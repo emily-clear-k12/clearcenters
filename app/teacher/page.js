@@ -118,9 +118,23 @@ export default function TeacherOverview() {
 
     const assignmentIds = assignments.map((a) => a.id);
     let allSubmissions = [];
+    let targetRows = [];
     if (assignmentIds.length > 0) {
       const { data } = await supabase.from("submissions").select("id, student_id, assignment_id, submitted_at, teacher_grade, released").in("assignment_id", assignmentIds);
       allSubmissions = data || [];
+      const { data: targets } = await supabase.from("assignment_students").select("assignment_id, student_id").in("assignment_id", assignmentIds);
+      targetRows = targets || [];
+    }
+    const targetsByAssignment = {};
+    targetRows.forEach((t) => {
+      if (!targetsByAssignment[t.assignment_id]) targetsByAssignment[t.assignment_id] = new Set();
+      targetsByAssignment[t.assignment_id].add(t.student_id);
+    });
+    function applicableStudentIdsFor(assignment) {
+      const targetSet = targetsByAssignment[assignment.id];
+      const classStudents = students.filter((st) => st.class_id === assignment.class_id).map((st) => st.id);
+      if (!targetSet || targetSet.size === 0) return classStudents;
+      return classStudents.filter((id) => targetSet.has(id));
     }
 
     const pending = allSubmissions.filter((s) => s.submitted_at && (s.teacher_grade === null || s.teacher_grade === undefined));
@@ -158,18 +172,18 @@ export default function TeacherOverview() {
       const submittedCount = subsForA.filter((s) => s.submitted_at).length;
       const releasedForA = subsForA.filter((s) => s.released && s.teacher_grade !== null && s.teacher_grade !== undefined);
       const avgForA = releasedForA.length > 0 ? Math.round((releasedForA.reduce((sum, s) => sum + s.teacher_grade, 0) / releasedForA.length / 2) * 100) : null;
-      const rosterSize = students.filter((st) => st.class_id === a.class_id).length;
+      const rosterSize = applicableStudentIdsFor(a).length;
       return { id: a.id, title: caseMap[a.case_standard] || a.case_standard, standard: a.case_standard, className: classMap[a.class_id], dueDate: a.due_date, submittedCount, rosterSize, avgForA };
     });
     setRecentAssignments(assignmentRows);
 
     if (assignments.length > 0) {
       const mostRecent = assignments[0];
-      const subs = allSubmissions.filter((s) => s.assignment_id === mostRecent.id);
+      const applicable = applicableStudentIdsFor(mostRecent);
+      const subs = allSubmissions.filter((s) => s.assignment_id === mostRecent.id && applicable.includes(s.student_id));
       const completed = subs.filter((s) => s.submitted_at).length;
       const inProgress = subs.filter((s) => !s.submitted_at).length;
-      const rosterSize = students.filter((st) => st.class_id === mostRecent.class_id).length;
-      const notStarted = Math.max(0, rosterSize - completed - inProgress);
+      const notStarted = Math.max(0, applicable.length - completed - inProgress);
       setCompletionDonut({ completed, inProgress, notStarted });
     }
 

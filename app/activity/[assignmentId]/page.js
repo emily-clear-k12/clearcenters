@@ -35,6 +35,21 @@ export default async function ActivityPage({ params }) {
     redirect("/home");
   }
 
+  // If this assignment was narrowed to specific students, only those
+  // students may access it — everyone else in the class is turned away
+  // even though the assignment does belong to their class.
+  const { data: targets } = await supabaseAdmin
+    .from("assignment_students")
+    .select("student_id")
+    .eq("assignment_id", assignmentId);
+
+  if (targets && targets.length > 0) {
+    const isTargeted = targets.some((t) => t.student_id === studentId);
+    if (!isTargeted) {
+      redirect("/home");
+    }
+  }
+
   const caseEntry = getPublicCase(assignment.case_standard);
 
   if (!caseEntry) {

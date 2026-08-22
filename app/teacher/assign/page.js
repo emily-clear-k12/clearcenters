@@ -119,27 +119,48 @@ export default function MyClassesPage() {
 
     const assignmentIds = assignmentList.map((a) => a.id);
     let submissions = [];
+    let targetRows = [];
     if (assignmentIds.length > 0) {
       const { data: subs } = await supabase.from("submissions").select("student_id, assignment_id, submitted_at, teacher_grade").in("assignment_id", assignmentIds);
       submissions = subs || [];
+      const { data: targets } = await supabase.from("assignment_students").select("assignment_id, student_id").in("assignment_id", assignmentIds);
+      targetRows = targets || [];
+    }
+
+    // Map each assignment to the set of students it actually applies to —
+    // every student in the roster if whole-class, or just the targeted
+    // ones if this assignment was narrowed down.
+    const targetsByAssignment = {};
+    targetRows.forEach((t) => {
+      if (!targetsByAssignment[t.assignment_id]) targetsByAssignment[t.assignment_id] = new Set();
+      targetsByAssignment[t.assignment_id].add(t.student_id);
+    });
+    function applicableStudentIds(assignmentId) {
+      const targetSet = targetsByAssignment[assignmentId];
+      if (!targetSet || targetSet.size === 0) return rosterList.map((s) => s.id); // whole class
+      return [...targetSet];
     }
 
     // Per-assignment completion count, for display alongside each assignment
     const assignmentsWithCompletion = assignmentList.map((a) => {
-      const forA = submissions.filter((s) => s.assignment_id === a.id);
-      return { ...a, submittedCount: forA.filter((s) => s.submitted_at).length, rosterSize: rosterList.length };
+      const applicable = applicableStudentIds(a.id);
+      const forA = submissions.filter((s) => s.assignment_id === a.id && applicable.includes(s.student_id));
+      const isTargeted = !!(targetsByAssignment[a.id] && targetsByAssignment[a.id].size > 0);
+      return { ...a, submittedCount: forA.filter((s) => s.submitted_at).length, rosterSize: applicable.length, isTargeted };
     });
     setAssignments(assignmentsWithCompletion);
 
-    // Per-student status
+    // Per-student status — only count assignments that actually apply to
+    // this specific student (whole-class ones, or ones they were targeted for).
     const status = {};
     rosterList.forEach((st) => {
+      const applicableAssignments = assignmentList.filter((a) => applicableStudentIds(a.id).includes(st.id));
       const theirs = submissions.filter((s) => s.student_id === st.id);
       const startedAssignmentIds = new Set(theirs.map((s) => s.assignment_id));
       const needsReview = theirs.filter((s) => s.submitted_at && (s.teacher_grade === null || s.teacher_grade === undefined)).length;
       const submitted = theirs.filter((s) => s.submitted_at).length;
-      const notStarted = assignmentList.length - startedAssignmentIds.size;
-      status[st.id] = { needsReview, submitted, notStarted, total: assignmentList.length };
+      const notStarted = applicableAssignments.filter((a) => !startedAssignmentIds.has(a.id)).length;
+      status[st.id] = { needsReview, submitted, notStarted, total: applicableAssignments.length };
     });
     setStudentStatus(status);
     setLoadingStatus(false);
@@ -309,7 +330,12 @@ export default function MyClassesPage() {
                           </div>
                           <div style={{ flex: 1 }}>
                             <div style={{ fontSize: 12.5, fontWeight: 600 }}>{a.cases?.title || a.case_standard}</div>
-                            <div style={{ fontSize: 10.5, color: COLORS.textMuted }}>{a.due_date ? `Due ${a.due_date}` : "No due date"}</div>
+                            <div style={{ fontSize: 10.5, color: COLORS.textMuted, display: "flex", alignItems: "center", gap: 6 }}>
+                              {a.due_date ? `Due ${a.due_date}` : "No due date"}
+                              <span style={{ fontWeight: 700, color: a.isTargeted ? COLORS.violet : COLORS.teal }}>
+                                · {a.isTargeted ? `${a.rosterSize} student${a.rosterSize === 1 ? "" : "s"}` : "Whole Class"}
+                              </span>
+                            </div>
                           </div>
                           <div style={{ fontSize: 12, color: COLORS.textMuted, fontWeight: 700 }}>{a.submittedCount} / {a.rosterSize}</div>
                         </div>

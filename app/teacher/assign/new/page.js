@@ -57,6 +57,10 @@ function NewAssignmentContent() {
   const [browseGrade, setBrowseGrade] = useState("5");
   const [browseSubject, setBrowseSubject] = useState("Science");
 
+  const [roster, setRoster] = useState([]);
+  const [targetMode, setTargetMode] = useState("whole"); // 'whole' | 'specific'
+  const [selectedStudentIds, setSelectedStudentIds] = useState([]);
+
   useEffect(() => {
     supabase.auth.getUser().then(({ data, error: authError }) => {
       if (authError || !data?.user) { router.push("/login"); return; }
@@ -72,6 +76,13 @@ function NewAssignmentContent() {
   }, [teacherId]);
 
   useEffect(() => {
+    if (!assignClassId) { setRoster([]); return; }
+    supabase.from("students").select("id, first_name").eq("class_id", assignClassId).order("first_name").then(({ data }) => setRoster(data || []));
+    setTargetMode("whole");
+    setSelectedStudentIds([]);
+  }, [assignClassId]);
+
+  useEffect(() => {
     supabase.from("cases").select("standard, title, grade, subject").then(({ data }) => setCases(data || []));
   }, []);
 
@@ -82,13 +93,40 @@ function NewAssignmentContent() {
 
   const targetClass = classes.find((c) => c.id === assignClassId);
 
+  function toggleStudentTarget(id) {
+    setSelectedStudentIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
+  }
+
   async function handleAssign() {
     if (!selectedCase || !assignClassId) return;
+    if (targetMode === "specific" && selectedStudentIds.length === 0) {
+      setError("Pick at least one student, or switch to Whole Class.");
+      return;
+    }
     setAssigning(true);
     setError(null);
-    const { error: insertError } = await supabase.from("assignments").insert({ class_id: assignClassId, case_standard: selectedCase.standard, due_date: dueDate || null });
+    const { data: newAssignment, error: insertError } = await supabase
+      .from("assignments")
+      .insert({ class_id: assignClassId, case_standard: selectedCase.standard, due_date: dueDate || null })
+      .select()
+      .single();
+    if (insertError) {
+      setAssigning(false);
+      setError("Couldn't assign the case: " + insertError.message);
+      return;
+    }
+
+    if (targetMode === "specific") {
+      const rows = selectedStudentIds.map((studentId) => ({ assignment_id: newAssignment.id, student_id: studentId }));
+      const { error: targetError } = await supabase.from("assignment_students").insert(rows);
+      if (targetError) {
+        setAssigning(false);
+        setError("Assigned, but couldn't save the student list: " + targetError.message);
+        return;
+      }
+    }
+
     setAssigning(false);
-    if (insertError) { setError("Couldn't assign the case: " + insertError.message); return; }
     setAssignedSuccess(true);
   }
 
@@ -98,6 +136,8 @@ function NewAssignmentContent() {
     setChallengeStep("library");
     setSelectedChallenge(null);
     setAssignedSuccess(false);
+    setTargetMode("whole");
+    setSelectedStudentIds([]);
   }
 
   if (loadingAuth) {
@@ -130,7 +170,9 @@ function NewAssignmentContent() {
             <div style={{ background: COLORS.white, border: `1px solid ${COLORS.border}`, borderRadius: 16, padding: 32, textAlign: "center", boxShadow: "0 4px 16px rgba(13,27,42,.06)" }}>
               <div style={{ fontSize: 36, marginBottom: 10 }}>✅</div>
               <div style={{ fontWeight: 700, fontSize: 17, marginBottom: 6 }}>Assigned!</div>
-              <p style={{ color: COLORS.textMuted, fontSize: 13.5, marginBottom: 20 }}>"{selectedCase.title}" is now assigned to {targetClass?.name}.</p>
+              <p style={{ color: COLORS.textMuted, fontSize: 13.5, marginBottom: 20 }}>
+                "{selectedCase.title}" is now assigned to {targetMode === "specific" ? `${selectedStudentIds.length} student${selectedStudentIds.length === 1 ? "" : "s"} in` : "everyone in"} {targetClass?.name}.
+              </p>
               <div style={{ display: "flex", gap: 10, justifyContent: "center" }}>
                 <button onClick={assignAnother} className="gc-btn" style={{ background: COLORS.violetSoft, color: COLORS.violet, borderRadius: 999, padding: "11px 20px", fontWeight: 700, fontSize: 13.5 }}>Assign Another</button>
                 <button onClick={() => router.push("/teacher/assign")} className="gc-btn" style={{ background: COLORS.violet, color: COLORS.white, borderRadius: 999, padding: "11px 20px", fontWeight: 700, fontSize: 13.5 }}>Back to My Classes</button>
@@ -236,13 +278,56 @@ function NewAssignmentContent() {
                     <p style={{ fontSize: 12.5, color: COLORS.textMuted, marginBottom: 10 }}>You don't have any classes yet — create one on My Classes first.</p>
                   )}
 
-                  <div style={{ fontWeight: 700, fontSize: 13, marginBottom: 10 }}>5. Due date (optional)</div>
+                  {assignClassId && (
+                    <>
+                      <div style={{ fontWeight: 700, fontSize: 13, marginBottom: 10 }}>5. Who gets it?</div>
+                      <div style={{ display: "inline-flex", background: COLORS.cream, borderRadius: 999, padding: 3, marginBottom: 14, gap: 3 }}>
+                        <button className="gc-btn" onClick={() => setTargetMode("whole")} style={{ border: "none", padding: "7px 16px", borderRadius: 999, fontWeight: 700, fontSize: 12.5, background: targetMode === "whole" ? COLORS.violet : "transparent", color: targetMode === "whole" ? COLORS.white : COLORS.textMuted }}>
+                          Whole Class
+                        </button>
+                        <button className="gc-btn" onClick={() => setTargetMode("specific")} style={{ border: "none", padding: "7px 16px", borderRadius: 999, fontWeight: 700, fontSize: 12.5, background: targetMode === "specific" ? COLORS.violet : "transparent", color: targetMode === "specific" ? COLORS.white : COLORS.textMuted }}>
+                          Just Some Students
+                        </button>
+                      </div>
+
+                      {targetMode === "specific" && (
+                        <div style={{ display: "grid", gap: 6, maxHeight: 200, overflowY: "auto", marginBottom: 14, background: COLORS.cream, borderRadius: 10, padding: 10 }}>
+                          {roster.length > 0 ? roster.map((s) => {
+                            const checked = selectedStudentIds.includes(s.id);
+                            return (
+                              <button
+                                key={s.id}
+                                className="gc-btn"
+                                onClick={() => toggleStudentTarget(s.id)}
+                                style={{ display: "flex", alignItems: "center", gap: 8, background: checked ? COLORS.violetSoft : COLORS.white, border: checked ? `1.5px solid ${COLORS.violet}` : `1.5px solid ${COLORS.border}`, borderRadius: 8, padding: "7px 10px", textAlign: "left" }}
+                              >
+                                <div style={{ width: 16, height: 16, borderRadius: 4, background: checked ? COLORS.violet : COLORS.white, border: `1.5px solid ${checked ? COLORS.violet : COLORS.border}`, display: "flex", alignItems: "center", justifyContent: "center", color: COLORS.white, fontSize: 11, fontWeight: 700, flexShrink: 0 }}>
+                                  {checked ? "✓" : ""}
+                                </div>
+                                <span style={{ fontSize: 12.5, fontWeight: 600, color: COLORS.textDark }}>{s.first_name}</span>
+                              </button>
+                            );
+                          }) : (
+                            <div style={{ fontSize: 12.5, color: COLORS.textMuted, textAlign: "center", padding: 8 }}>No students in this class yet.</div>
+                          )}
+                        </div>
+                      )}
+                    </>
+                  )}
+
+                  <div style={{ fontWeight: 700, fontSize: 13, marginBottom: 10 }}>6. Due date (optional)</div>
                   <div style={{ position: "relative", marginBottom: 14 }}>
                     <Calendar size={14} style={{ position: "absolute", left: 10, top: 11, color: COLORS.textMuted }} />
                     <input type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} style={{ width: "100%", border: "2px solid #ECEAF5", borderRadius: 10, padding: "8px 10px 8px 32px", fontSize: 13, boxSizing: "border-box" }} />
                   </div>
                   <button className="gc-btn" onClick={handleAssign} disabled={assigning || !assignClassId} style={{ width: "100%", background: assignClassId ? COLORS.violet : "#D8D4E8", color: COLORS.white, borderRadius: 999, padding: "12px 20px", fontWeight: 700, fontSize: 14.5 }}>
-                    {assigning ? "Assigning..." : assignClassId ? `Assign to ${targetClass?.name} →` : "Choose a class first"}
+                    {assigning
+                      ? "Assigning..."
+                      : !assignClassId
+                      ? "Choose a class first"
+                      : targetMode === "specific"
+                      ? `Assign to ${selectedStudentIds.length} student${selectedStudentIds.length === 1 ? "" : "s"} →`
+                      : `Assign to ${targetClass?.name} →`}
                   </button>
                 </div>
               )}

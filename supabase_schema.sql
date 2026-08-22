@@ -128,3 +128,35 @@ update cases set grade = 5, subject = 'Science' where grade is null;
 alter table classes add column if not exists grade int;
 alter table classes add column if not exists subject text default 'Science';
 update classes set grade = 5, subject = 'Science' where grade is null;
+
+-- MIGRATION 3 — targeted assignments. If an assignment has ANY rows here,
+-- it's meant for just those specific students, not the whole class. If it
+-- has zero rows, it behaves exactly as before (whole class sees it).
+create table assignment_students (
+  id uuid default gen_random_uuid() primary key,
+  assignment_id uuid references assignments(id) on delete cascade,
+  student_id uuid references students(id) on delete cascade,
+  created_at timestamp default now()
+);
+
+alter table assignment_students enable row level security;
+
+create policy "Teachers can view targeting for their own assignments"
+on assignment_students for select
+using (
+  assignment_id in (
+    select a.id from assignments a
+    join classes c on c.id = a.class_id
+    where c.teacher_id = auth.uid()
+  )
+);
+
+create policy "Teachers can target students on their own assignments"
+on assignment_students for insert
+with check (
+  assignment_id in (
+    select a.id from assignments a
+    join classes c on c.id = a.class_id
+    where c.teacher_id = auth.uid()
+  )
+);
