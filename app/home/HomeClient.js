@@ -176,20 +176,12 @@ export default function HomeClient({ student, studentClass, assignments, mission
 
           <div style={{ background: COLORS.white, borderRadius: 16, boxShadow: "0 4px 16px rgba(0,0,0,.08)", padding: 20 }}>
             <p style={{ fontSize: 13, fontWeight: 700, color: COLORS.textMuted, textTransform: "uppercase", margin: "0 0 12px 0" }}>Your Progress</p>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-              <div className="stat-card-img" style={{ position: "relative", paddingTop: "56.28%", borderRadius: 14, overflow: "hidden", boxShadow: "0 2px 8px rgba(0,0,0,.08)" }}>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+              <div className="stat-card-img" style={{ position: "relative", paddingTop: "56.28%", borderRadius: 16, overflow: "hidden", boxShadow: "0 2px 10px rgba(0,0,0,.1)" }}>
                 <img src="/icons/stat_missions_completed.jpg" alt="Missions Completed" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
                 <div className="num" style={{ position: "absolute", left: "49.9%", top: "35.8%", transform: "translate(-50%, -50%)", fontFamily: "'Poppins', sans-serif", fontWeight: 700, color: COLORS.textDark }}>{missionsCompleted}</div>
               </div>
-              <div className="stat-card-img" style={{ position: "relative", paddingTop: "56.28%", borderRadius: 14, overflow: "hidden", boxShadow: "0 2px 8px rgba(0,0,0,.08)" }}>
-                <img src="/icons/stat_hints_used.jpg" alt="Hints Used" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
-                <div className="num" style={{ position: "absolute", left: "49.9%", top: "35.8%", transform: "translate(-50%, -50%)", fontFamily: "'Poppins', sans-serif", fontWeight: 700, color: COLORS.textDark }}>0</div>
-              </div>
-              <div className="stat-card-img" style={{ position: "relative", paddingTop: "56.28%", borderRadius: 14, overflow: "hidden", boxShadow: "0 2px 8px rgba(0,0,0,.08)" }}>
-                <img src="/icons/stat_streak_days.jpg" alt="Streak Days" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
-                <div className="num" style={{ position: "absolute", left: "49.9%", top: "35.8%", transform: "translate(-50%, -50%)", fontFamily: "'Poppins', sans-serif", fontWeight: 700, color: COLORS.textDark }}>{student.streak_days}</div>
-              </div>
-              <div className="stat-card-img" style={{ position: "relative", paddingTop: "56.28%", borderRadius: 14, overflow: "hidden", boxShadow: "0 2px 8px rgba(0,0,0,.08)" }}>
+              <div className="stat-card-img" style={{ position: "relative", paddingTop: "56.28%", borderRadius: 16, overflow: "hidden", boxShadow: "0 2px 10px rgba(0,0,0,.1)" }}>
                 <img src="/icons/stat_crystal_points.jpg" alt="Crystal Points" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
                 <div className="num" style={{ position: "absolute", left: "49.9%", top: "35.8%", transform: "translate(-50%, -50%)", fontFamily: "'Poppins', sans-serif", fontWeight: 700, color: COLORS.textDark }}>{student.crystal_points}</div>
               </div>

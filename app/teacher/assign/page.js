@@ -34,15 +34,22 @@ function generatePin() {
   return String(Math.floor(1000 + Math.random() * 9000));
 }
 
+function caseImagePath(standard) {
+  return `/cases/${standard.replace(".", "-")}.jpg`;
+}
+
 export default function TeacherAssignPage() {
   const router = useRouter();
   const [loadingAuth, setLoadingAuth] = useState(true);
   const [teacherId, setTeacherId] = useState(null);
 
   const [classes, setClasses] = useState([]);
+  const [loadingClasses, setLoadingClasses] = useState(true);
+  const [classCounts, setClassCounts] = useState({});
   const [selectedClassId, setSelectedClassId] = useState(null);
   const [newClassName, setNewClassName] = useState("");
   const [creatingClass, setCreatingClass] = useState(false);
+  const [showNewClassForm, setShowNewClassForm] = useState(false);
 
   const [cases, setCases] = useState([]);
   const [caseSearch, setCaseSearch] = useState("");
@@ -70,12 +77,26 @@ export default function TeacherAssignPage() {
 
   const loadClasses = useCallback(async () => {
     if (!teacherId) return;
+    setLoadingClasses(true);
     const { data } = await supabase.from("classes").select("*").eq("teacher_id", teacherId).order("created_at");
-    setClasses(data || []);
-    if (data && data.length > 0 && !selectedClassId) {
-      setSelectedClassId(data[0].id);
+    const list = data || [];
+    setClasses(list);
+
+    if (list.length > 0) {
+      const { data: allStudents } = await supabase
+        .from("students")
+        .select("class_id")
+        .in("class_id", list.map((c) => c.id));
+      const counts = {};
+      (allStudents || []).forEach((s) => {
+        counts[s.class_id] = (counts[s.class_id] || 0) + 1;
+      });
+      setClassCounts(counts);
     }
-  }, [teacherId, selectedClassId]);
+
+    setSelectedClassId((prev) => prev || (list.length > 0 ? list[0].id : null));
+    setLoadingClasses(false);
+  }, [teacherId]);
 
   useEffect(() => {
     if (teacherId) loadClasses();
@@ -126,7 +147,8 @@ export default function TeacherAssignPage() {
       return;
     }
     setNewClassName("");
-    setClasses([...classes, data]);
+    setShowNewClassForm(false);
+    setClasses((prev) => [...prev, data]);
     setSelectedClassId(data.id);
   }
 
@@ -167,6 +189,7 @@ export default function TeacherAssignPage() {
     }
     setNewStudentName("");
     loadClassDetails();
+    loadClasses();
   }
 
   function copyClassCode(code) {
@@ -180,7 +203,7 @@ export default function TeacherAssignPage() {
   );
   const selectedClass = classes.find((c) => c.id === selectedClassId);
 
-  if (loadingAuth) {
+  if (loadingAuth || loadingClasses) {
     return (
       <div style={{ minHeight: "100vh", background: COLORS.navy, display: "flex", alignItems: "center", justifyContent: "center", color: COLORS.white, fontFamily: "'Inter', sans-serif" }}>
         Loading...
@@ -197,26 +220,9 @@ export default function TeacherAssignPage() {
       `}</style>
 
       <div style={{ background: COLORS.slate, padding: "14px 20px", display: "flex", alignItems: "center", gap: 14 }}>
-        <div style={{ marginRight: "auto" }}>
-          <div style={{ fontFamily: "'Poppins', sans-serif", color: COLORS.white, fontWeight: 700, fontSize: 17 }}>
-            {selectedClass ? selectedClass.name : "ClearCenters HQ · Teacher"}
-          </div>
-          {selectedClass && (
-            <div style={{ color: "rgba(255,255,255,.6)", fontSize: 12.5, display: "flex", alignItems: "center", gap: 6 }}>
-              {roster.length} students · Class Code: <strong style={{ color: COLORS.white }}>{selectedClass.class_code}</strong>
-              <button onClick={() => copyClassCode(selectedClass.class_code)} className="gc-btn" style={{ background: "none", padding: 2, color: "rgba(255,255,255,.7)" }}>
-                {copiedCode ? <Check size={13} /> : <Copy size={13} />}
-              </button>
-            </div>
-          )}
+        <div style={{ fontFamily: "'Poppins', sans-serif", color: COLORS.white, fontWeight: 700, fontSize: 17, marginRight: "auto" }}>
+          ClearCenters HQ · Teacher
         </div>
-        {classes.length > 1 && (
-          <select value={selectedClassId || ""} onChange={(e) => setSelectedClassId(e.target.value)} style={{ borderRadius: 8, padding: "6px 10px", fontSize: 13, marginRight: 10 }}>
-            {classes.map((c) => (
-              <option key={c.id} value={c.id}>{c.name}</option>
-            ))}
-          </select>
-        )}
         <button
           onClick={async () => { await supabase.auth.signOut(); router.push("/login"); }}
           className="gc-btn"
@@ -234,8 +240,68 @@ export default function TeacherAssignPage() {
             </div>
           )}
 
+          <div style={{ marginBottom: 20 }}>
+            <p style={{ fontSize: 12, fontWeight: 700, color: "rgba(255,255,255,.7)", letterSpacing: 0.5, marginBottom: 10 }}>MY CLASSES</p>
+            <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+              {classes.map((c) => {
+                const isSelected = c.id === selectedClassId;
+                return (
+                  <button
+                    key={c.id}
+                    className="gc-btn"
+                    onClick={() => setSelectedClassId(c.id)}
+                    style={{
+                      background: isSelected ? COLORS.white : "rgba(255,255,255,.08)",
+                      border: isSelected ? `2px solid ${COLORS.violet}` : "2px solid transparent",
+                      borderRadius: 14,
+                      padding: "12px 18px",
+                      textAlign: "left",
+                      minWidth: 180,
+                    }}
+                  >
+                    <div style={{ fontWeight: 700, fontSize: 14, color: isSelected ? COLORS.textDark : COLORS.white, marginBottom: 3 }}>{c.name}</div>
+                    <div style={{ fontSize: 11.5, color: isSelected ? COLORS.textMuted : "rgba(255,255,255,.6)" }}>
+                      {classCounts[c.id] || 0} students · {c.class_code}
+                    </div>
+                  </button>
+                );
+              })}
+              <button
+                className="gc-btn"
+                onClick={() => setShowNewClassForm(!showNewClassForm)}
+                style={{ background: "rgba(255,255,255,.08)", border: "2px dashed rgba(255,255,255,.3)", borderRadius: 14, padding: "12px 18px", color: COLORS.white, fontWeight: 700, fontSize: 13, minWidth: 140, display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}
+              >
+                <Plus size={15} /> New Class
+              </button>
+            </div>
+
+            {showNewClassForm && (
+              <form onSubmit={handleCreateClass} style={{ display: "flex", gap: 8, marginTop: 12, maxWidth: 420 }}>
+                <input
+                  autoFocus
+                  value={newClassName}
+                  onChange={(e) => setNewClassName(e.target.value)}
+                  placeholder="e.g. 5th Grade Science, Period 3"
+                  style={{ flex: 1, border: "2px solid #ECEAF5", borderRadius: 10, padding: "10px 12px", fontSize: 14, boxSizing: "border-box" }}
+                />
+                <button type="submit" disabled={creatingClass} className="gc-btn" style={{ background: COLORS.violet, color: COLORS.white, borderRadius: 10, padding: "0 18px", fontWeight: 700, fontSize: 13.5 }}>
+                  {creatingClass ? "Creating..." : "Create"}
+                </button>
+              </form>
+            )}
+          </div>
+
+          {selectedClass && (
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16, color: "rgba(255,255,255,.75)", fontSize: 13 }}>
+              Class Code for <strong style={{ color: COLORS.white }}>{selectedClass.name}</strong>: <strong style={{ color: COLORS.white }}>{selectedClass.class_code}</strong>
+              <button onClick={() => copyClassCode(selectedClass.class_code)} className="gc-btn" style={{ background: "rgba(255,255,255,.1)", border: "none", borderRadius: 8, padding: "4px 8px", color: "rgba(255,255,255,.9)", display: "flex", alignItems: "center", gap: 4 }}>
+                {copiedCode ? <Check size={13} /> : <Copy size={13} />} {copiedCode ? "Copied" : "Copy"}
+              </button>
+            </div>
+          )}
+
           {classes.length === 0 ? (
-            <div style={{ background: COLORS.white, borderRadius: 16, padding: 24, maxWidth: 460, margin: "40px auto", textAlign: "center" }}>
+            <div style={{ background: COLORS.white, borderRadius: 16, padding: 24, maxWidth: 460, margin: "20px auto", textAlign: "center" }}>
               <div style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 700, fontSize: 18, marginBottom: 8 }}>Create your first class</div>
               <p style={{ color: COLORS.textMuted, fontSize: 13.5, marginBottom: 16 }}>This generates a real class code your students will use to log in.</p>
               <form onSubmit={handleCreateClass}>
@@ -274,6 +340,9 @@ export default function TeacherAssignPage() {
                           onClick={() => setSelectedCase(c)}
                           style={{ display: "flex", alignItems: "center", gap: 10, textAlign: "left", background: isSelected ? COLORS.violetSoft : COLORS.cream, border: isSelected ? `2px solid ${COLORS.violet}` : "2px solid transparent", borderRadius: 12, padding: "10px 12px" }}
                         >
+                          <div style={{ width: 48, height: 48, borderRadius: 8, overflow: "hidden", flexShrink: 0 }}>
+                            <img src={caseImagePath(c.standard)} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+                          </div>
                           <div style={{ flex: 1 }}>
                             <div style={{ fontSize: 13.5, fontWeight: 700 }}>{c.title}</div>
                             <div style={{ fontSize: 11, color: COLORS.textMuted }}>{c.standard} · Group Chat</div>
