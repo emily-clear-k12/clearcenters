@@ -22,6 +22,17 @@ const COLORS = {
   textMuted: "#697386",
 };
 
+const CHALLENGE_TYPES = [
+  { key: "group_chat", label: "Group Chat", image: "/teacher/challenges/group_chat.jpg", real: true },
+  { key: "comment_section", label: "Comment Section", image: "/teacher/challenges/comment_section.jpg", real: false },
+  { key: "video_detective", label: "Short-Form Video Detective", image: "/teacher/challenges/video_detective.jpg", real: false },
+  { key: "model_makeover", label: "Model Makeover", image: "/teacher/challenges/model_makeover.jpg", real: false },
+  { key: "museum_exhibit", label: "Museum Exhibit Builder", image: "/teacher/challenges/museum_exhibit.jpg", real: false },
+  { key: "newsroom", label: "Newsroom", image: "/teacher/challenges/newsroom.jpg", real: false },
+  { key: "repair_desk", label: "Repair Desk", image: "/teacher/challenges/repair_desk.jpg", real: false },
+  { key: "you_be_the_judge", label: "You Be the Judge", image: "/teacher/challenges/you_be_the_judge.jpg", real: false },
+];
+
 function generateClassCode() {
   const letters = "ABCDEFGHJKLMNPQRSTUVWXYZ";
   const digits = "0123456789";
@@ -62,6 +73,11 @@ export default function TeacherAssignPage() {
   const [dueDate, setDueDate] = useState("");
   const [assigning, setAssigning] = useState(false);
   const [assignments, setAssignments] = useState([]);
+
+  const [challengeStep, setChallengeStep] = useState("library"); // 'library' | 'gradeSubject' | 'caseList'
+  const [selectedChallenge, setSelectedChallenge] = useState(null);
+  const [browseGrade, setBrowseGrade] = useState("5");
+  const [browseSubject, setBrowseSubject] = useState("Science");
 
   const [roster, setRoster] = useState([]);
   const [newStudentName, setNewStudentName] = useState("");
@@ -173,6 +189,8 @@ export default function TeacherAssignPage() {
       return;
     }
     setSelectedCase(null);
+    setChallengeStep("library");
+    setSelectedChallenge(null);
     setDueDate("");
     loadClassDetails();
   }
@@ -207,7 +225,7 @@ export default function TeacherAssignPage() {
   const selectedClass = classes.find((c) => c.id === selectedClassId);
   const filteredCases = cases.filter(
     (c) =>
-      (!selectedClass || (c.grade === selectedClass.grade && c.subject === selectedClass.subject)) &&
+      c.grade === parseInt(browseGrade) && c.subject === browseSubject &&
       (c.title.toLowerCase().includes(caseSearch.toLowerCase()) || c.standard.toLowerCase().includes(caseSearch.toLowerCase()))
   );
 
@@ -343,42 +361,98 @@ export default function TeacherAssignPage() {
             <div style={{ display: "grid", gridTemplateColumns: "1.3fr 1fr", gap: 18 }}>
               <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
                 <div style={{ background: COLORS.white, borderRadius: 16, padding: 16, boxShadow: "0 4px 16px rgba(0,0,0,.12)" }}>
-                  <div style={{ fontWeight: 700, fontSize: 13, marginBottom: 10 }}>1. Choose a case</div>
-                  <div style={{ position: "relative", marginBottom: 12 }}>
-                    <Search size={15} style={{ position: "absolute", left: 10, top: 10, color: COLORS.textMuted }} />
-                    <input
-                      value={caseSearch}
-                      onChange={(e) => setCaseSearch(e.target.value)}
-                      placeholder="Search by title or standard..."
-                      style={{ width: "100%", border: "2px solid #ECEAF5", borderRadius: 10, padding: "8px 10px 8px 32px", fontSize: 13, boxSizing: "border-box" }}
-                    />
-                  </div>
-                  <div style={{ display: "grid", gap: 8, maxHeight: 280, overflowY: "auto" }}>
-                    {filteredCases.map((c) => {
-                      const isSelected = selectedCase && selectedCase.standard === c.standard;
-                      return (
-                        <button
-                          key={c.standard}
-                          className="gc-btn"
-                          onClick={() => setSelectedCase(c)}
-                          style={{ display: "flex", alignItems: "center", gap: 10, textAlign: "left", background: isSelected ? COLORS.violetSoft : COLORS.cream, border: isSelected ? `2px solid ${COLORS.violet}` : "2px solid transparent", borderRadius: 12, padding: "10px 12px" }}
-                        >
-                          <div style={{ width: 48, height: 48, borderRadius: 8, overflow: "hidden", flexShrink: 0 }}>
-                            <img src={caseImagePath(c.standard)} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
-                          </div>
-                          <div style={{ flex: 1 }}>
-                            <div style={{ fontSize: 13.5, fontWeight: 700 }}>{c.title}</div>
-                            <div style={{ fontSize: 11, color: COLORS.textMuted }}>{c.standard} · {c.grade}th Grade {c.subject}</div>
-                          </div>
-                        </button>
-                      );
-                    })}
-                    {filteredCases.length === 0 && (
-                      <div style={{ fontSize: 13, color: COLORS.textMuted, textAlign: "center", padding: 16 }}>
-                        No {selectedClass ? `${selectedClass.grade}th Grade ${selectedClass.subject}` : ""} cases yet — check back once they're added!
+                  {challengeStep === "library" && (
+                    <>
+                      <div style={{ fontWeight: 700, fontSize: 13, marginBottom: 12 }}>1. Choose a Challenge Type</div>
+                      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+                        {CHALLENGE_TYPES.map((ch) => (
+                          <button
+                            key={ch.key}
+                            className="gc-btn"
+                            disabled={!ch.real}
+                            onClick={() => { setSelectedChallenge(ch); setChallengeStep("gradeSubject"); }}
+                            style={{ position: "relative", borderRadius: 12, overflow: "hidden", border: `1px solid ${COLORS.border}`, padding: 0, textAlign: "left", opacity: ch.real ? 1 : 0.7, cursor: ch.real ? "pointer" : "default" }}
+                          >
+                            <div style={{ position: "relative", height: 90 }}>
+                              <img src={ch.image} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block", filter: ch.real ? "none" : "grayscale(0.3)" }} />
+                              {!ch.real && (
+                                <span style={{ position: "absolute", top: 6, right: 6, fontSize: 9.5, fontWeight: 700, background: "rgba(255,255,255,.92)", color: COLORS.textMuted, padding: "2px 8px", borderRadius: 999 }}>Coming Soon</span>
+                              )}
+                            </div>
+                            <div style={{ padding: "8px 10px", fontSize: 12.5, fontWeight: 700, color: COLORS.textDark }}>{ch.label}</div>
+                          </button>
+                        ))}
                       </div>
-                    )}
-                  </div>
+                    </>
+                  )}
+
+                  {challengeStep === "gradeSubject" && (
+                    <>
+                      <button onClick={() => setChallengeStep("library")} className="gc-btn" style={{ background: "none", color: COLORS.violet, fontSize: 12.5, fontWeight: 700, marginBottom: 10 }}>← Back to Challenge Types</button>
+                      <div style={{ fontWeight: 700, fontSize: 13, marginBottom: 4 }}>2. {selectedChallenge?.label} — choose grade & subject</div>
+                      <div style={{ fontSize: 11.5, color: COLORS.textMuted, marginBottom: 14 }}>You can assign any grade level to any class — pick whichever fits this student or group.</div>
+                      <div style={{ display: "flex", gap: 8, marginBottom: 14 }}>
+                        <select value={browseGrade} onChange={(e) => setBrowseGrade(e.target.value)} style={{ flex: 1, border: "2px solid #ECEAF5", borderRadius: 10, padding: "10px 12px", fontSize: 14 }}>
+                          <option value="3">3rd Grade</option>
+                          <option value="4">4th Grade</option>
+                          <option value="5">5th Grade</option>
+                        </select>
+                        <select value={browseSubject} onChange={(e) => setBrowseSubject(e.target.value)} style={{ flex: 1, border: "2px solid #ECEAF5", borderRadius: 10, padding: "10px 12px", fontSize: 14 }}>
+                          <option value="Science">Science</option>
+                          <option value="Social Studies">Social Studies</option>
+                          <option value="Math">Math</option>
+                          <option value="ELAR">ELAR</option>
+                        </select>
+                      </div>
+                      <button onClick={() => setChallengeStep("caseList")} className="gc-btn" style={{ width: "100%", background: COLORS.violet, color: COLORS.white, borderRadius: 999, padding: "11px 20px", fontWeight: 700, fontSize: 14 }}>
+                        Browse {browseGrade === "3" ? "3rd" : `${browseGrade}th`} Grade {browseSubject} Cases →
+                      </button>
+                    </>
+                  )}
+
+                  {challengeStep === "caseList" && (
+                    <>
+                      <button onClick={() => setChallengeStep("gradeSubject")} className="gc-btn" style={{ background: "none", color: COLORS.violet, fontSize: 12.5, fontWeight: 700, marginBottom: 10 }}>← Change Grade/Subject</button>
+                      <div style={{ fontWeight: 700, fontSize: 13, marginBottom: 10 }}>
+                        3. Choose a case — {browseGrade === "3" ? "3rd" : `${browseGrade}th`} Grade {browseSubject}
+                      </div>
+                      <div style={{ position: "relative", marginBottom: 12 }}>
+                        <Search size={15} style={{ position: "absolute", left: 10, top: 10, color: COLORS.textMuted }} />
+                        <input
+                          value={caseSearch}
+                          onChange={(e) => setCaseSearch(e.target.value)}
+                          placeholder="Search by title or standard..."
+                          style={{ width: "100%", border: "2px solid #ECEAF5", borderRadius: 10, padding: "8px 10px 8px 32px", fontSize: 13, boxSizing: "border-box" }}
+                        />
+                      </div>
+                      <div style={{ display: "grid", gap: 8, maxHeight: 280, overflowY: "auto" }}>
+                        {filteredCases.map((c) => {
+                          const isSelected = selectedCase && selectedCase.standard === c.standard;
+                          return (
+                            <button
+                              key={c.standard}
+                              className="gc-btn"
+                              onClick={() => setSelectedCase(c)}
+                              style={{ display: "flex", alignItems: "center", gap: 10, textAlign: "left", background: isSelected ? COLORS.violetSoft : COLORS.cream, border: isSelected ? `2px solid ${COLORS.violet}` : "2px solid transparent", borderRadius: 12, padding: "10px 12px" }}
+                            >
+                              <div style={{ width: 48, height: 48, borderRadius: 8, overflow: "hidden", flexShrink: 0 }}>
+                                <img src={caseImagePath(c.standard)} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+                              </div>
+                              <div style={{ flex: 1 }}>
+                                <div style={{ fontSize: 13.5, fontWeight: 700 }}>{c.title}</div>
+                                <div style={{ fontSize: 11, color: COLORS.textMuted }}>{c.standard} · {c.grade}th Grade {c.subject}</div>
+                              </div>
+                            </button>
+                          );
+                        })}
+                        {filteredCases.length === 0 && (
+                          <div style={{ fontSize: 13, color: COLORS.textMuted, textAlign: "center", padding: 16 }}>
+                            No {browseGrade === "3" ? "3rd" : `${browseGrade}th`} Grade {browseSubject} cases yet — check back once they're added!
+                          </div>
+                        )}
+                      </div>
+                    </>
+                  )}
                 </div>
 
                 <div style={{ background: COLORS.white, borderRadius: 16, padding: 16, boxShadow: "0 4px 16px rgba(0,0,0,.12)" }}>
