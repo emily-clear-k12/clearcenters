@@ -117,3 +117,14 @@ using (
     where c.teacher_id = auth.uid()
   )
 );
+
+-- MIGRATION 2 — added when planning ahead for 4th grade content and future
+-- subjects beyond Science. Adds real grade/subject to cases and classes
+-- instead of everything being an unstated assumption of "5th grade Science."
+alter table cases add column if not exists grade int;
+alter table cases add column if not exists subject text default 'Science';
+update cases set grade = 5, subject = 'Science' where grade is null;
+
+alter table classes add column if not exists grade int;
+alter table classes add column if not exists subject text default 'Science';
+update classes set grade = 5, subject = 'Science' where grade is null;

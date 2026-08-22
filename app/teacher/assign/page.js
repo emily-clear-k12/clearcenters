@@ -48,6 +48,8 @@ export default function TeacherAssignPage() {
   const [classCounts, setClassCounts] = useState({});
   const [selectedClassId, setSelectedClassId] = useState(null);
   const [newClassName, setNewClassName] = useState("");
+  const [newClassGrade, setNewClassGrade] = useState("5");
+  const [newClassSubject, setNewClassSubject] = useState("Science");
   const [creatingClass, setCreatingClass] = useState(false);
   const [showNewClassForm, setShowNewClassForm] = useState(false);
 
@@ -105,7 +107,7 @@ export default function TeacherAssignPage() {
   useEffect(() => {
     supabase
       .from("cases")
-      .select("standard, title")
+      .select("standard, title, grade, subject")
       .then(({ data }) => setCases(data || []));
   }, []);
 
@@ -138,7 +140,7 @@ export default function TeacherAssignPage() {
     const code = generateClassCode();
     const { data, error: insertError } = await supabase
       .from("classes")
-      .insert({ teacher_id: teacherId, name: newClassName.trim(), class_code: code })
+      .insert({ teacher_id: teacherId, name: newClassName.trim(), class_code: code, grade: parseInt(newClassGrade), subject: newClassSubject })
       .select()
       .single();
     setCreatingClass(false);
@@ -198,10 +200,12 @@ export default function TeacherAssignPage() {
     setTimeout(() => setCopiedCode(false), 1500);
   }
 
-  const filteredCases = cases.filter(
-    (c) => c.title.toLowerCase().includes(caseSearch.toLowerCase()) || c.standard.toLowerCase().includes(caseSearch.toLowerCase())
-  );
   const selectedClass = classes.find((c) => c.id === selectedClassId);
+  const filteredCases = cases.filter(
+    (c) =>
+      (!selectedClass || (c.grade === selectedClass.grade && c.subject === selectedClass.subject)) &&
+      (c.title.toLowerCase().includes(caseSearch.toLowerCase()) || c.standard.toLowerCase().includes(caseSearch.toLowerCase()))
+  );
 
   if (loadingAuth || loadingClasses) {
     return (
@@ -261,7 +265,7 @@ export default function TeacherAssignPage() {
                   >
                     <div style={{ fontWeight: 700, fontSize: 14, color: isSelected ? COLORS.textDark : COLORS.white, marginBottom: 3 }}>{c.name}</div>
                     <div style={{ fontSize: 11.5, color: isSelected ? COLORS.textMuted : "rgba(255,255,255,.6)" }}>
-                      {classCounts[c.id] || 0} students · {c.class_code}
+                      {c.grade ? `${c.grade === 3 ? "3rd" : c.grade + "th"} Grade ${c.subject} · ` : ""}{classCounts[c.id] || 0} students · {c.class_code}
                     </div>
                   </button>
                 );
@@ -276,14 +280,25 @@ export default function TeacherAssignPage() {
             </div>
 
             {showNewClassForm && (
-              <form onSubmit={handleCreateClass} style={{ display: "flex", gap: 8, marginTop: 12, maxWidth: 420 }}>
+              <form onSubmit={handleCreateClass} style={{ display: "flex", gap: 8, marginTop: 12, maxWidth: 560, flexWrap: "wrap" }}>
                 <input
                   autoFocus
                   value={newClassName}
                   onChange={(e) => setNewClassName(e.target.value)}
                   placeholder="e.g. 5th Grade Science, Period 3"
-                  style={{ flex: 1, border: "2px solid #ECEAF5", borderRadius: 10, padding: "10px 12px", fontSize: 14, boxSizing: "border-box" }}
+                  style={{ flex: 1, minWidth: 180, border: "2px solid #ECEAF5", borderRadius: 10, padding: "10px 12px", fontSize: 14, boxSizing: "border-box" }}
                 />
+                <select value={newClassGrade} onChange={(e) => setNewClassGrade(e.target.value)} style={{ border: "2px solid #ECEAF5", borderRadius: 10, padding: "10px 12px", fontSize: 14 }}>
+                  <option value="3">3rd Grade</option>
+                  <option value="4">4th Grade</option>
+                  <option value="5">5th Grade</option>
+                </select>
+                <select value={newClassSubject} onChange={(e) => setNewClassSubject(e.target.value)} style={{ border: "2px solid #ECEAF5", borderRadius: 10, padding: "10px 12px", fontSize: 14 }}>
+                  <option value="Science">Science</option>
+                  <option value="Social Studies">Social Studies</option>
+                  <option value="Math">Math</option>
+                  <option value="ELAR">ELAR</option>
+                </select>
                 <button type="submit" disabled={creatingClass} className="gc-btn" style={{ background: COLORS.violet, color: COLORS.white, borderRadius: 10, padding: "0 18px", fontWeight: 700, fontSize: 13.5 }}>
                   {creatingClass ? "Creating..." : "Create"}
                 </button>
@@ -309,8 +324,21 @@ export default function TeacherAssignPage() {
                   value={newClassName}
                   onChange={(e) => setNewClassName(e.target.value)}
                   placeholder="e.g. 5th Grade Science"
-                  style={{ width: "100%", border: "2px solid #ECEAF5", borderRadius: 10, padding: "10px 12px", fontSize: 14, boxSizing: "border-box", marginBottom: 12 }}
+                  style={{ width: "100%", border: "2px solid #ECEAF5", borderRadius: 10, padding: "10px 12px", fontSize: 14, boxSizing: "border-box", marginBottom: 10 }}
                 />
+                <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
+                  <select value={newClassGrade} onChange={(e) => setNewClassGrade(e.target.value)} style={{ flex: 1, border: "2px solid #ECEAF5", borderRadius: 10, padding: "10px 12px", fontSize: 14 }}>
+                    <option value="3">3rd Grade</option>
+                    <option value="4">4th Grade</option>
+                    <option value="5">5th Grade</option>
+                  </select>
+                  <select value={newClassSubject} onChange={(e) => setNewClassSubject(e.target.value)} style={{ flex: 1, border: "2px solid #ECEAF5", borderRadius: 10, padding: "10px 12px", fontSize: 14 }}>
+                    <option value="Science">Science</option>
+                    <option value="Social Studies">Social Studies</option>
+                    <option value="Math">Math</option>
+                    <option value="ELAR">ELAR</option>
+                  </select>
+                </div>
                 <button type="submit" disabled={creatingClass} className="gc-btn" style={{ width: "100%", background: COLORS.violet, color: COLORS.white, borderRadius: 999, padding: "12px 20px", fontWeight: 700, fontSize: 14.5 }}>
                   {creatingClass ? "Creating..." : "Create Class"}
                 </button>
@@ -345,11 +373,16 @@ export default function TeacherAssignPage() {
                           </div>
                           <div style={{ flex: 1 }}>
                             <div style={{ fontSize: 13.5, fontWeight: 700 }}>{c.title}</div>
-                            <div style={{ fontSize: 11, color: COLORS.textMuted }}>{c.standard} · Group Chat</div>
+                            <div style={{ fontSize: 11, color: COLORS.textMuted }}>{c.standard} · {c.grade}th Grade {c.subject}</div>
                           </div>
                         </button>
                       );
                     })}
+                    {filteredCases.length === 0 && (
+                      <div style={{ fontSize: 13, color: COLORS.textMuted, textAlign: "center", padding: 16 }}>
+                        No {selectedClass ? `${selectedClass.grade}th Grade ${selectedClass.subject}` : ""} cases yet — check back once they're added!
+                      </div>
+                    )}
                   </div>
                 </div>
 
