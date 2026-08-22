@@ -73,20 +73,15 @@ function DisplayContent() {
       <div style={{ position: "relative", width: "100%", maxWidth: 1250, aspectRatio: "1672 / 941" }}>
         <img src="/teacher/join_class_bg.jpg" alt="" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "contain" }} />
 
-        {/* "Join Our Class" -> replaced live with the real class name */}
-        <div style={{ position: "absolute", left: "6%", top: "18.5%", width: "28%", fontFamily: "'Poppins', sans-serif", fontWeight: 700, fontSize: "clamp(16px, 2.6vw, 34px)", color: "#0D1B2A", lineHeight: 1.1 }}>
-          Join {classInfo.name}
-        </div>
-
         {/* Class code, overlaid exactly in the blank left box */}
-        <div style={{ position: "absolute", left: "34.6%", top: "38.4%", width: "19.4%", height: "18.6%", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <div style={{ position: "absolute", left: "37%", top: "44%", width: "21%", height: "26%", display: "flex", alignItems: "center", justifyContent: "center" }}>
           <div style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 700, fontSize: "clamp(18px, 2.6vw, 34px)", color: "#0D1B2A", letterSpacing: 1 }}>
             {classInfo.class_code}
           </div>
         </div>
 
         {/* QR code, overlaid exactly in the blank right box */}
-        <div style={{ position: "absolute", left: "57.2%", top: "38.4%", width: "10%", height: "18.6%", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <div style={{ position: "absolute", left: "60%", top: "44%", width: "11%", height: "26%", display: "flex", alignItems: "center", justifyContent: "center" }}>
           {joinUrl && <QRCodeSVG value={joinUrl} size={110} fgColor="#0D1B2A" style={{ width: "78%", height: "auto" }} />}
         </div>
       </div>
