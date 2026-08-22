@@ -19,7 +19,7 @@ const COLORS = {
 const NAV_ITEMS = [
   { label: "Overview", icon: "/teacher/nav_overview.png", href: "/teacher" },
   { label: "My Classes", icon: "/teacher/nav_my_classes.png", href: "/teacher/assign" },
-  { label: "Assignments", icon: "/teacher/nav_assignments.png", href: "/teacher/assign/new" },
+  { label: "Challenge Library", icon: "/teacher/nav_assignments.png", href: "/teacher/assign/new" },
   { label: "Student Progress", icon: "/teacher/nav_student_progress.png", href: "/teacher/progress" },
   { label: "Submissions", icon: "/teacher/nav_submissions.png", href: "/teacher/grade" },
   { label: "Reports", icon: "/teacher/nav_reports.png", href: "/teacher/reports" },

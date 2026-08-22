@@ -36,11 +36,13 @@ function caseImagePath(standard) {
 function NewAssignmentContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const classId = searchParams.get("classId");
+  const incomingClassId = searchParams.get("classId");
 
   const [loadingAuth, setLoadingAuth] = useState(true);
+  const [teacherId, setTeacherId] = useState(null);
   const [teacherEmail, setTeacherEmail] = useState("");
-  const [targetClass, setTargetClass] = useState(null);
+  const [classes, setClasses] = useState([]);
+  const [assignClassId, setAssignClassId] = useState(incomingClassId || null);
   const [error, setError] = useState(null);
 
   const [cases, setCases] = useState([]);
@@ -58,21 +60,16 @@ function NewAssignmentContent() {
   useEffect(() => {
     supabase.auth.getUser().then(({ data, error: authError }) => {
       if (authError || !data?.user) { router.push("/login"); return; }
+      setTeacherId(data.user.id);
       setTeacherEmail(data.user.email || "");
       setLoadingAuth(false);
     });
   }, [router]);
 
   useEffect(() => {
-    if (!classId) return;
-    supabase.from("classes").select("*").eq("id", classId).single().then(({ data }) => {
-      if (data) {
-        setTargetClass(data);
-        setBrowseGrade(String(data.grade || "5"));
-        setBrowseSubject(data.subject || "Science");
-      }
-    });
-  }, [classId]);
+    if (!teacherId) return;
+    supabase.from("classes").select("*").eq("teacher_id", teacherId).order("created_at").then(({ data }) => setClasses(data || []));
+  }, [teacherId]);
 
   useEffect(() => {
     supabase.from("cases").select("standard, title, grade, subject").then(({ data }) => setCases(data || []));
@@ -83,11 +80,13 @@ function NewAssignmentContent() {
       (c.title.toLowerCase().includes(caseSearch.toLowerCase()) || c.standard.toLowerCase().includes(caseSearch.toLowerCase()))
   );
 
+  const targetClass = classes.find((c) => c.id === assignClassId);
+
   async function handleAssign() {
-    if (!selectedCase || !classId) return;
+    if (!selectedCase || !assignClassId) return;
     setAssigning(true);
     setError(null);
-    const { error: insertError } = await supabase.from("assignments").insert({ class_id: classId, case_standard: selectedCase.standard, due_date: dueDate || null });
+    const { error: insertError } = await supabase.from("assignments").insert({ class_id: assignClassId, case_standard: selectedCase.standard, due_date: dueDate || null });
     setAssigning(false);
     if (insertError) { setError("Couldn't assign the case: " + insertError.message); return; }
     setAssignedSuccess(true);
@@ -105,20 +104,6 @@ function NewAssignmentContent() {
     return <div style={{ minHeight: "100vh", background: COLORS.cream, display: "flex", alignItems: "center", justifyContent: "center", color: COLORS.textMuted, fontFamily: "'Inter', sans-serif" }}>Loading...</div>;
   }
 
-  if (!classId) {
-    return (
-      <div style={{ display: "flex", minHeight: "100vh", background: COLORS.cream, fontFamily: "'Inter', sans-serif" }}>
-        <TeacherSidebar teacherEmail={teacherEmail} />
-        <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", padding: 20, textAlign: "center" }}>
-          <div>
-            <p style={{ color: COLORS.textMuted, marginBottom: 12 }}>No class selected. Start from My Classes instead.</p>
-            <button onClick={() => router.push("/teacher/assign")} style={{ background: COLORS.violet, color: COLORS.white, border: "none", borderRadius: 999, padding: "10px 20px", fontWeight: 700, cursor: "pointer" }}>Go to My Classes</button>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div style={{ display: "flex", minHeight: "100vh", background: COLORS.cream, fontFamily: "'Inter', sans-serif", color: COLORS.textDark }}>
       <style>{`
@@ -134,9 +119,9 @@ function NewAssignmentContent() {
           <button onClick={() => router.push("/teacher/assign")} className="gc-btn" style={{ display: "flex", alignItems: "center", gap: 6, background: "none", color: COLORS.textMuted, fontSize: 13, fontWeight: 600, marginBottom: 10 }}>
             <ChevronLeft size={16} /> Back to My Classes
           </button>
-          <h1 style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 700, fontSize: 24, margin: "0 0 4px 0" }}>New Assignment</h1>
+          <h1 style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 700, fontSize: 24, margin: "0 0 4px 0" }}>Challenge Library</h1>
           <p style={{ color: COLORS.textMuted, fontSize: 14, marginBottom: 20 }}>
-            Assigning to <strong style={{ color: COLORS.textDark }}>{targetClass?.name || "..."}</strong>
+            Browse challenge types and cases, then choose which class to assign to.
           </p>
 
           {error && <div style={{ background: "#FBEAEA", color: "#B23A3A", borderRadius: 10, padding: "10px 14px", fontSize: 13, marginBottom: 16 }}>{error}</div>}
@@ -225,13 +210,39 @@ function NewAssignmentContent() {
 
               {selectedCase && (
                 <div style={{ background: COLORS.white, border: `1px solid ${COLORS.border}`, borderRadius: 16, padding: 16, boxShadow: "0 4px 16px rgba(13,27,42,.06)" }}>
-                  <div style={{ fontWeight: 700, fontSize: 13, marginBottom: 10 }}>4. Due date (optional)</div>
+                  <div style={{ fontWeight: 700, fontSize: 13, marginBottom: 10 }}>4. Which class is this for?</div>
+                  {classes.length > 0 ? (
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 14 }}>
+                      {classes.map((c) => (
+                        <button
+                          key={c.id}
+                          className="gc-btn"
+                          onClick={() => setAssignClassId(c.id)}
+                          style={{
+                            background: assignClassId === c.id ? COLORS.violetSoft : COLORS.cream,
+                            border: assignClassId === c.id ? `2px solid ${COLORS.violet}` : "2px solid transparent",
+                            borderRadius: 10,
+                            padding: "9px 14px",
+                            fontSize: 12.5,
+                            fontWeight: 700,
+                            color: COLORS.textDark,
+                          }}
+                        >
+                          {c.name}
+                        </button>
+                      ))}
+                    </div>
+                  ) : (
+                    <p style={{ fontSize: 12.5, color: COLORS.textMuted, marginBottom: 10 }}>You don't have any classes yet — create one on My Classes first.</p>
+                  )}
+
+                  <div style={{ fontWeight: 700, fontSize: 13, marginBottom: 10 }}>5. Due date (optional)</div>
                   <div style={{ position: "relative", marginBottom: 14 }}>
                     <Calendar size={14} style={{ position: "absolute", left: 10, top: 11, color: COLORS.textMuted }} />
                     <input type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} style={{ width: "100%", border: "2px solid #ECEAF5", borderRadius: 10, padding: "8px 10px 8px 32px", fontSize: 13, boxSizing: "border-box" }} />
                   </div>
-                  <button className="gc-btn" onClick={handleAssign} disabled={assigning} style={{ width: "100%", background: COLORS.violet, color: COLORS.white, borderRadius: 999, padding: "12px 20px", fontWeight: 700, fontSize: 14.5 }}>
-                    {assigning ? "Assigning..." : `Assign to ${targetClass?.name || "Class"} →`}
+                  <button className="gc-btn" onClick={handleAssign} disabled={assigning || !assignClassId} style={{ width: "100%", background: assignClassId ? COLORS.violet : "#D8D4E8", color: COLORS.white, borderRadius: 999, padding: "12px 20px", fontWeight: 700, fontSize: 14.5 }}>
+                    {assigning ? "Assigning..." : assignClassId ? `Assign to ${targetClass?.name} →` : "Choose a class first"}
                   </button>
                 </div>
               )}
