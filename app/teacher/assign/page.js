@@ -211,12 +211,19 @@ export default function TeacherAssignPage() {
           )}
         </div>
         {classes.length > 1 && (
-          <select value={selectedClassId || ""} onChange={(e) => setSelectedClassId(e.target.value)} style={{ borderRadius: 8, padding: "6px 10px", fontSize: 13 }}>
+          <select value={selectedClassId || ""} onChange={(e) => setSelectedClassId(e.target.value)} style={{ borderRadius: 8, padding: "6px 10px", fontSize: 13, marginRight: 10 }}>
             {classes.map((c) => (
               <option key={c.id} value={c.id}>{c.name}</option>
             ))}
           </select>
         )}
+        <button
+          onClick={async () => { await supabase.auth.signOut(); router.push("/login"); }}
+          className="gc-btn"
+          style={{ background: "rgba(255,255,255,.12)", color: COLORS.white, border: "none", borderRadius: 999, padding: "7px 16px", fontWeight: 700, fontSize: 12.5 }}
+        >
+          Log Out
+        </button>
       </div>
 
       <div style={{ padding: "20px 20px 40px", display: "flex", justifyContent: "center" }}>
