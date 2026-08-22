@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useState } from "react";
-import { useRouter } from "next/navigation";
+import React, { useState, useEffect, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Eye, EyeOff, User, Lock, Hash } from "lucide-react";
 import { supabase } from "../../lib/supabaseClient";
 
@@ -13,8 +13,9 @@ const COLORS = {
   textMuted: "#8892A6",
 };
 
-export default function LoginPage() {
+function LoginContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [role, setRole] = useState("student");
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState("");
@@ -24,6 +25,14 @@ export default function LoginPage() {
   const [pin, setPin] = useState("");
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    const codeFromUrl = searchParams.get("classCode");
+    if (codeFromUrl) {
+      setClassCode(codeFromUrl.toUpperCase());
+      setRole("student");
+    }
+  }, [searchParams]);
 
   async function handleTeacherSignIn(e) {
     e.preventDefault();
@@ -117,7 +126,9 @@ export default function LoginPage() {
           </form>
         ) : (
           <form onSubmit={handleStudentSignIn}>
-            <label style={{ fontSize: 13.5, fontWeight: 700, color: COLORS.textDark, display: "block", marginBottom: 6 }}>Class Code</label>
+            <label style={{ fontSize: 13.5, fontWeight: 700, color: COLORS.textDark, display: "block", marginBottom: 6 }}>
+              Class Code {searchParams.get("classCode") && <span style={{ color: "#22C55E", fontWeight: 600 }}>· filled in for you</span>}
+            </label>
             <div style={{ position: "relative", marginBottom: 18 }}>
               <Hash size={17} style={{ position: "absolute", left: 13, top: 13, color: COLORS.textMuted }} />
               <input
@@ -161,5 +172,13 @@ export default function LoginPage() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<div style={{ minHeight: "100vh", background: "#F2F0FA" }} />}>
+      <LoginContent />
+    </Suspense>
   );
 }

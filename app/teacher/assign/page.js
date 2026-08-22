@@ -261,6 +261,9 @@ export default function MyClassesPage() {
               <button onClick={() => copyClassCode(selectedClass.class_code)} className="gc-btn" style={{ background: COLORS.violetSoft, border: "none", borderRadius: 8, padding: "4px 8px", color: COLORS.violet, display: "flex", alignItems: "center", gap: 4 }}>
                 {copiedCode ? <Check size={13} /> : <Copy size={13} />} {copiedCode ? "Copied" : "Copy"}
               </button>
+              <button onClick={() => router.push(`/teacher/assign/display?classId=${selectedClass.id}`)} className="gc-btn" style={{ background: COLORS.violet, border: "none", borderRadius: 8, padding: "4px 10px", color: COLORS.white, fontWeight: 700 }}>
+                Present to Class
+              </button>
             </div>
           )}
 
