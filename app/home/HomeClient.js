@@ -144,7 +144,7 @@ export default function HomeClient({ student, studentClass, assignments, mission
               <p style={{ fontSize: 13, color: COLORS.textMuted, margin: "0 0 20px 0" }}>
                 {activeMission.case_standard}{activeMission.due_date ? ` · Due ${activeMission.due_date}` : ""}
               </p>
-              <button className="gc-btn" style={{ background: COLORS.violet, color: COLORS.white, borderRadius: 999, padding: "12px 22px", fontWeight: 700, fontSize: 15 }}>
+              <button onClick={() => router.push(`/activity/${activeMission.id}`)} className="gc-btn" style={{ background: COLORS.violet, color: COLORS.white, borderRadius: 999, padding: "12px 22px", fontWeight: 700, fontSize: 15 }}>
                 Continue Mission →
               </button>
             </div>
