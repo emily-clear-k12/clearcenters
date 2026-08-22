@@ -3,21 +3,17 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "../../../lib/supabaseClient";
+import TeacherSidebar from "../../../components/TeacherSidebar";
 
 const COLORS = {
-  navy: "#16243F",
-  deepNavy: "#1B2D4D",
-  slate: "#2A3E63",
+  cream: "#F2F0FA",
   violet: "#7B5DFF",
   violetSoft: "#EDE6FF",
   teal: "#00C2C7",
-  cream: "#F2F0FA",
   white: "#FFFFFF",
+  border: "#E1E2EE",
   textDark: "#1F2A44",
-  textMuted: "#8892A6",
-  gold: "#FFC44D",
-  success: "#22C55E",
-  warning: "#FF9F43",
+  textMuted: "#697386",
 };
 
 const GRADE_LABELS = { 0: "Level 0", 1: "Level 1", 2: "Level 2" };
@@ -26,6 +22,7 @@ export default function TeacherGradeListPage() {
   const router = useRouter();
   const [loadingAuth, setLoadingAuth] = useState(true);
   const [loadingSubs, setLoadingSubs] = useState(true);
+  const [teacherEmail, setTeacherEmail] = useState("");
   const [submissions, setSubmissions] = useState([]);
   const [error, setError] = useState(null);
 
@@ -35,6 +32,7 @@ export default function TeacherGradeListPage() {
         router.push("/login");
         return;
       }
+      setTeacherEmail(data.user.email || "");
       setLoadingAuth(false);
     });
   }, [router]);
@@ -99,41 +97,25 @@ export default function TeacherGradeListPage() {
 
   if (loadingAuth || loadingSubs) {
     return (
-      <div style={{ minHeight: "100vh", background: COLORS.navy, display: "flex", alignItems: "center", justifyContent: "center", color: COLORS.white, fontFamily: "'Inter', sans-serif" }}>
+      <div style={{ minHeight: "100vh", background: COLORS.cream, display: "flex", alignItems: "center", justifyContent: "center", color: COLORS.textMuted, fontFamily: "'Inter', sans-serif" }}>
         Loading...
       </div>
     );
   }
 
   return (
-    <div style={{ minHeight: "100vh", background: `linear-gradient(180deg, ${COLORS.navy} 0%, ${COLORS.deepNavy} 100%)`, fontFamily: "'Inter', sans-serif", color: COLORS.textDark }}>
+    <div style={{ display: "flex", minHeight: "100vh", background: COLORS.cream, fontFamily: "'Inter', sans-serif", color: COLORS.textDark }}>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@600;700&family=Inter:wght@400;500;600;700&display=swap');
         .gc-btn { transition: transform 150ms ease; cursor: pointer; border: none; font-family: 'Inter', sans-serif; }
         .gc-btn:hover { transform: translateY(-1px); }
       `}</style>
 
-      <div style={{ background: COLORS.slate, padding: "14px 20px", display: "flex", alignItems: "center", gap: 14 }}>
-        <div style={{ fontFamily: "'Poppins', sans-serif", color: COLORS.white, fontWeight: 700, fontSize: 17, marginRight: "auto" }}>
-          Review Submissions
-        </div>
-        <button onClick={() => router.push("/teacher")} className="gc-btn" style={{ background: "rgba(255,255,255,.12)", color: COLORS.white, border: "none", borderRadius: 999, padding: "7px 16px", fontWeight: 700, fontSize: 12.5, marginRight: 8 }}>
-          Dashboard
-        </button>
-        <button onClick={() => router.push("/teacher/assign")} className="gc-btn" style={{ background: "rgba(255,255,255,.12)", color: COLORS.white, border: "none", borderRadius: 999, padding: "7px 16px", fontWeight: 700, fontSize: 12.5 }}>
-          Assign & Roster
-        </button>
-        <button
-          onClick={async () => { await supabase.auth.signOut(); router.push("/login"); }}
-          className="gc-btn"
-          style={{ background: "rgba(255,255,255,.12)", color: COLORS.white, border: "none", borderRadius: 999, padding: "7px 16px", fontWeight: 700, fontSize: 12.5 }}
-        >
-          Log Out
-        </button>
-      </div>
+      <TeacherSidebar teacherEmail={teacherEmail} />
 
-      <div style={{ padding: "20px 20px 40px", display: "flex", justifyContent: "center" }}>
+      <div style={{ flex: 1, padding: "32px 36px", display: "flex", justifyContent: "center" }}>
         <div style={{ width: "100%", maxWidth: 900 }}>
+          <h1 style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 700, fontSize: 28, margin: "0 0 20px 0" }}>Review Submissions</h1>
           {error && (
             <div style={{ background: "#FBEAEA", color: "#B23A3A", borderRadius: 10, padding: "10px 14px", fontSize: 13, marginBottom: 16 }}>
               {error}

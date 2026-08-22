@@ -3,32 +3,77 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "../../lib/supabaseClient";
+import TeacherSidebar from "../../components/TeacherSidebar";
 
 const COLORS = {
-  navy: "#16243F",
-  deepNavy: "#1B2D4D",
-  slate: "#2A3E63",
+  navy: "#0D1B2A",
+  deepNavy: "#162845",
+  canvas: "#F2F0FA",
+  white: "#FFFFFF",
   violet: "#7B5DFF",
   violetSoft: "#EDE6FF",
   teal: "#00C2C7",
-  tealSoft: "#E6F8F9",
+  aqua: "#4DD6FF",
   gold: "#FFC44D",
-  cream: "#F2F0FA",
-  white: "#FFFFFF",
-  textDark: "#1F2A44",
-  textMuted: "#8892A6",
+  success: "#22C55E",
   warning: "#FF9F43",
+  info: "#3D84F5",
+  border: "#E1E2EE",
+  textDark: "#1F2A44",
+  textMuted: "#697386",
 };
 
-export default function TeacherDashboard() {
+function proficiencyBand(avg) {
+  if (avg >= 1.8) return { label: "Excellent", color: COLORS.success };
+  if (avg >= 1.4) return { label: "Proficient", color: COLORS.info };
+  if (avg >= 1.0) return { label: "Developing", color: COLORS.violet };
+  return { label: "Needs Support", color: "#E4574C" };
+}
+
+function Card({ children, style }) {
+  return (
+    <div style={{ background: COLORS.white, border: `1px solid ${COLORS.border}`, borderRadius: 16, padding: 20, boxShadow: "0 4px 16px rgba(13,27,42,.06)", ...style }}>
+      {children}
+    </div>
+  );
+}
+
+function Donut({ segments, size = 150, centerLabel, centerSub }) {
+  const total = segments.reduce((s, seg) => s + seg.value, 0) || 1;
+  let acc = 0;
+  const stops = segments.map((seg) => {
+    const start = (acc / total) * 360;
+    acc += seg.value;
+    const end = (acc / total) * 360;
+    return `${seg.color} ${start}deg ${end}deg`;
+  });
+  const gradient = stops.length > 0 ? `conic-gradient(${stops.join(", ")})` : `conic-gradient(${COLORS.border} 0deg 360deg)`;
+  return (
+    <div style={{ position: "relative", width: size, height: size, borderRadius: "50%", background: gradient, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+      <div style={{ width: size * 0.66, height: size * 0.66, borderRadius: "50%", background: COLORS.white, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
+        <div style={{ fontSize: size * 0.19, fontWeight: 700, fontFamily: "'Poppins', sans-serif", color: COLORS.textDark }}>{centerLabel}</div>
+        {centerSub && <div style={{ fontSize: 11, color: COLORS.textMuted, textAlign: "center" }}>{centerSub}</div>}
+      </div>
+    </div>
+  );
+}
+
+export default function TeacherOverview() {
   const router = useRouter();
   const [loadingAuth, setLoadingAuth] = useState(true);
   const [loading, setLoading] = useState(true);
-  const [teacherName, setTeacherName] = useState("");
-  const [classCount, setClassCount] = useState(0);
-  const [studentCount, setStudentCount] = useState(0);
-  const [pendingSubmissions, setPendingSubmissions] = useState([]);
+  const [teacherEmail, setTeacherEmail] = useState("");
   const [error, setError] = useState(null);
+
+  const [studentCount, setStudentCount] = useState(0);
+  const [assignmentCount, setAssignmentCount] = useState(0);
+  const [pendingSubmissions, setPendingSubmissions] = useState([]);
+  const [totalCrystalPoints, setTotalCrystalPoints] = useState(0);
+  const [classAverage, setClassAverage] = useState(null);
+  const [bandCounts, setBandCounts] = useState({ Excellent: 0, Proficient: 0, Developing: 0, "Needs Support": 0 });
+  const [studentInsights, setStudentInsights] = useState([]);
+  const [recentAssignments, setRecentAssignments] = useState([]);
+  const [completionDonut, setCompletionDonut] = useState({ completed: 0, inProgress: 0, notStarted: 0 });
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data, error: authError }) => {
@@ -36,47 +81,96 @@ export default function TeacherDashboard() {
         router.push("/login");
         return;
       }
-      setTeacherName(data.user.email?.split("@")[0] || "");
+      setTeacherEmail(data.user.email || "");
       setLoadingAuth(false);
     });
   }, [router]);
 
   const loadDashboard = useCallback(async () => {
     setLoading(true);
+    setError(null);
 
-    const { data: classes } = await supabase.from("classes").select("id");
+    const { data: classes } = await supabase.from("classes").select("id, name");
     const classIds = (classes || []).map((c) => c.id);
-    setClassCount(classIds.length);
+    const classMap = Object.fromEntries((classes || []).map((c) => [c.id, c.name]));
 
+    let students = [];
     if (classIds.length > 0) {
-      const { count: students } = await supabase
-        .from("students")
-        .select("id", { count: "exact", head: true })
-        .in("class_id", classIds);
-      setStudentCount(students || 0);
+      const { data } = await supabase.from("students").select("id, first_name, class_id, crystal_points").in("class_id", classIds);
+      students = data || [];
+    }
+    setStudentCount(students.length);
+    setTotalCrystalPoints(students.reduce((sum, s) => sum + (s.crystal_points || 0), 0));
+
+    let assignments = [];
+    if (classIds.length > 0) {
+      const { data } = await supabase.from("assignments").select("id, case_standard, due_date, class_id, created_at").in("class_id", classIds).order("created_at", { ascending: false });
+      assignments = data || [];
+    }
+    setAssignmentCount(assignments.length);
+
+    const caseStandards = [...new Set(assignments.map((a) => a.case_standard).filter(Boolean))];
+    let caseMap = {};
+    if (caseStandards.length > 0) {
+      const { data: cases } = await supabase.from("cases").select("standard, title").in("standard", caseStandards);
+      caseMap = Object.fromEntries((cases || []).map((c) => [c.standard, c.title]));
     }
 
-    const { data: subs, error: fetchError } = await supabase
-      .from("submissions")
-      .select("id, submitted_at, student_id")
-      .not("submitted_at", "is", null)
-      .is("teacher_grade", null)
-      .order("submitted_at", { ascending: false });
-
-    if (fetchError) {
-      setError(fetchError.message);
-      setLoading(false);
-      return;
+    const assignmentIds = assignments.map((a) => a.id);
+    let allSubmissions = [];
+    if (assignmentIds.length > 0) {
+      const { data } = await supabase.from("submissions").select("id, student_id, assignment_id, submitted_at, teacher_grade, released").in("assignment_id", assignmentIds);
+      allSubmissions = data || [];
     }
 
-    const list = subs || [];
-    if (list.length > 0) {
-      const studentIds = [...new Set(list.map((s) => s.student_id).filter(Boolean))];
-      const { data: students } = await supabase.from("students").select("id, first_name").in("id", studentIds);
-      const studentMap = Object.fromEntries((students || []).map((s) => [s.id, s]));
-      setPendingSubmissions(list.map((s) => ({ ...s, studentName: studentMap[s.student_id]?.first_name || "Unknown" })));
+    const pending = allSubmissions.filter((s) => s.submitted_at && (s.teacher_grade === null || s.teacher_grade === undefined));
+    const studentMap = Object.fromEntries(students.map((s) => [s.id, s.first_name]));
+    setPendingSubmissions(
+      pending.sort((a, b) => new Date(b.submitted_at) - new Date(a.submitted_at)).map((s) => ({ ...s, studentName: studentMap[s.student_id] || "Unknown" }))
+    );
+
+    const released = allSubmissions.filter((s) => s.released && s.teacher_grade !== null && s.teacher_grade !== undefined);
+    if (released.length > 0) {
+      const avg = released.reduce((sum, s) => sum + s.teacher_grade, 0) / released.length;
+      setClassAverage(Math.round((avg / 2) * 100));
     } else {
-      setPendingSubmissions([]);
+      setClassAverage(null);
+    }
+
+    const byStudent = {};
+    released.forEach((s) => {
+      if (!byStudent[s.student_id]) byStudent[s.student_id] = [];
+      byStudent[s.student_id].push(s.teacher_grade);
+    });
+    const bands = { Excellent: 0, Proficient: 0, Developing: 0, "Needs Support": 0 };
+    const insights = [];
+    Object.entries(byStudent).forEach(([studentId, grades]) => {
+      const avg = grades.reduce((a, b) => a + b, 0) / grades.length;
+      const band = proficiencyBand(avg);
+      bands[band.label] += 1;
+      insights.push({ studentId, name: studentMap[studentId] || "Unknown", avgPct: Math.round((avg / 2) * 100), band });
+    });
+    setBandCounts(bands);
+    setStudentInsights(insights.sort((a, b) => a.avgPct - b.avgPct).slice(0, 5));
+
+    const assignmentRows = assignments.slice(0, 5).map((a) => {
+      const subsForA = allSubmissions.filter((s) => s.assignment_id === a.id);
+      const submittedCount = subsForA.filter((s) => s.submitted_at).length;
+      const releasedForA = subsForA.filter((s) => s.released && s.teacher_grade !== null && s.teacher_grade !== undefined);
+      const avgForA = releasedForA.length > 0 ? Math.round((releasedForA.reduce((sum, s) => sum + s.teacher_grade, 0) / releasedForA.length / 2) * 100) : null;
+      const rosterSize = students.filter((st) => st.class_id === a.class_id).length;
+      return { id: a.id, title: caseMap[a.case_standard] || a.case_standard, standard: a.case_standard, className: classMap[a.class_id], dueDate: a.due_date, submittedCount, rosterSize, avgForA };
+    });
+    setRecentAssignments(assignmentRows);
+
+    if (assignments.length > 0) {
+      const mostRecent = assignments[0];
+      const subs = allSubmissions.filter((s) => s.assignment_id === mostRecent.id);
+      const completed = subs.filter((s) => s.submitted_at).length;
+      const inProgress = subs.filter((s) => !s.submitted_at).length;
+      const rosterSize = students.filter((st) => st.class_id === mostRecent.class_id).length;
+      const notStarted = Math.max(0, rosterSize - completed - inProgress);
+      setCompletionDonut({ completed, inProgress, notStarted });
     }
 
     setLoading(false);
@@ -88,110 +182,218 @@ export default function TeacherDashboard() {
 
   if (loadingAuth || loading) {
     return (
-      <div style={{ minHeight: "100vh", background: COLORS.navy, display: "flex", alignItems: "center", justifyContent: "center", color: COLORS.white, fontFamily: "'Inter', sans-serif" }}>
+      <div style={{ minHeight: "100vh", background: COLORS.canvas, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Inter', sans-serif", color: COLORS.textMuted }}>
         Loading...
       </div>
     );
   }
 
   const pendingCount = pendingSubmissions.length;
+  const teacherFirstName = teacherEmail.split("@")[0];
+  const completionTotal = completionDonut.completed + completionDonut.inProgress + completionDonut.notStarted;
+  const completionPct = completionTotal > 0 ? Math.round((completionDonut.completed / completionTotal) * 100) : 0;
+  const bandTotal = Object.values(bandCounts).reduce((a, b) => a + b, 0);
 
   return (
-    <div style={{ minHeight: "100vh", background: `linear-gradient(180deg, ${COLORS.navy} 0%, ${COLORS.deepNavy} 100%)`, fontFamily: "'Inter', sans-serif", color: COLORS.textDark }}>
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@600;700&family=Inter:wght@400;500;600;700&display=swap');
-        .gc-btn { transition: transform 150ms ease; cursor: pointer; border: none; font-family: 'Inter', sans-serif; }
+    <div style={{ display: "flex", minHeight: "100vh", background: COLORS.canvas, fontFamily: "'Inter', sans-serif", color: COLORS.textDark }}>
+      <style>{`@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@600;700&family=Inter:wght@400;500;600;700&display=swap');
+        .gc-btn { transition: transform 150ms ease, box-shadow 150ms ease; cursor: pointer; border: none; font-family: 'Inter', sans-serif; }
         .gc-btn:hover { transform: translateY(-1px); }
-        .gc-pulse { animation: gcPulse 2s ease-in-out infinite; }
-        @keyframes gcPulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(255,159,67,.4); } 50% { box-shadow: 0 0 0 10px rgba(255,159,67,0); } }
       `}</style>
 
-      <div style={{ background: COLORS.slate, padding: "14px 20px", display: "flex", alignItems: "center", gap: 14 }}>
-        <div style={{ fontFamily: "'Poppins', sans-serif", color: COLORS.white, fontWeight: 700, fontSize: 17, marginRight: "auto" }}>
-          ClearCenters HQ · Dashboard
+      <TeacherSidebar teacherEmail={teacherEmail} />
+
+      <main style={{ flex: 1, padding: "32px 36px", maxWidth: 1450, margin: "0 auto" }}>
+        {error && <div style={{ background: "#FBEAEA", color: "#B23A3A", borderRadius: 10, padding: "10px 14px", fontSize: 13, marginBottom: 16 }}>{error}</div>}
+
+        <div style={{ position: "relative", marginBottom: 20, borderRadius: 20, overflow: "hidden", background: COLORS.white, border: `1px solid ${COLORS.border}`, padding: "28px 32px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <div>
+            <h1 style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 700, fontSize: 38, color: COLORS.textDark, margin: "0 0 6px 0" }}>
+              Welcome back{teacherFirstName ? `, ${teacherFirstName}` : ""}!
+            </h1>
+            <p style={{ fontSize: 15, color: COLORS.textMuted, margin: 0 }}>Here's what's happening in your classes today.</p>
+          </div>
+          <img src="/teacher/header_crystal_books_plant.png" alt="" style={{ height: 130, objectFit: "contain", opacity: 0.95 }} />
         </div>
-        <button onClick={() => router.push("/teacher/assign")} className="gc-btn" style={{ background: "rgba(255,255,255,.12)", color: COLORS.white, border: "none", borderRadius: 999, padding: "7px 16px", fontWeight: 700, fontSize: 12.5 }}>
-          Assign & Roster
-        </button>
-        <button onClick={() => router.push("/teacher/grade")} className="gc-btn" style={{ background: "rgba(255,255,255,.12)", color: COLORS.white, border: "none", borderRadius: 999, padding: "7px 16px", fontWeight: 700, fontSize: 12.5 }}>
-          Review Submissions
-        </button>
-        <button
-          onClick={async () => { await supabase.auth.signOut(); router.push("/login"); }}
-          className="gc-btn"
-          style={{ background: "rgba(255,255,255,.12)", color: COLORS.white, border: "none", borderRadius: 999, padding: "7px 16px", fontWeight: 700, fontSize: 12.5 }}
-        >
-          Log Out
-        </button>
-      </div>
 
-      <div style={{ padding: "24px 20px 40px", display: "flex", justifyContent: "center" }}>
-        <div style={{ width: "100%", maxWidth: 960 }}>
-          <h1 style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 700, fontSize: 26, color: COLORS.white, margin: "0 0 20px 0" }}>
-            Welcome back{teacherName ? `, ${teacherName}` : ""}!
-          </h1>
-
-          {error && (
-            <div style={{ background: "#FBEAEA", color: "#B23A3A", borderRadius: 10, padding: "10px 14px", fontSize: 13, marginBottom: 16 }}>{error}</div>
-          )}
-
-          {pendingCount > 0 ? (
-            <button
-              onClick={() => router.push("/teacher/grade")}
-              className="gc-btn gc-pulse"
-              style={{ width: "100%", background: COLORS.white, borderRadius: 18, padding: 22, boxShadow: "0 8px 24px rgba(0,0,0,.15)", marginBottom: 20, display: "flex", alignItems: "center", gap: 18, textAlign: "left", border: `2px solid ${COLORS.warning}` }}
-            >
-              <div style={{ width: 56, height: 56, borderRadius: "50%", background: "#FFF4E5", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 26, flexShrink: 0 }}>📥</div>
-              <div style={{ flex: 1 }}>
-                <div style={{ fontWeight: 700, fontSize: 19, color: COLORS.textDark, fontFamily: "'Poppins', sans-serif" }}>
-                  {pendingCount} submission{pendingCount === 1 ? "" : "s"} waiting to review
-                </div>
-                <div style={{ fontSize: 13.5, color: COLORS.textMuted, marginTop: 2 }}>
-                  {pendingSubmissions.slice(0, 3).map((s) => s.studentName).filter(Boolean).join(", ")}
-                  {pendingCount > 3 ? ` and ${pendingCount - 3} more` : ""}
-                </div>
-              </div>
-              <div style={{ background: COLORS.violet, color: COLORS.white, borderRadius: 999, padding: "10px 20px", fontWeight: 700, fontSize: 14 }}>Review Now →</div>
-            </button>
-          ) : (
-            <div style={{ background: COLORS.white, borderRadius: 18, padding: 22, boxShadow: "0 4px 16px rgba(0,0,0,.1)", marginBottom: 20, display: "flex", alignItems: "center", gap: 16 }}>
-              <div style={{ fontSize: 26 }}>✅</div>
+        <Card style={{ display: "flex", padding: "18px 8px", marginBottom: 20, gap: 8 }}>
+          {[
+            { icon: "/teacher/metric_students.png", value: studentCount, label: "Students" },
+            { icon: "/teacher/metric_class_average.png", value: classAverage !== null ? `${classAverage}%` : "—", label: "Class Average", sub: classAverage === null ? "No released grades yet" : null },
+            { icon: "/teacher/metric_active_assignments.png", value: assignmentCount, label: "Active Assignments" },
+            { icon: "/teacher/metric_needs_review.png", value: pendingCount, label: "Needs Review" },
+            { icon: "/teacher/metric_crystal_points.png", value: totalCrystalPoints, label: "Crystal Points", sub: "Points system coming soon" },
+          ].map((m, i) => (
+            <div key={i} style={{ flex: 1, display: "flex", alignItems: "center", gap: 12, padding: "8px 14px", borderRight: i < 4 ? `1px solid ${COLORS.border}` : "none" }}>
+              <img src={m.icon} alt="" style={{ width: 44, height: 44, objectFit: "contain" }} />
               <div>
-                <div style={{ fontWeight: 700, fontSize: 16, color: COLORS.textDark }}>You're all caught up!</div>
-                <div style={{ fontSize: 13, color: COLORS.textMuted }}>No submissions are waiting for a grade right now.</div>
+                <div style={{ fontSize: 26, fontWeight: 700, fontFamily: "'Poppins', sans-serif", color: COLORS.textDark, lineHeight: 1.1 }}>{m.value}</div>
+                <div style={{ fontSize: 12.5, color: COLORS.textMuted, fontWeight: 600 }}>{m.label}</div>
+                {m.sub && <div style={{ fontSize: 10, color: COLORS.textMuted, fontStyle: "italic" }}>{m.sub}</div>}
               </div>
             </div>
-          )}
+          ))}
+        </Card>
 
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 14, marginBottom: 20 }}>
-            <div style={{ background: COLORS.white, borderRadius: 16, padding: 18, textAlign: "center", boxShadow: "0 2px 10px rgba(0,0,0,.08)" }}>
-              <div style={{ fontSize: 26, fontWeight: 700, fontFamily: "'Poppins', sans-serif", color: COLORS.violet }}>{classCount}</div>
-              <div style={{ fontSize: 12, color: COLORS.textMuted, fontWeight: 600 }}>Classes</div>
-            </div>
-            <div style={{ background: COLORS.white, borderRadius: 16, padding: 18, textAlign: "center", boxShadow: "0 2px 10px rgba(0,0,0,.08)" }}>
-              <div style={{ fontSize: 26, fontWeight: 700, fontFamily: "'Poppins', sans-serif", color: COLORS.teal }}>{studentCount}</div>
-              <div style={{ fontSize: 12, color: COLORS.textMuted, fontWeight: 600 }}>Students</div>
-            </div>
-            <div style={{ background: COLORS.white, borderRadius: 16, padding: 18, textAlign: "center", boxShadow: "0 2px 10px rgba(0,0,0,.08)" }}>
-              <div style={{ fontSize: 26, fontWeight: 700, fontFamily: "'Poppins', sans-serif", color: COLORS.gold }}>{pendingCount}</div>
-              <div style={{ fontSize: 12, color: COLORS.textMuted, fontWeight: 600 }}>Needs Review</div>
-            </div>
-          </div>
+        <div style={{ display: "grid", gridTemplateColumns: "1.1fr 1.1fr 1fr", gap: 16, marginBottom: 16 }}>
+          <Card>
+            <div style={{ fontWeight: 700, fontSize: 16, marginBottom: 14 }}>Class Performance Overview</div>
+            {bandTotal > 0 ? (
+              <div style={{ display: "flex", gap: 16, alignItems: "center" }}>
+                <Donut
+                  segments={[
+                    { value: bandCounts.Excellent, color: COLORS.success },
+                    { value: bandCounts.Proficient, color: COLORS.info },
+                    { value: bandCounts.Developing, color: COLORS.violet },
+                    { value: bandCounts["Needs Support"], color: "#E4574C" },
+                  ]}
+                  centerLabel={`${classAverage}%`}
+                  centerSub="Average"
+                />
+                <div style={{ flex: 1, display: "grid", gap: 6 }}>
+                  {[
+                    ["Excellent (90–100%)", bandCounts.Excellent, COLORS.success],
+                    ["Proficient (70–89%)", bandCounts.Proficient, COLORS.info],
+                    ["Developing (50–69%)", bandCounts.Developing, COLORS.violet],
+                    ["Needs Support (<50%)", bandCounts["Needs Support"], "#E4574C"],
+                  ].map(([label, count, color]) => (
+                    <div key={label} style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 12 }}>
+                      <div style={{ width: 9, height: 9, borderRadius: "50%", background: color, flexShrink: 0 }} />
+                      <div style={{ flex: 1, color: COLORS.textDark }}>{label}</div>
+                      <div style={{ fontWeight: 700 }}>{count}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <div style={{ fontSize: 13, color: COLORS.textMuted, padding: "20px 0", textAlign: "center" }}>No released grades yet — this fills in once you release some.</div>
+            )}
+          </Card>
 
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
-            <button onClick={() => router.push("/teacher/assign")} className="gc-btn" style={{ background: COLORS.white, borderRadius: 16, padding: 20, textAlign: "left", boxShadow: "0 2px 10px rgba(0,0,0,.08)" }}>
-              <div style={{ fontSize: 22, marginBottom: 8 }}>📋</div>
-              <div style={{ fontWeight: 700, fontSize: 15, color: COLORS.textDark, marginBottom: 3 }}>Assign & Roster</div>
-              <div style={{ fontSize: 12.5, color: COLORS.textMuted }}>Manage classes, assign cases, add students</div>
-            </button>
-            <button onClick={() => router.push("/teacher/grade")} className="gc-btn" style={{ background: COLORS.white, borderRadius: 16, padding: 20, textAlign: "left", boxShadow: "0 2px 10px rgba(0,0,0,.08)" }}>
-              <div style={{ fontSize: 22, marginBottom: 8 }}>📥</div>
-              <div style={{ fontWeight: 700, fontSize: 15, color: COLORS.textDark, marginBottom: 3 }}>Review Submissions</div>
-              <div style={{ fontSize: 12.5, color: COLORS.textMuted }}>Grade real student work and release grades</div>
-            </button>
+          <Card>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
+              <div style={{ fontWeight: 700, fontSize: 16 }}>Student Progress Insights</div>
+              <button onClick={() => router.push("/teacher/progress")} className="gc-btn" style={{ background: "none", color: COLORS.violet, fontSize: 12.5, fontWeight: 700 }}>View All</button>
+            </div>
+            {studentInsights.length > 0 ? (
+              <div style={{ display: "grid", gap: 10 }}>
+                {studentInsights.map((s) => (
+                  <div key={s.studentId} style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                    <div style={{ width: 30, height: 30, borderRadius: "50%", background: COLORS.violetSoft, display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, color: COLORS.violet, fontSize: 12, flexShrink: 0 }}>{s.name[0]}</div>
+                    <div style={{ fontSize: 13, fontWeight: 600, width: 90, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{s.name}</div>
+                    <div style={{ flex: 1, height: 6, background: COLORS.border, borderRadius: 999, overflow: "hidden" }}>
+                      <div style={{ height: "100%", width: `${s.avgPct}%`, background: s.band.color, borderRadius: 999 }} />
+                    </div>
+                    <div style={{ fontSize: 12, fontWeight: 700, width: 34, textAlign: "right" }}>{s.avgPct}%</div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div style={{ fontSize: 13, color: COLORS.textMuted, padding: "20px 0", textAlign: "center" }}>No released grades yet.</div>
+            )}
+          </Card>
+
+          <Card>
+            <div style={{ fontWeight: 700, fontSize: 16, marginBottom: 14 }}>Assignment Completion</div>
+            {completionTotal > 0 ? (
+              <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 12 }}>
+                <Donut
+                  segments={[
+                    { value: completionDonut.completed, color: COLORS.violet },
+                    { value: completionDonut.inProgress, color: COLORS.info },
+                    { value: completionDonut.notStarted, color: COLORS.warning },
+                  ]}
+                  centerLabel={`${completionPct}%`}
+                  centerSub="Completed"
+                />
+                <div style={{ fontSize: 11.5, color: COLORS.textMuted }}>{completionDonut.completed} / {completionTotal} students · most recent assignment</div>
+              </div>
+            ) : (
+              <div style={{ fontSize: 13, color: COLORS.textMuted, padding: "20px 0", textAlign: "center" }}>Assign a case to see completion here.</div>
+            )}
+          </Card>
+        </div>
+
+        <div style={{ display: "grid", gridTemplateColumns: "1.3fr 1.3fr 1fr", gap: 16 }}>
+          <Card>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
+              <div style={{ fontWeight: 700, fontSize: 16 }}>Active Assignments</div>
+              <button onClick={() => router.push("/teacher/assign")} className="gc-btn" style={{ background: "none", color: COLORS.violet, fontSize: 12.5, fontWeight: 700 }}>View All</button>
+            </div>
+            <div style={{ display: "grid", gap: 4 }}>
+              {recentAssignments.length > 0 ? recentAssignments.map((a) => (
+                <div key={a.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 4px", borderBottom: `1px solid ${COLORS.border}` }}>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontSize: 13, fontWeight: 600 }}>{a.title}</div>
+                    <div style={{ fontSize: 11, color: COLORS.textMuted }}>{a.className}{a.dueDate ? ` · Due ${a.dueDate}` : ""}</div>
+                  </div>
+                  <div style={{ fontSize: 12, color: COLORS.textMuted }}>{a.submittedCount} / {a.rosterSize}</div>
+                  <div style={{ fontSize: 12, fontWeight: 700, width: 40, textAlign: "right" }}>{a.avgForA !== null ? `${a.avgForA}%` : "—"}</div>
+                </div>
+              )) : <div style={{ fontSize: 13, color: COLORS.textMuted, padding: "12px 0" }}>No assignments yet.</div>}
+            </div>
+          </Card>
+
+          <Card>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
+              <div style={{ fontWeight: 700, fontSize: 16 }}>Submission Review Queue</div>
+              <button onClick={() => router.push("/teacher/grade")} className="gc-btn" style={{ background: "none", color: COLORS.violet, fontSize: 12.5, fontWeight: 700 }}>View All</button>
+            </div>
+            <div style={{ display: "grid", gap: 4 }}>
+              {pendingSubmissions.slice(0, 4).length > 0 ? pendingSubmissions.slice(0, 4).map((s) => (
+                <button key={s.id} onClick={() => router.push(`/teacher/grade/${s.id}`)} className="gc-btn" style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 4px", borderBottom: `1px solid ${COLORS.border}`, background: "none", textAlign: "left" }}>
+                  <div style={{ width: 30, height: 30, borderRadius: "50%", background: COLORS.violetSoft, display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, color: COLORS.violet, fontSize: 12, flexShrink: 0 }}>{s.studentName[0]}</div>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontSize: 13, fontWeight: 600 }}>{s.studentName}</div>
+                    <div style={{ fontSize: 11, color: COLORS.textMuted }}>Submitted {new Date(s.submitted_at).toLocaleString()}</div>
+                  </div>
+                  <span style={{ fontSize: 10.5, fontWeight: 700, padding: "3px 9px", borderRadius: 999, background: "#FFF4E5", color: "#B8860B" }}>Needs Review</span>
+                </button>
+              )) : <div style={{ fontSize: 13, color: COLORS.textMuted, padding: "12px 0" }}>Nothing waiting — you're all caught up!</div>}
+              {pendingCount > 0 && (
+                <button onClick={() => router.push("/teacher/grade")} className="gc-btn" style={{ marginTop: 8, background: COLORS.violet, color: COLORS.white, borderRadius: 999, padding: "11px 20px", fontWeight: 700, fontSize: 13.5 }}>
+                  Review All Submissions ({pendingCount})
+                </button>
+              )}
+            </div>
+          </Card>
+
+          <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+            <Card style={{ background: COLORS.violetSoft, border: "none", position: "relative", overflow: "visible" }}>
+              <div style={{ fontSize: 11.5, fontWeight: 700, color: COLORS.violet, marginBottom: 6 }}>✨ HQ INSIGHT</div>
+              <p style={{ fontSize: 12.5, color: COLORS.textDark, lineHeight: 1.5, margin: "0 0 14px 0", paddingRight: 50 }}>
+                {pendingCount > 0
+                  ? `${pendingCount} submission${pendingCount === 1 ? "" : "s"} ${pendingCount === 1 ? "is" : "are"} waiting for your review.`
+                  : "You're all caught up! No submissions are waiting right now."}
+              </p>
+              {pendingCount > 0 && (
+                <button onClick={() => router.push("/teacher/grade")} className="gc-btn" style={{ background: COLORS.violet, color: COLORS.white, borderRadius: 999, padding: "9px 16px", fontWeight: 700, fontSize: 12.5 }}>
+                  Review Now
+                </button>
+              )}
+              <img src="/teacher/hq_guide_robot.png" alt="" style={{ position: "absolute", right: 4, bottom: 0, width: 64, height: "auto" }} />
+            </Card>
+
+            <Card>
+              <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 10 }}>Quick Actions</div>
+              <div style={{ display: "grid", gap: 2 }}>
+                <button onClick={() => router.push("/teacher/assign")} className="gc-btn" style={{ display: "flex", alignItems: "center", gap: 10, background: "none", padding: "9px 4px", fontSize: 13, fontWeight: 600, color: COLORS.textDark, textAlign: "left" }}>
+                  <img src="/teacher/action_create_assignment.png" alt="" style={{ width: 20, height: 20 }} /> Create New Assignment <span style={{ marginLeft: "auto", color: COLORS.textMuted }}>›</span>
+                </button>
+                {[
+                  { icon: "/teacher/action_send_announcement.png", label: "Send Class Announcement" },
+                  { icon: "/teacher/action_generate_report.png", label: "Generate Class Report" },
+                  { icon: "/teacher/action_award_crystal_points.png", label: "Award Crystal Points" },
+                ].map((a) => (
+                  <div key={a.label} style={{ display: "flex", alignItems: "center", gap: 10, padding: "9px 4px", fontSize: 13, fontWeight: 600, color: COLORS.textMuted, opacity: 0.6 }}>
+                    <img src={a.icon} alt="" style={{ width: 20, height: 20, filter: "grayscale(1)" }} /> {a.label} <span style={{ marginLeft: "auto", fontSize: 10, fontWeight: 700, background: COLORS.border, padding: "2px 8px", borderRadius: 999 }}>Soon</span>
+                  </div>
+                ))}
+              </div>
+            </Card>
           </div>
         </div>
-      </div>
+      </main>
     </div>
   );
 }

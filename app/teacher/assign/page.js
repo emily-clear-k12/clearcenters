@@ -4,11 +4,12 @@ import React, { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { Search, Plus, Calendar, Copy, Check } from "lucide-react";
 import { supabase } from "../../../lib/supabaseClient";
+import TeacherSidebar from "../../../components/TeacherSidebar";
 
 const COLORS = {
-  navy: "#16243F",
-  deepNavy: "#1B2D4D",
-  slate: "#2A3E63",
+  navy: "#0D1B2A",
+  deepNavy: "#162845",
+  slate: "#697386",
   violet: "#7B5DFF",
   violetSoft: "#EDE6FF",
   teal: "#00C2C7",
@@ -16,8 +17,9 @@ const COLORS = {
   gold: "#FFC44D",
   cream: "#F2F0FA",
   white: "#FFFFFF",
+  border: "#E1E2EE",
   textDark: "#1F2A44",
-  textMuted: "#8892A6",
+  textMuted: "#697386",
 };
 
 function generateClassCode() {
@@ -42,6 +44,7 @@ export default function TeacherAssignPage() {
   const router = useRouter();
   const [loadingAuth, setLoadingAuth] = useState(true);
   const [teacherId, setTeacherId] = useState(null);
+  const [teacherEmail, setTeacherEmail] = useState("");
 
   const [classes, setClasses] = useState([]);
   const [loadingClasses, setLoadingClasses] = useState(true);
@@ -73,6 +76,7 @@ export default function TeacherAssignPage() {
         return;
       }
       setTeacherId(data.user.id);
+      setTeacherEmail(data.user.email || "");
       setLoadingAuth(false);
     });
   }, [router]);
@@ -209,41 +213,25 @@ export default function TeacherAssignPage() {
 
   if (loadingAuth || loadingClasses) {
     return (
-      <div style={{ minHeight: "100vh", background: COLORS.navy, display: "flex", alignItems: "center", justifyContent: "center", color: COLORS.white, fontFamily: "'Inter', sans-serif" }}>
+      <div style={{ minHeight: "100vh", background: COLORS.cream, display: "flex", alignItems: "center", justifyContent: "center", color: COLORS.textMuted, fontFamily: "'Inter', sans-serif" }}>
         Loading...
       </div>
     );
   }
 
   return (
-    <div style={{ minHeight: "100vh", background: `linear-gradient(180deg, ${COLORS.navy} 0%, ${COLORS.deepNavy} 100%)`, fontFamily: "'Inter', sans-serif", color: COLORS.textDark }}>
+    <div style={{ display: "flex", minHeight: "100vh", background: COLORS.cream, fontFamily: "'Inter', sans-serif", color: COLORS.textDark }}>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@600;700&family=Inter:wght@400;500;600;700&display=swap');
         .gc-btn { transition: transform 150ms ease; cursor: pointer; border: none; font-family: 'Inter', sans-serif; }
         .gc-btn:hover { transform: translateY(-1px); }
       `}</style>
 
-      <div style={{ background: COLORS.slate, padding: "14px 20px", display: "flex", alignItems: "center", gap: 14 }}>
-        <div style={{ fontFamily: "'Poppins', sans-serif", color: COLORS.white, fontWeight: 700, fontSize: 17, marginRight: "auto" }}>
-          ClearCenters HQ · Teacher
-        </div>
-        <button onClick={() => router.push("/teacher")} className="gc-btn" style={{ background: "rgba(255,255,255,.12)", color: COLORS.white, border: "none", borderRadius: 999, padding: "7px 16px", fontWeight: 700, fontSize: 12.5, marginRight: 8 }}>
-          Dashboard
-        </button>
-        <button onClick={() => router.push("/teacher/grade")} className="gc-btn" style={{ background: "rgba(255,255,255,.12)", color: COLORS.white, border: "none", borderRadius: 999, padding: "7px 16px", fontWeight: 700, fontSize: 12.5, marginRight: 8 }}>
-          Review Submissions
-        </button>
-        <button
-          onClick={async () => { await supabase.auth.signOut(); router.push("/login"); }}
-          className="gc-btn"
-          style={{ background: "rgba(255,255,255,.12)", color: COLORS.white, border: "none", borderRadius: 999, padding: "7px 16px", fontWeight: 700, fontSize: 12.5 }}
-        >
-          Log Out
-        </button>
-      </div>
+      <TeacherSidebar teacherEmail={teacherEmail} />
 
-      <div style={{ padding: "20px 20px 40px", display: "flex", justifyContent: "center" }}>
+      <div style={{ flex: 1, padding: "32px 36px", display: "flex", justifyContent: "center" }}>
         <div style={{ width: "100%", maxWidth: 1080 }}>
+          <h1 style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 700, fontSize: 28, margin: "0 0 20px 0", color: COLORS.textDark }}>My Classes</h1>
           {error && (
             <div style={{ background: "#FBEAEA", color: "#B23A3A", borderRadius: 10, padding: "10px 14px", fontSize: 13, marginBottom: 16 }}>
               {error}
@@ -251,7 +239,7 @@ export default function TeacherAssignPage() {
           )}
 
           <div style={{ marginBottom: 20 }}>
-            <p style={{ fontSize: 12, fontWeight: 700, color: "rgba(255,255,255,.7)", letterSpacing: 0.5, marginBottom: 10 }}>MY CLASSES</p>
+            <p style={{ fontSize: 12, fontWeight: 700, color: COLORS.textMuted, letterSpacing: 0.5, marginBottom: 10 }}>MY CLASSES</p>
             <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
               {classes.map((c) => {
                 const isSelected = c.id === selectedClassId;
@@ -261,16 +249,17 @@ export default function TeacherAssignPage() {
                     className="gc-btn"
                     onClick={() => setSelectedClassId(c.id)}
                     style={{
-                      background: isSelected ? COLORS.white : "rgba(255,255,255,.08)",
-                      border: isSelected ? `2px solid ${COLORS.violet}` : "2px solid transparent",
+                      background: COLORS.white,
+                      border: isSelected ? `2px solid ${COLORS.violet}` : `1px solid ${COLORS.border}`,
+                      boxShadow: isSelected ? "0 4px 16px rgba(123,93,255,.15)" : "0 2px 8px rgba(13,27,42,.05)",
                       borderRadius: 14,
                       padding: "12px 18px",
                       textAlign: "left",
                       minWidth: 180,
                     }}
                   >
-                    <div style={{ fontWeight: 700, fontSize: 14, color: isSelected ? COLORS.textDark : COLORS.white, marginBottom: 3 }}>{c.name}</div>
-                    <div style={{ fontSize: 11.5, color: isSelected ? COLORS.textMuted : "rgba(255,255,255,.6)" }}>
+                    <div style={{ fontWeight: 700, fontSize: 14, color: COLORS.textDark, marginBottom: 3 }}>{c.name}</div>
+                    <div style={{ fontSize: 11.5, color: COLORS.textMuted }}>
                       {c.grade ? `${c.grade === 3 ? "3rd" : c.grade + "th"} Grade ${c.subject} · ` : ""}{classCounts[c.id] || 0} students · {c.class_code}
                     </div>
                   </button>
@@ -279,7 +268,7 @@ export default function TeacherAssignPage() {
               <button
                 className="gc-btn"
                 onClick={() => setShowNewClassForm(!showNewClassForm)}
-                style={{ background: "rgba(255,255,255,.08)", border: "2px dashed rgba(255,255,255,.3)", borderRadius: 14, padding: "12px 18px", color: COLORS.white, fontWeight: 700, fontSize: 13, minWidth: 140, display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}
+                style={{ background: COLORS.white, border: `2px dashed ${COLORS.border}`, borderRadius: 14, padding: "12px 18px", color: COLORS.violet, fontWeight: 700, fontSize: 13, minWidth: 140, display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}
               >
                 <Plus size={15} /> New Class
               </button>
@@ -292,14 +281,14 @@ export default function TeacherAssignPage() {
                   value={newClassName}
                   onChange={(e) => setNewClassName(e.target.value)}
                   placeholder="e.g. 5th Grade Science, Period 3"
-                  style={{ flex: 1, minWidth: 180, border: "2px solid #ECEAF5", borderRadius: 10, padding: "10px 12px", fontSize: 14, boxSizing: "border-box" }}
+                  style={{ flex: 1, minWidth: 180, border: `2px solid ${COLORS.border}`, borderRadius: 10, padding: "10px 12px", fontSize: 14, boxSizing: "border-box" }}
                 />
-                <select value={newClassGrade} onChange={(e) => setNewClassGrade(e.target.value)} style={{ border: "2px solid #ECEAF5", borderRadius: 10, padding: "10px 12px", fontSize: 14 }}>
+                <select value={newClassGrade} onChange={(e) => setNewClassGrade(e.target.value)} style={{ border: `2px solid ${COLORS.border}`, borderRadius: 10, padding: "10px 12px", fontSize: 14 }}>
                   <option value="3">3rd Grade</option>
                   <option value="4">4th Grade</option>
                   <option value="5">5th Grade</option>
                 </select>
-                <select value={newClassSubject} onChange={(e) => setNewClassSubject(e.target.value)} style={{ border: "2px solid #ECEAF5", borderRadius: 10, padding: "10px 12px", fontSize: 14 }}>
+                <select value={newClassSubject} onChange={(e) => setNewClassSubject(e.target.value)} style={{ border: `2px solid ${COLORS.border}`, borderRadius: 10, padding: "10px 12px", fontSize: 14 }}>
                   <option value="Science">Science</option>
                   <option value="Social Studies">Social Studies</option>
                   <option value="Math">Math</option>
@@ -313,9 +302,9 @@ export default function TeacherAssignPage() {
           </div>
 
           {selectedClass && (
-            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16, color: "rgba(255,255,255,.75)", fontSize: 13 }}>
-              Class Code for <strong style={{ color: COLORS.white }}>{selectedClass.name}</strong>: <strong style={{ color: COLORS.white }}>{selectedClass.class_code}</strong>
-              <button onClick={() => copyClassCode(selectedClass.class_code)} className="gc-btn" style={{ background: "rgba(255,255,255,.1)", border: "none", borderRadius: 8, padding: "4px 8px", color: "rgba(255,255,255,.9)", display: "flex", alignItems: "center", gap: 4 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16, color: COLORS.textMuted, fontSize: 13 }}>
+              Class Code for <strong style={{ color: COLORS.textDark }}>{selectedClass.name}</strong>: <strong style={{ color: COLORS.violet }}>{selectedClass.class_code}</strong>
+              <button onClick={() => copyClassCode(selectedClass.class_code)} className="gc-btn" style={{ background: COLORS.violetSoft, border: "none", borderRadius: 8, padding: "4px 8px", color: COLORS.violet, display: "flex", alignItems: "center", gap: 4 }}>
                 {copiedCode ? <Check size={13} /> : <Copy size={13} />} {copiedCode ? "Copied" : "Copy"}
               </button>
             </div>

@@ -5,20 +5,20 @@ import { useRouter, useParams } from "next/navigation";
 import { ChevronLeft, Sparkles } from "lucide-react";
 import { supabase } from "../../../../lib/supabaseClient";
 import { getPublicCase } from "../../../../lib/cases/index.public";
+import TeacherSidebar from "../../../../components/TeacherSidebar";
 
 const COLORS = {
-  navy: "#16243F",
-  deepNavy: "#1B2D4D",
-  slate: "#2A3E63",
+  navy: "#0D1B2A",
+  cream: "#F2F0FA",
   violet: "#7B5DFF",
   violetSoft: "#EDE6FF",
   teal: "#00C2C7",
   tealSoft: "#E6F8F9",
   gold: "#FFC44D",
-  cream: "#F2F0FA",
+  border: "#E1E2EE",
   white: "#FFFFFF",
   textDark: "#1F2A44",
-  textMuted: "#8892A6",
+  textMuted: "#697386",
   success: "#22C55E",
   warning: "#FF9F43",
 };
@@ -71,6 +71,7 @@ export default function TeacherGradeDetailPage() {
 
   const [loadingAuth, setLoadingAuth] = useState(true);
   const [loading, setLoading] = useState(true);
+  const [teacherEmail, setTeacherEmail] = useState("");
   const [submission, setSubmission] = useState(null);
   const [error, setError] = useState(null);
 
@@ -85,6 +86,7 @@ export default function TeacherGradeDetailPage() {
         router.push("/login");
         return;
       }
+      setTeacherEmail(data.user.email || "");
       setLoadingAuth(false);
     });
   }, [router]);
@@ -150,7 +152,7 @@ export default function TeacherGradeDetailPage() {
 
   if (loadingAuth || loading) {
     return (
-      <div style={{ minHeight: "100vh", background: COLORS.navy, display: "flex", alignItems: "center", justifyContent: "center", color: COLORS.white, fontFamily: "'Inter', sans-serif" }}>
+      <div style={{ minHeight: "100vh", background: COLORS.cream, display: "flex", alignItems: "center", justifyContent: "center", color: COLORS.textMuted, fontFamily: "'Inter', sans-serif" }}>
         Loading...
       </div>
     );
@@ -158,7 +160,7 @@ export default function TeacherGradeDetailPage() {
 
   if (error && !submission) {
     return (
-      <div style={{ minHeight: "100vh", background: COLORS.navy, display: "flex", alignItems: "center", justifyContent: "center", color: COLORS.white, fontFamily: "'Inter', sans-serif", padding: 20, textAlign: "center" }}>
+      <div style={{ minHeight: "100vh", background: COLORS.cream, display: "flex", alignItems: "center", justifyContent: "center", color: COLORS.textDark, fontFamily: "'Inter', sans-serif", padding: 20, textAlign: "center" }}>
         <div>
           <p>{error}</p>
           <button onClick={() => router.push("/teacher/grade")} style={{ background: COLORS.violet, color: COLORS.white, border: "none", borderRadius: 999, padding: "10px 20px", fontWeight: 700, cursor: "pointer" }}>Back to Submissions</button>
@@ -184,7 +186,7 @@ export default function TeacherGradeDetailPage() {
       : NEXT_STEPS_GENERIC[finalGrade] || NEXT_STEPS_GENERIC[0];
 
   return (
-    <div style={{ minHeight: "100vh", background: `linear-gradient(180deg, ${COLORS.navy} 0%, ${COLORS.deepNavy} 100%)`, fontFamily: "'Inter', sans-serif", color: COLORS.textDark }}>
+    <div style={{ display: "flex", minHeight: "100vh", background: COLORS.cream, fontFamily: "'Inter', sans-serif", color: COLORS.textDark }}>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@600;700&family=Inter:wght@400;500;600;700&display=swap');
         .gc-btn { transition: transform 150ms ease; cursor: pointer; border: none; font-family: 'Inter', sans-serif; }
@@ -193,24 +195,27 @@ export default function TeacherGradeDetailPage() {
         @keyframes gcFadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
       `}</style>
 
-      <div style={{ background: COLORS.slate, padding: "12px 20px", display: "flex", alignItems: "center", gap: 14 }}>
-        <button onClick={() => router.push("/teacher/grade")} style={{ background: "none", border: "none", color: COLORS.white, display: "flex", alignItems: "center", padding: 6, borderRadius: 8, cursor: "pointer" }}>
-          <ChevronLeft size={20} />
-        </button>
-        <div style={{ width: 40, height: 40, borderRadius: "50%", background: COLORS.violetSoft, display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, color: COLORS.violet, fontSize: 15, flexShrink: 0 }}>
-          {studentName[0]}
-        </div>
-        <div style={{ marginRight: "auto" }}>
-          <div style={{ fontFamily: "'Poppins', sans-serif", color: COLORS.white, fontWeight: 700, fontSize: 15 }}>{studentName}</div>
-          <div style={{ color: "rgba(255,255,255,.6)", fontSize: 12 }}>{submission.className}</div>
-        </div>
-        <div style={{ textAlign: "right" }}>
-          <div style={{ color: COLORS.white, fontWeight: 700, fontSize: 13.5 }}>{submission.caseTitle || submission.caseStandard}</div>
-          <div style={{ color: "rgba(255,255,255,.55)", fontSize: 11.5 }}>Submitted {new Date(submission.submitted_at).toLocaleString()}</div>
-        </div>
-      </div>
+      <TeacherSidebar teacherEmail={teacherEmail} />
 
-      <div style={{ padding: "20px 20px 40px", display: "flex", justifyContent: "center" }}>
+      <div style={{ flex: 1, padding: "24px 32px 40px" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 14, background: COLORS.white, border: `1px solid ${COLORS.border}`, borderRadius: 16, padding: "14px 20px", marginBottom: 20, boxShadow: "0 4px 16px rgba(13,27,42,.06)" }}>
+          <button onClick={() => router.push("/teacher/grade")} style={{ background: "none", border: "none", color: COLORS.textMuted, display: "flex", alignItems: "center", padding: 6, borderRadius: 8, cursor: "pointer" }}>
+            <ChevronLeft size={20} />
+          </button>
+          <div style={{ width: 40, height: 40, borderRadius: "50%", background: COLORS.violetSoft, display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, color: COLORS.violet, fontSize: 15, flexShrink: 0 }}>
+            {studentName[0]}
+          </div>
+          <div style={{ marginRight: "auto" }}>
+            <div style={{ fontFamily: "'Poppins', sans-serif", color: COLORS.textDark, fontWeight: 700, fontSize: 15 }}>{studentName}</div>
+            <div style={{ color: COLORS.textMuted, fontSize: 12 }}>{submission.className}</div>
+          </div>
+          <div style={{ textAlign: "right" }}>
+            <div style={{ color: COLORS.textDark, fontWeight: 700, fontSize: 13.5 }}>{submission.caseTitle || submission.caseStandard}</div>
+            <div style={{ color: COLORS.textMuted, fontSize: 11.5 }}>Submitted {new Date(submission.submitted_at).toLocaleString()}</div>
+          </div>
+        </div>
+
+        <div style={{ display: "flex", justifyContent: "center" }}>
         <div style={{ width: "100%", maxWidth: 1000, display: "grid", gridTemplateColumns: "1.3fr 1fr", gap: 18 }}>
           <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
             <div style={{ background: COLORS.white, borderRadius: 16, padding: 16, boxShadow: "0 4px 16px rgba(0,0,0,.12)" }}>
@@ -315,6 +320,7 @@ export default function TeacherGradeDetailPage() {
               )}
             </div>
           </div>
+        </div>
         </div>
       </div>
 
