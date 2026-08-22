@@ -33,11 +33,17 @@ export default async function HomePage() {
     .eq("class_id", student.class_id)
     .order("created_at", { ascending: false });
 
+  const { count: missionsCompleted } = await supabaseAdmin
+    .from("submissions")
+    .select("id", { count: "exact", head: true })
+    .eq("student_id", studentId);
+
   return (
     <HomeClient
       student={student}
       studentClass={studentClass}
       assignments={assignments || []}
+      missionsCompleted={missionsCompleted || 0}
     />
   );
 }

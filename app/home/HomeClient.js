@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 
 const COLORS = {
@@ -39,9 +39,32 @@ function caseImagePath(standard) {
   return `/cases/${standard.replace(".", "-")}.jpg`;
 }
 
-export default function HomeClient({ student, studentClass, assignments }) {
+export default function HomeClient({ student, studentClass, assignments, missionsCompleted }) {
   const router = useRouter();
   const [samOpen, setSamOpen] = useState(false);
+
+  useEffect(() => {
+    function fitStatNumbers() {
+      document.querySelectorAll(".stat-card-img").forEach((card) => {
+        const num = card.querySelector(".num");
+        if (!num) return;
+        const circleDiameter = card.offsetWidth * 0.251;
+        const maxWidth = circleDiameter * 0.72;
+        const maxHeight = circleDiameter * 0.6;
+        let fontSize = circleDiameter * 0.5;
+        num.style.fontSize = fontSize + "px";
+        let guard = 0;
+        while ((num.scrollWidth > maxWidth || num.scrollHeight > maxHeight) && fontSize > 8 && guard < 60) {
+          fontSize -= 1;
+          num.style.fontSize = fontSize + "px";
+          guard++;
+        }
+      });
+    }
+    fitStatNumbers();
+    window.addEventListener("resize", fitStatNumbers);
+    return () => window.removeEventListener("resize", fitStatNumbers);
+  }, [student.crystal_points, student.streak_days, missionsCompleted]);
 
   async function handleLogout() {
     await fetch("/api/student-logout", { method: "POST" });
@@ -154,13 +177,21 @@ export default function HomeClient({ student, studentClass, assignments }) {
           <div style={{ background: COLORS.white, borderRadius: 16, boxShadow: "0 4px 16px rgba(0,0,0,.08)", padding: 20 }}>
             <p style={{ fontSize: 13, fontWeight: 700, color: COLORS.textMuted, textTransform: "uppercase", margin: "0 0 12px 0" }}>Your Progress</p>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-              <div style={{ background: COLORS.cream, borderRadius: 12, padding: 14, textAlign: "center" }}>
-                <div style={{ fontSize: 22, fontWeight: 700, fontFamily: "'Poppins', sans-serif" }}>{student.crystal_points}</div>
-                <div style={{ fontSize: 11, color: COLORS.textMuted, fontWeight: 600 }}>Crystal Points</div>
+              <div className="stat-card-img" style={{ position: "relative", paddingTop: "56.28%", borderRadius: 14, overflow: "hidden", boxShadow: "0 2px 8px rgba(0,0,0,.08)" }}>
+                <img src="/icons/stat_missions_completed.jpg" alt="Missions Completed" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
+                <div className="num" style={{ position: "absolute", left: "49.9%", top: "35.8%", transform: "translate(-50%, -50%)", fontFamily: "'Poppins', sans-serif", fontWeight: 700, color: COLORS.textDark }}>{missionsCompleted}</div>
               </div>
-              <div style={{ background: COLORS.cream, borderRadius: 12, padding: 14, textAlign: "center" }}>
-                <div style={{ fontSize: 22, fontWeight: 700, fontFamily: "'Poppins', sans-serif" }}>{student.streak_days}</div>
-                <div style={{ fontSize: 11, color: COLORS.textMuted, fontWeight: 600 }}>Streak Days</div>
+              <div className="stat-card-img" style={{ position: "relative", paddingTop: "56.28%", borderRadius: 14, overflow: "hidden", boxShadow: "0 2px 8px rgba(0,0,0,.08)" }}>
+                <img src="/icons/stat_hints_used.jpg" alt="Hints Used" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
+                <div className="num" style={{ position: "absolute", left: "49.9%", top: "35.8%", transform: "translate(-50%, -50%)", fontFamily: "'Poppins', sans-serif", fontWeight: 700, color: COLORS.textDark }}>0</div>
+              </div>
+              <div className="stat-card-img" style={{ position: "relative", paddingTop: "56.28%", borderRadius: 14, overflow: "hidden", boxShadow: "0 2px 8px rgba(0,0,0,.08)" }}>
+                <img src="/icons/stat_streak_days.jpg" alt="Streak Days" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
+                <div className="num" style={{ position: "absolute", left: "49.9%", top: "35.8%", transform: "translate(-50%, -50%)", fontFamily: "'Poppins', sans-serif", fontWeight: 700, color: COLORS.textDark }}>{student.streak_days}</div>
+              </div>
+              <div className="stat-card-img" style={{ position: "relative", paddingTop: "56.28%", borderRadius: 14, overflow: "hidden", boxShadow: "0 2px 8px rgba(0,0,0,.08)" }}>
+                <img src="/icons/stat_crystal_points.jpg" alt="Crystal Points" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
+                <div className="num" style={{ position: "absolute", left: "49.9%", top: "35.8%", transform: "translate(-50%, -50%)", fontFamily: "'Poppins', sans-serif", fontWeight: 700, color: COLORS.textDark }}>{student.crystal_points}</div>
               </div>
             </div>
           </div>
