@@ -91,3 +91,29 @@ insert into cases (standard, title) values
   ('5.12C', 'The Parking Lot Town Hall'),
   ('5.13A', 'The Desert Survival Reality Show'),
   ('5.13B', 'The Pet Talent Scout');
+
+-- RLS policies for submissions — added after initial schema setup.
+-- Students never touch this table with the anon key directly; their
+-- reads/writes go through a server API route using the admin key
+-- (same pattern as student login). These policies cover the teacher side.
+alter table submissions enable row level security;
+
+create policy "Teachers can view submissions for their classes"
+on submissions for select
+using (
+  assignment_id in (
+    select a.id from assignments a
+    join classes c on c.id = a.class_id
+    where c.teacher_id = auth.uid()
+  )
+);
+
+create policy "Teachers can grade submissions for their classes"
+on submissions for update
+using (
+  assignment_id in (
+    select a.id from assignments a
+    join classes c on c.id = a.class_id
+    where c.teacher_id = auth.uid()
+  )
+);
