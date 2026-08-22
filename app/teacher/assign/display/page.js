@@ -60,55 +60,34 @@ function DisplayContent() {
   }
 
   return (
-    <div style={{ minHeight: "100vh", background: `linear-gradient(160deg, ${COLORS.violetSoft} 0%, ${COLORS.cream} 60%)`, fontFamily: "'Inter', sans-serif", position: "relative", overflow: "hidden" }}>
+    <div style={{ minHeight: "100vh", background: "#1F2A44", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Inter', sans-serif", position: "relative" }}>
       <style>{`@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@600;700&family=Inter:wght@400;500;600;700&display=swap');`}</style>
 
       <button
         onClick={() => router.push("/teacher/assign")}
-        style={{ position: "absolute", top: 24, left: 24, display: "flex", alignItems: "center", gap: 6, background: COLORS.white, border: "none", borderRadius: 999, padding: "10px 18px", fontWeight: 700, fontSize: 13, color: COLORS.textDark, cursor: "pointer", boxShadow: "0 4px 16px rgba(13,27,42,.1)" }}
+        style={{ position: "absolute", top: 24, left: 24, zIndex: 10, display: "flex", alignItems: "center", gap: 6, background: COLORS.white, border: "none", borderRadius: 999, padding: "10px 18px", fontWeight: 700, fontSize: 13, color: COLORS.textDark, cursor: "pointer", boxShadow: "0 4px 16px rgba(13,27,42,.1)" }}
       >
         <ChevronLeft size={16} /> Exit
       </button>
 
-      <img src="/teacher/crystal_pedestal.png" alt="" style={{ position: "absolute", right: 40, top: 40, width: 140, opacity: 0.9 }} />
-      <img src="/teacher/hq_crystal_cluster.png" alt="" style={{ position: "absolute", left: -20, bottom: -20, width: 160, opacity: 0.6 }} />
+      <div style={{ position: "relative", width: "100%", maxWidth: 1250, aspectRatio: "1672 / 941" }}>
+        <img src="/teacher/join_class_bg.jpg" alt="" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "contain" }} />
 
-      <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: 40, position: "relative" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
-          <img src="/teacher/brand_crystal_mark.png" alt="" style={{ height: 34 }} />
-          <div style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 700, fontSize: 22, color: COLORS.textDark }}>ClearCenters</div>
-        </div>
-
-        <h1 style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 700, fontSize: "clamp(32px, 5vw, 52px)", color: COLORS.textDark, margin: "0 0 6px 0", textAlign: "center" }}>
+        {/* "Join Our Class" -> replaced live with the real class name */}
+        <div style={{ position: "absolute", left: "6%", top: "18.5%", width: "28%", fontFamily: "'Poppins', sans-serif", fontWeight: 700, fontSize: "clamp(16px, 2.6vw, 34px)", color: "#0D1B2A", lineHeight: 1.1 }}>
           Join {classInfo.name}
-        </h1>
-        <p style={{ fontSize: 17, color: COLORS.textMuted, margin: "0 0 40px 0", textAlign: "center" }}>
-          Scan the code or enter it at sign in — then just your name and PIN.
-        </p>
+        </div>
 
-        <div style={{ background: COLORS.white, borderRadius: 28, boxShadow: "0 24px 60px rgba(13,27,42,.15)", padding: "48px 56px", display: "flex", alignItems: "center", gap: 56 }}>
-          <div style={{ textAlign: "center" }}>
-            <div style={{ fontSize: 13, fontWeight: 700, color: COLORS.violet, letterSpacing: 2, marginBottom: 14 }}>CLASS CODE</div>
-            <div style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 700, fontSize: "clamp(48px, 7vw, 76px)", color: COLORS.textDark, letterSpacing: 4 }}>
-              {classInfo.class_code}
-            </div>
-          </div>
-
-          <div style={{ width: 1, alignSelf: "stretch", background: "#ECEAF5" }} />
-
-          <div style={{ textAlign: "center" }}>
-            <div style={{ fontSize: 13, fontWeight: 700, color: COLORS.teal, letterSpacing: 2, marginBottom: 14 }}>QR CODE</div>
-            {joinUrl && (
-              <div style={{ padding: 12, background: COLORS.white, borderRadius: 16, border: `2px solid ${COLORS.violetSoft}` }}>
-                <QRCodeSVG value={joinUrl} size={160} fgColor={COLORS.textDark} />
-              </div>
-            )}
+        {/* Class code, overlaid exactly in the blank left box */}
+        <div style={{ position: "absolute", left: "34.6%", top: "38.4%", width: "19.4%", height: "18.6%", display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <div style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 700, fontSize: "clamp(18px, 2.6vw, 34px)", color: "#0D1B2A", letterSpacing: 1 }}>
+            {classInfo.class_code}
           </div>
         </div>
 
-        <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 32, background: COLORS.white, borderRadius: 999, padding: "10px 22px", boxShadow: "0 4px 16px rgba(13,27,42,.08)" }}>
-          <span style={{ color: COLORS.teal, fontWeight: 700 }}>✓</span>
-          <span style={{ fontSize: 14, color: COLORS.textDark, fontWeight: 600 }}>You belong here. Ask questions. Explore ideas. Do your best.</span>
+        {/* QR code, overlaid exactly in the blank right box */}
+        <div style={{ position: "absolute", left: "57.2%", top: "38.4%", width: "10%", height: "18.6%", display: "flex", alignItems: "center", justifyContent: "center" }}>
+          {joinUrl && <QRCodeSVG value={joinUrl} size={110} fgColor="#0D1B2A" style={{ width: "78%", height: "auto" }} />}
         </div>
       </div>
     </div>
