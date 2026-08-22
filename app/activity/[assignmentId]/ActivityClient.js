@@ -108,6 +108,18 @@ function SourceTracker({ cast, sources, onChange, readOnly, horizontal }) {
   );
 }
 
+// Cold-open message data comes from two different authoring sources: the
+// hand-built reference case (5.12B) uses { charId: "name" } for character
+// lines and { who: "system" } only for the system line, while the 18
+// generator-drafted cases use { who: "name" } for every line, including
+// character lines. Resolve either shape to the real cast key so one
+// format never crashes on the other's data.
+function coldOpenSpeakerId(m) {
+  if (m.charId) return m.charId;
+  if (m.who && m.who !== "system") return m.who;
+  return null;
+}
+
 function TranscriptModal({ open, onClose, coldOpenMessages, cast, liveMessages }) {
   if (!open) return null;
   return (
@@ -124,9 +136,9 @@ function TranscriptModal({ open, onClose, coldOpenMessages, cast, liveMessages }
               <div key={"co" + i} style={{ alignSelf: "center", background: "#DDE6EA", color: "#3C4C55", fontSize: 12.5, padding: "7px 12px", borderRadius: 10, maxWidth: "92%", textAlign: "center" }}>{m.text}</div>
             ) : (
               <div key={"co" + i} style={{ display: "flex", gap: 8, alignItems: "flex-end", maxWidth: "88%" }}>
-                <CharAvatar cast={cast} charId={m.charId} size={28} />
+                <CharAvatar cast={cast} charId={coldOpenSpeakerId(m)} size={28} />
                 <div>
-                  <div style={{ fontSize: 10.5, fontWeight: 700, color: cast[m.charId].color }}>{cast[m.charId].name}</div>
+                  <div style={{ fontSize: 10.5, fontWeight: 700, color: (cast[coldOpenSpeakerId(m)] || {}).color }}>{cast[coldOpenSpeakerId(m)] ? cast[coldOpenSpeakerId(m)].name : "Character"}</div>
                   <div style={{ background: COLORS.white, borderRadius: 12, padding: "7px 11px", fontSize: 13.5, lineHeight: 1.35, color: COLORS.textDark }}>{m.text}</div>
                 </div>
               </div>
@@ -399,7 +411,7 @@ export default function ActivityClient(props) {
         {coldPhase === "intro" && (
           <div style={{ textAlign: "center", maxWidth: 520 }}>
             <div style={{ fontSize: 56, marginBottom: 10 }}>📱</div>
-            <h1 style={{ fontFamily: "'Poppins', sans-serif", fontSize: 32, marginBottom: 10, fontWeight: 700 }}>The Farm Crew</h1>
+            <h1 style={{ fontFamily: "'Poppins', sans-serif", fontSize: 32, marginBottom: 10, fontWeight: 700 }}>The Cast</h1>
             {Object.values(cast).map(function (c) { return (<div key={c.name} style={{ color: "rgba(255,255,255,.75)", fontSize: 15, margin: "3px 0" }}>{c.emoji} {c.name}</div>); })}
             <div style={{ marginTop: 24, display: "inline-block", background: COLORS.violet, fontWeight: 700, padding: "11px 24px", borderRadius: 999, fontSize: 15 }}>Click to begin</div>
           </div>
@@ -408,7 +420,7 @@ export default function ActivityClient(props) {
         {coldPhase === "messages" && (
           <div style={{ width: "min(680px, 92vw)", height: "min(72vh, 620px)", background: COLORS.cream, borderRadius: 22, overflow: "hidden", display: "flex", flexDirection: "column", boxShadow: "0 24px 60px rgba(0,0,0,.45)" }}>
             <div style={{ background: COLORS.violet, color: COLORS.white, padding: "12px 18px", textAlign: "left" }}>
-              <div style={{ fontWeight: 700, fontSize: 17 }}>The Farm Crew</div>
+              <div style={{ fontWeight: 700, fontSize: 17 }}>The Cast</div>
               <div style={{ fontSize: 12, opacity: 0.85 }}>{Object.values(cast).map(function (c) { return c.name; }).join(", ")}</div>
             </div>
             <div ref={scrollRef} style={{ flex: 1, overflowY: "auto", padding: "14px 16px", display: "flex", flexDirection: "column", gap: 10, textAlign: "left" }}>
@@ -417,9 +429,9 @@ export default function ActivityClient(props) {
                   <div key={i} style={{ alignSelf: "center", background: "#DDE6EA", color: "#3C4C55", fontSize: 13, padding: "8px 14px", borderRadius: 12, maxWidth: "92%", textAlign: "center" }}>{m.text}</div>
                 ) : (
                   <div key={i} style={{ display: "flex", gap: 8, alignItems: "flex-end", maxWidth: "86%" }}>
-                    <CharAvatar cast={cast} charId={m.charId} size={32} />
+                    <CharAvatar cast={cast} charId={coldOpenSpeakerId(m)} size={32} />
                     <div>
-                      <div style={{ fontSize: 11, fontWeight: 700, color: cast[m.charId].color }}>{cast[m.charId].name}</div>
+                      <div style={{ fontSize: 11, fontWeight: 700, color: (cast[coldOpenSpeakerId(m)] || {}).color }}>{cast[coldOpenSpeakerId(m)] ? cast[coldOpenSpeakerId(m)].name : "Character"}</div>
                       <div style={{ background: COLORS.white, borderRadius: 14, padding: "8px 12px", fontSize: 14.5, lineHeight: 1.35, color: COLORS.textDark }}>{m.text}</div>
                     </div>
                   </div>
