@@ -24,8 +24,22 @@ const CONFIDENCE_LEVELS = [
   { id: "strong", emoji: "😄", label: "Really strong" },
 ];
 
-const STARTER_CHIPS = ["Ask Daisy what she's noticed", "Ask Frankie about his crop data", "Ask Dr. Wren to explain the food web"];
 const REQUIRED_CHECKS = 3;
+
+// Suggested chat-starter chips, built from whichever case is actually
+// loaded instead of a hardcoded Bee Mystery-only list. The first cast
+// member is always the one holding the trap belief (Buzz, Ricky, etc.) —
+// skip them and point students at the others, same pattern the original
+// Bee Mystery chips used (Daisy/Frankie/Wren, never Buzz).
+function buildStarterChips(cast) {
+  const templates = [
+    function (first) { return "Ask " + first + " what they've noticed"; },
+    function (first) { return "Ask " + first + " about the evidence"; },
+    function (first) { return "Ask " + first + " to explain their thinking"; },
+  ];
+  const others = Object.values(cast).slice(1, 1 + templates.length);
+  return others.map(function (c, i) { return templates[i](c.name.split(" ")[0]); });
+}
 
 function CharAvatar({ cast, charId, size = 36 }) {
   const c = cast[charId] || Object.values(cast)[0];
@@ -44,7 +58,7 @@ function StepTracker({ currentIdx }) {
         <React.Fragment key={label}>
           <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 3, width: 46 }}>
             <div style={{ width: 22, height: 22, borderRadius: "50%", fontSize: 10, fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center", border: i <= currentIdx ? "none" : "2px solid rgba(255,255,255,.3)", background: i < currentIdx ? COLORS.teal : i === currentIdx ? COLORS.violet : "transparent", color: i <= currentIdx ? COLORS.white : "rgba(255,255,255,.55)" }}>
-              {i < currentIdx ? "check" : i + 1}
+              {i < currentIdx ? "✓" : i + 1}
             </div>
             <div style={{ fontSize: 9.5, fontWeight: 600, color: i <= currentIdx ? COLORS.white : "rgba(255,255,255,.5)" }}>{label}</div>
           </div>
@@ -207,6 +221,7 @@ export default function ActivityClient(props) {
   const caseStandard = props.caseStandard;
   const publicCase = props.publicCase;
   const cast = props.cast;
+  const starterChips = buildStarterChips(cast);
   const organizerFields = props.organizerFields;
   const existingSubmission = props.existingSubmission;
   const alreadySubmitted = props.alreadySubmitted;
@@ -542,7 +557,7 @@ export default function ActivityClient(props) {
               </div>
               <div style={{ borderTop: "1px solid #ECEAF5", padding: 12, background: COLORS.white }}>
                 <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 8 }}>
-                  {STARTER_CHIPS.map(function (chip, i) { return (<button key={i} className="gc-btn" onClick={function () { setLiveDraft(chip); }} style={{ background: COLORS.violetSoft, color: COLORS.violet, borderRadius: 999, padding: "5px 12px", fontWeight: 600, fontSize: 11.5 }}>{chip}</button>); })}
+                  {starterChips.map(function (chip, i) { return (<button key={i} className="gc-btn" onClick={function () { setLiveDraft(chip); }} style={{ background: COLORS.violetSoft, color: COLORS.violet, borderRadius: 999, padding: "5px 12px", fontWeight: 600, fontSize: 11.5 }}>{chip}</button>); })}
                 </div>
                 <div style={{ display: "flex", gap: 8 }}>
                   <textarea value={liveDraft} onChange={function (e) { setLiveDraft(e.target.value); }} onKeyDown={function (e) { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendLiveMessage(); } }} placeholder="Type your message..." style={{ flex: 1, resize: "none", border: "2px solid #ECEAF5", borderRadius: 12, padding: "10px 12px", fontFamily: "inherit", fontSize: 14, height: 44, boxSizing: "border-box" }} />
@@ -650,7 +665,7 @@ export default function ActivityClient(props) {
                   {publicCase.selfCheckQuestions.map(function (item, i) {
                     return (
                       <button key={i} className="gc-btn" onClick={function () { toggleChecklistItem(i); }} style={{ display: "flex", alignItems: "flex-start", gap: 8, textAlign: "left", background: checklist[i] ? "#E6F8F9" : COLORS.cream, border: checklist[i] ? "1.5px solid " + COLORS.teal : "1.5px solid transparent", borderRadius: 10, padding: "9px 11px" }}>
-                        <div style={{ width: 18, height: 18, borderRadius: 5, flexShrink: 0, marginTop: 1, border: "2px solid " + (checklist[i] ? COLORS.teal : "#D8D4E8"), background: checklist[i] ? COLORS.teal : COLORS.white, display: "flex", alignItems: "center", justifyContent: "center", color: COLORS.white, fontSize: 12, fontWeight: 700 }}>{checklist[i] ? "check" : ""}</div>
+                        <div style={{ width: 18, height: 18, borderRadius: 5, flexShrink: 0, marginTop: 1, border: "2px solid " + (checklist[i] ? COLORS.teal : "#D8D4E8"), background: checklist[i] ? COLORS.teal : COLORS.white, display: "flex", alignItems: "center", justifyContent: "center", color: COLORS.white, fontSize: 12, fontWeight: 700 }}>{checklist[i] ? "✓" : ""}</div>
                         <div style={{ fontSize: 12.5, color: COLORS.textDark, lineHeight: 1.4 }}>{item}</div>
                       </button>
                     );

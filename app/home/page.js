@@ -30,10 +30,14 @@ export default async function HomePage() {
 
   const assignments = await getVisibleAssignmentsForStudent(studentId, student.class_id);
 
+  // Only count real, final submissions — not draft rows created by
+  // autosave while a student is still mid-activity (see the submitted_at
+  // fix in /api/submission/save).
   const { count: missionsCompleted } = await supabaseAdmin
     .from("submissions")
     .select("id", { count: "exact", head: true })
-    .eq("student_id", studentId);
+    .eq("student_id", studentId)
+    .not("submitted_at", "is", null);
 
   return (
     <HomeClient
