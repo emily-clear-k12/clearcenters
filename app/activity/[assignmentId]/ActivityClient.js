@@ -349,10 +349,12 @@ export default function ActivityClient(props) {
     setShowSubmitConfirm(true);
   }
 
+  const [submitError, setSubmitError] = useState(null);
+
   function confirmSubmit() {
     setShowSubmitConfirm(false);
     setSubmitting(true);
-    setAppPhase("share");
+    setSubmitError(null);
     fetch("/api/submission/submit", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -367,7 +369,14 @@ export default function ActivityClient(props) {
         selfConfidence: null,
       }),
     })
-      .catch(function () {})
+      .then(function (res) { return res.json().then(function (data) { return { ok: res.ok, data: data }; }); })
+      .then(function (result) {
+        if (!result.ok) throw new Error(result.data.error || "Submit failed");
+        setAppPhase("share");
+      })
+      .catch(function (err) {
+        setSubmitError("Something went wrong submitting your answer. Please try again — nothing has been lost.");
+      })
       .finally(function () {
         setSubmitting(false);
       });
@@ -686,6 +695,16 @@ export default function ActivityClient(props) {
       )}
 
       <SubmitConfirmModal open={showSubmitConfirm} onCancel={function () { setShowSubmitConfirm(false); }} onConfirm={confirmSubmit} />
+      {submitError && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(13,20,35,.65)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 100, padding: 20 }}>
+          <div style={{ background: COLORS.white, borderRadius: 18, width: "min(420px, 100%)", padding: 24, boxShadow: "0 24px 60px rgba(0,0,0,.4)", textAlign: "center" }}>
+            <div style={{ fontSize: 36, marginBottom: 10 }}>⚠️</div>
+            <div style={{ fontWeight: 700, fontSize: 16, color: COLORS.textDark, marginBottom: 8 }}>Couldn't submit</div>
+            <div style={{ fontSize: 13.5, color: COLORS.textMuted, lineHeight: 1.5, marginBottom: 18 }}>{submitError}</div>
+            <button onClick={function () { setSubmitError(null); setShowSubmitConfirm(true); }} style={{ background: COLORS.violet, color: COLORS.white, border: "none", borderRadius: 999, padding: "11px 22px", fontWeight: 700, fontSize: 14, cursor: "pointer" }}>Try again</button>
+          </div>
+        </div>
+      )}
       <CelebrationModal open={selfConfidence !== null && appPhase === "share"} onGoHome={function () { router.push("/home"); }} />
       <TranscriptModal open={transcriptOpen} onClose={function () { setTranscriptOpen(false); }} coldOpenMessages={publicCase.coldOpenMessages} cast={cast} liveMessages={appPhase !== "organizer" ? liveMessages : null} />
 

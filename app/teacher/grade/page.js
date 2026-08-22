@@ -41,21 +41,55 @@ export default function TeacherGradeListPage() {
 
   const loadSubmissions = useCallback(async () => {
     setLoadingSubs(true);
-    const { data, error: fetchError } = await supabase
+    setError(null);
+
+    const { data: subs, error: subsError } = await supabase
       .from("submissions")
-      .select(
-        `id, submitted_at, released, ai_score, teacher_grade, self_confidence,
-         students ( first_name ),
-         assignments ( case_standard, due_date, classes ( name ), cases ( title ) )`
-      )
+      .select("id, submitted_at, released, ai_score, teacher_grade, self_confidence, student_id, assignment_id")
       .not("submitted_at", "is", null)
       .order("submitted_at", { ascending: false });
 
-    if (fetchError) {
-      setError(fetchError.message);
-    } else {
-      setSubmissions(data || []);
+    if (subsError) {
+      setError(subsError.message);
+      setLoadingSubs(false);
+      return;
     }
+
+    const list = subs || [];
+    if (list.length === 0) {
+      setSubmissions([]);
+      setLoadingSubs(false);
+      return;
+    }
+
+    const studentIds = [...new Set(list.map((s) => s.student_id).filter(Boolean))];
+    const assignmentIds = [...new Set(list.map((s) => s.assignment_id).filter(Boolean))];
+
+    const { data: students } = await supabase.from("students").select("id, first_name").in("id", studentIds);
+    const { data: assignments } = await supabase.from("assignments").select("id, case_standard, due_date, class_id").in("id", assignmentIds);
+
+    const classIds = [...new Set((assignments || []).map((a) => a.class_id).filter(Boolean))];
+    const caseStandards = [...new Set((assignments || []).map((a) => a.case_standard).filter(Boolean))];
+
+    const { data: classes } = await supabase.from("classes").select("id, name").in("id", classIds);
+    const { data: cases } = await supabase.from("cases").select("standard, title").in("standard", caseStandards);
+
+    const studentMap = Object.fromEntries((students || []).map((s) => [s.id, s]));
+    const classMap = Object.fromEntries((classes || []).map((c) => [c.id, c]));
+    const caseMap = Object.fromEntries((cases || []).map((c) => [c.standard, c]));
+    const assignmentMap = Object.fromEntries((assignments || []).map((a) => [a.id, a]));
+
+    const merged = list.map((s) => {
+      const assignment = assignmentMap[s.assignment_id];
+      return {
+        ...s,
+        studentName: studentMap[s.student_id]?.first_name || "Unknown student",
+        caseTitle: assignment ? (caseMap[assignment.case_standard]?.title || assignment.case_standard) : "Unknown case",
+        className: assignment ? classMap[assignment.class_id]?.name : "Unknown class",
+      };
+    });
+
+    setSubmissions(merged);
     setLoadingSubs(false);
   }, []);
 
@@ -83,6 +117,9 @@ export default function TeacherGradeListPage() {
         <div style={{ fontFamily: "'Poppins', sans-serif", color: COLORS.white, fontWeight: 700, fontSize: 17, marginRight: "auto" }}>
           Review Submissions
         </div>
+        <button onClick={() => router.push("/teacher")} className="gc-btn" style={{ background: "rgba(255,255,255,.12)", color: COLORS.white, border: "none", borderRadius: 999, padding: "7px 16px", fontWeight: 700, fontSize: 12.5, marginRight: 8 }}>
+          Dashboard
+        </button>
         <button onClick={() => router.push("/teacher/assign")} className="gc-btn" style={{ background: "rgba(255,255,255,.12)", color: COLORS.white, border: "none", borderRadius: 999, padding: "7px 16px", fontWeight: 700, fontSize: 12.5 }}>
           Assign & Roster
         </button>
@@ -119,12 +156,12 @@ export default function TeacherGradeListPage() {
                     style={{ background: COLORS.white, borderRadius: 14, padding: 16, boxShadow: "0 2px 10px rgba(0,0,0,.08)", display: "flex", alignItems: "center", gap: 16, textAlign: "left" }}
                   >
                     <div style={{ width: 40, height: 40, borderRadius: "50%", background: COLORS.violetSoft, display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, color: COLORS.violet, fontSize: 15, flexShrink: 0 }}>
-                      {s.students?.first_name?.[0] || "?"}
+                      {s.studentName?.[0] || "?"}
                     </div>
                     <div style={{ flex: 1 }}>
-                      <div style={{ fontWeight: 700, fontSize: 14.5 }}>{s.students?.first_name || "Unknown student"}</div>
+                      <div style={{ fontWeight: 700, fontSize: 14.5 }}>{s.studentName}</div>
                       <div style={{ fontSize: 12.5, color: COLORS.textMuted }}>
-                        {s.assignments?.cases?.title || s.assignments?.case_standard} · {s.assignments?.classes?.name}
+                        {s.caseTitle} · {s.className}
                       </div>
                     </div>
                     <div style={{ textAlign: "right" }}>

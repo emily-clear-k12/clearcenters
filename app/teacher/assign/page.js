@@ -227,6 +227,9 @@ export default function TeacherAssignPage() {
         <div style={{ fontFamily: "'Poppins', sans-serif", color: COLORS.white, fontWeight: 700, fontSize: 17, marginRight: "auto" }}>
           ClearCenters HQ · Teacher
         </div>
+        <button onClick={() => router.push("/teacher")} className="gc-btn" style={{ background: "rgba(255,255,255,.12)", color: COLORS.white, border: "none", borderRadius: 999, padding: "7px 16px", fontWeight: 700, fontSize: 12.5, marginRight: 8 }}>
+          Dashboard
+        </button>
         <button onClick={() => router.push("/teacher/grade")} className="gc-btn" style={{ background: "rgba(255,255,255,.12)", color: COLORS.white, border: "none", borderRadius: 999, padding: "7px 16px", fontWeight: 700, fontSize: 12.5, marginRight: 8 }}>
           Review Submissions
         </button>

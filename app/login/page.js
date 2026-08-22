@@ -35,7 +35,7 @@ export default function LoginPage() {
       setError(signInError.message);
       return;
     }
-    router.push("/teacher/assign");
+    router.push("/teacher");
   }
 
   async function handleStudentSignIn(e) {

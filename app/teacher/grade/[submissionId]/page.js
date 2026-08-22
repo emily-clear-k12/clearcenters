@@ -93,9 +93,7 @@ export default function TeacherGradeDetailPage() {
     setLoading(true);
     const { data, error: fetchError } = await supabase
       .from("submissions")
-      .select(
-        `*, students ( first_name ), assignments ( case_standard, due_date, classes ( name ), cases ( title ) )`
-      )
+      .select("*")
       .eq("id", submissionId)
       .single();
 
@@ -105,9 +103,29 @@ export default function TeacherGradeDetailPage() {
       return;
     }
 
-    setSubmission(data);
-    setFinalGrade(data.teacher_grade !== null && data.teacher_grade !== undefined ? data.teacher_grade : (data.ai_score !== null ? data.ai_score : 0));
-    setFeedback(data.teacher_feedback || "");
+    const { data: student } = await supabase.from("students").select("first_name").eq("id", data.student_id).single();
+    const { data: assignment } = await supabase.from("assignments").select("case_standard, due_date, class_id").eq("id", data.assignment_id).single();
+
+    let className = null;
+    let caseTitle = null;
+    if (assignment) {
+      const { data: cls } = await supabase.from("classes").select("name").eq("id", assignment.class_id).single();
+      const { data: caseRow } = await supabase.from("cases").select("title").eq("standard", assignment.case_standard).single();
+      className = cls?.name;
+      caseTitle = caseRow?.title;
+    }
+
+    const merged = {
+      ...data,
+      studentName: student?.first_name || "Unknown student",
+      className,
+      caseTitle,
+      caseStandard: assignment?.case_standard,
+    };
+
+    setSubmission(merged);
+    setFinalGrade(merged.teacher_grade !== null && merged.teacher_grade !== undefined ? merged.teacher_grade : (merged.ai_score !== null ? merged.ai_score : 0));
+    setFeedback(merged.teacher_feedback || "");
     setLoading(false);
   }, [submissionId]);
 
@@ -149,8 +167,8 @@ export default function TeacherGradeDetailPage() {
     );
   }
 
-  const caseEntry = getPublicCase(submission.assignments?.case_standard);
-  const studentName = submission.students?.first_name || "This student";
+  const caseEntry = getPublicCase(submission.caseStandard);
+  const studentName = submission.studentName || "This student";
   const confMeta = submission.self_confidence ? CONFIDENCE_META[submission.self_confidence] : null;
   const checklist = submission.checklist || [];
   const checkedCount = checklist.filter(Boolean).length;
@@ -184,10 +202,10 @@ export default function TeacherGradeDetailPage() {
         </div>
         <div style={{ marginRight: "auto" }}>
           <div style={{ fontFamily: "'Poppins', sans-serif", color: COLORS.white, fontWeight: 700, fontSize: 15 }}>{studentName}</div>
-          <div style={{ color: "rgba(255,255,255,.6)", fontSize: 12 }}>{submission.assignments?.classes?.name}</div>
+          <div style={{ color: "rgba(255,255,255,.6)", fontSize: 12 }}>{submission.className}</div>
         </div>
         <div style={{ textAlign: "right" }}>
-          <div style={{ color: COLORS.white, fontWeight: 700, fontSize: 13.5 }}>{submission.assignments?.cases?.title || submission.assignments?.case_standard}</div>
+          <div style={{ color: COLORS.white, fontWeight: 700, fontSize: 13.5 }}>{submission.caseTitle || submission.caseStandard}</div>
           <div style={{ color: "rgba(255,255,255,.55)", fontSize: 11.5 }}>Submitted {new Date(submission.submitted_at).toLocaleString()}</div>
         </div>
       </div>
