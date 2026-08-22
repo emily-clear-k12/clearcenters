@@ -74,14 +74,14 @@ function DisplayContent() {
         <img src="/teacher/join_class_bg.jpg" alt="" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "contain" }} />
 
         {/* Class code, overlaid exactly in the blank left box */}
-        <div style={{ position: "absolute", left: "39.5%", top: "44%", width: "21%", height: "26%", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <div style={{ position: "absolute", left: "41%", top: "44%", width: "21%", height: "26%", display: "flex", alignItems: "center", justifyContent: "center" }}>
           <div style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 700, fontSize: "clamp(18px, 2.6vw, 34px)", color: "#0D1B2A", letterSpacing: 1 }}>
             {classInfo.class_code}
           </div>
         </div>
 
         {/* QR code, overlaid exactly in the blank right box */}
-        <div style={{ position: "absolute", left: "62.5%", top: "44%", width: "11%", height: "26%", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <div style={{ position: "absolute", left: "64.5%", top: "44%", width: "11%", height: "26%", display: "flex", alignItems: "center", justifyContent: "center" }}>
           {joinUrl && <QRCodeSVG value={joinUrl} size={110} fgColor="#0D1B2A" style={{ width: "78%", height: "auto" }} />}
         </div>
       </div>
