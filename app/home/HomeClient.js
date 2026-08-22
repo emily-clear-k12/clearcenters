@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import StudentSidebar from "../../components/StudentSidebar";
 
 const COLORS = {
   navy: "#0D1B2A",
@@ -24,15 +25,6 @@ const BADGE_TIERS = [
   { key: "crystal_thinker", label: "Crystal Thinker", threshold: 150, img: "/badges/crystal_thinker.jpg" },
   { key: "rising_star", label: "Rising Star", threshold: 300, img: "/badges/rising_star.jpg" },
   { key: "master", label: "Master", threshold: 500, img: "/badges/master.jpg" },
-];
-
-const NAV_ITEMS = [
-  { label: "Home", icon: "/icons/nav_home.png", active: true },
-  { label: "My Missions", icon: "/icons/nav_missions.png" },
-  { label: "Progress", icon: "/icons/nav_progress.png" },
-  { label: "Badges", icon: "/icons/nav_badges.png" },
-  { label: "My Notebook", icon: "/icons/nav_notebook.png" },
-  { label: "Gear Locker", icon: "/icons/nav_gear.png" },
 ];
 
 function caseImagePath(standard) {
@@ -66,11 +58,6 @@ export default function HomeClient({ student, studentClass, assignments, mission
     return () => window.removeEventListener("resize", fitStatNumbers);
   }, [student.crystal_points, student.streak_days, missionsCompleted]);
 
-  async function handleLogout() {
-    await fetch("/api/student-logout", { method: "POST" });
-    router.push("/login");
-  }
-
   const activeMission = assignments[0] || null;
   const upNext = assignments.slice(1, 3);
   const currentTierIndex = [...BADGE_TIERS].reverse().findIndex((t) => student.crystal_points >= t.threshold);
@@ -84,36 +71,7 @@ export default function HomeClient({ student, studentClass, assignments, mission
         .gc-btn:hover { transform: translateY(-1px); }
       `}</style>
 
-      <aside style={{ width: 168, background: COLORS.navy, padding: "20px 12px", display: "flex", flexDirection: "column", gap: 20, flexShrink: 0 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "0 8px" }}>
-          <img src="/icons/crystal_logo.png" alt="" style={{ width: 24 }} />
-          <div style={{ fontFamily: "'Poppins', sans-serif", color: COLORS.white, fontWeight: 700, fontSize: 14.5 }}>
-            ClearCenters<span style={{ color: COLORS.gold }}> HQ</span>
-          </div>
-        </div>
-        <nav style={{ display: "flex", flexDirection: "column", gap: 3 }}>
-          {NAV_ITEMS.map((item) => (
-            <button
-              key={item.label}
-              style={{
-                display: "flex", alignItems: "center", gap: 11, height: 46, padding: "0 10px", borderRadius: 12,
-                background: item.active ? COLORS.deepNavy : "transparent",
-                boxShadow: item.active ? `inset 3px 0 0 ${COLORS.gold}` : "none",
-                color: item.active ? COLORS.white : "rgba(255,255,255,.75)",
-                fontWeight: 600, fontSize: 13, width: "100%", textAlign: "left", border: "none", cursor: "pointer",
-              }}
-            >
-              <img src={item.icon} alt="" style={{ width: 21, height: 21, objectFit: "contain" }} />
-              <span>{item.label}</span>
-            </button>
-          ))}
-        </nav>
-        <div style={{ marginTop: "auto" }}>
-          <button onClick={handleLogout} className="gc-btn" style={{ width: "100%", background: "rgba(255,255,255,.08)", color: COLORS.white, borderRadius: 10, padding: "9px 10px", fontWeight: 600, fontSize: 12.5 }}>
-            Log Out
-          </button>
-        </div>
-      </aside>
+      <StudentSidebar />
 
       <main style={{ flex: 1, padding: 24, maxWidth: 1300, margin: "0 auto" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 24 }}>
@@ -160,14 +118,20 @@ export default function HomeClient({ student, studentClass, assignments, mission
             <p style={{ fontSize: 13, fontWeight: 700, color: COLORS.textMuted, textTransform: "uppercase", margin: "0 0 12px 0" }}>Up Next</p>
             {upNext.length > 0 ? (
               upNext.map((a) => (
-                <div key={a.id} style={{ position: "relative", height: 80, borderRadius: 14, overflow: "hidden", marginBottom: 10, cursor: "pointer" }}>
+                <button
+                  key={a.id}
+                  type="button"
+                  onClick={() => router.push(`/activity/${a.id}`)}
+                  className="gc-btn"
+                  style={{ position: "relative", display: "block", width: "100%", height: 80, borderRadius: 14, overflow: "hidden", marginBottom: 10, cursor: "pointer", border: "none", padding: 0, background: "none", textAlign: "left", font: "inherit" }}
+                >
                   <img src={caseImagePath(a.case_standard)} alt="" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
                   <div style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg, rgba(13,27,42,0) 35%, rgba(13,27,42,.82) 100%)" }} />
                   <div style={{ position: "absolute", left: 12, right: 12, bottom: 8, color: COLORS.white }}>
                     <div style={{ fontSize: 13.5, fontWeight: 700 }}>{a.cases?.title}</div>
                     <div style={{ fontSize: 11, color: "rgba(255,255,255,.85)" }}>{a.case_standard}</div>
                   </div>
-                </div>
+                </button>
               ))
             ) : (
               <p style={{ fontSize: 13, color: COLORS.textMuted }}>Nothing else assigned yet.</p>
