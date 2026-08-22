@@ -81,7 +81,7 @@ function DisplayContent() {
         </div>
 
         {/* QR code, overlaid exactly in the blank right box */}
-        <div style={{ position: "absolute", left: "64.5%", top: "44%", width: "11%", height: "26%", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <div style={{ position: "absolute", left: "66.5%", top: "44%", width: "11%", height: "26%", display: "flex", alignItems: "center", justifyContent: "center" }}>
           {joinUrl && <QRCodeSVG value={joinUrl} size={110} fgColor="#0D1B2A" style={{ width: "78%", height: "auto" }} />}
         </div>
       </div>
