@@ -99,9 +99,14 @@ export default function HomeClient({ student, studentClass, assignments, mission
                 YOUR ACTIVE MISSION · GROUP CHAT
               </span>
               <h2 style={{ fontSize: 24, fontWeight: 700, margin: "0 0 4px 0", color: COLORS.textDark }}>{activeMission.cases?.title}</h2>
-              <p style={{ fontSize: 13, color: COLORS.textMuted, margin: "0 0 20px 0" }}>
+              <p style={{ fontSize: 13, color: COLORS.textMuted, margin: activeMission.cases?.learning_target ? "0 0 10px 0" : "0 0 20px 0" }}>
                 {activeMission.case_standard}{activeMission.due_date ? ` · Due ${activeMission.due_date}` : ""}
               </p>
+              {activeMission.cases?.learning_target && (
+                <div style={{ fontSize: 13.5, color: COLORS.textDark, background: COLORS.tealSoft, borderRadius: 12, padding: "10px 12px", marginBottom: 20, lineHeight: 1.5 }}>
+                  🎯 {activeMission.cases.learning_target}
+                </div>
+              )}
               <button onClick={() => router.push(`/activity/${activeMission.id}`)} className="gc-btn" style={{ background: COLORS.violet, color: COLORS.white, borderRadius: 999, padding: "12px 22px", fontWeight: 700, fontSize: 15 }}>
                 Continue Mission →
               </button>

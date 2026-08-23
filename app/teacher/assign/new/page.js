@@ -83,7 +83,7 @@ function NewAssignmentContent() {
   }, [assignClassId]);
 
   useEffect(() => {
-    supabase.from("cases").select("standard, title, grade, subject").then(({ data }) => setCases(data || []));
+    supabase.from("cases").select("standard, title, grade, subject, learning_target, lesson_summary, misconception_note").then(({ data }) => setCases(data || []));
   }, []);
 
   const filteredCases = cases.filter(
@@ -249,6 +249,47 @@ function NewAssignmentContent() {
                   </>
                 )}
               </div>
+
+              {selectedCase && (selectedCase.learning_target || selectedCase.lesson_summary || selectedCase.misconception_note) && (
+                <div style={{ background: COLORS.white, border: `1px solid ${COLORS.border}`, borderRadius: 16, padding: 16, boxShadow: "0 4px 16px rgba(13,27,42,.06)" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
+                    <div style={{ width: 40, height: 40, borderRadius: 8, overflow: "hidden", flexShrink: 0 }}>
+                      <img src={caseImagePath(selectedCase.standard)} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                    </div>
+                    <div>
+                      <div style={{ fontSize: 14, fontWeight: 700, color: COLORS.textDark }}>{selectedCase.title}</div>
+                      <div style={{ fontSize: 11, color: COLORS.textMuted }}>{selectedCase.standard}</div>
+                    </div>
+                  </div>
+
+                  {selectedCase.learning_target && (
+                    <div style={{ marginBottom: 12 }}>
+                      <div style={{ fontSize: 10.5, fontWeight: 700, color: COLORS.textMuted, letterSpacing: .4, marginBottom: 5, textTransform: "uppercase" }}>Learning Target</div>
+                      <div style={{ background: COLORS.tealSoft, borderRadius: 10, padding: "9px 11px", fontSize: 13, color: COLORS.textDark, lineHeight: 1.5 }}>
+                        🎯 {selectedCase.learning_target}
+                      </div>
+                    </div>
+                  )}
+
+                  {selectedCase.lesson_summary && (
+                    <div style={{ marginBottom: 12 }}>
+                      <div style={{ fontSize: 10.5, fontWeight: 700, color: COLORS.textMuted, letterSpacing: .4, marginBottom: 5, textTransform: "uppercase" }}>Lesson Summary</div>
+                      <div style={{ fontSize: 13, color: COLORS.textDark, lineHeight: 1.5 }}>
+                        {selectedCase.lesson_summary}
+                      </div>
+                    </div>
+                  )}
+
+                  {selectedCase.misconception_note && (
+                    <div>
+                      <div style={{ fontSize: 10.5, fontWeight: 700, color: COLORS.textMuted, letterSpacing: .4, marginBottom: 5, textTransform: "uppercase" }}>Watch For</div>
+                      <div style={{ background: "#FFF4E5", border: `1px solid ${COLORS.warning || "#FF9F43"}`, borderRadius: 10, padding: "9px 11px", fontSize: 12.5, color: "#7A4A0A", lineHeight: 1.5 }}>
+                        ⚠️ {selectedCase.misconception_note}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
 
               {selectedCase && (
                 <div style={{ background: COLORS.white, border: `1px solid ${COLORS.border}`, borderRadius: 16, padding: 16, boxShadow: "0 4px 16px rgba(13,27,42,.06)" }}>
