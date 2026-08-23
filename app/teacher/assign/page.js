@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { Plus, Copy, Check } from "lucide-react";
+import { Plus, Copy, Check, Printer } from "lucide-react";
 import { supabase } from "../../../lib/supabaseClient";
 import TeacherSidebar from "../../../components/TeacherSidebar";
 
@@ -284,6 +284,9 @@ export default function MyClassesPage() {
               </button>
               <button onClick={() => router.push(`/teacher/assign/display?classId=${selectedClass.id}`)} className="gc-btn" style={{ background: COLORS.violet, border: "none", borderRadius: 8, padding: "4px 10px", color: COLORS.white, fontWeight: 700 }}>
                 Present to Class
+              </button>
+              <button onClick={() => window.open(`/teacher/roster/${selectedClass.id}`, "_blank")} className="gc-btn" style={{ background: COLORS.white, border: `1px solid ${COLORS.border}`, borderRadius: 8, padding: "4px 10px", color: COLORS.textDark, fontWeight: 700, display: "flex", alignItems: "center", gap: 5 }}>
+                <Printer size={13} /> Print Roster
               </button>
             </div>
           )}
