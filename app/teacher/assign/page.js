@@ -64,6 +64,7 @@ export default function MyClassesPage() {
   const [addingStudent, setAddingStudent] = useState(false);
   const [copiedCode, setCopiedCode] = useState(false);
   const [error, setError] = useState(null);
+  const [caseDetailAssignment, setCaseDetailAssignment] = useState(null);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data, error: authError }) => {
@@ -112,7 +113,7 @@ export default function MyClassesPage() {
 
     const { data: assigned } = await supabase
       .from("assignments")
-      .select("id, due_date, case_standard, created_at, cases(title)")
+      .select("id, due_date, case_standard, created_at, cases(title, learning_target, lesson_summary, misconception_note)")
       .eq("class_id", selectedClassId)
       .order("created_at", { ascending: false });
     const assignmentList = assigned || [];
@@ -327,11 +328,17 @@ export default function MyClassesPage() {
                   {assignments.length > 0 ? (
                     <div style={{ display: "grid", gap: 6 }}>
                       {assignments.map((a) => (
-                        <div key={a.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 4px", borderBottom: `1px solid ${COLORS.border}` }}>
+                        <button
+                          key={a.id}
+                          type="button"
+                          onClick={() => setCaseDetailAssignment(a)}
+                          className="gc-btn"
+                          style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 4px", borderBottom: `1px solid ${COLORS.border}`, background: "none", border: "none", borderBottomWidth: 1, borderBottomStyle: "solid", borderBottomColor: COLORS.border, width: "100%", textAlign: "left", cursor: "pointer", font: "inherit", color: "inherit" }}
+                        >
                           <div style={{ width: 34, height: 34, borderRadius: 8, overflow: "hidden", flexShrink: 0 }}>
                             <img src={caseImagePath(a.case_standard)} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                           </div>
-                          <div style={{ flex: 1 }}>
+                          <div style={{ flex: 1, minWidth: 0 }}>
                             <div style={{ fontSize: 12.5, fontWeight: 600 }}>{a.cases?.title || a.case_standard}</div>
                             <div style={{ fontSize: 10.5, color: COLORS.textMuted, display: "flex", alignItems: "center", gap: 6 }}>
                               {a.due_date ? `Due ${a.due_date}` : "No due date"}
@@ -340,8 +347,8 @@ export default function MyClassesPage() {
                               </span>
                             </div>
                           </div>
-                          <div style={{ fontSize: 12, color: COLORS.textMuted, fontWeight: 700 }}>{a.submittedCount} / {a.rosterSize}</div>
-                        </div>
+                          <div style={{ fontSize: 12, color: COLORS.textMuted, fontWeight: 700, flexShrink: 0 }}>{a.submittedCount} / {a.rosterSize}</div>
+                        </button>
                       ))}
                     </div>
                   ) : (
@@ -400,6 +407,70 @@ export default function MyClassesPage() {
           )}
         </div>
       </div>
+
+      {caseDetailAssignment && (
+        <div
+          onClick={() => setCaseDetailAssignment(null)}
+          style={{ position: "fixed", inset: 0, background: "rgba(13,27,42,.45)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 100, padding: 20 }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{ background: COLORS.white, borderRadius: 20, maxWidth: 520, width: "100%", maxHeight: "85vh", overflowY: "auto", boxShadow: "0 20px 60px rgba(13,27,42,.3)" }}
+          >
+            <div style={{ height: 140, overflow: "hidden", borderRadius: "20px 20px 0 0", position: "relative" }}>
+              <img src={caseImagePath(caseDetailAssignment.case_standard)} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+              <button
+                onClick={() => setCaseDetailAssignment(null)}
+                className="gc-btn"
+                style={{ position: "absolute", top: 12, right: 12, background: "rgba(13,27,42,.55)", color: COLORS.white, border: "none", borderRadius: "50%", width: 30, height: 30, fontSize: 16, lineHeight: 1 }}
+              >
+                ✕
+              </button>
+            </div>
+            <div style={{ padding: 22 }}>
+              <span style={{ display: "inline-flex", background: COLORS.violetSoft, color: COLORS.violet, fontSize: 11, fontWeight: 700, letterSpacing: .3, padding: "4px 10px", borderRadius: 999, marginBottom: 10 }}>
+                {caseDetailAssignment.case_standard}
+              </span>
+              <div style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 700, fontSize: 19, color: COLORS.textDark, marginBottom: 14 }}>
+                {caseDetailAssignment.cases?.title || caseDetailAssignment.case_standard}
+              </div>
+
+              {caseDetailAssignment.cases?.learning_target && (
+                <div style={{ marginBottom: 16 }}>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: COLORS.textMuted, letterSpacing: .4, marginBottom: 5, textTransform: "uppercase" }}>Learning Target</div>
+                  <div style={{ background: COLORS.tealSoft, borderRadius: 12, padding: "10px 12px", fontSize: 13.5, color: COLORS.textDark, lineHeight: 1.5 }}>
+                    🎯 {caseDetailAssignment.cases.learning_target}
+                  </div>
+                </div>
+              )}
+
+              {caseDetailAssignment.cases?.lesson_summary && (
+                <div style={{ marginBottom: 16 }}>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: COLORS.textMuted, letterSpacing: .4, marginBottom: 5, textTransform: "uppercase" }}>Lesson Summary</div>
+                  <div style={{ fontSize: 13.5, color: COLORS.textDark, lineHeight: 1.55 }}>
+                    {caseDetailAssignment.cases.lesson_summary}
+                  </div>
+                </div>
+              )}
+
+              {caseDetailAssignment.cases?.misconception_note && (
+                <div>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: COLORS.textMuted, letterSpacing: .4, marginBottom: 5, textTransform: "uppercase" }}>Watch For</div>
+                  <div style={{ background: "#FFF4E5", border: `1px solid ${COLORS.warning}`, borderRadius: 12, padding: "10px 12px", fontSize: 13, color: "#7A4A0A", lineHeight: 1.5 }}>
+                    ⚠️ {caseDetailAssignment.cases.misconception_note}
+                  </div>
+                </div>
+              )}
+
+              {!caseDetailAssignment.cases?.learning_target && !caseDetailAssignment.cases?.lesson_summary && !caseDetailAssignment.cases?.misconception_note && (
+                <div style={{ fontSize: 13, color: COLORS.textMuted, textAlign: "center", padding: "12px 0" }}>
+                  No learning target content yet for this case.
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

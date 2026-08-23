@@ -84,9 +84,14 @@ export default function MissionsClient({ student, assignments }) {
                     GROUP CHAT
                   </span>
                   <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 2, color: COLORS.textDark }}>{a.cases?.title}</div>
-                  <div style={{ fontSize: 12.5, color: COLORS.textMuted, marginBottom: 14 }}>
+                  <div style={{ fontSize: 12.5, color: COLORS.textMuted, marginBottom: a.cases?.learning_target ? 8 : 14 }}>
                     {a.case_standard}{a.due_date ? ` · Due ${a.due_date}` : ""}
                   </div>
+                  {a.cases?.learning_target && (
+                    <div style={{ fontSize: 12, color: COLORS.textDark, background: COLORS.tealSoft, borderRadius: 10, padding: "8px 10px", marginBottom: 14, lineHeight: 1.4 }}>
+                      🎯 {a.cases.learning_target}
+                    </div>
+                  )}
                   <div style={{ display: "inline-flex", alignItems: "center", gap: 6, color: COLORS.violet, fontWeight: 700, fontSize: 13.5 }}>
                     Open Mission →
                   </div>
