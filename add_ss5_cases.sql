@@ -1,0 +1,35 @@
+-- Adds the 30 new 5th grade Social Studies Group Chat cases.
+-- Standards are stored with an "SS." prefix (e.g. 'SS.5.8A') so they can
+-- never collide with a Science case sharing the same bare TEKS number —
+-- both Science and Social Studies have their own 5.8A and 5.8B, for example.
+insert into cases (standard, title, grade, subject) values
+  ('SS.5.2A', 'The Tea Party Blame Game', 5, 'Social Studies'),
+  ('SS.5.4A', 'The One-Reason War', 5, 'Social Studies'),
+  ('SS.5.4B', 'Same Country, Different Future', 5, 'Social Studies'),
+  ('SS.5.4D', 'The Cause File', 5, 'Social Studies'),
+  ('SS.5.4E', 'Freedom: Case Closed?', 5, 'Social Studies'),
+  ('SS.5.4F', 'Opportunity for Who?', 5, 'Social Studies'),
+  ('SS.5.7B', 'The Town That Picked the Wrong Spot', 5, 'Social Studies'),
+  ('SS.5.8A', 'Adapt or Change It?', 5, 'Social Studies'),
+  ('SS.5.8B', 'The Dam Debate', 5, 'Social Studies'),
+  ('SS.5.11A', 'The Sneaker Sellout', 5, 'Social Studies'),
+  ('SS.5.11B', 'The Strawberry Shortage', 5, 'Social Studies'),
+  ('SS.5.12B', 'Where Should We Build It?', 5, 'Social Studies'),
+  ('SS.5.12C', 'The City That Kept Growing', 5, 'Social Studies'),
+  ('SS.5.12D', 'The 500-Order Disaster', 5, 'Social Studies'),
+  ('SS.5.13A', 'Who Gets the Final Say?', 5, 'Social Studies'),
+  ('SS.5.13B', 'The Meeting Nobody Asked For', 5, 'Social Studies'),
+  ('SS.5.14A', 'The Breakup Letter', 5, 'Social Studies'),
+  ('SS.5.14B', 'Six Jobs, One Constitution', 5, 'Social Studies'),
+  ('SS.5.14C', 'Why Add Ten More?', 5, 'Social Studies'),
+  ('SS.5.15A', 'Everybody Wants the Gavel', 5, 'Social Studies'),
+  ('SS.5.15B', 'The President Said Yes. Case Closed?', 5, 'Social Studies'),
+  ('SS.5.15C', 'Whose Job Is This Anyway?', 5, 'Social Studies'),
+  ('SS.5.17A', 'Why Bother?', 5, 'Social Studies'),
+  ('SS.5.17B', 'Dear... Who?', 5, 'Social Studies'),
+  ('SS.5.17C', 'The Pizza Vote Disaster', 5, 'Social Studies'),
+  ('SS.5.19A', 'Can They Actually Do That?', 5, 'Social Studies'),
+  ('SS.5.20B', 'The Painting Is Not Just a Picture', 5, 'Social Studies'),
+  ('SS.5.21B', 'Who Gets to Be “American”?', 5, 'Social Studies'),
+  ('SS.5.22B', 'The Railroad Was Just Transportation', 5, 'Social Studies'),
+  ('SS.5.22C', 'It Only Changed One Thing', 5, 'Social Studies');

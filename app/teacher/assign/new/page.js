@@ -30,7 +30,7 @@ const CHALLENGE_TYPES = [
 ];
 
 function caseImagePath(standard) {
-  return `/cases/${standard.replace(".", "-")}.jpg`;
+  return `/cases/${standard.replace(/\./g, "-")}.jpg`;
 }
 
 function NewAssignmentContent() {

@@ -32,7 +32,7 @@ const GRADE_META = {
 
 function caseImagePath(standard) {
   if (!standard) return "/icons/crystal_points.png";
-  return `/cases/${standard.replace(".", "-")}.jpg`;
+  return `/cases/${standard.replace(/\./g, "-")}.jpg`;
 }
 
 export default function ProgressClient({ student, missions }) {

@@ -17,7 +17,7 @@ const COLORS = {
 };
 
 function caseImagePath(standard) {
-  return `/cases/${standard.replace(".", "-")}.jpg`;
+  return `/cases/${standard.replace(/\./g, "-")}.jpg`;
 }
 
 export default function MissionsClient({ student, assignments }) {

@@ -28,7 +28,7 @@ const BADGE_TIERS = [
 ];
 
 function caseImagePath(standard) {
-  return `/cases/${standard.replace(".", "-")}.jpg`;
+  return `/cases/${standard.replace(/\./g, "-")}.jpg`;
 }
 
 export default function HomeClient({ student, studentClass, assignments, missionsCompleted }) {

@@ -21,7 +21,7 @@ const COLORS = {
 const GRADE_LABELS = { 0: "Level 0", 1: "Level 1", 2: "Level 2" };
 
 function caseImagePath(standard) {
-  return `/cases/${standard.replace(".", "-")}.jpg`;
+  return `/cases/${standard.replace(/\./g, "-")}.jpg`;
 }
 
 export default function StudentDetailPage() {
