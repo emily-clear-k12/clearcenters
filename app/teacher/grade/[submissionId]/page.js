@@ -185,6 +185,16 @@ export default function TeacherGradeDetailPage() {
       ? { heading: "Push further", body: caseEntry.pushAngle }
       : NEXT_STEPS_GENERIC[finalGrade] || NEXT_STEPS_GENERIC[0];
 
+  // Springboard for the teacher: the standard's core question and the
+  // specific misconception this case is built around, pulled from the same
+  // public case content already shown to the student — not new authored
+  // content, just surfaced here so the teacher doesn't have to go look it
+  // up separately before reteaching.
+  const standardSpringboard =
+    finalGrade !== 2 && caseEntry && caseEntry.publicCase
+      ? { bigQuestion: caseEntry.publicCase.bigQuestion, trapLine: caseEntry.publicCase.trapLine }
+      : null;
+
   return (
     <div style={{ display: "flex", minHeight: "100vh", background: COLORS.cream, fontFamily: "'Inter', sans-serif", color: COLORS.textDark }}>
       <style>{`
@@ -256,6 +266,14 @@ export default function TeacherGradeDetailPage() {
                 Suggested Next Step · {nextStep.heading}
               </div>
               <div style={{ fontSize: 12.5, color: COLORS.textDark, lineHeight: 1.5 }}>{nextStep.body}</div>
+              {standardSpringboard && (
+                <div style={{ marginTop: 12, paddingTop: 12, borderTop: "1px solid rgba(0,0,0,.08)" }}>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: COLORS.textMuted, textTransform: "uppercase", letterSpacing: 0.4, marginBottom: 4 }}>Core Idea of This Standard</div>
+                  <div style={{ fontSize: 12.5, color: COLORS.textDark, lineHeight: 1.5, marginBottom: 10 }}>{standardSpringboard.bigQuestion}</div>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: COLORS.textMuted, textTransform: "uppercase", letterSpacing: 0.4, marginBottom: 4 }}>Misconception They May Be Holding Onto</div>
+                  <div style={{ fontSize: 12.5, color: COLORS.textDark, lineHeight: 1.5, fontStyle: "italic" }}>"{standardSpringboard.trapLine}"</div>
+                </div>
+              )}
             </div>
           </div>
 

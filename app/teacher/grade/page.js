@@ -23,7 +23,8 @@ export default function TeacherGradeListPage() {
   const [loadingAuth, setLoadingAuth] = useState(true);
   const [loadingSubs, setLoadingSubs] = useState(true);
   const [teacherEmail, setTeacherEmail] = useState("");
-  const [submissions, setSubmissions] = useState([]);
+  const [teacherId, setTeacherId] = useState(null);
+  const [groups, setGroups] = useState([]);
   const [error, setError] = useState(null);
 
   useEffect(() => {
@@ -33,49 +34,64 @@ export default function TeacherGradeListPage() {
         return;
       }
       setTeacherEmail(data.user.email || "");
+      setTeacherId(data.user.id);
       setLoadingAuth(false);
     });
   }, [router]);
 
-  const loadSubmissions = useCallback(async () => {
+  const loadSubmissions = useCallback(async (teacherId) => {
     setLoadingSubs(true);
     setError(null);
 
-    const { data: subs, error: subsError } = await supabase
-      .from("submissions")
-      .select("id, submitted_at, released, ai_score, teacher_grade, self_confidence, student_id, assignment_id")
-      .not("submitted_at", "is", null)
-      .order("submitted_at", { ascending: false });
+    // Start from THIS teacher's own classes and work outward, instead of
+    // starting from every submission in the database — otherwise every
+    // teacher using the app would see every other teacher's submissions
+    // mixed in together here.
+    const { data: classes, error: classesError } = await supabase.from("classes").select("id, name").eq("teacher_id", teacherId).order("name");
+    if (classesError) {
+      setError(classesError.message);
+      setLoadingSubs(false);
+      return;
+    }
+    const classList = classes || [];
+    const classIds = classList.map((c) => c.id);
+    const classMap = Object.fromEntries(classList.map((c) => [c.id, c]));
 
-    if (subsError) {
-      setError(subsError.message);
+    if (classIds.length === 0) {
+      setGroups([]);
       setLoadingSubs(false);
       return;
     }
 
-    const list = subs || [];
-    if (list.length === 0) {
-      setSubmissions([]);
-      setLoadingSubs(false);
-      return;
+    const { data: assignments } = await supabase.from("assignments").select("id, case_standard, due_date, class_id").in("class_id", classIds);
+    const assignmentList = assignments || [];
+    const assignmentIds = assignmentList.map((a) => a.id);
+    const assignmentMap = Object.fromEntries(assignmentList.map((a) => [a.id, a]));
+    const caseStandards = [...new Set(assignmentList.map((a) => a.case_standard).filter(Boolean))];
+
+    let list = [];
+    if (assignmentIds.length > 0) {
+      const { data: subs, error: subsError } = await supabase
+        .from("submissions")
+        .select("id, submitted_at, released, ai_score, teacher_grade, self_confidence, student_id, assignment_id")
+        .in("assignment_id", assignmentIds)
+        .not("submitted_at", "is", null)
+        .order("submitted_at", { ascending: false });
+
+      if (subsError) {
+        setError(subsError.message);
+        setLoadingSubs(false);
+        return;
+      }
+      list = subs || [];
     }
 
     const studentIds = [...new Set(list.map((s) => s.student_id).filter(Boolean))];
-    const assignmentIds = [...new Set(list.map((s) => s.assignment_id).filter(Boolean))];
-
-    const { data: students } = await supabase.from("students").select("id, first_name").in("id", studentIds);
-    const { data: assignments } = await supabase.from("assignments").select("id, case_standard, due_date, class_id").in("id", assignmentIds);
-
-    const classIds = [...new Set((assignments || []).map((a) => a.class_id).filter(Boolean))];
-    const caseStandards = [...new Set((assignments || []).map((a) => a.case_standard).filter(Boolean))];
-
-    const { data: classes } = await supabase.from("classes").select("id, name").in("id", classIds);
-    const { data: cases } = await supabase.from("cases").select("standard, title").in("standard", caseStandards);
+    const { data: students } = studentIds.length > 0 ? await supabase.from("students").select("id, first_name").in("id", studentIds) : { data: [] };
+    const { data: cases } = caseStandards.length > 0 ? await supabase.from("cases").select("standard, title").in("standard", caseStandards) : { data: [] };
 
     const studentMap = Object.fromEntries((students || []).map((s) => [s.id, s]));
-    const classMap = Object.fromEntries((classes || []).map((c) => [c.id, c]));
     const caseMap = Object.fromEntries((cases || []).map((c) => [c.standard, c]));
-    const assignmentMap = Object.fromEntries((assignments || []).map((a) => [a.id, a]));
 
     const merged = list.map((s) => {
       const assignment = assignmentMap[s.assignment_id];
@@ -83,17 +99,26 @@ export default function TeacherGradeListPage() {
         ...s,
         studentName: studentMap[s.student_id]?.first_name || "Unknown student",
         caseTitle: assignment ? (caseMap[assignment.case_standard]?.title || assignment.case_standard) : "Unknown case",
+        classId: assignment ? assignment.class_id : null,
         className: assignment ? classMap[assignment.class_id]?.name : "Unknown class",
       };
     });
 
-    setSubmissions(merged);
+    // Divide by class instead of one mixed list across every class.
+    const byClass = {};
+    classList.forEach((c) => { byClass[c.id] = { classId: c.id, className: c.name, submissions: [] }; });
+    merged.forEach((s) => {
+      if (s.classId && byClass[s.classId]) byClass[s.classId].submissions.push(s);
+    });
+    const grouped = Object.values(byClass).filter((g) => g.submissions.length > 0);
+
+    setGroups(grouped);
     setLoadingSubs(false);
   }, []);
 
   useEffect(() => {
-    if (!loadingAuth) loadSubmissions();
-  }, [loadingAuth, loadSubmissions]);
+    if (!loadingAuth && teacherId) loadSubmissions(teacherId);
+  }, [loadingAuth, teacherId, loadSubmissions]);
 
   if (loadingAuth || loadingSubs) {
     return (
@@ -122,51 +147,56 @@ export default function TeacherGradeListPage() {
             </div>
           )}
 
-          {submissions.length === 0 ? (
+          {groups.length === 0 ? (
             <div style={{ background: COLORS.white, borderRadius: 16, padding: 32, textAlign: "center", color: COLORS.textMuted }}>
               No submissions yet — once a student submits a mission, it'll show up here.
             </div>
           ) : (
-            <div style={{ display: "grid", gap: 10 }}>
-              {submissions.map((s) => {
-                const needsReview = s.teacher_grade === null || s.teacher_grade === undefined;
-                return (
-                  <button
-                    key={s.id}
-                    className="gc-btn"
-                    onClick={() => router.push(`/teacher/grade/${s.id}`)}
-                    style={{ background: COLORS.white, borderRadius: 14, padding: 16, boxShadow: "0 2px 10px rgba(0,0,0,.08)", display: "flex", alignItems: "center", gap: 16, textAlign: "left" }}
-                  >
-                    <div style={{ width: 40, height: 40, borderRadius: "50%", background: COLORS.violetSoft, display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, color: COLORS.violet, fontSize: 15, flexShrink: 0 }}>
-                      {s.studentName?.[0] || "?"}
-                    </div>
-                    <div style={{ flex: 1 }}>
-                      <div style={{ fontWeight: 700, fontSize: 14.5 }}>{s.studentName}</div>
-                      <div style={{ fontSize: 12.5, color: COLORS.textMuted }}>
-                        {s.caseTitle} · {s.className}
-                      </div>
-                    </div>
-                    <div style={{ textAlign: "right" }}>
-                      <div style={{ fontSize: 11, color: COLORS.textMuted, marginBottom: 4 }}>
-                        {new Date(s.submitted_at).toLocaleDateString()}
-                      </div>
-                      <span
-                        style={{
-                          fontSize: 11.5,
-                          fontWeight: 700,
-                          padding: "3px 10px",
-                          borderRadius: 999,
-                          background: s.released ? "#E6F8F9" : needsReview ? "#FFF4E5" : "#E6F8F9",
-                          color: s.released ? COLORS.teal : needsReview ? "#B8860B" : COLORS.teal,
-                        }}
+            groups.map((g) => (
+              <div key={g.classId} style={{ marginBottom: 24 }}>
+                <h2 style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 700, fontSize: 16, margin: "0 0 10px 4px" }}>{g.className}</h2>
+                <div style={{ display: "grid", gap: 10 }}>
+                  {g.submissions.map((s) => {
+                    const needsReview = s.teacher_grade === null || s.teacher_grade === undefined;
+                    return (
+                      <button
+                        key={s.id}
+                        className="gc-btn"
+                        onClick={() => router.push(`/teacher/grade/${s.id}`)}
+                        style={{ background: COLORS.white, borderRadius: 14, padding: 16, boxShadow: "0 2px 10px rgba(0,0,0,.08)", display: "flex", alignItems: "center", gap: 16, textAlign: "left" }}
                       >
-                        {s.released ? "Released" : needsReview ? "Needs Review" : `Graded: ${GRADE_LABELS[s.teacher_grade]}`}
-                      </span>
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
+                        <div style={{ width: 40, height: 40, borderRadius: "50%", background: COLORS.violetSoft, display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, color: COLORS.violet, fontSize: 15, flexShrink: 0 }}>
+                          {s.studentName?.[0] || "?"}
+                        </div>
+                        <div style={{ flex: 1 }}>
+                          <div style={{ fontWeight: 700, fontSize: 14.5 }}>{s.studentName}</div>
+                          <div style={{ fontSize: 12.5, color: COLORS.textMuted }}>
+                            {s.caseTitle}
+                          </div>
+                        </div>
+                        <div style={{ textAlign: "right" }}>
+                          <div style={{ fontSize: 11, color: COLORS.textMuted, marginBottom: 4 }}>
+                            {new Date(s.submitted_at).toLocaleDateString()}
+                          </div>
+                          <span
+                            style={{
+                              fontSize: 11.5,
+                              fontWeight: 700,
+                              padding: "3px 10px",
+                              borderRadius: 999,
+                              background: s.released ? "#E6F8F9" : needsReview ? "#FFF4E5" : "#E6F8F9",
+                              color: s.released ? COLORS.teal : needsReview ? "#B8860B" : COLORS.teal,
+                            }}
+                          >
+                            {s.released ? "Released" : needsReview ? "Needs Review" : `Graded: ${GRADE_LABELS[s.teacher_grade]}`}
+                          </span>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            ))
           )}
         </div>
       </div>

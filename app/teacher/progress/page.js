@@ -29,19 +29,23 @@ export default function StudentProgressPage() {
   const [loadingAuth, setLoadingAuth] = useState(true);
   const [loading, setLoading] = useState(true);
   const [teacherEmail, setTeacherEmail] = useState("");
-  const [rows, setRows] = useState([]);
+  const [teacherId, setTeacherId] = useState(null);
+  const [groups, setGroups] = useState([]);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data, error }) => {
       if (error || !data?.user) { router.push("/login"); return; }
       setTeacherEmail(data.user.email || "");
+      setTeacherId(data.user.id);
       setLoadingAuth(false);
     });
   }, [router]);
 
-  const load = useCallback(async () => {
+  const load = useCallback(async (teacherId) => {
     setLoading(true);
-    const { data: classes } = await supabase.from("classes").select("id, name");
+    // Only THIS teacher's own classes — otherwise every teacher using the
+    // app would see every other teacher's students mixed in together.
+    const { data: classes } = await supabase.from("classes").select("id, name").eq("teacher_id", teacherId).order("name");
     const classIds = (classes || []).map((c) => c.id);
     const classMap = Object.fromEntries((classes || []).map((c) => [c.id, c.name]));
 
@@ -75,15 +79,25 @@ export default function StudentProgressPage() {
       const avg = hasGrades ? info.grades.reduce((a, b) => a + b, 0) / info.grades.length : null;
       const avgPct = avg !== null ? Math.round((avg / 2) * 100) : null;
       const band = avg !== null ? proficiencyBand(avg) : null;
-      return { id: st.id, name: st.first_name, className: classMap[st.class_id], missionsCompleted: info.submittedCount, avgPct, band };
+      return { id: st.id, name: st.first_name, classId: st.class_id, className: classMap[st.class_id], missionsCompleted: info.submittedCount, avgPct, band };
     });
 
-    computed.sort((a, b) => (a.avgPct ?? -1) - (b.avgPct ?? -1));
-    setRows(computed);
+    // Divide by class instead of one mixed list, so each class's students
+    // are grouped together under their own heading. Within a class, sort by
+    // avgPct ascending (students needing the most support float to the top).
+    const byClass = {};
+    (classes || []).forEach((c) => { byClass[c.id] = { classId: c.id, className: c.name, students: [] }; });
+    computed.forEach((row) => {
+      if (byClass[row.classId]) byClass[row.classId].students.push(row);
+    });
+    const grouped = Object.values(byClass);
+    grouped.forEach((g) => g.students.sort((a, b) => (a.avgPct ?? -1) - (b.avgPct ?? -1)));
+
+    setGroups(grouped);
     setLoading(false);
   }, []);
 
-  useEffect(() => { if (!loadingAuth) load(); }, [loadingAuth, load]);
+  useEffect(() => { if (!loadingAuth && teacherId) load(teacherId); }, [loadingAuth, teacherId, load]);
 
   if (loadingAuth || loading) {
     return <div style={{ minHeight: "100vh", background: COLORS.canvas, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Inter', sans-serif", color: COLORS.textMuted }}>Loading...</div>;
@@ -95,32 +109,40 @@ export default function StudentProgressPage() {
       <TeacherSidebar teacherEmail={teacherEmail} />
       <main style={{ flex: 1, padding: "32px 36px", maxWidth: 1000, margin: "0 auto" }}>
         <h1 style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 700, fontSize: 28, margin: "0 0 6px 0" }}>Student Progress</h1>
-        <p style={{ color: COLORS.textMuted, fontSize: 14, marginBottom: 24 }}>Based on released grades across all your classes.</p>
+        <p style={{ color: COLORS.textMuted, fontSize: 14, marginBottom: 24 }}>Based on released grades, grouped by class.</p>
 
-        <div style={{ background: COLORS.white, border: `1px solid ${COLORS.border}`, borderRadius: 16, padding: 8, boxShadow: "0 4px 16px rgba(13,27,42,.06)" }}>
-          {rows.length === 0 && <div style={{ padding: 24, textAlign: "center", color: COLORS.textMuted, fontSize: 14 }}>No students yet.</div>}
-          {rows.map((r) => (
-            <div key={r.id} style={{ display: "flex", alignItems: "center", gap: 14, padding: "14px 12px", borderBottom: `1px solid ${COLORS.border}` }}>
-              <div style={{ width: 36, height: 36, borderRadius: "50%", background: COLORS.violetSoft, display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, color: COLORS.violet, fontSize: 14, flexShrink: 0 }}>{r.name[0]}</div>
-              <div style={{ width: 140 }}>
-                <div style={{ fontWeight: 700, fontSize: 14 }}>{r.name}</div>
-                <div style={{ fontSize: 11.5, color: COLORS.textMuted }}>{r.className}</div>
-              </div>
-              <div style={{ width: 130, fontSize: 12.5, color: COLORS.textMuted }}>{r.missionsCompleted} submitted</div>
-              <div style={{ flex: 1, height: 8, background: COLORS.border, borderRadius: 999, overflow: "hidden" }}>
-                {r.avgPct !== null && <div style={{ height: "100%", width: `${r.avgPct}%`, background: r.band.color, borderRadius: 999 }} />}
-              </div>
-              <div style={{ width: 50, textAlign: "right", fontWeight: 700, fontSize: 13 }}>{r.avgPct !== null ? `${r.avgPct}%` : "—"}</div>
-              <div style={{ width: 110, textAlign: "right" }}>
-                {r.band ? (
-                  <span style={{ fontSize: 11, fontWeight: 700, padding: "3px 10px", borderRadius: 999, background: r.band.color + "22", color: r.band.color }}>{r.band.label}</span>
-                ) : (
-                  <span style={{ fontSize: 11, color: COLORS.textMuted }}>No grades yet</span>
-                )}
-              </div>
+        {groups.length === 0 && (
+          <div style={{ background: COLORS.white, border: `1px solid ${COLORS.border}`, borderRadius: 16, padding: 24, textAlign: "center", color: COLORS.textMuted, fontSize: 14 }}>No classes yet.</div>
+        )}
+
+        {groups.map((g) => (
+          <div key={g.classId} style={{ marginBottom: 24 }}>
+            <h2 style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 700, fontSize: 16, margin: "0 0 10px 4px", color: COLORS.textDark }}>{g.className}</h2>
+            <div style={{ background: COLORS.white, border: `1px solid ${COLORS.border}`, borderRadius: 16, padding: 8, boxShadow: "0 4px 16px rgba(13,27,42,.06)" }}>
+              {g.students.length === 0 && <div style={{ padding: 24, textAlign: "center", color: COLORS.textMuted, fontSize: 14 }}>No students in this class yet.</div>}
+              {g.students.map((r) => (
+                <div key={r.id} style={{ display: "flex", alignItems: "center", gap: 14, padding: "14px 12px", borderBottom: `1px solid ${COLORS.border}` }}>
+                  <div style={{ width: 36, height: 36, borderRadius: "50%", background: COLORS.violetSoft, display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, color: COLORS.violet, fontSize: 14, flexShrink: 0 }}>{r.name[0]}</div>
+                  <div style={{ width: 140 }}>
+                    <div style={{ fontWeight: 700, fontSize: 14 }}>{r.name}</div>
+                  </div>
+                  <div style={{ width: 130, fontSize: 12.5, color: COLORS.textMuted }}>{r.missionsCompleted} submitted</div>
+                  <div style={{ flex: 1, height: 8, background: COLORS.border, borderRadius: 999, overflow: "hidden" }}>
+                    {r.avgPct !== null && <div style={{ height: "100%", width: `${r.avgPct}%`, background: r.band.color, borderRadius: 999 }} />}
+                  </div>
+                  <div style={{ width: 50, textAlign: "right", fontWeight: 700, fontSize: 13 }}>{r.avgPct !== null ? `${r.avgPct}%` : "—"}</div>
+                  <div style={{ width: 110, textAlign: "right" }}>
+                    {r.band ? (
+                      <span style={{ fontSize: 11, fontWeight: 700, padding: "3px 10px", borderRadius: 999, background: r.band.color + "22", color: r.band.color }}>{r.band.label}</span>
+                    ) : (
+                      <span style={{ fontSize: 11, color: COLORS.textMuted }}>No grades yet</span>
+                    )}
+                  </div>
+                </div>
+              ))}
             </div>
-          ))}
-        </div>
+          </div>
+        ))}
       </main>
     </div>
   );

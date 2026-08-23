@@ -508,7 +508,7 @@ export default function ActivityClient(props) {
       <style>{"\n        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@600;700&family=Inter:wght@400;500;600;700&display=swap');\n        .gc-btn { transition: transform 150ms ease; cursor: pointer; border: none; font-family: 'Inter', sans-serif; }\n        .gc-btn:hover { transform: translateY(-1px); }\n        .gc-fade-in { animation: gcFadeIn 220ms ease-out; }\n        @keyframes gcFadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }\n        .gc-dot { animation: gcPulse 1.2s ease-in-out infinite; }\n        @keyframes gcPulse { 0%,100% { opacity: .3; } 50% { opacity: 1; } }\n      "}</style>
 
       <div style={{ background: COLORS.slate, padding: "12px 20px", display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap" }}>
-        <button onClick={function () { router.push("/home"); }} className="gc-btn" style={{ background: "none", color: COLORS.white, display: "flex", alignItems: "center", padding: 6, borderRadius: 8 }}>← Home</button>
+        <button onClick={function () { router.push("/home"); router.refresh(); }} className="gc-btn" style={{ background: "none", color: COLORS.white, display: "flex", alignItems: "center", padding: 6, borderRadius: 8 }}>← Home</button>
         <div style={{ marginRight: "auto" }}>
           <div style={{ fontFamily: "'Poppins', sans-serif", color: COLORS.white, fontWeight: 700, fontSize: 16, lineHeight: 1.2 }}>{publicCase.title}</div>
           <div style={{ color: "rgba(255,255,255,.6)", fontSize: 12 }}>{publicCase.standard}</div>
@@ -775,7 +775,7 @@ export default function ActivityClient(props) {
           </div>
         </div>
       )}
-      <CelebrationModal open={selfConfidence !== null && appPhase === "share"} onGoHome={function () { router.push("/home"); }} />
+      <CelebrationModal open={selfConfidence !== null && appPhase === "share"} onGoHome={function () { router.push("/home"); router.refresh(); }} />
       <TranscriptModal open={transcriptOpen} onClose={function () { setTranscriptOpen(false); }} coldOpenMessages={publicCase.coldOpenMessages} cast={cast} liveMessages={appPhase !== "organizer" ? liveMessages : null} />
 
       <p style={{ fontSize: 11.5, color: "rgba(255,255,255,.55)", textAlign: "center", marginTop: 4, marginBottom: 12, lineHeight: 1.5 }}>
