@@ -265,11 +265,35 @@ export default function ActivityClient(props) {
 
   function saveProgress(fields) {
     var body = Object.assign({ assignmentId: assignmentId }, fields);
-    fetch("/api/submission/save", {
+    // Resolves true/false instead of throwing, so existing fire-and-forget
+    // callers below are unaffected — only the manual Save Progress button
+    // actually looks at whether it worked.
+    return fetch("/api/submission/save", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),
-    }).catch(function () {});
+    }).then(function (res) { return res.ok; }).catch(function () { return false; });
+  }
+
+  const [manualSaveState, setManualSaveState] = useState("idle"); // idle | saving | saved | error
+
+  // Everything that's savable so far, regardless of which step the student
+  // is currently on — so a student who's mid-Discuss (or anywhere past the
+  // organizer) when class ends can hit one button and not lose their work,
+  // even though the app itself only autosaves at step transitions.
+  function handleManualSave() {
+    setManualSaveState("saving");
+    saveProgress({
+      organizer: organizer,
+      sources: sources,
+      attempt1: attempt1,
+      attempt2: attempt2,
+      checklist: checklist,
+      self_confidence: selfConfidence,
+    }).then(function (ok) {
+      setManualSaveState(ok ? "saved" : "error");
+      setTimeout(function () { setManualSaveState("idle"); }, 2200);
+    });
   }
 
   function advanceColdOpen() {
@@ -489,6 +513,25 @@ export default function ActivityClient(props) {
           <div style={{ fontFamily: "'Poppins', sans-serif", color: COLORS.white, fontWeight: 700, fontSize: 16, lineHeight: 1.2 }}>{publicCase.title}</div>
           <div style={{ color: "rgba(255,255,255,.6)", fontSize: 12 }}>{publicCase.standard}</div>
         </div>
+        {appPhase !== "share" && (
+          <button
+            type="button"
+            onClick={handleManualSave}
+            className="gc-btn"
+            disabled={manualSaveState === "saving"}
+            style={{
+              background: manualSaveState === "saved" ? COLORS.teal : manualSaveState === "error" ? "#B23A3A" : "rgba(255,255,255,.14)",
+              color: COLORS.white,
+              borderRadius: 999,
+              padding: "8px 16px",
+              fontWeight: 700,
+              fontSize: 12.5,
+              whiteSpace: "nowrap",
+            }}
+          >
+            {manualSaveState === "saving" ? "Saving…" : manualSaveState === "saved" ? "✓ Saved" : manualSaveState === "error" ? "Couldn't save — try again" : "💾 Save Progress"}
+          </button>
+        )}
         <StepTracker currentIdx={stepIdx} />
       </div>
 

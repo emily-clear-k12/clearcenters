@@ -364,7 +364,13 @@ export default function MyClassesPage() {
                   {roster.map((s) => {
                     const status = studentStatus[s.id] || { needsReview: 0, submitted: 0, notStarted: 0, total: 0 };
                     return (
-                      <div key={s.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 8px", borderBottom: `1px solid ${COLORS.border}` }}>
+                      <button
+                        key={s.id}
+                        type="button"
+                        onClick={() => router.push(`/teacher/students/${s.id}`)}
+                        className="gc-btn"
+                        style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 8px", background: "none", border: "none", borderBottom: `1px solid ${COLORS.border}`, width: "100%", textAlign: "left", cursor: "pointer", font: "inherit", color: "inherit" }}
+                      >
                         <div style={{ width: 32, height: 32, borderRadius: "50%", background: COLORS.violetSoft, display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, color: COLORS.violet, fontSize: 13, flexShrink: 0 }}>{s.first_name[0]}</div>
                         <div style={{ flex: 1 }}>
                           <div style={{ fontSize: 13, fontWeight: 600 }}>{s.first_name}</div>
@@ -381,7 +387,7 @@ export default function MyClassesPage() {
                         ) : (
                           <span style={{ fontSize: 10.5, color: COLORS.textMuted }}>No assignments yet</span>
                         )}
-                      </div>
+                      </button>
                     );
                   })}
                   {roster.length === 0 && <div style={{ fontSize: 13, color: COLORS.textMuted, textAlign: "center", padding: 12 }}>No students yet — add your first one on the left.</div>}
