@@ -167,7 +167,7 @@ export default function TeacherGradeDetailPage() {
     setShowConfirm(false);
     const { error: updateError } = await supabase
       .from("submissions")
-      .update({ teacher_grade: finalGrade, teacher_feedback: feedback, released: true })
+      .update({ teacher_grade: finalGrade, teacher_feedback: feedback, released: true, released_at: new Date().toISOString() })
       .eq("id", submissionId);
     if (updateError) {
       setSaving(false);

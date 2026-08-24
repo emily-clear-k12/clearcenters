@@ -10,6 +10,7 @@ const COLORS = {
   violetSoft: "#EDE6FF",
   teal: "#00C2C7",
   tealSoft: "#E6F8F9",
+  gold: "#FFC44D",
   cream: "#F2F0FA",
   white: "#FFFFFF",
   textDark: "#1F2A44",
@@ -76,8 +77,13 @@ export default function MissionsClient({ student, assignments }) {
                 className="gc-btn mission-card"
                 style={{ display: "block", width: "100%", textAlign: "left", background: COLORS.white, borderRadius: 18, boxShadow: "0 4px 16px rgba(0,0,0,.08)", overflow: "hidden", padding: 0, border: "none", cursor: "pointer", font: "inherit", color: "inherit" }}
               >
-                <div style={{ height: 130, overflow: "hidden" }}>
+                <div style={{ height: 130, overflow: "hidden", position: "relative" }}>
                   <img src={caseImagePath(a.case_standard)} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+                  {a.revisionRequested && (
+                    <div title="Sent back for revision" style={{ position: "absolute", top: 8, left: 8, width: 32, height: 32, borderRadius: "50%", background: COLORS.gold, boxShadow: "0 2px 8px rgba(0,0,0,.3)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 17 }}>
+                      ⭐
+                    </div>
+                  )}
                 </div>
                 <div style={{ padding: 16 }}>
                   <span style={{ display: "inline-flex", background: COLORS.violetSoft, color: COLORS.violet, fontSize: 11, fontWeight: 700, letterSpacing: .3, padding: "4px 10px", borderRadius: 999, marginBottom: 8 }}>

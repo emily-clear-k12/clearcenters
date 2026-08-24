@@ -89,8 +89,15 @@ export default function ProgressClient({ student, missions }) {
                         </div>
                       </div>
                       {meta ? (
-                        <span style={{ fontSize: 12.5, fontWeight: 700, padding: "5px 12px", borderRadius: 999, background: meta.bg, color: meta.color, whiteSpace: "nowrap" }}>
-                          {meta.emoji} {meta.label}
+                        <span style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                          {m.isNewGrade && (
+                            <span style={{ fontSize: 10.5, fontWeight: 700, padding: "3px 8px", borderRadius: 999, background: "#E4574C", color: COLORS.white, whiteSpace: "nowrap" }}>
+                              NEW
+                            </span>
+                          )}
+                          <span style={{ fontSize: 12.5, fontWeight: 700, padding: "5px 12px", borderRadius: 999, background: meta.bg, color: meta.color, whiteSpace: "nowrap" }}>
+                            {meta.emoji} {meta.label}
+                          </span>
                         </span>
                       ) : m.revisionRequested ? (
                         <span style={{ fontSize: 12.5, fontWeight: 700, padding: "5px 12px", borderRadius: 999, background: "#FFF4E5", color: "#B8860B", whiteSpace: "nowrap" }}>

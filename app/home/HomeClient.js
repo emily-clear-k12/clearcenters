@@ -34,6 +34,14 @@ function caseImagePath(standard) {
 export default function HomeClient({ student, studentClass, assignments, missionsCompleted }) {
   const router = useRouter();
   const [samOpen, setSamOpen] = useState(false);
+  const [notif, setNotif] = useState(null);
+
+  useEffect(() => {
+    fetch("/api/student/notifications")
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => { if (data) setNotif(data); })
+      .catch(() => {});
+  }, []);
 
   useEffect(() => {
     function fitStatNumbers() {
@@ -96,6 +104,25 @@ export default function HomeClient({ student, studentClass, assignments, mission
             </div>
           </div>
         </div>
+
+        {notif && notif.count > 0 && (
+          <button
+            type="button"
+            onClick={() => router.push("/progress")}
+            className="gc-btn"
+            style={{ display: "flex", alignItems: "center", gap: 12, width: "100%", textAlign: "left", background: "#FFF4E5", border: `1.5px solid ${COLORS.gold}`, borderRadius: 16, padding: "14px 18px", marginBottom: 20 }}
+          >
+            <span style={{ fontSize: 24, lineHeight: 1 }}>{notif.revisionCount > 0 ? "🔁" : "🌟"}</span>
+            <span style={{ flex: 1, fontSize: 13.5, fontWeight: 700, color: "#8A5A00", lineHeight: 1.4 }}>
+              {notif.revisionCount > 0 && notif.newGradeCount > 0
+                ? `${notif.revisionCount} mission${notif.revisionCount === 1 ? "" : "s"} need${notif.revisionCount === 1 ? "s" : ""} another try, and you have ${notif.newGradeCount} new grade${notif.newGradeCount === 1 ? "" : "s"} waiting!`
+                : notif.revisionCount > 0
+                ? `${notif.revisionCount} mission${notif.revisionCount === 1 ? "" : "s"} need${notif.revisionCount === 1 ? "s" : ""} another try — see what your teacher said.`
+                : `You have ${notif.newGradeCount} new grade${notif.newGradeCount === 1 ? "" : "s"} waiting in My Progress!`}
+            </span>
+            <span style={{ color: "#8A5A00", fontWeight: 700, fontSize: 13, whiteSpace: "nowrap" }}>View →</span>
+          </button>
+        )}
 
         {activeMission ? (
           <div style={{ position: "relative", background: COLORS.white, borderRadius: 20, boxShadow: "0 4px 16px rgba(0,0,0,.1)", padding: 24, display: "grid", gridTemplateColumns: "240px 1fr", gap: 24, marginBottom: 24 }}>

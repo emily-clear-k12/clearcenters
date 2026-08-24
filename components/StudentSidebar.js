@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { useRouter, usePathname } from "next/navigation";
 
 const COLORS = {
@@ -27,6 +27,23 @@ const NAV_ITEMS = [
 export default function StudentSidebar() {
   const router = useRouter();
   const pathname = usePathname();
+
+  // Small badge on "Progress" — a new grade waiting, or a mission sent
+  // back for revision. Fetched once on mount rather than threaded down as
+  // a prop, so every page that renders this sidebar gets it for free
+  // without each page.js needing to fetch and pass it through.
+  const [notifCount, setNotifCount] = useState(0);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch("/api/student/notifications")
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (!cancelled && data) setNotifCount(data.count || 0);
+      })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, [pathname]);
 
   async function handleLogout() {
     await fetch("/api/student-logout", { method: "POST" });
@@ -62,7 +79,12 @@ export default function StudentSidebar() {
               }}
             >
               <img src={item.icon} alt="" style={{ width: 21, height: 21, objectFit: "contain" }} />
-              <span>{item.label}</span>
+              <span style={{ flex: 1 }}>{item.label}</span>
+              {item.href === "/progress" && notifCount > 0 && (
+                <span style={{ minWidth: 18, height: 18, borderRadius: 999, background: "#FF9F43", color: COLORS.white, fontSize: 10.5, fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center", padding: "0 4px", flexShrink: 0 }}>
+                  {notifCount > 9 ? "9+" : notifCount}
+                </span>
+              )}
             </button>
           );
         })}
