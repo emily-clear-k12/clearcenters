@@ -19,19 +19,15 @@ const COLORS = {
   success: "#22C55E",
 };
 
-const BADGE_TIERS = [
-  { key: "explorer", label: "Explorer", threshold: 0, img: "/badges/explorer.jpg" },
-  { key: "pathfinder", label: "Pathfinder", threshold: 50, img: "/badges/pathfinder.jpg" },
-  { key: "crystal_thinker", label: "Crystal Thinker", threshold: 150, img: "/badges/crystal_thinker.jpg" },
-  { key: "rising_star", label: "Rising Star", threshold: 300, img: "/badges/rising_star.jpg" },
-  { key: "master", label: "Master", threshold: 500, img: "/badges/master.jpg" },
-];
-
 function caseImagePath(standard) {
   return `/cases/${standard.replace(/\./g, "-")}.jpg`;
 }
 
-export default function HomeClient({ student, studentClass, assignments, missionsCompleted }) {
+export default function HomeClient({ student, studentClass, assignments, missionsCompleted, badgeTiers }) {
+  // Badge tiers are teacher-editable (see /teacher/badges) and loaded from
+  // the database by the server component; this is just a safety net in
+  // case that table is ever empty.
+  const tiers = badgeTiers && badgeTiers.length > 0 ? badgeTiers : [];
   const router = useRouter();
   const [samOpen, setSamOpen] = useState(false);
   const [notif, setNotif] = useState(null);
@@ -68,8 +64,8 @@ export default function HomeClient({ student, studentClass, assignments, mission
 
   const activeMission = assignments[0] || null;
   const upNext = assignments.slice(1, 3);
-  const currentTierIndex = [...BADGE_TIERS].reverse().findIndex((t) => student.crystal_points >= t.threshold);
-  const currentTier = currentTierIndex >= 0 ? BADGE_TIERS[BADGE_TIERS.length - 1 - currentTierIndex] : BADGE_TIERS[0];
+  const currentTierIndex = [...tiers].reverse().findIndex((t) => student.crystal_points >= t.threshold);
+  const currentTier = tiers.length > 0 ? (currentTierIndex >= 0 ? tiers[tiers.length - 1 - currentTierIndex] : tiers[0]) : null;
 
   return (
     <div style={{ minHeight: "100vh", background: COLORS.cream, fontFamily: "'Inter', sans-serif", color: COLORS.textDark, display: "flex" }}>
@@ -203,21 +199,24 @@ export default function HomeClient({ student, studentClass, assignments, mission
             <p style={{ fontSize: 13, fontWeight: 700, color: COLORS.textMuted, textTransform: "uppercase", margin: 0 }}>Your Badges</p>
           </div>
           <div style={{ display: "flex", gap: 20, flexWrap: "wrap" }}>
-            {BADGE_TIERS.map((tier) => {
+            {tiers.map((tier) => {
               const earned = student.crystal_points >= tier.threshold;
-              const isCurrent = tier.key === currentTier.key;
+              const isCurrent = currentTier && tier.id === currentTier.id;
               return (
-                <div key={tier.key} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6, width: 92, position: "relative" }}>
+                <div key={tier.id} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6, width: 92, position: "relative" }}>
                   {isCurrent && (
                     <div style={{ position: "absolute", top: -6, left: "50%", transform: "translateX(-50%)", width: 78, height: 78, borderRadius: "50%", boxShadow: `0 0 0 3px ${COLORS.gold}` }} />
                   )}
-                  <img src={tier.img} alt="" style={{ width: 68, height: 68, objectFit: "contain", borderRadius: 12, opacity: earned ? 1 : 0.28, filter: earned ? "none" : "grayscale(1)" }} />
+                  <img src={tier.image_path} alt="" style={{ width: 68, height: 68, objectFit: "contain", borderRadius: 12, opacity: earned ? 1 : 0.28, filter: earned ? "none" : "grayscale(1)" }} />
                   <div style={{ fontSize: 12.5, fontWeight: 700, textAlign: "center", color: earned ? COLORS.textDark : COLORS.textMuted }}>
                     {tier.label}{!earned ? " · Locked" : ""}
                   </div>
                 </div>
               );
             })}
+            {tiers.length === 0 && (
+              <p style={{ fontSize: 13, color: COLORS.textMuted }}>Badges aren't set up yet — check back soon!</p>
+            )}
           </div>
         </div>
       </main>
