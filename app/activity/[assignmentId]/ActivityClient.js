@@ -4,6 +4,7 @@ import React, { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Send, Loader2 } from "lucide-react";
 import { MAX_DISCUSS_TURNS } from "../../../lib/constants";
+import { GENERIC_HINTS, getCaseHints } from "../../../lib/hints";
 
 const COLORS = {
   navy: "#16243F",
@@ -366,26 +367,22 @@ export default function ActivityClient(props) {
   }
 
   function requestHint() {
+    // Hints are pre-written now (see lib/hints.js) instead of a live AI
+    // call, so this is a plain local lookup — no fetch, no loading state,
+    // and no way for it to fail. Case-specific hints show first, in order;
+    // once those run out, it loops through the generic list for as long as
+    // the student keeps asking, since there's no API cost to cap anymore.
     if (hintLoading) return;
-    setHintLoading(true);
-    setHintError(null);
-    fetch("/api/hint", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ caseStandard: caseStandard, draftText: currentDraftText() }),
-    })
-      .then(function (res) { return res.json().then(function (data) { return { ok: res.ok, data: data }; }); })
-      .then(function (result) {
-        if (!result.ok) throw new Error(result.data.error);
-        setHintText(result.data.hint);
-        setHintCount(function (c) { return c + 1; });
-      })
-      .catch(function () {
-        setHintError("Couldn't reach S.A.M. just now. Give it another try.");
-      })
-      .finally(function () {
-        setHintLoading(false);
-      });
+    var caseHints = getCaseHints(caseStandard);
+    var hint;
+    if (hintCount < caseHints.length) {
+      hint = caseHints[hintCount];
+    } else {
+      var genericIndex = (hintCount - caseHints.length) % GENERIC_HINTS.length;
+      hint = GENERIC_HINTS[genericIndex];
+    }
+    setHintText(hint);
+    setHintCount(function (c) { return c + 1; });
   }
 
   function toggleChecklistItem(i) {
