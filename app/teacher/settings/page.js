@@ -62,13 +62,20 @@ export default function ClassSettingsPage() {
     if (!newName || newName === cls.name) return;
 
     setRowStatus((s) => ({ ...s, [cls.id]: "saving" }));
-    const { error } = await supabase
+    // .select() here isn't just to get the row back — it's what lets us tell
+    // "actually saved" apart from "matched zero rows and silently did nothing,"
+    // which is exactly what happens if Row Level Security blocks the write
+    // without throwing an error.
+    const { data, error } = await supabase
       .from("classes")
       .update({ name: newName })
       .eq("id", cls.id)
-      .eq("teacher_id", teacherId);
+      .eq("teacher_id", teacherId)
+      .select();
 
-    if (error) {
+    if (error || !data || data.length === 0) {
+      if (error) console.error("Class rename failed:", error);
+      else console.error("Class rename matched 0 rows — likely blocked by Row Level Security on 'classes'.");
       setRowStatus((s) => ({ ...s, [cls.id]: "error" }));
       return;
     }
