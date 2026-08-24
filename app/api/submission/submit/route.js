@@ -72,5 +72,15 @@ Student's response:
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
+  // A real submit (not a draft autosave) counts as today's activity for the
+  // student's streak. bump_daily_streak() does the "is this a new day, is it
+  // consecutive, or did they miss a day" math atomically in Postgres — best
+  // effort only, a hiccup here should never block the submission itself.
+  try {
+    await supabaseAdmin.rpc("bump_daily_streak", { p_student_id: studentId });
+  } catch (err) {
+    // ignore — streak is a nice-to-have, not worth failing the submit over
+  }
+
   return NextResponse.json({ success: true });
 }

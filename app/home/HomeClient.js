@@ -83,9 +83,17 @@ export default function HomeClient({ student, studentClass, assignments, mission
               {studentClass?.name ? `${studentClass.name} · ` : ""}What mission will you tackle today?
             </p>
           </div>
-          <div style={{ display: "flex", alignItems: "center", gap: 6, background: COLORS.white, borderRadius: 999, padding: "6px 14px 6px 6px", boxShadow: "0 4px 16px rgba(0,0,0,.08)", fontWeight: 700, fontSize: 14 }}>
-            <img src="/icons/crystal_points.png" alt="" style={{ width: 24, height: 24, objectFit: "contain" }} />
-            {student.crystal_points}
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            {student.streak_days > 0 && (
+              <div style={{ display: "flex", alignItems: "center", gap: 6, background: COLORS.white, borderRadius: 999, padding: "6px 14px", boxShadow: "0 4px 16px rgba(0,0,0,.08)", fontWeight: 700, fontSize: 14 }}>
+                <span style={{ fontSize: 18, lineHeight: 1 }}>🔥</span>
+                {student.streak_days} day{student.streak_days === 1 ? "" : "s"}
+              </div>
+            )}
+            <div style={{ display: "flex", alignItems: "center", gap: 6, background: COLORS.white, borderRadius: 999, padding: "6px 14px 6px 6px", boxShadow: "0 4px 16px rgba(0,0,0,.08)", fontWeight: 700, fontSize: 14 }}>
+              <img src="/icons/crystal_points.png" alt="" style={{ width: 24, height: 24, objectFit: "contain" }} />
+              {student.crystal_points}
+            </div>
           </div>
         </div>
 

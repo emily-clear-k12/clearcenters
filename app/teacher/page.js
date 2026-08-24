@@ -58,6 +58,89 @@ function Donut({ segments, size = 150, centerLabel, centerSub }) {
   );
 }
 
+const POINT_PRESETS = [5, 10, 25, 50];
+
+function AwardPointsModal({ open, classes, rawStudents, defaultClassId, awarding, onCancel, onAward }) {
+  const [classId, setClassId] = useState(defaultClassId || (classes[0] && classes[0].id) || "");
+  const [mode, setMode] = useState("class"); // "class" | "student"
+  const [studentId, setStudentId] = useState("");
+  const [amount, setAmount] = useState(10);
+
+  useEffect(() => {
+    if (open) {
+      setClassId(defaultClassId || (classes[0] && classes[0].id) || "");
+      setMode("class");
+      setStudentId("");
+      setAmount(10);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open]);
+
+  if (!open) return null;
+
+  const classStudents = rawStudents.filter((s) => s.class_id === classId);
+  const selectedClass = classes.find((c) => c.id === classId);
+  const canAward = amount > 0 && classId && (mode === "class" ? classStudents.length > 0 : !!studentId);
+
+  return (
+    <div style={{ position: "fixed", inset: 0, background: "rgba(13,20,35,.65)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 100, padding: 20 }}>
+      <div style={{ background: COLORS.white, borderRadius: 18, width: "min(440px, 100%)", padding: 24, boxShadow: "0 24px 60px rgba(0,0,0,.4)" }}>
+        <div style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 700, fontSize: 18, color: COLORS.textDark, marginBottom: 4 }}>🔮 Award Crystal Points</div>
+        <div style={{ fontSize: 13, color: COLORS.textMuted, marginBottom: 18 }}>Give a class or a single student a bonus — great for a great question, a kind classmate moment, or anything else that doesn't fit a rubric.</div>
+
+        <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: COLORS.textMuted, marginBottom: 6 }}>Class</label>
+        <select value={classId} onChange={(e) => { setClassId(e.target.value); setStudentId(""); }} style={{ width: "100%", padding: "10px 12px", borderRadius: 10, border: `1.5px solid ${COLORS.border}`, fontSize: 13.5, marginBottom: 14, fontFamily: "inherit" }}>
+          {classes.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+        </select>
+
+        <div style={{ display: "flex", gap: 8, marginBottom: 14 }}>
+          <button type="button" className="gc-btn" onClick={() => setMode("class")} style={{ flex: 1, padding: "9px 8px", borderRadius: 10, fontWeight: 700, fontSize: 13, background: mode === "class" ? COLORS.violet : COLORS.canvas, color: mode === "class" ? COLORS.white : COLORS.textDark }}>
+            Whole Class{selectedClass ? ` (${classStudents.length})` : ""}
+          </button>
+          <button type="button" className="gc-btn" onClick={() => setMode("student")} style={{ flex: 1, padding: "9px 8px", borderRadius: 10, fontWeight: 700, fontSize: 13, background: mode === "student" ? COLORS.violet : COLORS.canvas, color: mode === "student" ? COLORS.white : COLORS.textDark }}>
+            One Student
+          </button>
+        </div>
+
+        {mode === "student" && (
+          <select value={studentId} onChange={(e) => setStudentId(e.target.value)} style={{ width: "100%", padding: "10px 12px", borderRadius: 10, border: `1.5px solid ${COLORS.border}`, fontSize: 13.5, marginBottom: 14, fontFamily: "inherit" }}>
+            <option value="">Choose a student...</option>
+            {classStudents.map((s) => <option key={s.id} value={s.id}>{s.first_name}</option>)}
+          </select>
+        )}
+
+        <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: COLORS.textMuted, marginBottom: 6 }}>Points</label>
+        <div style={{ display: "flex", gap: 8, marginBottom: 10 }}>
+          {POINT_PRESETS.map((p) => (
+            <button key={p} type="button" className="gc-btn" onClick={() => setAmount(p)} style={{ flex: 1, padding: "9px 4px", borderRadius: 10, fontWeight: 700, fontSize: 13, background: amount === p ? COLORS.gold : COLORS.canvas, color: COLORS.textDark }}>
+              +{p}
+            </button>
+          ))}
+        </div>
+        <input
+          type="number"
+          min={1}
+          value={amount}
+          onChange={(e) => setAmount(parseInt(e.target.value, 10) || 0)}
+          style={{ width: "100%", padding: "10px 12px", borderRadius: 10, border: `1.5px solid ${COLORS.border}`, fontSize: 13.5, marginBottom: 18, fontFamily: "inherit", boxSizing: "border-box" }}
+        />
+
+        <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
+          <button onClick={onCancel} className="gc-btn" style={{ background: COLORS.canvas, color: COLORS.textDark, borderRadius: 999, padding: "11px 20px", fontWeight: 700, fontSize: 13.5 }}>Cancel</button>
+          <button
+            onClick={() => onAward({ classId, mode, studentId, amount, studentCount: classStudents.length })}
+            disabled={!canAward || awarding}
+            className="gc-btn"
+            style={{ background: COLORS.violet, color: COLORS.white, borderRadius: 999, padding: "11px 20px", fontWeight: 700, fontSize: 13.5, opacity: canAward ? 1 : 0.5 }}
+          >
+            {awarding ? "Awarding..." : `Award +${amount}`}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function TeacherOverview() {
   const router = useRouter();
   const [loadingAuth, setLoadingAuth] = useState(true);
@@ -78,6 +161,9 @@ export default function TeacherOverview() {
   const [targetsByAssignment, setTargetsByAssignment] = useState({});
   const [caseMap, setCaseMap] = useState({});
   const [selectedClassId, setSelectedClassId] = useState("all");
+  const [awardModalOpen, setAwardModalOpen] = useState(false);
+  const [awarding, setAwarding] = useState(false);
+  const [awardSuccess, setAwardSuccess] = useState(null);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data, error: authError }) => {
@@ -147,6 +233,22 @@ export default function TeacherOverview() {
   useEffect(() => {
     if (!loadingAuth && teacherId) loadDashboard(teacherId);
   }, [loadingAuth, teacherId, loadDashboard]);
+
+  async function handleAwardPoints({ classId, mode, studentId, amount, studentCount }) {
+    setAwarding(true);
+    const targetIds = mode === "student" ? [studentId] : rawStudents.filter((s) => s.class_id === classId).map((s) => s.id);
+
+    // Same increment_crystal_points() function the grade-release flow uses —
+    // one RPC call per student so a class award can't race with itself.
+    await Promise.all(targetIds.map((id) => supabase.rpc("increment_crystal_points", { p_student_id: id, p_amount: amount })));
+
+    setAwarding(false);
+    setAwardModalOpen(false);
+    const className = classMap[classId] || "the class";
+    setAwardSuccess(mode === "student" ? `+${amount} points awarded!` : `+${amount} points awarded to all ${targetIds.length} students in ${className}!`);
+    if (teacherId) await loadDashboard(teacherId);
+    setTimeout(() => setAwardSuccess(null), 4000);
+  }
 
   const classMap = React.useMemo(() => Object.fromEntries(classes.map((c) => [c.id, c.name])), [classes]);
   const studentMap = React.useMemo(() => Object.fromEntries(rawStudents.map((s) => [s.id, s.first_name])), [rawStudents]);
@@ -253,6 +355,8 @@ export default function TeacherOverview() {
       <style>{`@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@600;700&family=Inter:wght@400;500;600;700&display=swap');
         .gc-btn { transition: transform 150ms ease, box-shadow 150ms ease; cursor: pointer; border: none; font-family: 'Inter', sans-serif; }
         .gc-btn:hover { transform: translateY(-1px); }
+        .gc-fade-in { animation: gcFadeIn 220ms ease-out; }
+        @keyframes gcFadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
       `}</style>
 
       <TeacherSidebar teacherEmail={teacherEmail} />
@@ -298,7 +402,7 @@ export default function TeacherOverview() {
             { icon: "/teacher/metric_class_average.png", value: classAverage !== null ? `${classAverage}%` : "—", label: "Class Average", sub: classAverage === null ? "No released grades yet" : null },
             { icon: "/teacher/metric_active_assignments.png", value: assignmentCount, label: "Active Assignments" },
             { icon: "/teacher/metric_needs_review.png", value: pendingCount, label: "Needs Review" },
-            { icon: "/teacher/metric_crystal_points.png", value: totalCrystalPoints, label: "Crystal Points", sub: "Points system coming soon" },
+            { icon: "/teacher/metric_crystal_points.png", value: totalCrystalPoints, label: "Crystal Points" },
           ].map((m, i) => (
             <div key={i} style={{ flex: 1, display: "flex", alignItems: "center", gap: 12, padding: "8px 14px", borderRight: i < 4 ? `1px solid ${COLORS.border}` : "none" }}>
               <img src={m.icon} alt="" style={{ width: 44, height: 44, objectFit: "contain" }} />
@@ -456,10 +560,12 @@ export default function TeacherOverview() {
                 <button onClick={() => router.push("/teacher/assign")} className="gc-btn" style={{ display: "flex", alignItems: "center", gap: 10, background: "none", padding: "9px 4px", fontSize: 13, fontWeight: 600, color: COLORS.textDark, textAlign: "left" }}>
                   <img src="/teacher/action_create_assignment.png" alt="" style={{ width: 20, height: 20 }} /> Create New Assignment <span style={{ marginLeft: "auto", color: COLORS.textMuted }}>›</span>
                 </button>
+                <button onClick={() => setAwardModalOpen(true)} disabled={classes.length === 0} className="gc-btn" style={{ display: "flex", alignItems: "center", gap: 10, background: "none", padding: "9px 4px", fontSize: 13, fontWeight: 600, color: COLORS.textDark, textAlign: "left", opacity: classes.length === 0 ? 0.5 : 1 }}>
+                  <img src="/teacher/action_award_crystal_points.png" alt="" style={{ width: 20, height: 20 }} /> Award Crystal Points <span style={{ marginLeft: "auto", color: COLORS.textMuted }}>›</span>
+                </button>
                 {[
                   { icon: "/teacher/action_send_announcement.png", label: "Send Class Announcement" },
                   { icon: "/teacher/action_generate_report.png", label: "Generate Class Report" },
-                  { icon: "/teacher/action_award_crystal_points.png", label: "Award Crystal Points" },
                 ].map((a) => (
                   <div key={a.label} style={{ display: "flex", alignItems: "center", gap: 10, padding: "9px 4px", fontSize: 13, fontWeight: 600, color: COLORS.textMuted, opacity: 0.6 }}>
                     <img src={a.icon} alt="" style={{ width: 20, height: 20, filter: "grayscale(1)" }} /> {a.label} <span style={{ marginLeft: "auto", fontSize: 10, fontWeight: 700, background: COLORS.border, padding: "2px 8px", borderRadius: 999 }}>Soon</span>
@@ -470,6 +576,22 @@ export default function TeacherOverview() {
           </div>
         </div>
       </main>
+
+      {awardSuccess && (
+        <div className="gc-fade-in" style={{ position: "fixed", bottom: 28, right: 28, background: COLORS.textDark, color: COLORS.white, borderRadius: 12, padding: "14px 20px", fontWeight: 700, fontSize: 13.5, boxShadow: "0 8px 24px rgba(0,0,0,.25)", zIndex: 200 }}>
+          🔮 {awardSuccess}
+        </div>
+      )}
+
+      <AwardPointsModal
+        open={awardModalOpen}
+        classes={classes}
+        rawStudents={rawStudents}
+        defaultClassId={selectedClassId !== "all" ? selectedClassId : undefined}
+        awarding={awarding}
+        onCancel={() => setAwardModalOpen(false)}
+        onAward={handleAwardPoints}
+      />
     </div>
   );
 }

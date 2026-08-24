@@ -24,6 +24,10 @@ const COLORS = {
 };
 
 const GRADE_LABELS = { 0: "Level 0", 1: "Level 1", 2: "Level 2" };
+// Crystal Points awarded when a grade is released, scaled to score so effort
+// still earns something even at Level 0. Easy to retune later — just these
+// three numbers.
+const POINTS_BY_GRADE = { 0: 10, 1: 20, 2: 30 };
 const CONFIDENCE_META = {
   shaky: { emoji: "😕", label: "Still shaky" },
   solid: { emoji: "🙂", label: "Pretty solid" },
@@ -79,6 +83,7 @@ export default function TeacherGradeDetailPage() {
   const [feedback, setFeedback] = useState("");
   const [showConfirm, setShowConfirm] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [pointsAwarded, setPointsAwarded] = useState(null);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data, error: authError }) => {
@@ -142,11 +147,29 @@ export default function TeacherGradeDetailPage() {
       .from("submissions")
       .update({ teacher_grade: finalGrade, teacher_feedback: feedback, released: true })
       .eq("id", submissionId);
-    setSaving(false);
     if (updateError) {
+      setSaving(false);
       setError("Couldn't release the grade: " + updateError.message);
       return;
     }
+
+    // Award Crystal Points for this release. This runs through the
+    // increment_crystal_points() Postgres function (not a plain client-side
+    // read-then-write) so two releases landing at the same moment can't
+    // stomp on each other's point total.
+    const amount = POINTS_BY_GRADE[finalGrade] ?? 0;
+    if (amount > 0 && submission.student_id) {
+      const { error: pointsError } = await supabase.rpc("increment_crystal_points", {
+        p_student_id: submission.student_id,
+        p_amount: amount,
+      });
+      if (!pointsError) setPointsAwarded(amount);
+      // A points hiccup shouldn't block the release the teacher already
+      // confirmed — the grade is what matters most; points can be
+      // reconciled later if this ever actually fails.
+    }
+
+    setSaving(false);
     await loadSubmission();
   }
 
@@ -330,6 +353,7 @@ export default function TeacherGradeDetailPage() {
               {submission.released ? (
                 <div className="gc-fade-in" style={{ textAlign: "center", background: COLORS.tealSoft, color: COLORS.teal, borderRadius: 10, padding: "10px 12px", fontWeight: 700, fontSize: 13 }}>
                   ✓ Released to {studentName}
+                  {pointsAwarded !== null && <span> · +{pointsAwarded} Crystal Points 🔮</span>}
                 </div>
               ) : (
                 <button className="gc-btn" onClick={() => setShowConfirm(true)} disabled={saving} style={{ width: "100%", background: COLORS.violet, color: COLORS.white, border: "none", borderRadius: 999, padding: "12px 20px", fontWeight: 700, fontSize: 14.5 }}>
