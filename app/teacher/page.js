@@ -63,17 +63,21 @@ export default function TeacherOverview() {
   const [loadingAuth, setLoadingAuth] = useState(true);
   const [loading, setLoading] = useState(true);
   const [teacherEmail, setTeacherEmail] = useState("");
+  const [teacherId, setTeacherId] = useState(null);
   const [error, setError] = useState(null);
 
-  const [studentCount, setStudentCount] = useState(0);
-  const [assignmentCount, setAssignmentCount] = useState(0);
-  const [pendingSubmissions, setPendingSubmissions] = useState([]);
-  const [totalCrystalPoints, setTotalCrystalPoints] = useState(0);
-  const [classAverage, setClassAverage] = useState(null);
-  const [bandCounts, setBandCounts] = useState({ Excellent: 0, Proficient: 0, Developing: 0, "Needs Support": 0 });
-  const [studentInsights, setStudentInsights] = useState([]);
-  const [recentAssignments, setRecentAssignments] = useState([]);
-  const [completionDonut, setCompletionDonut] = useState({ completed: 0, inProgress: 0, notStarted: 0 });
+  // Raw data straight from Supabase, unfiltered by class. Everything the
+  // dashboard displays is derived from this via the `dashboard` memo below,
+  // filtered down to whichever class tab is selected — that's what keeps
+  // the Class Performance donut (and everything else) from blending every
+  // class's numbers together.
+  const [classes, setClasses] = useState([]);
+  const [rawStudents, setRawStudents] = useState([]);
+  const [rawAssignments, setRawAssignments] = useState([]);
+  const [rawSubmissions, setRawSubmissions] = useState([]);
+  const [targetsByAssignment, setTargetsByAssignment] = useState({});
+  const [caseMap, setCaseMap] = useState({});
+  const [selectedClassId, setSelectedClassId] = useState("all");
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data, error: authError }) => {
@@ -82,38 +86,41 @@ export default function TeacherOverview() {
         return;
       }
       setTeacherEmail(data.user.email || "");
+      setTeacherId(data.user.id);
       setLoadingAuth(false);
     });
   }, [router]);
 
-  const loadDashboard = useCallback(async () => {
+  const loadDashboard = useCallback(async (teacherId) => {
     setLoading(true);
     setError(null);
 
-    const { data: classes } = await supabase.from("classes").select("id, name");
-    const classIds = (classes || []).map((c) => c.id);
-    const classMap = Object.fromEntries((classes || []).map((c) => [c.id, c.name]));
+    // Only THIS teacher's own classes — otherwise every teacher using the
+    // app would see every other teacher's students and classes mixed in.
+    const { data: classesData } = await supabase.from("classes").select("id, name").eq("teacher_id", teacherId).order("name");
+    const classIds = (classesData || []).map((c) => c.id);
+    setClasses(classesData || []);
 
     let students = [];
     if (classIds.length > 0) {
       const { data } = await supabase.from("students").select("id, first_name, class_id, crystal_points").in("class_id", classIds);
       students = data || [];
     }
-    setStudentCount(students.length);
-    setTotalCrystalPoints(students.reduce((sum, s) => sum + (s.crystal_points || 0), 0));
+    setRawStudents(students);
 
     let assignments = [];
     if (classIds.length > 0) {
       const { data } = await supabase.from("assignments").select("id, case_standard, due_date, class_id, created_at").in("class_id", classIds).order("created_at", { ascending: false });
       assignments = data || [];
     }
-    setAssignmentCount(assignments.length);
+    setRawAssignments(assignments);
 
     const caseStandards = [...new Set(assignments.map((a) => a.case_standard).filter(Boolean))];
-    let caseMap = {};
     if (caseStandards.length > 0) {
       const { data: cases } = await supabase.from("cases").select("standard, title").in("standard", caseStandards);
-      caseMap = Object.fromEntries((cases || []).map((c) => [c.standard, c.title]));
+      setCaseMap(Object.fromEntries((cases || []).map((c) => [c.standard, c.title])));
+    } else {
+      setCaseMap({});
     }
 
     const assignmentIds = assignments.map((a) => a.id);
@@ -125,74 +132,107 @@ export default function TeacherOverview() {
       const { data: targets } = await supabase.from("assignment_students").select("assignment_id, student_id").in("assignment_id", assignmentIds);
       targetRows = targets || [];
     }
-    const targetsByAssignment = {};
+    setRawSubmissions(allSubmissions);
+
+    const targetsMap = {};
     targetRows.forEach((t) => {
-      if (!targetsByAssignment[t.assignment_id]) targetsByAssignment[t.assignment_id] = new Set();
-      targetsByAssignment[t.assignment_id].add(t.student_id);
+      if (!targetsMap[t.assignment_id]) targetsMap[t.assignment_id] = new Set();
+      targetsMap[t.assignment_id].add(t.student_id);
     });
+    setTargetsByAssignment(targetsMap);
+
+    setLoading(false);
+  }, []);
+
+  useEffect(() => {
+    if (!loadingAuth && teacherId) loadDashboard(teacherId);
+  }, [loadingAuth, teacherId, loadDashboard]);
+
+  const classMap = React.useMemo(() => Object.fromEntries(classes.map((c) => [c.id, c.name])), [classes]);
+  const studentMap = React.useMemo(() => Object.fromEntries(rawStudents.map((s) => [s.id, s.first_name])), [rawStudents]);
+
+  // Everything the page renders is computed here, scoped to the selected
+  // class tab ("all" combines every class, same as the old behavior).
+  const dashboard = React.useMemo(() => {
     function applicableStudentIdsFor(assignment) {
       const targetSet = targetsByAssignment[assignment.id];
-      const classStudents = students.filter((st) => st.class_id === assignment.class_id).map((st) => st.id);
+      const classStudents = rawStudents.filter((st) => st.class_id === assignment.class_id).map((st) => st.id);
       if (!targetSet || targetSet.size === 0) return classStudents;
       return classStudents.filter((id) => targetSet.has(id));
     }
 
-    const pending = allSubmissions.filter((s) => s.submitted_at && (s.teacher_grade === null || s.teacher_grade === undefined));
-    const studentMap = Object.fromEntries(students.map((s) => [s.id, s.first_name]));
-    setPendingSubmissions(
-      pending.sort((a, b) => new Date(b.submitted_at) - new Date(a.submitted_at)).map((s) => ({ ...s, studentName: studentMap[s.student_id] || "Unknown" }))
-    );
+    const students = selectedClassId === "all" ? rawStudents : rawStudents.filter((s) => s.class_id === selectedClassId);
+    const assignments = selectedClassId === "all" ? rawAssignments : rawAssignments.filter((a) => a.class_id === selectedClassId);
+    const assignmentIds = new Set(assignments.map((a) => a.id));
+    const submissions = rawSubmissions.filter((s) => assignmentIds.has(s.assignment_id));
 
-    const released = allSubmissions.filter((s) => s.released && s.teacher_grade !== null && s.teacher_grade !== undefined);
-    if (released.length > 0) {
-      const avg = released.reduce((sum, s) => sum + s.teacher_grade, 0) / released.length;
-      setClassAverage(Math.round((avg / 2) * 100));
-    } else {
-      setClassAverage(null);
-    }
+    const pending = submissions
+      .filter((s) => s.submitted_at && (s.teacher_grade === null || s.teacher_grade === undefined))
+      .sort((a, b) => new Date(b.submitted_at) - new Date(a.submitted_at))
+      .map((s) => ({ ...s, studentName: studentMap[s.student_id] || "Unknown" }));
+
+    const released = submissions.filter((s) => s.released && s.teacher_grade !== null && s.teacher_grade !== undefined);
+    const classAverage = released.length > 0 ? Math.round((released.reduce((sum, s) => sum + s.teacher_grade, 0) / released.length / 2) * 100) : null;
 
     const byStudent = {};
     released.forEach((s) => {
       if (!byStudent[s.student_id]) byStudent[s.student_id] = [];
       byStudent[s.student_id].push(s.teacher_grade);
     });
-    const bands = { Excellent: 0, Proficient: 0, Developing: 0, "Needs Support": 0 };
+    const bandCounts = { Excellent: 0, Proficient: 0, Developing: 0, "Needs Support": 0 };
     const insights = [];
     Object.entries(byStudent).forEach(([studentId, grades]) => {
       const avg = grades.reduce((a, b) => a + b, 0) / grades.length;
       const band = proficiencyBand(avg);
-      bands[band.label] += 1;
+      bandCounts[band.label] += 1;
       insights.push({ studentId, name: studentMap[studentId] || "Unknown", avgPct: Math.round((avg / 2) * 100), band });
     });
-    setBandCounts(bands);
-    setStudentInsights(insights.sort((a, b) => a.avgPct - b.avgPct).slice(0, 5));
+    insights.sort((a, b) => a.avgPct - b.avgPct);
 
-    const assignmentRows = assignments.slice(0, 5).map((a) => {
-      const subsForA = allSubmissions.filter((s) => s.assignment_id === a.id);
+    const recentAssignments = assignments.slice(0, 5).map((a) => {
+      const subsForA = rawSubmissions.filter((s) => s.assignment_id === a.id);
       const submittedCount = subsForA.filter((s) => s.submitted_at).length;
       const releasedForA = subsForA.filter((s) => s.released && s.teacher_grade !== null && s.teacher_grade !== undefined);
       const avgForA = releasedForA.length > 0 ? Math.round((releasedForA.reduce((sum, s) => sum + s.teacher_grade, 0) / releasedForA.length / 2) * 100) : null;
       const rosterSize = applicableStudentIdsFor(a).length;
       return { id: a.id, title: caseMap[a.case_standard] || a.case_standard, standard: a.case_standard, className: classMap[a.class_id], dueDate: a.due_date, submittedCount, rosterSize, avgForA };
     });
-    setRecentAssignments(assignmentRows);
 
+    let completionDonut = { completed: 0, inProgress: 0, notStarted: 0 };
     if (assignments.length > 0) {
       const mostRecent = assignments[0];
       const applicable = applicableStudentIdsFor(mostRecent);
-      const subs = allSubmissions.filter((s) => s.assignment_id === mostRecent.id && applicable.includes(s.student_id));
+      const subs = rawSubmissions.filter((s) => s.assignment_id === mostRecent.id && applicable.includes(s.student_id));
       const completed = subs.filter((s) => s.submitted_at).length;
       const inProgress = subs.filter((s) => !s.submitted_at).length;
       const notStarted = Math.max(0, applicable.length - completed - inProgress);
-      setCompletionDonut({ completed, inProgress, notStarted });
+      completionDonut = { completed, inProgress, notStarted };
     }
 
-    setLoading(false);
-  }, []);
+    return {
+      studentCount: students.length,
+      totalCrystalPoints: students.reduce((sum, s) => sum + (s.crystal_points || 0), 0),
+      assignmentCount: assignments.length,
+      pendingSubmissions: pending,
+      classAverage,
+      bandCounts,
+      studentInsights: insights.slice(0, 5),
+      recentAssignments,
+      completionDonut,
+    };
+  }, [selectedClassId, rawStudents, rawAssignments, rawSubmissions, targetsByAssignment, caseMap, classMap, studentMap]);
 
-  useEffect(() => {
-    if (!loadingAuth) loadDashboard();
-  }, [loadingAuth, loadDashboard]);
+  const {
+    studentCount,
+    totalCrystalPoints,
+    assignmentCount,
+    pendingSubmissions,
+    classAverage,
+    bandCounts,
+    studentInsights,
+    recentAssignments,
+    completionDonut,
+  } = dashboard;
 
   if (loadingAuth || loading) {
     return (
@@ -229,6 +269,28 @@ export default function TeacherOverview() {
           </div>
           <img src="/teacher/header_crystal_books_plant.png" alt="" style={{ height: 130, objectFit: "contain", opacity: 0.95 }} />
         </div>
+
+        {classes.length > 1 && (
+          <div style={{ display: "flex", gap: 8, marginBottom: 20, flexWrap: "wrap" }}>
+            <button
+              className="gc-btn"
+              onClick={() => setSelectedClassId("all")}
+              style={{ background: selectedClassId === "all" ? COLORS.violet : COLORS.white, color: selectedClassId === "all" ? COLORS.white : COLORS.textDark, border: selectedClassId === "all" ? "none" : `1px solid ${COLORS.border}`, borderRadius: 999, padding: "9px 18px", fontWeight: 700, fontSize: 13 }}
+            >
+              All Classes
+            </button>
+            {classes.map((c) => (
+              <button
+                key={c.id}
+                className="gc-btn"
+                onClick={() => setSelectedClassId(c.id)}
+                style={{ background: selectedClassId === c.id ? COLORS.violet : COLORS.white, color: selectedClassId === c.id ? COLORS.white : COLORS.textDark, border: selectedClassId === c.id ? "none" : `1px solid ${COLORS.border}`, borderRadius: 999, padding: "9px 18px", fontWeight: 700, fontSize: 13 }}
+              >
+                {c.name}
+              </button>
+            ))}
+          </div>
+        )}
 
         <Card style={{ display: "flex", padding: "18px 8px", marginBottom: 20, gap: 8 }}>
           {[
