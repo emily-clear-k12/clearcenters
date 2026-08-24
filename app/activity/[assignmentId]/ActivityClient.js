@@ -3,6 +3,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Send, Loader2 } from "lucide-react";
+import { MAX_DISCUSS_TURNS } from "../../../lib/constants";
 
 const COLORS = {
   navy: "#16243F",
@@ -331,8 +332,11 @@ export default function ActivityClient(props) {
     setAppPhase("think");
   }
 
+  var discussTurnsUsed = liveMessages.filter(function (m) { return m.role === "user"; }).length;
+  var discussCapReached = discussTurnsUsed >= MAX_DISCUSS_TURNS;
+
   function sendLiveMessage() {
-    if (!liveDraft.trim() || liveLoading) return;
+    if (!liveDraft.trim() || liveLoading || discussCapReached) return;
     var userMsg = { role: "user", text: liveDraft.trim() };
     var nextMessages = liveMessages.concat([userMsg]);
     setLiveMessages(nextMessages);
@@ -599,13 +603,22 @@ export default function ActivityClient(props) {
                 {liveError && <div style={{ fontSize: 12.5, color: "#B23A3A", background: "#FBEAEA", borderRadius: 10, padding: "8px 12px" }}>{liveError}</div>}
               </div>
               <div style={{ borderTop: "1px solid #ECEAF5", padding: 12, background: COLORS.white }}>
-                <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 8 }}>
-                  {starterChips.map(function (chip, i) { return (<button key={i} className="gc-btn" onClick={function () { setLiveDraft(chip); }} style={{ background: COLORS.violetSoft, color: COLORS.violet, borderRadius: 999, padding: "5px 12px", fontWeight: 600, fontSize: 11.5 }}>{chip}</button>); })}
-                </div>
-                <div style={{ display: "flex", gap: 8 }}>
-                  <textarea value={liveDraft} onChange={function (e) { setLiveDraft(e.target.value); }} onKeyDown={function (e) { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendLiveMessage(); } }} placeholder="Type your message..." style={{ flex: 1, resize: "none", border: "2px solid #ECEAF5", borderRadius: 12, padding: "10px 12px", fontFamily: "inherit", fontSize: 14, height: 44, boxSizing: "border-box" }} />
-                  <button className="gc-btn" onClick={sendLiveMessage} disabled={liveLoading} style={{ background: liveLoading ? "#9FE4E6" : COLORS.teal, color: COLORS.white, borderRadius: 12, padding: "0 18px", display: "flex", alignItems: "center", gap: 6, fontWeight: 700, fontSize: 14 }}><Send size={16} /></button>
-                </div>
+                {discussCapReached ? (
+                  <div style={{ background: COLORS.violetSoft, color: COLORS.violet, borderRadius: 12, padding: "12px 14px", fontSize: 13.5, fontWeight: 600, textAlign: "center" }}>
+                    That's a full conversation — you've got plenty to go on. Head to Think when you're ready.
+                  </div>
+                ) : (
+                  <>
+                    <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 8 }}>
+                      {starterChips.map(function (chip, i) { return (<button key={i} className="gc-btn" onClick={function () { setLiveDraft(chip); }} style={{ background: COLORS.violetSoft, color: COLORS.violet, borderRadius: 999, padding: "5px 12px", fontWeight: 600, fontSize: 11.5 }}>{chip}</button>); })}
+                    </div>
+                    <div style={{ display: "flex", gap: 8 }}>
+                      <textarea value={liveDraft} onChange={function (e) { setLiveDraft(e.target.value); }} onKeyDown={function (e) { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendLiveMessage(); } }} placeholder="Type your message..." style={{ flex: 1, resize: "none", border: "2px solid #ECEAF5", borderRadius: 12, padding: "10px 12px", fontFamily: "inherit", fontSize: 14, height: 44, boxSizing: "border-box" }} />
+                      <button className="gc-btn" onClick={sendLiveMessage} disabled={liveLoading} style={{ background: liveLoading ? "#9FE4E6" : COLORS.teal, color: COLORS.white, borderRadius: 12, padding: "0 18px", display: "flex", alignItems: "center", gap: 6, fontWeight: 700, fontSize: 14 }}><Send size={16} /></button>
+                    </div>
+                    <div style={{ fontSize: 11, color: COLORS.textMuted, marginTop: 6, textAlign: "right" }}>{MAX_DISCUSS_TURNS - discussTurnsUsed} question{MAX_DISCUSS_TURNS - discussTurnsUsed === 1 ? "" : "s"} left</div>
+                  </>
+                )}
               </div>
             </div>
 

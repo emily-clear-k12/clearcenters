@@ -1,9 +1,22 @@
 import { NextResponse } from "next/server";
+import { cookies } from "next/headers";
 
 // SERVER ONLY. This route is the only place that ever touches the real
 // Anthropic API key. The browser calls this route; this route calls
 // Anthropic. The key itself never reaches the browser at any point.
+//
+// This is the generic test route behind /test-ai (a leftover connection-check
+// page from when the app was first wired up). It used to have no login check
+// at all — anyone who found the URL could fire arbitrary, unlimited calls on
+// the API key. Locked to logged-in students for now; if /test-ai isn't needed
+// anymore, both this file and app/test-ai/page.js can be deleted outright.
 export async function POST(request) {
+  const cookieStore = cookies();
+  const studentId = cookieStore.get("cc_student_id")?.value;
+  if (!studentId) {
+    return NextResponse.json({ error: "Not logged in." }, { status: 401 });
+  }
+
   const body = await request.json();
   const { system, messages, max_tokens } = body;
 

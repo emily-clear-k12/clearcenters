@@ -1,8 +1,18 @@
 import { NextResponse } from "next/server";
+import { cookies } from "next/headers";
 import { callClaude } from "../../../lib/anthropic";
 import { getServerCase } from "../../../lib/cases/index.server";
+import { MAX_DISCUSS_TURNS } from "../../../lib/constants";
 
 export async function POST(request) {
+  // Only a logged-in student can reach the AI characters — this route used
+  // to be reachable by anyone who knew the URL, logged in or not.
+  const cookieStore = cookies();
+  const studentId = cookieStore.get("cc_student_id")?.value;
+  if (!studentId) {
+    return NextResponse.json({ error: "Not logged in." }, { status: 401 });
+  }
+
   const { caseStandard, messages } = await request.json();
   const caseData = getServerCase(caseStandard);
 
@@ -11,6 +21,14 @@ export async function POST(request) {
   }
   if (!messages || !Array.isArray(messages)) {
     return NextResponse.json({ error: "Missing messages." }, { status: 400 });
+  }
+
+  // Belt-and-suspenders: the UI stops a student at MAX_DISCUSS_TURNS
+  // messages, but that's just JavaScript in the browser — enforce the same
+  // cap here so it can't be skipped from dev tools.
+  const studentTurns = messages.filter((m) => m.role === "user").length;
+  if (studentTurns > MAX_DISCUSS_TURNS) {
+    return NextResponse.json({ error: "You've reached the most questions allowed for this investigation." }, { status: 429 });
   }
 
   const castList = Object.values(caseData.castNames).join(", ");
