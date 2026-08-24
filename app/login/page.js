@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import Link from "next/link";
 import { Eye, EyeOff, User, Lock, Hash } from "lucide-react";
 import { supabase } from "../../lib/supabaseClient";
 
@@ -123,6 +124,9 @@ function LoginContent() {
             <button type="submit" disabled={loading} style={{ width: "100%", background: COLORS.violet, color: COLORS.white, border: "none", borderRadius: 12, padding: "13px 20px", fontWeight: 700, fontSize: 15.5, cursor: "pointer" }}>
               {loading ? "Signing in..." : "Sign In"}
             </button>
+            <p style={{ textAlign: "center", fontSize: 13, color: COLORS.textMuted, marginTop: 14 }}>
+              New teacher? <Link href="/teacher-signup" style={{ color: COLORS.violet, fontWeight: 700, textDecoration: "none" }}>Create an account</Link>
+            </p>
           </form>
         ) : (
           <form onSubmit={handleStudentSignIn}>
