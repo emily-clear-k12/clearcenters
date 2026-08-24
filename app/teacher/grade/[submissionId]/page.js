@@ -68,6 +68,26 @@ function ReleaseConfirmModal({ open, studentName, grade, onCancel, onConfirm }) 
   );
 }
 
+function SendBackConfirmModal({ open, studentName, feedback, onCancel, onConfirm }) {
+  if (!open) return null;
+  return (
+    <div style={{ position: "fixed", inset: 0, background: "rgba(13,20,35,.65)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 100, padding: 20 }}>
+      <div style={{ background: COLORS.white, borderRadius: 18, width: "min(440px, 100%)", padding: 24, boxShadow: "0 24px 60px rgba(0,0,0,.4)", textAlign: "center" }}>
+        <div style={{ fontSize: 36, marginBottom: 10 }}>🔁</div>
+        <div style={{ fontWeight: 700, fontSize: 17, color: COLORS.textDark, marginBottom: 8 }}>Send this back to {studentName} to try again?</div>
+        <div style={{ fontSize: 13.5, color: COLORS.textMuted, lineHeight: 1.5, marginBottom: 10 }}>
+          No grade will be released yet. They'll see this note from you and get a chance to revise their answer:
+        </div>
+        <div style={{ background: COLORS.cream, borderRadius: 10, padding: 12, fontSize: 13, color: COLORS.textDark, textAlign: "left", lineHeight: 1.5, marginBottom: 6 }}>{feedback}</div>
+        <div style={{ display: "flex", gap: 10, justifyContent: "center", marginTop: 18 }}>
+          <button onClick={onCancel} style={{ background: COLORS.cream, color: COLORS.textDark, border: "none", borderRadius: 999, padding: "11px 22px", fontWeight: 700, fontSize: 14, cursor: "pointer" }}>Not yet</button>
+          <button onClick={onConfirm} style={{ background: COLORS.warning, color: COLORS.white, border: "none", borderRadius: 999, padding: "11px 22px", fontWeight: 700, fontSize: 14, cursor: "pointer" }}>Send back</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function TeacherGradeDetailPage() {
   const router = useRouter();
   const params = useParams();
@@ -84,6 +104,8 @@ export default function TeacherGradeDetailPage() {
   const [showConfirm, setShowConfirm] = useState(false);
   const [saving, setSaving] = useState(false);
   const [pointsAwarded, setPointsAwarded] = useState(null);
+  const [showSendBackConfirm, setShowSendBackConfirm] = useState(false);
+  const [sendingBack, setSendingBack] = useState(false);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data, error: authError }) => {
@@ -170,6 +192,37 @@ export default function TeacherGradeDetailPage() {
     }
 
     setSaving(false);
+    await loadSubmission();
+  }
+
+  async function handleSendBack() {
+    setSendingBack(true);
+    setShowSendBackConfirm(false);
+    const { error: updateError } = await supabase
+      .from("submissions")
+      .update({ revision_requested: true, revision_requested_at: new Date().toISOString(), teacher_feedback: feedback, released: false })
+      .eq("id", submissionId);
+    if (updateError) {
+      setSendingBack(false);
+      setError("Couldn't send this back: " + updateError.message);
+      return;
+    }
+    setSendingBack(false);
+    await loadSubmission();
+  }
+
+  async function handleCancelSendBack() {
+    setSendingBack(true);
+    const { error: updateError } = await supabase
+      .from("submissions")
+      .update({ revision_requested: false, revision_requested_at: null })
+      .eq("id", submissionId);
+    if (updateError) {
+      setSendingBack(false);
+      setError("Couldn't undo that: " + updateError.message);
+      return;
+    }
+    setSendingBack(false);
     await loadSubmission();
   }
 
@@ -336,7 +389,7 @@ export default function TeacherGradeDetailPage() {
                     key={g}
                     className="gc-btn"
                     onClick={() => setFinalGrade(g)}
-                    disabled={submission.released}
+                    disabled={submission.released || submission.revision_requested}
                     style={{ padding: "12px 8px", borderRadius: 10, fontWeight: 700, fontSize: 14, border: finalGrade === g ? `2px solid ${COLORS.gold}` : "2px solid transparent", background: finalGrade === g ? "#FFF7E6" : COLORS.cream, color: COLORS.textDark }}
                   >
                     {GRADE_LABELS[g]}
@@ -346,8 +399,8 @@ export default function TeacherGradeDetailPage() {
               <textarea
                 value={feedback}
                 onChange={(e) => setFeedback(e.target.value)}
-                disabled={submission.released}
-                placeholder="Optional feedback for the student..."
+                disabled={submission.released || submission.revision_requested}
+                placeholder="Feedback for the student — required if you're sending this back for a revision, optional if you're releasing a grade..."
                 style={{ width: "100%", minHeight: 70, resize: "vertical", border: "2px solid #ECEAF5", borderRadius: 10, padding: 10, fontFamily: "inherit", fontSize: 13, boxSizing: "border-box", marginBottom: 12 }}
               />
               {submission.released ? (
@@ -355,10 +408,33 @@ export default function TeacherGradeDetailPage() {
                   ✓ Released to {studentName}
                   {pointsAwarded !== null && <span> · +{pointsAwarded} Crystal Points 🔮</span>}
                 </div>
+              ) : submission.revision_requested ? (
+                <div className="gc-fade-in">
+                  <div style={{ textAlign: "center", background: "#FFF4E5", color: "#8A5A00", borderRadius: 10, padding: "10px 12px", fontWeight: 700, fontSize: 13, marginBottom: 8 }}>
+                    🔁 Sent back — waiting for {studentName} to try again
+                  </div>
+                  <button className="gc-btn" onClick={handleCancelSendBack} disabled={sendingBack} style={{ width: "100%", background: "none", color: COLORS.textMuted, border: `1.5px solid ${COLORS.border}`, borderRadius: 999, padding: "9px 16px", fontWeight: 700, fontSize: 12.5 }}>
+                    {sendingBack ? "Undoing..." : "Undo — go back to grading"}
+                  </button>
+                </div>
               ) : (
-                <button className="gc-btn" onClick={() => setShowConfirm(true)} disabled={saving} style={{ width: "100%", background: COLORS.violet, color: COLORS.white, border: "none", borderRadius: 999, padding: "12px 20px", fontWeight: 700, fontSize: 14.5 }}>
-                  {saving ? "Saving..." : "Release Grade →"}
-                </button>
+                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                  <button className="gc-btn" onClick={() => setShowConfirm(true)} disabled={saving || sendingBack} style={{ width: "100%", background: COLORS.violet, color: COLORS.white, border: "none", borderRadius: 999, padding: "12px 20px", fontWeight: 700, fontSize: 14.5 }}>
+                    {saving ? "Saving..." : "Release Grade →"}
+                  </button>
+                  <button
+                    className="gc-btn"
+                    onClick={() => setShowSendBackConfirm(true)}
+                    disabled={saving || sendingBack || !feedback.trim()}
+                    title={!feedback.trim() ? "Add feedback above so the student knows what to fix" : ""}
+                    style={{ width: "100%", background: "none", color: !feedback.trim() ? COLORS.textMuted : "#B8860B", border: `1.5px solid ${!feedback.trim() ? COLORS.border : COLORS.warning}`, borderRadius: 999, padding: "10px 20px", fontWeight: 700, fontSize: 13.5, opacity: !feedback.trim() ? 0.6 : 1 }}
+                  >
+                    {sendingBack ? "Sending..." : "🔁 Send Back for Revision"}
+                  </button>
+                  {!feedback.trim() && (
+                    <div style={{ fontSize: 11.5, color: COLORS.textMuted, textAlign: "center" }}>Add feedback above to send this back for a revision.</div>
+                  )}
+                </div>
               )}
             </div>
           </div>
@@ -367,6 +443,7 @@ export default function TeacherGradeDetailPage() {
       </div>
 
       <ReleaseConfirmModal open={showConfirm} studentName={studentName} grade={finalGrade} onCancel={() => setShowConfirm(false)} onConfirm={handleRelease} />
+      <SendBackConfirmModal open={showSendBackConfirm} studentName={studentName} feedback={feedback} onCancel={() => setShowSendBackConfirm(false)} onConfirm={handleSendBack} />
     </div>
   );
 }

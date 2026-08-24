@@ -73,7 +73,7 @@ export default function TeacherGradeListPage() {
     if (assignmentIds.length > 0) {
       const { data: subs, error: subsError } = await supabase
         .from("submissions")
-        .select("id, submitted_at, released, ai_score, teacher_grade, self_confidence, student_id, assignment_id")
+        .select("id, submitted_at, released, ai_score, teacher_grade, self_confidence, student_id, assignment_id, revision_requested")
         .in("assignment_id", assignmentIds)
         .not("submitted_at", "is", null)
         .order("submitted_at", { ascending: false });
@@ -157,7 +157,7 @@ export default function TeacherGradeListPage() {
                 <h2 style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 700, fontSize: 16, margin: "0 0 10px 4px" }}>{g.className}</h2>
                 <div style={{ display: "grid", gap: 10 }}>
                   {g.submissions.map((s) => {
-                    const needsReview = s.teacher_grade === null || s.teacher_grade === undefined;
+                    const needsReview = !s.revision_requested && (s.teacher_grade === null || s.teacher_grade === undefined);
                     return (
                       <button
                         key={s.id}
@@ -184,11 +184,11 @@ export default function TeacherGradeListPage() {
                               fontWeight: 700,
                               padding: "3px 10px",
                               borderRadius: 999,
-                              background: s.released ? "#E6F8F9" : needsReview ? "#FFF4E5" : "#E6F8F9",
-                              color: s.released ? COLORS.teal : needsReview ? "#B8860B" : COLORS.teal,
+                              background: s.released ? "#E6F8F9" : s.revision_requested ? "#FFF4E5" : needsReview ? "#FFF4E5" : "#E6F8F9",
+                              color: s.released ? COLORS.teal : s.revision_requested ? "#B8860B" : needsReview ? "#B8860B" : COLORS.teal,
                             }}
                           >
-                            {s.released ? "Released" : needsReview ? "Needs Review" : `Graded: ${GRADE_LABELS[s.teacher_grade]}`}
+                            {s.released ? "Released" : s.revision_requested ? "🔁 Sent Back" : needsReview ? "Needs Review" : `Graded: ${GRADE_LABELS[s.teacher_grade]}`}
                           </span>
                         </div>
                       </button>

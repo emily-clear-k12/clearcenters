@@ -55,6 +55,11 @@ Student's response:
     ai_score: aiScore,
     ai_rationale: aiRationale,
     submitted_at: new Date().toISOString(),
+    // A (re)submit always clears any pending "please try again" request —
+    // whether this is a first submission (already false) or a resubmit
+    // after the teacher sent it back (flips it back off so it drops out of
+    // the "waiting on student" state and lands back in the review queue).
+    revision_requested: false,
   };
 
   const { data: existing } = await supabaseAdmin

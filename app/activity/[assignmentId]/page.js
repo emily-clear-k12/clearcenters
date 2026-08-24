@@ -70,6 +70,11 @@ export default async function ActivityPage({ params }) {
     .eq("student_id", studentId)
     .maybeSingle();
 
+  // A submission the teacher sent back for revision should NOT lock the
+  // student out of the mission — only a submitted AND not-sent-back
+  // submission is treated as final/done.
+  const revisionRequested = !!(existingSubmission && existingSubmission.revision_requested);
+
   return (
     <ActivityClient
       assignmentId={assignmentId}
@@ -78,7 +83,9 @@ export default async function ActivityPage({ params }) {
       cast={caseEntry.cast}
       organizerFields={caseEntry.organizerFields}
       existingSubmission={existingSubmission}
-      alreadySubmitted={!!(existingSubmission && existingSubmission.submitted_at)}
+      alreadySubmitted={!!(existingSubmission && existingSubmission.submitted_at) && !revisionRequested}
+      revisionRequested={revisionRequested}
+      revisionFeedback={revisionRequested ? existingSubmission.teacher_feedback || null : null}
     />
   );
 }

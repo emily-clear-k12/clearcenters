@@ -83,6 +83,11 @@ export default function MissionsClient({ student, assignments }) {
                   <span style={{ display: "inline-flex", background: COLORS.violetSoft, color: COLORS.violet, fontSize: 11, fontWeight: 700, letterSpacing: .3, padding: "4px 10px", borderRadius: 999, marginBottom: 8 }}>
                     GROUP CHAT
                   </span>
+                  {a.revisionRequested && (
+                    <span style={{ display: "inline-flex", alignItems: "center", gap: 4, background: "#FFF4E5", color: "#B8860B", fontSize: 11, fontWeight: 700, letterSpacing: .3, padding: "4px 10px", borderRadius: 999, marginBottom: 8, marginLeft: 6 }}>
+                      🔁 Try Again
+                    </span>
+                  )}
                   <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 2, color: COLORS.textDark }}>{a.cases?.title}</div>
                   <div style={{ fontSize: 12.5, color: COLORS.textMuted, marginBottom: a.cases?.learning_target ? 8 : 14 }}>
                     {a.case_standard}{a.due_date ? ` · Due ${a.due_date}` : ""}

@@ -227,12 +227,18 @@ export default function ActivityClient(props) {
   const organizerFields = props.organizerFields;
   const existingSubmission = props.existingSubmission;
   const alreadySubmitted = props.alreadySubmitted;
+  const revisionRequested = props.revisionRequested;
+  const revisionFeedback = props.revisionFeedback;
 
   const router = useRouter();
   const draft = existingSubmission || {};
   const hasOrganizerDraft = draft.organizer && Object.values(draft.organizer).some(function (v) { return v; });
 
-  const [appPhase, setAppPhase] = useState(alreadySubmitted ? "share" : hasOrganizerDraft ? "organizer" : "coldopen");
+  // A mission the teacher sent back lands the student straight on their
+  // existing answer to revise it (skipping the intro/evidence steps they
+  // already did) rather than back at square one, or stuck on the old
+  // "already submitted" screen.
+  const [appPhase, setAppPhase] = useState(revisionRequested ? "revise" : alreadySubmitted ? "share" : hasOrganizerDraft ? "organizer" : "coldopen");
   const [coldPhase, setColdPhase] = useState("intro");
   const [coldMsgIndex, setColdMsgIndex] = useState(-1);
 
@@ -676,6 +682,17 @@ export default function ActivityClient(props) {
       {appPhase === "revise" && (
         <div style={{ flex: 1, padding: "16px 20px 32px", display: "flex", flexDirection: "column", alignItems: "center" }}>
           <div style={{ width: "100%", maxWidth: 1080, marginBottom: 14 }}>
+            {revisionRequested && (
+              <div className="gc-fade-in" style={{ background: "#FFF4E5", border: "1.5px solid " + COLORS.gold, borderRadius: 14, padding: "14px 18px", marginBottom: 14, display: "flex", gap: 12, alignItems: "flex-start" }}>
+                <span style={{ fontSize: 22, lineHeight: 1 }}>🔁</span>
+                <div>
+                  <div style={{ fontWeight: 700, fontSize: 14, color: "#8A5A00", marginBottom: 4 }}>Your teacher asked you to try again</div>
+                  <div style={{ fontSize: 13.5, color: COLORS.textDark, lineHeight: 1.5 }}>
+                    {revisionFeedback || "Take another look at your answer below and see if you can strengthen it."}
+                  </div>
+                </div>
+              </div>
+            )}
             <div className="gc-fade-in" style={{ background: COLORS.violetSoft, borderRadius: 14, padding: "14px 18px" }}>
               <div style={{ fontSize: 11, fontWeight: 700, color: COLORS.violet, letterSpacing: 0.5, marginBottom: 4 }}>BIG QUESTION</div>
               <div style={{ fontSize: 15, fontWeight: 600, color: COLORS.textDark }}>{publicCase.bigQuestion}</div>
@@ -684,12 +701,12 @@ export default function ActivityClient(props) {
           <div style={{ width: "100%", maxWidth: 1080, display: "grid", gridTemplateColumns: "1.3fr 1fr", gap: 16 }}>
             <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
               <div style={{ background: COLORS.white, borderRadius: 16, boxShadow: "0 4px 16px rgba(0,0,0,.12)", padding: 16 }}>
-                <div style={{ fontWeight: 700, fontSize: 13, color: COLORS.textMuted, marginBottom: 8, textTransform: "uppercase", letterSpacing: 0.5 }}>Your Attempt 1</div>
+                <div style={{ fontWeight: 700, fontSize: 13, color: COLORS.textMuted, marginBottom: 8, textTransform: "uppercase", letterSpacing: 0.5 }}>{revisionRequested ? "Your Previous Answer" : "Your Attempt 1"}</div>
                 <div style={{ background: COLORS.cream, borderRadius: 10, padding: 12, fontSize: 14, lineHeight: 1.5, color: COLORS.textDark, minHeight: 60 }}>{attempt1 || <span style={{ color: COLORS.textMuted, fontStyle: "italic" }}>(no answer written)</span>}</div>
               </div>
               <div style={{ background: COLORS.white, borderRadius: 16, boxShadow: "0 4px 16px rgba(0,0,0,.12)", padding: 16 }}>
-                <div style={{ fontWeight: 700, fontSize: 14, color: COLORS.textDark, marginBottom: 4 }}>Want to revise? (optional)</div>
-                <div style={{ fontSize: 12, color: COLORS.textMuted, marginBottom: 8 }}>Leave this blank to keep your first attempt, or rewrite your answer here.</div>
+                <div style={{ fontWeight: 700, fontSize: 14, color: COLORS.textDark, marginBottom: 4 }}>{revisionRequested ? "Rewrite your answer" : "Want to revise? (optional)"}</div>
+                <div style={{ fontSize: 12, color: COLORS.textMuted, marginBottom: 8 }}>{revisionRequested ? "Use your teacher's feedback above to strengthen your answer." : "Leave this blank to keep your first attempt, or rewrite your answer here."}</div>
                 <textarea value={attempt2} onChange={function (e) { setAttempt2(e.target.value); }} placeholder="Rewrite your answer here if you'd like to improve it..." style={{ width: "100%", minHeight: 140, resize: "vertical", border: "2px solid #ECEAF5", borderRadius: 12, padding: 12, fontFamily: "inherit", fontSize: 14.5, lineHeight: 1.5, boxSizing: "border-box" }} />
                 <div style={{ textAlign: "right", fontSize: 11.5, color: COLORS.textMuted, marginTop: 4 }}>{attempt2.length} / 800</div>
               </div>
@@ -734,7 +751,7 @@ export default function ActivityClient(props) {
                 <SourceTracker cast={cast} sources={sources} onChange={function () {}} readOnly horizontal />
                 <Organizer fieldsMeta={organizerFields} values={organizer} onChange={function () {}} compact readOnly horizontal />
               </div>
-              <button className="gc-btn" onClick={handleRequestSubmit} style={{ background: COLORS.violet, color: COLORS.white, borderRadius: 999, padding: "13px 20px", fontWeight: 700, fontSize: 15 }}>Submit for Grading →</button>
+              <button className="gc-btn" onClick={handleRequestSubmit} style={{ background: COLORS.violet, color: COLORS.white, borderRadius: 999, padding: "13px 20px", fontWeight: 700, fontSize: 15 }}>{revisionRequested ? "Resubmit for Grading →" : "Submit for Grading →"}</button>
             </div>
           </div>
         </div>

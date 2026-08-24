@@ -213,7 +213,7 @@ export default function TeacherOverview() {
     let allSubmissions = [];
     let targetRows = [];
     if (assignmentIds.length > 0) {
-      const { data } = await supabase.from("submissions").select("id, student_id, assignment_id, submitted_at, teacher_grade, released").in("assignment_id", assignmentIds);
+      const { data } = await supabase.from("submissions").select("id, student_id, assignment_id, submitted_at, teacher_grade, released, revision_requested").in("assignment_id", assignmentIds);
       allSubmissions = data || [];
       const { data: targets } = await supabase.from("assignment_students").select("assignment_id, student_id").in("assignment_id", assignmentIds);
       targetRows = targets || [];
@@ -268,8 +268,11 @@ export default function TeacherOverview() {
     const assignmentIds = new Set(assignments.map((a) => a.id));
     const submissions = rawSubmissions.filter((s) => assignmentIds.has(s.assignment_id));
 
+    // A submission that's been sent back for revision has already been
+    // reviewed once — it's now waiting on the student, not on the
+    // teacher, so it's excluded here rather than cluttering this queue.
     const pending = submissions
-      .filter((s) => s.submitted_at && (s.teacher_grade === null || s.teacher_grade === undefined))
+      .filter((s) => s.submitted_at && !s.revision_requested && (s.teacher_grade === null || s.teacher_grade === undefined))
       .sort((a, b) => new Date(b.submitted_at) - new Date(a.submitted_at))
       .map((s) => ({ ...s, studentName: studentMap[s.student_id] || "Unknown" }));
 

@@ -106,6 +106,11 @@ export default function HomeClient({ student, studentClass, assignments, mission
               <span style={{ display: "inline-flex", background: COLORS.violetSoft, color: COLORS.violet, fontSize: 12, fontWeight: 700, letterSpacing: .3, padding: "5px 12px", borderRadius: 999, marginBottom: 10 }}>
                 YOUR ACTIVE MISSION · GROUP CHAT
               </span>
+              {activeMission.revisionRequested && (
+                <span style={{ display: "inline-flex", alignItems: "center", gap: 4, background: "#FFF4E5", color: "#B8860B", fontSize: 12, fontWeight: 700, letterSpacing: .3, padding: "5px 12px", borderRadius: 999, marginBottom: 10, marginLeft: 8 }}>
+                  🔁 Your teacher asked for a revision
+                </span>
+              )}
               <h2 style={{ fontSize: 24, fontWeight: 700, margin: "0 0 4px 0", color: COLORS.textDark }}>{activeMission.cases?.title}</h2>
               <p style={{ fontSize: 13, color: COLORS.textMuted, margin: activeMission.cases?.learning_target ? "0 0 10px 0" : "0 0 20px 0" }}>
                 {activeMission.case_standard}{activeMission.due_date ? ` · Due ${activeMission.due_date}` : ""}
@@ -141,7 +146,7 @@ export default function HomeClient({ student, studentClass, assignments, mission
                   <img src={caseImagePath(a.case_standard)} alt="" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
                   <div style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg, rgba(13,27,42,0) 35%, rgba(13,27,42,.82) 100%)" }} />
                   <div style={{ position: "absolute", left: 12, right: 12, bottom: 8, color: COLORS.white }}>
-                    <div style={{ fontSize: 13.5, fontWeight: 700 }}>{a.cases?.title}</div>
+                    <div style={{ fontSize: 13.5, fontWeight: 700 }}>{a.cases?.title}{a.revisionRequested ? " 🔁" : ""}</div>
                     <div style={{ fontSize: 11, color: "rgba(255,255,255,.85)" }}>{a.case_standard}</div>
                   </div>
                 </button>
