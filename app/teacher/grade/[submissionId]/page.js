@@ -5,6 +5,7 @@ import { useRouter, useParams } from "next/navigation";
 import { ChevronLeft, Sparkles } from "lucide-react";
 import { supabase } from "../../../../lib/supabaseClient";
 import { getPublicCase } from "../../../../lib/cases/index.public";
+import { getNewsroomBNPublicCase } from "../../../../lib/cases/newsroom-bn/index.public";
 import TeacherSidebar from "../../../../components/TeacherSidebar";
 
 const COLORS = {
@@ -137,11 +138,13 @@ export default function TeacherGradeDetailPage() {
 
     let className = null;
     let caseTitle = null;
+    let caseEngine = "group_chat";
     if (assignment) {
       const { data: cls } = await supabase.from("classes").select("name").eq("id", assignment.class_id).single();
-      const { data: caseRow } = await supabase.from("cases").select("title").eq("standard", assignment.case_standard).single();
+      const { data: caseRow } = await supabase.from("cases").select("title, engine").eq("standard", assignment.case_standard).single();
       className = cls?.name;
       caseTitle = caseRow?.title;
+      caseEngine = caseRow?.engine || "group_chat";
     }
 
     const merged = {
@@ -150,6 +153,7 @@ export default function TeacherGradeDetailPage() {
       className,
       caseTitle,
       caseStandard: assignment?.case_standard,
+      caseEngine,
     };
 
     setSubmission(merged);
@@ -246,6 +250,10 @@ export default function TeacherGradeDetailPage() {
   }
 
   const caseEntry = getPublicCase(submission.caseStandard);
+  const isNewsroom = (submission.caseEngine || "").startsWith("newsroom");
+  const newsroomCase = isNewsroom ? getNewsroomBNPublicCase(submission.caseStandard) : null;
+  const newsroomVoiceName = (id) => (newsroomCase?.voices.find((v) => v.id === id) || {}).name || id;
+  const nd = submission.newsroom_data || null;
   const studentName = submission.studentName || "This student";
   const confMeta = submission.self_confidence ? CONFIDENCE_META[submission.self_confidence] : null;
   const checklist = submission.checklist || [];
@@ -316,6 +324,47 @@ export default function TeacherGradeDetailPage() {
                   <span style={{ background: COLORS.tealSoft, color: COLORS.teal, fontSize: 10.5, fontWeight: 700, padding: "2px 8px", borderRadius: 999 }}>2nd attempt</span>
                 </div>
                 <div style={{ background: COLORS.cream, borderRadius: 10, padding: 12, fontSize: 14, lineHeight: 1.5, color: COLORS.textDark }}>{submission.attempt2}</div>
+              </div>
+            )}
+
+            {isNewsroom && nd && (
+              <div style={{ background: COLORS.white, borderRadius: 16, padding: 16, boxShadow: "0 4px 16px rgba(0,0,0,.12)" }}>
+                <div style={{ fontWeight: 700, fontSize: 12.5, color: COLORS.textMuted, marginBottom: 10, textTransform: "uppercase", letterSpacing: 0.5 }}>Newsroom Investigation</div>
+
+                <div style={{ fontSize: 11, fontWeight: 700, color: COLORS.textMuted, marginBottom: 3 }}>First Guess</div>
+                <div style={{ fontSize: 13, color: COLORS.textDark, marginBottom: 12, fontStyle: "italic" }}>{nd.firstGuess || "—"}</div>
+
+                <div style={{ fontSize: 11, fontWeight: 700, color: COLORS.textMuted, marginBottom: 5 }}>Investigation Log ({(nd.investigationLog || []).length} claims logged)</div>
+                <div style={{ display: "grid", gap: 6, marginBottom: 12 }}>
+                  {(nd.investigationLog || []).map((log, i) => (
+                    <div key={i} style={{ background: COLORS.cream, borderRadius: 8, padding: "8px 10px", fontSize: 12 }}>
+                      <span style={{ fontWeight: 700 }}>{newsroomVoiceName(log.voiceId)}</span>
+                      <span style={{ marginLeft: 6, fontSize: 10, fontWeight: 700, padding: "1px 7px", borderRadius: 999, background: log.stamp === "observation" ? "#E9F9EE" : "#EDE6FF", color: log.stamp === "observation" ? COLORS.success : COLORS.violet }}>
+                        {log.stamp === "observation" ? "Observation" : "Inference"}
+                      </span>
+                      <div style={{ marginTop: 3, color: COLORS.textDark }}>{log.text}</div>
+                    </div>
+                  ))}
+                  {(nd.investigationLog || []).length === 0 && <div style={{ fontSize: 12, color: COLORS.textMuted }}>No claims logged.</div>}
+                </div>
+
+                <div style={{ fontSize: 11, fontWeight: 700, color: COLORS.textMuted, marginBottom: 3 }}>Cause & Effect Chain</div>
+                <div style={{ fontSize: 12.5, color: COLORS.textDark, marginBottom: 4 }}><b>Root cause:</b> {nd.causeChain?.rootCause || "—"}</div>
+                {(nd.causeChain?.ripples || []).map((r, i) => (
+                  <div key={i} style={{ fontSize: 12.5, color: COLORS.textDark, marginBottom: 4 }}><b>Ripple {i + 1}:</b> {r}</div>
+                ))}
+
+                <div style={{ fontSize: 11, fontWeight: 700, color: COLORS.textMuted, margin: "10px 0 3px" }}>Design a Next Test</div>
+                <div style={{ fontSize: 12.5, color: COLORS.textDark, marginBottom: 2 }}><b>Would measure:</b> {nd.nextTest?.measure || "—"}</div>
+                <div style={{ fontSize: 12.5, color: COLORS.textDark, marginBottom: 10 }}><b>Would hold constant:</b> {nd.nextTest?.constant || "—"}</div>
+
+                <div style={{ fontSize: 11, fontWeight: 700, color: COLORS.textMuted, marginBottom: 3 }}>Second Look — Sources Used vs. Rejected</div>
+                <div style={{ fontSize: 12.5, color: COLORS.textDark, marginBottom: 2 }}><b>Used:</b> {(nd.attempt2?.usedVoiceIds || []).map(newsroomVoiceName).join(", ") || "—"}</div>
+                <div style={{ fontSize: 12.5, color: COLORS.textDark, marginBottom: 2 }}><b>Rejected:</b> {nd.attempt2?.rejectedVoiceId ? newsroomVoiceName(nd.attempt2.rejectedVoiceId) : "—"}</div>
+                <div style={{ fontSize: 12.5, color: COLORS.textDark, marginBottom: 10 }}><b>Why:</b> {nd.attempt2?.rejectedJustification || "—"}</div>
+
+                <div style={{ fontSize: 11, fontWeight: 700, color: COLORS.textMuted, marginBottom: 3 }}>Final Headline</div>
+                <div style={{ fontSize: 13.5, fontWeight: 700, color: COLORS.textDark }}>{nd.headline || "—"}</div>
               </div>
             )}
 

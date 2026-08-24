@@ -2,7 +2,9 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { supabaseAdmin } from "../../../lib/supabaseAdmin";
 import { getPublicCase } from "../../../lib/cases/index.public";
+import { getNewsroomBNPublicCase } from "../../../lib/cases/newsroom-bn/index.public";
 import ActivityClient from "./ActivityClient";
+import NewsroomBNClient from "./NewsroomBNClient";
 
 export default async function ActivityPage({ params }) {
   const { assignmentId } = params;
@@ -50,9 +52,24 @@ export default async function ActivityPage({ params }) {
     }
   }
 
-  const caseEntry = getPublicCase(assignment.case_standard);
+  // A case's `engine` column decides which challenge type's content and
+  // game engine this assignment uses — "group_chat" (the default) or, as
+  // of Newsroom, "newsroom_bn" (Breaking News mode). Future Newsroom
+  // modes will use their own "newsroom_fr"/"newsroom_dd"/"newsroom_sr"
+  // engine values and their own client component here.
+  const { data: caseRow } = await supabaseAdmin
+    .from("cases")
+    .select("engine")
+    .eq("standard", assignment.case_standard)
+    .maybeSingle();
 
-  if (!caseEntry) {
+  const engine = (caseRow && caseRow.engine) || "group_chat";
+  const isNewsroomBN = engine.startsWith("newsroom");
+
+  const caseEntry = isNewsroomBN ? null : getPublicCase(assignment.case_standard);
+  const newsroomCase = isNewsroomBN ? getNewsroomBNPublicCase(assignment.case_standard) : null;
+
+  if (!caseEntry && !newsroomCase) {
     return (
       <div style={{ minHeight: "100vh", background: "#16243F", display: "flex", alignItems: "center", justifyContent: "center", color: "#FFFFFF", fontFamily: "sans-serif", textAlign: "center", padding: 20 }}>
         <div>
@@ -74,6 +91,22 @@ export default async function ActivityPage({ params }) {
   // student out of the mission — only a submitted AND not-sent-back
   // submission is treated as final/done.
   const revisionRequested = !!(existingSubmission && existingSubmission.revision_requested);
+  const alreadySubmitted = !!(existingSubmission && existingSubmission.submitted_at) && !revisionRequested;
+  const revisionFeedback = revisionRequested ? existingSubmission.teacher_feedback || null : null;
+
+  if (isNewsroomBN) {
+    return (
+      <NewsroomBNClient
+        assignmentId={assignmentId}
+        caseStandard={assignment.case_standard}
+        publicCase={newsroomCase}
+        existingSubmission={existingSubmission}
+        alreadySubmitted={alreadySubmitted}
+        revisionRequested={revisionRequested}
+        revisionFeedback={revisionFeedback}
+      />
+    );
+  }
 
   return (
     <ActivityClient
@@ -83,9 +116,9 @@ export default async function ActivityPage({ params }) {
       cast={caseEntry.cast}
       organizerFields={caseEntry.organizerFields}
       existingSubmission={existingSubmission}
-      alreadySubmitted={!!(existingSubmission && existingSubmission.submitted_at) && !revisionRequested}
+      alreadySubmitted={alreadySubmitted}
       revisionRequested={revisionRequested}
-      revisionFeedback={revisionRequested ? existingSubmission.teacher_feedback || null : null}
+      revisionFeedback={revisionFeedback}
     />
   );
 }

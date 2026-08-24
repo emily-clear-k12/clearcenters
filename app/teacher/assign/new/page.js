@@ -24,13 +24,23 @@ const CHALLENGE_TYPES = [
   { key: "video_detective", label: "Short-Form Video Detective", image: "/teacher/challenges/video_detective.jpg", real: false },
   { key: "model_makeover", label: "Model Makeover", image: "/teacher/challenges/model_makeover.jpg", real: false },
   { key: "museum_exhibit", label: "Museum Exhibit Builder", image: "/teacher/challenges/museum_exhibit.jpg", real: false },
-  { key: "newsroom", label: "Newsroom", image: "/teacher/challenges/newsroom.jpg", real: false },
+  { key: "newsroom", label: "Newsroom", image: "/teacher/challenges/newsroom.jpg", real: true },
   { key: "repair_desk", label: "Repair Desk", image: "/teacher/challenges/repair_desk.jpg", real: false },
   { key: "you_be_the_judge", label: "You Be the Judge", image: "/teacher/challenges/you_be_the_judge.jpg", real: false },
 ];
 
 function caseImagePath(standard) {
   return `/cases/${standard.replace(/\./g, "-")}.jpg`;
+}
+
+// A case's `engine` column tells us which challenge type it belongs to.
+// Newsroom currently only ships Breaking News mode ("newsroom_bn"), but
+// Field Report/Data Desk/Special Report will land as "newsroom_fr" etc.
+// later — all of those should still show up under the one Newsroom tile.
+function matchesChallenge(caseEngine, challengeKey) {
+  if (!challengeKey) return false;
+  if (challengeKey === "newsroom") return (caseEngine || "").startsWith("newsroom");
+  return (caseEngine || "group_chat") === challengeKey;
 }
 
 function NewAssignmentContent() {
@@ -83,11 +93,12 @@ function NewAssignmentContent() {
   }, [assignClassId]);
 
   useEffect(() => {
-    supabase.from("cases").select("standard, title, grade, subject, learning_target, lesson_summary, misconception_note").then(({ data }) => setCases(data || []));
+    supabase.from("cases").select("standard, title, grade, subject, engine, learning_target, lesson_summary, misconception_note").then(({ data }) => setCases(data || []));
   }, []);
 
   const filteredCases = cases.filter(
     (c) => c.grade === parseInt(browseGrade) && c.subject === browseSubject &&
+      matchesChallenge(c.engine, selectedChallenge?.key) &&
       (c.title.toLowerCase().includes(caseSearch.toLowerCase()) || c.standard.toLowerCase().includes(caseSearch.toLowerCase()))
   );
 
