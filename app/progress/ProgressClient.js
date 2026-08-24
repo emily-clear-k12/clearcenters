@@ -92,17 +92,31 @@ export default function ProgressClient({ student, missions }) {
                         <span style={{ fontSize: 12.5, fontWeight: 700, padding: "5px 12px", borderRadius: 999, background: meta.bg, color: meta.color, whiteSpace: "nowrap" }}>
                           {meta.emoji} {meta.label}
                         </span>
+                      ) : m.revisionRequested ? (
+                        <span style={{ fontSize: 12.5, fontWeight: 700, padding: "5px 12px", borderRadius: 999, background: "#FFF4E5", color: "#B8860B", whiteSpace: "nowrap" }}>
+                          🔁 Try Again
+                        </span>
                       ) : (
                         <span style={{ fontSize: 12.5, fontWeight: 700, padding: "5px 12px", borderRadius: 999, background: COLORS.cream, color: COLORS.textMuted, whiteSpace: "nowrap" }}>
                           Waiting for your teacher
                         </span>
                       )}
                     </div>
-                    {meta && m.feedback && (
+                    {(meta || m.revisionRequested) && m.feedback && (
                       <div style={{ marginTop: 10, background: COLORS.cream, borderRadius: 10, padding: "10px 12px" }}>
                         <div style={{ fontSize: 10.5, fontWeight: 700, color: COLORS.textMuted, textTransform: "uppercase", letterSpacing: 0.4, marginBottom: 3 }}>Note from your teacher</div>
                         <div style={{ fontSize: 13, color: COLORS.textDark, lineHeight: 1.45 }}>{m.feedback}</div>
                       </div>
+                    )}
+                    {m.revisionRequested && (
+                      <button
+                        type="button"
+                        onClick={() => router.push(`/activity/${m.assignmentId}`)}
+                        className="gc-btn"
+                        style={{ marginTop: 10, background: COLORS.violet, color: COLORS.white, borderRadius: 999, padding: "9px 18px", fontWeight: 700, fontSize: 13 }}
+                      >
+                        Continue Mission →
+                      </button>
                     )}
                   </div>
                 </div>

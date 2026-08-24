@@ -30,7 +30,7 @@ export default async function ProgressPage() {
   // only ever see the teacher's own grade and feedback.
   const { data: submissions } = await supabaseAdmin
     .from("submissions")
-    .select("id, assignment_id, submitted_at, released, teacher_grade, teacher_feedback")
+    .select("id, assignment_id, submitted_at, released, teacher_grade, teacher_feedback, revision_requested")
     .eq("student_id", studentId)
     .not("submitted_at", "is", null)
     .order("submitted_at", { ascending: false });
@@ -58,12 +58,17 @@ export default async function ProgressPage() {
     const caseRow = assignment ? caseMap[assignment.case_standard] : null;
     return {
       id: s.id,
+      assignmentId: s.assignment_id,
       caseStandard: assignment ? assignment.case_standard : null,
       caseTitle: caseRow ? caseRow.title : (assignment ? assignment.case_standard : "Mission"),
       submittedAt: s.submitted_at,
       released: !!s.released,
+      revisionRequested: !!s.revision_requested,
       grade: s.released ? s.teacher_grade : null,
-      feedback: s.released ? s.teacher_feedback : null,
+      // The revision note and the released-grade note both live in the same
+      // teacher_feedback column — show it either way so the student always
+      // sees the teacher's most recent note about this mission.
+      feedback: s.released || s.revision_requested ? s.teacher_feedback : null,
     };
   });
 
