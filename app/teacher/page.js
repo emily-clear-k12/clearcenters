@@ -563,9 +563,11 @@ export default function TeacherOverview() {
                 <button onClick={() => setAwardModalOpen(true)} disabled={classes.length === 0} className="gc-btn" style={{ display: "flex", alignItems: "center", gap: 10, background: "none", padding: "9px 4px", fontSize: 13, fontWeight: 600, color: COLORS.textDark, textAlign: "left", opacity: classes.length === 0 ? 0.5 : 1 }}>
                   <img src="/teacher/action_award_crystal_points.png" alt="" style={{ width: 20, height: 20 }} /> Award Crystal Points <span style={{ marginLeft: "auto", color: COLORS.textMuted }}>›</span>
                 </button>
+                <button onClick={() => router.push("/teacher/reports")} disabled={classes.length === 0} className="gc-btn" style={{ display: "flex", alignItems: "center", gap: 10, background: "none", padding: "9px 4px", fontSize: 13, fontWeight: 600, color: COLORS.textDark, textAlign: "left", opacity: classes.length === 0 ? 0.5 : 1 }}>
+                  <img src="/teacher/action_generate_report.png" alt="" style={{ width: 20, height: 20 }} /> Generate Class Report <span style={{ marginLeft: "auto", color: COLORS.textMuted }}>›</span>
+                </button>
                 {[
                   { icon: "/teacher/action_send_announcement.png", label: "Send Class Announcement" },
-                  { icon: "/teacher/action_generate_report.png", label: "Generate Class Report" },
                 ].map((a) => (
                   <div key={a.label} style={{ display: "flex", alignItems: "center", gap: 10, padding: "9px 4px", fontSize: 13, fontWeight: 600, color: COLORS.textMuted, opacity: 0.6 }}>
                     <img src={a.icon} alt="" style={{ width: 20, height: 20, filter: "grayscale(1)" }} /> {a.label} <span style={{ marginLeft: "auto", fontSize: 10, fontWeight: 700, background: COLORS.border, padding: "2px 8px", borderRadius: 999 }}>Soon</span>
