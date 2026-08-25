@@ -3,8 +3,10 @@ import { redirect } from "next/navigation";
 import { supabaseAdmin } from "../../../lib/supabaseAdmin";
 import { getPublicCase } from "../../../lib/cases/index.public";
 import { getNewsroomBNPublicCase } from "../../../lib/cases/newsroom-bn/index.public";
+import { getSignalCheckPublicCase } from "../../../lib/cases/signal-check/index.public";
 import ActivityClient from "./ActivityClient";
 import NewsroomBNClient from "./NewsroomBNClient";
+import SignalCheckClient from "./SignalCheckClient";
 
 export default async function ActivityPage({ params }) {
   const { assignmentId } = params;
@@ -53,10 +55,12 @@ export default async function ActivityPage({ params }) {
   }
 
   // A case's `engine` column decides which challenge type's content and
-  // game engine this assignment uses — "group_chat" (the default) or, as
-  // of Newsroom, "newsroom_bn" (Breaking News mode). Future Newsroom
-  // modes will use their own "newsroom_fr"/"newsroom_dd"/"newsroom_sr"
-  // engine values and their own client component here.
+  // game engine this assignment uses — "group_chat" (the default), as of
+  // Newsroom "newsroom_bn" (Breaking News mode), and as of Signal Check
+  // "fact_check_desk" (matches the CHALLENGE_TYPES key in
+  // app/teacher/assign/new/page.js). Future Newsroom modes will use their
+  // own "newsroom_fr"/"newsroom_dd"/"newsroom_sr" engine values and their
+  // own client component here.
   const { data: caseRow } = await supabaseAdmin
     .from("cases")
     .select("engine")
@@ -65,11 +69,13 @@ export default async function ActivityPage({ params }) {
 
   const engine = (caseRow && caseRow.engine) || "group_chat";
   const isNewsroomBN = engine.startsWith("newsroom");
+  const isSignalCheck = engine === "fact_check_desk";
 
-  const caseEntry = isNewsroomBN ? null : getPublicCase(assignment.case_standard);
+  const caseEntry = isNewsroomBN || isSignalCheck ? null : getPublicCase(assignment.case_standard);
   const newsroomCase = isNewsroomBN ? getNewsroomBNPublicCase(assignment.case_standard) : null;
+  const signalCheckCase = isSignalCheck ? getSignalCheckPublicCase(assignment.case_standard) : null;
 
-  if (!caseEntry && !newsroomCase) {
+  if (!caseEntry && !newsroomCase && !signalCheckCase) {
     return (
       <div style={{ minHeight: "100vh", background: "#16243F", display: "flex", alignItems: "center", justifyContent: "center", color: "#FFFFFF", fontFamily: "sans-serif", textAlign: "center", padding: 20 }}>
         <div>
@@ -100,6 +106,20 @@ export default async function ActivityPage({ params }) {
         assignmentId={assignmentId}
         caseStandard={assignment.case_standard}
         publicCase={newsroomCase}
+        existingSubmission={existingSubmission}
+        alreadySubmitted={alreadySubmitted}
+        revisionRequested={revisionRequested}
+        revisionFeedback={revisionFeedback}
+      />
+    );
+  }
+
+  if (isSignalCheck) {
+    return (
+      <SignalCheckClient
+        assignmentId={assignmentId}
+        caseStandard={assignment.case_standard}
+        publicCase={signalCheckCase}
         existingSubmission={existingSubmission}
         alreadySubmitted={alreadySubmitted}
         revisionRequested={revisionRequested}

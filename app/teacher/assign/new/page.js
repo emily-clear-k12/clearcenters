@@ -23,15 +23,16 @@ const COLORS = {
 // Detective is now part of Fact-Check Desk (video/caption claim format), and
 // You Be the Judge + Comment Section Challenge + Bracket Battle combined into
 // Comment Court (a placeholder name, pending Emily's final pick). All of
-// these still need real content authored before any go live except Group
-// Chat, so everything but Group Chat stays `real: false` ("Coming Soon") for
-// now regardless of what used to be true for a given key.
+// these still need real content authored before any go live, so they stay
+// `real: false` ("Coming Soon") until then. Group Chat and Fact-Check Desk
+// (branded "Signal Check" in the UI, engine "fact_check_desk") both have
+// real pilot content now, so both are `real: true`.
 const CHALLENGE_TYPES = [
   { key: "group_chat", label: "Group Chat", image: "/teacher/challenges/group_chat.jpg", real: true,
     description: "Students role-play as characters, concepts, or parts of a system in a live group chat, using evidence to prove what's really going on." },
   { key: "repair_desk", label: "Repair Desk", image: "/teacher/challenges/repair_desk.jpg", real: false,
     description: "A broken ticket arrives — a flawed diagram, model, or work sample. Students diagnose what's wrong, fix it, and explain the fix to whoever sent it in." },
-  { key: "fact_check_desk", label: "Signal Check", image: "/teacher/challenges/fact_check_desk.jpg", real: false,
+  { key: "fact_check_desk", label: "Signal Check", image: "/teacher/challenges/fact_check_desk.jpg", real: true,
     description: "Students play a station Cadet, scanning Incoming Transmissions — headlines, data readouts, even recovered footage — for the truth before stamping a verdict: True, Misleading, or False." },
   { key: "museum_exhibit", label: "Museum Exhibit Builder", image: "/teacher/challenges/museum_exhibit.jpg", real: false,
     description: "Students curate a small exhibit from a pile of evidence — choosing the strongest items, rejecting at least one on purpose, and writing placards that explain why." },
