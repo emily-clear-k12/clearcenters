@@ -182,6 +182,60 @@ function SubmitConfirmModal({ open, onCancel, onConfirm }) {
   );
 }
 
+// Shared between the Verdict screen's inline "Review the Evidence Again"
+// panel and the Sensor Sort screen's evidence modal — same content, same
+// fallback rule (field report photo when the case has one, the raw sensor
+// log otherwise), pulled out once so both stay in sync automatically.
+function EvidenceContent({ publicCase, compact }) {
+  if (publicCase.fieldReport) {
+    return (
+      <div style={{ borderRadius: 14, overflow: "hidden", border: "1px solid rgba(255,255,255,.15)" }}>
+        <img src={publicCase.fieldReport.image} alt={publicCase.fieldReport.imageCaption || "Field evidence photo"} style={{ display: "block", width: "100%", maxHeight: compact ? 280 : 340, objectFit: "cover" }} />
+        <div style={{ padding: "14px 16px", background: "rgba(255,255,255,.05)" }}>
+          {publicCase.fieldReport.imageCaption && (
+            <div style={{ fontFamily: "'Space Mono', monospace", fontSize: 10, letterSpacing: 1, color: COLORS.teal, marginBottom: 6 }}>{publicCase.fieldReport.imageCaption.toUpperCase()}</div>
+          )}
+          <div style={{ fontSize: 12.5, lineHeight: 1.55, color: "rgba(255,255,255,.85)" }}>
+            {publicCase.fieldReport.notes.split("\n\n").map((para, i) => (
+              <p key={i} style={{ margin: i === 0 ? 0 : "8px 0 0" }}>{para}</p>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+      {publicCase.evidenceReadings.map((e, i) => (
+        <div key={e.id} style={{ display: "flex", gap: 10, background: "rgba(255,255,255,.05)", border: "1px solid rgba(255,255,255,.15)", borderRadius: 12, padding: "10px 14px" }}>
+          <div style={{ fontFamily: "'Space Mono', monospace", fontSize: 10, fontWeight: 700, color: COLORS.teal, flexShrink: 0, width: 22 }}>#{i + 1}</div>
+          <div>
+            <div style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 600, fontSize: 12.5 }}>{e.label}</div>
+            <div style={{ fontSize: 12, lineHeight: 1.4, color: "rgba(255,255,255,.75)", marginTop: 2 }}>{e.reading}</div>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// Pop-up version of EvidenceContent for screens (like Sensor Sort) that
+// don't have a natural place to show it inline.
+function EvidenceModal({ open, onClose, publicCase }) {
+  if (!open) return null;
+  return (
+    <div style={{ position: "fixed", inset: 0, background: "rgba(6,8,16,.75)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 100, padding: 20 }} onClick={onClose}>
+      <div onClick={(e) => e.stopPropagation()} style={{ background: COLORS.navy, border: "1px solid rgba(255,255,255,.2)", borderRadius: 18, width: "min(560px, 100%)", maxHeight: "85vh", overflowY: "auto", padding: 20, boxShadow: "0 24px 60px rgba(0,0,0,.5)" }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
+          <div style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 700, fontSize: 15, color: COLORS.white }}>📋 Review the Evidence</div>
+          <button onClick={onClose} className="sc-btn" style={{ background: "rgba(255,255,255,.1)", border: "none", color: COLORS.white, borderRadius: 999, width: 28, height: 28, cursor: "pointer", fontSize: 14, lineHeight: 1 }}>✕</button>
+        </div>
+        <EvidenceContent publicCase={publicCase} compact />
+      </div>
+    </div>
+  );
+}
+
 // Ported from Group Chat's CelebrationModal.
 function CelebrationModal({ open, onGoHome }) {
   if (!open) return null;
@@ -230,6 +284,10 @@ export default function SignalCheckClient({ assignmentId, caseStandard, publicCa
   // of having to navigate all the way back to the Scan screen and lose their
   // in-progress answers.
   const [evidenceOpen, setEvidenceOpen] = useState(false);
+  // Same idea, but as a pop-up modal for the Sensor Sort screen — there's
+  // no natural inline spot for a collapsible panel there without crowding
+  // the tray/bins layout.
+  const [evidenceModalOpen, setEvidenceModalOpen] = useState(false);
 
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState(null);
@@ -447,7 +505,7 @@ export default function SignalCheckClient({ assignmentId, caseStandard, publicCa
         </div>
       )}
 
-      <div style={{ position: "relative", maxWidth: 760, margin: "0 auto", padding: "20px 20px 60px", zIndex: 2 }}>
+      <div style={{ position: "relative", maxWidth: phase === "answer" && !submitted ? 1080 : 760, margin: "0 auto", padding: "20px 20px 60px", zIndex: 2 }}>
 
         {phase === "main" && (
           <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 22, textAlign: "center", padding: "30px 0" }}>
@@ -531,6 +589,12 @@ export default function SignalCheckClient({ assignmentId, caseStandard, publicCa
               <div style={{ fontFamily: "'Space Mono', monospace", fontSize: 10.5, letterSpacing: 1.5, color: COLORS.teal, marginTop: 3 }}>TAP A READING, THEN TAP THE SIGNAL IT PROVES</div>
             </div>
 
+            <div style={{ display: "flex", justifyContent: "center" }}>
+              <button type="button" onClick={() => setEvidenceModalOpen(true)} className="sc-btn" style={{ background: "rgba(255,255,255,.08)", border: "1px solid rgba(255,255,255,.25)", color: COLORS.white, borderRadius: 999, padding: "8px 16px", fontSize: 12.5, fontWeight: 700, display: "inline-flex", alignItems: "center", gap: 6 }}>
+                📋 Review the Evidence
+              </button>
+            </div>
+
             <div style={{ background: "rgba(8,10,22,.5)", border: "1px solid rgba(255,255,255,.2)", borderRadius: 16, padding: 14, minHeight: 60 }}>
               <div style={{ fontFamily: "'Space Mono', monospace", fontSize: 9, letterSpacing: 1, color: "rgba(255,255,255,.6)", marginBottom: 8, textAlign: "center" }}>SENSOR TRAY</div>
               <div style={{ display: "flex", flexWrap: "wrap", gap: 10, justifyContent: "center" }}>
@@ -580,120 +644,101 @@ export default function SignalCheckClient({ assignmentId, caseStandard, publicCa
               ⟶ FILE A VERDICT ON EACH SIGNAL
             </div>
 
-            <div style={{ display: "flex", flexDirection: "column", gap: 12, maxWidth: 640, margin: "0 auto", width: "100%" }}>
-              {publicCase.statements.map((s) => {
-                const a = statementAnswers[s.id] || {};
-                const hasErr = !!errors[s.id];
-                return (
-                  <div key={s.id} style={{ background: "rgba(8,10,22,.6)", border: hasErr ? `1.5px solid ${COLORS.danger}` : "1px solid rgba(255,255,255,.2)", borderRadius: 16, padding: "14px 18px" }}>
-                    <div style={{ fontFamily: "'Space Mono', monospace", fontSize: 9, letterSpacing: 1, color: COLORS.teal, marginBottom: 6 }}>{s.tag}</div>
-                    <div style={{ fontSize: 13, lineHeight: 1.5, color: "rgba(255,255,255,.9)", marginBottom: 10 }}>"{s.text}"</div>
+            <div style={{ display: "grid", gridTemplateColumns: "1.3fr 1fr", gap: 16, width: "100%" }}>
+              <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                {publicCase.statements.map((s) => {
+                  const a = statementAnswers[s.id] || {};
+                  const hasErr = !!errors[s.id];
+                  return (
+                    <div key={s.id} style={{ background: "rgba(8,10,22,.6)", border: hasErr ? `1.5px solid ${COLORS.danger}` : "1px solid rgba(255,255,255,.2)", borderRadius: 16, padding: "14px 18px" }}>
+                      <div style={{ fontFamily: "'Space Mono', monospace", fontSize: 9, letterSpacing: 1, color: COLORS.teal, marginBottom: 6 }}>{s.tag}</div>
+                      <div style={{ fontSize: 13, lineHeight: 1.5, color: "rgba(255,255,255,.9)", marginBottom: 10 }}>"{s.text}"</div>
 
-                    {publicCase.stemMode === "dropdown" && (
-                      <>
-                        <VerdictButtons options={publicCase.verdictOptions} value={a.verdict} onChange={(v) => setAnswer(s.id, "verdict", v)} hasErr={hasErr && !a.verdict} />
-                        <div style={{ fontSize: 13, lineHeight: 1.7 }}>
-                          because{" "}
-                          <select className="sc-select" value={a.evidence1 || ""} onChange={(e) => setAnswer(s.id, "evidence1", e.target.value)}>
-                            <option value="">choose ▾</option>
-                            {publicCase.evidenceReadings.map((e) => <option key={e.id} value={e.id}>{e.label}</option>)}
-                          </select>{" "}
-                          and{" "}
-                          <select className="sc-select" value={a.evidence2 || ""} onChange={(e) => setAnswer(s.id, "evidence2", e.target.value)}>
-                            <option value="">choose ▾</option>
-                            {publicCase.evidenceReadings.map((e) => <option key={e.id} value={e.id}>{e.label}</option>)}
-                          </select>.
-                        </div>
-                      </>
-                    )}
-
-                    {publicCase.stemMode === "dropdown-open" && (
-                      <>
-                        <VerdictButtons options={publicCase.verdictOptions} value={a.verdict} onChange={(v) => pickVerdictWithStem(s.id, v)} hasErr={hasErr && !a.verdict} />
-                        <textarea className={"sc-textarea" + (hasErr ? " err" : "")} placeholder="Explain your reasoning using the evidence..." value={a.reasoning || ""} onChange={(e) => setAnswer(s.id, "reasoning", e.target.value)} />
-                      </>
-                    )}
-
-                    {publicCase.stemMode === "open" && (
-                      <>
-                        <VerdictButtons options={publicCase.verdictOptions} value={a.verdictText} onChange={(v) => setAnswer(s.id, "verdictText", v)} hasErr={hasErr && !a.verdictText} />
-                        <textarea className={"sc-textarea" + (hasErr ? " err" : "")} placeholder="Explain your reasoning using the evidence..." value={a.reasoning || ""} onChange={(e) => setAnswer(s.id, "reasoning", e.target.value)} />
-                      </>
-                    )}
-
-                    {hasErr && <div style={{ color: COLORS.danger, fontSize: 11, fontWeight: 600, marginTop: 6 }}>Fill this in before submitting.</div>}
-                  </div>
-                );
-              })}
-            </div>
-
-            {/* Lets a student re-check the evidence right here, without losing
-                their in-progress answers by navigating back to Scan. */}
-            <GlassCard style={{ maxWidth: 640, margin: "0 auto", width: "100%" }}>
-              <button className="sc-btn" onClick={() => setEvidenceOpen((o) => !o)} style={{ background: "none", width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", padding: 0, fontFamily: "'Poppins', sans-serif", fontWeight: 700, fontSize: 14, color: COLORS.white }}>
-                📋 Review the Evidence Again
-                <span style={{ color: COLORS.teal, fontSize: 12 }}>{evidenceOpen ? "▲ HIDE" : "▼ SHOW"}</span>
-              </button>
-              {evidenceOpen && (
-                publicCase.fieldReport ? (
-                  // Same field report as the Scan screen — the exact image
-                  // and paragraph, not a different summarized version — so
-                  // "checking the evidence again" really means the same
-                  // evidence, not something new.
-                  <div style={{ marginTop: 14, borderRadius: 14, overflow: "hidden", border: "1px solid rgba(255,255,255,.15)" }}>
-                    <img src={publicCase.fieldReport.image} alt={publicCase.fieldReport.imageCaption || "Field evidence photo"} style={{ display: "block", width: "100%", maxHeight: 280, objectFit: "cover" }} />
-                    <div style={{ padding: "14px 16px", background: "rgba(255,255,255,.05)" }}>
-                      {publicCase.fieldReport.imageCaption && (
-                        <div style={{ fontFamily: "'Space Mono', monospace", fontSize: 10, letterSpacing: 1, color: COLORS.teal, marginBottom: 6 }}>{publicCase.fieldReport.imageCaption.toUpperCase()}</div>
+                      {publicCase.stemMode === "dropdown" && (
+                        <>
+                          <VerdictButtons options={publicCase.verdictOptions} value={a.verdict} onChange={(v) => setAnswer(s.id, "verdict", v)} hasErr={hasErr && !a.verdict} />
+                          <div style={{ fontSize: 13, lineHeight: 1.7 }}>
+                            because{" "}
+                            <select className="sc-select" value={a.evidence1 || ""} onChange={(e) => setAnswer(s.id, "evidence1", e.target.value)}>
+                              <option value="">choose ▾</option>
+                              {publicCase.evidenceReadings.map((e) => <option key={e.id} value={e.id}>{e.label}</option>)}
+                            </select>{" "}
+                            and{" "}
+                            <select className="sc-select" value={a.evidence2 || ""} onChange={(e) => setAnswer(s.id, "evidence2", e.target.value)}>
+                              <option value="">choose ▾</option>
+                              {publicCase.evidenceReadings.map((e) => <option key={e.id} value={e.id}>{e.label}</option>)}
+                            </select>.
+                          </div>
+                        </>
                       )}
-                      <div style={{ fontSize: 12.5, lineHeight: 1.55, color: "rgba(255,255,255,.85)" }}>
-                        {publicCase.fieldReport.notes.split("\n\n").map((para, i) => (
-                          <p key={i} style={{ margin: i === 0 ? 0 : "8px 0 0" }}>{para}</p>
-                        ))}
-                      </div>
+
+                      {publicCase.stemMode === "dropdown-open" && (
+                        <>
+                          <VerdictButtons options={publicCase.verdictOptions} value={a.verdict} onChange={(v) => pickVerdictWithStem(s.id, v)} hasErr={hasErr && !a.verdict} />
+                          <textarea className={"sc-textarea" + (hasErr ? " err" : "")} placeholder="Explain your reasoning using the evidence..." value={a.reasoning || ""} onChange={(e) => setAnswer(s.id, "reasoning", e.target.value)} />
+                        </>
+                      )}
+
+                      {publicCase.stemMode === "open" && (
+                        <>
+                          <VerdictButtons options={publicCase.verdictOptions} value={a.verdictText} onChange={(v) => setAnswer(s.id, "verdictText", v)} hasErr={hasErr && !a.verdictText} />
+                          <textarea className={"sc-textarea" + (hasErr ? " err" : "")} placeholder="Explain your reasoning using the evidence..." value={a.reasoning || ""} onChange={(e) => setAnswer(s.id, "reasoning", e.target.value)} />
+                        </>
+                      )}
+
+                      {hasErr && <div style={{ color: COLORS.danger, fontSize: 11, fontWeight: 600, marginTop: 6 }}>Fill this in before submitting.</div>}
                     </div>
-                  </div>
-                ) : (
-                  <div style={{ marginTop: 14, display: "flex", flexDirection: "column", gap: 8 }}>
-                    {publicCase.evidenceReadings.map((e, i) => (
-                      <div key={e.id} style={{ display: "flex", gap: 10, background: "rgba(255,255,255,.05)", border: "1px solid rgba(255,255,255,.15)", borderRadius: 12, padding: "10px 14px" }}>
-                        <div style={{ fontFamily: "'Space Mono', monospace", fontSize: 10, fontWeight: 700, color: COLORS.teal, flexShrink: 0, width: 22 }}>#{i + 1}</div>
-                        <div>
-                          <div style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 600, fontSize: 12.5 }}>{e.label}</div>
-                          <div style={{ fontSize: 12, lineHeight: 1.4, color: "rgba(255,255,255,.75)", marginTop: 2 }}>{e.reading}</div>
-                        </div>
+                  );
+                })}
+
+                {/* Lets a student re-check the evidence right here, without
+                    losing their in-progress answers by navigating back to
+                    Scan. */}
+                <GlassCard>
+                  <button className="sc-btn" onClick={() => setEvidenceOpen((o) => !o)} style={{ background: "none", width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", padding: 0, fontFamily: "'Poppins', sans-serif", fontWeight: 700, fontSize: 14, color: COLORS.white }}>
+                    📋 Review the Evidence Again
+                    <span style={{ color: COLORS.teal, fontSize: 12 }}>{evidenceOpen ? "▲ HIDE" : "▼ SHOW"}</span>
+                  </button>
+                  {evidenceOpen && (
+                    // Same field report (or sensor log) as the Scan screen —
+                    // the exact image and paragraph, not a different
+                    // summarized version — so "checking the evidence again"
+                    // really means the same evidence, not something new.
+                    <div style={{ marginTop: 14 }}>
+                      <EvidenceContent publicCase={publicCase} compact />
+                    </div>
+                  )}
+                </GlassCard>
+              </div>
+
+              <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                <GlassCard>
+                  <div style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 700, fontSize: 14, marginBottom: 4 }}>Self-Check</div>
+                  <div style={{ fontSize: 11.5, color: "rgba(255,255,255,.65)", marginBottom: 10 }}>Check off the ones that are true — you need at least {REQUIRED_CHECKS} of {selfCheckQuestions.length} ({checkedCount}/{selfCheckQuestions.length} so far).</div>
+                  <div style={{ display: "grid", gap: 8 }}>
+                    {selfCheckQuestions.map((item, i) => (
+                      <div key={i} onClick={() => toggleChecklistItem(i)} className="sc-chip" style={{ display: "flex", gap: 8, alignItems: "flex-start", background: checklist[i] ? "rgba(0,194,199,.14)" : "rgba(255,255,255,.06)", border: checklist[i] ? `1.5px solid ${COLORS.teal}` : "1.5px solid rgba(255,255,255,.18)", borderRadius: 10, padding: "9px 11px" }}>
+                        <div style={{ width: 18, height: 18, borderRadius: 5, flexShrink: 0, marginTop: 1, border: `2px solid ${checklist[i] ? COLORS.teal : "rgba(255,255,255,.3)"}`, background: checklist[i] ? COLORS.teal : "transparent", display: "flex", alignItems: "center", justifyContent: "center", color: COLORS.navy, fontSize: 12, fontWeight: 700 }}>{checklist[i] ? "✓" : ""}</div>
+                        <div style={{ fontSize: 12.5, lineHeight: 1.4 }}>{item}</div>
                       </div>
                     ))}
                   </div>
-                )
-              )}
-            </GlassCard>
+                  {showChecklistError && !checklistPasses && (
+                    <div style={{ color: COLORS.danger, fontSize: 12, fontWeight: 600, marginTop: 10 }}>Check at least {REQUIRED_CHECKS} before submitting.</div>
+                  )}
+                </GlassCard>
 
-            <GlassCard style={{ maxWidth: 640, margin: "0 auto", width: "100%" }}>
-              <div style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 700, fontSize: 14, marginBottom: 4 }}>Self-Check</div>
-              <div style={{ fontSize: 11.5, color: "rgba(255,255,255,.65)", marginBottom: 10 }}>Check off the ones that are true — you need at least {REQUIRED_CHECKS} of {selfCheckQuestions.length} ({checkedCount}/{selfCheckQuestions.length} so far).</div>
-              <div style={{ display: "grid", gap: 8 }}>
-                {selfCheckQuestions.map((item, i) => (
-                  <div key={i} onClick={() => toggleChecklistItem(i)} className="sc-chip" style={{ display: "flex", gap: 8, alignItems: "flex-start", background: checklist[i] ? "rgba(0,194,199,.14)" : "rgba(255,255,255,.06)", border: checklist[i] ? `1.5px solid ${COLORS.teal}` : "1.5px solid rgba(255,255,255,.18)", borderRadius: 10, padding: "9px 11px" }}>
-                    <div style={{ width: 18, height: 18, borderRadius: 5, flexShrink: 0, marginTop: 1, border: `2px solid ${checklist[i] ? COLORS.teal : "rgba(255,255,255,.3)"}`, background: checklist[i] ? COLORS.teal : "transparent", display: "flex", alignItems: "center", justifyContent: "center", color: COLORS.navy, fontSize: 12, fontWeight: 700 }}>{checklist[i] ? "✓" : ""}</div>
-                    <div style={{ fontSize: 12.5, lineHeight: 1.4 }}>{item}</div>
-                  </div>
-                ))}
+                {submitError && <div style={{ textAlign: "center", color: COLORS.danger, fontSize: 13, fontWeight: 600 }}>{submitError}</div>}
+
+                <GlassCard style={{ textAlign: "center" }}>
+                  <PrimaryButton onClick={handleRequestSubmit} disabled={submitting} style={{ width: "100%", justifyContent: "center" }}>
+                    {submitting ? <Loader2 size={16} className="spin" style={{ animation: "spin 1s linear infinite" }} /> : null}
+                    Submit for Grading
+                    {!submitting && <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M4 12L20 4L14 20L11 13L4 12Z" stroke={COLORS.navy} strokeWidth="1.8" strokeLinejoin="round" /></svg>}
+                  </PrimaryButton>
+                  <div style={{ fontSize: 11, color: "rgba(255,255,255,.6)", marginTop: 8 }}>Goes to your teacher for review — ECHO's read is just a first pass.</div>
+                </GlassCard>
               </div>
-              {showChecklistError && !checklistPasses && (
-                <div style={{ color: COLORS.danger, fontSize: 12, fontWeight: 600, marginTop: 10 }}>Check at least {REQUIRED_CHECKS} before submitting.</div>
-              )}
-            </GlassCard>
-
-            {submitError && <div style={{ textAlign: "center", color: COLORS.danger, fontSize: 13, fontWeight: 600 }}>{submitError}</div>}
-
-            <div style={{ textAlign: "center" }}>
-              <PrimaryButton onClick={handleRequestSubmit} disabled={submitting}>
-                {submitting ? <Loader2 size={16} className="spin" style={{ animation: "spin 1s linear infinite" }} /> : null}
-                Submit for Grading
-                {!submitting && <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M4 12L20 4L14 20L11 13L4 12Z" stroke={COLORS.navy} strokeWidth="1.8" strokeLinejoin="round" /></svg>}
-              </PrimaryButton>
-              <div style={{ fontSize: 11, color: "rgba(255,255,255,.6)", marginTop: 8 }}>Goes to your teacher for review — ECHO's read is just a first pass.</div>
             </div>
 
             <EchoLine text={publicCase.echo.reflect || publicCase.echo.submit} />
@@ -729,6 +774,7 @@ export default function SignalCheckClient({ assignmentId, caseStandard, publicCa
 
       </div>
 
+      <EvidenceModal open={evidenceModalOpen} onClose={() => setEvidenceModalOpen(false)} publicCase={publicCase} />
       <SubmitConfirmModal open={showSubmitConfirm} onCancel={() => setShowSubmitConfirm(false)} onConfirm={confirmSubmit} />
       <CelebrationModal open={selfConfidence !== null && phase === "answer" && submitted} onGoHome={() => router.push("/missions")} />
     </div>

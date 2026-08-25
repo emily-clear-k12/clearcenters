@@ -365,9 +365,16 @@ export default function TeacherGradeDetailPage() {
                         <div key={s.id} style={{ paddingTop: i === 0 ? 0 : 14, borderTop: i === 0 ? "none" : `1px solid ${COLORS.border}` }}>
                           <div style={{ fontSize: 11, fontWeight: 700, color: COLORS.textMuted, marginBottom: 3, textTransform: "uppercase", letterSpacing: 0.4 }}>{s.tag}</div>
                           <div style={{ fontSize: 13.5, color: COLORS.textDark, marginBottom: 8, fontStyle: "italic" }}>"{s.text}"</div>
-                          <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 6, color: !verdict ? COLORS.textMuted : isCorrect ? COLORS.success : COLORS.warning }}>
-                            Answered: {verdict ? verdict.toUpperCase() : "(no answer)"}
-                            {verdict && !isCorrect ? `  ·  correct answer: ${s.correctVerdict.toUpperCase()}` : ""}
+                          <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginBottom: 6 }}>
+                            <span style={{ fontSize: 13, fontWeight: 700, color: !verdict ? COLORS.textMuted : isCorrect ? COLORS.success : COLORS.warning }}>
+                              Answered: {verdict ? verdict.toUpperCase() : "(no answer)"}
+                            </span>
+                            {verdict && (
+                              <span style={{ display: "inline-flex", alignItems: "center", gap: 3, fontSize: 10.5, fontWeight: 700, letterSpacing: 0.3, padding: "2px 8px", borderRadius: 999, background: isCorrect ? "#E9F9EE" : "#FBEAEA", color: isCorrect ? COLORS.success : "#B23A3A" }}>
+                                {isCorrect ? "✓ CORRECT" : "✗ INCORRECT"}
+                              </span>
+                            )}
+                            {verdict && !isCorrect ? <span style={{ fontSize: 12, color: COLORS.textMuted }}>correct answer: {s.correctVerdict.toUpperCase()}</span> : ""}
                           </div>
                           {signalCheckCase.stemMode === "dropdown" ? (
                             <div style={{ background: COLORS.cream, borderRadius: 10, padding: 10, fontSize: 13, color: COLORS.textDark }}>

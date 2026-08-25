@@ -126,8 +126,8 @@ export default function HomeClient({ student, studentClass, assignments, mission
               <img src={caseImagePath(activeMission.case_standard)} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
             </div>
             <div>
-              <span style={{ display: "inline-flex", background: COLORS.violetSoft, color: COLORS.violet, fontSize: 12, fontWeight: 700, letterSpacing: .3, padding: "5px 12px", borderRadius: 999, marginBottom: 10 }}>
-                YOUR ACTIVE MISSION · GROUP CHAT
+              <span style={{ display: "inline-flex", background: activeMission.cases?.engine === "fact_check_desk" ? COLORS.tealSoft : COLORS.violetSoft, color: activeMission.cases?.engine === "fact_check_desk" ? COLORS.teal : COLORS.violet, fontSize: 12, fontWeight: 700, letterSpacing: .3, padding: "5px 12px", borderRadius: 999, marginBottom: 10 }}>
+                YOUR ACTIVE MISSION · {activeMission.cases?.engine === "fact_check_desk" ? "SIGNAL CHECK" : "GROUP CHAT"}
               </span>
               {activeMission.revisionRequested && (
                 <span style={{ display: "inline-flex", alignItems: "center", gap: 4, background: "#FFF4E5", color: "#B8860B", fontSize: 12, fontWeight: 700, letterSpacing: .3, padding: "5px 12px", borderRadius: 999, marginBottom: 10, marginLeft: 8 }}>

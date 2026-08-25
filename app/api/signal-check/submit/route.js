@@ -56,19 +56,23 @@ async function gradeWithClaude(caseData, stemMode, statementAnswers) {
     })
     .join("\n");
 
-  const prompt = `Score this ${caseData.title ? "student's" : "student's"} Signal Check response on a 0/1/2 scale against this rubric. Respond with ONLY a JSON object like {"score": 0, "rationale": "..."} — no other text, no markdown, no code fence, just the raw JSON object.
+  const prompt = `You are grading a student's Signal Check response — a fact-check exercise where the student picks a True/Misleading/False verdict for each signal AND explains their reasoning. Score it on a 0/1/2 scale against this rubric. Respond with ONLY a JSON object like {"score": 0, "rationale": "..."} — no other text, no markdown, no code fence, just the raw JSON object.
 
 Case: ${caseData.title}
 Rubric (per signal):
 ${rubricText}
 
-A strong (2) response gets the verdict right AND explains it using the required evidence for every signal. A 1 gets some but not all signals right, or is missing key evidence in the reasoning. A 0 mostly gets verdicts wrong or gives no real reasoning.
+For EACH signal, judge two separate things: (1) did the student pick the correct verdict, and (2) does their written reasoning actually explain WHY, using the specific evidence — not just restating the verdict or writing something vague/generic. A signal only counts as fully correct if both the verdict AND the explanation are right.
+
+A strong (2) response gets the verdict right AND gives a real, evidence-based explanation for every signal. A 1 gets some signals fully right but is missing correct verdicts, or has reasoning that's thin, vague, or doesn't actually use the evidence, on one or more signals. A 0 mostly gets verdicts wrong or gives no real reasoning anywhere.
+
+In the rationale, briefly call out by signal letter which ones were solid and which ones had a wrong verdict or weak/incorrect reasoning, so a teacher can see at a glance where to focus. Keep it to 2-3 sentences total.
 
 Student's response:
 ${studentText}`;
 
   try {
-    const raw = await callClaude({ messages: [{ role: "user", content: prompt }], max_tokens: 200 });
+    const raw = await callClaude({ messages: [{ role: "user", content: prompt }], max_tokens: 350 });
     const parsed = extractJSON(raw);
     return { score: parsed.score, rationale: parsed.rationale };
   } catch (err) {

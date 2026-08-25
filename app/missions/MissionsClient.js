@@ -86,8 +86,8 @@ export default function MissionsClient({ student, assignments }) {
                   )}
                 </div>
                 <div style={{ padding: 16 }}>
-                  <span style={{ display: "inline-flex", background: COLORS.violetSoft, color: COLORS.violet, fontSize: 11, fontWeight: 700, letterSpacing: .3, padding: "4px 10px", borderRadius: 999, marginBottom: 8 }}>
-                    GROUP CHAT
+                  <span style={{ display: "inline-flex", background: a.cases?.engine === "fact_check_desk" ? COLORS.tealSoft : COLORS.violetSoft, color: a.cases?.engine === "fact_check_desk" ? COLORS.teal : COLORS.violet, fontSize: 11, fontWeight: 700, letterSpacing: .3, padding: "4px 10px", borderRadius: 999, marginBottom: 8 }}>
+                    {a.cases?.engine === "fact_check_desk" ? "SIGNAL CHECK" : "GROUP CHAT"}
                   </span>
                   {a.revisionRequested && (
                     <span style={{ display: "inline-flex", alignItems: "center", gap: 4, background: "#FFF4E5", color: "#B8860B", fontSize: 11, fontWeight: 700, letterSpacing: .3, padding: "4px 10px", borderRadius: 999, marginBottom: 8, marginLeft: 6 }}>
