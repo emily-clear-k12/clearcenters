@@ -18,26 +18,35 @@ const COLORS = {
   danger: "#E4574C",
 };
 
-// Percent-based boxes matching the dashed guide zones baked into
-// /public/gear/hq_background.png (a 1000x700 canvas). If the background
-// art is ever redrawn with different room proportions, these five boxes
-// are the only thing that needs to move to match it.
+// Percent-based boxes matching room features drawn into
+// /public/gear/hq_background.png (a 1672x941 canvas, the "Dream Space"
+// woodland-cottage art). If the background art is ever redrawn with
+// different room proportions, these boxes are the only thing that needs
+// to move to match it. "lighting" and "fireplace" are new slots added
+// alongside the original five when the room was re-themed; "window" and
+// "pet" still point at their original (pre-reskin) placeholder art since
+// no replacement pieces exist for those yet — repositioned here just
+// enough to sit sensibly in the new room, not restyled.
 const SLOT_LAYOUT = {
-  window: { left: "6%", top: "15.7%", width: "24%", height: "38.6%" },
-  wall: { left: "37%", top: "15.7%", width: "31%", height: "30%" },
-  seating: { left: "6%", top: "67.1%", width: "26%", height: "27.1%" },
-  rug: { left: "34%", top: "80%", width: "42%", height: "14.3%" },
-  pet: { left: "80%", top: "71.4%", width: "15%", height: "21.4%" },
+  window: { left: "2%", top: "42%", width: "12%", height: "18%" },
+  wall: { left: "40%", top: "24%", width: "20%", height: "34%" },
+  seating: { left: "5%", top: "62%", width: "22%", height: "32%" },
+  rug: { left: "33%", top: "80%", width: "34%", height: "16%" },
+  pet: { left: "26%", top: "85%", width: "10%", height: "13%" },
+  lighting: { left: "38%", top: "2%", width: "24%", height: "18%" },
+  fireplace: { left: "70%", top: "56%", width: "24%", height: "36%" },
 };
 
 const SLOT_LABELS = {
   seating: "Seating",
   rug: "Rug",
-  wall: "Wall Art",
+  wall: "Wall Décor",
   window: "Window",
   pet: "Pet",
+  lighting: "Lighting",
+  fireplace: "Fireplace",
 };
-const SLOT_ORDER = ["seating", "rug", "wall", "window", "pet"];
+const SLOT_ORDER = ["seating", "rug", "wall", "lighting", "fireplace", "window", "pet"];
 
 export default function GearLockerClient({ student, shopItems, inventory }) {
   const router = useRouter();
@@ -131,7 +140,7 @@ export default function GearLockerClient({ student, shopItems, inventory }) {
         )}
 
         {/* The HQ stage */}
-        <div style={{ position: "relative", width: "100%", paddingTop: "70%", borderRadius: 20, overflow: "hidden", boxShadow: "0 8px 30px rgba(0,0,0,.18)", marginBottom: 28 }}>
+        <div style={{ position: "relative", width: "100%", paddingTop: "56.3%", borderRadius: 20, overflow: "hidden", boxShadow: "0 8px 30px rgba(0,0,0,.18)", marginBottom: 28 }}>
           <img src="/gear/hq_background.png" alt="Your treehouse HQ" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
           {SLOT_ORDER.map((slot) => {
             const item = equippedBySlot[slot];
