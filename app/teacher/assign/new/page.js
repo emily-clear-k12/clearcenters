@@ -187,7 +187,7 @@ function NewAssignmentContent() {
       <TeacherSidebar teacherEmail={teacherEmail} />
 
       <div style={{ flex: 1, padding: "32px 36px", display: "flex", justifyContent: "center" }}>
-        <div style={{ width: "100%", maxWidth: 640 }}>
+        <div style={{ width: "100%", maxWidth: challengeStep === "library" ? 1240 : 640 }}>
           <button onClick={() => router.push("/teacher/assign")} className="gc-btn" style={{ display: "flex", alignItems: "center", gap: 6, background: "none", color: COLORS.textMuted, fontSize: 13, fontWeight: 600, marginBottom: 10 }}>
             <ChevronLeft size={16} /> Back to My Classes
           </button>
@@ -216,10 +216,10 @@ function NewAssignmentContent() {
                 {challengeStep === "library" && (
                   <>
                     <div style={{ fontWeight: 700, fontSize: 13, marginBottom: 12 }}>1. Choose a Challenge Type</div>
-                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+                    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(290px, 1fr))", gap: 14 }}>
                       {CHALLENGE_TYPES.map((ch) => (
                         <button key={ch.key} className="gc-btn" disabled={!ch.real} onClick={() => { setSelectedChallenge(ch); setChallengeStep("gradeSubject"); }} style={{ position: "relative", borderRadius: 12, overflow: "hidden", border: `1px solid ${COLORS.border}`, padding: 0, textAlign: "left", opacity: ch.real ? 1 : 0.7, cursor: ch.real ? "pointer" : "default" }}>
-                          <div style={{ position: "relative", height: 90 }}>
+                          <div style={{ position: "relative", height: 110 }}>
                             <img src={ch.image} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block", filter: ch.real ? "none" : "grayscale(0.3)" }} />
                             {!ch.real && <span style={{ position: "absolute", top: 6, right: 6, fontSize: 9.5, fontWeight: 700, background: "rgba(255,255,255,.92)", color: COLORS.textMuted, padding: "2px 8px", borderRadius: 999 }}>Coming Soon</span>}
                           </div>

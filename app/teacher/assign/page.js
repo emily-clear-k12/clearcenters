@@ -65,6 +65,9 @@ export default function MyClassesPage() {
   const [copiedCode, setCopiedCode] = useState(false);
   const [error, setError] = useState(null);
   const [caseDetailAssignment, setCaseDetailAssignment] = useState(null);
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState(null);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data, error: authError }) => {
@@ -206,6 +209,48 @@ export default function MyClassesPage() {
     navigator.clipboard.writeText(code);
     setCopiedCode(true);
     setTimeout(() => setCopiedCode(false), 1500);
+  }
+
+  function closeCaseDetail() {
+    setCaseDetailAssignment(null);
+    setConfirmingDelete(false);
+    setDeleteError(null);
+  }
+
+  // Deletes an assignment and everything hanging off it. Works the same way
+  // no matter which challenge type/engine the assignment's case belongs to
+  // (Group Chat, Signal Check, whatever comes next) — it only ever touches
+  // the generic assignments/assignment_students/submissions tables, never
+  // engine-specific content, so nothing extra is needed as new challenge
+  // types come online.
+  async function handleDeleteAssignment() {
+    if (!caseDetailAssignment) return;
+    setDeleting(true);
+    setDeleteError(null);
+
+    // submissions has RLS enabled with no delete policy by default — this
+    // needs the "Teachers can delete submissions for their classes" policy
+    // (same shape as the existing view/grade policies) or this step 403s.
+    const { error: subsError } = await supabase.from("submissions").delete().eq("assignment_id", caseDetailAssignment.id);
+    if (subsError) {
+      setDeleting(false);
+      setDeleteError("Couldn't delete this assignment's submissions: " + subsError.message);
+      return;
+    }
+
+    // assignment_students cascade-deletes with the assignment row, but
+    // clearing it explicitly first means this doesn't depend on that.
+    await supabase.from("assignment_students").delete().eq("assignment_id", caseDetailAssignment.id);
+
+    const { error: assignError } = await supabase.from("assignments").delete().eq("id", caseDetailAssignment.id);
+    setDeleting(false);
+    if (assignError) {
+      setDeleteError("Couldn't delete the assignment: " + assignError.message);
+      return;
+    }
+
+    closeCaseDetail();
+    loadClassDetails();
   }
 
   const selectedClass = classes.find((c) => c.id === selectedClassId);
@@ -410,7 +455,7 @@ export default function MyClassesPage() {
 
       {caseDetailAssignment && (
         <div
-          onClick={() => setCaseDetailAssignment(null)}
+          onClick={closeCaseDetail}
           style={{ position: "fixed", inset: 0, background: "rgba(13,27,42,.45)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 100, padding: 20 }}
         >
           <div
@@ -420,7 +465,7 @@ export default function MyClassesPage() {
             <div style={{ height: 140, overflow: "hidden", borderRadius: "20px 20px 0 0", position: "relative" }}>
               <img src={caseImagePath(caseDetailAssignment.case_standard)} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
               <button
-                onClick={() => setCaseDetailAssignment(null)}
+                onClick={closeCaseDetail}
                 className="gc-btn"
                 style={{ position: "absolute", top: 12, right: 12, background: "rgba(13,27,42,.55)", color: COLORS.white, border: "none", borderRadius: "50%", width: 30, height: 30, fontSize: 16, lineHeight: 1 }}
               >
@@ -467,6 +512,47 @@ export default function MyClassesPage() {
                   No learning target content yet for this case.
                 </div>
               )}
+
+              <div style={{ marginTop: 20, paddingTop: 16, borderTop: `1px solid ${COLORS.border}` }}>
+                {deleteError && <div style={{ background: "#FBEAEA", color: "#B23A3A", borderRadius: 10, padding: "9px 12px", fontSize: 12.5, marginBottom: 10 }}>{deleteError}</div>}
+
+                {!confirmingDelete ? (
+                  <button
+                    type="button"
+                    onClick={() => setConfirmingDelete(true)}
+                    className="gc-btn"
+                    style={{ background: "none", color: "#B23A3A", fontSize: 12.5, fontWeight: 700, padding: "6px 2px" }}
+                  >
+                    Delete Assignment
+                  </button>
+                ) : (
+                  <div style={{ background: "#FBEAEA", border: "1px solid #F0B8B8", borderRadius: 12, padding: "12px 14px" }}>
+                    <div style={{ fontSize: 12.5, color: "#7A2020", lineHeight: 1.5, marginBottom: 10 }}>
+                      Delete this assignment{caseDetailAssignment.submittedCount > 0 ? ` and its ${caseDetailAssignment.submittedCount} submission${caseDetailAssignment.submittedCount === 1 ? "" : "s"}` : ""}? This can't be undone.
+                    </div>
+                    <div style={{ display: "flex", gap: 8 }}>
+                      <button
+                        type="button"
+                        onClick={() => setConfirmingDelete(false)}
+                        disabled={deleting}
+                        className="gc-btn"
+                        style={{ background: COLORS.white, border: `1px solid ${COLORS.border}`, color: COLORS.textDark, borderRadius: 999, padding: "8px 16px", fontWeight: 700, fontSize: 12.5 }}
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleDeleteAssignment}
+                        disabled={deleting}
+                        className="gc-btn"
+                        style={{ background: "#B23A3A", color: COLORS.white, borderRadius: 999, padding: "8px 16px", fontWeight: 700, fontSize: 12.5 }}
+                      >
+                        {deleting ? "Deleting..." : "Yes, Delete"}
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>
