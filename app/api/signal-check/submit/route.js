@@ -73,8 +73,14 @@ ${studentText}`;
     return { score: parsed.score, rationale: parsed.rationale };
   } catch (err) {
     // Scoring failure shouldn't block the student's submission — a teacher
-    // can still grade manually if this is null.
-    return { score: null, rationale: null };
+    // can still grade manually if this is null. But swallowing the actual
+    // error to a bare null/null made this impossible to diagnose from the
+    // outside (every failure just showed "AI scoring wasn't available",
+    // whether the cause was a bad API key, an invalid model name, or a
+    // parsing miss). Stash the real error message in rationale, prefixed so
+    // the grading UI can tell a genuine diagnostic apart from a real AI
+    // rationale and render it distinctly.
+    return { score: null, rationale: "[AI grading error] " + (err && err.message ? err.message : String(err)) };
   }
 }
 
@@ -86,7 +92,7 @@ export async function POST(request) {
     return NextResponse.json({ error: "Not logged in." }, { status: 401 });
   }
 
-  const { assignmentId, caseStandard, stemMode, statementAnswers, practiceContext } = await request.json();
+  const { assignmentId, caseStandard, stemMode, statementAnswers, checklist, practiceContext } = await request.json();
   const caseData = getSignalCheckServerCase(caseStandard);
 
   let aiScore = null;
@@ -106,6 +112,7 @@ export async function POST(request) {
 
   const fields = {
     attempt2: summarizeForHumans(caseData, stemMode, statementAnswers),
+    checklist: checklist || null,
     signal_data: {
       stemMode: stemMode || null,
       statementAnswers: statementAnswers || {},

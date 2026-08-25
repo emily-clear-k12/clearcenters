@@ -6,6 +6,7 @@ import { ChevronLeft, Sparkles } from "lucide-react";
 import { supabase } from "../../../../lib/supabaseClient";
 import { getPublicCase } from "../../../../lib/cases/index.public";
 import { getNewsroomBNPublicCase } from "../../../../lib/cases/newsroom-bn/index.public";
+import { getSignalCheckPublicCase } from "../../../../lib/cases/signal-check/index.public";
 import TeacherSidebar from "../../../../components/TeacherSidebar";
 
 const COLORS = {
@@ -39,6 +40,15 @@ const NEXT_STEPS_GENERIC = {
   0: { heading: "Reteach the core idea", body: "This student is still holding onto the trap claim. Sit down together and walk back through the evidence bank one piece at a time." },
   1: { heading: "Close the gap", body: "They're partway there but missing a piece. Point them back to the evidence they didn't use yet and ask them to add one more connection." },
 };
+
+// Same shape as NEXT_STEPS_GENERIC above, reworded for Signal Check — there's
+// no single "trap claim" here, just true/false/misleading verdicts on each
+// signal, so the reteach language points at the evidence per signal instead.
+const SIGNAL_CHECK_NEXT_STEPS = {
+  0: { heading: "Reteach the core idea", body: "This student is still misreading the evidence — most of their verdicts don't match what the readings actually show. Sit down together and walk through the evidence, signal by signal." },
+  1: { heading: "Close the gap", body: "They got some signals right, but at least one verdict doesn't match the evidence, or the reasoning behind it is thin. Point them back to the signal(s) they missed and ask them to reconnect their reasoning to the evidence." },
+};
+const SIGNAL_CHECK_PUSH_FURTHER = "This student read every signal correctly. Challenge them to point out a piece of evidence they didn't cite, or explain why a different verdict wouldn't fit as well.";
 
 function ScorePill({ label, value, color, sublabel }) {
   return (
@@ -249,7 +259,9 @@ export default function TeacherGradeDetailPage() {
     );
   }
 
-  const caseEntry = getPublicCase(submission.caseStandard);
+  const isSignalCheck = submission.caseEngine === "fact_check_desk";
+  const caseEntry = isSignalCheck ? null : getPublicCase(submission.caseStandard);
+  const signalCheckCase = isSignalCheck ? getSignalCheckPublicCase(submission.caseStandard) : null;
   const isNewsroom = (submission.caseEngine || "").startsWith("newsroom");
   const newsroomCase = isNewsroom ? getNewsroomBNPublicCase(submission.caseStandard) : null;
   const newsroomVoiceName = (id) => (newsroomCase?.voices.find((v) => v.id === id) || {}).name || id;
@@ -258,26 +270,48 @@ export default function TeacherGradeDetailPage() {
   const confMeta = submission.self_confidence ? CONFIDENCE_META[submission.self_confidence] : null;
   const checklist = submission.checklist || [];
   const checkedCount = checklist.filter(Boolean).length;
+  const selfCheckQuestions = isSignalCheck ? (signalCheckCase?.selfCheckQuestions || []) : (caseEntry?.publicCase?.selfCheckQuestions || []);
   const gapFlag =
     submission.ai_score !== null &&
     (Math.abs(finalGrade - submission.ai_score) >= 2 ||
       (submission.self_confidence === "strong" && finalGrade === 0) ||
       (submission.self_confidence === "shaky" && finalGrade === 2));
 
-  const nextStep =
-    finalGrade === 2 && caseEntry
-      ? { heading: "Push further", body: caseEntry.pushAngle }
-      : NEXT_STEPS_GENERIC[finalGrade] || NEXT_STEPS_GENERIC[0];
+  // The signals this student's verdicts don't match — used both for the
+  // structured per-question breakdown on the left and the reteach
+  // springboard below. Empty when this isn't a Signal Check submission or
+  // the case content can't be found.
+  const signalCheckAnswers = (submission.signal_data && submission.signal_data.statementAnswers) || {};
+  function signalCheckVerdict(s) {
+    const a = signalCheckAnswers[s.id] || {};
+    return signalCheckCase?.stemMode === "open" ? a.verdictText : a.verdict;
+  }
+  const signalCheckWrongSignals =
+    isSignalCheck && signalCheckCase
+      ? signalCheckCase.statements.filter((s) => signalCheckVerdict(s) !== s.correctVerdict)
+      : [];
+
+  const nextStep = isSignalCheck
+    ? finalGrade === 2
+      ? { heading: "Push further", body: SIGNAL_CHECK_PUSH_FURTHER }
+      : SIGNAL_CHECK_NEXT_STEPS[finalGrade] || SIGNAL_CHECK_NEXT_STEPS[0]
+    : finalGrade === 2 && caseEntry
+    ? { heading: "Push further", body: caseEntry.pushAngle }
+    : NEXT_STEPS_GENERIC[finalGrade] || NEXT_STEPS_GENERIC[0];
 
   // Springboard for the teacher: the standard's core question and the
-  // specific misconception this case is built around, pulled from the same
-  // public case content already shown to the student — not new authored
-  // content, just surfaced here so the teacher doesn't have to go look it
-  // up separately before reteaching.
-  const standardSpringboard =
-    finalGrade !== 2 && caseEntry && caseEntry.publicCase
-      ? { bigQuestion: caseEntry.publicCase.bigQuestion, trapLine: caseEntry.publicCase.trapLine }
-      : null;
+  // specific misconception (Group Chat) or the missed signals (Signal
+  // Check) this case is built around, pulled from the same public case
+  // content already shown to the student — not new authored content, just
+  // surfaced here so the teacher doesn't have to go look it up separately
+  // before reteaching.
+  const standardSpringboard = isSignalCheck
+    ? finalGrade !== 2 && signalCheckCase
+      ? { kind: "signal-check", claimHeadline: signalCheckCase.transmission.claimHeadline, wrongSignals: signalCheckWrongSignals }
+      : null
+    : finalGrade !== 2 && caseEntry && caseEntry.publicCase
+    ? { kind: "group-chat", bigQuestion: caseEntry.publicCase.bigQuestion, trapLine: caseEntry.publicCase.trapLine }
+    : null;
 
   return (
     <div style={{ display: "flex", minHeight: "100vh", background: COLORS.cream, fontFamily: "'Inter', sans-serif", color: COLORS.textDark }}>
@@ -312,19 +346,63 @@ export default function TeacherGradeDetailPage() {
         <div style={{ display: "flex", justifyContent: "center" }}>
         <div style={{ width: "100%", maxWidth: 1000, display: "grid", gridTemplateColumns: "1.3fr 1fr", gap: 18 }}>
           <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-            <div style={{ background: COLORS.white, borderRadius: 16, padding: 16, boxShadow: "0 4px 16px rgba(0,0,0,.12)" }}>
-              <div style={{ fontWeight: 700, fontSize: 12.5, color: COLORS.textMuted, marginBottom: 8, textTransform: "uppercase", letterSpacing: 0.5 }}>Attempt 1</div>
-              <div style={{ background: COLORS.cream, borderRadius: 10, padding: 12, fontSize: 14, lineHeight: 1.5, color: COLORS.textDark }}>{submission.attempt1 || <span style={{ color: COLORS.textMuted, fontStyle: "italic" }}>(no answer written)</span>}</div>
-            </div>
-
-            {submission.attempt2 && (
+            {isSignalCheck ? (
+              // Signal Check only ever has one attempt — no revise step —
+              // so the Attempt 1 / Attempt 2 split doesn't apply here. Show
+              // each signal matched with what the student actually answered
+              // instead of the flattened one-paragraph summary.
               <div style={{ background: COLORS.white, borderRadius: 16, padding: 16, boxShadow: "0 4px 16px rgba(0,0,0,.12)" }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
-                  <div style={{ fontWeight: 700, fontSize: 12.5, color: COLORS.textMuted, textTransform: "uppercase", letterSpacing: 0.5 }}>Attempt 2 · Revised</div>
-                  <span style={{ background: COLORS.tealSoft, color: COLORS.teal, fontSize: 10.5, fontWeight: 700, padding: "2px 8px", borderRadius: 999 }}>2nd attempt</span>
-                </div>
-                <div style={{ background: COLORS.cream, borderRadius: 10, padding: 12, fontSize: 14, lineHeight: 1.5, color: COLORS.textDark }}>{submission.attempt2}</div>
+                <div style={{ fontWeight: 700, fontSize: 12.5, color: COLORS.textMuted, marginBottom: 12, textTransform: "uppercase", letterSpacing: 0.5 }}>Student's Responses</div>
+                {signalCheckCase ? (
+                  <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+                    {signalCheckCase.statements.map((s, i) => {
+                      const a = signalCheckAnswers[s.id] || {};
+                      const verdict = signalCheckVerdict(s);
+                      const isCorrect = verdict && verdict === s.correctVerdict;
+                      const evidenceById = {};
+                      (signalCheckCase.evidenceReadings || []).forEach((e) => { evidenceById[e.id] = e; });
+                      return (
+                        <div key={s.id} style={{ paddingTop: i === 0 ? 0 : 14, borderTop: i === 0 ? "none" : `1px solid ${COLORS.border}` }}>
+                          <div style={{ fontSize: 11, fontWeight: 700, color: COLORS.textMuted, marginBottom: 3, textTransform: "uppercase", letterSpacing: 0.4 }}>{s.tag}</div>
+                          <div style={{ fontSize: 13.5, color: COLORS.textDark, marginBottom: 8, fontStyle: "italic" }}>"{s.text}"</div>
+                          <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 6, color: !verdict ? COLORS.textMuted : isCorrect ? COLORS.success : COLORS.warning }}>
+                            Answered: {verdict ? verdict.toUpperCase() : "(no answer)"}
+                            {verdict && !isCorrect ? `  ·  correct answer: ${s.correctVerdict.toUpperCase()}` : ""}
+                          </div>
+                          {signalCheckCase.stemMode === "dropdown" ? (
+                            <div style={{ background: COLORS.cream, borderRadius: 10, padding: 10, fontSize: 13, color: COLORS.textDark }}>
+                              Evidence cited: {[a.evidence1, a.evidence2].filter(Boolean).map((id) => evidenceById[id]?.label || id).join(", ") || <span style={{ color: COLORS.textMuted, fontStyle: "italic" }}>(none picked)</span>}
+                            </div>
+                          ) : (
+                            <div style={{ background: COLORS.cream, borderRadius: 10, padding: 10, fontSize: 13, lineHeight: 1.5, color: COLORS.textDark }}>
+                              {a.reasoning || <span style={{ color: COLORS.textMuted, fontStyle: "italic" }}>(no reasoning written)</span>}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <div style={{ background: COLORS.cream, borderRadius: 10, padding: 12, fontSize: 13, color: COLORS.textMuted, fontStyle: "italic" }}>{submission.attempt2 || "(no answer written)"}</div>
+                )}
               </div>
+            ) : (
+              <>
+                <div style={{ background: COLORS.white, borderRadius: 16, padding: 16, boxShadow: "0 4px 16px rgba(0,0,0,.12)" }}>
+                  <div style={{ fontWeight: 700, fontSize: 12.5, color: COLORS.textMuted, marginBottom: 8, textTransform: "uppercase", letterSpacing: 0.5 }}>Attempt 1</div>
+                  <div style={{ background: COLORS.cream, borderRadius: 10, padding: 12, fontSize: 14, lineHeight: 1.5, color: COLORS.textDark }}>{submission.attempt1 || <span style={{ color: COLORS.textMuted, fontStyle: "italic" }}>(no answer written)</span>}</div>
+                </div>
+
+                {submission.attempt2 && (
+                  <div style={{ background: COLORS.white, borderRadius: 16, padding: 16, boxShadow: "0 4px 16px rgba(0,0,0,.12)" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
+                      <div style={{ fontWeight: 700, fontSize: 12.5, color: COLORS.textMuted, textTransform: "uppercase", letterSpacing: 0.5 }}>Attempt 2 · Revised</div>
+                      <span style={{ background: COLORS.tealSoft, color: COLORS.teal, fontSize: 10.5, fontWeight: 700, padding: "2px 8px", borderRadius: 999 }}>2nd attempt</span>
+                    </div>
+                    <div style={{ background: COLORS.cream, borderRadius: 10, padding: 12, fontSize: 14, lineHeight: 1.5, color: COLORS.textDark }}>{submission.attempt2}</div>
+                  </div>
+                )}
+              </>
             )}
 
             {isNewsroom && nd && (
@@ -382,7 +460,16 @@ export default function TeacherGradeDetailPage() {
                   <div style={{ fontSize: 13, color: COLORS.textDark, lineHeight: 1.45 }}>{submission.ai_rationale}</div>
                 </div>
               ) : (
-                <div style={{ fontSize: 13, color: COLORS.textMuted, fontStyle: "italic" }}>AI scoring wasn't available for this submission — grade manually below.</div>
+                <div>
+                  <div style={{ fontSize: 13, color: COLORS.textMuted, fontStyle: "italic" }}>AI scoring wasn't available for this submission — grade manually below.</div>
+                  {/* Failed grading calls stash the real error here (prefixed
+                      "[AI grading error]") instead of a bare null, so a
+                      persistent failure is diagnosable from this screen
+                      instead of looking identical every time. */}
+                  {submission.ai_rationale && submission.ai_rationale.startsWith("[AI grading error]") && (
+                    <div style={{ marginTop: 8, background: "#FBEAEA", border: "1px solid #F0C4C4", borderRadius: 8, padding: "8px 10px", fontSize: 11.5, color: "#8A3030", fontFamily: "monospace" }}>{submission.ai_rationale}</div>
+                  )}
+                </div>
               )}
             </div>
 
@@ -391,7 +478,7 @@ export default function TeacherGradeDetailPage() {
                 Suggested Next Step · {nextStep.heading}
               </div>
               <div style={{ fontSize: 12.5, color: COLORS.textDark, lineHeight: 1.5 }}>{nextStep.body}</div>
-              {standardSpringboard && (
+              {standardSpringboard && standardSpringboard.kind === "group-chat" && (
                 <div style={{ marginTop: 12, paddingTop: 12, borderTop: "1px solid rgba(0,0,0,.08)" }}>
                   <div style={{ fontSize: 11, fontWeight: 700, color: COLORS.textMuted, textTransform: "uppercase", letterSpacing: 0.4, marginBottom: 4 }}>Core Idea of This Standard</div>
                   <div style={{ fontSize: 12.5, color: COLORS.textDark, lineHeight: 1.5, marginBottom: 10 }}>{standardSpringboard.bigQuestion}</div>
@@ -399,16 +486,36 @@ export default function TeacherGradeDetailPage() {
                   <div style={{ fontSize: 12.5, color: COLORS.textDark, lineHeight: 1.5, fontStyle: "italic" }}>"{standardSpringboard.trapLine}"</div>
                 </div>
               )}
+              {standardSpringboard && standardSpringboard.kind === "signal-check" && (
+                <div style={{ marginTop: 12, paddingTop: 12, borderTop: "1px solid rgba(0,0,0,.08)" }}>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: COLORS.textMuted, textTransform: "uppercase", letterSpacing: 0.4, marginBottom: 4 }}>The Claim Being Fact-Checked</div>
+                  <div style={{ fontSize: 12.5, color: COLORS.textDark, lineHeight: 1.5, fontStyle: "italic", marginBottom: 10 }}>"{standardSpringboard.claimHeadline}"</div>
+                  {standardSpringboard.wrongSignals.length > 0 ? (
+                    <>
+                      <div style={{ fontSize: 11, fontWeight: 700, color: COLORS.textMuted, textTransform: "uppercase", letterSpacing: 0.4, marginBottom: 4 }}>Signals to Revisit</div>
+                      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                        {standardSpringboard.wrongSignals.map((s) => (
+                          <div key={s.id} style={{ fontSize: 12.5, color: COLORS.textDark, lineHeight: 1.5 }}>
+                            <b>{s.tag} — should be {s.correctVerdict.toUpperCase()}:</b> {s.reasonText}
+                          </div>
+                        ))}
+                      </div>
+                    </>
+                  ) : (
+                    <div style={{ fontSize: 12.5, color: COLORS.textDark, lineHeight: 1.5 }}>Every verdict matched the evidence — the gap here is likely in how the reasoning is explained rather than which signals were picked.</div>
+                  )}
+                </div>
+              )}
             </div>
           </div>
 
           <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-            {checklist.length > 0 && caseEntry && (
+            {checklist.length > 0 && selfCheckQuestions.length > 0 && (
               <div style={{ background: COLORS.white, borderRadius: 16, padding: 16, boxShadow: "0 4px 16px rgba(0,0,0,.12)" }}>
                 <div style={{ fontWeight: 700, fontSize: 13, color: COLORS.textDark, marginBottom: 2 }}>Student's Self-Check</div>
                 <div style={{ fontSize: 11.5, color: COLORS.textMuted, marginBottom: 10 }}>Checked {checkedCount} of {checklist.length} before submitting</div>
                 <div style={{ display: "grid", gap: 6 }}>
-                  {caseEntry.publicCase.selfCheckQuestions.map((q, i) => (
+                  {selfCheckQuestions.map((q, i) => (
                     <div key={i} style={{ display: "flex", gap: 8, alignItems: "flex-start", fontSize: 12, lineHeight: 1.4 }}>
                       <span style={{ color: checklist[i] ? COLORS.success : "#D8D4E8", fontWeight: 700, flexShrink: 0 }}>{checklist[i] ? "✓" : "○"}</span>
                       <span style={{ color: checklist[i] ? COLORS.textDark : COLORS.textMuted }}>{q}</span>

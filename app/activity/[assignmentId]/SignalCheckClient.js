@@ -595,17 +595,33 @@ export default function SignalCheckClient({ assignmentId, caseStandard, publicCa
                 <span style={{ color: COLORS.teal, fontSize: 12 }}>{evidenceOpen ? "▲ HIDE" : "▼ SHOW"}</span>
               </button>
               {evidenceOpen && (
-                <div style={{ marginTop: 14, display: "flex", flexDirection: "column", gap: 8 }}>
-                  {publicCase.evidenceReadings.map((e, i) => (
-                    <div key={e.id} style={{ display: "flex", gap: 10, background: "rgba(255,255,255,.05)", border: "1px solid rgba(255,255,255,.15)", borderRadius: 12, padding: "10px 14px" }}>
-                      <div style={{ fontFamily: "'Space Mono', monospace", fontSize: 10, fontWeight: 700, color: COLORS.teal, flexShrink: 0, width: 22 }}>#{i + 1}</div>
-                      <div>
-                        <div style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 600, fontSize: 12.5 }}>{e.label}</div>
-                        <div style={{ fontSize: 12, lineHeight: 1.4, color: "rgba(255,255,255,.75)", marginTop: 2 }}>{e.reading}</div>
-                      </div>
+                publicCase.fieldReport ? (
+                  // Same field report as the Scan screen — the exact image
+                  // and paragraph, not a different summarized version — so
+                  // "checking the evidence again" really means the same
+                  // evidence, not something new.
+                  <div style={{ marginTop: 14, borderRadius: 14, overflow: "hidden", border: "1px solid rgba(255,255,255,.15)" }}>
+                    <img src={publicCase.fieldReport.image} alt={publicCase.fieldReport.imageCaption || "Field evidence photo"} style={{ display: "block", width: "100%", maxHeight: 280, objectFit: "cover" }} />
+                    <div style={{ padding: "14px 16px", background: "rgba(255,255,255,.05)" }}>
+                      {publicCase.fieldReport.imageCaption && (
+                        <div style={{ fontFamily: "'Space Mono', monospace", fontSize: 10, letterSpacing: 1, color: COLORS.teal, marginBottom: 6 }}>{publicCase.fieldReport.imageCaption.toUpperCase()}</div>
+                      )}
+                      <div style={{ fontSize: 12.5, lineHeight: 1.55, color: "rgba(255,255,255,.85)" }}>{publicCase.fieldReport.notes}</div>
                     </div>
-                  ))}
-                </div>
+                  </div>
+                ) : (
+                  <div style={{ marginTop: 14, display: "flex", flexDirection: "column", gap: 8 }}>
+                    {publicCase.evidenceReadings.map((e, i) => (
+                      <div key={e.id} style={{ display: "flex", gap: 10, background: "rgba(255,255,255,.05)", border: "1px solid rgba(255,255,255,.15)", borderRadius: 12, padding: "10px 14px" }}>
+                        <div style={{ fontFamily: "'Space Mono', monospace", fontSize: 10, fontWeight: 700, color: COLORS.teal, flexShrink: 0, width: 22 }}>#{i + 1}</div>
+                        <div>
+                          <div style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 600, fontSize: 12.5 }}>{e.label}</div>
+                          <div style={{ fontSize: 12, lineHeight: 1.4, color: "rgba(255,255,255,.75)", marginTop: 2 }}>{e.reading}</div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )
               )}
             </GlassCard>
 

@@ -41,9 +41,12 @@ Student's response:
       aiRationale = parsed.rationale;
     } catch (err) {
       // Scoring failure shouldn't block the student's submission from going
-      // through — a teacher can still grade manually if this is null.
+      // through — a teacher can still grade manually if this is null. The
+      // real error used to be swallowed entirely (null/null), which made
+      // every failure look identical from the outside. Stash it in
+      // rationale instead so the grading UI can surface the actual cause.
       aiScore = null;
-      aiRationale = null;
+      aiRationale = "[AI grading error] " + (err && err.message ? err.message : String(err));
     }
   }
 
