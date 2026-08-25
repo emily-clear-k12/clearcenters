@@ -217,40 +217,48 @@ export default function MyClassesPage() {
     setDeleteError(null);
   }
 
-  // Deletes an assignment and everything hanging off it. Works the same way
+  // Deletes an assignment and everything hanging off it, via a server API
+  // route using the admin key (see app/api/teacher/assignment/delete) —
+  // NOT direct client-side .delete() calls. Those silently no-op under RLS
+  // (0 rows affected, no error) if a table's delete policy is missing,
+  // which is exactly what happened the first time this shipped: nothing
+  // errored, but the assignment just stayed put. The admin-key route
+  // bypasses that entirely and always actually deletes. Works the same way
   // no matter which challenge type/engine the assignment's case belongs to
   // (Group Chat, Signal Check, whatever comes next) — it only ever touches
-  // the generic assignments/assignment_students/submissions tables, never
-  // engine-specific content, so nothing extra is needed as new challenge
-  // types come online.
+  // the generic assignment tables, never engine-specific content, so
+  // nothing extra is needed as new challenge types come online.
   async function handleDeleteAssignment() {
     if (!caseDetailAssignment) return;
     setDeleting(true);
     setDeleteError(null);
 
-    // submissions has RLS enabled with no delete policy by default — this
-    // needs the "Teachers can delete submissions for their classes" policy
-    // (same shape as the existing view/grade policies) or this step 403s.
-    const { error: subsError } = await supabase.from("submissions").delete().eq("assignment_id", caseDetailAssignment.id);
-    if (subsError) {
+    const { data: sessionData } = await supabase.auth.getSession();
+    const accessToken = sessionData?.session?.access_token;
+    if (!accessToken) {
       setDeleting(false);
-      setDeleteError("Couldn't delete this assignment's submissions: " + subsError.message);
+      setDeleteError("Your session expired — refresh the page and try again.");
       return;
     }
 
-    // assignment_students cascade-deletes with the assignment row, but
-    // clearing it explicitly first means this doesn't depend on that.
-    await supabase.from("assignment_students").delete().eq("assignment_id", caseDetailAssignment.id);
-
-    const { error: assignError } = await supabase.from("assignments").delete().eq("id", caseDetailAssignment.id);
-    setDeleting(false);
-    if (assignError) {
-      setDeleteError("Couldn't delete the assignment: " + assignError.message);
-      return;
+    try {
+      const res = await fetch("/api/teacher/assignment/delete", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ assignmentId: caseDetailAssignment.id, accessToken }),
+      });
+      const result = await res.json();
+      setDeleting(false);
+      if (!res.ok) {
+        setDeleteError(result.error || "Couldn't delete the assignment.");
+        return;
+      }
+      closeCaseDetail();
+      loadClassDetails();
+    } catch (err) {
+      setDeleting(false);
+      setDeleteError("Couldn't delete the assignment — check your connection and try again.");
     }
-
-    closeCaseDetail();
-    loadClassDetails();
   }
 
   const selectedClass = classes.find((c) => c.id === selectedClassId);
