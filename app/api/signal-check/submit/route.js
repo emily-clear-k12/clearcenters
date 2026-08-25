@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { supabaseAdmin } from "../../../../lib/supabaseAdmin";
-import { callClaude } from "../../../../lib/anthropic";
+import { callClaude, extractJSON } from "../../../../lib/anthropic";
 import { getSignalCheckServerCase } from "../../../../lib/cases/signal-check/index.server";
 
 function summarizeForHumans(caseData, stemMode, statementAnswers) {
@@ -56,7 +56,7 @@ async function gradeWithClaude(caseData, stemMode, statementAnswers) {
     })
     .join("\n");
 
-  const prompt = `Score this ${caseData.title ? "student's" : "student's"} Signal Check response on a 0/1/2 scale against this rubric. Respond with ONLY a JSON object like {"score": 0, "rationale": "..."} — no other text.
+  const prompt = `Score this ${caseData.title ? "student's" : "student's"} Signal Check response on a 0/1/2 scale against this rubric. Respond with ONLY a JSON object like {"score": 0, "rationale": "..."} — no other text, no markdown, no code fence, just the raw JSON object.
 
 Case: ${caseData.title}
 Rubric (per signal):
@@ -69,7 +69,7 @@ ${studentText}`;
 
   try {
     const raw = await callClaude({ messages: [{ role: "user", content: prompt }], max_tokens: 200 });
-    const parsed = JSON.parse(raw.trim());
+    const parsed = extractJSON(raw);
     return { score: parsed.score, rationale: parsed.rationale };
   } catch (err) {
     // Scoring failure shouldn't block the student's submission — a teacher

@@ -21,8 +21,23 @@ const COLORS = {
   textMuted: "#697386",
 };
 
-const PHASES = ["main", "scan", "sort", "verdict", "submit"];
-const PHASE_LABEL = { main: "Transmission", scan: "Scan", sort: "Sensor Sort", verdict: "Verdict", submit: "Submit" };
+// "verdict" (the old spoiler reveal screen) is gone — it showed the correct
+// answer, already locked in, before the student ever picked one themselves.
+// "answer" is where students now actually press True/Misleading/False for
+// the first time. "reflect" is the new self-check + confirm + submit +
+// post-submit reflection step, ported from Group Chat's best-practice flow.
+const PHASES = ["main", "scan", "sort", "answer", "reflect"];
+const PHASE_LABEL = { main: "Transmission", scan: "Scan", sort: "Sensor Sort", answer: "Verdict", reflect: "Submit" };
+
+const CONFIDENCE_LEVELS = [
+  { id: "shaky", emoji: "😕", label: "Still shaky" },
+  { id: "solid", emoji: "🙂", label: "Pretty solid" },
+  { id: "strong", emoji: "😄", label: "Really strong" },
+];
+
+// Same product-wide rule as Group Chat: at least 3 of the 5 self-check
+// questions must be checked before a student can submit for grading.
+const REQUIRED_CHECKS = 3;
 
 function TopBar({ standard, subject }) {
   return (
@@ -50,6 +65,7 @@ function Dots({ phase }) {
 }
 
 function EchoLine({ text }) {
+  if (!text) return null;
   return (
     <div style={{ position: "relative", display: "flex", alignItems: "center", gap: 12, maxWidth: 640, margin: "0 auto", zIndex: 2 }}>
       <div style={{ width: 32, height: 32, borderRadius: "50%", flexShrink: 0, background: `radial-gradient(circle at 35% 30%, ${COLORS.teal}, #0c2230 75%)`, boxShadow: "0 0 14px rgba(0,194,199,.65)" }} />
@@ -87,11 +103,86 @@ function verdictColor(v) {
   return COLORS.gold;
 }
 
+// Real tap-to-pick buttons for True/Misleading/False — replaces the old
+// dropdown/typed-text verdict inputs. Emily's ask: "if anything pressing
+// the actual buttons to say if its true/false."
+function VerdictButtons({ options, value, onChange, hasErr }) {
+  return (
+    <div style={{ display: "flex", gap: 6, marginBottom: 10 }}>
+      {(options || []).map((opt) => {
+        const active = value === opt;
+        return (
+          <button
+            key={opt}
+            type="button"
+            onClick={() => onChange(opt)}
+            className="sc-btn"
+            style={{
+              flex: 1,
+              textAlign: "center",
+              fontFamily: "'Poppins', sans-serif",
+              fontWeight: 700,
+              fontSize: 11,
+              padding: "10px 4px",
+              borderRadius: 9,
+              background: active ? `${verdictColor(opt)}29` : "rgba(255,255,255,.06)",
+              border: active ? `1.5px solid ${verdictColor(opt)}` : hasErr ? `1.5px solid ${COLORS.danger}` : "1.5px solid rgba(255,255,255,.2)",
+              color: active ? COLORS.white : "rgba(255,255,255,.65)",
+              cursor: "pointer",
+            }}
+          >
+            {opt.toUpperCase()}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+// Ported from Group Chat's SubmitConfirmModal — same copy, Signal Check's
+// own navy/teal styling instead of violet/cream so it still reads as this
+// activity's own UI.
+function SubmitConfirmModal({ open, onCancel, onConfirm }) {
+  if (!open) return null;
+  return (
+    <div style={{ position: "fixed", inset: 0, background: "rgba(6,8,16,.7)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 100, padding: 20 }}>
+      <div style={{ background: COLORS.navy, border: "1px solid rgba(255,255,255,.2)", borderRadius: 18, width: "min(420px, 100%)", padding: 24, boxShadow: "0 24px 60px rgba(0,0,0,.5)", textAlign: "center", fontFamily: "'Inter', sans-serif" }}>
+        <div style={{ fontSize: 36, marginBottom: 10 }}>📡</div>
+        <div style={{ fontWeight: 700, fontSize: 17, color: COLORS.white, marginBottom: 8 }}>Ready to submit for grading?</div>
+        <div style={{ fontSize: 13.5, color: "rgba(255,255,255,.7)", lineHeight: 1.5, marginBottom: 6 }}>Once you submit, you won't be able to make more changes to your answer.</div>
+        <div style={{ display: "flex", gap: 10, justifyContent: "center", marginTop: 18 }}>
+          <button onClick={onCancel} style={{ background: "rgba(255,255,255,.1)", color: COLORS.white, border: "none", borderRadius: 999, padding: "11px 22px", fontWeight: 700, fontSize: 14, cursor: "pointer" }}>No, go back</button>
+          <button onClick={onConfirm} style={{ background: COLORS.teal, color: COLORS.navy, border: "none", borderRadius: 999, padding: "11px 22px", fontWeight: 700, fontSize: 14, cursor: "pointer" }}>Yes, submit</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Ported from Group Chat's CelebrationModal.
+function CelebrationModal({ open, onGoHome }) {
+  if (!open) return null;
+  return (
+    <div style={{ position: "fixed", inset: 0, background: "rgba(6,8,16,.7)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 100, padding: 20 }}>
+      <div style={{ background: COLORS.navy, border: "1px solid rgba(255,255,255,.2)", borderRadius: 18, width: "min(420px, 100%)", padding: 28, boxShadow: "0 24px 60px rgba(0,0,0,.5)", textAlign: "center", fontFamily: "'Inter', sans-serif" }}>
+        <div style={{ fontSize: 40, marginBottom: 8 }}>🎉</div>
+        <div style={{ fontWeight: 700, fontSize: 18, color: COLORS.white, marginBottom: 6 }}>Thanks for reflecting on your work!</div>
+        <div style={{ fontSize: 13.5, color: "rgba(255,255,255,.7)", marginBottom: 20 }}>Your teacher will release your final grade soon.</div>
+        <button onClick={onGoHome} style={{ background: COLORS.teal, color: COLORS.navy, border: "none", borderRadius: 999, padding: "12px 26px", fontWeight: 700, fontSize: 15, cursor: "pointer" }}>Back to Missions</button>
+      </div>
+    </div>
+  );
+}
+
 export default function SignalCheckClient({ assignmentId, caseStandard, publicCase, existingSubmission, alreadySubmitted, revisionRequested, revisionFeedback }) {
   const router = useRouter();
   const storageKey = "cc_signalcheck_draft_" + assignmentId;
 
-  const [phase, setPhase] = useState("main");
+  const draft = existingSubmission || {};
+  const draftAnswers = (draft.signal_data && draft.signal_data.statementAnswers) || {};
+  const selfCheckQuestions = publicCase.selfCheckQuestions || [];
+
+  const [phase, setPhase] = useState(alreadySubmitted && !revisionRequested ? "reflect" : "main");
 
   // Sensor Sort game state — self-check practice, never graded.
   const [selectedItemId, setSelectedItemId] = useState(null);
@@ -100,9 +191,16 @@ export default function SignalCheckClient({ assignmentId, caseStandard, publicCa
   const [firstTryCorrect, setFirstTryCorrect] = useState(0);
   const [wrongFlashBinId, setWrongFlashBinId] = useState(null);
 
-  // Screen 5 answers, shape depends on publicCase.stemMode.
-  const [statementAnswers, setStatementAnswers] = useState({});
+  // Answer phase state, shape depends on publicCase.stemMode.
+  const [statementAnswers, setStatementAnswers] = useState(draftAnswers);
   const [errors, setErrors] = useState({});
+
+  // Reflect phase state — self-check checklist, confirm modal, real submit,
+  // post-submit confidence. Same pattern as Group Chat's revise/share steps.
+  const [checklist, setChecklist] = useState(draft.checklist || selfCheckQuestions.map(() => false));
+  const [showReflectErrors, setShowReflectErrors] = useState(false);
+  const [showSubmitConfirm, setShowSubmitConfirm] = useState(false);
+  const [selfConfidence, setSelfConfidence] = useState(draft.self_confidence || null);
 
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState(null);
@@ -121,6 +219,7 @@ export default function SignalCheckClient({ assignmentId, caseStandard, publicCa
         setAttemptsByItem(d.attemptsByItem || {});
         setFirstTryCorrect(d.firstTryCorrect || 0);
         setStatementAnswers(d.statementAnswers || {});
+        setChecklist(d.checklist || selfCheckQuestions.map(() => false));
       }
     } catch (err) {}
     hydrated.current = true;
@@ -129,9 +228,9 @@ export default function SignalCheckClient({ assignmentId, caseStandard, publicCa
 
   useEffect(() => {
     if (!hydrated.current || submitted) return;
-    const draft = { phase, placements, attemptsByItem, firstTryCorrect, statementAnswers };
-    try { localStorage.setItem(storageKey, JSON.stringify(draft)); } catch (err) {}
-  }, [phase, placements, attemptsByItem, firstTryCorrect, statementAnswers, submitted, storageKey]);
+    const d = { phase, placements, attemptsByItem, firstTryCorrect, statementAnswers, checklist };
+    try { localStorage.setItem(storageKey, JSON.stringify(d)); } catch (err) {}
+  }, [phase, placements, attemptsByItem, firstTryCorrect, statementAnswers, checklist, submitted, storageKey]);
 
   function goTo(next) {
     setPhase(next);
@@ -140,6 +239,9 @@ export default function SignalCheckClient({ assignmentId, caseStandard, publicCa
 
   const evidenceById = {};
   publicCase.evidenceReadings.forEach((e) => { evidenceById[e.id] = e; });
+
+  const statementById = {};
+  publicCase.statements.forEach((s) => { statementById[s.id] = s; });
 
   const unplacedItems = publicCase.evidenceReadings.filter((e) => !placements[e.id]);
   const allSorted = Object.keys(placements).length === publicCase.evidenceReadings.length;
@@ -170,7 +272,7 @@ export default function SignalCheckClient({ assignmentId, caseStandard, publicCa
     setStatementAnswers((prev) => ({ ...prev, [stmtId]: { ...prev[stmtId], [field]: value } }));
   }
 
-  function validateSubmit() {
+  function validateAnswers() {
     const mode = publicCase.stemMode;
     const nextErrors = {};
     publicCase.statements.forEach((s) => {
@@ -180,15 +282,48 @@ export default function SignalCheckClient({ assignmentId, caseStandard, publicCa
       } else if (mode === "dropdown-open") {
         if (!a.verdict || !a.reasoning || !a.reasoning.trim()) nextErrors[s.id] = true;
       } else {
-        if (!a.verdictText || !a.verdictText.trim() || !a.reasoning || !a.reasoning.trim()) nextErrors[s.id] = true;
+        if (!a.verdictText || !a.reasoning || !a.reasoning.trim()) nextErrors[s.id] = true;
       }
     });
     setErrors(nextErrors);
     return Object.keys(nextErrors).length === 0;
   }
 
+  function continueToReflect() {
+    if (!validateAnswers()) return;
+    goTo("reflect");
+  }
+
+  function toggleChecklistItem(i) {
+    setChecklist((prev) => {
+      const next = prev.slice();
+      next[i] = !next[i];
+      return next;
+    });
+  }
+  const checkedCount = checklist.filter(Boolean).length;
+  const checklistPasses = checkedCount >= REQUIRED_CHECKS;
+
+  function handleRequestSubmit() {
+    if (!checklistPasses) { setShowReflectErrors(true); return; }
+    setShowReflectErrors(false);
+    setShowSubmitConfirm(true);
+  }
+
+  function saveProgress(fields) {
+    return fetch("/api/submission/save", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ assignmentId, ...fields }),
+    }).then((res) => res.ok).catch(() => false);
+  }
+
+  function pickConfidence(id) {
+    setSelfConfidence(id);
+    saveProgress({ self_confidence: id });
+  }
+
   async function submitForGrading() {
-    if (!validateSubmit()) return;
     setSubmitting(true);
     setSubmitError(null);
     try {
@@ -200,6 +335,7 @@ export default function SignalCheckClient({ assignmentId, caseStandard, publicCa
           caseStandard,
           stemMode: publicCase.stemMode,
           statementAnswers,
+          checklist,
           practiceContext: {
             sortTotalItems: publicCase.evidenceReadings.length,
             sortFirstTryCorrect: firstTryCorrect,
@@ -217,17 +353,9 @@ export default function SignalCheckClient({ assignmentId, caseStandard, publicCa
     }
   }
 
-  if (submitted) {
-    return (
-      <div style={{ minHeight: "100vh", background: COLORS.navy, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Inter', sans-serif", padding: 20 }}>
-        <div style={{ maxWidth: 480, textAlign: "center", background: "rgba(8,10,22,.6)", border: "1px solid rgba(255,255,255,.2)", borderRadius: 20, padding: 32 }}>
-          <div style={{ fontSize: 44, marginBottom: 10 }}>📡</div>
-          <div style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 700, fontSize: 20, marginBottom: 8, color: COLORS.white }}>Your signal is filed!</div>
-          <p style={{ color: "rgba(255,255,255,.7)", fontSize: 14, marginBottom: 20 }}>Your teacher will review your verdicts and let you know how it went.</p>
-          <PrimaryButton onClick={() => router.push("/missions")}>Back to Missions</PrimaryButton>
-        </div>
-      </div>
-    );
+  function confirmSubmit() {
+    setShowSubmitConfirm(false);
+    submitForGrading();
   }
 
   const backgroundStyle = {
@@ -298,14 +426,17 @@ export default function SignalCheckClient({ assignmentId, caseStandard, publicCa
                 </div>
               ))}
             </div>
-            <div style={{ textAlign: "center", fontFamily: "'Space Mono', monospace", fontSize: 11, letterSpacing: 2, color: COLORS.teal }}>⟶ SENSOR LOG · {publicCase.evidenceReadings.length} RAW READINGS · NOTHING SORTED YET</div>
-            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            <div style={{ textAlign: "center", fontFamily: "'Space Mono', monospace", fontSize: 11, letterSpacing: 2, color: COLORS.teal }}>⟶ SENSOR LOG · {publicCase.evidenceReadings.length} RAW READINGS</div>
+            {/* Numbered raw observations, no category badges — a "distractor" or
+                "photo/data" badge here would telegraph which readings matter
+                before the student has sorted anything. */}
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
               {publicCase.evidenceReadings.map((e, i) => (
-                <div key={e.id} style={{ display: "flex", gap: 12, alignItems: "flex-start", background: "rgba(8,10,22,.55)", border: "1px solid rgba(255,255,255,.16)", borderRadius: 12, padding: "12px 16px" }}>
-                  <div style={{ fontFamily: "'Space Mono', monospace", fontSize: 10.5, color: COLORS.teal, flexShrink: 0, minWidth: 30, opacity: 0.8 }}>#{String(i + 1).padStart(2, "0")}</div>
-                  <div style={{ flex: 1, minWidth: 0 }}>
+                <div key={e.id} style={{ display: "flex", gap: 12, background: "rgba(8,10,22,.55)", border: "1px solid rgba(255,255,255,.2)", borderRadius: 14, padding: "12px 16px" }}>
+                  <div style={{ fontFamily: "'Space Mono', monospace", fontSize: 11, fontWeight: 700, color: COLORS.teal, flexShrink: 0, width: 26 }}>#{i + 1}</div>
+                  <div>
                     <div style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 600, fontSize: 13 }}>{e.label}</div>
-                    <div style={{ fontFamily: "'Space Mono', monospace", fontSize: 11.5, color: "rgba(255,255,255,.72)", marginTop: 3, lineHeight: 1.4 }}>{e.reading}</div>
+                    <div style={{ fontSize: 12.5, lineHeight: 1.4, color: "rgba(255,255,255,.78)", marginTop: 2 }}>{e.reading}</div>
                   </div>
                 </div>
               ))}
@@ -332,29 +463,32 @@ export default function SignalCheckClient({ assignmentId, caseStandard, publicCa
               <div style={{ display: "flex", flexWrap: "wrap", gap: 8, justifyContent: "center" }}>
                 {unplacedItems.length === 0 && <div style={{ fontSize: 12, color: "rgba(255,255,255,.5)" }}>All readings sorted.</div>}
                 {unplacedItems.map((e) => (
-                  <div key={e.id} onClick={() => pickItem(e.id)} className={"sc-chip" + (selectedItemId === e.id ? " selected" : "")} style={{ background: "rgba(255,255,255,.08)", border: "1.5px dashed rgba(255,255,255,.4)", borderRadius: 10, padding: "9px 12px", maxWidth: 210 }}>
-                    <div style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 600, fontSize: 12 }}>{e.label}</div>
-                    <div style={{ fontFamily: "'Space Mono', monospace", fontSize: 10, color: "rgba(255,255,255,.65)", marginTop: 3, lineHeight: 1.3 }}>{e.reading}</div>
+                  <div key={e.id} onClick={() => pickItem(e.id)} className={"sc-chip" + (selectedItemId === e.id ? " selected" : "")} style={{ background: "rgba(255,255,255,.08)", border: "1.5px dashed rgba(255,255,255,.4)", borderRadius: 10, padding: "9px 12px", fontFamily: "'Poppins', sans-serif", fontWeight: 600, fontSize: 12 }}>
+                    {e.label}
                   </div>
                 ))}
               </div>
             </div>
 
             <div style={{ display: "flex", flexWrap: "wrap", gap: 12 }}>
-              {publicCase.sortBins.map((bin) => (
-                <div key={bin.id} onClick={() => placeInBin(bin)} className={"sc-bin" + (wrongFlashBinId === bin.id ? " flash" : "")} style={{ flex: "1 1 200px", cursor: selectedItemId ? "pointer" : "default", background: "rgba(8,10,22,.5)", border: `1.5px solid ${bin.id === "none" ? "rgba(255,255,255,.3)" : "rgba(0,194,199,.5)"}`, borderRadius: 16, padding: "12px 14px", minHeight: 90 }}>
-                  <div style={{ fontFamily: "'Space Mono', monospace", fontSize: 10, letterSpacing: 1, color: bin.id === "none" ? "rgba(255,255,255,.6)" : COLORS.teal }}>{bin.label}{bin.sublabel ? ` · ${bin.sublabel}` : ""}</div>
-                  <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 8 }}>
-                    {publicCase.evidenceReadings.filter((e) => placements[e.id] === bin.id).map((e) => (
-                      <div key={e.id} style={{ background: "rgba(0,194,199,.14)", border: "1.5px solid rgba(0,194,199,.6)", borderRadius: 9, padding: "6px 9px", fontFamily: "'Poppins', sans-serif", fontWeight: 600, fontSize: 11 }}>{e.label}</div>
-                    ))}
+              {publicCase.sortBins.map((bin) => {
+                const stmt = statementById[bin.id];
+                return (
+                  <div key={bin.id} onClick={() => placeInBin(bin)} className={"sc-bin" + (wrongFlashBinId === bin.id ? " flash" : "")} style={{ flex: "1 1 200px", cursor: selectedItemId ? "pointer" : "default", background: "rgba(8,10,22,.5)", border: `1.5px solid ${bin.id === "none" ? "rgba(255,255,255,.3)" : "rgba(0,194,199,.5)"}`, borderRadius: 16, padding: "12px 14px", minHeight: 90 }}>
+                    <div style={{ fontFamily: "'Space Mono', monospace", fontSize: 10, letterSpacing: 1, color: bin.id === "none" ? "rgba(255,255,255,.6)" : COLORS.teal }}>{bin.label}</div>
+                    {stmt && <div style={{ fontSize: 12, lineHeight: 1.35, color: "rgba(255,255,255,.82)", marginTop: 5 }}>"{stmt.text}"</div>}
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 8 }}>
+                      {publicCase.evidenceReadings.filter((e) => placements[e.id] === bin.id).map((e) => (
+                        <div key={e.id} style={{ background: "rgba(0,194,199,.14)", border: "1.5px solid rgba(0,194,199,.6)", borderRadius: 9, padding: "6px 9px", fontFamily: "'Poppins', sans-serif", fontWeight: 600, fontSize: 11 }}>{e.label}</div>
+                      ))}
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
 
             <div style={{ display: "flex", justifyContent: "center", marginTop: 6 }}>
-              <PrimaryButton disabled={!allSorted} onClick={() => goTo("verdict")}>
+              <PrimaryButton disabled={!allSorted} onClick={() => goTo("answer")}>
                 Lock In Sort — {Object.keys(placements).length}/{publicCase.evidenceReadings.length}
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M5 12H19M19 12L13 6M19 12L13 18" stroke={COLORS.navy} strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" /></svg>
               </PrimaryButton>
@@ -363,48 +497,10 @@ export default function SignalCheckClient({ assignmentId, caseStandard, publicCa
           </div>
         )}
 
-        {phase === "verdict" && (
+        {phase === "answer" && (
           <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-            <div style={{ textAlign: "center", fontFamily: "'Space Mono', monospace", fontSize: 11, letterSpacing: 2, color: COLORS.teal }}>⟶ FILE A VERDICT ON EACH SIGNAL</div>
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 14, justifyContent: "center" }}>
-              {publicCase.statements.map((s) => (
-                <div key={s.id} style={{ flex: "1 1 260px", maxWidth: 340, background: "rgba(8,10,22,.58)", border: "1px solid rgba(255,255,255,.2)", borderRadius: 16, padding: 16 }}>
-                  <div style={{ fontFamily: "'Space Mono', monospace", fontSize: 9.5, letterSpacing: 1, color: COLORS.teal, marginBottom: 6 }}>{s.tag}</div>
-                  <div style={{ fontSize: 12.5, lineHeight: 1.35, color: "rgba(255,255,255,.85)", marginBottom: 12 }}>"{s.text}"</div>
-                  <div style={{ display: "flex", gap: 6, marginBottom: 10 }}>
-                    {publicCase.verdictOptions.map((opt) => {
-                      const active = opt === s.correctVerdict;
-                      return (
-                        <div key={opt} style={{ flex: 1, textAlign: "center", fontFamily: "'Poppins', sans-serif", fontWeight: 700, fontSize: 10.5, padding: "8px 4px", borderRadius: 9, background: active ? `${verdictColor(opt)}29` : "rgba(255,255,255,.06)", border: active ? `1.5px solid ${verdictColor(opt)}` : "1.5px solid rgba(255,255,255,.16)", color: active ? COLORS.white : "rgba(255,255,255,.4)" }}>
-                          {opt.toUpperCase()}
-                          {active && <div style={{ fontFamily: "'Space Mono', monospace", fontSize: 7.5, marginTop: 3, opacity: 0.85 }}>LOCKED</div>}
-                        </div>
-                      );
-                    })}
-                  </div>
-                  <div style={{ fontSize: 11.5, lineHeight: 1.45, color: "rgba(255,255,255,.82)" }}><b style={{ color: COLORS.white }}>Why?</b> {s.reasonText}</div>
-                </div>
-              ))}
-            </div>
-            <div style={{ display: "flex", justifyContent: "center", marginTop: 6 }}>
-              <PrimaryButton onClick={() => goTo("submit")}>
-                Send Correction
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M5 12H19M19 12L13 6M19 12L13 18" stroke={COLORS.navy} strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" /></svg>
-              </PrimaryButton>
-            </div>
-            <EchoLine text={publicCase.echo.verdict} />
-          </div>
-        )}
-
-        {phase === "submit" && (
-          <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-            <div style={{ display: "flex", justifyContent: "center" }}>
-              <div style={{ display: "inline-flex", alignItems: "center", gap: 8, fontFamily: "'Space Mono', monospace", fontSize: 10.5, letterSpacing: 1.3, color: COLORS.gold, background: "rgba(255,196,77,.15)", border: `1px solid ${COLORS.gold}`, padding: "7px 15px", borderRadius: 999 }}>
-                READY TO SUBMIT · NOT YET GRADED
-              </div>
-            </div>
             <div style={{ textAlign: "center", fontFamily: "'Space Mono', monospace", fontSize: 11, letterSpacing: 2, color: COLORS.teal }}>
-              ⟶ FILE YOUR FINAL REPORT
+              ⟶ FILE A VERDICT ON EACH SIGNAL
             </div>
 
             <div style={{ display: "flex", flexDirection: "column", gap: 12, maxWidth: 640, margin: "0 auto", width: "100%" }}>
@@ -414,58 +510,98 @@ export default function SignalCheckClient({ assignmentId, caseStandard, publicCa
                 return (
                   <div key={s.id} style={{ background: "rgba(8,10,22,.6)", border: hasErr ? `1.5px solid ${COLORS.danger}` : "1px solid rgba(255,255,255,.2)", borderRadius: 16, padding: "14px 18px" }}>
                     <div style={{ fontFamily: "'Space Mono', monospace", fontSize: 9, letterSpacing: 1, color: COLORS.teal, marginBottom: 6 }}>{s.tag}</div>
+                    <div style={{ fontSize: 13, lineHeight: 1.5, color: "rgba(255,255,255,.9)", marginBottom: 10 }}>"{s.text}"</div>
 
                     {publicCase.stemMode === "dropdown" && (
-                      <div style={{ fontSize: 13, lineHeight: 1.7 }}>
-                        "{s.text}" is{" "}
-                        <select className="sc-select" value={a.verdict || ""} onChange={(e) => setAnswer(s.id, "verdict", e.target.value)}>
-                          <option value="">choose ▾</option>
-                          {publicCase.verdictOptions.map((o) => <option key={o} value={o}>{o.toUpperCase()}</option>)}
-                        </select>{" "}
-                        because{" "}
-                        <select className="sc-select" value={a.evidence1 || ""} onChange={(e) => setAnswer(s.id, "evidence1", e.target.value)}>
-                          <option value="">choose ▾</option>
-                          {publicCase.evidenceReadings.map((e) => <option key={e.id} value={e.id}>{e.label}</option>)}
-                        </select>{" "}
-                        and{" "}
-                        <select className="sc-select" value={a.evidence2 || ""} onChange={(e) => setAnswer(s.id, "evidence2", e.target.value)}>
-                          <option value="">choose ▾</option>
-                          {publicCase.evidenceReadings.map((e) => <option key={e.id} value={e.id}>{e.label}</option>)}
-                        </select>.
-                      </div>
+                      <>
+                        <VerdictButtons options={publicCase.verdictOptions} value={a.verdict} onChange={(v) => setAnswer(s.id, "verdict", v)} hasErr={hasErr && !a.verdict} />
+                        <div style={{ fontSize: 13, lineHeight: 1.7 }}>
+                          because{" "}
+                          <select className="sc-select" value={a.evidence1 || ""} onChange={(e) => setAnswer(s.id, "evidence1", e.target.value)}>
+                            <option value="">choose ▾</option>
+                            {publicCase.evidenceReadings.map((e) => <option key={e.id} value={e.id}>{e.label}</option>)}
+                          </select>{" "}
+                          and{" "}
+                          <select className="sc-select" value={a.evidence2 || ""} onChange={(e) => setAnswer(s.id, "evidence2", e.target.value)}>
+                            <option value="">choose ▾</option>
+                            {publicCase.evidenceReadings.map((e) => <option key={e.id} value={e.id}>{e.label}</option>)}
+                          </select>.
+                        </div>
+                      </>
                     )}
 
                     {publicCase.stemMode === "dropdown-open" && (
                       <>
-                        <div style={{ fontSize: 13, lineHeight: 1.7, marginBottom: 8 }}>
-                          "{s.text}" is{" "}
-                          <select className="sc-select" value={a.verdict || ""} onChange={(e) => setAnswer(s.id, "verdict", e.target.value)}>
-                            <option value="">choose ▾</option>
-                            {publicCase.verdictOptions.map((o) => <option key={o} value={o}>{o.toUpperCase()}</option>)}
-                          </select>.
-                        </div>
+                        <VerdictButtons options={publicCase.verdictOptions} value={a.verdict} onChange={(v) => setAnswer(s.id, "verdict", v)} hasErr={hasErr && !a.verdict} />
                         <textarea className={"sc-textarea" + (hasErr ? " err" : "")} placeholder="Explain your reasoning using the evidence..." value={a.reasoning || ""} onChange={(e) => setAnswer(s.id, "reasoning", e.target.value)} />
                       </>
                     )}
 
                     {publicCase.stemMode === "open" && (
                       <>
-                        <div style={{ fontSize: 12.5, color: "rgba(255,255,255,.7)", marginBottom: 6 }}>"{s.text}"</div>
-                        <textarea className={"sc-textarea" + (hasErr ? " err" : "")} placeholder="Is this True, Misleading, or False? Write your verdict..." style={{ minHeight: 44, marginBottom: 8 }} value={a.verdictText || ""} onChange={(e) => setAnswer(s.id, "verdictText", e.target.value)} />
+                        <VerdictButtons options={publicCase.verdictOptions} value={a.verdictText} onChange={(v) => setAnswer(s.id, "verdictText", v)} hasErr={hasErr && !a.verdictText} />
                         <textarea className={"sc-textarea" + (hasErr ? " err" : "")} placeholder="Explain your reasoning using the evidence..." value={a.reasoning || ""} onChange={(e) => setAnswer(s.id, "reasoning", e.target.value)} />
                       </>
                     )}
 
-                    {hasErr && <div style={{ color: COLORS.danger, fontSize: 11, fontWeight: 600, marginTop: 6 }}>Fill this in before submitting.</div>}
+                    {hasErr && <div style={{ color: COLORS.danger, fontSize: 11, fontWeight: 600, marginTop: 6 }}>Fill this in before continuing.</div>}
                   </div>
                 );
               })}
             </div>
 
+            <div style={{ textAlign: "center" }}>
+              <PrimaryButton onClick={continueToReflect}>
+                Continue to Review
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M5 12H19M19 12L13 6M19 12L13 18" stroke={COLORS.navy} strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" /></svg>
+              </PrimaryButton>
+            </div>
+
+            <EchoLine text={publicCase.echo.submit} />
+          </div>
+        )}
+
+        {phase === "reflect" && !submitted && (
+          <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+            <div style={{ textAlign: "center", fontFamily: "'Space Mono', monospace", fontSize: 11, letterSpacing: 2, color: COLORS.teal }}>⟶ FINAL CHECK BEFORE YOU FILE</div>
+
+            <GlassCard style={{ maxWidth: 640, margin: "0 auto", width: "100%" }}>
+              <div style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 700, fontSize: 14, marginBottom: 10 }}>Your Verdicts</div>
+              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                {publicCase.statements.map((s) => {
+                  const a = statementAnswers[s.id] || {};
+                  const v = publicCase.stemMode === "open" ? a.verdictText : a.verdict;
+                  return (
+                    <div key={s.id} style={{ display: "flex", justifyContent: "space-between", gap: 10, fontSize: 12.5 }}>
+                      <span style={{ color: "rgba(255,255,255,.75)" }}>{s.tag}</span>
+                      <span style={{ fontWeight: 700, color: verdictColor(v) }}>{(v || "—").toUpperCase()}</span>
+                    </div>
+                  );
+                })}
+              </div>
+              <button className="sc-btn" onClick={() => goTo("answer")} style={{ background: "none", color: COLORS.teal, fontSize: 12, fontWeight: 700, padding: 0, marginTop: 12 }}>← Go back and change something</button>
+            </GlassCard>
+
+            <GlassCard style={{ maxWidth: 640, margin: "0 auto", width: "100%" }}>
+              <div style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 700, fontSize: 14, marginBottom: 4 }}>Self-Check</div>
+              <div style={{ fontSize: 11.5, color: "rgba(255,255,255,.65)", marginBottom: 10 }}>Check off the ones that are true — you need at least {REQUIRED_CHECKS} of {selfCheckQuestions.length} ({checkedCount}/{selfCheckQuestions.length} so far).</div>
+              <div style={{ display: "grid", gap: 8 }}>
+                {selfCheckQuestions.map((item, i) => (
+                  <div key={i} onClick={() => toggleChecklistItem(i)} className="sc-chip" style={{ display: "flex", gap: 8, alignItems: "flex-start", background: checklist[i] ? "rgba(0,194,199,.14)" : "rgba(255,255,255,.06)", border: checklist[i] ? `1.5px solid ${COLORS.teal}` : "1.5px solid rgba(255,255,255,.18)", borderRadius: 10, padding: "9px 11px" }}>
+                    <div style={{ width: 18, height: 18, borderRadius: 5, flexShrink: 0, marginTop: 1, border: `2px solid ${checklist[i] ? COLORS.teal : "rgba(255,255,255,.3)"}`, background: checklist[i] ? COLORS.teal : "transparent", display: "flex", alignItems: "center", justifyContent: "center", color: COLORS.navy, fontSize: 12, fontWeight: 700 }}>{checklist[i] ? "✓" : ""}</div>
+                    <div style={{ fontSize: 12.5, lineHeight: 1.4 }}>{item}</div>
+                  </div>
+                ))}
+              </div>
+              {showReflectErrors && !checklistPasses && (
+                <div style={{ color: COLORS.danger, fontSize: 12, fontWeight: 600, marginTop: 10 }}>Check at least {REQUIRED_CHECKS} before submitting.</div>
+              )}
+            </GlassCard>
+
             {submitError && <div style={{ textAlign: "center", color: COLORS.danger, fontSize: 13, fontWeight: 600 }}>{submitError}</div>}
 
             <div style={{ textAlign: "center" }}>
-              <PrimaryButton onClick={submitForGrading} disabled={submitting}>
+              <PrimaryButton onClick={handleRequestSubmit} disabled={submitting}>
                 {submitting ? <Loader2 size={16} className="spin" style={{ animation: "spin 1s linear infinite" }} /> : null}
                 Submit for Grading
                 {!submitting && <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M4 12L20 4L14 20L11 13L4 12Z" stroke={COLORS.navy} strokeWidth="1.8" strokeLinejoin="round" /></svg>}
@@ -473,11 +609,41 @@ export default function SignalCheckClient({ assignmentId, caseStandard, publicCa
               <div style={{ fontSize: 11, color: "rgba(255,255,255,.6)", marginTop: 8 }}>Goes to your teacher for review — ECHO's read is just a first pass.</div>
             </div>
 
-            <EchoLine text={publicCase.echo.submit} />
+            <EchoLine text={publicCase.echo.reflect || publicCase.echo.submit} />
+          </div>
+        )}
+
+        {phase === "reflect" && submitted && (
+          <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+            <div style={{ textAlign: "center", fontFamily: "'Space Mono', monospace", fontSize: 11, letterSpacing: 2, color: COLORS.teal }}>⟶ REPORT FILED</div>
+
+            <GlassCard style={{ maxWidth: 520, margin: "0 auto", width: "100%", textAlign: "center" }}>
+              <div style={{ fontSize: 36, marginBottom: 8 }}>📡</div>
+              <div style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 700, fontSize: 17, marginBottom: 6 }}>Submitted! Nice work.</div>
+              <div style={{ fontSize: 13, color: "rgba(255,255,255,.75)", lineHeight: 1.5 }}>Your teacher will release your grade soon. Take a second to think about how it went.</div>
+            </GlassCard>
+
+            <GlassCard style={{ maxWidth: 520, margin: "0 auto", width: "100%" }}>
+              <div style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 700, fontSize: 14, marginBottom: 10, textAlign: "center" }}>How confident are you in your report?</div>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 10 }}>
+                {CONFIDENCE_LEVELS.map((c) => (
+                  <button key={c.id} className="sc-btn" onClick={() => pickConfidence(c.id)} style={{ padding: "14px 8px", borderRadius: 12, fontWeight: 700, fontSize: 12.5, display: "flex", flexDirection: "column", alignItems: "center", gap: 6, background: selfConfidence === c.id ? COLORS.teal : "rgba(255,255,255,.08)", color: selfConfidence === c.id ? COLORS.navy : COLORS.white, border: selfConfidence === c.id ? `2px solid ${COLORS.teal}` : "2px solid transparent" }}>
+                    <span style={{ fontSize: 24 }}>{c.emoji}</span>{c.label}
+                  </button>
+                ))}
+              </div>
+            </GlassCard>
+
+            <div style={{ textAlign: "center" }}>
+              <PrimaryButton onClick={() => router.push("/missions")}>Back to Missions</PrimaryButton>
+            </div>
           </div>
         )}
 
       </div>
+
+      <SubmitConfirmModal open={showSubmitConfirm} onCancel={() => setShowSubmitConfirm(false)} onConfirm={confirmSubmit} />
+      <CelebrationModal open={selfConfidence !== null && phase === "reflect" && submitted} onGoHome={() => router.push("/missions")} />
     </div>
   );
 }

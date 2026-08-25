@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { supabaseAdmin } from "../../../../lib/supabaseAdmin";
-import { callClaude } from "../../../../lib/anthropic";
+import { callClaude, extractJSON } from "../../../../lib/anthropic";
 import { getServerCase } from "../../../../lib/cases/index.server";
 
 export async function POST(request) {
@@ -29,12 +29,14 @@ Rubric — a strong (2) response includes all of:
 ${caseData.mustInclude.map((m) => "- " + m).join("\n")}
 A 1 includes some but not all of the above. A 0 mostly restates the trap claim ("${caseData.trapLine}") without real evidence.
 
+Respond with ONLY the raw JSON object — no other text, no markdown, no code fence.
+
 Student's response:
 "${finalText || "(no response written)"}"`;
 
     try {
       const raw = await callClaude({ messages: [{ role: "user", content: scoringPrompt }], max_tokens: 200 });
-      const parsed = JSON.parse(raw.trim());
+      const parsed = extractJSON(raw);
       aiScore = parsed.score;
       aiRationale = parsed.rationale;
     } catch (err) {
