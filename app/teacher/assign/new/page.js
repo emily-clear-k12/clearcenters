@@ -18,15 +18,35 @@ const COLORS = {
   textMuted: "#697386",
 };
 
+// Roster as of the Aug 2026 challenge-type consolidation: Model Makeover is
+// now part of Repair Desk (visual/diagram fix mode), Short-Form Video
+// Detective is now part of Fact-Check Desk (video/caption claim format), and
+// You Be the Judge + Comment Section Challenge + Bracket Battle combined into
+// Comment Court (a placeholder name, pending Emily's final pick). All of
+// these still need real content authored before any go live except Group
+// Chat, so everything but Group Chat stays `real: false` ("Coming Soon") for
+// now regardless of what used to be true for a given key.
 const CHALLENGE_TYPES = [
-  { key: "group_chat", label: "Group Chat", image: "/teacher/challenges/group_chat.jpg", real: true },
-  { key: "comment_section", label: "Comment Section", image: "/teacher/challenges/comment_section.jpg", real: false },
-  { key: "video_detective", label: "Short-Form Video Detective", image: "/teacher/challenges/video_detective.jpg", real: false },
-  { key: "model_makeover", label: "Model Makeover", image: "/teacher/challenges/model_makeover.jpg", real: false },
-  { key: "museum_exhibit", label: "Museum Exhibit Builder", image: "/teacher/challenges/museum_exhibit.jpg", real: false },
-  { key: "newsroom", label: "Newsroom", image: "/teacher/challenges/newsroom.jpg", real: true },
-  { key: "repair_desk", label: "Repair Desk", image: "/teacher/challenges/repair_desk.jpg", real: false },
-  { key: "you_be_the_judge", label: "You Be the Judge", image: "/teacher/challenges/you_be_the_judge.jpg", real: false },
+  { key: "group_chat", label: "Group Chat", image: "/teacher/challenges/group_chat.jpg", real: true,
+    description: "Students role-play as characters, concepts, or parts of a system in a live group chat, using evidence to prove what's really going on." },
+  { key: "repair_desk", label: "Repair Desk", image: "/teacher/challenges/repair_desk.jpg", real: false,
+    description: "A broken ticket arrives — a flawed diagram, model, or work sample. Students diagnose what's wrong, fix it, and explain the fix to whoever sent it in." },
+  { key: "fact_check_desk", label: "Fact-Check Desk", image: "/teacher/challenges/fact_check_desk.jpg", real: false,
+    description: "A claim shows up as a headline, post, graph, or short video clip. Students check it against real evidence, issue a verdict, and rewrite it accurately." },
+  { key: "museum_exhibit", label: "Museum Exhibit Builder", image: "/teacher/challenges/museum_exhibit.jpg", real: false,
+    description: "Students curate a small exhibit from a pile of evidence — choosing the strongest items, rejecting at least one on purpose, and writing placards that explain why." },
+  { key: "newsroom", label: "Newsroom", image: "/teacher/challenges/newsroom.jpg", real: false,
+    description: "Students gather their own evidence from the scene, then build and produce a report — headline, script, and all — before it airs." },
+  { key: "mission_map", label: "Mission Map", image: "/teacher/challenges/mission_map.jpg", real: false,
+    description: "Students move through locked checkpoints, collecting clues, rejecting a tempting wrong answer, and building a reasoning chain to unlock the final response." },
+  { key: "comment_court", label: "Comment Court", image: "/teacher/challenges/comment_court.jpg", real: false,
+    description: "A disputed claim shows up as a messy comment thread. Students sort the noise, weigh the evidence, and either rule on the dispute or run it as a bracket when there's more than two sides." },
+  { key: "simulation_lab", label: "Simulation Lab", image: "/teacher/challenges/simulation_lab.jpg", real: false,
+    description: "Students adjust real variables with sliders and dials, watch the results happen live, and explain the pattern using data they generated themselves." },
+  { key: "classification_lab", label: "Classification Lab", image: "/teacher/challenges/classification_lab.jpg", real: false,
+    description: "Items come down a conveyor belt. Students sort them into the correct bins, then justify one deliberately tricky case in writing." },
+  { key: "territory_builder", label: "Territory Builder", image: "/teacher/challenges/territory_builder.jpg", real: false,
+    description: "Students place things on an actual map — habitats, settlements, resources — and get feedback on whether the placement actually holds up." },
 ];
 
 function caseImagePath(standard) {
@@ -202,7 +222,8 @@ function NewAssignmentContent() {
                             <img src={ch.image} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block", filter: ch.real ? "none" : "grayscale(0.3)" }} />
                             {!ch.real && <span style={{ position: "absolute", top: 6, right: 6, fontSize: 9.5, fontWeight: 700, background: "rgba(255,255,255,.92)", color: COLORS.textMuted, padding: "2px 8px", borderRadius: 999 }}>Coming Soon</span>}
                           </div>
-                          <div style={{ padding: "8px 10px", fontSize: 12.5, fontWeight: 700, color: COLORS.textDark }}>{ch.label}</div>
+                          <div style={{ padding: "8px 10px 2px 10px", fontSize: 12.5, fontWeight: 700, color: COLORS.textDark }}>{ch.label}</div>
+                          {ch.description && <div style={{ padding: "0 10px 10px 10px", fontSize: 10.5, lineHeight: 1.4, color: COLORS.textMuted }}>{ch.description}</div>}
                         </button>
                       ))}
                     </div>
