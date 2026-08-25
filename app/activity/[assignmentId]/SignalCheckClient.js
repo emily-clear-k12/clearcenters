@@ -23,11 +23,12 @@ const COLORS = {
 
 // "verdict" (the old spoiler reveal screen) is gone — it showed the correct
 // answer, already locked in, before the student ever picked one themselves.
-// "answer" is where students now actually press True/Misleading/False for
-// the first time. "reflect" is the new self-check + confirm + submit +
-// post-submit reflection step, ported from Group Chat's best-practice flow.
-const PHASES = ["main", "scan", "sort", "answer", "reflect"];
-const PHASE_LABEL = { main: "Transmission", scan: "Scan", sort: "Sensor Sort", answer: "Verdict", reflect: "Submit" };
+// "answer" is now a single combined screen: students press True/Misleading/
+// False, can revise those picks freely, can reopen the evidence to double
+// check themselves, self-check, and submit — all without leaving the page
+// or losing their place. No separate locked "review" screen in between.
+const PHASES = ["main", "scan", "sort", "answer"];
+const PHASE_LABEL = { main: "Transmission", scan: "Scan", sort: "Sensor Sort", answer: "Verdict & Submit" };
 
 const CONFIDENCE_LEVELS = [
   { id: "shaky", emoji: "😕", label: "Still shaky" },
@@ -182,7 +183,7 @@ export default function SignalCheckClient({ assignmentId, caseStandard, publicCa
   const draftAnswers = (draft.signal_data && draft.signal_data.statementAnswers) || {};
   const selfCheckQuestions = publicCase.selfCheckQuestions || [];
 
-  const [phase, setPhase] = useState(alreadySubmitted && !revisionRequested ? "reflect" : "main");
+  const [phase, setPhase] = useState(alreadySubmitted && !revisionRequested ? "answer" : "main");
 
   // Sensor Sort game state — self-check practice, never graded.
   const [selectedItemId, setSelectedItemId] = useState(null);
@@ -195,12 +196,18 @@ export default function SignalCheckClient({ assignmentId, caseStandard, publicCa
   const [statementAnswers, setStatementAnswers] = useState(draftAnswers);
   const [errors, setErrors] = useState({});
 
-  // Reflect phase state — self-check checklist, confirm modal, real submit,
-  // post-submit confidence. Same pattern as Group Chat's revise/share steps.
+  // Self-check checklist, confirm modal, real submit, post-submit
+  // confidence — same pattern as Group Chat's revise/share steps, folded
+  // into the same screen as the verdict cards instead of a separate step.
   const [checklist, setChecklist] = useState(draft.checklist || selfCheckQuestions.map(() => false));
-  const [showReflectErrors, setShowReflectErrors] = useState(false);
+  const [showChecklistError, setShowChecklistError] = useState(false);
   const [showSubmitConfirm, setShowSubmitConfirm] = useState(false);
   const [selfConfidence, setSelfConfidence] = useState(draft.self_confidence || null);
+  // Lets a student re-open the evidence they already scanned, right from the
+  // verdict screen, to double-check themselves before submitting — instead
+  // of having to navigate all the way back to the Scan screen and lose their
+  // in-progress answers.
+  const [evidenceOpen, setEvidenceOpen] = useState(false);
 
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState(null);
@@ -214,7 +221,10 @@ export default function SignalCheckClient({ assignmentId, caseStandard, publicCa
       const raw = localStorage.getItem(storageKey);
       if (raw) {
         const d = JSON.parse(raw);
-        if (!revisionRequested) setPhase(d.phase || "main");
+        // Older drafts saved under the previous 5-phase version may have
+        // "verdict" or "reflect" stored — both now live under "answer".
+        const restoredPhase = d.phase === "verdict" || d.phase === "reflect" ? "answer" : d.phase;
+        if (!revisionRequested) setPhase(restoredPhase || "main");
         setPlacements(d.placements || {});
         setAttemptsByItem(d.attemptsByItem || {});
         setFirstTryCorrect(d.firstTryCorrect || 0);
@@ -289,11 +299,6 @@ export default function SignalCheckClient({ assignmentId, caseStandard, publicCa
     return Object.keys(nextErrors).length === 0;
   }
 
-  function continueToReflect() {
-    if (!validateAnswers()) return;
-    goTo("reflect");
-  }
-
   function toggleChecklistItem(i) {
     setChecklist((prev) => {
       const next = prev.slice();
@@ -305,8 +310,15 @@ export default function SignalCheckClient({ assignmentId, caseStandard, publicCa
   const checklistPasses = checkedCount >= REQUIRED_CHECKS;
 
   function handleRequestSubmit() {
-    if (!checklistPasses) { setShowReflectErrors(true); return; }
-    setShowReflectErrors(false);
+    // Verdicts first — a missing/invalid answer is a bigger problem than an
+    // unchecked self-check box, so surface that error first if both apply.
+    if (!validateAnswers()) {
+      setShowChecklistError(false);
+      if (typeof window !== "undefined") window.scrollTo({ top: 0, behavior: "smooth" });
+      return;
+    }
+    if (!checklistPasses) { setShowChecklistError(true); return; }
+    setShowChecklistError(false);
     setShowSubmitConfirm(true);
   }
 
@@ -418,6 +430,41 @@ export default function SignalCheckClient({ assignmentId, caseStandard, publicCa
 
         {phase === "scan" && (
           <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+
+            {publicCase.fieldReport ? (
+              // One photo + a short field-note paragraph, read as a single
+              // report instead of a grid of separate evidence cards — scales
+              // to new cases without needing a photo per individual reading.
+              <GlassCard style={{ padding: 0, overflow: "hidden" }}>
+                <img src={publicCase.fieldReport.image} alt={publicCase.fieldReport.imageCaption || "Field evidence photo"} style={{ display: "block", width: "100%", maxHeight: 360, objectFit: "cover" }} />
+                <div style={{ padding: "16px 20px" }}>
+                  {publicCase.fieldReport.imageCaption && (
+                    <div style={{ fontFamily: "'Space Mono', monospace", fontSize: 10.5, letterSpacing: 1, color: COLORS.teal, marginBottom: 8 }}>{publicCase.fieldReport.imageCaption.toUpperCase()}</div>
+                  )}
+                  <div style={{ fontSize: 13.5, lineHeight: 1.6, color: "rgba(255,255,255,.9)" }}>{publicCase.fieldReport.notes}</div>
+                </div>
+              </GlassCard>
+            ) : (
+              // Fallback for cases without a field report photo yet — the
+              // numbered sensor log, no category badges (a "distractor" or
+              // "photo/data" badge here would telegraph which readings
+              // matter before the student has sorted anything).
+              <>
+                <div style={{ textAlign: "center", fontFamily: "'Space Mono', monospace", fontSize: 11, letterSpacing: 2, color: COLORS.teal }}>⟶ SENSOR LOG · {publicCase.evidenceReadings.length} RAW READINGS</div>
+                <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                  {publicCase.evidenceReadings.map((e, i) => (
+                    <div key={e.id} style={{ display: "flex", gap: 12, background: "rgba(8,10,22,.55)", border: "1px solid rgba(255,255,255,.2)", borderRadius: 14, padding: "12px 16px" }}>
+                      <div style={{ fontFamily: "'Space Mono', monospace", fontSize: 11, fontWeight: 700, color: COLORS.teal, flexShrink: 0, width: 26 }}>#{i + 1}</div>
+                      <div>
+                        <div style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 600, fontSize: 13 }}>{e.label}</div>
+                        <div style={{ fontSize: 12.5, lineHeight: 1.4, color: "rgba(255,255,255,.78)", marginTop: 2 }}>{e.reading}</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
+
             <div style={{ display: "flex", gap: 12, flexWrap: "wrap", justifyContent: "center" }}>
               {publicCase.statements.map((s) => (
                 <div key={s.id} style={{ background: "rgba(8,10,22,.6)", border: "1px solid rgba(255,255,255,.2)", borderRadius: 14, padding: "10px 16px", maxWidth: 320 }}>
@@ -426,21 +473,7 @@ export default function SignalCheckClient({ assignmentId, caseStandard, publicCa
                 </div>
               ))}
             </div>
-            <div style={{ textAlign: "center", fontFamily: "'Space Mono', monospace", fontSize: 11, letterSpacing: 2, color: COLORS.teal }}>⟶ SENSOR LOG · {publicCase.evidenceReadings.length} RAW READINGS</div>
-            {/* Numbered raw observations, no category badges — a "distractor" or
-                "photo/data" badge here would telegraph which readings matter
-                before the student has sorted anything. */}
-            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-              {publicCase.evidenceReadings.map((e, i) => (
-                <div key={e.id} style={{ display: "flex", gap: 12, background: "rgba(8,10,22,.55)", border: "1px solid rgba(255,255,255,.2)", borderRadius: 14, padding: "12px 16px" }}>
-                  <div style={{ fontFamily: "'Space Mono', monospace", fontSize: 11, fontWeight: 700, color: COLORS.teal, flexShrink: 0, width: 26 }}>#{i + 1}</div>
-                  <div>
-                    <div style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 600, fontSize: 13 }}>{e.label}</div>
-                    <div style={{ fontSize: 12.5, lineHeight: 1.4, color: "rgba(255,255,255,.78)", marginTop: 2 }}>{e.reading}</div>
-                  </div>
-                </div>
-              ))}
-            </div>
+
             <div style={{ display: "flex", justifyContent: "center", marginTop: 6 }}>
               <PrimaryButton onClick={() => goTo("sort")}>
                 Match the Signal
@@ -460,11 +493,12 @@ export default function SignalCheckClient({ assignmentId, caseStandard, publicCa
 
             <div style={{ background: "rgba(8,10,22,.5)", border: "1px solid rgba(255,255,255,.2)", borderRadius: 16, padding: 14, minHeight: 60 }}>
               <div style={{ fontFamily: "'Space Mono', monospace", fontSize: 9, letterSpacing: 1, color: "rgba(255,255,255,.6)", marginBottom: 8, textAlign: "center" }}>SENSOR TRAY</div>
-              <div style={{ display: "flex", flexWrap: "wrap", gap: 8, justifyContent: "center" }}>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 10, justifyContent: "center" }}>
                 {unplacedItems.length === 0 && <div style={{ fontSize: 12, color: "rgba(255,255,255,.5)" }}>All readings sorted.</div>}
                 {unplacedItems.map((e) => (
-                  <div key={e.id} onClick={() => pickItem(e.id)} className={"sc-chip" + (selectedItemId === e.id ? " selected" : "")} style={{ background: "rgba(255,255,255,.08)", border: "1.5px dashed rgba(255,255,255,.4)", borderRadius: 10, padding: "9px 12px", fontFamily: "'Poppins', sans-serif", fontWeight: 600, fontSize: 12 }}>
-                    {e.label}
+                  <div key={e.id} onClick={() => pickItem(e.id)} className={"sc-chip" + (selectedItemId === e.id ? " selected" : "")} style={{ background: "rgba(255,255,255,.08)", border: "1.5px dashed rgba(255,255,255,.4)", borderRadius: 12, padding: "10px 14px", maxWidth: 240, textAlign: "left" }}>
+                    <div style={{ fontFamily: "'Space Mono', monospace", fontSize: 9, letterSpacing: 0.5, color: COLORS.teal, marginBottom: 3 }}>{e.label.toUpperCase()}</div>
+                    <div style={{ fontFamily: "'Inter', sans-serif", fontWeight: 500, fontSize: 12.5, lineHeight: 1.35 }}>{e.reading}</div>
                   </div>
                 ))}
               </div>
@@ -474,12 +508,15 @@ export default function SignalCheckClient({ assignmentId, caseStandard, publicCa
               {publicCase.sortBins.map((bin) => {
                 const stmt = statementById[bin.id];
                 return (
-                  <div key={bin.id} onClick={() => placeInBin(bin)} className={"sc-bin" + (wrongFlashBinId === bin.id ? " flash" : "")} style={{ flex: "1 1 200px", cursor: selectedItemId ? "pointer" : "default", background: "rgba(8,10,22,.5)", border: `1.5px solid ${bin.id === "none" ? "rgba(255,255,255,.3)" : "rgba(0,194,199,.5)"}`, borderRadius: 16, padding: "12px 14px", minHeight: 90 }}>
+                  <div key={bin.id} onClick={() => placeInBin(bin)} className={"sc-bin" + (wrongFlashBinId === bin.id ? " flash" : "")} style={{ flex: "1 1 220px", cursor: selectedItemId ? "pointer" : "default", background: "rgba(8,10,22,.5)", border: `1.5px solid ${bin.id === "none" ? "rgba(255,255,255,.3)" : "rgba(0,194,199,.5)"}`, borderRadius: 16, padding: "12px 14px", minHeight: 90 }}>
                     <div style={{ fontFamily: "'Space Mono', monospace", fontSize: 10, letterSpacing: 1, color: bin.id === "none" ? "rgba(255,255,255,.6)" : COLORS.teal }}>{bin.label}</div>
                     {stmt && <div style={{ fontSize: 12, lineHeight: 1.35, color: "rgba(255,255,255,.82)", marginTop: 5 }}>"{stmt.text}"</div>}
-                    <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 8 }}>
+                    <div style={{ display: "flex", flexDirection: "column", gap: 6, marginTop: 8 }}>
                       {publicCase.evidenceReadings.filter((e) => placements[e.id] === bin.id).map((e) => (
-                        <div key={e.id} style={{ background: "rgba(0,194,199,.14)", border: "1.5px solid rgba(0,194,199,.6)", borderRadius: 9, padding: "6px 9px", fontFamily: "'Poppins', sans-serif", fontWeight: 600, fontSize: 11 }}>{e.label}</div>
+                        <div key={e.id} style={{ background: "rgba(0,194,199,.14)", border: "1.5px solid rgba(0,194,199,.6)", borderRadius: 9, padding: "7px 10px" }}>
+                          <div style={{ fontFamily: "'Space Mono', monospace", fontSize: 8.5, letterSpacing: 0.5, color: COLORS.teal, marginBottom: 2 }}>{e.label.toUpperCase()}</div>
+                          <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 11, lineHeight: 1.35 }}>{e.reading}</div>
+                        </div>
                       ))}
                     </div>
                   </div>
@@ -497,7 +534,7 @@ export default function SignalCheckClient({ assignmentId, caseStandard, publicCa
           </div>
         )}
 
-        {phase === "answer" && (
+        {phase === "answer" && !submitted && (
           <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
             <div style={{ textAlign: "center", fontFamily: "'Space Mono', monospace", fontSize: 11, letterSpacing: 2, color: COLORS.teal }}>
               ⟶ FILE A VERDICT ON EACH SIGNAL
@@ -544,42 +581,32 @@ export default function SignalCheckClient({ assignmentId, caseStandard, publicCa
                       </>
                     )}
 
-                    {hasErr && <div style={{ color: COLORS.danger, fontSize: 11, fontWeight: 600, marginTop: 6 }}>Fill this in before continuing.</div>}
+                    {hasErr && <div style={{ color: COLORS.danger, fontSize: 11, fontWeight: 600, marginTop: 6 }}>Fill this in before submitting.</div>}
                   </div>
                 );
               })}
             </div>
 
-            <div style={{ textAlign: "center" }}>
-              <PrimaryButton onClick={continueToReflect}>
-                Continue to Review
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M5 12H19M19 12L13 6M19 12L13 18" stroke={COLORS.navy} strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" /></svg>
-              </PrimaryButton>
-            </div>
-
-            <EchoLine text={publicCase.echo.submit} />
-          </div>
-        )}
-
-        {phase === "reflect" && !submitted && (
-          <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-            <div style={{ textAlign: "center", fontFamily: "'Space Mono', monospace", fontSize: 11, letterSpacing: 2, color: COLORS.teal }}>⟶ FINAL CHECK BEFORE YOU FILE</div>
-
+            {/* Lets a student re-check the evidence right here, without losing
+                their in-progress answers by navigating back to Scan. */}
             <GlassCard style={{ maxWidth: 640, margin: "0 auto", width: "100%" }}>
-              <div style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 700, fontSize: 14, marginBottom: 10 }}>Your Verdicts</div>
-              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                {publicCase.statements.map((s) => {
-                  const a = statementAnswers[s.id] || {};
-                  const v = publicCase.stemMode === "open" ? a.verdictText : a.verdict;
-                  return (
-                    <div key={s.id} style={{ display: "flex", justifyContent: "space-between", gap: 10, fontSize: 12.5 }}>
-                      <span style={{ color: "rgba(255,255,255,.75)" }}>{s.tag}</span>
-                      <span style={{ fontWeight: 700, color: verdictColor(v) }}>{(v || "—").toUpperCase()}</span>
+              <button className="sc-btn" onClick={() => setEvidenceOpen((o) => !o)} style={{ background: "none", width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", padding: 0, fontFamily: "'Poppins', sans-serif", fontWeight: 700, fontSize: 14, color: COLORS.white }}>
+                📋 Review the Evidence Again
+                <span style={{ color: COLORS.teal, fontSize: 12 }}>{evidenceOpen ? "▲ HIDE" : "▼ SHOW"}</span>
+              </button>
+              {evidenceOpen && (
+                <div style={{ marginTop: 14, display: "flex", flexDirection: "column", gap: 8 }}>
+                  {publicCase.evidenceReadings.map((e, i) => (
+                    <div key={e.id} style={{ display: "flex", gap: 10, background: "rgba(255,255,255,.05)", border: "1px solid rgba(255,255,255,.15)", borderRadius: 12, padding: "10px 14px" }}>
+                      <div style={{ fontFamily: "'Space Mono', monospace", fontSize: 10, fontWeight: 700, color: COLORS.teal, flexShrink: 0, width: 22 }}>#{i + 1}</div>
+                      <div>
+                        <div style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 600, fontSize: 12.5 }}>{e.label}</div>
+                        <div style={{ fontSize: 12, lineHeight: 1.4, color: "rgba(255,255,255,.75)", marginTop: 2 }}>{e.reading}</div>
+                      </div>
                     </div>
-                  );
-                })}
-              </div>
-              <button className="sc-btn" onClick={() => goTo("answer")} style={{ background: "none", color: COLORS.teal, fontSize: 12, fontWeight: 700, padding: 0, marginTop: 12 }}>← Go back and change something</button>
+                  ))}
+                </div>
+              )}
             </GlassCard>
 
             <GlassCard style={{ maxWidth: 640, margin: "0 auto", width: "100%" }}>
@@ -593,7 +620,7 @@ export default function SignalCheckClient({ assignmentId, caseStandard, publicCa
                   </div>
                 ))}
               </div>
-              {showReflectErrors && !checklistPasses && (
+              {showChecklistError && !checklistPasses && (
                 <div style={{ color: COLORS.danger, fontSize: 12, fontWeight: 600, marginTop: 10 }}>Check at least {REQUIRED_CHECKS} before submitting.</div>
               )}
             </GlassCard>
@@ -613,7 +640,7 @@ export default function SignalCheckClient({ assignmentId, caseStandard, publicCa
           </div>
         )}
 
-        {phase === "reflect" && submitted && (
+        {phase === "answer" && submitted && (
           <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
             <div style={{ textAlign: "center", fontFamily: "'Space Mono', monospace", fontSize: 11, letterSpacing: 2, color: COLORS.teal }}>⟶ REPORT FILED</div>
 
@@ -643,7 +670,7 @@ export default function SignalCheckClient({ assignmentId, caseStandard, publicCa
       </div>
 
       <SubmitConfirmModal open={showSubmitConfirm} onCancel={() => setShowSubmitConfirm(false)} onConfirm={confirmSubmit} />
-      <CelebrationModal open={selfConfidence !== null && phase === "reflect" && submitted} onGoHome={() => router.push("/missions")} />
+      <CelebrationModal open={selfConfidence !== null && phase === "answer" && submitted} onGoHome={() => router.push("/missions")} />
     </div>
   );
 }
