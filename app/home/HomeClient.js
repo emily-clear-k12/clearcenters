@@ -230,7 +230,7 @@ export default function HomeClient({ student, studentClass, assignments, mission
       {samOpen && (
         <div style={{ position: "fixed", right: 28, bottom: 104, width: 240, background: COLORS.white, borderRadius: 16, boxShadow: "0 8px 24px rgba(0,0,0,.12)", padding: 16 }}>
           <p style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 700, fontSize: 14, margin: "0 0 4px 0" }}>
-            S.A.M. <span style={{ color: COLORS.teal }}>· Smart Assistant for Missions</span>
+            S.A.M. <span style={{ color: COLORS.teal }}>· ClearCenters Assistant for Missions</span>
           </p>
           <p style={{ fontSize: 12.5, color: COLORS.textDark, margin: 0, lineHeight: 1.45 }}>
             Click me anytime you're working on a mission and need a hint!

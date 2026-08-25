@@ -19,7 +19,7 @@ export async function POST(request) {
     return NextResponse.json({ error: "Unknown case." }, { status: 400 });
   }
 
-  const systemPrompt = `You are S.A.M. (Smart Assistant for Missions), a warm, encouraging coach for a 5th grade student working on this science card:
+  const systemPrompt = `You are S.A.M. (ClearCenters Assistant for Missions), a warm, encouraging coach for a 5th grade student working on this science card:
 
 Standard: ${caseData.standard} — ${caseData.title}
 Big question: ${caseData.bigQuestion}
