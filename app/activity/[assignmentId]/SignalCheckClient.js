@@ -477,7 +477,11 @@ export default function SignalCheckClient({ assignmentId, caseStandard, publicCa
                   {publicCase.fieldReport.imageCaption && (
                     <div style={{ fontFamily: "'Space Mono', monospace", fontSize: 10.5, letterSpacing: 1, color: COLORS.teal, marginBottom: 8 }}>{publicCase.fieldReport.imageCaption.toUpperCase()}</div>
                   )}
-                  <div style={{ fontSize: 13.5, lineHeight: 1.6, color: "rgba(255,255,255,.9)" }}>{publicCase.fieldReport.notes}</div>
+                  <div style={{ fontSize: 13.5, lineHeight: 1.6, color: "rgba(255,255,255,.9)" }}>
+                    {publicCase.fieldReport.notes.split("\n\n").map((para, i) => (
+                      <p key={i} style={{ margin: i === 0 ? 0 : "10px 0 0" }}>{para}</p>
+                    ))}
+                  </div>
                 </div>
               </GlassCard>
             ) : (
@@ -642,7 +646,11 @@ export default function SignalCheckClient({ assignmentId, caseStandard, publicCa
                       {publicCase.fieldReport.imageCaption && (
                         <div style={{ fontFamily: "'Space Mono', monospace", fontSize: 10, letterSpacing: 1, color: COLORS.teal, marginBottom: 6 }}>{publicCase.fieldReport.imageCaption.toUpperCase()}</div>
                       )}
-                      <div style={{ fontSize: 12.5, lineHeight: 1.55, color: "rgba(255,255,255,.85)" }}>{publicCase.fieldReport.notes}</div>
+                      <div style={{ fontSize: 12.5, lineHeight: 1.55, color: "rgba(255,255,255,.85)" }}>
+                        {publicCase.fieldReport.notes.split("\n\n").map((para, i) => (
+                          <p key={i} style={{ margin: i === 0 ? 0 : "8px 0 0" }}>{para}</p>
+                        ))}
+                      </div>
                     </div>
                   </div>
                 ) : (
