@@ -40,6 +40,28 @@ const CONFIDENCE_LEVELS = [
 // questions must be checked before a student can submit for grading.
 const REQUIRED_CHECKS = 3;
 
+// Grade 4 ("dropdown-open") is the middle rung: verdict is still a button,
+// but reasoning blends a sentence stem with open writing instead of either
+// a blank textarea (too hard to start) or full chip-built sentences (too
+// scaffolded). The stem auto-fills when a verdict is first picked so the
+// student isn't staring at an empty box, but validateAnswers() below still
+// requires real writing beyond it — the stem is a head start, not an
+// answer. Grade 3 keeps its fully chip-built sentence stem (unchanged,
+// already the most scaffolded mode); Grade 5 stays fully open (unchanged).
+const REASONING_STEMS = {
+  True: "I know this is TRUE because ",
+  False: "I know this is FALSE because ",
+  Misleading: "This is MISLEADING because ",
+};
+
+function hasRealReasoning(verdict, reasoning) {
+  const text = (reasoning || "").trim();
+  if (!text) return false;
+  const stem = (REASONING_STEMS[verdict] || "").trim();
+  if (stem && text === stem) return false; // stem auto-filled, never edited
+  return true;
+}
+
 function TopBar({ standard, subject }) {
   return (
     <div style={{ position: "relative", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "20px 24px 0", zIndex: 2 }}>
@@ -282,6 +304,20 @@ export default function SignalCheckClient({ assignmentId, caseStandard, publicCa
     setStatementAnswers((prev) => ({ ...prev, [stmtId]: { ...prev[stmtId], [field]: value } }));
   }
 
+  // Grade 4 only: picking a verdict seeds the reasoning box with a matching
+  // sentence stem — but only when the box is empty, or still holds a stem
+  // from a verdict the student has since changed their mind about. Once
+  // they've typed their own words, changing the verdict never touches it.
+  function pickVerdictWithStem(stmtId, verdict) {
+    setStatementAnswers((prev) => {
+      const current = prev[stmtId] || {};
+      const priorReasoning = current.reasoning || "";
+      const wasAutoStem = Object.values(REASONING_STEMS).includes(priorReasoning);
+      const nextReasoning = !priorReasoning.trim() || wasAutoStem ? REASONING_STEMS[verdict] || "" : priorReasoning;
+      return { ...prev, [stmtId]: { ...current, verdict, reasoning: nextReasoning } };
+    });
+  }
+
   function validateAnswers() {
     const mode = publicCase.stemMode;
     const nextErrors = {};
@@ -290,7 +326,7 @@ export default function SignalCheckClient({ assignmentId, caseStandard, publicCa
       if (mode === "dropdown") {
         if (!a.verdict || !a.evidence1 || !a.evidence2) nextErrors[s.id] = true;
       } else if (mode === "dropdown-open") {
-        if (!a.verdict || !a.reasoning || !a.reasoning.trim()) nextErrors[s.id] = true;
+        if (!a.verdict || !hasRealReasoning(a.verdict, a.reasoning)) nextErrors[s.id] = true;
       } else {
         if (!a.verdictText || !a.reasoning || !a.reasoning.trim()) nextErrors[s.id] = true;
       }
@@ -569,7 +605,7 @@ export default function SignalCheckClient({ assignmentId, caseStandard, publicCa
 
                     {publicCase.stemMode === "dropdown-open" && (
                       <>
-                        <VerdictButtons options={publicCase.verdictOptions} value={a.verdict} onChange={(v) => setAnswer(s.id, "verdict", v)} hasErr={hasErr && !a.verdict} />
+                        <VerdictButtons options={publicCase.verdictOptions} value={a.verdict} onChange={(v) => pickVerdictWithStem(s.id, v)} hasErr={hasErr && !a.verdict} />
                         <textarea className={"sc-textarea" + (hasErr ? " err" : "")} placeholder="Explain your reasoning using the evidence..." value={a.reasoning || ""} onChange={(e) => setAnswer(s.id, "reasoning", e.target.value)} />
                       </>
                     )}
