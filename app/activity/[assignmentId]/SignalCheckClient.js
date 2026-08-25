@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
+import { GENERIC_HINTS, getCaseHints } from "../../../lib/hints";
 
 // Signal Check's own locked palette — navy/teal/violet/gold, distinct from
 // Group Chat (violet-led) and Newsroom (navy/gold-led) so it reads as its
@@ -289,6 +290,12 @@ export default function SignalCheckClient({ assignmentId, caseStandard, publicCa
   // the tray/bins layout.
   const [evidenceModalOpen, setEvidenceModalOpen] = useState(false);
 
+  // S.A.M. hints — same pre-written system as Group Chat (lib/hints.js):
+  // case-specific hints show first, in order, then loop through the
+  // generic list for as long as the student keeps asking.
+  const [hintText, setHintText] = useState(null);
+  const [hintCount, setHintCount] = useState(0);
+
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState(null);
   const [submitted, setSubmitted] = useState(alreadySubmitted);
@@ -464,6 +471,15 @@ export default function SignalCheckClient({ assignmentId, caseStandard, publicCa
     submitForGrading();
   }
 
+  function requestHint() {
+    const caseHints = getCaseHints(caseStandard);
+    const hint = hintCount < caseHints.length
+      ? caseHints[hintCount]
+      : GENERIC_HINTS[(hintCount - caseHints.length) % GENERIC_HINTS.length];
+    setHintText(hint);
+    setHintCount((c) => c + 1);
+  }
+
   const backgroundStyle = {
     minHeight: "100vh",
     backgroundImage: 'url("/signal-check/window.jpg")',
@@ -491,6 +507,8 @@ export default function SignalCheckClient({ assignmentId, caseStandard, publicCa
         .sc-textarea::placeholder { color: rgba(255,255,255,.4); }
         .sc-textarea.err { border-color: ${COLORS.danger}; }
         @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        .sc-fade-in { animation: sc-fadein 250ms ease; }
+        @keyframes sc-fadein { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
       `}</style>
       <div className="sc-scrim" />
 
@@ -712,6 +730,21 @@ export default function SignalCheckClient({ assignmentId, caseStandard, publicCa
               </div>
 
               <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                <GlassCard>
+                  <button className="sc-btn" onClick={requestHint} style={{ background: COLORS.teal, color: COLORS.navy, borderRadius: 999, padding: "11px 20px", fontWeight: 700, fontSize: 13.5, width: "100%", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
+                    Get a hint {hintCount > 0 ? "(another)" : ""}
+                  </button>
+                  {hintText && (
+                    <div className="sc-fade-in" style={{ marginTop: 12, background: "rgba(0,194,199,.12)", border: "1px solid rgba(0,194,199,.35)", borderRadius: 14, padding: 14, display: "flex", gap: 10 }}>
+                      <img src="/icons/robot_point.png" alt="S.A.M." style={{ width: 36, height: 36, objectFit: "contain", flexShrink: 0 }} />
+                      <div>
+                        <div style={{ fontWeight: 700, fontSize: 12, color: COLORS.teal, marginBottom: 3 }}>S.A.M.</div>
+                        <div style={{ fontSize: 13, color: "rgba(255,255,255,.9)", lineHeight: 1.5 }}>{hintText}</div>
+                      </div>
+                    </div>
+                  )}
+                </GlassCard>
+
                 <GlassCard>
                   <div style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 700, fontSize: 14, marginBottom: 4 }}>Self-Check</div>
                   <div style={{ fontSize: 11.5, color: "rgba(255,255,255,.65)", marginBottom: 10 }}>Check off the ones that are true — you need at least {REQUIRED_CHECKS} of {selfCheckQuestions.length} ({checkedCount}/{selfCheckQuestions.length} so far).</div>
