@@ -550,6 +550,15 @@ export default function ActivityClient(props) {
               <div style={{ fontSize: 15, fontWeight: 600, color: COLORS.textDark }}>{publicCase.bigQuestion}</div>
             </div>
             <button className="gc-btn" onClick={function () { setTranscriptOpen(true); }} style={{ marginBottom: 14, background: COLORS.white, color: COLORS.violet, border: "2px solid " + COLORS.violet, borderRadius: 999, padding: "9px 16px", fontWeight: 700, fontSize: 13 }}>Re-read the discussion</button>
+            {publicCase.evidenceBank && publicCase.evidenceBank.length > 0 && (
+              <div className="gc-fade-in" style={{ background: COLORS.white, border: "2px solid " + COLORS.violetSoft, borderRadius: 14, padding: 16, marginBottom: 16 }}>
+                <div style={{ fontSize: 11, fontWeight: 700, color: COLORS.violet, letterSpacing: 0.5, marginBottom: 8 }}>EVIDENCE FROM THE STORY</div>
+                <div style={{ fontSize: 12, color: COLORS.textMuted, marginBottom: 10 }}>Use these to help you fill in your organizer below.</div>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                  {publicCase.evidenceBank.map(function (e, i) { return (<div key={i} style={{ background: COLORS.violetSoft, color: COLORS.violet, fontSize: 12.5, fontWeight: 600, padding: "7px 13px", borderRadius: 999, lineHeight: 1.3 }}>{e}</div>); })}
+                </div>
+              </div>
+            )}
             <Organizer fieldsMeta={organizerFields} values={organizer} onChange={updateOrganizer} errors={showOrganizerErrors ? organizerErrors : null} />
             {showOrganizerErrors && !organizerComplete && (<div style={{ color: "#FFD9D9", background: "rgba(214,69,69,.25)", borderRadius: 10, padding: "8px 12px", fontSize: 12.5, fontWeight: 600, marginTop: 10, textAlign: "center" }}>Fill in every box before continuing.</div>)}
             <button className="gc-btn" onClick={handleContinueToDiscuss} style={{ marginTop: 16, width: "100%", background: COLORS.violet, color: COLORS.white, borderRadius: 999, padding: "13px 20px", fontWeight: 700, fontSize: 15 }}>Continue to Discuss →</button>

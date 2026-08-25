@@ -62,6 +62,15 @@ export default function ReportsPage() {
         <h1 style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 700, fontSize: 28, margin: "0 0 6px 0" }}>Reports</h1>
         <p style={{ color: COLORS.textMuted, fontSize: 14, marginBottom: 24 }}>Pick a class to generate a printable summary — great for parent conferences or admin check-ins.</p>
 
+        <div className="gc-card" onClick={() => router.push("/teacher/reports/standards")} style={{ background: COLORS.violetSoft, border: `1px solid ${COLORS.violet}33`, borderRadius: 16, padding: "18px 20px", boxShadow: "0 4px 16px rgba(13,27,42,.06)", marginBottom: 20, display: "flex", alignItems: "center", gap: 16 }}>
+          <div style={{ width: 44, height: 44, borderRadius: 12, background: COLORS.white, display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, color: COLORS.violet, fontSize: 20, flexShrink: 0 }}>📊</div>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontWeight: 700, fontSize: 15 }}>Standards Report — All Classes</div>
+            <div style={{ fontSize: 12.5, color: COLORS.textMuted }}>How every standard is going, broken out class by class — one printable page.</div>
+          </div>
+          <div style={{ color: COLORS.violet, fontWeight: 700, fontSize: 13 }}>View →</div>
+        </div>
+
         {classes.length === 0 ? (
           <div style={{ background: COLORS.white, border: `1px solid ${COLORS.border}`, borderRadius: 16, padding: 24, textAlign: "center", color: COLORS.textMuted, fontSize: 14 }}>No classes yet.</div>
         ) : (

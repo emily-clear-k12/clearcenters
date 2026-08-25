@@ -314,6 +314,23 @@ export default function TeacherOverview() {
       completionDonut = { completed, inProgress, notStarted };
     }
 
+    // Same released-grade rollup as the Reports/Progress "By Standard"
+    // views, just scoped to whichever class tab is selected here ("all"
+    // pools every class together, same as the rest of this dashboard) —
+    // gives a quick "which standards need reteaching" read without a click.
+    const assignmentStandardMap = Object.fromEntries(assignments.map((a) => [a.id, a.case_standard]));
+    const byStandard = {};
+    released.forEach((s) => {
+      const standard = assignmentStandardMap[s.assignment_id];
+      if (!standard) return;
+      if (!byStandard[standard]) byStandard[standard] = [];
+      byStandard[standard].push(s.teacher_grade);
+    });
+    const standardRows = Object.entries(byStandard).map(([standard, grades]) => {
+      const avg = grades.reduce((a, b) => a + b, 0) / grades.length;
+      return { standard, title: caseMap[standard] || standard, avgPct: Math.round((avg / 2) * 100), band: proficiencyBand(avg), gradedCount: grades.length };
+    }).sort((a, b) => a.avgPct - b.avgPct);
+
     return {
       studentCount: students.length,
       totalCrystalPoints: students.reduce((sum, s) => sum + (s.crystal_points || 0), 0),
@@ -324,6 +341,7 @@ export default function TeacherOverview() {
       studentInsights: insights.slice(0, 5),
       recentAssignments,
       completionDonut,
+      standardRows,
     };
   }, [selectedClassId, rawStudents, rawAssignments, rawSubmissions, targetsByAssignment, caseMap, classMap, studentMap]);
 
@@ -337,6 +355,7 @@ export default function TeacherOverview() {
     studentInsights,
     recentAssignments,
     completionDonut,
+    standardRows,
   } = dashboard;
 
   if (loadingAuth || loading) {
@@ -496,6 +515,40 @@ export default function TeacherOverview() {
             )}
           </Card>
         </div>
+
+        <Card style={{ marginBottom: 16 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
+            <div>
+              <div style={{ fontWeight: 700, fontSize: 16 }}>Standards at a Glance</div>
+              <div style={{ fontSize: 12, color: COLORS.textMuted, marginTop: 2 }}>Released grades, rolled up by standard{selectedClassId === "all" && classes.length > 1 ? " · all classes" : ""}.</div>
+            </div>
+            <button onClick={() => router.push("/teacher/reports/standards")} className="gc-btn" style={{ background: "none", color: COLORS.violet, fontSize: 12.5, fontWeight: 700, whiteSpace: "nowrap" }}>Full Standards Report →</button>
+          </div>
+          {standardRows.length > 0 ? (
+            <div style={{ display: "grid", gap: 4 }}>
+              {standardRows.slice(0, 5).map((row) => (
+                <div key={row.standard} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 4px", borderBottom: `1px solid ${COLORS.border}` }}>
+                  <div style={{ width: 220, flexShrink: 0 }}>
+                    <div style={{ fontSize: 13, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{row.title}</div>
+                    <div style={{ fontSize: 11, color: COLORS.textMuted }}>{row.standard} · {row.gradedCount} graded</div>
+                  </div>
+                  <div style={{ flex: 1, height: 8, background: COLORS.border, borderRadius: 999, overflow: "hidden" }}>
+                    <div style={{ height: "100%", width: `${row.avgPct}%`, background: row.band.color, borderRadius: 999 }} />
+                  </div>
+                  <div style={{ width: 44, textAlign: "right", fontWeight: 700, fontSize: 13 }}>{row.avgPct}%</div>
+                  <div style={{ width: 110, textAlign: "right" }}>
+                    <span style={{ fontSize: 11, fontWeight: 700, padding: "3px 10px", borderRadius: 999, background: row.band.color + "22", color: row.band.color }}>{row.band.label}</span>
+                  </div>
+                </div>
+              ))}
+              {standardRows.length > 5 && (
+                <div style={{ fontSize: 12, color: COLORS.textMuted, padding: "8px 4px 0", textAlign: "center" }}>+{standardRows.length - 5} more standard{standardRows.length - 5 === 1 ? "" : "s"} — see the full report</div>
+              )}
+            </div>
+          ) : (
+            <div style={{ fontSize: 13, color: COLORS.textMuted, padding: "12px 0", textAlign: "center" }}>No released grades yet — this fills in once you release some.</div>
+          )}
+        </Card>
 
         <div style={{ display: "grid", gridTemplateColumns: "1.3fr 1.3fr 1fr", gap: 16 }}>
           <Card>
