@@ -298,12 +298,15 @@ export default function SignalCheckClient({ assignmentId, caseStandard, publicCa
                 </div>
               ))}
             </div>
-            <div style={{ textAlign: "center", fontFamily: "'Space Mono', monospace", fontSize: 11, letterSpacing: 2, color: COLORS.teal }}>⟶ DATA LOG · {publicCase.evidenceReadings.length} SENSOR READINGS</div>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))", gap: 12 }}>
-              {publicCase.evidenceReadings.map((e) => (
-                <div key={e.id} style={{ background: "rgba(8,10,22,.55)", border: "1px solid rgba(255,255,255,.2)", borderRadius: 14, padding: 14, display: "flex", flexDirection: "column", alignItems: "center", gap: 8, textAlign: "center" }}>
-                  <div style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 600, fontSize: 13 }}>{e.label}</div>
-                  <span style={{ fontFamily: "'Space Mono', monospace", fontSize: 9.5, fontWeight: 700, letterSpacing: 0.5, padding: "4px 8px", borderRadius: 999, background: e.kind === "distractor" ? "rgba(255,107,107,.16)" : "rgba(0,194,199,.2)", color: e.kind === "distractor" ? "#FF9C9C" : COLORS.teal, border: `1px solid ${e.kind === "distractor" ? "rgba(255,107,107,.4)" : "rgba(0,194,199,.5)"}` }}>{e.attribute}</span>
+            <div style={{ textAlign: "center", fontFamily: "'Space Mono', monospace", fontSize: 11, letterSpacing: 2, color: COLORS.teal }}>⟶ SENSOR LOG · {publicCase.evidenceReadings.length} RAW READINGS · NOTHING SORTED YET</div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              {publicCase.evidenceReadings.map((e, i) => (
+                <div key={e.id} style={{ display: "flex", gap: 12, alignItems: "flex-start", background: "rgba(8,10,22,.55)", border: "1px solid rgba(255,255,255,.16)", borderRadius: 12, padding: "12px 16px" }}>
+                  <div style={{ fontFamily: "'Space Mono', monospace", fontSize: 10.5, color: COLORS.teal, flexShrink: 0, minWidth: 30, opacity: 0.8 }}>#{String(i + 1).padStart(2, "0")}</div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 600, fontSize: 13 }}>{e.label}</div>
+                    <div style={{ fontFamily: "'Space Mono', monospace", fontSize: 11.5, color: "rgba(255,255,255,.72)", marginTop: 3, lineHeight: 1.4 }}>{e.reading}</div>
+                  </div>
                 </div>
               ))}
             </div>
@@ -329,8 +332,9 @@ export default function SignalCheckClient({ assignmentId, caseStandard, publicCa
               <div style={{ display: "flex", flexWrap: "wrap", gap: 8, justifyContent: "center" }}>
                 {unplacedItems.length === 0 && <div style={{ fontSize: 12, color: "rgba(255,255,255,.5)" }}>All readings sorted.</div>}
                 {unplacedItems.map((e) => (
-                  <div key={e.id} onClick={() => pickItem(e.id)} className={"sc-chip" + (selectedItemId === e.id ? " selected" : "")} style={{ background: "rgba(255,255,255,.08)", border: "1.5px dashed rgba(255,255,255,.4)", borderRadius: 10, padding: "9px 12px", fontFamily: "'Poppins', sans-serif", fontWeight: 600, fontSize: 12 }}>
-                    {e.label}
+                  <div key={e.id} onClick={() => pickItem(e.id)} className={"sc-chip" + (selectedItemId === e.id ? " selected" : "")} style={{ background: "rgba(255,255,255,.08)", border: "1.5px dashed rgba(255,255,255,.4)", borderRadius: 10, padding: "9px 12px", maxWidth: 210 }}>
+                    <div style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 600, fontSize: 12 }}>{e.label}</div>
+                    <div style={{ fontFamily: "'Space Mono', monospace", fontSize: 10, color: "rgba(255,255,255,.65)", marginTop: 3, lineHeight: 1.3 }}>{e.reading}</div>
                   </div>
                 ))}
               </div>
