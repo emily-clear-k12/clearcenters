@@ -550,15 +550,23 @@ export default function ActivityClient(props) {
               <div style={{ fontSize: 15, fontWeight: 600, color: COLORS.textDark }}>{publicCase.bigQuestion}</div>
             </div>
             <button className="gc-btn" onClick={function () { setTranscriptOpen(true); }} style={{ marginBottom: 14, background: COLORS.white, color: COLORS.violet, border: "2px solid " + COLORS.violet, borderRadius: 999, padding: "9px 16px", fontWeight: 700, fontSize: 13 }}>Re-read the discussion</button>
-            {publicCase.evidenceBank && publicCase.evidenceBank.length > 0 && (
-              <div className="gc-fade-in" style={{ background: COLORS.white, border: "2px solid " + COLORS.violetSoft, borderRadius: 14, padding: 16, marginBottom: 16 }}>
-                <div style={{ fontSize: 11, fontWeight: 700, color: COLORS.violet, letterSpacing: 0.5, marginBottom: 8 }}>EVIDENCE FROM THE STORY</div>
-                <div style={{ fontSize: 12, color: COLORS.textMuted, marginBottom: 10 }}>Use these to help you fill in your organizer below.</div>
-                <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
-                  {publicCase.evidenceBank.map(function (e, i) { return (<div key={i} style={{ background: COLORS.violetSoft, color: COLORS.violet, fontSize: 12.5, fontWeight: 600, padding: "7px 13px", borderRadius: 999, lineHeight: 1.3 }}>{e}</div>); })}
-                </div>
-              </div>
-            )}
+            {/* The raw evidenceBank strings used to render here as a
+                reference for filling out the organizer, but evidenceBank is
+                authored per-case for the cold-open "think" screen, where the
+                context is different (no blank waiting right below it). In
+                cases where the organizer field asks something close to
+                "what happened" and the evidence bank states it almost
+                verbatim (e.g. a Social Studies case with a fill-in-the-blank
+                like "What is the legislative branch's basic job?" sitting
+                right under a chip that says "The Texas Legislature makes
+                laws."), this handed students the answer instead of helping
+                them find it. Pulled per Emily's call on 2026-08-25 rather
+                than trying to rewrite evidenceBank content per-case — there
+                is no guarantee across the ~190 existing cases that the
+                evidence bank avoids directly answering the organizer
+                questions it would sit next to. "Re-read the discussion"
+                above is the safe way to point students back at the source
+                material without repeating it out of context. */}
             <Organizer fieldsMeta={organizerFields} values={organizer} onChange={updateOrganizer} errors={showOrganizerErrors ? organizerErrors : null} />
             {showOrganizerErrors && !organizerComplete && (<div style={{ color: "#FFD9D9", background: "rgba(214,69,69,.25)", borderRadius: 10, padding: "8px 12px", fontSize: 12.5, fontWeight: 600, marginTop: 10, textAlign: "center" }}>Fill in every box before continuing.</div>)}
             <button className="gc-btn" onClick={handleContinueToDiscuss} style={{ marginTop: 16, width: "100%", background: COLORS.violet, color: COLORS.white, borderRadius: 999, padding: "13px 20px", fontWeight: 700, fontSize: 15 }}>Continue to Discuss →</button>
