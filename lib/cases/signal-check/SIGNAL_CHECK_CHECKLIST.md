@@ -63,6 +63,17 @@ not learning_target alone:
 SQL always goes to Emily as plain text in chat — never as a `.sql` file
 attachment (standing rule, a file caused a real error once).
 
+Before sending, verify every apostrophe inside a single-quoted string is
+doubled (`''`), not a plain `'` — a plain apostrophe (e.g. "mole's",
+"doesn't") silently closes the string early and throws a syntax error
+several lines later, at whatever token happens to follow next. Eyeballing
+it once isn't enough; write the SQL to a local file and run a
+character-by-character quote-balance check (track whether you're inside
+a string literal, treat `''` as an escaped pair, confirm you end outside
+any string) before pasting it into chat. This caused a real failure in
+Batch 2's SQL (3.13A-SC's misconception_note had two unescaped
+apostrophes: "mole's" and "aren't").
+
 ## 5. S.A.M. hints
 
 S.A.M. (ClearCenters Assistant for Missions) is app-wide, not specific to
