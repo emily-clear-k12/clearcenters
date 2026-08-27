@@ -14,13 +14,11 @@ const COLORS = {
   textMuted: "#8892A6",
 };
 
-// The new background art is already violet/crystal-toned (a ClearCenters
-// logo top-left, a robot with books bottom-right, blue-teal + violet
-// crystals scattered around a wide open middle), so the primary buttons
-// pick up a violet-to-teal gradient sampled from those same crystal
-// colors instead of flat violet — ties the UI to the art without fighting
-// it, since the open middle of the background is itself a near-white
-// lavender that any button color would sit comfortably on.
+// The background art is violet/crystal-toned (a spaceship room with a
+// window onto space, a crystal pedestal, and the ClearCenters logo on its
+// right wall), so the primary buttons pick up a violet-to-teal gradient
+// sampled from those same crystal colors instead of flat violet — ties the
+// UI to the art without fighting it.
 const primaryGradient = "linear-gradient(135deg, #7B5DFF 0%, #00C2C7 100%)";
 
 function LoginContent() {
@@ -84,27 +82,40 @@ function LoginContent() {
     <div
       style={{
         minHeight: "100vh",
-        // The logo (top-left) and the robot (bottom-right) are baked
-        // right into this art near its edges, so "cover" was cropping
-        // one or both of them off on any screen wider or narrower than
-        // the image's own 1672x941 shape. "contain" always shows the
-        // whole image; the background color (sampled from the image's
-        // own near-white lavender) fills in the letterboxed edges so it
-        // reads as one continuous scene instead of bars.
+        // New background (Aug 27, later the same day) — a redesigned
+        // spaceship room with the new ClearCenters logo already baked into
+        // its right wall, replacing the old logo-top-left/robot-bottom-right
+        // art. Same "contain + matching backgroundColor" treatment as
+        // before, kept for the same reason: that wall-mounted logo sits
+        // close enough to the right edge that "cover" could crop it on a
+        // screen shaped very differently from the image's own 1672x941
+        // ratio. The fill color is sampled from the image's own light
+        // lavender floor, so the letterboxed edges (when they show at all)
+        // read as more of the same room rather than a bar.
         backgroundImage: "url(/student/login_background.jpg)",
         backgroundSize: "contain",
         backgroundPosition: "center",
         backgroundRepeat: "no-repeat",
-        backgroundColor: "#F0EEFC",
+        backgroundColor: "#D4BFF7",
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
         padding: 20,
       }}
     >
-      <div style={{ width: "min(600px, 100%)", background: COLORS.white, borderRadius: 26, boxShadow: "0 24px 60px rgba(31,20,90,.28)", padding: "40px 40px 32px" }}>
-        <h1 style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 700, fontSize: 34, color: COLORS.textDark, margin: "0 0 8px 0" }}>Welcome to HQ</h1>
-        <p style={{ color: COLORS.textMuted, fontSize: 15, lineHeight: 1.5, margin: "0 0 24px 0" }}>Your mission hub for learning, evidence, and adventure.</p>
+      <div style={{ width: "min(600px, 100%)", background: COLORS.white, borderRadius: 26, boxShadow: "0 24px 60px rgba(31,20,90,.28)", padding: "36px 40px 32px" }}>
+        {/* The new logo replaces the old "Welcome to HQ" text heading — the
+            background's own wall-mounted logo is small and off in a corner,
+            so this is the actual brand mark for the sign-in form itself.
+            The logo file already includes the "PROVE · GROW · SHINE"
+            tagline, so the subtitle below only adds the longer explanatory
+            sentence rather than repeating it. */}
+        <img
+          src="/clearcenters_logo.png"
+          alt="ClearCenters — Prove, Grow, Shine"
+          style={{ display: "block", width: "min(260px, 70%)", height: "auto", margin: "0 auto 14px" }}
+        />
+        <p style={{ color: COLORS.textMuted, fontSize: 15, lineHeight: 1.5, margin: "0 0 24px 0", textAlign: "center" }}>Your mission hub for learning, evidence, and adventure.</p>
 
         <div style={{ display: "inline-flex", background: COLORS.cream, borderRadius: 999, padding: 4, marginBottom: 26, gap: 4 }}>
           <button onClick={() => { setRole("student"); setError(null); }} style={{ border: "none", padding: "8px 18px", borderRadius: 999, fontWeight: 700, fontSize: 13.5, cursor: "pointer", background: role === "student" ? primaryGradient : "transparent", color: role === "student" ? COLORS.white : COLORS.textMuted }}>

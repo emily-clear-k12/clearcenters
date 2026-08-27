@@ -25,6 +25,15 @@ const COLORS = {
 // and accepted that a `cover`-cropped background can nudge these spots
 // slightly off-pixel on an unusually-shaped window).
 //
+// Reordered Aug 27 (later the same day) per Emily's call: planets should
+// read left-to-right, cheapest to most expensive, rather than sit at
+// whatever spot roughly matched the original mockup. The 5 original x/y
+// anchors (26/36/50/64/74, each with its own baked-in "landing ring" in
+// the background art) are unchanged as physical spots — only which planet
+// sits at which spot changed, so every original ring still has a planet
+// on it. LavaCore has no baked ring (see below) and continues the arc one
+// step further right and lower.
+//
 // `lavacore` (added once Emily sent real LavaCore art, same session) isn't
 // baked into the background art the way the other 5 aren't either — every
 // planet here is a separate overlay image, not part of the jpg — so this
@@ -35,17 +44,18 @@ const COLORS = {
 // caught colliding with the "GALAXY HUB" neon sign baked into the
 // background art (same class of bug as the duplicate-title issue this
 // planet's row was already fixed for) — the sign occupies roughly x 38-63%,
-// y 10-19% of the background, and this node's icon+label block extends
-// upward from its anchor point, so anything near that band collides.
-// Moved to the upper-right, clear of the sign and clear of the other 5
-// nodes' rows.
+// y 10-19% of the background. Second attempt (82, 14) cleared the sign but
+// broke the new left-to-right price ordering once LavaCore needed to sit
+// to the right of Cloud Reef instead of in the upper-right corner. Now at
+// (88, 48) — continuing the arc's rightward-and-downward curve past Cloud
+// Reef (74, 47), clear of both the sign and the stats panel (top-right).
 const PLANET_POSITIONS = {
-  glow_garden: { x: 36, y: 35 },
-  frost_ring: { x: 50, y: 29 },
-  robot_relay_city: { x: 64, y: 29 },
-  jungle_moon: { x: 26, y: 47 },
+  glow_garden: { x: 26, y: 47 },
+  frost_ring: { x: 36, y: 35 },
+  robot_relay_city: { x: 50, y: 29 },
+  jungle_moon: { x: 64, y: 29 },
   cloud_reef: { x: 74, y: 47 },
-  lavacore: { x: 82, y: 14 },
+  lavacore: { x: 88, y: 48 },
 };
 const SHIP_POSITION = { x: 50, y: 52 };
 
@@ -64,7 +74,7 @@ function PlanetDetailModal({ planet, unlocked, onClose }) {
         <img
           src={planet.image_path}
           alt={planet.name}
-          style={{ width: 190, height: 190, objectFit: "contain", margin: "0 auto 10px", display: "block", filter: unlocked ? "none" : "grayscale(1) brightness(.55)" }}
+          style={{ width: 190, height: 190, objectFit: "contain", margin: "0 auto 10px", display: "block" }}
         />
         <h2 style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 700, fontSize: 21, color: COLORS.white, margin: "0 0 8px 0" }}>{planet.name}</h2>
         {unlocked ? (
@@ -131,6 +141,12 @@ export default function GearLockerClient({ student, planets, visitedPlanetKeys, 
   function isUnlocked(planet) {
     return student.crystal_points >= planet.threshold;
   }
+
+  // Locked planets used to render grayscale + dimmed (map node, grid card,
+  // and the arrival-scene modal). Emily asked to drop that — locked planets
+  // now render in full color everywhere; the 🔒 badge is the only locked
+  // signal left. See the `filter` props below (and PlanetDetailModal above)
+  // for where the grayscale used to be applied.
 
   async function openPlanet(planet) {
     const unlocked = isUnlocked(planet);
@@ -256,7 +272,7 @@ export default function GearLockerClient({ student, planets, visitedPlanetKeys, 
                   <img
                     src={planet.image_path}
                     alt={planet.name}
-                    style={{ width: "100%", height: "100%", objectFit: "contain", filter: unlocked ? "drop-shadow(0 6px 14px rgba(0,0,0,.4))" : "grayscale(1) brightness(.55) drop-shadow(0 6px 10px rgba(0,0,0,.4))" }}
+                    style={{ width: "100%", height: "100%", objectFit: "contain", filter: unlocked ? "drop-shadow(0 6px 14px rgba(0,0,0,.4))" : "drop-shadow(0 6px 10px rgba(0,0,0,.4))" }}
                   />
                   {unlocked ? (
                     visited && (
@@ -332,7 +348,7 @@ export default function GearLockerClient({ student, planets, visitedPlanetKeys, 
                   style={{ textAlign: "left", background: COLORS.white, borderRadius: 18, boxShadow: "0 4px 16px rgba(0,0,0,.08)", overflow: "hidden", padding: 14, border: "none", cursor: "pointer", font: "inherit", color: "inherit", position: "relative" }}
                 >
                   <div style={{ width: "100%", height: 90, display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 8 }}>
-                    <img src={planet.image_path} alt="" style={{ maxWidth: "100%", maxHeight: "100%", objectFit: "contain", filter: unlocked ? "none" : "grayscale(1) brightness(.75)" }} />
+                    <img src={planet.image_path} alt="" style={{ maxWidth: "100%", maxHeight: "100%", objectFit: "contain" }} />
                   </div>
                   <div style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 700, fontSize: 14, color: planet.theme_color, marginBottom: 4 }}>{planet.name}</div>
                   <p style={{ fontSize: 11.5, color: COLORS.textMuted, lineHeight: 1.4, margin: "0 0 10px 0", minHeight: 46 }}>{planet.description}</p>

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import BackToHubButton from "../../components/BackToHubButton";
 
@@ -40,7 +40,7 @@ function engineTag(engine) {
 
 // Floating-pedestal scene (Aug 27) — replaces the old scrolling card grid.
 // Up to 4 missions sit on the fixed pedestals baked into the background art;
-// any pedestal with no assigned mission dims to gray. Anything past 4 lists
+// any pedestal with no assigned mission dims to gray. Anything past 5 lists
 // in a scrollable strip below the scene. This is Emily's "blend 1 and 2"
 // choice between showing everything on pedestals vs. a plain overflow list.
 //
@@ -75,11 +75,46 @@ export default function MissionsClient({ student, assignments }) {
     return new Date(a.due_date) - new Date(b.due_date);
   });
 
-  const onPedestals = sorted.slice(0, 4);
-  const overflow = sorted.slice(4);
+  // Second pass (Aug 27, later the same day): Emily wanted 5 distinct
+  // missions on screen at once (4 pedestals + the center dais), not 4 —
+  // the original version put the soonest-due mission's own card in BOTH
+  // its pedestal AND the center dais, so only 4 unique missions were ever
+  // visible even though 5 slots existed. Now the top 5 soonest-due missions
+  // fill all 5 slots with no repeats, and clicking a pedestal swaps its
+  // mission with whatever's currently in the center — a real exchange, not
+  // a copy — so the center dais never shows a mission that's also still
+  // sitting on a pedestal. Anything beyond the top 5 goes to the overflow
+  // strip (was top 4 before).
+  const topFive = sorted.slice(0, 5);
+  const overflow = sorted.slice(5);
+  const idsKey = topFive.map((m) => m.id).join(",");
 
-  const [selectedId, setSelectedId] = useState(onPedestals[0]?.id ?? null);
-  const selected = onPedestals.find((a) => a.id === selectedId) || onPedestals[0] || null;
+  const [pedestalIds, setPedestalIds] = useState(() => SLOTS.map((_, i) => topFive[i]?.id ?? null));
+  const [centerId, setCenterId] = useState(() => (topFive[4] ?? topFive[0])?.id ?? null);
+
+  // If the underlying mission list changes shape (a new mission assigned, one
+  // completed and dropped off, etc.), re-deal fresh so we don't keep pointing
+  // at ids that no longer exist — same "soonest due first" intent as before,
+  // just re-applied whenever the real data actually changes.
+  useEffect(() => {
+    setPedestalIds(SLOTS.map((_, i) => topFive[i]?.id ?? null));
+    setCenterId((topFive[4] ?? topFive[0])?.id ?? null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [idsKey]);
+
+  const onPedestals = pedestalIds.map((id) => sorted.find((m) => m.id === id) || null);
+  const selected = sorted.find((m) => m.id === centerId) || null;
+
+  function handlePedestalClick(slotIndex) {
+    const clickedId = pedestalIds[slotIndex];
+    if (clickedId == null) return;
+    setPedestalIds((prev) => {
+      const next = [...prev];
+      next[slotIndex] = centerId;
+      return next;
+    });
+    setCenterId(clickedId);
+  }
 
   return (
     <div
@@ -119,40 +154,32 @@ export default function MissionsClient({ student, assignments }) {
 
       <BackToHubButton />
 
-      {/* Header bar — floats over the full-bleed art near the top, same
-          spot it used to sit above the bordered stage card. */}
+      {/* The big white title banner (My Missions / mission count / crystal
+          pill) is gone as of Emily's Aug 27 request — she wanted the top of
+          the scene clear so more of the art shows. What's left of it is
+          just the crystal count, shrunk down into a small frosted pill in
+          the top-right corner, matching the compact panel style Galaxy Hub
+          already uses for the same info. */}
       <div
         style={{
           position: "fixed",
           top: 20,
-          left: 100,
           right: 20,
           zIndex: 2,
           display: "flex",
-          justifyContent: "space-between",
-          alignItems: "flex-start",
-          gap: 12,
-          background: "rgba(255,255,255,.92)",
+          alignItems: "center",
+          gap: 6,
+          background: "rgba(255,255,255,.85)",
           backdropFilter: "blur(8px)",
-          borderRadius: 20,
-          padding: "14px 20px",
-          boxShadow: "0 4px 16px rgba(0,0,0,.18)",
+          borderRadius: 999,
+          padding: "8px 16px 8px 10px",
+          boxShadow: "0 4px 14px rgba(0,0,0,.15)",
+          fontWeight: 700,
+          fontSize: 14,
         }}
       >
-        <div>
-          <h1 style={{ fontFamily: "'Poppins', sans-serif", fontSize: 22, fontWeight: 700, margin: "0 0 4px 0", color: COLORS.textDark }}>
-            My Missions
-          </h1>
-          <p style={{ margin: 0, color: COLORS.textMuted, fontSize: 13 }}>
-            {sorted.length === 0
-              ? "No missions assigned yet"
-              : `${sorted.length} mission${sorted.length === 1 ? "" : "s"} assigned to you · choose one to launch`}
-          </p>
-        </div>
-        <div style={{ display: "flex", alignItems: "center", gap: 6, background: COLORS.white, borderRadius: 999, padding: "6px 14px 6px 6px", boxShadow: "0 4px 16px rgba(0,0,0,.08)", fontWeight: 700, fontSize: 14, flexShrink: 0 }}>
-          <img src="/icons/crystal_points.png" alt="" style={{ width: 24, height: 24, objectFit: "contain" }} />
-          {student.crystal_points}
-        </div>
+        <img src="/icons/crystal_points.png" alt="" style={{ width: 22, height: 22, objectFit: "contain" }} />
+        {student.crystal_points}
       </div>
 
       {/* The mission bay scene — a fixed full-viewport overlay so the
@@ -162,8 +189,13 @@ export default function MissionsClient({ student, assignments }) {
       <div style={{ position: "fixed", inset: 0, zIndex: 1 }}>
           {SLOTS.map((slot, slotIndex) => {
             const mission = onPedestals[slotIndex];
-            const cardW = Math.round(112 * slot.scale);
-            const imgH = Math.round(56 * slot.scale);
+            // Bumped up from 112/56 (Aug 27, later the same day) — Emily
+            // wanted the side tiles big enough to read the whole title
+            // without it getting cut off. Paired with the switch below from
+            // one-line ellipsis truncation to a 2-line wrap, so a long title
+            // like "What Made Texas Grow?" has room to actually finish.
+            const cardW = Math.round(150 * slot.scale);
+            const imgH = Math.round(74 * slot.scale);
 
             if (!mission) {
               // A translucent gray + dashed outline reads as "empty slot" at
@@ -188,18 +220,15 @@ export default function MissionsClient({ student, assignments }) {
               );
             }
 
-            const isActive = mission.id === selectedId;
             const ring = subjectRingColor(mission.cases?.subject);
-            const shadow = isActive
-              ? `0 0 0 2.5px ${ring}, 0 0 0 6px rgba(123,93,255,.55), 0 10px 26px rgba(40,20,80,.28)`
-              : `0 0 0 2.5px ${ring}, 0 8px 22px rgba(40,20,80,.18)`;
+            const shadow = `0 0 0 2.5px ${ring}, 0 8px 22px rgba(40,20,80,.18)`;
 
             return (
               <button
-                key={mission.id}
+                key={slot.key}
                 type="button"
                 className="ped-btn"
-                onClick={() => setSelectedId(mission.id)}
+                onClick={() => handlePedestalClick(slotIndex)}
                 style={{
                   position: "absolute",
                   left: `${slot.x}%`,
@@ -224,14 +253,18 @@ export default function MissionsClient({ student, assignments }) {
                       </div>
                     )}
                   </div>
-                  <div style={{ padding: `${Math.round(6 * slot.scale)}px ${Math.round(8 * slot.scale)}px ${Math.round(8 * slot.scale)}px` }}>
-                    <span style={{ display: "inline-block", fontSize: 8 + slot.scale, fontWeight: 700, letterSpacing: .3, padding: "2px 7px", borderRadius: 999, marginBottom: 3, background: `${ring}26`, color: ring }}>
+                  <div style={{ padding: `${Math.round(7 * slot.scale)}px ${Math.round(10 * slot.scale)}px ${Math.round(9 * slot.scale)}px` }}>
+                    <span style={{ display: "inline-block", fontSize: 8.5 + slot.scale, fontWeight: 700, letterSpacing: .3, padding: "2px 7px", borderRadius: 999, marginBottom: 4, background: `${ring}26`, color: ring }}>
                       {mission.cases?.subject ? mission.cases.subject.toUpperCase() : engineTag(mission.cases?.engine)}
                     </span>
-                    <div style={{ fontWeight: 700, lineHeight: 1.2, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", fontSize: 11 + slot.scale, color: COLORS.textDark, textAlign: "left" }}>
+                    {/* Full title, wrapped up to 2 lines, instead of a
+                        single-line ellipsis truncation — Emily wanted to be
+                        able to read the whole title on the tile itself
+                        without it getting cut off. */}
+                    <div style={{ fontWeight: 700, lineHeight: 1.25, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden", fontSize: 12.5 + slot.scale, color: COLORS.textDark, textAlign: "left" }}>
                       {mission.cases?.title}
                     </div>
-                    <div style={{ color: COLORS.textMuted, fontSize: 9 + slot.scale, textAlign: "left" }}>
+                    <div style={{ color: COLORS.textMuted, fontSize: 10 + slot.scale, textAlign: "left", marginTop: 2 }}>
                       {mission.case_standard}
                     </div>
                   </div>
@@ -314,7 +347,7 @@ export default function MissionsClient({ student, assignments }) {
           )}
       </div>
 
-      {/* Overflow — anything past the 4 pedestals. Fixed to the bottom of
+      {/* Overflow — anything past the 5 slots (4 pedestals + center). Fixed to the bottom of
           the viewport (Aug 27 full-screen pass) since this page no longer
           has a flowing `<main>` column for it to sit below — same no-scroll
           100vh page as Home, so this has to float instead of flow. */}
