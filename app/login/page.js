@@ -14,6 +14,15 @@ const COLORS = {
   textMuted: "#8892A6",
 };
 
+// The new background art is already violet/crystal-toned (a ClearCenters
+// logo top-left, a robot with books bottom-right, blue-teal + violet
+// crystals scattered around a wide open middle), so the primary buttons
+// pick up a violet-to-teal gradient sampled from those same crystal
+// colors instead of flat violet — ties the UI to the art without fighting
+// it, since the open middle of the background is itself a near-white
+// lavender that any button color would sit comfortably on.
+const primaryGradient = "linear-gradient(135deg, #7B5DFF 0%, #00C2C7 100%)";
+
 function LoginContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -72,16 +81,28 @@ function LoginContent() {
   }
 
   return (
-    <div style={{ minHeight: "100vh", background: COLORS.cream, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
-      <div style={{ width: "min(680px, 100%)", background: COLORS.white, borderRadius: 26, boxShadow: "0 24px 60px rgba(0,0,0,.15)", padding: "44px 44px 36px" }}>
+    <div
+      style={{
+        minHeight: "100vh",
+        backgroundImage: "url(/student/login_background.jpg)",
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+        backgroundRepeat: "no-repeat",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        padding: 20,
+      }}
+    >
+      <div style={{ width: "min(600px, 100%)", background: COLORS.white, borderRadius: 26, boxShadow: "0 24px 60px rgba(31,20,90,.28)", padding: "40px 40px 32px" }}>
         <h1 style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 700, fontSize: 34, color: COLORS.textDark, margin: "0 0 8px 0" }}>Welcome to HQ</h1>
         <p style={{ color: COLORS.textMuted, fontSize: 15, lineHeight: 1.5, margin: "0 0 24px 0" }}>Your mission hub for learning, evidence, and adventure.</p>
 
         <div style={{ display: "inline-flex", background: COLORS.cream, borderRadius: 999, padding: 4, marginBottom: 26, gap: 4 }}>
-          <button onClick={() => { setRole("student"); setError(null); }} style={{ border: "none", padding: "8px 18px", borderRadius: 999, fontWeight: 700, fontSize: 13.5, cursor: "pointer", background: role === "student" ? COLORS.violet : "transparent", color: role === "student" ? COLORS.white : COLORS.textMuted }}>
+          <button onClick={() => { setRole("student"); setError(null); }} style={{ border: "none", padding: "8px 18px", borderRadius: 999, fontWeight: 700, fontSize: 13.5, cursor: "pointer", background: role === "student" ? primaryGradient : "transparent", color: role === "student" ? COLORS.white : COLORS.textMuted }}>
             I'm a Student
           </button>
-          <button onClick={() => { setRole("teacher"); setError(null); }} style={{ border: "none", padding: "8px 18px", borderRadius: 999, fontWeight: 700, fontSize: 13.5, cursor: "pointer", background: role === "teacher" ? COLORS.violet : "transparent", color: role === "teacher" ? COLORS.white : COLORS.textMuted }}>
+          <button onClick={() => { setRole("teacher"); setError(null); }} style={{ border: "none", padding: "8px 18px", borderRadius: 999, fontWeight: 700, fontSize: 13.5, cursor: "pointer", background: role === "teacher" ? primaryGradient : "transparent", color: role === "teacher" ? COLORS.white : COLORS.textMuted }}>
             I'm a Teacher
           </button>
         </div>
@@ -121,7 +142,7 @@ function LoginContent() {
               </button>
             </div>
 
-            <button type="submit" disabled={loading} style={{ width: "100%", background: COLORS.violet, color: COLORS.white, border: "none", borderRadius: 12, padding: "13px 20px", fontWeight: 700, fontSize: 15.5, cursor: "pointer" }}>
+            <button type="submit" disabled={loading} style={{ width: "100%", background: primaryGradient, color: COLORS.white, border: "none", borderRadius: 12, padding: "13px 20px", fontWeight: 700, fontSize: 15.5, cursor: "pointer" }}>
               {loading ? "Signing in..." : "Sign In"}
             </button>
             <p style={{ textAlign: "center", fontSize: 13, color: COLORS.textMuted, marginTop: 14 }}>
@@ -168,7 +189,7 @@ function LoginContent() {
               />
             </div>
 
-            <button type="submit" disabled={loading} style={{ width: "100%", background: COLORS.violet, color: COLORS.white, border: "none", borderRadius: 12, padding: "13px 20px", fontWeight: 700, fontSize: 15.5, cursor: "pointer" }}>
+            <button type="submit" disabled={loading} style={{ width: "100%", background: primaryGradient, color: COLORS.white, border: "none", borderRadius: 12, padding: "13px 20px", fontWeight: 700, fontSize: 15.5, cursor: "pointer" }}>
               {loading ? "Checking..." : "Start My Mission →"}
             </button>
             <p style={{ textAlign: "center", fontSize: 13, color: COLORS.textMuted, marginTop: 14 }}>Don't know your Class Code or PIN? Ask your teacher!</p>
@@ -181,7 +202,7 @@ function LoginContent() {
 
 export default function LoginPage() {
   return (
-    <Suspense fallback={<div style={{ minHeight: "100vh", background: "#F2F0FA" }} />}>
+    <Suspense fallback={<div style={{ minHeight: "100vh", background: "#EDEBFC" }} />}>
       <LoginContent />
     </Suspense>
   );

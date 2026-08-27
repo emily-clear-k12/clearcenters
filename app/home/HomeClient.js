@@ -23,6 +23,16 @@ function caseImagePath(standard) {
   return `/cases/${standard.replace(/\./g, "-")}.jpg`;
 }
 
+// Shared "frosted glass" look for the dashboard tiles now that they float
+// over the crystal-room background — semi-transparent instead of solid
+// white so the room shows through, with a blur so text on top stays
+// readable regardless of what's behind it.
+const glassCard = {
+  background: "rgba(255,255,255,.42)",
+  backdropFilter: "blur(10px)",
+  WebkitBackdropFilter: "blur(10px)",
+};
+
 export default function HomeClient({ student, studentClass, assignments, missionsCompleted, badgeTiers }) {
   // Badge tiers are teacher-editable (see /teacher/badges) and loaded from
   // the database by the server component; this is just a safety net in
@@ -145,7 +155,7 @@ export default function HomeClient({ student, studentClass, assignments, mission
         )}
 
         {activeMission ? (
-          <div style={{ position: "relative", background: COLORS.white, borderRadius: 20, boxShadow: "0 4px 16px rgba(0,0,0,.1)", padding: 24, display: "grid", gridTemplateColumns: "240px 1fr", gap: 24, marginBottom: 24 }}>
+          <div style={{ position: "relative", ...glassCard, borderRadius: 20, boxShadow: "0 4px 16px rgba(0,0,0,.1)", padding: 24, display: "grid", gridTemplateColumns: "240px 1fr", gap: 24, marginBottom: 24 }}>
             <div style={{ borderRadius: 16, overflow: "hidden", boxShadow: "0 6px 18px rgba(13,27,42,.18)" }}>
               <img src={caseImagePath(activeMission.case_standard)} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
             </div>
@@ -173,13 +183,13 @@ export default function HomeClient({ student, studentClass, assignments, mission
             </div>
           </div>
         ) : (
-          <div style={{ background: COLORS.white, borderRadius: 20, padding: 32, textAlign: "center", color: COLORS.textMuted, marginBottom: 24 }}>
+          <div style={{ ...glassCard, borderRadius: 20, padding: 32, textAlign: "center", color: COLORS.textMuted, marginBottom: 24 }}>
             No missions assigned yet — check back once your teacher assigns one!
           </div>
         )}
 
         <div style={{ display: "grid", gridTemplateColumns: "1.35fr 1fr", gap: 20, marginBottom: 20 }}>
-          <div style={{ background: COLORS.white, borderRadius: 16, boxShadow: "0 4px 16px rgba(0,0,0,.08)", padding: 20 }}>
+          <div style={{ ...glassCard, borderRadius: 16, boxShadow: "0 4px 16px rgba(0,0,0,.08)", padding: 20 }}>
             <p style={{ fontSize: 13, fontWeight: 700, color: COLORS.textMuted, textTransform: "uppercase", margin: "0 0 12px 0" }}>Up Next</p>
             {upNext.length > 0 ? (
               upNext.map((a) => (
@@ -203,7 +213,7 @@ export default function HomeClient({ student, studentClass, assignments, mission
             )}
           </div>
 
-          <div style={{ background: COLORS.white, borderRadius: 16, boxShadow: "0 4px 16px rgba(0,0,0,.08)", padding: 20 }}>
+          <div style={{ ...glassCard, borderRadius: 16, boxShadow: "0 4px 16px rgba(0,0,0,.08)", padding: 20 }}>
             <p style={{ fontSize: 13, fontWeight: 700, color: COLORS.textMuted, textTransform: "uppercase", margin: "0 0 12px 0" }}>Your Progress</p>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
               <div className="stat-card-img" style={{ position: "relative", paddingTop: "56.28%", borderRadius: 16, overflow: "hidden", boxShadow: "0 2px 10px rgba(0,0,0,.1)" }}>
@@ -218,9 +228,9 @@ export default function HomeClient({ student, studentClass, assignments, mission
           </div>
         </div>
 
-        <div style={{ background: COLORS.white, borderRadius: 16, boxShadow: "0 4px 16px rgba(0,0,0,.08)", padding: 20 }}>
+        <div style={{ ...glassCard, borderRadius: 16, boxShadow: "0 4px 16px rgba(0,0,0,.08)", padding: 20, width: "fit-content", maxWidth: "100%" }}>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
-            <p style={{ fontSize: 13, fontWeight: 700, color: COLORS.textMuted, textTransform: "uppercase", margin: 0 }}>Your Badges</p>
+            <p style={{ fontSize: 13, fontWeight: 700, color: COLORS.textMuted, textTransform: "uppercase", margin: 0, whiteSpace: "nowrap" }}>Your Badges</p>
           </div>
           <div style={{ display: "flex", gap: 20, flexWrap: "wrap" }}>
             {tiers.map((tier) => {
