@@ -26,6 +26,7 @@ export default function TeacherGradeListPage() {
   const [classes, setClasses] = useState([]);
   const [submissions, setSubmissions] = useState([]);
   const [selectedClassId, setSelectedClassId] = useState("all");
+  const [search, setSearch] = useState("");
   const [error, setError] = useState(null);
 
   useEffect(() => {
@@ -120,9 +121,24 @@ export default function TeacherGradeListPage() {
   // Two-stage derive from the flat submissions list: filter by the selected
   // class tab, then bucket what's left by assignment so the grid reads as
   // "here's who's done with THIS mission" instead of one long name list.
-  const filteredSubmissions = useMemo(() => {
+  const classFilteredSubmissions = useMemo(() => {
     return selectedClassId === "all" ? submissions : submissions.filter((s) => s.classId === selectedClassId);
   }, [submissions, selectedClassId]);
+
+  const filteredSubmissions = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return classFilteredSubmissions;
+    return classFilteredSubmissions.filter((s) => s.studentName.toLowerCase().includes(q));
+  }, [classFilteredSubmissions, search]);
+
+  function needsReview(s) {
+    return !s.revision_requested && (s.teacher_grade === null || s.teacher_grade === undefined);
+  }
+
+  // How many are still waiting, in the current class scope (not affected by
+  // the search box) — this backs the Grade Next button and the page-level
+  // count, so typing a name to look someone up doesn't change that number.
+  const totalNeedsReview = useMemo(() => classFilteredSubmissions.filter(needsReview).length, [classFilteredSubmissions]);
 
   const assignmentGroups = useMemo(() => {
     const byAssignment = {};
@@ -133,15 +149,26 @@ export default function TeacherGradeListPage() {
       }
       byAssignment[key].submissions.push(s);
     });
-    // Most recently active assignment first — that's the queue a teacher
-    // actually works from, not alphabetical or by due date.
+    // Sorted by how many submissions in that assignment still need review —
+    // an assignment with a real backlog should sit above one that's fully
+    // graded, even if the fully-graded one had a late resubmission more
+    // recently. Ties broken by most-recently-active, same as before.
     return Object.values(byAssignment)
       .map((g) => {
         const sorted = [...g.submissions].sort((a, b) => new Date(b.submitted_at) - new Date(a.submitted_at));
-        return { ...g, submissions: sorted, mostRecent: new Date(sorted[0].submitted_at).getTime() };
+        const needsCount = sorted.filter(needsReview).length;
+        return { ...g, submissions: sorted, needsCount, mostRecent: new Date(sorted[0].submitted_at).getTime() };
       })
-      .sort((a, b) => b.mostRecent - a.mostRecent);
+      .sort((a, b) => b.needsCount - a.needsCount || b.mostRecent - a.mostRecent);
   }, [filteredSubmissions]);
+
+  function handleGradeNext() {
+    // Oldest still-waiting submission first — that's the one that's been
+    // sitting the longest, not necessarily the one in the top assignment
+    // group (a small backlog can still contain the oldest wait).
+    const waiting = classFilteredSubmissions.filter(needsReview).sort((a, b) => new Date(a.submitted_at) - new Date(b.submitted_at));
+    if (waiting.length > 0) router.push(`/teacher/grade/${waiting[0].id}`);
+  }
 
   if (loadingAuth || loadingSubs) {
     return (
@@ -172,6 +199,32 @@ export default function TeacherGradeListPage() {
             </div>
           )}
 
+          <div style={{ background: `linear-gradient(135deg, ${COLORS.violet}, ${COLORS.teal})`, borderRadius: 16, padding: "16px 20px", display: "flex", alignItems: "center", gap: 14, marginBottom: 18, boxShadow: "0 6px 18px rgba(140,82,242,.25)" }}>
+            <div style={{ fontSize: 24 }}>⚡</div>
+            <div style={{ flex: 1 }}>
+              <div style={{ color: COLORS.white, fontWeight: 700, fontSize: 15, fontFamily: "'Poppins', sans-serif" }}>Grade Next</div>
+              <div style={{ color: "rgba(255,255,255,.85)", fontSize: 12 }}>
+                {totalNeedsReview > 0
+                  ? `Jump straight to the oldest ungraded submission — ${totalNeedsReview} waiting${selectedClassId === "all" ? " across all classes" : ""}.`
+                  : "Nothing waiting — you're all caught up!"}
+              </div>
+            </div>
+            <button className="gc-btn" onClick={handleGradeNext} disabled={totalNeedsReview === 0} style={{ background: COLORS.white, color: COLORS.violet, borderRadius: 999, padding: "10px 20px", fontWeight: 700, fontSize: 13, opacity: totalNeedsReview === 0 ? 0.6 : 1, cursor: totalNeedsReview === 0 ? "default" : "pointer" }}>
+              Start Grading →
+            </button>
+          </div>
+
+          <div style={{ position: "relative", maxWidth: 300, marginBottom: 16 }}>
+            <input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search students..."
+              style={{ width: "100%", border: "2px solid #ECEAF5", borderRadius: 10, padding: "9px 10px 9px 34px", fontSize: 13, boxSizing: "border-box", fontFamily: "inherit" }}
+            />
+            <span style={{ position: "absolute", left: 10, top: 9, color: COLORS.textMuted }}>🔍</span>
+          </div>
+          <div style={{ fontSize: 11, color: COLORS.textMuted, marginBottom: 14 }}>Sorted by how many submissions still need review — not by which assignment is newest.</div>
+
           {classes.length > 1 && (
             <div style={{ display: "flex", gap: 8, marginBottom: 20, flexWrap: "wrap" }}>
               <button
@@ -200,11 +253,16 @@ export default function TeacherGradeListPage() {
             </div>
           ) : (
             assignmentGroups.map((g) => (
-              <div key={g.assignmentId} style={{ marginBottom: 28 }}>
+              <div key={g.assignmentId} style={{ marginBottom: 28, opacity: g.needsCount === 0 ? 0.6 : 1 }}>
                 <div style={{ display: "flex", alignItems: "baseline", gap: 8, marginBottom: 10, padding: "0 2px" }}>
                   <h2 style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 700, fontSize: 15.5, margin: 0 }}>{g.caseTitle}</h2>
                   {selectedClassId === "all" && (
                     <span style={{ fontSize: 11, fontWeight: 700, color: COLORS.violet, background: COLORS.violetSoft, padding: "2px 9px", borderRadius: 999 }}>{g.className}</span>
+                  )}
+                  {g.needsCount > 0 ? (
+                    <span style={{ fontSize: 11, fontWeight: 700, color: "#B8860B", background: "#FFF4E5", padding: "2px 9px", borderRadius: 999 }}>🔴 {g.needsCount} need review</span>
+                  ) : (
+                    <span style={{ fontSize: 11, fontWeight: 700, color: COLORS.success || "#22C55E", background: "#E9F9EE", padding: "2px 9px", borderRadius: 999 }}>✓ all graded</span>
                   )}
                   <span style={{ fontSize: 12, color: COLORS.textMuted, marginLeft: "auto" }}>
                     {g.submissions.length} submission{g.submissions.length === 1 ? "" : "s"}
@@ -212,14 +270,14 @@ export default function TeacherGradeListPage() {
                 </div>
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(6, 1fr)", gap: 12 }}>
                   {g.submissions.map((s) => {
-                    const needsReview = !s.revision_requested && (s.teacher_grade === null || s.teacher_grade === undefined);
+                    const isNeedsReview = needsReview(s);
                     // Same "amber = needs your attention, teal = handled" split the
                     // old row layout used — graded-but-not-yet-released counts as
                     // handled here too, same as it always has.
-                    const isHandled = s.released || (!needsReview && !s.revision_requested);
+                    const isHandled = s.released || (!isNeedsReview && !s.revision_requested);
                     const statusBg = isHandled ? "#E6F8F9" : "#FFF4E5";
                     const statusColor = isHandled ? COLORS.teal : "#B8860B";
-                    const statusLabel = s.released ? "Released" : s.revision_requested ? "Sent Back" : needsReview ? "Needs Review" : "Graded";
+                    const statusLabel = s.released ? "Released" : s.revision_requested ? "Sent Back" : isNeedsReview ? "Needs Review" : "Graded";
                     return (
                       <button
                         key={s.id}

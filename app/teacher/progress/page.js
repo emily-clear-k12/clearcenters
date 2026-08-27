@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "../../../lib/supabaseClient";
 import TeacherSidebar from "../../../components/TeacherSidebar";
@@ -11,8 +11,10 @@ const COLORS = {
   white: "#FFFFFF",
   violet: "#8C52F2",
   violetSoft: "#EEE6FD",
+  teal: "#6FD8F5",
   success: "#22C55E",
   info: "#3D84F5",
+  danger: "#E4574C",
   border: "#E1E2EE",
   textDark: "#1F2A44",
   textMuted: "#697386",
@@ -22,8 +24,13 @@ function proficiencyBand(avg) {
   if (avg >= 1.8) return { label: "Excellent", color: COLORS.success };
   if (avg >= 1.4) return { label: "Proficient", color: COLORS.info };
   if (avg >= 1.0) return { label: "Developing", color: COLORS.violet };
-  return { label: "Needs Support", color: "#E4574C" };
+  return { label: "Needs Support", color: COLORS.danger };
 }
+
+// Lower rank = shown first in the card grid — students who need a look float
+// to the front, a student with no grades yet sorts last (nothing to act on).
+const BAND_RANK = { "Needs Support": 0, "Developing": 1, "Proficient": 2, "Excellent": 3 };
+const BAND_ORDER = ["Needs Support", "Developing", "Proficient", "Excellent"];
 
 export default function StudentProgressPage() {
   const router = useRouter();
@@ -35,6 +42,9 @@ export default function StudentProgressPage() {
   const [standardGroups, setStandardGroups] = useState([]);
   const [view, setView] = useState("student"); // "student" | "standard"
   const [expandedKey, setExpandedKey] = useState(null);
+  const [selectedClassId, setSelectedClassId] = useState("all");
+  const [search, setSearch] = useState("");
+  const [bandFilter, setBandFilter] = useState(null);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data, error }) => {
@@ -151,6 +161,40 @@ export default function StudentProgressPage() {
 
   useEffect(() => { if (!loadingAuth && teacherId) load(teacherId); }, [loadingAuth, teacherId, load]);
 
+  // Everyone in the currently-selected class scope (or every class, for "All
+  // Classes"), independent of search/band filter — this backs the summary
+  // line so the headline counts stay stable while a teacher searches/filters.
+  const scopedStudents = useMemo(() => {
+    const relevant = selectedClassId === "all" ? groups : groups.filter((g) => g.classId === selectedClassId);
+    return relevant.flatMap((g) => g.students);
+  }, [groups, selectedClassId]);
+
+  const scopedBandCounts = useMemo(() => {
+    const counts = { "Needs Support": 0, "Developing": 0, "Proficient": 0, "Excellent": 0 };
+    scopedStudents.forEach((s) => { if (s.band) counts[s.band.label] += 1; });
+    return counts;
+  }, [scopedStudents]);
+
+  const scopedAvg = useMemo(() => {
+    const graded = scopedStudents.filter((s) => s.avgPct !== null);
+    if (graded.length === 0) return null;
+    return Math.round(graded.reduce((sum, s) => sum + s.avgPct, 0) / graded.length);
+  }, [scopedStudents]);
+
+  // Search + band filter on top of the scoped roster, then sorted so
+  // students who need a look float to the front of the grid.
+  const visibleStudents = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    let list = scopedStudents.filter((s) => (q ? s.name.toLowerCase().includes(q) : true));
+    if (bandFilter) list = list.filter((s) => s.band?.label === bandFilter);
+    return [...list].sort((a, b) => {
+      const rankA = a.band ? BAND_RANK[a.band.label] : 4;
+      const rankB = b.band ? BAND_RANK[b.band.label] : 4;
+      if (rankA !== rankB) return rankA - rankB;
+      return (a.avgPct ?? -1) - (b.avgPct ?? -1);
+    });
+  }, [scopedStudents, search, bandFilter]);
+
   if (loadingAuth || loading) {
     return <div style={{ minHeight: "100vh", background: COLORS.canvas, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Inter', sans-serif", color: COLORS.textMuted }}>Loading...</div>;
   }
@@ -159,7 +203,7 @@ export default function StudentProgressPage() {
     <div style={{ display: "flex", minHeight: "100vh", background: COLORS.canvas, fontFamily: "'Inter', sans-serif", color: COLORS.textDark }}>
       <style>{`@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@600;700&family=Inter:wght@400;500;600;700&display=swap');`}</style>
       <TeacherSidebar teacherEmail={teacherEmail} />
-      <main style={{ flex: 1, padding: "32px 36px", maxWidth: 1000, margin: "0 auto" }}>
+      <main style={{ flex: 1, padding: "32px 36px", maxWidth: 1200, margin: "0 auto", width: "100%", boxSizing: "border-box" }}>
         <TeacherPageBanner>
           <div style={{ maxWidth: "62%" }}>
             <h1 style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 700, fontSize: 28, margin: "0 0 6px 0" }}>Student Progress</h1>
@@ -183,34 +227,110 @@ export default function StudentProgressPage() {
           <div style={{ background: COLORS.white, border: `1px solid ${COLORS.border}`, borderRadius: 16, padding: 24, textAlign: "center", color: COLORS.textMuted, fontSize: 14 }}>No classes yet.</div>
         )}
 
-        {view === "student" && groups.map((g) => (
-          <div key={g.classId} style={{ marginBottom: 24 }}>
-            <h2 style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 700, fontSize: 16, margin: "0 0 10px 4px", color: COLORS.textDark }}>{g.className}</h2>
-            <div style={{ background: COLORS.white, border: `1px solid ${COLORS.border}`, borderRadius: 16, padding: 8, boxShadow: "0 4px 16px rgba(13,27,42,.06)" }}>
-              {g.students.length === 0 && <div style={{ padding: 24, textAlign: "center", color: COLORS.textMuted, fontSize: 14 }}>No students in this class yet.</div>}
-              {g.students.map((r) => (
-                <div key={r.id} style={{ display: "flex", alignItems: "center", gap: 14, padding: "14px 12px", borderBottom: `1px solid ${COLORS.border}` }}>
-                  <div style={{ width: 36, height: 36, borderRadius: "50%", background: COLORS.violetSoft, display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, color: COLORS.violet, fontSize: 14, flexShrink: 0 }}>{r.name[0]}</div>
-                  <div style={{ width: 140 }}>
-                    <div style={{ fontWeight: 700, fontSize: 14 }}>{r.name}</div>
-                  </div>
-                  <div style={{ width: 130, fontSize: 12.5, color: COLORS.textMuted }}>{r.missionsCompleted} submitted</div>
-                  <div style={{ flex: 1, height: 8, background: COLORS.border, borderRadius: 999, overflow: "hidden" }}>
-                    {r.avgPct !== null && <div style={{ height: "100%", width: `${r.avgPct}%`, background: r.band.color, borderRadius: 999 }} />}
-                  </div>
-                  <div style={{ width: 50, textAlign: "right", fontWeight: 700, fontSize: 13 }}>{r.avgPct !== null ? `${r.avgPct}%` : "—"}</div>
-                  <div style={{ width: 110, textAlign: "right" }}>
-                    {r.band ? (
-                      <span style={{ fontSize: 11, fontWeight: 700, padding: "3px 10px", borderRadius: 999, background: r.band.color + "22", color: r.band.color }}>{r.band.label}</span>
-                    ) : (
-                      <span style={{ fontSize: 11, color: COLORS.textMuted }}>No grades yet</span>
-                    )}
-                  </div>
-                </div>
+        {view === "student" && groups.length > 0 && (
+          <>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 14 }}>
+              <button
+                onClick={() => setSelectedClassId("all")}
+                style={{ background: selectedClassId === "all" ? COLORS.violet : COLORS.white, color: selectedClassId === "all" ? COLORS.white : COLORS.textDark, border: selectedClassId === "all" ? "none" : `1px solid ${COLORS.border}`, borderRadius: 999, padding: "8px 16px", fontWeight: 700, fontSize: 12.5, cursor: "pointer", fontFamily: "inherit" }}
+              >
+                All Classes
+              </button>
+              {groups.map((g) => (
+                <button
+                  key={g.classId}
+                  onClick={() => setSelectedClassId(g.classId)}
+                  style={{ background: selectedClassId === g.classId ? COLORS.violet : COLORS.white, color: selectedClassId === g.classId ? COLORS.white : COLORS.textDark, border: selectedClassId === g.classId ? "none" : `1px solid ${COLORS.border}`, borderRadius: 999, padding: "8px 16px", fontWeight: 700, fontSize: 12.5, cursor: "pointer", fontFamily: "inherit" }}
+                >
+                  {g.className}
+                </button>
               ))}
             </div>
-          </div>
-        ))}
+
+            <div style={{ position: "relative", maxWidth: 320, marginBottom: 12 }}>
+              <input
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Search students..."
+                style={{ width: "100%", border: "2px solid #ECEAF5", borderRadius: 10, padding: "9px 10px 9px 34px", fontSize: 13, boxSizing: "border-box", fontFamily: "inherit" }}
+              />
+              <span style={{ position: "absolute", left: 10, top: 9, color: COLORS.textMuted }}>🔍</span>
+            </div>
+
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 12 }}>
+              <button
+                onClick={() => setBandFilter(null)}
+                style={{ background: bandFilter === null ? COLORS.textMuted : `${COLORS.textMuted}18`, color: bandFilter === null ? COLORS.white : COLORS.textMuted, border: `1.5px solid ${COLORS.textMuted}55`, borderRadius: 999, padding: "6px 14px", fontWeight: 700, fontSize: 11.5, cursor: "pointer", fontFamily: "inherit" }}
+              >
+                All {scopedStudents.length}
+              </button>
+              {BAND_ORDER.map((label) => {
+                const color = label === "Needs Support" ? COLORS.danger : label === "Developing" ? COLORS.violet : label === "Proficient" ? COLORS.info : COLORS.success;
+                const active = bandFilter === label;
+                return (
+                  <button
+                    key={label}
+                    onClick={() => setBandFilter(active ? null : label)}
+                    style={{ background: active ? color : `${color}18`, color: active ? COLORS.white : color, border: `1.5px solid ${color}55`, borderRadius: 999, padding: "6px 14px", fontWeight: 700, fontSize: 11.5, cursor: "pointer", fontFamily: "inherit" }}
+                  >
+                    {scopedBandCounts[label]} {label}
+                  </button>
+                );
+              })}
+            </div>
+
+            <div style={{ fontSize: 12.5, color: COLORS.textMuted, marginBottom: 8 }}>
+              <b style={{ color: COLORS.textDark }}>{scopedStudents.length} student{scopedStudents.length === 1 ? "" : "s"}</b>
+              {scopedAvg !== null && <> · avg <b style={{ color: COLORS.textDark }}>{scopedAvg}%</b></>}
+              {" · "}
+              <span style={{ color: COLORS.danger, fontWeight: 700 }}>{scopedBandCounts["Needs Support"]} Needs Support</span>
+              {" · "}
+              <span style={{ color: COLORS.violet, fontWeight: 700 }}>{scopedBandCounts["Developing"]} Developing</span>
+              {" · "}
+              <span style={{ color: COLORS.info, fontWeight: 700 }}>{scopedBandCounts["Proficient"]} Proficient</span>
+              {" · "}
+              <span style={{ color: COLORS.success, fontWeight: 700 }}>{scopedBandCounts["Excellent"]} Excellent</span>
+            </div>
+            <div style={{ fontSize: 11, color: COLORS.textMuted, marginBottom: 14 }}>
+              Sorted so students who need support show up first — a colored border flags anyone below Proficient.
+            </div>
+
+            {visibleStudents.length === 0 ? (
+              <div style={{ background: COLORS.white, border: `1px solid ${COLORS.border}`, borderRadius: 16, padding: 24, textAlign: "center", color: COLORS.textMuted, fontSize: 14 }}>
+                No students match your search or filter.
+              </div>
+            ) : (
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(150px, 1fr))", gap: 10 }}>
+                {visibleStudents.map((r) => {
+                  const flagged = r.band && (r.band.label === "Needs Support" || r.band.label === "Developing");
+                  return (
+                    <div
+                      key={r.id}
+                      style={{
+                        background: COLORS.white,
+                        border: flagged ? `2px solid ${r.band.color}` : `1px solid ${COLORS.border}`,
+                        borderRadius: 12,
+                        padding: 12,
+                        textAlign: "center",
+                        boxShadow: "0 2px 6px rgba(13,27,42,.04)",
+                      }}
+                    >
+                      <div style={{ width: 36, height: 36, borderRadius: "50%", background: COLORS.violetSoft, display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, color: COLORS.violet, fontSize: 13, margin: "0 auto 8px auto" }}>{r.name[0]}</div>
+                      <div style={{ fontWeight: 700, fontSize: 12.5, marginBottom: 2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{r.name}</div>
+                      <div style={{ fontSize: 11, color: COLORS.textMuted, marginBottom: 8 }}>{r.missionsCompleted} submitted</div>
+                      <div style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 700, fontSize: 18, color: r.band ? r.band.color : COLORS.textMuted, marginBottom: 4 }}>{r.avgPct !== null ? `${r.avgPct}%` : "—"}</div>
+                      {r.band ? (
+                        <span style={{ fontSize: 9.5, fontWeight: 700, padding: "2px 8px", borderRadius: 999, background: r.band.color + "22", color: r.band.color }}>{r.band.label}</span>
+                      ) : (
+                        <span style={{ fontSize: 9.5, fontWeight: 700, padding: "2px 8px", borderRadius: 999, background: COLORS.border, color: COLORS.textMuted }}>No grades yet</span>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </>
+        )}
 
         {view === "standard" && standardGroups.length === 0 && (
           <div style={{ background: COLORS.white, border: `1px solid ${COLORS.border}`, borderRadius: 16, padding: 24, textAlign: "center", color: COLORS.textMuted, fontSize: 14 }}>No classes yet.</div>
