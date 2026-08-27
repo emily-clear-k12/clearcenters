@@ -116,7 +116,18 @@ export default function HomeClient({ student, studentClass, assignments, mission
       >
         <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 3 }}>
           {currentTier && (
-            <img src={currentTier.image_path} alt={currentTier.label} title={currentTier.label} style={{ width: 30, height: 30, objectFit: "contain", borderRadius: 8, flexShrink: 0 }} />
+            <img
+              src={`/badges/transparent/${currentTier.tier_key}.png`}
+              alt={currentTier.label}
+              title={currentTier.label}
+              // Falls back to the original (square, light-gray-background)
+              // badge art if a tier ever shows up without a matching
+              // background-removed version in /badges/transparent/ — e.g. a
+              // brand-new tier a teacher adds later. Everyday case is the
+              // transparent version loads fine and this never fires.
+              onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = currentTier.image_path; }}
+              style={{ width: 40, height: 40, objectFit: "contain", flexShrink: 0 }}
+            />
           )}
           <h1 style={{ fontFamily: "'Poppins', sans-serif", fontSize: 16.5, fontWeight: 700, margin: 0, color: COLORS.textDark, lineHeight: 1.25 }}>
             Welcome back, {student.first_name}!
@@ -135,7 +146,7 @@ export default function HomeClient({ student, studentClass, assignments, mission
             <span style={{ fontSize: 14 }}>🎯</span> {missionsCompleted} mission{missionsCompleted === 1 ? "" : "s"} completed
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 7, fontWeight: 700, fontSize: 12.5, color: COLORS.textDark }}>
-            <img src="/icons/crystal_points.png" alt="" style={{ width: 16, height: 16, objectFit: "contain" }} />
+            <img src="/icons/crystal_points_gold.png" alt="" style={{ width: 16, height: 16, objectFit: "contain" }} />
             {student.crystal_points}
           </div>
         </div>
