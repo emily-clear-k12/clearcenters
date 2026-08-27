@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "../../../lib/supabaseClient";
 import TeacherSidebar from "../../../components/TeacherSidebar";
@@ -17,15 +17,15 @@ const COLORS = {
   textMuted: "#697386",
 };
 
-const GRADE_LABELS = { 0: "Level 0", 1: "Level 1", 2: "Level 2" };
-
 export default function TeacherGradeListPage() {
   const router = useRouter();
   const [loadingAuth, setLoadingAuth] = useState(true);
   const [loadingSubs, setLoadingSubs] = useState(true);
   const [teacherEmail, setTeacherEmail] = useState("");
   const [teacherId, setTeacherId] = useState(null);
-  const [groups, setGroups] = useState([]);
+  const [classes, setClasses] = useState([]);
+  const [submissions, setSubmissions] = useState([]);
+  const [selectedClassId, setSelectedClassId] = useState("all");
   const [error, setError] = useState(null);
 
   useEffect(() => {
@@ -57,9 +57,10 @@ export default function TeacherGradeListPage() {
     const classList = classes || [];
     const classIds = classList.map((c) => c.id);
     const classMap = Object.fromEntries(classList.map((c) => [c.id, c]));
+    setClasses(classList);
 
     if (classIds.length === 0) {
-      setGroups([]);
+      setSubmissions([]);
       setLoadingSubs(false);
       return;
     }
@@ -105,21 +106,42 @@ export default function TeacherGradeListPage() {
       };
     });
 
-    // Divide by class instead of one mixed list across every class.
-    const byClass = {};
-    classList.forEach((c) => { byClass[c.id] = { classId: c.id, className: c.name, submissions: [] }; });
-    merged.forEach((s) => {
-      if (s.classId && byClass[s.classId]) byClass[s.classId].submissions.push(s);
-    });
-    const grouped = Object.values(byClass).filter((g) => g.submissions.length > 0);
-
-    setGroups(grouped);
+    // Kept as one flat list rather than pre-grouped by class — the class
+    // tabs and the assignment grouping below both derive from this via
+    // useMemo, so switching tabs is instant and doesn't need a re-fetch.
+    setSubmissions(merged);
     setLoadingSubs(false);
   }, []);
 
   useEffect(() => {
     if (!loadingAuth && teacherId) loadSubmissions(teacherId);
   }, [loadingAuth, teacherId, loadSubmissions]);
+
+  // Two-stage derive from the flat submissions list: filter by the selected
+  // class tab, then bucket what's left by assignment so the grid reads as
+  // "here's who's done with THIS mission" instead of one long name list.
+  const filteredSubmissions = useMemo(() => {
+    return selectedClassId === "all" ? submissions : submissions.filter((s) => s.classId === selectedClassId);
+  }, [submissions, selectedClassId]);
+
+  const assignmentGroups = useMemo(() => {
+    const byAssignment = {};
+    filteredSubmissions.forEach((s) => {
+      const key = s.assignment_id;
+      if (!byAssignment[key]) {
+        byAssignment[key] = { assignmentId: key, caseTitle: s.caseTitle, className: s.className, classId: s.classId, submissions: [] };
+      }
+      byAssignment[key].submissions.push(s);
+    });
+    // Most recently active assignment first — that's the queue a teacher
+    // actually works from, not alphabetical or by due date.
+    return Object.values(byAssignment)
+      .map((g) => {
+        const sorted = [...g.submissions].sort((a, b) => new Date(b.submitted_at) - new Date(a.submitted_at));
+        return { ...g, submissions: sorted, mostRecent: new Date(sorted[0].submitted_at).getTime() };
+      })
+      .sort((a, b) => b.mostRecent - a.mostRecent);
+  }, [filteredSubmissions]);
 
   if (loadingAuth || loadingSubs) {
     return (
@@ -140,7 +162,7 @@ export default function TeacherGradeListPage() {
       <TeacherSidebar teacherEmail={teacherEmail} />
 
       <div style={{ flex: 1, padding: "32px 36px", display: "flex", justifyContent: "center" }}>
-        <div style={{ width: "100%", maxWidth: 900 }}>
+        <div style={{ width: "100%", maxWidth: 1100 }}>
           <TeacherPageBanner>
             <h1 style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 700, fontSize: 28, margin: 0 }}>Review Submissions</h1>
           </TeacherPageBanner>
@@ -150,50 +172,84 @@ export default function TeacherGradeListPage() {
             </div>
           )}
 
-          {groups.length === 0 ? (
+          {classes.length > 1 && (
+            <div style={{ display: "flex", gap: 8, marginBottom: 20, flexWrap: "wrap" }}>
+              <button
+                className="gc-btn"
+                onClick={() => setSelectedClassId("all")}
+                style={{ background: selectedClassId === "all" ? COLORS.violet : COLORS.white, color: selectedClassId === "all" ? COLORS.white : COLORS.textDark, border: selectedClassId === "all" ? "none" : `1px solid ${COLORS.border}`, borderRadius: 999, padding: "9px 18px", fontWeight: 700, fontSize: 13 }}
+              >
+                All Classes
+              </button>
+              {classes.map((c) => (
+                <button
+                  key={c.id}
+                  className="gc-btn"
+                  onClick={() => setSelectedClassId(c.id)}
+                  style={{ background: selectedClassId === c.id ? COLORS.violet : COLORS.white, color: selectedClassId === c.id ? COLORS.white : COLORS.textDark, border: selectedClassId === c.id ? "none" : `1px solid ${COLORS.border}`, borderRadius: 999, padding: "9px 18px", fontWeight: 700, fontSize: 13 }}
+                >
+                  {c.name}
+                </button>
+              ))}
+            </div>
+          )}
+
+          {assignmentGroups.length === 0 ? (
             <div style={{ background: COLORS.white, borderRadius: 16, padding: 32, textAlign: "center", color: COLORS.textMuted }}>
               No submissions yet — once a student submits a mission, it'll show up here.
             </div>
           ) : (
-            groups.map((g) => (
-              <div key={g.classId} style={{ marginBottom: 24 }}>
-                <h2 style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 700, fontSize: 16, margin: "0 0 10px 4px" }}>{g.className}</h2>
-                <div style={{ display: "grid", gap: 10 }}>
+            assignmentGroups.map((g) => (
+              <div key={g.assignmentId} style={{ marginBottom: 28 }}>
+                <div style={{ display: "flex", alignItems: "baseline", gap: 8, marginBottom: 10, padding: "0 2px" }}>
+                  <h2 style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 700, fontSize: 15.5, margin: 0 }}>{g.caseTitle}</h2>
+                  {selectedClassId === "all" && (
+                    <span style={{ fontSize: 11, fontWeight: 700, color: COLORS.violet, background: COLORS.violetSoft, padding: "2px 9px", borderRadius: 999 }}>{g.className}</span>
+                  )}
+                  <span style={{ fontSize: 12, color: COLORS.textMuted, marginLeft: "auto" }}>
+                    {g.submissions.length} submission{g.submissions.length === 1 ? "" : "s"}
+                  </span>
+                </div>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(6, 1fr)", gap: 12 }}>
                   {g.submissions.map((s) => {
                     const needsReview = !s.revision_requested && (s.teacher_grade === null || s.teacher_grade === undefined);
+                    // Same "amber = needs your attention, teal = handled" split the
+                    // old row layout used — graded-but-not-yet-released counts as
+                    // handled here too, same as it always has.
+                    const isHandled = s.released || (!needsReview && !s.revision_requested);
+                    const statusBg = isHandled ? "#E6F8F9" : "#FFF4E5";
+                    const statusColor = isHandled ? COLORS.teal : "#B8860B";
+                    const statusLabel = s.released ? "Released" : s.revision_requested ? "Sent Back" : needsReview ? "Needs Review" : "Graded";
                     return (
                       <button
                         key={s.id}
                         className="gc-btn"
                         onClick={() => router.push(`/teacher/grade/${s.id}`)}
-                        style={{ background: COLORS.white, borderRadius: 14, padding: 16, boxShadow: "0 2px 10px rgba(0,0,0,.08)", display: "flex", alignItems: "center", gap: 16, textAlign: "left" }}
+                        title={`${s.studentName} · submitted ${new Date(s.submitted_at).toLocaleDateString()}`}
+                        style={{
+                          aspectRatio: "1 / 1",
+                          display: "flex",
+                          flexDirection: "column",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          gap: 6,
+                          background: statusBg,
+                          border: `1.5px solid ${statusColor}33`,
+                          borderRadius: 14,
+                          padding: 10,
+                          textAlign: "center",
+                          overflow: "hidden",
+                        }}
                       >
-                        <div style={{ width: 40, height: 40, borderRadius: "50%", background: COLORS.violetSoft, display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, color: COLORS.violet, fontSize: 15, flexShrink: 0 }}>
+                        <div style={{ width: 34, height: 34, borderRadius: "50%", background: COLORS.white, display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, color: COLORS.violet, fontSize: 13.5, flexShrink: 0 }}>
                           {s.studentName?.[0] || "?"}
                         </div>
-                        <div style={{ flex: 1 }}>
-                          <div style={{ fontWeight: 700, fontSize: 14.5 }}>{s.studentName}</div>
-                          <div style={{ fontSize: 12.5, color: COLORS.textMuted }}>
-                            {s.caseTitle}
-                          </div>
+                        <div style={{ fontWeight: 700, fontSize: 12, color: COLORS.textDark, maxWidth: "100%", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                          {s.studentName}
                         </div>
-                        <div style={{ textAlign: "right" }}>
-                          <div style={{ fontSize: 11, color: COLORS.textMuted, marginBottom: 4 }}>
-                            {new Date(s.submitted_at).toLocaleDateString()}
-                          </div>
-                          <span
-                            style={{
-                              fontSize: 11.5,
-                              fontWeight: 700,
-                              padding: "3px 10px",
-                              borderRadius: 999,
-                              background: s.released ? "#E6F8F9" : s.revision_requested ? "#FFF4E5" : needsReview ? "#FFF4E5" : "#E6F8F9",
-                              color: s.released ? COLORS.teal : s.revision_requested ? "#B8860B" : needsReview ? "#B8860B" : COLORS.teal,
-                            }}
-                          >
-                            {s.released ? "Released" : s.revision_requested ? "🔁 Sent Back" : needsReview ? "Needs Review" : `Graded: ${GRADE_LABELS[s.teacher_grade]}`}
-                          </span>
-                        </div>
+                        <span style={{ fontSize: 9.5, fontWeight: 700, color: statusColor, letterSpacing: .2 }}>
+                          {s.revision_requested && !s.released ? "🔁 " : ""}{statusLabel}
+                        </span>
                       </button>
                     );
                   })}
