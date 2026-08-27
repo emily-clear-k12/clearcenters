@@ -21,6 +21,14 @@ function caseImagePath(standard) {
   return `/cases/${standard.replace(/\./g, "-")}.jpg`;
 }
 
+// Same frosted-glass treatment used on the Home dashboard, now that this
+// page also floats over a decorative background instead of flat cream.
+const glassCard = {
+  background: "rgba(255,255,255,.42)",
+  backdropFilter: "blur(10px)",
+  WebkitBackdropFilter: "blur(10px)",
+};
+
 export default function MissionsClient({ student, assignments }) {
   const router = useRouter();
   const [samOpen, setSamOpen] = useState(false);
@@ -37,7 +45,23 @@ export default function MissionsClient({ student, assignments }) {
   });
 
   return (
-    <div style={{ minHeight: "100vh", background: COLORS.cream, fontFamily: "'Inter', sans-serif", color: COLORS.textDark, display: "flex" }}>
+    <div
+      style={{
+        minHeight: "100vh",
+        // "contain" + a matching background-color (rather than "cover")
+        // so the shelf/robot art near the edges never gets cropped on a
+        // screen with a different aspect ratio than the source image —
+        // learned the hard way on the sign-in page's background.
+        backgroundImage: "url(/student/missions_background.jpg)",
+        backgroundSize: "contain",
+        backgroundPosition: "center",
+        backgroundRepeat: "no-repeat",
+        backgroundColor: "#EDE8F3",
+        fontFamily: "'Inter', sans-serif",
+        color: COLORS.textDark,
+        display: "flex",
+      }}
+    >
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@600;700&family=Inter:wght@400;500;600;700&display=swap');
         .gc-btn { transition: transform 150ms ease, box-shadow 150ms ease; cursor: pointer; border: none; font-family: 'Inter', sans-serif; }
@@ -48,7 +72,18 @@ export default function MissionsClient({ student, assignments }) {
       <StudentSidebar />
 
       <main style={{ flex: 1, padding: 24, maxWidth: 1300, margin: "0 auto" }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 24 }}>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "flex-start",
+            marginBottom: 24,
+            ...glassCard,
+            borderRadius: 20,
+            padding: "14px 20px",
+            boxShadow: "0 4px 16px rgba(0,0,0,.08)",
+          }}
+        >
           <div>
             <h1 style={{ fontFamily: "'Poppins', sans-serif", fontSize: 30, fontWeight: 700, margin: "0 0 4px 0", color: COLORS.textDark }}>
               My Missions
@@ -64,7 +99,7 @@ export default function MissionsClient({ student, assignments }) {
         </div>
 
         {sorted.length === 0 ? (
-          <div style={{ background: COLORS.white, borderRadius: 20, padding: 32, textAlign: "center", color: COLORS.textMuted }}>
+          <div style={{ ...glassCard, borderRadius: 20, padding: 32, textAlign: "center", color: COLORS.textMuted }}>
             No missions assigned yet — check back once your teacher assigns one!
           </div>
         ) : (
@@ -75,7 +110,7 @@ export default function MissionsClient({ student, assignments }) {
                 type="button"
                 onClick={() => router.push(`/activity/${a.id}`)}
                 className="gc-btn mission-card"
-                style={{ display: "block", width: "100%", textAlign: "left", background: COLORS.white, borderRadius: 18, boxShadow: "0 4px 16px rgba(0,0,0,.08)", overflow: "hidden", padding: 0, border: "none", cursor: "pointer", font: "inherit", color: "inherit" }}
+                style={{ display: "block", width: "100%", textAlign: "left", ...glassCard, borderRadius: 18, boxShadow: "0 4px 16px rgba(0,0,0,.08)", overflow: "hidden", padding: 0, border: "none", cursor: "pointer", font: "inherit", color: "inherit" }}
               >
                 <div style={{ height: 130, overflow: "hidden", position: "relative" }}>
                   <img src={caseImagePath(a.case_standard)} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />

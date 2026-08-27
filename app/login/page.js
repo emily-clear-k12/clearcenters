@@ -84,10 +84,18 @@ function LoginContent() {
     <div
       style={{
         minHeight: "100vh",
+        // The logo (top-left) and the robot (bottom-right) are baked
+        // right into this art near its edges, so "cover" was cropping
+        // one or both of them off on any screen wider or narrower than
+        // the image's own 1672x941 shape. "contain" always shows the
+        // whole image; the background color (sampled from the image's
+        // own near-white lavender) fills in the letterboxed edges so it
+        // reads as one continuous scene instead of bars.
         backgroundImage: "url(/student/login_background.jpg)",
-        backgroundSize: "cover",
+        backgroundSize: "contain",
         backgroundPosition: "center",
         backgroundRepeat: "no-repeat",
+        backgroundColor: "#F0EEFC",
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
