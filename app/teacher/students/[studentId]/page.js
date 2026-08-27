@@ -6,9 +6,9 @@ import { supabase } from "../../../../lib/supabaseClient";
 import TeacherSidebar from "../../../../components/TeacherSidebar";
 
 const COLORS = {
-  violet: "#7B5DFF",
-  violetSoft: "#EDE6FF",
-  teal: "#00C2C7",
+  violet: "#8C52F2",
+  violetSoft: "#EEE6FD",
+  teal: "#6FD8F5",
   tealSoft: "#E6F8F9",
   warning: "#FF9F43",
   cream: "#F2F0FA",

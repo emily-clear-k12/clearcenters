@@ -12,9 +12,9 @@ import TeacherSidebar from "../../../../components/TeacherSidebar";
 const COLORS = {
   navy: "#0D1B2A",
   cream: "#F2F0FA",
-  violet: "#7B5DFF",
-  violetSoft: "#EDE6FF",
-  teal: "#00C2C7",
+  violet: "#8C52F2",
+  violetSoft: "#EEE6FD",
+  teal: "#6FD8F5",
   tealSoft: "#E6F8F9",
   gold: "#FFC44D",
   border: "#E1E2EE",
@@ -424,7 +424,7 @@ export default function TeacherGradeDetailPage() {
                   {(nd.investigationLog || []).map((log, i) => (
                     <div key={i} style={{ background: COLORS.cream, borderRadius: 8, padding: "8px 10px", fontSize: 12 }}>
                       <span style={{ fontWeight: 700 }}>{newsroomVoiceName(log.voiceId)}</span>
-                      <span style={{ marginLeft: 6, fontSize: 10, fontWeight: 700, padding: "1px 7px", borderRadius: 999, background: log.stamp === "observation" ? "#E9F9EE" : "#EDE6FF", color: log.stamp === "observation" ? COLORS.success : COLORS.violet }}>
+                      <span style={{ marginLeft: 6, fontSize: 10, fontWeight: 700, padding: "1px 7px", borderRadius: 999, background: log.stamp === "observation" ? "#E9F9EE" : "#EEE6FD", color: log.stamp === "observation" ? COLORS.success : COLORS.violet }}>
                         {log.stamp === "observation" ? "Observation" : "Inference"}
                       </span>
                       <div style={{ marginTop: 3, color: COLORS.textDark }}>{log.text}</div>

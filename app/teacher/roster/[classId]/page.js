@@ -7,8 +7,8 @@ import { QRCodeSVG } from "qrcode.react";
 import { supabase } from "../../../../lib/supabaseClient";
 
 const COLORS = {
-  violet: "#7B5DFF",
-  violetSoft: "#EDE6FF",
+  violet: "#8C52F2",
+  violetSoft: "#EEE6FD",
   border: "#E1E2EE",
   textDark: "#1F2A44",
   textMuted: "#697386",

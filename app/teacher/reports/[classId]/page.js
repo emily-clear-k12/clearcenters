@@ -9,8 +9,8 @@ import TeacherSidebar from "../../../../components/TeacherSidebar";
 const COLORS = {
   canvas: "#F2F0FA",
   white: "#FFFFFF",
-  violet: "#7B5DFF",
-  violetSoft: "#EDE6FF",
+  violet: "#8C52F2",
+  violetSoft: "#EEE6FD",
   success: "#22C55E",
   info: "#3D84F5",
   border: "#E1E2EE",

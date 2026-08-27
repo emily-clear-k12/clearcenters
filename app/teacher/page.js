@@ -6,14 +6,19 @@ import { supabase } from "../../lib/supabaseClient";
 import TeacherSidebar from "../../components/TeacherSidebar";
 import TeacherPageBanner from "../../components/TeacherPageBanner";
 
+// Palette updated Aug 27 (evening pass) — violet and teal sampled from the
+// new sci-fi banner art (the crystal's glow and the desk's edge lighting)
+// instead of the app's older, bluer violet (#7B5DFF) and darker teal
+// (#00C2C7). Same pair now lives in TeacherSidebar.js and every other
+// app/teacher/*/page.js COLORS object — keep them in sync if tuned again.
 const COLORS = {
   navy: "#0D1B2A",
   deepNavy: "#162845",
   canvas: "#F2F0FA",
   white: "#FFFFFF",
-  violet: "#7B5DFF",
-  violetSoft: "#EDE6FF",
-  teal: "#00C2C7",
+  violet: "#8C52F2",
+  violetSoft: "#EEE6FD",
+  teal: "#6FD8F5",
   aqua: "#4DD6FF",
   gold: "#FFC44D",
   success: "#22C55E",
@@ -29,6 +34,16 @@ function proficiencyBand(avg) {
   if (avg >= 1.4) return { label: "Proficient", color: COLORS.info };
   if (avg >= 1.0) return { label: "Developing", color: COLORS.violet };
   return { label: "Needs Support", color: "#E4574C" };
+}
+
+// A due date's relative-day phrasing for the "Due Soon" hero card —
+// overdue assignments sort first and read as overdue rather than a
+// confusing negative day count.
+function dueLabel(days) {
+  if (days < 0) return `${Math.abs(days)} day${Math.abs(days) === 1 ? "" : "s"} overdue`;
+  if (days === 0) return "due today";
+  if (days === 1) return "due tomorrow";
+  return `due in ${days} days`;
 }
 
 function Card({ children, style }) {
@@ -256,6 +271,16 @@ export default function TeacherOverview() {
 
   // Everything the page renders is computed here, scoped to the selected
   // class tab ("all" combines every class, same as the old behavior).
+  //
+  // Rebuilt Aug 27 (evening pass) around a "Needs Your Attention" hero row
+  // instead of one long stack of every metric at once — this memo now also
+  // produces the three hero lists (pendingWithTitles, needsCheckIn,
+  // dueSoon) alongside the original analytics fields. The Assignment
+  // Completion donut, the full Active Assignments list, and the full
+  // Submission Review Queue list were dropped from Overview entirely —
+  // their information now lives in the hero row (for what's urgent) or one
+  // click away on My Classes / Submissions (for the full list), rather than
+  // duplicated in three places on one screen.
   const dashboard = React.useMemo(() => {
     function applicableStudentIdsFor(assignment) {
       const targetSet = targetsByAssignment[assignment.id];
@@ -269,13 +294,16 @@ export default function TeacherOverview() {
     const assignmentIds = new Set(assignments.map((a) => a.id));
     const submissions = rawSubmissions.filter((s) => assignmentIds.has(s.assignment_id));
 
+    const assignmentTitleById = {};
+    assignments.forEach((a) => { assignmentTitleById[a.id] = caseMap[a.case_standard] || a.case_standard; });
+
     // A submission that's been sent back for revision has already been
     // reviewed once — it's now waiting on the student, not on the
     // teacher, so it's excluded here rather than cluttering this queue.
     const pending = submissions
       .filter((s) => s.submitted_at && !s.revision_requested && (s.teacher_grade === null || s.teacher_grade === undefined))
       .sort((a, b) => new Date(b.submitted_at) - new Date(a.submitted_at))
-      .map((s) => ({ ...s, studentName: studentMap[s.student_id] || "Unknown" }));
+      .map((s) => ({ ...s, studentName: studentMap[s.student_id] || "Unknown", title: assignmentTitleById[s.assignment_id] || "an assignment" }));
 
     const released = submissions.filter((s) => s.released && s.teacher_grade !== null && s.teacher_grade !== undefined);
     const classAverage = released.length > 0 ? Math.round((released.reduce((sum, s) => sum + s.teacher_grade, 0) / released.length / 2) * 100) : null;
@@ -295,6 +323,29 @@ export default function TeacherOverview() {
     });
     insights.sort((a, b) => a.avgPct - b.avgPct);
 
+    // Only students actually below "Proficient" count as needing a
+    // check-in — unlike the old design, a class that's doing great no
+    // longer shows its top 5 students dressed up as a worry list.
+    const needsCheckIn = insights.filter((i) => i.band.label === "Needs Support" || i.band.label === "Developing");
+
+    // Due-date-driven, not creation-date-driven, and sorted so anything
+    // already overdue floats to the very top — that's the version of
+    // "what's coming up" that actually matters day to day.
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const dueSoonAll = assignments
+      .filter((a) => a.due_date)
+      .map((a) => {
+        const applicable = applicableStudentIdsFor(a);
+        const subsForA = rawSubmissions.filter((s) => s.assignment_id === a.id && applicable.includes(s.student_id));
+        const submittedCount = subsForA.filter((s) => s.submitted_at).length;
+        const due = new Date(`${a.due_date}T00:00:00`);
+        const days = Math.round((due - today) / 86400000);
+        return { id: a.id, title: assignmentTitleById[a.id] || a.case_standard, className: classMap[a.class_id], days, submittedCount, rosterSize: applicable.length };
+      })
+      .sort((a, b) => a.days - b.days);
+    const dueSoon = dueSoonAll.filter((d) => d.days <= 7);
+
     const recentAssignments = assignments.slice(0, 5).map((a) => {
       const subsForA = rawSubmissions.filter((s) => s.assignment_id === a.id);
       const submittedCount = subsForA.filter((s) => s.submitted_at).length;
@@ -303,17 +354,6 @@ export default function TeacherOverview() {
       const rosterSize = applicableStudentIdsFor(a).length;
       return { id: a.id, title: caseMap[a.case_standard] || a.case_standard, standard: a.case_standard, className: classMap[a.class_id], dueDate: a.due_date, submittedCount, rosterSize, avgForA };
     });
-
-    let completionDonut = { completed: 0, inProgress: 0, notStarted: 0 };
-    if (assignments.length > 0) {
-      const mostRecent = assignments[0];
-      const applicable = applicableStudentIdsFor(mostRecent);
-      const subs = rawSubmissions.filter((s) => s.assignment_id === mostRecent.id && applicable.includes(s.student_id));
-      const completed = subs.filter((s) => s.submitted_at).length;
-      const inProgress = subs.filter((s) => !s.submitted_at).length;
-      const notStarted = Math.max(0, applicable.length - completed - inProgress);
-      completionDonut = { completed, inProgress, notStarted };
-    }
 
     // Same released-grade rollup as the Reports/Progress "By Standard"
     // views, just scoped to whichever class tab is selected here ("all"
@@ -337,11 +377,12 @@ export default function TeacherOverview() {
       totalCrystalPoints: students.reduce((sum, s) => sum + (s.crystal_points || 0), 0),
       assignmentCount: assignments.length,
       pendingSubmissions: pending,
+      needsCheckIn,
+      dueSoon,
       classAverage,
       bandCounts,
       studentInsights: insights.slice(0, 5),
       recentAssignments,
-      completionDonut,
       standardRows,
     };
   }, [selectedClassId, rawStudents, rawAssignments, rawSubmissions, targetsByAssignment, caseMap, classMap, studentMap]);
@@ -351,13 +392,12 @@ export default function TeacherOverview() {
     totalCrystalPoints,
     assignmentCount,
     pendingSubmissions,
+    needsCheckIn,
+    dueSoon,
     classAverage,
     bandCounts,
-    studentInsights,
-    recentAssignments,
-    completionDonut,
-    standardRows,
   } = dashboard;
+  const standardRows = dashboard.standardRows;
 
   if (loadingAuth || loading) {
     return (
@@ -369,8 +409,6 @@ export default function TeacherOverview() {
 
   const pendingCount = pendingSubmissions.length;
   const teacherFirstName = teacherEmail.split("@")[0];
-  const completionTotal = completionDonut.completed + completionDonut.inProgress + completionDonut.notStarted;
-  const completionPct = completionTotal > 0 ? Math.round((completionDonut.completed / completionTotal) * 100) : 0;
   const bandTotal = Object.values(bandCounts).reduce((a, b) => a + b, 0);
 
   return (
@@ -384,7 +422,7 @@ export default function TeacherOverview() {
 
       <TeacherSidebar teacherEmail={teacherEmail} />
 
-      <main style={{ flex: 1, padding: "32px 36px", maxWidth: 1450, margin: "0 auto" }}>
+      <main style={{ flex: 1, padding: "32px 36px", maxWidth: 1360, margin: "0 auto" }}>
         {error && <div style={{ background: "#FBEAEA", color: "#B23A3A", borderRadius: 10, padding: "10px 14px", fontSize: 13, marginBottom: 16 }}>{error}</div>}
 
         <TeacherPageBanner>
@@ -392,16 +430,16 @@ export default function TeacherOverview() {
             <h1 style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 700, fontSize: 34, color: COLORS.textDark, margin: "0 0 6px 0" }}>
               Welcome back{teacherFirstName ? `, ${teacherFirstName}` : ""}!
             </h1>
-            <p style={{ fontSize: 15, color: COLORS.textMuted, margin: 0 }}>Here's what's happening in your classes today.</p>
+            <p style={{ fontSize: 15, color: COLORS.textMuted, margin: 0 }}>Here's what needs your attention today.</p>
           </div>
         </TeacherPageBanner>
 
         {classes.length > 1 && (
-          <div style={{ display: "flex", gap: 8, marginBottom: 20, flexWrap: "wrap" }}>
+          <div style={{ display: "flex", gap: 8, marginBottom: 24, flexWrap: "wrap" }}>
             <button
               className="gc-btn"
               onClick={() => setSelectedClassId("all")}
-              style={{ background: selectedClassId === "all" ? COLORS.violet : COLORS.white, color: selectedClassId === "all" ? COLORS.white : COLORS.textDark, border: selectedClassId === "all" ? "none" : `1px solid ${COLORS.border}`, borderRadius: 999, padding: "9px 18px", fontWeight: 700, fontSize: 13 }}
+              style={{ background: selectedClassId === "all" ? `linear-gradient(135deg, ${COLORS.violet}, ${COLORS.teal})` : COLORS.white, color: selectedClassId === "all" ? COLORS.white : COLORS.textDark, border: selectedClassId === "all" ? "none" : `1px solid ${COLORS.border}`, borderRadius: 999, padding: "9px 18px", fontWeight: 700, fontSize: 13 }}
             >
               All Classes
             </button>
@@ -410,7 +448,7 @@ export default function TeacherOverview() {
                 key={c.id}
                 className="gc-btn"
                 onClick={() => setSelectedClassId(c.id)}
-                style={{ background: selectedClassId === c.id ? COLORS.violet : COLORS.white, color: selectedClassId === c.id ? COLORS.white : COLORS.textDark, border: selectedClassId === c.id ? "none" : `1px solid ${COLORS.border}`, borderRadius: 999, padding: "9px 18px", fontWeight: 700, fontSize: 13 }}
+                style={{ background: selectedClassId === c.id ? `linear-gradient(135deg, ${COLORS.violet}, ${COLORS.teal})` : COLORS.white, color: selectedClassId === c.id ? COLORS.white : COLORS.textDark, border: selectedClassId === c.id ? "none" : `1px solid ${COLORS.border}`, borderRadius: 999, padding: "9px 18px", fontWeight: 700, fontSize: 13 }}
               >
                 {c.name}
               </button>
@@ -418,15 +456,65 @@ export default function TeacherOverview() {
           </div>
         )}
 
-        <Card style={{ display: "flex", padding: "18px 8px", marginBottom: 20, gap: 8 }}>
+        <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: 0.6, textTransform: "uppercase", color: "#A9ADC4", margin: "0 0 12px" }}>Needs Your Attention</div>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 16, marginBottom: 22 }}>
+          <Card style={{ borderTop: `3px solid ${COLORS.gold}` }}>
+            <div style={{ fontSize: 22, marginBottom: 8 }}>📝</div>
+            <div style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 700, fontSize: 30, color: COLORS.textDark, lineHeight: 1 }}>{pendingCount}</div>
+            <div style={{ fontSize: 13, fontWeight: 700, color: COLORS.textDark, margin: "4px 0 12px" }}>Submission{pendingCount === 1 ? "" : "s"} to Review</div>
+            <div style={{ display: "grid", gap: 6, marginBottom: 14, minHeight: 34 }}>
+              {pendingCount > 0 ? pendingSubmissions.slice(0, 2).map((s) => (
+                <div key={s.id} style={{ fontSize: 12.5, color: COLORS.textMuted, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                  <b style={{ color: COLORS.textDark, fontWeight: 600 }}>{s.studentName}</b> — {s.title}
+                </div>
+              )) : <div style={{ fontSize: 12.5, color: COLORS.textMuted }}>Nothing waiting — you're all caught up!</div>}
+            </div>
+            <button onClick={() => router.push("/teacher/grade")} className="gc-btn" style={{ background: `linear-gradient(135deg, ${COLORS.violet}, ${COLORS.teal})`, color: COLORS.white, borderRadius: 999, padding: "9px 16px", fontWeight: 700, fontSize: 12.5 }}>
+              Review Now →
+            </button>
+          </Card>
+
+          <Card style={{ borderTop: `3px solid ${COLORS.violet}` }}>
+            <div style={{ fontSize: 22, marginBottom: 8 }}>🎯</div>
+            <div style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 700, fontSize: 30, color: COLORS.textDark, lineHeight: 1 }}>{needsCheckIn.length}</div>
+            <div style={{ fontSize: 13, fontWeight: 700, color: COLORS.textDark, margin: "4px 0 12px" }}>Student{needsCheckIn.length === 1 ? "" : "s"} to Check In With</div>
+            <div style={{ display: "grid", gap: 6, marginBottom: 14, minHeight: 34 }}>
+              {needsCheckIn.length > 0 ? needsCheckIn.slice(0, 2).map((s) => (
+                <div key={s.studentId} style={{ fontSize: 12.5, color: COLORS.textMuted, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                  <b style={{ color: COLORS.textDark, fontWeight: 600 }}>{s.name}</b> — {s.avgPct}% avg, {s.band.label}
+                </div>
+              )) : <div style={{ fontSize: 12.5, color: COLORS.textMuted }}>Everyone's on track right now!</div>}
+            </div>
+            <button onClick={() => router.push("/teacher/progress")} className="gc-btn" style={{ background: `linear-gradient(135deg, ${COLORS.violet}, ${COLORS.teal})`, color: COLORS.white, borderRadius: 999, padding: "9px 16px", fontWeight: 700, fontSize: 12.5 }}>
+              View Progress →
+            </button>
+          </Card>
+
+          <Card style={{ borderTop: `3px solid ${COLORS.teal}` }}>
+            <div style={{ fontSize: 22, marginBottom: 8 }}>📅</div>
+            <div style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 700, fontSize: 30, color: COLORS.textDark, lineHeight: 1 }}>{dueSoon.length}</div>
+            <div style={{ fontSize: 13, fontWeight: 700, color: COLORS.textDark, margin: "4px 0 12px" }}>Due Soon</div>
+            <div style={{ display: "grid", gap: 6, marginBottom: 14, minHeight: 34 }}>
+              {dueSoon.length > 0 ? dueSoon.slice(0, 2).map((a) => (
+                <div key={a.id} style={{ fontSize: 12.5, color: COLORS.textMuted, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                  <b style={{ color: COLORS.textDark, fontWeight: 600 }}>{a.title}</b> — {dueLabel(a.days)} · {a.submittedCount}/{a.rosterSize} submitted
+                </div>
+              )) : <div style={{ fontSize: 12.5, color: COLORS.textMuted }}>Nothing due in the next week.</div>}
+            </div>
+            <button onClick={() => router.push("/teacher/assign")} className="gc-btn" style={{ background: `linear-gradient(135deg, ${COLORS.violet}, ${COLORS.teal})`, color: COLORS.white, borderRadius: 999, padding: "9px 16px", fontWeight: 700, fontSize: 12.5 }}>
+              View Assignments →
+            </button>
+          </Card>
+        </div>
+
+        <Card style={{ display: "flex", padding: "18px 8px", marginBottom: 22, gap: 8 }}>
           {[
             { icon: "/teacher/metric_students.png", value: studentCount, label: "Students" },
             { icon: "/teacher/metric_class_average.png", value: classAverage !== null ? `${classAverage}%` : "—", label: "Class Average", sub: classAverage === null ? "No released grades yet" : null },
             { icon: "/teacher/metric_active_assignments.png", value: assignmentCount, label: "Active Assignments" },
-            { icon: "/teacher/metric_needs_review.png", value: pendingCount, label: "Needs Review" },
             { icon: "/teacher/metric_crystal_points.png", value: totalCrystalPoints, label: "Crystal Points" },
           ].map((m, i) => (
-            <div key={i} style={{ flex: 1, display: "flex", alignItems: "center", gap: 12, padding: "8px 14px", borderRight: i < 4 ? `1px solid ${COLORS.border}` : "none" }}>
+            <div key={i} style={{ flex: 1, display: "flex", alignItems: "center", gap: 12, padding: "8px 14px", borderRight: i < 3 ? `1px solid ${COLORS.border}` : "none" }}>
               <img src={m.icon} alt="" style={{ width: 44, height: 44, objectFit: "contain" }} />
               <div>
                 <div style={{ fontSize: 26, fontWeight: 700, fontFamily: "'Poppins', sans-serif", color: COLORS.textDark, lineHeight: 1.1 }}>{m.value}</div>
@@ -437,9 +525,26 @@ export default function TeacherOverview() {
           ))}
         </Card>
 
-        <div style={{ display: "grid", gridTemplateColumns: "1.1fr 1.1fr 1fr", gap: 16, marginBottom: 16 }}>
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 30 }}>
+          <button onClick={() => router.push("/teacher/assign")} className="gc-btn" style={{ display: "flex", alignItems: "center", gap: 8, background: COLORS.white, border: `1px solid ${COLORS.border}`, borderRadius: 999, padding: "10px 18px", fontSize: 13, fontWeight: 700, color: COLORS.textDark }}>
+            <img src="/teacher/action_create_assignment.png" alt="" style={{ width: 18, height: 18 }} /> Create New Assignment
+          </button>
+          <button onClick={() => setAwardModalOpen(true)} disabled={classes.length === 0} className="gc-btn" style={{ display: "flex", alignItems: "center", gap: 8, background: COLORS.white, border: `1px solid ${COLORS.border}`, borderRadius: 999, padding: "10px 18px", fontSize: 13, fontWeight: 700, color: COLORS.textDark, opacity: classes.length === 0 ? 0.5 : 1 }}>
+            <img src="/teacher/action_award_crystal_points.png" alt="" style={{ width: 18, height: 18 }} /> Award Crystal Points
+          </button>
+          <button onClick={() => router.push("/teacher/reports")} disabled={classes.length === 0} className="gc-btn" style={{ display: "flex", alignItems: "center", gap: 8, background: COLORS.white, border: `1px solid ${COLORS.border}`, borderRadius: 999, padding: "10px 18px", fontSize: 13, fontWeight: 700, color: COLORS.textDark, opacity: classes.length === 0 ? 0.5 : 1 }}>
+            <img src="/teacher/action_generate_report.png" alt="" style={{ width: 18, height: 18 }} /> Generate Class Report
+          </button>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, background: COLORS.canvas, borderRadius: 999, padding: "10px 18px", fontSize: 13, fontWeight: 700, color: COLORS.textMuted, opacity: 0.7 }}>
+            <img src="/teacher/action_send_announcement.png" alt="" style={{ width: 18, height: 18, filter: "grayscale(1)" }} /> Send Class Announcement
+            <span style={{ fontSize: 10, fontWeight: 700, background: COLORS.border, padding: "2px 8px", borderRadius: 999 }}>Soon</span>
+          </div>
+        </div>
+
+        <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: 0.6, textTransform: "uppercase", color: "#A9ADC4", margin: "0 0 12px" }}>Deeper Insights</div>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
           <Card>
-            <div style={{ fontWeight: 700, fontSize: 16, marginBottom: 14 }}>Class Performance Overview</div>
+            <div style={{ fontWeight: 700, fontSize: 16, marginBottom: 14 }}>Class Performance</div>
             {bandTotal > 0 ? (
               <div style={{ display: "flex", gap: 16, alignItems: "center" }}>
                 <Donut
@@ -474,164 +579,34 @@ export default function TeacherOverview() {
 
           <Card>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
-              <div style={{ fontWeight: 700, fontSize: 16 }}>Student Progress Insights</div>
-              <button onClick={() => router.push("/teacher/progress")} className="gc-btn" style={{ background: "none", color: COLORS.violet, fontSize: 12.5, fontWeight: 700 }}>View All</button>
+              <div>
+                <div style={{ fontWeight: 700, fontSize: 16 }}>Standards at a Glance</div>
+                <div style={{ fontSize: 11.5, color: COLORS.textMuted, marginTop: 2 }}>Released grades, rolled up by standard.</div>
+              </div>
+              <button onClick={() => router.push("/teacher/reports/standards")} className="gc-btn" style={{ background: "none", color: COLORS.violet, fontSize: 12, fontWeight: 700, whiteSpace: "nowrap" }}>Full Report →</button>
             </div>
-            {studentInsights.length > 0 ? (
-              <div style={{ display: "grid", gap: 10 }}>
-                {studentInsights.map((s) => (
-                  <div key={s.studentId} style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                    <div style={{ width: 30, height: 30, borderRadius: "50%", background: COLORS.violetSoft, display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, color: COLORS.violet, fontSize: 12, flexShrink: 0 }}>{s.name[0]}</div>
-                    <div style={{ fontSize: 13, fontWeight: 600, width: 90, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{s.name}</div>
-                    <div style={{ flex: 1, height: 6, background: COLORS.border, borderRadius: 999, overflow: "hidden" }}>
-                      <div style={{ height: "100%", width: `${s.avgPct}%`, background: s.band.color, borderRadius: 999 }} />
+            {standardRows.length > 0 ? (
+              <div style={{ display: "grid", gap: 4 }}>
+                {standardRows.slice(0, 4).map((row) => (
+                  <div key={row.standard} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 4px", borderBottom: `1px solid ${COLORS.border}` }}>
+                    <div style={{ width: 130, flexShrink: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                      <div style={{ fontSize: 12.5, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{row.title}</div>
+                      <div style={{ fontSize: 10.5, color: COLORS.textMuted }}>{row.standard}</div>
                     </div>
-                    <div style={{ fontSize: 12, fontWeight: 700, width: 34, textAlign: "right" }}>{s.avgPct}%</div>
+                    <div style={{ flex: 1, height: 8, background: COLORS.border, borderRadius: 999, overflow: "hidden" }}>
+                      <div style={{ height: "100%", width: `${row.avgPct}%`, background: row.band.color, borderRadius: 999 }} />
+                    </div>
+                    <div style={{ width: 40, textAlign: "right", fontWeight: 700, fontSize: 13 }}>{row.avgPct}%</div>
                   </div>
                 ))}
+                {standardRows.length > 4 && (
+                  <div style={{ fontSize: 11.5, color: COLORS.textMuted, padding: "8px 4px 0", textAlign: "center" }}>+{standardRows.length - 4} more — see the full report</div>
+                )}
               </div>
             ) : (
-              <div style={{ fontSize: 13, color: COLORS.textMuted, padding: "20px 0", textAlign: "center" }}>No released grades yet.</div>
+              <div style={{ fontSize: 13, color: COLORS.textMuted, padding: "20px 0", textAlign: "center" }}>No released grades yet — this fills in once you release some.</div>
             )}
           </Card>
-
-          <Card>
-            <div style={{ fontWeight: 700, fontSize: 16, marginBottom: 14 }}>Assignment Completion</div>
-            {completionTotal > 0 ? (
-              <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 12 }}>
-                <Donut
-                  segments={[
-                    { value: completionDonut.completed, color: COLORS.violet },
-                    { value: completionDonut.inProgress, color: COLORS.info },
-                    { value: completionDonut.notStarted, color: COLORS.warning },
-                  ]}
-                  centerLabel={`${completionPct}%`}
-                  centerSub="Completed"
-                />
-                <div style={{ fontSize: 11.5, color: COLORS.textMuted }}>{completionDonut.completed} / {completionTotal} students · most recent assignment</div>
-              </div>
-            ) : (
-              <div style={{ fontSize: 13, color: COLORS.textMuted, padding: "20px 0", textAlign: "center" }}>Assign a case to see completion here.</div>
-            )}
-          </Card>
-        </div>
-
-        <Card style={{ marginBottom: 16 }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
-            <div>
-              <div style={{ fontWeight: 700, fontSize: 16 }}>Standards at a Glance</div>
-              <div style={{ fontSize: 12, color: COLORS.textMuted, marginTop: 2 }}>Released grades, rolled up by standard{selectedClassId === "all" && classes.length > 1 ? " · all classes" : ""}.</div>
-            </div>
-            <button onClick={() => router.push("/teacher/reports/standards")} className="gc-btn" style={{ background: "none", color: COLORS.violet, fontSize: 12.5, fontWeight: 700, whiteSpace: "nowrap" }}>Full Standards Report →</button>
-          </div>
-          {standardRows.length > 0 ? (
-            <div style={{ display: "grid", gap: 4 }}>
-              {standardRows.slice(0, 5).map((row) => (
-                <div key={row.standard} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 4px", borderBottom: `1px solid ${COLORS.border}` }}>
-                  <div style={{ width: 220, flexShrink: 0 }}>
-                    <div style={{ fontSize: 13, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{row.title}</div>
-                    <div style={{ fontSize: 11, color: COLORS.textMuted }}>{row.standard} · {row.gradedCount} graded</div>
-                  </div>
-                  <div style={{ flex: 1, height: 8, background: COLORS.border, borderRadius: 999, overflow: "hidden" }}>
-                    <div style={{ height: "100%", width: `${row.avgPct}%`, background: row.band.color, borderRadius: 999 }} />
-                  </div>
-                  <div style={{ width: 44, textAlign: "right", fontWeight: 700, fontSize: 13 }}>{row.avgPct}%</div>
-                  <div style={{ width: 110, textAlign: "right" }}>
-                    <span style={{ fontSize: 11, fontWeight: 700, padding: "3px 10px", borderRadius: 999, background: row.band.color + "22", color: row.band.color }}>{row.band.label}</span>
-                  </div>
-                </div>
-              ))}
-              {standardRows.length > 5 && (
-                <div style={{ fontSize: 12, color: COLORS.textMuted, padding: "8px 4px 0", textAlign: "center" }}>+{standardRows.length - 5} more standard{standardRows.length - 5 === 1 ? "" : "s"} — see the full report</div>
-              )}
-            </div>
-          ) : (
-            <div style={{ fontSize: 13, color: COLORS.textMuted, padding: "12px 0", textAlign: "center" }}>No released grades yet — this fills in once you release some.</div>
-          )}
-        </Card>
-
-        <div style={{ display: "grid", gridTemplateColumns: "1.3fr 1.3fr 1fr", gap: 16 }}>
-          <Card>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
-              <div style={{ fontWeight: 700, fontSize: 16 }}>Active Assignments</div>
-              <button onClick={() => router.push("/teacher/assign")} className="gc-btn" style={{ background: "none", color: COLORS.violet, fontSize: 12.5, fontWeight: 700 }}>View All</button>
-            </div>
-            <div style={{ display: "grid", gap: 4 }}>
-              {recentAssignments.length > 0 ? recentAssignments.map((a) => (
-                <div key={a.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 4px", borderBottom: `1px solid ${COLORS.border}` }}>
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: 13, fontWeight: 600 }}>{a.title}</div>
-                    <div style={{ fontSize: 11, color: COLORS.textMuted }}>{a.className}{a.dueDate ? ` · Due ${a.dueDate}` : ""}</div>
-                  </div>
-                  <div style={{ fontSize: 12, color: COLORS.textMuted }}>{a.submittedCount} / {a.rosterSize}</div>
-                  <div style={{ fontSize: 12, fontWeight: 700, width: 40, textAlign: "right" }}>{a.avgForA !== null ? `${a.avgForA}%` : "—"}</div>
-                </div>
-              )) : <div style={{ fontSize: 13, color: COLORS.textMuted, padding: "12px 0" }}>No assignments yet.</div>}
-            </div>
-          </Card>
-
-          <Card>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
-              <div style={{ fontWeight: 700, fontSize: 16 }}>Submission Review Queue</div>
-              <button onClick={() => router.push("/teacher/grade")} className="gc-btn" style={{ background: "none", color: COLORS.violet, fontSize: 12.5, fontWeight: 700 }}>View All</button>
-            </div>
-            <div style={{ display: "grid", gap: 4 }}>
-              {pendingSubmissions.slice(0, 4).length > 0 ? pendingSubmissions.slice(0, 4).map((s) => (
-                <button key={s.id} onClick={() => router.push(`/teacher/grade/${s.id}`)} className="gc-btn" style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 4px", borderBottom: `1px solid ${COLORS.border}`, background: "none", textAlign: "left" }}>
-                  <div style={{ width: 30, height: 30, borderRadius: "50%", background: COLORS.violetSoft, display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, color: COLORS.violet, fontSize: 12, flexShrink: 0 }}>{s.studentName[0]}</div>
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: 13, fontWeight: 600 }}>{s.studentName}</div>
-                    <div style={{ fontSize: 11, color: COLORS.textMuted }}>Submitted {new Date(s.submitted_at).toLocaleString()}</div>
-                  </div>
-                  <span style={{ fontSize: 10.5, fontWeight: 700, padding: "3px 9px", borderRadius: 999, background: "#FFF4E5", color: "#B8860B" }}>Needs Review</span>
-                </button>
-              )) : <div style={{ fontSize: 13, color: COLORS.textMuted, padding: "12px 0" }}>Nothing waiting — you're all caught up!</div>}
-              {pendingCount > 0 && (
-                <button onClick={() => router.push("/teacher/grade")} className="gc-btn" style={{ marginTop: 8, background: COLORS.violet, color: COLORS.white, borderRadius: 999, padding: "11px 20px", fontWeight: 700, fontSize: 13.5 }}>
-                  Review All Submissions ({pendingCount})
-                </button>
-              )}
-            </div>
-          </Card>
-
-          <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-            <Card style={{ background: COLORS.violetSoft, border: "none", position: "relative", overflow: "visible" }}>
-              <div style={{ fontSize: 11.5, fontWeight: 700, color: COLORS.violet, marginBottom: 6 }}>✨ HQ INSIGHT</div>
-              <p style={{ fontSize: 12.5, color: COLORS.textDark, lineHeight: 1.5, margin: "0 0 14px 0", paddingRight: 50 }}>
-                {pendingCount > 0
-                  ? `${pendingCount} submission${pendingCount === 1 ? "" : "s"} ${pendingCount === 1 ? "is" : "are"} waiting for your review.`
-                  : "You're all caught up! No submissions are waiting right now."}
-              </p>
-              {pendingCount > 0 && (
-                <button onClick={() => router.push("/teacher/grade")} className="gc-btn" style={{ background: COLORS.violet, color: COLORS.white, borderRadius: 999, padding: "9px 16px", fontWeight: 700, fontSize: 12.5 }}>
-                  Review Now
-                </button>
-              )}
-              <img src="/teacher/hq_guide_robot.png" alt="" style={{ position: "absolute", right: 4, bottom: 0, width: 64, height: "auto" }} />
-            </Card>
-
-            <Card>
-              <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 10 }}>Quick Actions</div>
-              <div style={{ display: "grid", gap: 2 }}>
-                <button onClick={() => router.push("/teacher/assign")} className="gc-btn" style={{ display: "flex", alignItems: "center", gap: 10, background: "none", padding: "9px 4px", fontSize: 13, fontWeight: 600, color: COLORS.textDark, textAlign: "left" }}>
-                  <img src="/teacher/action_create_assignment.png" alt="" style={{ width: 20, height: 20 }} /> Create New Assignment <span style={{ marginLeft: "auto", color: COLORS.textMuted }}>›</span>
-                </button>
-                <button onClick={() => setAwardModalOpen(true)} disabled={classes.length === 0} className="gc-btn" style={{ display: "flex", alignItems: "center", gap: 10, background: "none", padding: "9px 4px", fontSize: 13, fontWeight: 600, color: COLORS.textDark, textAlign: "left", opacity: classes.length === 0 ? 0.5 : 1 }}>
-                  <img src="/teacher/action_award_crystal_points.png" alt="" style={{ width: 20, height: 20 }} /> Award Crystal Points <span style={{ marginLeft: "auto", color: COLORS.textMuted }}>›</span>
-                </button>
-                <button onClick={() => router.push("/teacher/reports")} disabled={classes.length === 0} className="gc-btn" style={{ display: "flex", alignItems: "center", gap: 10, background: "none", padding: "9px 4px", fontSize: 13, fontWeight: 600, color: COLORS.textDark, textAlign: "left", opacity: classes.length === 0 ? 0.5 : 1 }}>
-                  <img src="/teacher/action_generate_report.png" alt="" style={{ width: 20, height: 20 }} /> Generate Class Report <span style={{ marginLeft: "auto", color: COLORS.textMuted }}>›</span>
-                </button>
-                {[
-                  { icon: "/teacher/action_send_announcement.png", label: "Send Class Announcement" },
-                ].map((a) => (
-                  <div key={a.label} style={{ display: "flex", alignItems: "center", gap: 10, padding: "9px 4px", fontSize: 13, fontWeight: 600, color: COLORS.textMuted, opacity: 0.6 }}>
-                    <img src={a.icon} alt="" style={{ width: 20, height: 20, filter: "grayscale(1)" }} /> {a.label} <span style={{ marginLeft: "auto", fontSize: 10, fontWeight: 700, background: COLORS.border, padding: "2px 8px", borderRadius: 999 }}>Soon</span>
-                  </div>
-                ))}
-              </div>
-            </Card>
-          </div>
         </div>
       </main>
 

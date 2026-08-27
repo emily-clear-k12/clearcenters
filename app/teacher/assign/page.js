@@ -9,9 +9,9 @@ import TeacherPageBanner from "../../../components/TeacherPageBanner";
 
 const COLORS = {
   navy: "#0D1B2A",
-  violet: "#7B5DFF",
-  violetSoft: "#EDE6FF",
-  teal: "#00C2C7",
+  violet: "#8C52F2",
+  violetSoft: "#EEE6FD",
+  teal: "#6FD8F5",
   tealSoft: "#E6F8F9",
   gold: "#FFC44D",
   warning: "#FF9F43",
