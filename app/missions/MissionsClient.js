@@ -44,14 +44,15 @@ function engineTag(engine) {
 // in a scrollable strip below the scene. This is Emily's "blend 1 and 2"
 // choice between showing everything on pedestals vs. a plain overflow list.
 //
-// Pedestal anchor points were read directly off the background image
-// (percent of the stage box) — back pedestals are further away (smaller,
-// higher up), front pedestals are closer (bigger, lower down), matching the
-// art's own perspective. The stage box itself uses the same
-// aspect-ratio-lock trick as the Crystal Vault room stage (GearLockerClient)
-// — width:100% + paddingTop as a fixed percentage — so these percentage
-// coordinates land in the same spot on the image at any screen width,
-// instead of drifting the way a "cover"-sized background would.
+// Pedestal anchor points were read directly off the background image,
+// as a percent of the full scene. Changed Aug 27 (full-screen pass) from
+// percent-of-an-aspect-locked-box to percent-of-the-full-viewport, to match
+// Emily's call to make this page fill the whole screen edge-to-edge like
+// Home does, rather than sit in a bordered card on a lavender page. The
+// trade-off, which Emily chose knowingly: on a browser window shaped very
+// differently from the image's own 1672x941 ratio, the `cover`-cropped
+// background can push these percentage spots slightly off the exact art
+// they were tuned against — same trade-off Home already lives with.
 const SLOTS = [
   { key: "back-left", x: 27, y: 50, scale: 0.82 },
   { key: "front-left", x: 15, y: 70, scale: 1.05 },
@@ -61,10 +62,6 @@ const SLOTS = [
 // Center dais — the raised platform in the middle of the scene where the
 // currently-selected mission gets its bigger "hero" card.
 const CENTER_SLOT = { x: 50, y: 63 };
-
-// /student/missions_hub_bg.jpg is 1672x941 (same convention as the Crystal
-// Vault room backgrounds) — 941/1672 = 56.3%.
-const STAGE_ASPECT_PADDING = "56.3%";
 
 export default function MissionsClient({ student, assignments }) {
   const router = useRouter();
@@ -87,7 +84,9 @@ export default function MissionsClient({ student, assignments }) {
   return (
     <div
       style={{
-        minHeight: "100vh",
+        position: "relative",
+        height: "100vh",
+        overflow: "hidden",
         background: COLORS.cream,
         fontFamily: "'Inter', sans-serif",
         color: COLORS.textDark,
@@ -103,55 +102,64 @@ export default function MissionsClient({ student, assignments }) {
         .overflow-row::-webkit-scrollbar-thumb { background: rgba(0,0,0,.18); border-radius: 999px; }
       `}</style>
 
-      <main style={{ padding: 24, maxWidth: 1300, margin: "0 auto" }}>
-        <BackToHubButton />
+      {/* Full-viewport fixed background (Aug 27 full-screen pass) — replaces
+          the old aspect-ratio-locked "card" stage so this page fills the
+          whole screen edge-to-edge like Home, per Emily's call. Everything
+          below is positioned as a percent of the full viewport now, not of
+          a locked-aspect box, so it can drift slightly from the art's exact
+          pixels on an unusually-shaped window — the same trade-off Home
+          already accepts. */}
+      <div style={{ position: "fixed", inset: 0, zIndex: 0 }}>
+        <img
+          src="/student/missions_hub_bg.jpg"
+          alt="Mission bay"
+          style={{ width: "100%", height: "100%", objectFit: "cover" }}
+        />
+      </div>
 
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "flex-start",
-            marginBottom: 20,
-            background: COLORS.white,
-            borderRadius: 20,
-            padding: "14px 20px",
-            boxShadow: "0 4px 16px rgba(0,0,0,.08)",
-          }}
-        >
-          <div>
-            <h1 style={{ fontFamily: "'Poppins', sans-serif", fontSize: 28, fontWeight: 700, margin: "0 0 4px 0", color: COLORS.textDark }}>
-              My Missions
-            </h1>
-            <p style={{ margin: 0, color: COLORS.textMuted, fontSize: 14 }}>
-              {sorted.length === 0
-                ? "No missions assigned yet"
-                : `${sorted.length} mission${sorted.length === 1 ? "" : "s"} assigned to you · choose one to launch`}
-            </p>
-          </div>
-          <div style={{ display: "flex", alignItems: "center", gap: 6, background: COLORS.white, borderRadius: 999, padding: "6px 14px 6px 6px", boxShadow: "0 4px 16px rgba(0,0,0,.08)", fontWeight: 700, fontSize: 14 }}>
-            <img src="/icons/crystal_points.png" alt="" style={{ width: 24, height: 24, objectFit: "contain" }} />
-            {student.crystal_points}
-          </div>
+      <BackToHubButton />
+
+      {/* Header bar — floats over the full-bleed art near the top, same
+          spot it used to sit above the bordered stage card. */}
+      <div
+        style={{
+          position: "fixed",
+          top: 20,
+          left: 100,
+          right: 20,
+          zIndex: 2,
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "flex-start",
+          gap: 12,
+          background: "rgba(255,255,255,.92)",
+          backdropFilter: "blur(8px)",
+          borderRadius: 20,
+          padding: "14px 20px",
+          boxShadow: "0 4px 16px rgba(0,0,0,.18)",
+        }}
+      >
+        <div>
+          <h1 style={{ fontFamily: "'Poppins', sans-serif", fontSize: 22, fontWeight: 700, margin: "0 0 4px 0", color: COLORS.textDark }}>
+            My Missions
+          </h1>
+          <p style={{ margin: 0, color: COLORS.textMuted, fontSize: 13 }}>
+            {sorted.length === 0
+              ? "No missions assigned yet"
+              : `${sorted.length} mission${sorted.length === 1 ? "" : "s"} assigned to you · choose one to launch`}
+          </p>
         </div>
+        <div style={{ display: "flex", alignItems: "center", gap: 6, background: COLORS.white, borderRadius: 999, padding: "6px 14px 6px 6px", boxShadow: "0 4px 16px rgba(0,0,0,.08)", fontWeight: 700, fontSize: 14, flexShrink: 0 }}>
+          <img src="/icons/crystal_points.png" alt="" style={{ width: 24, height: 24, objectFit: "contain" }} />
+          {student.crystal_points}
+        </div>
+      </div>
 
-        {/* The mission bay scene */}
-        <div
-          style={{
-            position: "relative",
-            width: "100%",
-            paddingTop: STAGE_ASPECT_PADDING,
-            borderRadius: 24,
-            overflow: "hidden",
-            boxShadow: "0 8px 30px rgba(0,0,0,.18)",
-            marginBottom: overflow.length > 0 ? 14 : 28,
-          }}
-        >
-          <img
-            src="/student/missions_hub_bg.jpg"
-            alt="Mission bay"
-            style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }}
-          />
-
+      {/* The mission bay scene — a fixed full-viewport overlay so the
+          pedestals/dais stay glued to the same spots on the fixed
+          background above regardless of scroll (there's no scroll on this
+          page — same no-scroll 100vh approach as Home). */}
+      <div style={{ position: "fixed", inset: 0, zIndex: 1 }}>
           {SLOTS.map((slot, slotIndex) => {
             const mission = onPedestals[slotIndex];
             const cardW = Math.round(112 * slot.scale);
@@ -304,15 +312,18 @@ export default function MissionsClient({ student, assignments }) {
               </p>
             </div>
           )}
-        </div>
+      </div>
 
-        {/* Overflow — anything past the 4 pedestals */}
-        {overflow.length > 0 && (
-          <div style={{ marginBottom: 28 }}>
-            <p style={{ fontSize: 11.5, fontWeight: 700, color: COLORS.textMuted, textTransform: "uppercase", letterSpacing: .4, margin: "0 0 8px 4px" }}>
-              +{overflow.length} more mission{overflow.length === 1 ? "" : "s"}
-            </p>
-            <div className="overflow-row" style={{ display: "flex", gap: 10, overflowX: "auto", paddingBottom: 6 }}>
+      {/* Overflow — anything past the 4 pedestals. Fixed to the bottom of
+          the viewport (Aug 27 full-screen pass) since this page no longer
+          has a flowing `<main>` column for it to sit below — same no-scroll
+          100vh page as Home, so this has to float instead of flow. */}
+      {overflow.length > 0 && (
+        <div style={{ position: "fixed", left: 24, right: 24, bottom: 20, zIndex: 2 }}>
+          <p style={{ fontSize: 11.5, fontWeight: 700, color: COLORS.white, textShadow: "0 1px 4px rgba(0,0,0,.6)", textTransform: "uppercase", letterSpacing: .4, margin: "0 0 8px 4px" }}>
+            +{overflow.length} more mission{overflow.length === 1 ? "" : "s"}
+          </p>
+          <div className="overflow-row" style={{ display: "flex", gap: 10, overflowX: "auto", paddingBottom: 6 }}>
               {overflow.map((mission) => {
                 const ring = subjectRingColor(mission.cases?.subject);
                 return (
@@ -353,10 +364,9 @@ export default function MissionsClient({ student, assignments }) {
                   </button>
                 );
               })}
-            </div>
           </div>
-        )}
-      </main>
+        </div>
+      )}
 
       <button
         type="button"

@@ -18,20 +18,36 @@ const COLORS = {
   danger: "#E4574C",
 };
 
-// Fixed spots on the map, read off Emily's background/mockup — same
-// "percent of the stage box" approach as the Missions pedestals, and for
-// the same reason: it keeps everything landing in the right spot on the
-// art at any screen width, using the same aspect-ratio-lock stage
-// (paddingTop below) the rest of the app's room/scene pages use.
+// Fixed spots on the map, read off Emily's background/mockup — percent of
+// the full viewport as of the Aug 27 full-screen pass (see MissionsClient.js
+// for the same change, made the same day for the same reason: Emily wants
+// this page edge-to-edge like Home instead of sitting in a bordered card,
+// and accepted that a `cover`-cropped background can nudge these spots
+// slightly off-pixel on an unusually-shaped window).
+//
+// `lavacore` (added once Emily sent real LavaCore art, same session) isn't
+// baked into the background art the way the other 5 aren't either — every
+// planet here is a separate overlay image, not part of the jpg — so this
+// position is a first guess rather than something read off a mockup. Move
+// it if Emily wants it somewhere else once she sees it.
+//
+// First attempt was top-center (50, 20), which the Playwright harness
+// caught colliding with the "GALAXY HUB" neon sign baked into the
+// background art (same class of bug as the duplicate-title issue this
+// planet's row was already fixed for) — the sign occupies roughly x 38-63%,
+// y 10-19% of the background, and this node's icon+label block extends
+// upward from its anchor point, so anything near that band collides.
+// Moved to the upper-right, clear of the sign and clear of the other 5
+// nodes' rows.
 const PLANET_POSITIONS = {
   glow_garden: { x: 36, y: 35 },
   frost_ring: { x: 50, y: 29 },
   robot_relay_city: { x: 64, y: 29 },
   jungle_moon: { x: 26, y: 47 },
   cloud_reef: { x: 74, y: 47 },
+  lavacore: { x: 82, y: 14 },
 };
 const SHIP_POSITION = { x: 50, y: 52 };
-const STAGE_ASPECT_PADDING = "56.3%";
 
 function formatShortDate(dateStr) {
   return new Date(dateStr).toLocaleDateString(undefined, { month: "short", day: "numeric" });
@@ -139,7 +155,7 @@ export default function GearLockerClient({ student, planets, visitedPlanetKeys, 
   }
 
   return (
-    <div style={{ minHeight: "100vh", background: COLORS.cream, fontFamily: "'Inter', sans-serif", color: COLORS.textDark }}>
+    <div style={{ position: "relative", minHeight: "100vh", background: COLORS.cream, fontFamily: "'Inter', sans-serif", color: COLORS.textDark }}>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@600;700&family=Inter:wght@400;500;600;700&display=swap');
         .gc-btn { transition: transform 150ms ease, box-shadow 150ms ease; cursor: pointer; border: none; font-family: 'Inter', sans-serif; }
@@ -150,17 +166,29 @@ export default function GearLockerClient({ student, planets, visitedPlanetKeys, 
         .nav-pill:hover { transform: translateY(-1px); }
       `}</style>
 
-      <main style={{ padding: 24, maxWidth: 1300, margin: "0 auto" }}>
-        <BackToHubButton />
+      {/* Full-viewport fixed background (Aug 27 full-screen pass) — replaces
+          the old aspect-ratio-locked "card" stage, same change and same
+          reasoning as MissionsClient.js. This stays pinned to the viewport
+          as the page scrolls (there IS scroll on this page, unlike
+          Missions, since the nav bar + Available Planets grid live below
+          the map) — the opaque foreground content further down simply
+          covers it once scrolled that far, same trick ProgressClient.js
+          already uses for its hero background. */}
+      <div style={{ position: "fixed", inset: 0, zIndex: 0, background: "#0D0B2A" }}>
+        <img src="/student/galaxy_hub_bg.jpg" alt="Galaxy Hub" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+      </div>
 
-        {/* THE MAP */}
-        <div style={{ position: "relative", width: "100%", paddingTop: STAGE_ASPECT_PADDING, borderRadius: 24, overflow: "hidden", boxShadow: "0 8px 30px rgba(0,0,0,.25)", marginBottom: 16, background: "#0D0B2A" }}>
-          <img src="/student/galaxy_hub_bg.jpg" alt="Galaxy Hub" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
+      {/* No HTML title here on purpose — the background art already has a
+          "GALAXY HUB" neon sign baked in up top; adding our own text
+          title doubled it up and collided with the sign. */}
 
-          {/* No HTML title here on purpose — the background art already has a
-              "GALAXY HUB" neon sign baked in up top; adding our own text
-              title doubled it up and collided with the sign. */}
+      <BackToHubButton />
 
+      {/* Fixed full-viewport overlay for the interactive map layer (crystal
+          panel, stats panel, dashed lines, ship, planet nodes) — pinned
+          exactly like the background above so they stay glued together at
+          any scroll position, matching Missions' same approach. */}
+      <div style={{ position: "fixed", inset: 0, zIndex: 1 }}>
           {/* Crystal count + log */}
           <div style={{ position: "absolute", top: "4%", left: "3%", background: "rgba(20,16,50,.72)", backdropFilter: "blur(8px)", borderRadius: 16, padding: "10px 14px", textAlign: "center", boxShadow: "0 4px 16px rgba(0,0,0,.3)" }}>
             <div style={{ fontSize: 9.5, fontWeight: 700, color: "#A9B4E8", textTransform: "uppercase", letterSpacing: .4, marginBottom: 4 }}>Your Crystals</div>
@@ -250,8 +278,18 @@ export default function GearLockerClient({ student, planets, visitedPlanetKeys, 
               </button>
             );
           })}
-        </div>
+      </div>
 
+      {/* Spacer — pushes the scrollable content below the fold so it
+          doesn't start out overlapping the fixed map above. Same 100vh
+          used everywhere else the map/pedestal art is sized to fill the
+          screen. */}
+      <div style={{ height: "100vh" }} />
+
+      {/* Scrollable foreground content — opaque so it fully covers the
+          fixed map/background above once the student scrolls this far,
+          same trick ProgressClient.js uses for its hero background. */}
+      <div style={{ position: "relative", zIndex: 2, background: COLORS.cream, padding: "24px 24px 40px", maxWidth: 1300, margin: "0 auto" }}>
         {/* NAV BAR — this page only, per Emily's call; every other student
             page keeps the small Back to Hub button instead. */}
         <div style={{ display: "flex", justifyContent: "center", gap: 8, flexWrap: "wrap", marginBottom: 20 }}>
@@ -312,7 +350,7 @@ export default function GearLockerClient({ student, planets, visitedPlanetKeys, 
             ✦ Earn crystals by completing missions and turning in your best work! ✦
           </p>
         </div>
-      </main>
+      </div>
 
       <PlanetDetailModal planet={selectedPlanet} unlocked={selectedPlanet ? isUnlocked(selectedPlanet) : false} onClose={() => setSelectedPlanet(null)} />
       <CrystalLogModal open={logOpen} onClose={() => setLogOpen(false)} pointsHistory={pointsHistory} />

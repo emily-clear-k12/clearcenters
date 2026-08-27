@@ -289,7 +289,10 @@ export default function ProgressClient({ student, missions, badgeTiers, pointsHi
         <img src="/student/progress_hub_bg.jpg" alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
       </div>
 
-      <div style={{ position: "relative", zIndex: 1, padding: 24, maxWidth: 1300, margin: "0 auto" }}>
+      <div style={{ position: "relative", zIndex: 1, padding: "70px 24px 24px", maxWidth: 1300, margin: "0 auto" }}>
+        {/* BackToHubButton is position:fixed as of the Aug 27 full-screen
+            pass (see components/BackToHubButton.js) — the extra top padding
+            above just keeps this page's own header card clear of it. */}
         <BackToHubButton />
 
         {/* HERO ZONE — title, stats, crystal pill + growth chart, then the
