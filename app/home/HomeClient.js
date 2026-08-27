@@ -188,7 +188,7 @@ export default function HomeClient({ student, studentClass, assignments, mission
           </div>
         )}
 
-        <div style={{ display: "grid", gridTemplateColumns: "1.35fr 1fr", gap: 20, marginBottom: 20 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "1.2fr 1fr", gap: 20, marginBottom: 20, alignItems: "stretch" }}>
           <div style={{ ...glassCard, borderRadius: 16, boxShadow: "0 4px 16px rgba(0,0,0,.08)", padding: 20 }}>
             <p style={{ fontSize: 13, fontWeight: 700, color: COLORS.textMuted, textTransform: "uppercase", margin: "0 0 12px 0" }}>Up Next</p>
             {upNext.length > 0 ? (
@@ -213,7 +213,13 @@ export default function HomeClient({ student, studentClass, assignments, mission
             )}
           </div>
 
-          <div style={{ ...glassCard, borderRadius: 16, boxShadow: "0 4px 16px rgba(0,0,0,.08)", padding: 20 }}>
+          {/* Your Progress + Your Badges, combined into one card per Emily's request (Aug 27) so
+              this row replaces two stacked sections with one — same total width as Up Next, no
+              extra vertical row, so the page fits without scrolling. Stats sit on top, the badge
+              track sits below a light divider; "marginTop: auto" on the badge block only kicks in
+              if this card ends up shorter than Up Next (grid stretch makes both columns match
+              height), pinning the badges to the bottom instead of leaving an awkward gap above them. */}
+          <div style={{ ...glassCard, borderRadius: 16, boxShadow: "0 4px 16px rgba(0,0,0,.08)", padding: 20, display: "flex", flexDirection: "column" }}>
             <p style={{ fontSize: 13, fontWeight: 700, color: COLORS.textMuted, textTransform: "uppercase", margin: "0 0 12px 0" }}>Your Progress</p>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
               <div className="stat-card-img" style={{ position: "relative", paddingTop: "56.28%", borderRadius: 16, overflow: "hidden", boxShadow: "0 2px 10px rgba(0,0,0,.1)" }}>
@@ -225,32 +231,30 @@ export default function HomeClient({ student, studentClass, assignments, mission
                 <div className="num" style={{ position: "absolute", left: "49.9%", top: "35.8%", transform: "translate(-50%, -50%)", fontFamily: "'Poppins', sans-serif", fontWeight: 700, color: COLORS.textDark }}>{student.crystal_points}</div>
               </div>
             </div>
-          </div>
-        </div>
 
-        <div style={{ ...glassCard, borderRadius: 16, boxShadow: "0 4px 16px rgba(0,0,0,.08)", padding: 20, width: "fit-content", maxWidth: "100%" }}>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
-            <p style={{ fontSize: 13, fontWeight: 700, color: COLORS.textMuted, textTransform: "uppercase", margin: 0, whiteSpace: "nowrap" }}>Your Badges</p>
-          </div>
-          <div style={{ display: "flex", gap: 20, flexWrap: "wrap" }}>
-            {tiers.map((tier) => {
-              const earned = student.crystal_points >= tier.threshold;
-              const isCurrent = currentTier && tier.id === currentTier.id;
-              return (
-                <div key={tier.id} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6, width: 92, position: "relative" }}>
-                  {isCurrent && (
-                    <div style={{ position: "absolute", top: -6, left: "50%", transform: "translateX(-50%)", width: 78, height: 78, borderRadius: "50%", boxShadow: `0 0 0 3px ${COLORS.gold}` }} />
-                  )}
-                  <img src={tier.image_path} alt="" style={{ width: 68, height: 68, objectFit: "contain", borderRadius: 12, opacity: earned ? 1 : 0.28, filter: earned ? "none" : "grayscale(1)" }} />
-                  <div style={{ fontSize: 12.5, fontWeight: 700, textAlign: "center", color: earned ? COLORS.textDark : COLORS.textMuted }}>
-                    {tier.label}{!earned ? " · Locked" : ""}
-                  </div>
-                </div>
-              );
-            })}
-            {tiers.length === 0 && (
-              <p style={{ fontSize: 13, color: COLORS.textMuted }}>Badges aren't set up yet — check back soon!</p>
-            )}
+            <div style={{ borderTop: "1px solid rgba(31,42,68,.12)", paddingTop: 12, marginTop: 16 }}>
+              <p style={{ fontSize: 10.5, fontWeight: 700, color: COLORS.textMuted, textTransform: "uppercase", letterSpacing: .3, margin: "0 0 10px 0" }}>Your Badges</p>
+              <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+                {tiers.map((tier) => {
+                  const earned = student.crystal_points >= tier.threshold;
+                  const isCurrent = currentTier && tier.id === currentTier.id;
+                  return (
+                    <div key={tier.id} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, width: 62, position: "relative" }}>
+                      {isCurrent && (
+                        <div style={{ position: "absolute", top: -5, left: "50%", transform: "translateX(-50%)", width: 60, height: 60, borderRadius: "50%", boxShadow: `0 0 0 3px ${COLORS.gold}` }} />
+                      )}
+                      <img src={tier.image_path} alt="" style={{ width: 52, height: 52, objectFit: "contain", borderRadius: 10, opacity: earned ? 1 : 0.28, filter: earned ? "none" : "grayscale(1)" }} />
+                      <div style={{ fontSize: 10, fontWeight: 700, textAlign: "center", lineHeight: 1.2, color: earned ? COLORS.textDark : COLORS.textMuted }}>
+                        {tier.label}{!earned ? " · Locked" : ""}
+                      </div>
+                    </div>
+                  );
+                })}
+                {tiers.length === 0 && (
+                  <p style={{ fontSize: 12, color: COLORS.textMuted, margin: 0 }}>Badges aren't set up yet — check back soon!</p>
+                )}
+              </div>
+            </div>
           </div>
         </div>
       </main>
