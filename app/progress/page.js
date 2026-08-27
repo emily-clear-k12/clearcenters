@@ -26,16 +26,23 @@ export default async function ProgressPage() {
   // this page, not this one.
   const lastCheck = student.last_progress_check_at || null;
 
+  // This page now covers what used to be two separate pages (My Progress
+  // and My Notebook), which both queried this same "submissions" table in
+  // slightly different shapes — this is the union of both: enough columns
+  // for the top "needs your attention" list AND the bottom archive tiles +
+  // their detail popup (which needs the student's actual answer text and
+  // the case's big question, hence the nested assignments/cases select).
+  //
   // Only real, final submissions — draft autosaves never set submitted_at
   // (see the fix in /api/submission/save), so this only shows work the
-  // student actually turned in.
-  //
-  // Intentionally NOT selecting ai_score or ai_rationale here — the AI's
-  // read is a teacher-only preview (see the grading page), students should
-  // only ever see the teacher's own grade and feedback.
+  // student actually turned in. Intentionally NOT selecting ai_score or
+  // ai_rationale — the AI's read is a teacher-only preview; students only
+  // ever see the teacher's own grade and feedback.
   const { data: submissions } = await supabaseAdmin
     .from("submissions")
-    .select("id, assignment_id, submitted_at, released, released_at, teacher_grade, teacher_feedback, revision_requested")
+    .select(
+      "id, assignment_id, attempt1, attempt2, self_confidence, submitted_at, released, released_at, teacher_grade, teacher_feedback, revision_requested, assignments(case_standard, cases(title, learning_target))"
+    )
     .eq("student_id", studentId)
     .not("submitted_at", "is", null)
     .order("submitted_at", { ascending: false });
@@ -57,31 +64,19 @@ export default async function ProgressPage() {
   }
 
   const subs = submissions || [];
-  const assignmentIds = [...new Set(subs.map((s) => s.assignment_id).filter(Boolean))];
-
-  let assignments = [];
-  if (assignmentIds.length > 0) {
-    const { data } = await supabaseAdmin.from("assignments").select("id, case_standard").in("id", assignmentIds);
-    assignments = data || [];
-  }
-  const assignmentMap = Object.fromEntries(assignments.map((a) => [a.id, a]));
-
-  const caseStandards = [...new Set(assignments.map((a) => a.case_standard).filter(Boolean))];
-  let cases = [];
-  if (caseStandards.length > 0) {
-    const { data } = await supabaseAdmin.from("cases").select("standard, title").in("standard", caseStandards);
-    cases = data || [];
-  }
-  const caseMap = Object.fromEntries(cases.map((c) => [c.standard, c]));
 
   const missions = subs.map((s) => {
-    const assignment = assignmentMap[s.assignment_id];
-    const caseRow = assignment ? caseMap[assignment.case_standard] : null;
+    const caseStandard = s.assignments?.case_standard || null;
+    const caseTitle = s.assignments?.cases?.title || caseStandard || "Mission";
     return {
       id: s.id,
       assignmentId: s.assignment_id,
-      caseStandard: assignment ? assignment.case_standard : null,
-      caseTitle: caseRow ? caseRow.title : (assignment ? assignment.case_standard : "Mission"),
+      caseStandard,
+      caseTitle,
+      learningTarget: s.assignments?.cases?.learning_target || null,
+      attempt1: s.attempt1,
+      attempt2: s.attempt2,
+      selfConfidence: s.self_confidence,
       submittedAt: s.submitted_at,
       released: !!s.released,
       revisionRequested: !!s.revision_requested,

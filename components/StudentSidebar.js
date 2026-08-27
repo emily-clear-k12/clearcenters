@@ -10,17 +10,21 @@ const COLORS = {
   gold: "#FFC44D",
 };
 
-// "Home", "My Missions", "Progress", "My Notebook", and "Gear Locker" all
-// have real pages behind them now. "Badges" stays visible (so the sidebar
-// doesn't look broken) but is non-interactive and dimmed, instead of
-// looking clickable and silently doing nothing like they used to — the
-// badge collection itself already lives on the Home screen.
+// "My Notebook" merged into "Progress" (Aug 27, 2026) — that page now
+// covers both "what needs your attention" and "finished & graded case
+// files" in one place, so its own nav entry and route went away (the old
+// /notebook URL now just redirects to /progress, see app/notebook/page.js).
+//
+// "Badges" stays visible (so the sidebar doesn't look broken) but is
+// non-interactive and dimmed, instead of looking clickable and silently
+// doing nothing like it used to — the badge collection itself lives on
+// the Home screen. It's slated to move into Gear Locker under a new
+// combined name; leave this dimmed until that page exists.
 const NAV_ITEMS = [
   { label: "Home", icon: "/icons/nav_home.png", href: "/home" },
   { label: "My Missions", icon: "/icons/nav_missions.png", href: "/missions" },
   { label: "Progress", icon: "/icons/nav_progress.png", href: "/progress" },
   { label: "Badges", icon: "/icons/nav_badges.png" },
-  { label: "My Notebook", icon: "/icons/nav_notebook.png", href: "/notebook" },
   { label: "Gear Locker", icon: "/icons/nav_gear.png", href: "/gear-locker" },
 ];
 
