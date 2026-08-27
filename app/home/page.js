@@ -39,9 +39,15 @@ export default async function HomePage() {
     .eq("student_id", studentId)
     .not("submitted_at", "is", null);
 
-  // Badge tiers moved off of Home and into the Crystal Vault page (Aug 27,
-  // 2026) as part of the hub redesign — see app/gear-locker/page.js — so
-  // this page no longer needs to fetch them.
+  // Badge tiers: also fetched by app/gear-locker/page.js (Crystal Vault),
+  // which is the full badge collection now. Home only needs this to show
+  // the student's current tier icon next to their name in the header tile
+  // (Aug 27) — it's a much smaller use of the same data, not a duplicate
+  // of the Crystal Vault feature.
+  const { data: badgeTiers } = await supabaseAdmin
+    .from("badge_tiers")
+    .select("*")
+    .order("sort_order");
 
   return (
     <HomeClient
@@ -49,6 +55,7 @@ export default async function HomePage() {
       studentClass={studentClass}
       assignments={assignments || []}
       missionsCompleted={missionsCompleted || 0}
+      badgeTiers={badgeTiers || []}
     />
   );
 }

@@ -42,7 +42,7 @@ function subjectRingColor(subject) {
 // portals always line up with the glowing floor rings baked into the
 // background art, and so the whole thing fits on one screen with no
 // scrolling — that was the point of the redesign.
-export default function HomeClient({ student, studentClass, assignments, missionsCompleted }) {
+export default function HomeClient({ student, studentClass, assignments, missionsCompleted, badgeTiers }) {
   const router = useRouter();
   const [samOpen, setSamOpen] = useState(false);
   const [notif, setNotif] = useState(null);
@@ -56,6 +56,13 @@ export default function HomeClient({ student, studentClass, assignments, mission
 
   const activeMission = assignments[0] || null;
   const upNext = assignments.slice(1, 3);
+
+  // Just enough badge logic to show the student's CURRENT tier icon next to
+  // their name in the header tile (Aug 27) — the full badge collection with
+  // earned/locked state for every tier lives on the Crystal Vault page.
+  const tiers = badgeTiers && badgeTiers.length > 0 ? badgeTiers : [];
+  const currentTierIndex = [...tiers].reverse().findIndex((t) => student.crystal_points >= t.threshold);
+  const currentTier = tiers.length > 0 ? (currentTierIndex >= 0 ? tiers[tiers.length - 1 - currentTierIndex] : tiers[0]) : null;
 
   return (
     <div
@@ -86,44 +93,49 @@ export default function HomeClient({ student, studentClass, assignments, mission
         .hub-portal--crystal:hover .hub-orb-wrap { filter: drop-shadow(0 10px 22px rgba(0,0,0,.4)) drop-shadow(0 0 22px #FFC44D); }
       `}</style>
 
-      {/* Header */}
+      {/* Header — a compact, more-square stat tile in the top-left corner
+          (Aug 27) rather than the old full-width bar. Welcome + name +
+          current badge on one line, class underneath, then streak / missions
+          completed / crystal points stacked as simple rows below — all the
+          identity + stats info consolidated into one tile instead of spread
+          across a wide bar with pills floating on the right. */}
       <div
         style={{
           position: "absolute",
           top: 18,
           left: 20,
-          right: 20,
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
+          width: 232,
           background: "rgba(255,255,255,.68)",
           backdropFilter: "blur(8px)",
           WebkitBackdropFilter: "blur(8px)",
           borderRadius: 20,
-          padding: "11px 20px",
+          padding: "16px 18px",
           boxShadow: "0 4px 16px rgba(0,0,0,.1)",
           zIndex: 5,
         }}
       >
-        <div>
-          <h1 style={{ fontFamily: "'Poppins', sans-serif", fontSize: 21, fontWeight: 700, margin: 0, color: COLORS.textDark }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 3 }}>
+          {currentTier && (
+            <img src={currentTier.image_path} alt={currentTier.label} title={currentTier.label} style={{ width: 30, height: 30, objectFit: "contain", borderRadius: 8, flexShrink: 0 }} />
+          )}
+          <h1 style={{ fontFamily: "'Poppins', sans-serif", fontSize: 16.5, fontWeight: 700, margin: 0, color: COLORS.textDark, lineHeight: 1.25 }}>
             Welcome back, {student.first_name}!
           </h1>
-          <p style={{ margin: "2px 0 0 0", color: COLORS.textMuted, fontSize: 12 }}>
-            {studentClass?.name ? `${studentClass.name} · ` : ""}your next mission is waiting
-          </p>
         </div>
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+        {studentClass?.name && (
+          <p style={{ margin: "0 0 10px 0", color: COLORS.textMuted, fontSize: 12 }}>{studentClass.name}</p>
+        )}
+        <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
           {student.streak_days > 0 && (
-            <div style={{ display: "flex", alignItems: "center", gap: 6, background: COLORS.white, borderRadius: 999, padding: "6px 13px", boxShadow: "0 3px 10px rgba(0,0,0,.08)", fontWeight: 700, fontSize: 13 }}>
-              🔥 {student.streak_days} day{student.streak_days === 1 ? "" : "s"}
+            <div style={{ display: "flex", alignItems: "center", gap: 7, fontWeight: 700, fontSize: 12.5, color: COLORS.textDark }}>
+              <span style={{ fontSize: 14 }}>🔥</span> {student.streak_days} day{student.streak_days === 1 ? "" : "s"}
             </div>
           )}
-          <div style={{ display: "flex", alignItems: "center", gap: 6, background: COLORS.white, borderRadius: 999, padding: "6px 13px", boxShadow: "0 3px 10px rgba(0,0,0,.08)", fontWeight: 700, fontSize: 13 }}>
-            🎯 {missionsCompleted}
+          <div style={{ display: "flex", alignItems: "center", gap: 7, fontWeight: 700, fontSize: 12.5, color: COLORS.textDark }}>
+            <span style={{ fontSize: 14 }}>🎯</span> {missionsCompleted} mission{missionsCompleted === 1 ? "" : "s"} completed
           </div>
-          <div style={{ display: "flex", alignItems: "center", gap: 6, background: COLORS.white, borderRadius: 999, padding: "6px 13px", boxShadow: "0 3px 10px rgba(0,0,0,.08)", fontWeight: 700, fontSize: 13 }}>
-            <img src="/icons/crystal_points.png" alt="" style={{ width: 18, height: 18, objectFit: "contain" }} />
+          <div style={{ display: "flex", alignItems: "center", gap: 7, fontWeight: 700, fontSize: 12.5, color: COLORS.textDark }}>
+            <img src="/icons/crystal_points.png" alt="" style={{ width: 16, height: 16, objectFit: "contain" }} />
             {student.crystal_points}
           </div>
         </div>
