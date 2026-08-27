@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Search, Calendar, ChevronLeft } from "lucide-react";
 import { supabase } from "../../../../lib/supabaseClient";
 import TeacherSidebar from "../../../../components/TeacherSidebar";
+import TeacherPageBanner from "../../../../components/TeacherPageBanner";
 
 const COLORS = {
   violet: "#7B5DFF",
@@ -191,10 +192,14 @@ function NewAssignmentContent() {
           <button onClick={() => router.push("/teacher/assign")} className="gc-btn" style={{ display: "flex", alignItems: "center", gap: 6, background: "none", color: COLORS.textMuted, fontSize: 13, fontWeight: 600, marginBottom: 10 }}>
             <ChevronLeft size={16} /> Back to My Classes
           </button>
-          <h1 style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 700, fontSize: 24, margin: "0 0 4px 0" }}>Challenge Library</h1>
-          <p style={{ color: COLORS.textMuted, fontSize: 14, marginBottom: 20 }}>
-            Browse challenge types and cases, then choose which class to assign to.
-          </p>
+          <TeacherPageBanner style={{ marginBottom: 20 }}>
+            <div style={{ maxWidth: "62%" }}>
+              <h1 style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 700, fontSize: 24, margin: "0 0 4px 0" }}>Challenge Library</h1>
+              <p style={{ color: COLORS.textMuted, fontSize: 14, margin: 0 }}>
+                Browse challenge types and cases, then choose which class to assign to.
+              </p>
+            </div>
+          </TeacherPageBanner>
 
           {error && <div style={{ background: "#FBEAEA", color: "#B23A3A", borderRadius: 10, padding: "10px 14px", fontSize: 13, marginBottom: 16 }}>{error}</div>}
 

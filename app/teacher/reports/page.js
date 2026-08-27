@@ -4,6 +4,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "../../../lib/supabaseClient";
 import TeacherSidebar from "../../../components/TeacherSidebar";
+import TeacherPageBanner from "../../../components/TeacherPageBanner";
 
 const COLORS = {
   canvas: "#F2F0FA",
@@ -59,8 +60,12 @@ export default function ReportsPage() {
       `}</style>
       <TeacherSidebar teacherEmail={teacherEmail} />
       <main style={{ flex: 1, padding: "32px 36px", maxWidth: 900, margin: "0 auto" }}>
-        <h1 style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 700, fontSize: 28, margin: "0 0 6px 0" }}>Reports</h1>
-        <p style={{ color: COLORS.textMuted, fontSize: 14, marginBottom: 24 }}>Pick a class to generate a printable summary — great for parent conferences or admin check-ins.</p>
+        <TeacherPageBanner>
+          <div style={{ maxWidth: "62%" }}>
+            <h1 style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 700, fontSize: 28, margin: "0 0 6px 0" }}>Reports</h1>
+            <p style={{ color: COLORS.textMuted, fontSize: 14, margin: 0 }}>Pick a class to generate a printable summary — great for parent conferences or admin check-ins.</p>
+          </div>
+        </TeacherPageBanner>
 
         <div className="gc-card" onClick={() => router.push("/teacher/reports/standards")} style={{ background: COLORS.violetSoft, border: `1px solid ${COLORS.violet}33`, borderRadius: 16, padding: "18px 20px", boxShadow: "0 4px 16px rgba(13,27,42,.06)", marginBottom: 20, display: "flex", alignItems: "center", gap: 16 }}>
           <div style={{ width: 44, height: 44, borderRadius: 12, background: COLORS.white, display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, color: COLORS.violet, fontSize: 20, flexShrink: 0 }}>📊</div>

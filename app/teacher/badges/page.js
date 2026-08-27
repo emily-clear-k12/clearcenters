@@ -4,6 +4,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "../../../lib/supabaseClient";
 import TeacherSidebar from "../../../components/TeacherSidebar";
+import TeacherPageBanner from "../../../components/TeacherPageBanner";
 
 const COLORS = {
   canvas: "#F2F0FA",
@@ -243,15 +244,17 @@ export default function BadgesRewardsPage() {
       <TeacherSidebar teacherEmail={teacherEmail} />
 
       <main style={{ flex: 1, padding: "32px 36px", maxWidth: 900, margin: "0 auto" }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 24 }}>
-          <div>
-            <h1 style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 700, fontSize: 28, margin: "0 0 4px 0" }}>Badges & Rewards</h1>
-            <p style={{ margin: 0, color: COLORS.textMuted, fontSize: 14 }}>Rename a tier or change how many Crystal Points it takes to reach it — students see these on their Home screen.</p>
+        <TeacherPageBanner style={{ marginBottom: 24 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+            <div style={{ maxWidth: "58%" }}>
+              <h1 style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 700, fontSize: 28, margin: "0 0 4px 0" }}>Badges & Rewards</h1>
+              <p style={{ margin: 0, color: COLORS.textMuted, fontSize: 14 }}>Rename a tier or change how many Crystal Points it takes to reach it — students see these on their Home screen.</p>
+            </div>
+            <button onClick={() => setAwardModalOpen(true)} disabled={classes.length === 0} className="gc-btn" style={{ background: COLORS.violet, color: COLORS.white, borderRadius: 999, padding: "11px 20px", fontWeight: 700, fontSize: 13.5, opacity: classes.length === 0 ? 0.5 : 1, whiteSpace: "nowrap" }}>
+              🔮 Award Crystal Points
+            </button>
           </div>
-          <button onClick={() => setAwardModalOpen(true)} disabled={classes.length === 0} className="gc-btn" style={{ background: COLORS.violet, color: COLORS.white, borderRadius: 999, padding: "11px 20px", fontWeight: 700, fontSize: 13.5, opacity: classes.length === 0 ? 0.5 : 1, whiteSpace: "nowrap" }}>
-            🔮 Award Crystal Points
-          </button>
-        </div>
+        </TeacherPageBanner>
 
         {error && (
           <div style={{ background: "#FBEAEA", color: "#B23A3A", borderRadius: 10, padding: "10px 14px", fontSize: 13, marginBottom: 16 }}>

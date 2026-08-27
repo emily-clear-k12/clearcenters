@@ -4,6 +4,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "../../../lib/supabaseClient";
 import TeacherSidebar from "../../../components/TeacherSidebar";
+import TeacherPageBanner from "../../../components/TeacherPageBanner";
 
 const COLORS = {
   canvas: "#F2F0FA",
@@ -94,10 +95,14 @@ export default function ClassSettingsPage() {
       <style>{`@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@600;700&family=Inter:wght@400;500;600;700&display=swap');`}</style>
       <TeacherSidebar teacherEmail={teacherEmail} />
       <main style={{ flex: 1, padding: "32px 36px", maxWidth: 780, margin: "0 auto" }}>
-        <h1 style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 700, fontSize: 26, margin: "0 0 6px 0" }}>Class Settings</h1>
-        <p style={{ color: COLORS.textMuted, fontSize: 14.5, lineHeight: 1.6, margin: "0 0 28px 0" }}>
-          Rename any of your classes below. Roster management and other class-level preferences are coming soon.
-        </p>
+        <TeacherPageBanner>
+          <div style={{ maxWidth: "62%" }}>
+            <h1 style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 700, fontSize: 26, margin: "0 0 6px 0" }}>Class Settings</h1>
+            <p style={{ color: COLORS.textMuted, fontSize: 14.5, lineHeight: 1.6, margin: 0 }}>
+              Rename any of your classes below. Roster management and other class-level preferences are coming soon.
+            </p>
+          </div>
+        </TeacherPageBanner>
 
         {loadingClasses ? (
           <div style={{ color: COLORS.textMuted, fontSize: 14 }}>Loading your classes...</div>

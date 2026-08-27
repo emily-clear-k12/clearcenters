@@ -4,6 +4,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "../../../lib/supabaseClient";
 import TeacherSidebar from "../../../components/TeacherSidebar";
+import TeacherPageBanner from "../../../components/TeacherPageBanner";
 
 const COLORS = {
   canvas: "#F2F0FA",
@@ -159,8 +160,12 @@ export default function StudentProgressPage() {
       <style>{`@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@600;700&family=Inter:wght@400;500;600;700&display=swap');`}</style>
       <TeacherSidebar teacherEmail={teacherEmail} />
       <main style={{ flex: 1, padding: "32px 36px", maxWidth: 1000, margin: "0 auto" }}>
-        <h1 style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 700, fontSize: 28, margin: "0 0 6px 0" }}>Student Progress</h1>
-        <p style={{ color: COLORS.textMuted, fontSize: 14, marginBottom: 16 }}>Based on released grades, grouped by class.</p>
+        <TeacherPageBanner>
+          <div style={{ maxWidth: "62%" }}>
+            <h1 style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 700, fontSize: 28, margin: "0 0 6px 0" }}>Student Progress</h1>
+            <p style={{ color: COLORS.textMuted, fontSize: 14, margin: 0 }}>Based on released grades, grouped by class.</p>
+          </div>
+        </TeacherPageBanner>
 
         <div style={{ display: "flex", gap: 8, marginBottom: 24 }}>
           {[{ key: "student", label: "By Student" }, { key: "standard", label: "By Standard" }].map((t) => (

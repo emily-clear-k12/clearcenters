@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Plus, Copy, Check, Printer } from "lucide-react";
 import { supabase } from "../../../lib/supabaseClient";
 import TeacherSidebar from "../../../components/TeacherSidebar";
+import TeacherPageBanner from "../../../components/TeacherPageBanner";
 
 const COLORS = {
   navy: "#0D1B2A",
@@ -281,14 +282,16 @@ export default function MyClassesPage() {
 
       <div style={{ flex: 1, padding: "32px 36px", display: "flex", justifyContent: "center" }}>
         <div style={{ width: "100%", maxWidth: 1080 }}>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20 }}>
-            <h1 style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 700, fontSize: 28, margin: 0, color: COLORS.textDark }}>My Classes</h1>
-            {selectedClassId && (
-              <button onClick={() => router.push(`/teacher/assign/new?classId=${selectedClassId}`)} className="gc-btn" style={{ background: COLORS.violet, color: COLORS.white, borderRadius: 999, padding: "11px 22px", fontWeight: 700, fontSize: 14, display: "flex", alignItems: "center", gap: 8 }}>
-                <Plus size={16} /> New Assignment
-              </button>
-            )}
-          </div>
+          <TeacherPageBanner style={{ marginBottom: 20 }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+              <h1 style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 700, fontSize: 28, margin: 0, color: COLORS.textDark }}>My Classes</h1>
+              {selectedClassId && (
+                <button onClick={() => router.push(`/teacher/assign/new?classId=${selectedClassId}`)} className="gc-btn" style={{ background: COLORS.violet, color: COLORS.white, borderRadius: 999, padding: "11px 22px", fontWeight: 700, fontSize: 14, display: "flex", alignItems: "center", gap: 8 }}>
+                  <Plus size={16} /> New Assignment
+                </button>
+              )}
+            </div>
+          </TeacherPageBanner>
 
           {error && <div style={{ background: "#FBEAEA", color: "#B23A3A", borderRadius: 10, padding: "10px 14px", fontSize: 13, marginBottom: 16 }}>{error}</div>}
 

@@ -4,6 +4,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "../../../lib/supabaseClient";
 import TeacherSidebar from "../../../components/TeacherSidebar";
+import TeacherPageBanner from "../../../components/TeacherPageBanner";
 
 const COLORS = {
   cream: "#F2F0FA",
@@ -140,7 +141,9 @@ export default function TeacherGradeListPage() {
 
       <div style={{ flex: 1, padding: "32px 36px", display: "flex", justifyContent: "center" }}>
         <div style={{ width: "100%", maxWidth: 900 }}>
-          <h1 style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 700, fontSize: 28, margin: "0 0 20px 0" }}>Review Submissions</h1>
+          <TeacherPageBanner>
+            <h1 style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 700, fontSize: 28, margin: 0 }}>Review Submissions</h1>
+          </TeacherPageBanner>
           {error && (
             <div style={{ background: "#FBEAEA", color: "#B23A3A", borderRadius: 10, padding: "10px 14px", fontSize: 13, marginBottom: 16 }}>
               {error}

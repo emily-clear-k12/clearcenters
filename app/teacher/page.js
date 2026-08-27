@@ -4,6 +4,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "../../lib/supabaseClient";
 import TeacherSidebar from "../../components/TeacherSidebar";
+import TeacherPageBanner from "../../components/TeacherPageBanner";
 
 const COLORS = {
   navy: "#0D1B2A",
@@ -386,15 +387,14 @@ export default function TeacherOverview() {
       <main style={{ flex: 1, padding: "32px 36px", maxWidth: 1450, margin: "0 auto" }}>
         {error && <div style={{ background: "#FBEAEA", color: "#B23A3A", borderRadius: 10, padding: "10px 14px", fontSize: 13, marginBottom: 16 }}>{error}</div>}
 
-        <div style={{ position: "relative", marginBottom: 20, borderRadius: 20, overflow: "hidden", background: COLORS.white, border: `1px solid ${COLORS.border}`, padding: "28px 32px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-          <div>
-            <h1 style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 700, fontSize: 38, color: COLORS.textDark, margin: "0 0 6px 0" }}>
+        <TeacherPageBanner>
+          <div style={{ maxWidth: "62%" }}>
+            <h1 style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 700, fontSize: 34, color: COLORS.textDark, margin: "0 0 6px 0" }}>
               Welcome back{teacherFirstName ? `, ${teacherFirstName}` : ""}!
             </h1>
             <p style={{ fontSize: 15, color: COLORS.textMuted, margin: 0 }}>Here's what's happening in your classes today.</p>
           </div>
-          <img src="/teacher/header_crystal_books_plant.png" alt="" style={{ height: 130, objectFit: "contain", opacity: 0.95 }} />
-        </div>
+        </TeacherPageBanner>
 
         {classes.length > 1 && (
           <div style={{ display: "flex", gap: 8, marginBottom: 20, flexWrap: "wrap" }}>
