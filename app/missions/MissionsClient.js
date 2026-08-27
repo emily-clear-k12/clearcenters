@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
-import StudentSidebar from "../../components/StudentSidebar";
+import BackToHubButton from "../../components/BackToHubButton";
 
 const COLORS = {
   navy: "#0D1B2A",
@@ -59,7 +59,6 @@ export default function MissionsClient({ student, assignments }) {
         backgroundColor: "#EDE8F3",
         fontFamily: "'Inter', sans-serif",
         color: COLORS.textDark,
-        display: "flex",
       }}
     >
       <style>{`
@@ -69,9 +68,9 @@ export default function MissionsClient({ student, assignments }) {
         .mission-card:hover { box-shadow: 0 10px 24px rgba(13,27,42,.18) !important; }
       `}</style>
 
-      <StudentSidebar />
+      <main style={{ padding: 24, maxWidth: 1300, margin: "0 auto" }}>
+        <BackToHubButton />
 
-      <main style={{ flex: 1, padding: 24, maxWidth: 1300, margin: "0 auto" }}>
         <div
           style={{
             display: "flex",

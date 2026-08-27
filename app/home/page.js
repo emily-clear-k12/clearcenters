@@ -39,12 +39,9 @@ export default async function HomePage() {
     .eq("student_id", studentId)
     .not("submitted_at", "is", null);
 
-  // Badge tiers are teacher-editable now (see /teacher/badges), so they
-  // live in the database instead of being hardcoded here.
-  const { data: badgeTiers } = await supabaseAdmin
-    .from("badge_tiers")
-    .select("*")
-    .order("sort_order");
+  // Badge tiers moved off of Home and into the Crystal Vault page (Aug 27,
+  // 2026) as part of the hub redesign — see app/gear-locker/page.js — so
+  // this page no longer needs to fetch them.
 
   return (
     <HomeClient
@@ -52,7 +49,6 @@ export default async function HomePage() {
       studentClass={studentClass}
       assignments={assignments || []}
       missionsCompleted={missionsCompleted || 0}
-      badgeTiers={badgeTiers || []}
     />
   );
 }

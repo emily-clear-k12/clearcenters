@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
-import StudentSidebar from "../../components/StudentSidebar";
+import BackToHubButton from "../../components/BackToHubButton";
 import { getPublicCase } from "../../lib/cases/index.public";
 
 const COLORS = {
@@ -133,7 +133,6 @@ export default function ProgressClient({ student, missions }) {
         backgroundColor: "#EFEBFA",
         fontFamily: "'Inter', sans-serif",
         color: COLORS.textDark,
-        display: "flex",
       }}
     >
       <style>{`
@@ -143,9 +142,9 @@ export default function ProgressClient({ student, missions }) {
         .gc-card:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,.14); }
       `}</style>
 
-      <StudentSidebar />
+      <main style={{ padding: 24, maxWidth: 1200, margin: "0 auto" }}>
+        <BackToHubButton />
 
-      <main style={{ flex: 1, padding: 24, maxWidth: 1200, margin: "0 auto" }}>
         <div
           style={{
             display: "flex",

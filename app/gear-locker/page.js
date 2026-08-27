@@ -32,11 +32,22 @@ export default async function GearLockerPage() {
     .select("item_id, equipped")
     .eq("student_id", studentId);
 
+  // Badges moved here from Home as part of the Crystal Vault merge (Aug 27,
+  // 2026) — this page now covers both spending crystal points AND seeing
+  // the badge tiers they unlock. Badge tiers are teacher-editable (see
+  // /teacher/badges), so they live in the database rather than being
+  // hardcoded here.
+  const { data: badgeTiers } = await supabaseAdmin
+    .from("badge_tiers")
+    .select("*")
+    .order("sort_order");
+
   return (
     <GearLockerClient
       student={student}
       shopItems={shopItems || []}
       inventory={inventory || []}
+      badgeTiers={badgeTiers || []}
     />
   );
 }

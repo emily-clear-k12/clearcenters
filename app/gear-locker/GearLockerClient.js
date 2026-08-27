@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
-import StudentSidebar from "../../components/StudentSidebar";
+import BackToHubButton from "../../components/BackToHubButton";
 
 const COLORS = {
   navy: "#0D1B2A",
@@ -111,13 +111,21 @@ function filenameOf(url) {
   return (url || "").split("/").pop();
 }
 
-export default function GearLockerClient({ student, shopItems, inventory }) {
+export default function GearLockerClient({ student, shopItems, inventory, badgeTiers }) {
   const router = useRouter();
   const [busyItemId, setBusyItemId] = useState(null);
   const [error, setError] = useState(null);
   const [selectedRoom, setSelectedRoom] = useState("dream_space");
 
   const room = ROOMS[selectedRoom];
+
+  // Badge tiers are teacher-editable (see /teacher/badges) and loaded from
+  // the database by the server component; this is just a safety net in
+  // case that table is ever empty. Moved here from Home as part of the
+  // Crystal Vault merge (Aug 27, 2026).
+  const tiers = badgeTiers && badgeTiers.length > 0 ? badgeTiers : [];
+  const currentTierIndex = [...tiers].reverse().findIndex((t) => student.crystal_points >= t.threshold);
+  const currentTier = tiers.length > 0 ? (currentTierIndex >= 0 ? tiers[tiers.length - 1 - currentTierIndex] : tiers[0]) : null;
 
   const ownedByItemId = Object.fromEntries(inventory.map((row) => [row.item_id, row]));
 
@@ -194,7 +202,7 @@ export default function GearLockerClient({ student, shopItems, inventory }) {
   }
 
   return (
-    <div style={{ minHeight: "100vh", background: COLORS.cream, fontFamily: "'Inter', sans-serif", color: COLORS.textDark, display: "flex" }}>
+    <div style={{ minHeight: "100vh", background: COLORS.cream, fontFamily: "'Inter', sans-serif", color: COLORS.textDark }}>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@600;700&family=Inter:wght@400;500;600;700&display=swap');
         .gc-btn { transition: transform 150ms ease, box-shadow 150ms ease; cursor: pointer; border: none; font-family: 'Inter', sans-serif; }
@@ -204,16 +212,41 @@ export default function GearLockerClient({ student, shopItems, inventory }) {
         .gc-room-tab:hover { transform: translateY(-1px); }
       `}</style>
 
-      <StudentSidebar />
+      <main style={{ padding: 24, maxWidth: 1200, margin: "0 auto" }}>
+        <BackToHubButton />
 
-      <main style={{ flex: 1, padding: 24, maxWidth: 1200, margin: "0 auto" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 20 }}>
           <div>
-            <h1 style={{ fontFamily: "'Poppins', sans-serif", fontSize: 28, fontWeight: 700, margin: "0 0 4px 0" }}>Your HQ</h1>
-            <p style={{ margin: 0, color: COLORS.textMuted, fontSize: 14 }}>Fill your rooms with stuff you earn from missions.</p>
+            <h1 style={{ fontFamily: "'Poppins', sans-serif", fontSize: 28, fontWeight: 700, margin: "0 0 4px 0" }}>Crystal Vault</h1>
+            <p style={{ margin: 0, color: COLORS.textMuted, fontSize: 14 }}>Spend your crystal points on room décor, and see the badges you've earned.</p>
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 6, background: COLORS.white, borderRadius: 999, padding: "8px 16px", boxShadow: "0 4px 16px rgba(0,0,0,.08)", fontWeight: 700, fontSize: 15 }}>
             🔮 {student.crystal_points}
+          </div>
+        </div>
+
+        {/* Badges — moved here from Home as part of the Crystal Vault merge. */}
+        <div style={{ background: COLORS.white, borderRadius: 16, boxShadow: "0 4px 16px rgba(0,0,0,.08)", padding: 20, marginBottom: 24 }}>
+          <p style={{ fontSize: 13, fontWeight: 700, color: COLORS.textMuted, textTransform: "uppercase", letterSpacing: .3, margin: "0 0 14px 0" }}>Your Badges</p>
+          <div style={{ display: "flex", gap: 14, flexWrap: "wrap" }}>
+            {tiers.map((tier) => {
+              const earned = student.crystal_points >= tier.threshold;
+              const isCurrent = currentTier && tier.id === currentTier.id;
+              return (
+                <div key={tier.id} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 5, width: 68, position: "relative" }}>
+                  {isCurrent && (
+                    <div style={{ position: "absolute", top: -6, left: "50%", transform: "translateX(-50%)", width: 66, height: 66, borderRadius: "50%", boxShadow: `0 0 0 3px ${COLORS.gold}` }} />
+                  )}
+                  <img src={tier.image_path} alt="" style={{ width: 58, height: 58, objectFit: "contain", borderRadius: 10, opacity: earned ? 1 : 0.28, filter: earned ? "none" : "grayscale(1)" }} />
+                  <div style={{ fontSize: 10.5, fontWeight: 700, textAlign: "center", lineHeight: 1.2, color: earned ? COLORS.textDark : COLORS.textMuted }}>
+                    {tier.label}{!earned ? " · Locked" : ""}
+                  </div>
+                </div>
+              );
+            })}
+            {tiers.length === 0 && (
+              <p style={{ fontSize: 12, color: COLORS.textMuted, margin: 0 }}>Badges aren't set up yet — check back soon!</p>
+            )}
           </div>
         </div>
 

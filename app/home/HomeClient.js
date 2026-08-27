@@ -2,42 +2,31 @@
 
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import StudentSidebar from "../../components/StudentSidebar";
 
 const COLORS = {
-  navy: "#0D1B2A",
-  deepNavy: "#162845",
   violet: "#7B5DFF",
   violetSoft: "#EDE6FF",
   teal: "#00C2C7",
   tealSoft: "#E6F8F9",
   gold: "#FFC44D",
-  cream: "#F2F0FA",
   white: "#FFFFFF",
   textDark: "#1F2A44",
   textMuted: "#8892A6",
-  success: "#22C55E",
 };
 
 function caseImagePath(standard) {
   return `/cases/${standard.replace(/\./g, "-")}.jpg`;
 }
 
-// Shared "frosted glass" look for the dashboard tiles now that they float
-// over the crystal-room background — semi-transparent instead of solid
-// white so the room shows through, with a blur so text on top stays
-// readable regardless of what's behind it.
-const glassCard = {
-  background: "rgba(255,255,255,.42)",
-  backdropFilter: "blur(10px)",
-  WebkitBackdropFilter: "blur(10px)",
-};
-
-export default function HomeClient({ student, studentClass, assignments, missionsCompleted, badgeTiers }) {
-  // Badge tiers are teacher-editable (see /teacher/badges) and loaded from
-  // the database by the server component; this is just a safety net in
-  // case that table is ever empty.
-  const tiers = badgeTiers && badgeTiers.length > 0 ? badgeTiers : [];
+// Home is now the "hub" — a single full-viewport sci-fi stage (spaceship
+// interior background) with the Active Mission + Up Next centered on it,
+// and three glowing orb "portals" standing in for the old sidebar's nav
+// links. Everything here is absolutely positioned against a fixed-height
+// stage (rather than the old scrolling flex layout) on purpose, so the
+// portals always line up with the glowing floor rings baked into the
+// background art, and so the whole thing fits on one screen with no
+// scrolling — that was the point of the redesign.
+export default function HomeClient({ student, studentClass, assignments, missionsCompleted }) {
   const router = useRouter();
   const [samOpen, setSamOpen] = useState(false);
   const [notif, setNotif] = useState(null);
@@ -49,224 +38,217 @@ export default function HomeClient({ student, studentClass, assignments, mission
       .catch(() => {});
   }, []);
 
-  useEffect(() => {
-    function fitStatNumbers() {
-      document.querySelectorAll(".stat-card-img").forEach((card) => {
-        const num = card.querySelector(".num");
-        if (!num) return;
-        const circleDiameter = card.offsetWidth * 0.251;
-        const maxWidth = circleDiameter * 0.72;
-        const maxHeight = circleDiameter * 0.6;
-        let fontSize = circleDiameter * 0.5;
-        num.style.fontSize = fontSize + "px";
-        let guard = 0;
-        while ((num.scrollWidth > maxWidth || num.scrollHeight > maxHeight) && fontSize > 8 && guard < 60) {
-          fontSize -= 1;
-          num.style.fontSize = fontSize + "px";
-          guard++;
-        }
-      });
-    }
-    fitStatNumbers();
-    window.addEventListener("resize", fitStatNumbers);
-    return () => window.removeEventListener("resize", fitStatNumbers);
-  }, [student.crystal_points, student.streak_days, missionsCompleted]);
-
   const activeMission = assignments[0] || null;
   const upNext = assignments.slice(1, 3);
-  const currentTierIndex = [...tiers].reverse().findIndex((t) => student.crystal_points >= t.threshold);
-  const currentTier = tiers.length > 0 ? (currentTierIndex >= 0 ? tiers[tiers.length - 1 - currentTierIndex] : tiers[0]) : null;
 
   return (
     <div
       style={{
-        minHeight: "100vh",
-        backgroundImage: "url(/student/home_background.jpg)",
+        position: "relative",
+        width: "100%",
+        height: "100vh",
+        overflow: "hidden",
+        backgroundImage: "url(/student/hub_background.jpg)",
         backgroundSize: "cover",
-        backgroundPosition: "center",
+        backgroundPosition: "center 30%",
         backgroundRepeat: "no-repeat",
         fontFamily: "'Inter', sans-serif",
         color: COLORS.textDark,
-        display: "flex",
       }}
     >
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@600;700&family=Inter:wght@400;500;600;700&display=swap');
         .gc-btn { transition: transform 150ms ease, box-shadow 150ms ease; cursor: pointer; border: none; font-family: 'Inter', sans-serif; }
         .gc-btn:hover { transform: translateY(-1px); }
+        @keyframes hub-floaty { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
+        .hub-portal { display: flex; flex-direction: column; align-items: center; gap: 8px; cursor: pointer; border: none; background: none; font-family: inherit; width: 130px; }
+        .hub-orb-wrap { position: relative; width: 104px; height: 104px; transition: transform 220ms ease, filter 220ms ease; filter: drop-shadow(0 6px 14px rgba(0,0,0,.35)); }
+        .hub-orb-wrap img { width: 100%; height: 100%; object-fit: contain; display: block; }
+        .hub-portal:hover .hub-orb-wrap { transform: scale(1.1) translateY(-4px); }
+        .hub-portal--missions:hover .hub-orb-wrap { filter: drop-shadow(0 10px 22px rgba(0,0,0,.4)) drop-shadow(0 0 22px #7B5DFF); }
+        .hub-portal--progress:hover .hub-orb-wrap { filter: drop-shadow(0 10px 22px rgba(0,0,0,.4)) drop-shadow(0 0 22px #00C2C7); }
+        .hub-portal--crystal:hover .hub-orb-wrap { filter: drop-shadow(0 10px 22px rgba(0,0,0,.4)) drop-shadow(0 0 22px #FFC44D); }
       `}</style>
 
-      <StudentSidebar />
-
-      <main style={{ flex: 1, padding: 24, maxWidth: 1300, margin: "0 auto" }}>
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "flex-start",
-            marginBottom: 24,
-            background: "rgba(255,255,255,.6)",
-            backdropFilter: "blur(8px)",
-            WebkitBackdropFilter: "blur(8px)",
-            borderRadius: 20,
-            padding: "14px 20px",
-            boxShadow: "0 4px 16px rgba(0,0,0,.08)",
-          }}
-        >
-          <div>
-            <h1 style={{ fontFamily: "'Poppins', sans-serif", fontSize: 30, fontWeight: 700, margin: "0 0 4px 0", color: COLORS.textDark }}>
-              Welcome back, {student.first_name}!
-            </h1>
-            <p style={{ margin: 0, color: COLORS.textMuted, fontSize: 15 }}>
-              {studentClass?.name ? `${studentClass.name} · ` : ""}What mission will you tackle today?
-            </p>
-          </div>
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            {student.streak_days > 0 && (
-              <div style={{ display: "flex", alignItems: "center", gap: 6, background: COLORS.white, borderRadius: 999, padding: "6px 14px", boxShadow: "0 4px 16px rgba(0,0,0,.08)", fontWeight: 700, fontSize: 14 }}>
-                <span style={{ fontSize: 18, lineHeight: 1 }}>🔥</span>
-                {student.streak_days} day{student.streak_days === 1 ? "" : "s"}
-              </div>
-            )}
-            <div style={{ display: "flex", alignItems: "center", gap: 6, background: COLORS.white, borderRadius: 999, padding: "6px 14px 6px 6px", boxShadow: "0 4px 16px rgba(0,0,0,.08)", fontWeight: 700, fontSize: 14 }}>
-              <img src="/icons/crystal_points.png" alt="" style={{ width: 24, height: 24, objectFit: "contain" }} />
-              {student.crystal_points}
+      {/* Header */}
+      <div
+        style={{
+          position: "absolute",
+          top: 18,
+          left: 20,
+          right: 20,
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          background: "rgba(255,255,255,.68)",
+          backdropFilter: "blur(8px)",
+          WebkitBackdropFilter: "blur(8px)",
+          borderRadius: 20,
+          padding: "11px 20px",
+          boxShadow: "0 4px 16px rgba(0,0,0,.1)",
+          zIndex: 5,
+        }}
+      >
+        <div>
+          <h1 style={{ fontFamily: "'Poppins', sans-serif", fontSize: 21, fontWeight: 700, margin: 0, color: COLORS.textDark }}>
+            Welcome back, {student.first_name}!
+          </h1>
+          <p style={{ margin: "2px 0 0 0", color: COLORS.textMuted, fontSize: 12 }}>
+            {studentClass?.name ? `${studentClass.name} · ` : ""}your next mission is waiting
+          </p>
+        </div>
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          {student.streak_days > 0 && (
+            <div style={{ display: "flex", alignItems: "center", gap: 6, background: COLORS.white, borderRadius: 999, padding: "6px 13px", boxShadow: "0 3px 10px rgba(0,0,0,.08)", fontWeight: 700, fontSize: 13 }}>
+              🔥 {student.streak_days} day{student.streak_days === 1 ? "" : "s"}
             </div>
+          )}
+          <div style={{ display: "flex", alignItems: "center", gap: 6, background: COLORS.white, borderRadius: 999, padding: "6px 13px", boxShadow: "0 3px 10px rgba(0,0,0,.08)", fontWeight: 700, fontSize: 13 }}>
+            🎯 {missionsCompleted}
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: 6, background: COLORS.white, borderRadius: 999, padding: "6px 13px", boxShadow: "0 3px 10px rgba(0,0,0,.08)", fontWeight: 700, fontSize: 13 }}>
+            <img src="/icons/crystal_points.png" alt="" style={{ width: 18, height: 18, objectFit: "contain" }} />
+            {student.crystal_points}
           </div>
         </div>
+      </div>
 
+      {/* Centered column: notification (if any) + Active Mission + Up Next */}
+      <div
+        style={{
+          position: "absolute",
+          top: 92,
+          left: "50%",
+          transform: "translateX(-50%)",
+          width: "min(660px, 54%)",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          gap: 12,
+          zIndex: 3,
+        }}
+      >
         {notif && notif.count > 0 && (
           <button
             type="button"
             onClick={() => router.push("/progress")}
             className="gc-btn"
-            style={{ display: "flex", alignItems: "center", gap: 12, width: "100%", textAlign: "left", background: "#FFF4E5", border: `1.5px solid ${COLORS.gold}`, borderRadius: 16, padding: "14px 18px", marginBottom: 20 }}
+            style={{
+              display: "flex", alignItems: "center", gap: 10, width: "100%", textAlign: "left",
+              background: "rgba(255,244,229,.92)", border: `1.5px solid ${COLORS.gold}`, borderRadius: 14,
+              padding: "10px 14px", backdropFilter: "blur(6px)", WebkitBackdropFilter: "blur(6px)",
+            }}
           >
-            <span style={{ fontSize: 24, lineHeight: 1 }}>{notif.revisionCount > 0 ? "🔁" : "🌟"}</span>
-            <span style={{ flex: 1, fontSize: 13.5, fontWeight: 700, color: "#8A5A00", lineHeight: 1.4 }}>
+            <span style={{ fontSize: 20, lineHeight: 1 }}>{notif.revisionCount > 0 ? "🔁" : "🌟"}</span>
+            <span style={{ flex: 1, fontSize: 12.5, fontWeight: 700, color: "#8A5A00", lineHeight: 1.35 }}>
               {notif.revisionCount > 0 && notif.newGradeCount > 0
                 ? `${notif.revisionCount} mission${notif.revisionCount === 1 ? "" : "s"} need${notif.revisionCount === 1 ? "s" : ""} another try, and you have ${notif.newGradeCount} new grade${notif.newGradeCount === 1 ? "" : "s"} waiting!`
                 : notif.revisionCount > 0
                 ? `${notif.revisionCount} mission${notif.revisionCount === 1 ? "" : "s"} need${notif.revisionCount === 1 ? "s" : ""} another try — see what your teacher said.`
                 : `You have ${notif.newGradeCount} new grade${notif.newGradeCount === 1 ? "" : "s"} waiting in My Progress!`}
             </span>
-            <span style={{ color: "#8A5A00", fontWeight: 700, fontSize: 13, whiteSpace: "nowrap" }}>View →</span>
+            <span style={{ color: "#8A5A00", fontWeight: 700, fontSize: 12, whiteSpace: "nowrap" }}>View →</span>
           </button>
         )}
 
         {activeMission ? (
-          <div style={{ position: "relative", ...glassCard, borderRadius: 20, boxShadow: "0 4px 16px rgba(0,0,0,.1)", padding: 24, display: "grid", gridTemplateColumns: "240px 1fr", gap: 24, marginBottom: 24 }}>
-            <div style={{ borderRadius: 16, overflow: "hidden", boxShadow: "0 6px 18px rgba(13,27,42,.18)" }}>
-              <img src={caseImagePath(activeMission.case_standard)} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
-            </div>
-            <div>
-              <span style={{ display: "inline-flex", background: activeMission.cases?.engine === "fact_check_desk" ? COLORS.tealSoft : COLORS.violetSoft, color: activeMission.cases?.engine === "fact_check_desk" ? COLORS.teal : COLORS.violet, fontSize: 12, fontWeight: 700, letterSpacing: .3, padding: "5px 12px", borderRadius: 999, marginBottom: 10 }}>
+          <div
+            style={{
+              position: "relative", width: "100%", background: "rgba(20,26,50,.42)",
+              backdropFilter: "blur(10px)", WebkitBackdropFilter: "blur(10px)", borderRadius: 18,
+              padding: "16px 18px", boxShadow: "0 0 0 1.5px rgba(140,180,255,.4), 0 10px 30px rgba(0,10,40,.35)",
+              animation: "hub-floaty 5s ease-in-out infinite",
+            }}
+          >
+            <div style={{ display: "flex", gap: 6, marginBottom: 9, flexWrap: "wrap" }}>
+              <span style={{ display: "inline-flex", background: "rgba(123,93,255,.35)", color: "#E4DBFF", fontSize: 10, fontWeight: 700, letterSpacing: .4, padding: "4px 11px", borderRadius: 999 }}>
                 YOUR ACTIVE MISSION · {activeMission.cases?.engine === "fact_check_desk" ? "SIGNAL CHECK" : "GROUP CHAT"}
               </span>
               {activeMission.revisionRequested && (
-                <span style={{ display: "inline-flex", alignItems: "center", gap: 4, background: "#FFF4E5", color: "#B8860B", fontSize: 12, fontWeight: 700, letterSpacing: .3, padding: "5px 12px", borderRadius: 999, marginBottom: 10, marginLeft: 8 }}>
-                  🔁 Your teacher asked for a revision
+                <span style={{ display: "inline-flex", background: "rgba(255,196,77,.3)", color: "#FFE7B0", fontSize: 10, fontWeight: 700, letterSpacing: .4, padding: "4px 11px", borderRadius: 999 }}>
+                  🔁 Revision requested
                 </span>
               )}
-              <h2 style={{ fontSize: 24, fontWeight: 700, margin: "0 0 4px 0", color: COLORS.textDark }}>{activeMission.cases?.title}</h2>
-              <p style={{ fontSize: 13, color: COLORS.textMuted, margin: activeMission.cases?.learning_target ? "0 0 10px 0" : "0 0 20px 0" }}>
-                {activeMission.case_standard}{activeMission.due_date ? ` · Due ${activeMission.due_date}` : ""}
-              </p>
-              {activeMission.cases?.learning_target && (
-                <div style={{ fontSize: 13.5, color: COLORS.textDark, background: COLORS.tealSoft, borderRadius: 12, padding: "10px 12px", marginBottom: 20, lineHeight: 1.5 }}>
-                  🎯 {activeMission.cases.learning_target}
-                </div>
-              )}
-              <button onClick={() => router.push(`/activity/${activeMission.id}`)} className="gc-btn" style={{ background: COLORS.violet, color: COLORS.white, borderRadius: 999, padding: "12px 22px", fontWeight: 700, fontSize: 15 }}>
-                Continue Mission →
-              </button>
+            </div>
+            <div style={{ display: "flex", gap: 13, alignItems: "center" }}>
+              <div style={{ width: 68, height: 68, borderRadius: 13, flexShrink: 0, overflow: "hidden", boxShadow: "0 4px 14px rgba(0,0,0,.25)" }}>
+                <img src={caseImagePath(activeMission.case_standard)} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+              </div>
+              <div style={{ minWidth: 0 }}>
+                <p style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 700, fontSize: 15.5, margin: "0 0 3px 0", color: COLORS.white }}>{activeMission.cases?.title}</p>
+                <p style={{ fontSize: 11.5, color: "#C9D2EE", margin: "0 0 9px 0" }}>
+                  {activeMission.case_standard}{activeMission.due_date ? ` · Due ${activeMission.due_date}` : ""}
+                </p>
+                <button onClick={() => router.push(`/activity/${activeMission.id}`)} className="gc-btn" style={{ background: COLORS.violet, color: COLORS.white, borderRadius: 999, padding: "8px 16px", fontWeight: 700, fontSize: 12 }}>
+                  Continue Mission →
+                </button>
+              </div>
             </div>
           </div>
         ) : (
-          <div style={{ ...glassCard, borderRadius: 20, padding: 32, textAlign: "center", color: COLORS.textMuted, marginBottom: 24 }}>
+          <div style={{ width: "100%", background: "rgba(20,26,50,.42)", backdropFilter: "blur(10px)", WebkitBackdropFilter: "blur(10px)", borderRadius: 18, padding: "22px 18px", textAlign: "center", color: "#C9D2EE", fontSize: 13 }}>
             No missions assigned yet — check back once your teacher assigns one!
           </div>
         )}
 
-        <div style={{ display: "grid", gridTemplateColumns: "1.2fr 1fr", gap: 20, marginBottom: 20, alignItems: "stretch" }}>
-          <div style={{ ...glassCard, borderRadius: 16, boxShadow: "0 4px 16px rgba(0,0,0,.08)", padding: 20 }}>
-            <p style={{ fontSize: 13, fontWeight: 700, color: COLORS.textMuted, textTransform: "uppercase", margin: "0 0 12px 0" }}>Up Next</p>
-            {upNext.length > 0 ? (
-              upNext.map((a) => (
+        {upNext.length > 0 && (
+          <>
+            <span style={{ alignSelf: "flex-start", fontSize: 10.5, fontWeight: 700, letterSpacing: .4, textTransform: "uppercase", color: "#EDEBFF", textShadow: "0 1px 6px rgba(0,0,0,.5)", marginLeft: 4 }}>
+              Up Next
+            </span>
+            <div style={{ display: "flex", gap: 10, width: "100%" }}>
+              {upNext.map((a) => (
                 <button
                   key={a.id}
                   type="button"
                   onClick={() => router.push(`/activity/${a.id}`)}
                   className="gc-btn"
-                  style={{ position: "relative", display: "block", width: "100%", height: 80, borderRadius: 14, overflow: "hidden", marginBottom: 10, cursor: "pointer", border: "none", padding: 0, background: "none", textAlign: "left", font: "inherit" }}
+                  style={{
+                    position: "relative", flex: 1, height: 62, borderRadius: 13, overflow: "hidden",
+                    background: "rgba(20,26,50,.42)", backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)",
+                    boxShadow: "0 0 0 1px rgba(140,180,255,.28), 0 6px 18px rgba(0,10,40,.3)",
+                    display: "flex", alignItems: "center", gap: 10, padding: "0 12px", border: "none", textAlign: "left", font: "inherit",
+                  }}
                 >
-                  <img src={caseImagePath(a.case_standard)} alt="" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
-                  <div style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg, rgba(13,27,42,0) 35%, rgba(13,27,42,.82) 100%)" }} />
-                  <div style={{ position: "absolute", left: 12, right: 12, bottom: 8, color: COLORS.white }}>
-                    <div style={{ fontSize: 13.5, fontWeight: 700 }}>{a.cases?.title}{a.revisionRequested ? " 🔁" : ""}</div>
-                    <div style={{ fontSize: 11, color: "rgba(255,255,255,.85)" }}>{a.case_standard}</div>
-                  </div>
+                  <span style={{ width: 8, height: 8, borderRadius: "50%", background: COLORS.teal, flexShrink: 0, boxShadow: `0 0 8px ${COLORS.teal}` }} />
+                  <span style={{ color: COLORS.white, minWidth: 0 }}>
+                    <span style={{ display: "block", fontWeight: 700, fontSize: 12.5, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                      {a.cases?.title}{a.revisionRequested ? " 🔁" : ""}
+                    </span>
+                    <span style={{ display: "block", fontSize: 10.5, color: "#C9D2EE" }}>{a.case_standard}</span>
+                  </span>
                 </button>
-              ))
-            ) : (
-              <p style={{ fontSize: 13, color: COLORS.textMuted }}>Nothing else assigned yet.</p>
-            )}
-          </div>
-
-          {/* Your Progress + Your Badges, combined into one card per Emily's request (Aug 27) so
-              this row replaces two stacked sections with one — same total width as Up Next, no
-              extra vertical row, so the page fits without scrolling. Stats sit on top, the badge
-              track sits below a light divider; "marginTop: auto" on the badge block only kicks in
-              if this card ends up shorter than Up Next (grid stretch makes both columns match
-              height), pinning the badges to the bottom instead of leaving an awkward gap above them. */}
-          <div style={{ ...glassCard, borderRadius: 16, boxShadow: "0 4px 16px rgba(0,0,0,.08)", padding: 20, display: "flex", flexDirection: "column" }}>
-            <p style={{ fontSize: 13, fontWeight: 700, color: COLORS.textMuted, textTransform: "uppercase", margin: "0 0 12px 0" }}>Your Progress</p>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
-              <div className="stat-card-img" style={{ position: "relative", paddingTop: "56.28%", borderRadius: 16, overflow: "hidden", boxShadow: "0 2px 10px rgba(0,0,0,.1)" }}>
-                <img src="/icons/stat_missions_completed.jpg" alt="Missions Completed" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
-                <div className="num" style={{ position: "absolute", left: "49.9%", top: "35.8%", transform: "translate(-50%, -50%)", fontFamily: "'Poppins', sans-serif", fontWeight: 700, color: COLORS.textDark }}>{missionsCompleted}</div>
-              </div>
-              <div className="stat-card-img" style={{ position: "relative", paddingTop: "56.28%", borderRadius: 16, overflow: "hidden", boxShadow: "0 2px 10px rgba(0,0,0,.1)" }}>
-                <img src="/icons/stat_crystal_points.jpg" alt="Crystal Points" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
-                <div className="num" style={{ position: "absolute", left: "49.9%", top: "35.8%", transform: "translate(-50%, -50%)", fontFamily: "'Poppins', sans-serif", fontWeight: 700, color: COLORS.textDark }}>{student.crystal_points}</div>
-              </div>
+              ))}
             </div>
+          </>
+        )}
+      </div>
 
-            <div style={{ borderTop: "1px solid rgba(31,42,68,.12)", paddingTop: 12, marginTop: 16 }}>
-              <p style={{ fontSize: 10.5, fontWeight: 700, color: COLORS.textMuted, textTransform: "uppercase", letterSpacing: .3, margin: "0 0 10px 0" }}>Your Badges</p>
-              <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-                {tiers.map((tier) => {
-                  const earned = student.crystal_points >= tier.threshold;
-                  const isCurrent = currentTier && tier.id === currentTier.id;
-                  return (
-                    <div key={tier.id} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, width: 62, position: "relative" }}>
-                      {isCurrent && (
-                        <div style={{ position: "absolute", top: -5, left: "50%", transform: "translateX(-50%)", width: 60, height: 60, borderRadius: "50%", boxShadow: `0 0 0 3px ${COLORS.gold}` }} />
-                      )}
-                      <img src={tier.image_path} alt="" style={{ width: 52, height: 52, objectFit: "contain", borderRadius: 10, opacity: earned ? 1 : 0.28, filter: earned ? "none" : "grayscale(1)" }} />
-                      <div style={{ fontSize: 10, fontWeight: 700, textAlign: "center", lineHeight: 1.2, color: earned ? COLORS.textDark : COLORS.textMuted }}>
-                        {tier.label}{!earned ? " · Locked" : ""}
-                      </div>
-                    </div>
-                  );
-                })}
-                {tiers.length === 0 && (
-                  <p style={{ fontSize: 12, color: COLORS.textMuted, margin: 0 }}>Badges aren't set up yet — check back soon!</p>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
-      </main>
+      {/* Portals — the three "screens" a student can navigate to */}
+      <div style={{ position: "absolute", bottom: "6%", left: "50%", transform: "translateX(-50%)", display: "flex", gap: 64, zIndex: 4 }}>
+        <button type="button" className="hub-portal hub-portal--missions" onClick={() => router.push("/missions")}>
+          <div className="hub-orb-wrap"><img src="/student/orb_missions.png" alt="" /></div>
+          <span style={{ fontWeight: 700, fontSize: 13, color: COLORS.white, background: "rgba(20,26,50,.55)", padding: "4px 14px", borderRadius: 999, backdropFilter: "blur(6px)" }}>My Missions</span>
+        </button>
+        <button type="button" className="hub-portal hub-portal--progress" onClick={() => router.push("/progress")}>
+          <div className="hub-orb-wrap"><img src="/student/orb_progress.png" alt="" /></div>
+          <span style={{ fontWeight: 700, fontSize: 13, color: COLORS.white, background: "rgba(20,26,50,.55)", padding: "4px 14px", borderRadius: 999, backdropFilter: "blur(6px)" }}>My Progress</span>
+        </button>
+        <button type="button" className="hub-portal hub-portal--crystal" onClick={() => router.push("/gear-locker")}>
+          <div className="hub-orb-wrap"><img src="/student/orb_crystal.png" alt="" /></div>
+          <span style={{ fontWeight: 700, fontSize: 13, color: COLORS.white, background: "rgba(20,26,50,.55)", padding: "4px 14px", borderRadius: 999, backdropFilter: "blur(6px)" }}>Crystal Vault</span>
+        </button>
+      </div>
 
       <button
+        type="button"
         onClick={() => setSamOpen(!samOpen)}
-        style={{ position: "fixed", right: 28, bottom: 28, width: 64, height: 64, borderRadius: "50%", background: COLORS.tealSoft, boxShadow: "0 8px 24px rgba(0,0,0,.12)", border: "none", cursor: "pointer", padding: 6 }}
+        style={{ position: "absolute", right: 26, bottom: 26, width: 58, height: 58, borderRadius: "50%", background: "rgba(255,255,255,.75)", backdropFilter: "blur(6px)", WebkitBackdropFilter: "blur(6px)", boxShadow: "0 8px 22px rgba(0,0,0,.2)", border: "none", cursor: "pointer", padding: 6, zIndex: 5 }}
       >
         <img src="/icons/robot_point.png" alt="S.A.M." style={{ width: "100%", height: "100%", objectFit: "contain" }} />
       </button>
       {samOpen && (
-        <div style={{ position: "fixed", right: 28, bottom: 104, width: 240, background: COLORS.white, borderRadius: 16, boxShadow: "0 8px 24px rgba(0,0,0,.12)", padding: 16 }}>
+        <div style={{ position: "absolute", right: 26, bottom: 92, width: 240, background: COLORS.white, borderRadius: 16, boxShadow: "0 8px 24px rgba(0,0,0,.2)", padding: 16, zIndex: 5 }}>
           <p style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 700, fontSize: 14, margin: "0 0 4px 0" }}>
             S.A.M. <span style={{ color: COLORS.teal }}>· ClearCenters Assistant for Missions</span>
           </p>
