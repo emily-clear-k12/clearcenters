@@ -68,7 +68,18 @@ export default function HomeClient({ student, studentClass, assignments, mission
   const currentTier = tiers.length > 0 ? (currentTierIndex >= 0 ? tiers[tiers.length - 1 - currentTierIndex] : tiers[0]) : null;
 
   return (
-    <div style={{ minHeight: "100vh", background: COLORS.cream, fontFamily: "'Inter', sans-serif", color: COLORS.textDark, display: "flex" }}>
+    <div
+      style={{
+        minHeight: "100vh",
+        backgroundImage: "url(/student/home_background.jpg)",
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+        backgroundRepeat: "no-repeat",
+        fontFamily: "'Inter', sans-serif",
+        color: COLORS.textDark,
+        display: "flex",
+      }}
+    >
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@600;700&family=Inter:wght@400;500;600;700&display=swap');
         .gc-btn { transition: transform 150ms ease, box-shadow 150ms ease; cursor: pointer; border: none; font-family: 'Inter', sans-serif; }
@@ -78,7 +89,20 @@ export default function HomeClient({ student, studentClass, assignments, mission
       <StudentSidebar />
 
       <main style={{ flex: 1, padding: 24, maxWidth: 1300, margin: "0 auto" }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 24 }}>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "flex-start",
+            marginBottom: 24,
+            background: "rgba(255,255,255,.6)",
+            backdropFilter: "blur(8px)",
+            WebkitBackdropFilter: "blur(8px)",
+            borderRadius: 20,
+            padding: "14px 20px",
+            boxShadow: "0 4px 16px rgba(0,0,0,.08)",
+          }}
+        >
           <div>
             <h1 style={{ fontFamily: "'Poppins', sans-serif", fontSize: 30, fontWeight: 700, margin: "0 0 4px 0", color: COLORS.textDark }}>
               Welcome back, {student.first_name}!
