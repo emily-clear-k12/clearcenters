@@ -154,6 +154,21 @@ export default function GearLockerClient({ student, planets, visitedPlanetKeys, 
       setLockedTip(planet.planet_key);
       setTimeout(() => setLockedTip(null), 1800);
     }
+
+    // Glow Garden is the pilot for a real per-planet arrival scene (built
+    // Aug 27) — once unlocked, it gets its own page instead of the generic
+    // modal below. Every other planet is untouched and still opens
+    // PlanetDetailModal; this branch is the only thing that changed here.
+    // A still-locked Glow Garden falls through exactly like every other
+    // locked planet (tooltip + the modal's own locked view) — only an
+    // unlocked visit routes to the new page. The new page records its own
+    // "visit" server-side on mount, so we don't also fire /api/planets/visit
+    // for it here.
+    if (unlocked && planet.planet_key === "glow_garden") {
+      router.push("/gear-locker/glow-garden");
+      return;
+    }
+
     setSelectedPlanet({ ...planet, __studentPoints: student.crystal_points });
     if (unlocked && !visitedSet.has(planet.planet_key)) {
       try {
