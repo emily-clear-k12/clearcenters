@@ -11,9 +11,11 @@ export default async function ProgressPage() {
     redirect("/login");
   }
 
+  // Added streak_days (Aug 27) — the new dashboard shows a "Learning
+  // Streak" card, same value Home already shows.
   const { data: student, error: studentError } = await supabaseAdmin
     .from("students")
-    .select("id, first_name, crystal_points, last_progress_check_at")
+    .select("id, first_name, crystal_points, streak_days, last_progress_check_at")
     .eq("id", studentId)
     .single();
 
@@ -47,6 +49,28 @@ export default async function ProgressPage() {
     .not("submitted_at", "is", null)
     .order("submitted_at", { ascending: false });
 
+  // Badge tiers — the new dashboard (Aug 27) shows the student's earned
+  // badges as a row of small chips, reusing the exact same tier art and
+  // earned/locked logic as Home and Crystal Vault.
+  const { data: badgeTiers } = await supabaseAdmin
+    .from("badge_tiers")
+    .select("*")
+    .order("sort_order");
+
+  // Crystal-point history — powers the new "Your Crystal Growth" chart.
+  // This table only started being written to as of the Aug 27 migration
+  // (a trigger on students.crystal_points, see
+  // sql/crystal_points_history_migration.sql) — a student's chart will be
+  // sparse or empty until they've had activity since that migration ran.
+  // Capped at the most recent 30 points; that's already more than enough
+  // to draw a reasonable line and keeps this query cheap.
+  const { data: pointsHistory } = await supabaseAdmin
+    .from("crystal_points_history")
+    .select("new_total, created_at")
+    .eq("student_id", studentId)
+    .order("created_at", { ascending: true })
+    .limit(30);
+
   // Mark this visit as "now" — clears the "new grade" badge everywhere
   // else in the app going forward, without touching the "sent back for
   // revision" flag (that only clears once the student actually resubmits).
@@ -79,6 +103,7 @@ export default async function ProgressPage() {
       selfConfidence: s.self_confidence,
       submittedAt: s.submitted_at,
       released: !!s.released,
+      releasedAt: s.released_at || null,
       revisionRequested: !!s.revision_requested,
       isNewGrade: !!(s.released && s.released_at && (!lastCheck || new Date(s.released_at) > new Date(lastCheck))),
       grade: s.released ? s.teacher_grade : null,
@@ -89,5 +114,12 @@ export default async function ProgressPage() {
     };
   });
 
-  return <ProgressClient student={student} missions={missions} />;
+  return (
+    <ProgressClient
+      student={student}
+      missions={missions}
+      badgeTiers={badgeTiers || []}
+      pointsHistory={pointsHistory || []}
+    />
+  );
 }
