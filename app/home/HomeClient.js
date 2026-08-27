@@ -18,6 +18,22 @@ function caseImagePath(standard) {
   return `/cases/${standard.replace(/\./g, "-")}.jpg`;
 }
 
+// Bright per-subject outline on the mission cards so a student can tell
+// what subject an assignment is at a glance, without reading the standard
+// code — Emily's request (Aug 27). Cases without a recognized subject (or
+// with subject not yet selected by the data layer) fall back to the same
+// soft blue ring the cards originally shipped with, so nothing looks
+// broken if a new subject shows up before it has a color here.
+const SUBJECT_RING_COLORS = {
+  "Science": "#39D97A",
+  "Social Studies": "#FFDD40",
+};
+const DEFAULT_RING_COLOR = "#8FA4FF";
+
+function subjectRingColor(subject) {
+  return SUBJECT_RING_COLORS[subject] || DEFAULT_RING_COLOR;
+}
+
 // Home is now the "hub" — a single full-viewport sci-fi stage (spaceship
 // interior background) with the Active Mission + Up Next centered on it,
 // and three glowing orb "portals" standing in for the old sidebar's nav
@@ -156,7 +172,8 @@ export default function HomeClient({ student, studentClass, assignments, mission
             style={{
               position: "relative", width: "100%", background: "rgba(20,26,50,.42)",
               backdropFilter: "blur(10px)", WebkitBackdropFilter: "blur(10px)", borderRadius: 18,
-              padding: "16px 18px", boxShadow: "0 0 0 1.5px rgba(140,180,255,.4), 0 10px 30px rgba(0,10,40,.35)",
+              padding: "16px 18px",
+              boxShadow: `0 0 0 2.5px ${subjectRingColor(activeMission.cases?.subject)}, 0 0 22px ${subjectRingColor(activeMission.cases?.subject)}77, 0 10px 30px rgba(0,10,40,.35)`,
               animation: "hub-floaty 5s ease-in-out infinite",
             }}
           >
@@ -197,28 +214,31 @@ export default function HomeClient({ student, studentClass, assignments, mission
               Up Next
             </span>
             <div style={{ display: "flex", gap: 10, width: "100%" }}>
-              {upNext.map((a) => (
-                <button
-                  key={a.id}
-                  type="button"
-                  onClick={() => router.push(`/activity/${a.id}`)}
-                  className="gc-btn"
-                  style={{
-                    position: "relative", flex: 1, height: 62, borderRadius: 13, overflow: "hidden",
-                    background: "rgba(20,26,50,.42)", backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)",
-                    boxShadow: "0 0 0 1px rgba(140,180,255,.28), 0 6px 18px rgba(0,10,40,.3)",
-                    display: "flex", alignItems: "center", gap: 10, padding: "0 12px", border: "none", textAlign: "left", font: "inherit",
-                  }}
-                >
-                  <span style={{ width: 8, height: 8, borderRadius: "50%", background: COLORS.teal, flexShrink: 0, boxShadow: `0 0 8px ${COLORS.teal}` }} />
-                  <span style={{ color: COLORS.white, minWidth: 0 }}>
-                    <span style={{ display: "block", fontWeight: 700, fontSize: 12.5, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                      {a.cases?.title}{a.revisionRequested ? " 🔁" : ""}
+              {upNext.map((a) => {
+                const ring = subjectRingColor(a.cases?.subject);
+                return (
+                  <button
+                    key={a.id}
+                    type="button"
+                    onClick={() => router.push(`/activity/${a.id}`)}
+                    className="gc-btn"
+                    style={{
+                      position: "relative", flex: 1, height: 62, borderRadius: 13, overflow: "hidden",
+                      background: "rgba(20,26,50,.42)", backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)",
+                      boxShadow: `0 0 0 2px ${ring}, 0 0 14px ${ring}66, 0 6px 18px rgba(0,10,40,.3)`,
+                      display: "flex", alignItems: "center", gap: 10, padding: "0 12px", border: "none", textAlign: "left", font: "inherit",
+                    }}
+                  >
+                    <span style={{ width: 8, height: 8, borderRadius: "50%", background: ring, flexShrink: 0, boxShadow: `0 0 8px ${ring}` }} />
+                    <span style={{ color: COLORS.white, minWidth: 0 }}>
+                      <span style={{ display: "block", fontWeight: 700, fontSize: 12.5, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                        {a.cases?.title}{a.revisionRequested ? " 🔁" : ""}
+                      </span>
+                      <span style={{ display: "block", fontSize: 10.5, color: "#C9D2EE" }}>{a.case_standard}</span>
                     </span>
-                    <span style={{ display: "block", fontSize: 10.5, color: "#C9D2EE" }}>{a.case_standard}</span>
-                  </span>
-                </button>
-              ))}
+                  </button>
+                );
+              })}
             </div>
           </>
         )}
