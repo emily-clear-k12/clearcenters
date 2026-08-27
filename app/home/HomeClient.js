@@ -59,7 +59,7 @@ export default function HomeClient({ student, studentClass, assignments, mission
 
   // Just enough badge logic to show the student's CURRENT tier icon next to
   // their name in the header tile (Aug 27) — the full badge collection with
-  // earned/locked state for every tier lives on the Crystal Vault page.
+  // earned/locked state for every tier lives on its own /badges page.
   const tiers = badgeTiers && badgeTiers.length > 0 ? badgeTiers : [];
   const currentTierIndex = [...tiers].reverse().findIndex((t) => student.crystal_points >= t.threshold);
   const currentTier = tiers.length > 0 ? (currentTierIndex >= 0 ? tiers[tiers.length - 1 - currentTierIndex] : tiers[0]) : null;
@@ -279,7 +279,7 @@ export default function HomeClient({ student, studentClass, assignments, mission
         </button>
         <button type="button" className="hub-portal hub-portal--crystal" onClick={() => router.push("/gear-locker")}>
           <div className="hub-orb-wrap"><img src="/student/orb_crystal.png" alt="" /></div>
-          <span style={{ fontWeight: 700, fontSize: 13, color: COLORS.white, background: "rgba(20,26,50,.55)", padding: "4px 14px", borderRadius: 999, backdropFilter: "blur(6px)" }}>Crystal Vault</span>
+          <span style={{ fontWeight: 700, fontSize: 13, color: COLORS.white, background: "rgba(20,26,50,.55)", padding: "4px 14px", borderRadius: 999, backdropFilter: "blur(6px)" }}>Galaxy Hub</span>
         </button>
       </div>
 

@@ -18,186 +18,123 @@ const COLORS = {
   danger: "#E4574C",
 };
 
-// Every room shares this same stage canvas: /public/gear/*_background.png
-// are all drawn at 1672x941, so one paddingTop hack (below, "56.3%") works
-// for all rooms. Adding a new room later just means adding another entry
-// here plus a background image at that same 1672x941 size — no other
-// layout math needs to change.
-//
-// Rooms keep their slot_keys distinct (all Arcade slots are prefixed
-// "arcade_") specifically so the buy/equip API — which unequips the other
-// item sharing a slot_key whenever you equip a new one — naturally treats
-// each room's furniture as its own independent set. A student can have a
-// Dream Space chair AND an Arcade beanbag both "equipped" at once; each
-// just shows up in its own room. That was a deliberate choice to avoid
-// touching the equip API at all.
-const ROOMS = {
-  dream_space: {
-    label: "Dream Space",
-    icon: "🌲",
-    background: "/gear/hq_background.png",
-    slotLayout: {
-      window: { left: "2%", top: "42%", width: "12%", height: "18%" },
-      wall: { left: "40%", top: "24%", width: "20%", height: "34%" },
-      seating: { left: "5%", top: "62%", width: "22%", height: "32%" },
-      rug: { left: "33%", top: "80%", width: "34%", height: "16%" },
-      pet: { left: "26%", top: "85%", width: "10%", height: "13%" },
-      lighting: { left: "38%", top: "2%", width: "24%", height: "18%" },
-      fireplace: { left: "70%", top: "56%", width: "24%", height: "36%" },
-    },
-    slotLabels: {
-      seating: "Seating",
-      rug: "Rug",
-      wall: "Wall Décor",
-      window: "Window",
-      pet: "Pet",
-      lighting: "Lighting",
-      fireplace: "Fireplace",
-    },
-    slotOrder: ["seating", "rug", "wall", "lighting", "fireplace", "window", "pet"],
-  },
-  arcade: {
-    label: "Arcade",
-    icon: "🕹️",
-    background: "/gear/arcade_background.png",
-    slotLayout: {
-      arcade_seating: { left: "5%", top: "60%", width: "22%", height: "34%" },
-      arcade_rug: { left: "30%", top: "78%", width: "40%", height: "18%" },
-      arcade_wall: { left: "13%", top: "35%", width: "19%", height: "27%" },
-      arcade_lighting: { left: "36%", top: "2%", width: "28%", height: "16%" },
-      arcade_centerpiece: { left: "32%", top: "26%", width: "36%", height: "36%" },
-      arcade_extra: { left: "73%", top: "42%", width: "22%", height: "50%" },
-    },
-    slotLabels: {
-      arcade_seating: "Seating",
-      arcade_rug: "Rug",
-      arcade_wall: "Wall Décor",
-      arcade_lighting: "Lighting",
-      arcade_centerpiece: "Entertainment Center",
-      arcade_extra: "Arcade Extras",
-    },
-    slotOrder: [
-      "arcade_seating",
-      "arcade_rug",
-      "arcade_wall",
-      "arcade_lighting",
-      "arcade_centerpiece",
-      "arcade_extra",
-    ],
-  },
+// Fixed spots on the map, read off Emily's background/mockup — same
+// "percent of the stage box" approach as the Missions pedestals, and for
+// the same reason: it keeps everything landing in the right spot on the
+// art at any screen width, using the same aspect-ratio-lock stage
+// (paddingTop below) the rest of the app's room/scene pages use.
+const PLANET_POSITIONS = {
+  glow_garden: { x: 36, y: 35 },
+  frost_ring: { x: 50, y: 29 },
+  robot_relay_city: { x: 64, y: 29 },
+  jungle_moon: { x: 26, y: 47 },
+  cloud_reef: { x: 74, y: 47 },
 };
+const SHIP_POSITION = { x: 50, y: 52 };
+const STAGE_ASPECT_PADDING = "56.3%";
 
-// Original 12 placeholder pieces from before either room got real art.
-// Two of them (crystal_cat.png / fairy_curtain.png) are still the only
-// art the "pet" and "window" slots have, so they stay on sale everywhere.
-// The rest get quietly dropped from the shop the moment a themed item
-// exists in that same slot — but only from the shop grid. If a student
-// already owns/equipped one, it's untouched; this only stops it from
-// being offered to anyone new.
-const RETIRE_WHEN_REPLACED = new Set([
-  "beanbag_purple.png",
-  "bulletin_board.png",
-  "cushion_teal.png",
-  "hammock_gold.png",
-  "poster_stars.png",
-  "potted_plant.png",
-  "rug_round.png",
-  "rug_stripe.png",
-  "string_lights.png",
-  "tiny_dragon.png",
-]);
-
-function filenameOf(url) {
-  return (url || "").split("/").pop();
+function formatShortDate(dateStr) {
+  return new Date(dateStr).toLocaleDateString(undefined, { month: "short", day: "numeric" });
 }
 
-export default function GearLockerClient({ student, shopItems, inventory, badgeTiers }) {
+function PlanetDetailModal({ planet, unlocked, onClose }) {
+  if (!planet) return null;
+  const pointsToUnlock = Math.max(0, planet.threshold - planet.__studentPoints);
+
+  return (
+    <div onClick={onClose} style={{ position: "fixed", inset: 0, background: "rgba(8,10,30,.72)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 100, padding: 20 }}>
+      <div onClick={(e) => e.stopPropagation()} style={{ background: "linear-gradient(180deg, #1B1440, #0D0B2A)", borderRadius: 24, width: "min(440px, 100%)", overflow: "hidden", boxShadow: "0 24px 70px rgba(0,0,0,.5)", position: "relative", textAlign: "center", padding: "30px 26px" }}>
+        <button onClick={onClose} style={{ position: "absolute", top: 14, right: 14, width: 30, height: 30, borderRadius: "50%", background: "rgba(255,255,255,.12)", color: COLORS.white, border: "none", cursor: "pointer", fontSize: 15 }}>×</button>
+        <img
+          src={planet.image_path}
+          alt={planet.name}
+          style={{ width: 190, height: 190, objectFit: "contain", margin: "0 auto 10px", display: "block", filter: unlocked ? "none" : "grayscale(1) brightness(.55)" }}
+        />
+        <h2 style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 700, fontSize: 21, color: COLORS.white, margin: "0 0 8px 0" }}>{planet.name}</h2>
+        {unlocked ? (
+          <>
+            <p style={{ fontSize: 13.5, color: "#C9D2EE", lineHeight: 1.5, margin: "0 0 16px 0" }}>{planet.description}</p>
+            <div style={{ display: "inline-flex", alignItems: "center", gap: 6, background: "rgba(34,197,94,.18)", color: "#4ADE80", borderRadius: 999, padding: "6px 16px", fontWeight: 700, fontSize: 12.5 }}>
+              🚀 You've arrived! Welcome to {planet.name}.
+            </div>
+          </>
+        ) : (
+          <>
+            <p style={{ fontSize: 13.5, color: "#8C93B8", lineHeight: 1.5, margin: "0 0 16px 0" }}>🔒 This world is still locked.</p>
+            <div style={{ display: "inline-flex", alignItems: "center", gap: 6, background: `${planet.theme_color}26`, color: planet.theme_color, borderRadius: 999, padding: "6px 16px", fontWeight: 700, fontSize: 12.5 }}>
+              💎 Need {pointsToUnlock} more crystal{pointsToUnlock === 1 ? "" : "s"} to unlock
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function CrystalLogModal({ open, onClose, pointsHistory }) {
+  if (!open) return null;
+  return (
+    <div onClick={onClose} style={{ position: "fixed", inset: 0, background: "rgba(13,20,35,.6)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 100, padding: 20 }}>
+      <div onClick={(e) => e.stopPropagation()} style={{ background: COLORS.white, borderRadius: 20, width: "min(380px, 100%)", maxHeight: "70vh", overflowY: "auto", boxShadow: "0 24px 60px rgba(0,0,0,.4)", padding: 22 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+          <h2 style={{ fontFamily: "'Poppins', sans-serif", fontSize: 17, fontWeight: 700, margin: 0, color: COLORS.textDark }}>💎 Crystal Log</h2>
+          <button onClick={onClose} style={{ width: 28, height: 28, borderRadius: "50%", background: COLORS.cream, border: "none", cursor: "pointer", fontSize: 14 }}>×</button>
+        </div>
+        {pointsHistory.length === 0 ? (
+          <p style={{ fontSize: 12.5, color: COLORS.textMuted, margin: 0 }}>No crystal activity yet — go complete a mission!</p>
+        ) : (
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            {pointsHistory.map((row, i) => (
+              <div key={i} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", background: COLORS.cream, borderRadius: 10, padding: "8px 12px" }}>
+                <span style={{ fontSize: 12, color: COLORS.textMuted }}>{formatShortDate(row.created_at)}</span>
+                <span style={{ fontSize: 13, fontWeight: 700, color: row.amount >= 0 ? "#22C55E" : COLORS.danger }}>
+                  {row.amount >= 0 ? "+" : ""}{row.amount}
+                </span>
+                <span style={{ fontSize: 11.5, color: COLORS.textMuted }}>→ {row.new_total}</span>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+export default function GearLockerClient({ student, planets, visitedPlanetKeys, badgeTiers, pointsHistory }) {
   const router = useRouter();
-  const [busyItemId, setBusyItemId] = useState(null);
-  const [error, setError] = useState(null);
-  const [selectedRoom, setSelectedRoom] = useState("dream_space");
+  const [selectedPlanet, setSelectedPlanet] = useState(null);
+  const [logOpen, setLogOpen] = useState(false);
+  const [messagesTip, setMessagesTip] = useState(false);
+  const [lockedTip, setLockedTip] = useState(null);
 
-  const room = ROOMS[selectedRoom];
+  const visitedSet = new Set(visitedPlanetKeys);
+  const tiers = badgeTiers || [];
+  const badgesEarnedCount = tiers.filter((t) => student.crystal_points >= t.threshold).length;
+  const planetsVisitedCount = planets.filter((p) => visitedSet.has(p.planet_key)).length;
 
-  // Badge tiers are teacher-editable (see /teacher/badges) and loaded from
-  // the database by the server component; this is just a safety net in
-  // case that table is ever empty. Moved here from Home as part of the
-  // Crystal Vault merge (Aug 27, 2026).
-  const tiers = badgeTiers && badgeTiers.length > 0 ? badgeTiers : [];
-  const currentTierIndex = [...tiers].reverse().findIndex((t) => student.crystal_points >= t.threshold);
-  const currentTier = tiers.length > 0 ? (currentTierIndex >= 0 ? tiers[tiers.length - 1 - currentTierIndex] : tiers[0]) : null;
-
-  const ownedByItemId = Object.fromEntries(inventory.map((row) => [row.item_id, row]));
-
-  // What's actually showing in each slot right now, across every room —
-  // harmless to compute globally since slot_key names never collide
-  // between rooms.
-  const itemsById = Object.fromEntries(shopItems.map((it) => [it.id, it]));
-  const equippedBySlot = {};
-  inventory.forEach((row) => {
-    if (!row.equipped) return;
-    const item = itemsById[row.item_id];
-    if (item) equippedBySlot[item.slot_key] = item;
-  });
-
-  const itemsBySlot = {};
-  shopItems.forEach((item) => {
-    if (!itemsBySlot[item.slot_key]) itemsBySlot[item.slot_key] = [];
-    itemsBySlot[item.slot_key].push(item);
-  });
-
-  // Quietly retire old clipart placeholders once a themed replacement
-  // exists in that slot (see RETIRE_WHEN_REPLACED above).
-  Object.keys(itemsBySlot).forEach((slot) => {
-    const items = itemsBySlot[slot];
-    const hasThemedReplacement = items.some((it) => !RETIRE_WHEN_REPLACED.has(filenameOf(it.image_url)));
-    if (hasThemedReplacement) {
-      itemsBySlot[slot] = items.filter(
-        (it) => !RETIRE_WHEN_REPLACED.has(filenameOf(it.image_url)) || ownedByItemId[it.id]
-      );
-    }
-  });
-
-  async function handleBuy(item) {
-    setError(null);
-    setBusyItemId(item.id);
-    try {
-      const res = await fetch("/api/gear/purchase", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ itemId: item.id }),
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        setError(data.error || "Couldn't complete that purchase.");
-        return;
-      }
-      router.refresh();
-    } catch (err) {
-      setError("Something went wrong — try again.");
-    } finally {
-      setBusyItemId(null);
-    }
+  function isUnlocked(planet) {
+    return student.crystal_points >= planet.threshold;
   }
 
-  async function handleEquip(item) {
-    setError(null);
-    setBusyItemId(item.id);
-    try {
-      const res = await fetch("/api/gear/equip", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ itemId: item.id }),
-      });
-      if (!res.ok) {
-        setError("Couldn't switch that item — try again.");
-        return;
+  async function openPlanet(planet) {
+    const unlocked = isUnlocked(planet);
+    if (!unlocked) {
+      setLockedTip(planet.planet_key);
+      setTimeout(() => setLockedTip(null), 1800);
+    }
+    setSelectedPlanet({ ...planet, __studentPoints: student.crystal_points });
+    if (unlocked && !visitedSet.has(planet.planet_key)) {
+      try {
+        await fetch("/api/planets/visit", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ planetKey: planet.planet_key }),
+        });
+        router.refresh();
+      } catch (err) {
+        // A hiccup here just means the "visited" checkmark takes one more
+        // visit to appear — not worth blocking the arrival scene over.
       }
-      router.refresh();
-    } catch (err) {
-      setError("Something went wrong — try again.");
-    } finally {
-      setBusyItemId(null);
     }
   }
 
@@ -207,140 +144,178 @@ export default function GearLockerClient({ student, shopItems, inventory, badgeT
         @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@600;700&family=Inter:wght@400;500;600;700&display=swap');
         .gc-btn { transition: transform 150ms ease, box-shadow 150ms ease; cursor: pointer; border: none; font-family: 'Inter', sans-serif; }
         .gc-btn:hover { transform: translateY(-1px); }
-        .gc-btn:disabled { cursor: default; transform: none; }
-        .gc-room-tab { transition: transform 150ms ease, box-shadow 150ms ease; cursor: pointer; border: none; font-family: 'Poppins', sans-serif; }
-        .gc-room-tab:hover { transform: translateY(-1px); }
+        .planet-node { transition: transform 150ms ease, filter 150ms ease; cursor: pointer; border: none; background: none; padding: 0; font-family: inherit; }
+        .planet-node:hover { transform: translate(-50%, -100%) scale(1.06) !important; }
+        .nav-pill { transition: transform 120ms ease; cursor: pointer; border: none; font-family: 'Inter', sans-serif; }
+        .nav-pill:hover { transform: translateY(-1px); }
       `}</style>
 
-      <main style={{ padding: 24, maxWidth: 1200, margin: "0 auto" }}>
+      <main style={{ padding: 24, maxWidth: 1300, margin: "0 auto" }}>
         <BackToHubButton />
 
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 20 }}>
-          <div>
-            <h1 style={{ fontFamily: "'Poppins', sans-serif", fontSize: 28, fontWeight: 700, margin: "0 0 4px 0" }}>Crystal Vault</h1>
-            <p style={{ margin: 0, color: COLORS.textMuted, fontSize: 14 }}>Spend your crystal points on room décor, and see the badges you've earned.</p>
-          </div>
-          <div style={{ display: "flex", alignItems: "center", gap: 6, background: COLORS.white, borderRadius: 999, padding: "8px 16px", boxShadow: "0 4px 16px rgba(0,0,0,.08)", fontWeight: 700, fontSize: 15 }}>
-            🔮 {student.crystal_points}
-          </div>
-        </div>
+        {/* THE MAP */}
+        <div style={{ position: "relative", width: "100%", paddingTop: STAGE_ASPECT_PADDING, borderRadius: 24, overflow: "hidden", boxShadow: "0 8px 30px rgba(0,0,0,.25)", marginBottom: 16, background: "#0D0B2A" }}>
+          <img src="/student/galaxy_hub_bg.jpg" alt="Galaxy Hub" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
 
-        {/* Badges — moved here from Home as part of the Crystal Vault merge. */}
-        <div style={{ background: COLORS.white, borderRadius: 16, boxShadow: "0 4px 16px rgba(0,0,0,.08)", padding: 20, marginBottom: 24 }}>
-          <p style={{ fontSize: 13, fontWeight: 700, color: COLORS.textMuted, textTransform: "uppercase", letterSpacing: .3, margin: "0 0 14px 0" }}>Your Badges</p>
-          <div style={{ display: "flex", gap: 14, flexWrap: "wrap" }}>
-            {tiers.map((tier) => {
-              const earned = student.crystal_points >= tier.threshold;
-              const isCurrent = currentTier && tier.id === currentTier.id;
+          {/* No HTML title here on purpose — the background art already has a
+              "GALAXY HUB" neon sign baked in up top; adding our own text
+              title doubled it up and collided with the sign. */}
+
+          {/* Crystal count + log */}
+          <div style={{ position: "absolute", top: "4%", left: "3%", background: "rgba(20,16,50,.72)", backdropFilter: "blur(8px)", borderRadius: 16, padding: "10px 14px", textAlign: "center", boxShadow: "0 4px 16px rgba(0,0,0,.3)" }}>
+            <div style={{ fontSize: 9.5, fontWeight: 700, color: "#A9B4E8", textTransform: "uppercase", letterSpacing: .4, marginBottom: 4 }}>Your Crystals</div>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 6, fontFamily: "'Poppins', sans-serif", fontWeight: 700, fontSize: "clamp(16px, 2vw, 24px)", color: COLORS.white, marginBottom: 4 }}>
+              💎 {student.crystal_points}
+            </div>
+            <button onClick={() => setLogOpen(true)} className="gc-btn" style={{ background: "none", color: "#9B8FE0", fontSize: 10.5, fontWeight: 700, textDecoration: "underline", padding: 0 }}>
+              Crystal Log ↗
+            </button>
+          </div>
+
+          {/* Stats panel */}
+          <div style={{ position: "absolute", top: "4%", right: "3%", background: "rgba(20,16,50,.72)", backdropFilter: "blur(8px)", borderRadius: 16, padding: "10px 14px", boxShadow: "0 4px 16px rgba(0,0,0,.3)", minWidth: 120 }}>
+            <div style={{ fontSize: 9.5, fontWeight: 700, color: "#A9B4E8", textTransform: "uppercase", letterSpacing: .4, marginBottom: 6 }}>Your Stats</div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 4, fontSize: "clamp(9px, 1vw, 11.5px)", color: COLORS.white }}>
+              <div>🌍 Planets Visited: <b>{planetsVisitedCount}</b></div>
+              <div>🛡️ Badges Earned: <b>{badgesEarnedCount}</b></div>
+              <div>🔥 Streak: <b>{student.streak_days || 0} Day{student.streak_days === 1 ? "" : "s"}</b></div>
+            </div>
+          </div>
+
+          {/* Dashed connector lines */}
+          <svg viewBox="0 0 100 100" preserveAspectRatio="none" style={{ position: "absolute", inset: 0, width: "100%", height: "100%" }}>
+            {planets.map((p) => {
+              const pos = PLANET_POSITIONS[p.planet_key];
+              if (!pos) return null;
               return (
-                <div key={tier.id} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 5, width: 68, position: "relative" }}>
-                  {isCurrent && (
-                    <div style={{ position: "absolute", top: -6, left: "50%", transform: "translateX(-50%)", width: 66, height: 66, borderRadius: "50%", boxShadow: `0 0 0 3px ${COLORS.gold}` }} />
-                  )}
-                  <img src={tier.image_path} alt="" style={{ width: 58, height: 58, objectFit: "contain", borderRadius: 10, opacity: earned ? 1 : 0.28, filter: earned ? "none" : "grayscale(1)" }} />
-                  <div style={{ fontSize: 10.5, fontWeight: 700, textAlign: "center", lineHeight: 1.2, color: earned ? COLORS.textDark : COLORS.textMuted }}>
-                    {tier.label}{!earned ? " · Locked" : ""}
-                  </div>
-                </div>
+                <line
+                  key={p.planet_key}
+                  x1={SHIP_POSITION.x} y1={SHIP_POSITION.y}
+                  x2={pos.x} y2={pos.y}
+                  stroke="rgba(160,180,255,.4)"
+                  strokeWidth="0.3"
+                  strokeDasharray="1.2 1.2"
+                />
               );
             })}
-            {tiers.length === 0 && (
-              <p style={{ fontSize: 12, color: COLORS.textMuted, margin: 0 }}>Badges aren't set up yet — check back soon!</p>
-            )}
-          </div>
-        </div>
+          </svg>
 
-        {/* Room picker */}
-        <div style={{ display: "flex", gap: 10, marginBottom: 16 }}>
-          {Object.entries(ROOMS).map(([key, r]) => {
-            const active = key === selectedRoom;
+          {/* Ship / current location */}
+          <div style={{ position: "absolute", left: `${SHIP_POSITION.x}%`, top: `${SHIP_POSITION.y}%`, transform: "translate(-50%, -50%)", textAlign: "center", zIndex: 3 }}>
+            <div style={{ width: "clamp(30px, 5vw, 52px)", height: "clamp(30px, 5vw, 52px)", borderRadius: "50%", background: "radial-gradient(circle, rgba(123,93,255,.9), rgba(123,93,255,.15))", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "clamp(14px, 2.2vw, 24px)", boxShadow: "0 0 24px rgba(123,93,255,.7)", margin: "0 auto 6px" }}>
+              🚀
+            </div>
+            <div style={{ background: "rgba(20,16,50,.8)", borderRadius: 999, padding: "3px 12px", fontSize: "clamp(7px, 0.9vw, 10px)", fontWeight: 700, color: COLORS.white, whiteSpace: "nowrap" }}>
+              CURRENT LOCATION · Crystal Command
+            </div>
+          </div>
+
+          {/* Planet nodes */}
+          {planets.map((planet) => {
+            const pos = PLANET_POSITIONS[planet.planet_key];
+            if (!pos) return null;
+            const unlocked = isUnlocked(planet);
+            const visited = visitedSet.has(planet.planet_key);
             return (
               <button
-                key={key}
-                className="gc-room-tab"
-                onClick={() => setSelectedRoom(key)}
-                style={{
-                  borderRadius: 999,
-                  padding: "10px 20px",
-                  fontWeight: 700,
-                  fontSize: 14,
-                  background: active ? COLORS.violet : COLORS.white,
-                  color: active ? COLORS.white : COLORS.textDark,
-                  boxShadow: active ? "0 4px 16px rgba(123,93,255,.35)" : "0 4px 16px rgba(0,0,0,.08)",
-                }}
+                key={planet.id}
+                type="button"
+                className="planet-node"
+                onClick={() => openPlanet(planet)}
+                style={{ position: "absolute", left: `${pos.x}%`, top: `${pos.y}%`, transform: "translate(-50%, -100%)", zIndex: 2, textAlign: "center" }}
               >
-                {r.icon} {r.label}
+                <div style={{ position: "relative", width: "clamp(48px, 9vw, 100px)", height: "clamp(48px, 9vw, 100px)" }}>
+                  <img
+                    src={planet.image_path}
+                    alt={planet.name}
+                    style={{ width: "100%", height: "100%", objectFit: "contain", filter: unlocked ? "drop-shadow(0 6px 14px rgba(0,0,0,.4))" : "grayscale(1) brightness(.55) drop-shadow(0 6px 10px rgba(0,0,0,.4))" }}
+                  />
+                  {unlocked ? (
+                    visited && (
+                      <div style={{ position: "absolute", top: -2, right: -2, width: 20, height: 20, borderRadius: "50%", background: "#22C55E", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, boxShadow: "0 2px 6px rgba(0,0,0,.3)" }}>✓</div>
+                    )
+                  ) : (
+                    <div style={{ position: "absolute", top: -2, right: -2, width: 20, height: 20, borderRadius: "50%", background: "rgba(20,16,50,.85)", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, boxShadow: "0 2px 6px rgba(0,0,0,.3)" }}>🔒</div>
+                  )}
+                </div>
+                <div style={{ marginTop: 4, fontSize: "clamp(8px, 1vw, 11px)", fontWeight: 700, color: COLORS.white, textShadow: "0 1px 4px rgba(0,0,0,.6)", whiteSpace: "nowrap" }}>{planet.name}</div>
+                <div style={{ display: "inline-flex", alignItems: "center", gap: 3, marginTop: 2, background: unlocked ? `${planet.theme_color}CC` : "rgba(20,16,50,.75)", color: "#fff", borderRadius: 999, padding: "2px 8px", fontSize: "clamp(7px, 0.85vw, 10px)", fontWeight: 700 }}>
+                  💎 {planet.threshold}
+                </div>
+                {lockedTip === planet.planet_key && (
+                  <div style={{ marginTop: 4, background: "#1B1440", color: "#fff", borderRadius: 8, padding: "3px 8px", fontSize: 9.5, whiteSpace: "nowrap" }}>
+                    Need {Math.max(0, planet.threshold - student.crystal_points)} more!
+                  </div>
+                )}
               </button>
             );
           })}
         </div>
 
-        {error && (
-          <div style={{ background: "#FDEAEA", color: COLORS.danger, borderRadius: 10, padding: "10px 14px", fontSize: 13, marginBottom: 16, fontWeight: 600 }}>{error}</div>
-        )}
-
-        {/* The HQ stage */}
-        <div style={{ position: "relative", width: "100%", paddingTop: "56.3%", borderRadius: 20, overflow: "hidden", boxShadow: "0 8px 30px rgba(0,0,0,.18)", marginBottom: 28 }}>
-          <img src={room.background} alt={`Your ${room.label} HQ`} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
-          {room.slotOrder.map((slot) => {
-            const item = equippedBySlot[slot];
-            if (!item) return null;
-            const box = room.slotLayout[slot];
-            return (
-              <img
-                key={slot}
-                src={item.image_url}
-                alt={item.name}
-                style={{ position: "absolute", left: box.left, top: box.top, width: box.width, height: box.height, objectFit: "contain" }}
-              />
-            );
-          })}
+        {/* NAV BAR — this page only, per Emily's call; every other student
+            page keeps the small Back to Hub button instead. */}
+        <div style={{ display: "flex", justifyContent: "center", gap: 8, flexWrap: "wrap", marginBottom: 20 }}>
+          <div className="nav-pill" style={{ display: "flex", alignItems: "center", gap: 6, background: COLORS.violet, color: COLORS.white, borderRadius: 999, padding: "9px 18px", fontWeight: 700, fontSize: 13 }}>
+            🪐 Galaxy Map
+          </div>
+          <button type="button" onClick={() => router.push("/missions")} className="nav-pill gc-btn" style={{ display: "flex", alignItems: "center", gap: 6, background: COLORS.white, color: COLORS.textDark, borderRadius: 999, padding: "9px 18px", fontWeight: 700, fontSize: 13, boxShadow: "0 2px 10px rgba(0,0,0,.08)" }}>
+            📋 My Missions
+          </button>
+          <button type="button" onClick={() => router.push("/progress")} className="nav-pill gc-btn" style={{ display: "flex", alignItems: "center", gap: 6, background: COLORS.white, color: COLORS.textDark, borderRadius: 999, padding: "9px 18px", fontWeight: 700, fontSize: 13, boxShadow: "0 2px 10px rgba(0,0,0,.08)" }}>
+            💎 My Progress
+          </button>
+          <button type="button" onClick={() => router.push("/badges")} className="nav-pill gc-btn" style={{ display: "flex", alignItems: "center", gap: 6, background: COLORS.white, color: COLORS.textDark, borderRadius: 999, padding: "9px 18px", fontWeight: 700, fontSize: 13, boxShadow: "0 2px 10px rgba(0,0,0,.08)" }}>
+            🛡️ Badges
+          </button>
+          <div style={{ position: "relative" }}>
+            <button type="button" onClick={() => { setMessagesTip(true); setTimeout(() => setMessagesTip(false), 1800); }} className="nav-pill gc-btn" style={{ display: "flex", alignItems: "center", gap: 6, background: COLORS.white, color: COLORS.textDark, borderRadius: 999, padding: "9px 18px", fontWeight: 700, fontSize: 13, boxShadow: "0 2px 10px rgba(0,0,0,.08)" }}>
+              💬 Messages
+            </button>
+            {messagesTip && (
+              <div style={{ position: "absolute", top: "110%", left: "50%", transform: "translateX(-50%)", background: COLORS.navy, color: COLORS.white, borderRadius: 8, padding: "5px 12px", fontSize: 11, whiteSpace: "nowrap", zIndex: 5 }}>
+                Coming soon!
+              </div>
+            )}
+          </div>
         </div>
 
-        {/* The shop */}
-        <div style={{ display: "grid", gap: 20 }}>
-          {room.slotOrder.filter((slot) => itemsBySlot[slot]?.length).map((slot) => (
-            <div key={slot}>
-              <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 10, color: COLORS.textMuted, textTransform: "uppercase", letterSpacing: 0.4 }}>{room.slotLabels[slot]}</div>
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(150px, 1fr))", gap: 14 }}>
-                {itemsBySlot[slot].map((item) => {
-                  const owned = ownedByItemId[item.id];
-                  const isEquipped = owned?.equipped;
-                  const canAfford = student.crystal_points >= item.price;
-                  const busy = busyItemId === item.id;
-                  return (
-                    <div key={item.id} style={{ background: COLORS.white, borderRadius: 16, padding: 14, boxShadow: "0 4px 16px rgba(0,0,0,.08)", border: isEquipped ? `2px solid ${COLORS.gold}` : "2px solid transparent", display: "flex", flexDirection: "column", alignItems: "center", gap: 8 }}>
-                      <div style={{ width: "100%", height: 90, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                        <img src={item.image_url} alt={item.name} style={{ maxWidth: "100%", maxHeight: "100%", objectFit: "contain" }} />
-                      </div>
-                      <div style={{ fontSize: 12.5, fontWeight: 700, textAlign: "center" }}>{item.name}</div>
-                      {owned ? (
-                        <button
-                          className="gc-btn"
-                          onClick={() => !isEquipped && handleEquip(item)}
-                          disabled={isEquipped || busy}
-                          style={{ width: "100%", borderRadius: 999, padding: "7px 10px", fontWeight: 700, fontSize: 12, background: isEquipped ? COLORS.violetSoft : COLORS.cream, color: isEquipped ? COLORS.violet : COLORS.textDark }}
-                        >
-                          {isEquipped ? "✓ In Your HQ" : busy ? "..." : "Equip"}
-                        </button>
-                      ) : (
-                        <button
-                          className="gc-btn"
-                          onClick={() => handleBuy(item)}
-                          disabled={!canAfford || busy}
-                          style={{ width: "100%", borderRadius: 999, padding: "7px 10px", fontWeight: 700, fontSize: 12, background: canAfford ? COLORS.violet : COLORS.border, color: canAfford ? COLORS.white : COLORS.textMuted }}
-                        >
-                          {busy ? "..." : `🔮 ${item.price}`}
-                        </button>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          ))}
+        {/* AVAILABLE PLANETS list */}
+        <div>
+          <p style={{ textAlign: "center", fontSize: 13, fontWeight: 700, color: COLORS.textMuted, textTransform: "uppercase", letterSpacing: 0.6, margin: "0 0 14px 0" }}>✦ Available Planets ✦</p>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(190px, 1fr))", gap: 14 }}>
+            {planets.map((planet) => {
+              const unlocked = isUnlocked(planet);
+              return (
+                <button
+                  key={planet.id}
+                  type="button"
+                  onClick={() => openPlanet(planet)}
+                  className="gc-btn"
+                  style={{ textAlign: "left", background: COLORS.white, borderRadius: 18, boxShadow: "0 4px 16px rgba(0,0,0,.08)", overflow: "hidden", padding: 14, border: "none", cursor: "pointer", font: "inherit", color: "inherit", position: "relative" }}
+                >
+                  <div style={{ width: "100%", height: 90, display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 8 }}>
+                    <img src={planet.image_path} alt="" style={{ maxWidth: "100%", maxHeight: "100%", objectFit: "contain", filter: unlocked ? "none" : "grayscale(1) brightness(.75)" }} />
+                  </div>
+                  <div style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 700, fontSize: 14, color: planet.theme_color, marginBottom: 4 }}>{planet.name}</div>
+                  <p style={{ fontSize: 11.5, color: COLORS.textMuted, lineHeight: 1.4, margin: "0 0 10px 0", minHeight: 46 }}>{planet.description}</p>
+                  <div style={{ display: "inline-flex", alignItems: "center", gap: 4, background: unlocked ? `${planet.theme_color}1F` : COLORS.cream, color: unlocked ? planet.theme_color : COLORS.textMuted, borderRadius: 999, padding: "4px 11px", fontWeight: 700, fontSize: 12 }}>
+                    💎 {planet.threshold}
+                  </div>
+                  {!unlocked && (
+                    <div style={{ position: "absolute", top: 12, right: 12, width: 26, height: 26, borderRadius: "50%", background: "rgba(20,16,50,.75)", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12 }}>🔒</div>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+          <p style={{ textAlign: "center", fontSize: 12, color: COLORS.textMuted, marginTop: 16 }}>
+            ✦ Earn crystals by completing missions and turning in your best work! ✦
+          </p>
         </div>
       </main>
+
+      <PlanetDetailModal planet={selectedPlanet} unlocked={selectedPlanet ? isUnlocked(selectedPlanet) : false} onClose={() => setSelectedPlanet(null)} />
+      <CrystalLogModal open={logOpen} onClose={() => setLogOpen(false)} pointsHistory={pointsHistory} />
     </div>
   );
 }
