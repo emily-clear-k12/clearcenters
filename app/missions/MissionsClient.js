@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import BackToHubButton from "../../components/BackToHubButton";
 
 const COLORS = {
-  navy: "#0D1B2A",
   violet: "#7B5DFF",
   violetSoft: "#EDE6FF",
   teal: "#00C2C7",
@@ -21,22 +20,57 @@ function caseImagePath(standard) {
   return `/cases/${standard.replace(/\./g, "-")}.jpg`;
 }
 
-// Same frosted-glass treatment used on the Home dashboard, now that this
-// page also floats over a decorative background instead of flat cream.
-const glassCard = {
-  background: "rgba(255,255,255,.42)",
-  backdropFilter: "blur(10px)",
-  WebkitBackdropFilter: "blur(10px)",
+// Same subject ring colors as Home's mission cards (see HomeClient.js) — kept
+// byte-for-byte identical on purpose so a student sees the same green/gold
+// coding for Science/Social Studies everywhere in the app. If a new subject
+// ever needs a color, add it here AND in HomeClient.js together.
+const SUBJECT_RING_COLORS = {
+  "Science": "#39D97A",
+  "Social Studies": "#FFDD40",
 };
+const DEFAULT_RING_COLOR = "#8FA4FF";
+
+function subjectRingColor(subject) {
+  return SUBJECT_RING_COLORS[subject] || DEFAULT_RING_COLOR;
+}
+
+function engineTag(engine) {
+  return engine === "fact_check_desk" ? "SIGNAL CHECK" : "GROUP CHAT";
+}
+
+// Floating-pedestal scene (Aug 27) — replaces the old scrolling card grid.
+// Up to 4 missions sit on the fixed pedestals baked into the background art;
+// any pedestal with no assigned mission dims to gray. Anything past 4 lists
+// in a scrollable strip below the scene. This is Emily's "blend 1 and 2"
+// choice between showing everything on pedestals vs. a plain overflow list.
+//
+// Pedestal anchor points were read directly off the background image
+// (percent of the stage box) — back pedestals are further away (smaller,
+// higher up), front pedestals are closer (bigger, lower down), matching the
+// art's own perspective. The stage box itself uses the same
+// aspect-ratio-lock trick as the Crystal Vault room stage (GearLockerClient)
+// — width:100% + paddingTop as a fixed percentage — so these percentage
+// coordinates land in the same spot on the image at any screen width,
+// instead of drifting the way a "cover"-sized background would.
+const SLOTS = [
+  { key: "back-left", x: 27, y: 50, scale: 0.82 },
+  { key: "front-left", x: 15, y: 70, scale: 1.05 },
+  { key: "back-right", x: 73, y: 50, scale: 0.82 },
+  { key: "front-right", x: 84, y: 71, scale: 1.05 },
+];
+// Center dais — the raised platform in the middle of the scene where the
+// currently-selected mission gets its bigger "hero" card.
+const CENTER_SLOT = { x: 50, y: 63 };
+
+// /student/missions_hub_bg.jpg is 1672x941 (same convention as the Crystal
+// Vault room backgrounds) — 941/1672 = 56.3%.
+const STAGE_ASPECT_PADDING = "56.3%";
 
 export default function MissionsClient({ student, assignments }) {
   const router = useRouter();
   const [samOpen, setSamOpen] = useState(false);
 
-  // Sort by due date so the most time-sensitive missions show first;
-  // anything without a due date sorts to the end. This is a display-only
-  // sort for this page — it does not touch the order Home uses to pick
-  // its "Active Mission" / "Up Next" cards.
+  // Soonest-due-first — the same display sort this page has always used.
   const sorted = [...assignments].sort((a, b) => {
     if (!a.due_date && !b.due_date) return 0;
     if (!a.due_date) return 1;
@@ -44,19 +78,17 @@ export default function MissionsClient({ student, assignments }) {
     return new Date(a.due_date) - new Date(b.due_date);
   });
 
+  const onPedestals = sorted.slice(0, 4);
+  const overflow = sorted.slice(4);
+
+  const [selectedId, setSelectedId] = useState(onPedestals[0]?.id ?? null);
+  const selected = onPedestals.find((a) => a.id === selectedId) || onPedestals[0] || null;
+
   return (
     <div
       style={{
         minHeight: "100vh",
-        // "contain" + a matching background-color (rather than "cover")
-        // so the shelf/robot art near the edges never gets cropped on a
-        // screen with a different aspect ratio than the source image —
-        // learned the hard way on the sign-in page's background.
-        backgroundImage: "url(/student/missions_background.jpg)",
-        backgroundSize: "contain",
-        backgroundPosition: "center",
-        backgroundRepeat: "no-repeat",
-        backgroundColor: "#EDE8F3",
+        background: COLORS.cream,
         fontFamily: "'Inter', sans-serif",
         color: COLORS.textDark,
       }}
@@ -65,7 +97,10 @@ export default function MissionsClient({ student, assignments }) {
         @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@600;700&family=Inter:wght@400;500;600;700&display=swap');
         .gc-btn { transition: transform 150ms ease, box-shadow 150ms ease; cursor: pointer; border: none; font-family: 'Inter', sans-serif; }
         .gc-btn:hover { transform: translateY(-1px); }
-        .mission-card:hover { box-shadow: 0 10px 24px rgba(13,27,42,.18) !important; }
+        .ped-btn { transition: transform 150ms ease, filter 150ms ease; }
+        .ped-btn:hover:not(.ped-empty) { transform: translate(-50%, -104%) !important; }
+        .overflow-row::-webkit-scrollbar { height: 6px; }
+        .overflow-row::-webkit-scrollbar-thumb { background: rgba(0,0,0,.18); border-radius: 999px; }
       `}</style>
 
       <main style={{ padding: 24, maxWidth: 1300, margin: "0 auto" }}>
@@ -76,19 +111,21 @@ export default function MissionsClient({ student, assignments }) {
             display: "flex",
             justifyContent: "space-between",
             alignItems: "flex-start",
-            marginBottom: 24,
-            ...glassCard,
+            marginBottom: 20,
+            background: COLORS.white,
             borderRadius: 20,
             padding: "14px 20px",
             boxShadow: "0 4px 16px rgba(0,0,0,.08)",
           }}
         >
           <div>
-            <h1 style={{ fontFamily: "'Poppins', sans-serif", fontSize: 30, fontWeight: 700, margin: "0 0 4px 0", color: COLORS.textDark }}>
+            <h1 style={{ fontFamily: "'Poppins', sans-serif", fontSize: 28, fontWeight: 700, margin: "0 0 4px 0", color: COLORS.textDark }}>
               My Missions
             </h1>
-            <p style={{ margin: 0, color: COLORS.textMuted, fontSize: 15 }}>
-              {sorted.length} mission{sorted.length === 1 ? "" : "s"} assigned to you · work through them in any order
+            <p style={{ margin: 0, color: COLORS.textMuted, fontSize: 14 }}>
+              {sorted.length === 0
+                ? "No missions assigned yet"
+                : `${sorted.length} mission${sorted.length === 1 ? "" : "s"} assigned to you · choose one to launch`}
             </p>
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 6, background: COLORS.white, borderRadius: 999, padding: "6px 14px 6px 6px", boxShadow: "0 4px 16px rgba(0,0,0,.08)", fontWeight: 700, fontSize: 14 }}>
@@ -97,52 +134,226 @@ export default function MissionsClient({ student, assignments }) {
           </div>
         </div>
 
-        {sorted.length === 0 ? (
-          <div style={{ ...glassCard, borderRadius: 20, padding: 32, textAlign: "center", color: COLORS.textMuted }}>
-            No missions assigned yet — check back once your teacher assigns one!
-          </div>
-        ) : (
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(240px, 1fr))", gap: 20 }}>
-            {sorted.map((a) => (
+        {/* The mission bay scene */}
+        <div
+          style={{
+            position: "relative",
+            width: "100%",
+            paddingTop: STAGE_ASPECT_PADDING,
+            borderRadius: 24,
+            overflow: "hidden",
+            boxShadow: "0 8px 30px rgba(0,0,0,.18)",
+            marginBottom: overflow.length > 0 ? 14 : 28,
+          }}
+        >
+          <img
+            src="/student/missions_hub_bg.jpg"
+            alt="Mission bay"
+            style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }}
+          />
+
+          {SLOTS.map((slot, slotIndex) => {
+            const mission = onPedestals[slotIndex];
+            const cardW = Math.round(112 * slot.scale);
+            const imgH = Math.round(56 * slot.scale);
+
+            if (!mission) {
+              // A translucent gray + dashed outline reads as "empty slot" at
+              // a glance against this bright background — a plain low-opacity
+              // white box (tried first) nearly vanished since there's no
+              // image content left for a grayscale filter to desaturate.
+              return (
+                <div
+                  key={slot.key}
+                  style={{
+                    position: "absolute",
+                    left: `${slot.x}%`,
+                    top: `${slot.y}%`,
+                    transform: "translate(-50%, -100%)",
+                    width: cardW,
+                    height: imgH + 40,
+                    borderRadius: 14,
+                    background: "rgba(90,95,120,.20)",
+                    border: "2px dashed rgba(90,95,120,.32)",
+                  }}
+                />
+              );
+            }
+
+            const isActive = mission.id === selectedId;
+            const ring = subjectRingColor(mission.cases?.subject);
+            const shadow = isActive
+              ? `0 0 0 2.5px ${ring}, 0 0 0 6px rgba(123,93,255,.55), 0 10px 26px rgba(40,20,80,.28)`
+              : `0 0 0 2.5px ${ring}, 0 8px 22px rgba(40,20,80,.18)`;
+
+            return (
               <button
-                key={a.id}
+                key={mission.id}
                 type="button"
-                onClick={() => router.push(`/activity/${a.id}`)}
-                className="gc-btn mission-card"
-                style={{ display: "block", width: "100%", textAlign: "left", ...glassCard, borderRadius: 18, boxShadow: "0 4px 16px rgba(0,0,0,.08)", overflow: "hidden", padding: 0, border: "none", cursor: "pointer", font: "inherit", color: "inherit" }}
+                className="ped-btn"
+                onClick={() => setSelectedId(mission.id)}
+                style={{
+                  position: "absolute",
+                  left: `${slot.x}%`,
+                  top: `${slot.y}%`,
+                  transform: "translate(-50%, -100%)",
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  border: "none",
+                  background: "none",
+                  padding: 0,
+                  cursor: "pointer",
+                  font: "inherit",
+                }}
               >
-                <div style={{ height: 130, overflow: "hidden", position: "relative" }}>
-                  <img src={caseImagePath(a.case_standard)} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
-                  {a.revisionRequested && (
-                    <div title="Sent back for revision" style={{ position: "absolute", top: 8, left: 8, width: 32, height: 32, borderRadius: "50%", background: COLORS.gold, boxShadow: "0 2px 8px rgba(0,0,0,.3)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 17 }}>
-                      ⭐
+                <div style={{ width: cardW, borderRadius: 14, overflow: "hidden", background: "rgba(255,255,255,.94)", boxShadow: shadow, display: "flex", flexDirection: "column" }}>
+                  <div style={{ position: "relative", height: imgH }}>
+                    <img src={caseImagePath(mission.case_standard)} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+                    {mission.revisionRequested && (
+                      <div title="Sent back for revision" style={{ position: "absolute", top: 4, left: 4, width: Math.round(18 * slot.scale), height: Math.round(18 * slot.scale), borderRadius: "50%", background: COLORS.gold, boxShadow: "0 2px 6px rgba(0,0,0,.3)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: Math.round(10 * slot.scale) }}>
+                        ⭐
+                      </div>
+                    )}
+                  </div>
+                  <div style={{ padding: `${Math.round(6 * slot.scale)}px ${Math.round(8 * slot.scale)}px ${Math.round(8 * slot.scale)}px` }}>
+                    <span style={{ display: "inline-block", fontSize: 8 + slot.scale, fontWeight: 700, letterSpacing: .3, padding: "2px 7px", borderRadius: 999, marginBottom: 3, background: `${ring}26`, color: ring }}>
+                      {mission.cases?.subject ? mission.cases.subject.toUpperCase() : engineTag(mission.cases?.engine)}
+                    </span>
+                    <div style={{ fontWeight: 700, lineHeight: 1.2, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", fontSize: 11 + slot.scale, color: COLORS.textDark, textAlign: "left" }}>
+                      {mission.cases?.title}
                     </div>
-                  )}
+                    <div style={{ color: COLORS.textMuted, fontSize: 9 + slot.scale, textAlign: "left" }}>
+                      {mission.case_standard}
+                    </div>
+                  </div>
                 </div>
-                <div style={{ padding: 16 }}>
-                  <span style={{ display: "inline-flex", background: a.cases?.engine === "fact_check_desk" ? COLORS.tealSoft : COLORS.violetSoft, color: a.cases?.engine === "fact_check_desk" ? COLORS.teal : COLORS.violet, fontSize: 11, fontWeight: 700, letterSpacing: .3, padding: "4px 10px", borderRadius: 999, marginBottom: 8 }}>
-                    {a.cases?.engine === "fact_check_desk" ? "SIGNAL CHECK" : "GROUP CHAT"}
+                <div style={{ width: 3, height: 18 * slot.scale, marginTop: 4, background: "linear-gradient(180deg, rgba(255,255,255,.9), rgba(255,255,255,0))" }} />
+              </button>
+            );
+          })}
+
+          {/* Center dais — the currently-selected mission's bigger detail card */}
+          {selected ? (
+            <div
+              style={{
+                position: "absolute",
+                left: `${CENTER_SLOT.x}%`,
+                top: `${CENTER_SLOT.y}%`,
+                transform: "translate(-50%, -100%)",
+                width: "23%",
+                minWidth: 220,
+                maxWidth: 300,
+                borderRadius: 20,
+                overflow: "hidden",
+                background: "rgba(255,255,255,.96)",
+                boxShadow: `0 0 0 3px ${subjectRingColor(selected.cases?.subject)}, 0 14px 40px rgba(40,20,80,.22)`,
+                zIndex: 4,
+              }}
+            >
+              <div style={{ width: "100%", aspectRatio: "16/7", overflow: "hidden" }}>
+                <img src={caseImagePath(selected.case_standard)} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+              </div>
+              <div style={{ padding: "12px 16px 16px" }}>
+                <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 8 }}>
+                  <span style={{ display: "inline-block", fontSize: 10.5, fontWeight: 700, letterSpacing: .3, padding: "4px 11px", borderRadius: 999, background: `${subjectRingColor(selected.cases?.subject)}26`, color: subjectRingColor(selected.cases?.subject) }}>
+                    {selected.cases?.subject ? selected.cases.subject.toUpperCase() : engineTag(selected.cases?.engine)} · {engineTag(selected.cases?.engine)}
                   </span>
-                  {a.revisionRequested && (
-                    <span style={{ display: "inline-flex", alignItems: "center", gap: 4, background: "#FFF4E5", color: "#B8860B", fontSize: 11, fontWeight: 700, letterSpacing: .3, padding: "4px 10px", borderRadius: 999, marginBottom: 8, marginLeft: 6 }}>
+                  {selected.revisionRequested && (
+                    <span style={{ display: "inline-flex", alignItems: "center", gap: 4, background: "#FFF4E5", color: "#B8860B", fontSize: 10.5, fontWeight: 700, letterSpacing: .3, padding: "4px 11px", borderRadius: 999 }}>
                       🔁 Try Again
                     </span>
                   )}
-                  <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 2, color: COLORS.textDark }}>{a.cases?.title}</div>
-                  <div style={{ fontSize: 12.5, color: COLORS.textMuted, marginBottom: a.cases?.learning_target ? 8 : 14 }}>
-                    {a.case_standard}{a.due_date ? ` · Due ${a.due_date}` : ""}
-                  </div>
-                  {a.cases?.learning_target && (
-                    <div style={{ fontSize: 12, color: COLORS.textDark, background: COLORS.tealSoft, borderRadius: 10, padding: "8px 10px", marginBottom: 14, lineHeight: 1.4 }}>
-                      🎯 {a.cases.learning_target}
-                    </div>
-                  )}
-                  <div style={{ display: "inline-flex", alignItems: "center", gap: 6, color: COLORS.violet, fontWeight: 700, fontSize: 13.5 }}>
-                    Open Mission →
-                  </div>
                 </div>
-              </button>
-            ))}
+                <p style={{ fontFamily: "'Poppins', sans-serif", fontSize: 16.5, fontWeight: 700, margin: "0 0 3px 0", color: COLORS.textDark }}>{selected.cases?.title}</p>
+                <p style={{ fontSize: 11.5, color: COLORS.textMuted, margin: "0 0 10px 0" }}>
+                  {selected.case_standard}{selected.due_date ? ` · Due ${selected.due_date}` : ""}
+                </p>
+                {selected.cases?.learning_target && (
+                  <div style={{ fontSize: 11.5, color: COLORS.textDark, background: COLORS.tealSoft, borderRadius: 10, padding: "8px 10px", marginBottom: 12, lineHeight: 1.4 }}>
+                    🎯 {selected.cases.learning_target}
+                  </div>
+                )}
+                <button
+                  type="button"
+                  onClick={() => router.push(`/activity/${selected.id}`)}
+                  className="gc-btn"
+                  style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 6, width: "100%", background: `linear-gradient(135deg, ${COLORS.violet}, #9B7DFF)`, color: COLORS.white, borderRadius: 999, padding: "10px 18px", fontWeight: 700, fontSize: 13 }}
+                >
+                  Launch Mission 🚀
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div
+              style={{
+                position: "absolute",
+                left: "50%",
+                top: "30%",
+                transform: "translateX(-50%)",
+                width: 280,
+                textAlign: "center",
+                background: "rgba(255,255,255,.94)",
+                borderRadius: 18,
+                padding: "28px 20px",
+                boxShadow: "0 10px 30px rgba(40,20,80,.18)",
+              }}
+            >
+              <p style={{ color: COLORS.textMuted, fontSize: 13, margin: 0 }}>
+                No missions assigned yet — check back once your teacher assigns one!
+              </p>
+            </div>
+          )}
+        </div>
+
+        {/* Overflow — anything past the 4 pedestals */}
+        {overflow.length > 0 && (
+          <div style={{ marginBottom: 28 }}>
+            <p style={{ fontSize: 11.5, fontWeight: 700, color: COLORS.textMuted, textTransform: "uppercase", letterSpacing: .4, margin: "0 0 8px 4px" }}>
+              +{overflow.length} more mission{overflow.length === 1 ? "" : "s"}
+            </p>
+            <div className="overflow-row" style={{ display: "flex", gap: 10, overflowX: "auto", paddingBottom: 6 }}>
+              {overflow.map((mission) => {
+                const ring = subjectRingColor(mission.cases?.subject);
+                return (
+                  <button
+                    key={mission.id}
+                    type="button"
+                    onClick={() => router.push(`/activity/${mission.id}`)}
+                    className="gc-btn"
+                    style={{
+                      flexShrink: 0,
+                      width: 220,
+                      display: "flex",
+                      gap: 10,
+                      alignItems: "center",
+                      textAlign: "left",
+                      background: COLORS.white,
+                      borderRadius: 14,
+                      padding: 10,
+                      boxShadow: `0 0 0 2px ${ring}, 0 4px 14px rgba(0,0,0,.08)`,
+                      border: "none",
+                      font: "inherit",
+                      color: "inherit",
+                      cursor: "pointer",
+                    }}
+                  >
+                    <div style={{ position: "relative", width: 40, height: 40, borderRadius: 9, overflow: "hidden", flexShrink: 0 }}>
+                      <img src={caseImagePath(mission.case_standard)} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+                      {mission.revisionRequested && (
+                        <div style={{ position: "absolute", top: 1, left: 1, width: 14, height: 14, borderRadius: "50%", background: COLORS.gold, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 8 }}>⭐</div>
+                      )}
+                    </div>
+                    <div style={{ minWidth: 0 }}>
+                      <div style={{ fontSize: 12, fontWeight: 700, color: COLORS.textDark, lineHeight: 1.25, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                        {mission.cases?.title}
+                      </div>
+                      <div style={{ fontSize: 10.5, color: COLORS.textMuted }}>{mission.case_standard}</div>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
           </div>
         )}
       </main>
