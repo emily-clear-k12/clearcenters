@@ -178,16 +178,43 @@ function NewAssignmentContent() {
   }
 
   return (
-    <div style={{ display: "flex", minHeight: "100vh", background: COLORS.cream, fontFamily: "'Inter', sans-serif", color: COLORS.textDark }}>
+    <div style={{ position: "relative", display: "flex", minHeight: "100vh", fontFamily: "'Inter', sans-serif", color: COLORS.textDark }}>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@600;700&family=Inter:wght@400;500;600;700&display=swap');
         .gc-btn { transition: transform 150ms ease; cursor: pointer; border: none; font-family: 'Inter', sans-serif; }
         .gc-btn:hover { transform: translateY(-1px); }
       `}</style>
 
-      <TeacherSidebar teacherEmail={teacherEmail} />
+      {/* Emily's Challenge Library background (Aug 27) — a 1672x941 image with
+          the desk/window/crystal art on its right side, close enough to the
+          right and bottom edges that a plain "cover" would risk cropping it
+          on a browser window shaped differently from the source image. Using
+          the same "contain + matching backgroundColor" fix as every other
+          edge-anchored background in the app (see the handoff doc's Part 1):
+          the image is never cropped, and the sampled near-white lavender
+          fallback color blends into any letterboxed edge instead of showing
+          as a bar. Fixed to the viewport so it stays put while this page's
+          content (which can get tall — case grids, forms) scrolls over it;
+          the sidebar and content are lifted onto their own stacking layer
+          above it with position/zIndex so the opaque sidebar still fully
+          covers its own strip either way. */}
+      <div
+        style={{
+          position: "fixed",
+          inset: 0,
+          zIndex: 0,
+          backgroundColor: "#F3EEFA",
+          backgroundImage: "url(/teacher/challenge_library_bg.jpg)",
+          backgroundSize: "contain",
+          backgroundPosition: "center",
+          backgroundRepeat: "no-repeat",
+        }}
+      />
 
-      <div style={{ flex: 1, padding: "32px 36px", display: "flex", justifyContent: "center" }}>
+      <div style={{ position: "relative", zIndex: 1, display: "flex", width: "100%" }}>
+        <TeacherSidebar teacherEmail={teacherEmail} />
+
+        <div style={{ flex: 1, padding: "32px 36px", display: "flex", justifyContent: "center" }}>
         <div style={{ width: "100%", maxWidth: challengeStep === "library" ? 1240 : challengeStep === "caseList" ? 920 : 640 }}>
           <button onClick={() => router.push("/teacher/assign")} className="gc-btn" style={{ display: "flex", alignItems: "center", gap: 6, background: "none", color: COLORS.textMuted, fontSize: 13, fontWeight: 600, marginBottom: 10 }}>
             <ChevronLeft size={16} /> Back to My Classes
@@ -443,6 +470,7 @@ function NewAssignmentContent() {
             </div>
           )}
         </div>
+      </div>
       </div>
     </div>
   );
