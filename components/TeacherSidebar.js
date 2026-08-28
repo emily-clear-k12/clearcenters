@@ -82,9 +82,20 @@ export default function TeacherSidebar({ teacherName, teacherEmail }) {
         minHeight: "100vh",
       }}
     >
-      <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "24px 20px 20px" }}>
-        <img src="/teacher/brand_crystal_mark.png" alt="" style={{ width: 26, height: "auto" }} />
-        <div style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 700, fontSize: 16, color: COLORS.textDark }}>ClearCenters</div>
+      {/* Real ClearCenters logo lockup (Aug 27), replacing the small crystal
+          icon + text wordmark this sidebar used before — same transparent
+          brand asset Emily supplied, just scoped to its own file under
+          public/teacher/ rather than reusing the student login page's copy
+          (public/clearcenters_logo.png), since there's no confirmation the
+          two are pixel-identical crops. This sidebar is shared by every
+          teacher page, so this one change updates the brand mark across the
+          entire teacher dashboard at once. Capped at 170px so it comfortably
+          fits the sidebar's 216px width with its existing 20px side padding;
+          the "PROVE GROW SHINE" tagline is legible but necessarily small at
+          this scale — a real, accepted trade-off of a wide 3:1 lockup living
+          in a narrow sidebar column, not an oversight. */}
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", padding: "20px 16px 16px" }}>
+        <img src="/teacher/clearcenters_logo.png" alt="ClearCenters" style={{ width: "100%", maxWidth: 170, height: "auto", display: "block" }} />
       </div>
 
       <nav style={{ display: "flex", flexDirection: "column", gap: 2, padding: "4px 12px", flex: 1 }}>
