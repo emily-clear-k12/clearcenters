@@ -25,34 +25,37 @@ const COLORS = {
 // and accepted that a `cover`-cropped background can nudge these spots
 // slightly off-pixel on an unusually-shaped window).
 //
-// Reordered Aug 27 (later the same day) per Emily's call: planets should
-// read left-to-right, cheapest to most expensive, rather than sit at
-// whatever spot roughly matched the original mockup. The 5 original x/y
-// anchors (26/36/50/64/74, each with its own baked-in "landing ring" in
-// the background art) are unchanged as physical spots — only which planet
-// sits at which spot changed, so every original ring still has a planet
-// on it. LavaCore has no baked ring (see below) and continues the arc one
-// step further right and lower.
+// Rebalanced again Aug 27 (later still) per Emily's request: 3 planets on
+// each side of the ship, mirrored, instead of 5 planets plus one sitting
+// dead-center. The background art has 5 baked-in "landing ring" anchors at
+// x = 26/36/50/64/74 (see the price-ordering note this replaces, below) —
+// an odd number, so there's no way to split them 3-and-3 without leaving
+// the center ring (50, 29) empty. Emily confirmed that trade-off directly
+// ("move it anyway") rather than have it picked silently. The fix: Robot
+// Relay City moves off the center ring into the ring at x=36 (previously
+// Frost Ring's spot), Frost Ring shifts one ring outward to x=26 (glow
+// Garden's old spot), and Glow Garden moves to a new ringless spot at
+// x=12 — mirroring LavaCore's existing ringless spot at x=88 exactly
+// (50-12 = 88-50 = 38; same y, 48, on both). The center ring (50, 29) is
+// now unused — a real, deliberate side effect, not an oversight. Jungle
+// Moon / Cloud Reef / LavaCore (the right half) are untouched, since they
+// already mirror this pattern's spacing.
 //
-// `lavacore` (added once Emily sent real LavaCore art, same session) isn't
-// baked into the background art the way the other 5 aren't either — every
-// planet here is a separate overlay image, not part of the jpg — so this
-// position is a first guess rather than something read off a mockup. Move
-// it if Emily wants it somewhere else once she sees it.
+// Left-to-right cheapest-to-most-expensive (Group S's rule) still holds
+// across all 6, it's just measured outward-in-from-each-edge now instead
+// of one continuous left-to-right sweep through a center point: x=12
+// (Glow Garden, 50) < x=26 (Frost Ring, 80) < x=36 (Robot Relay City, 120)
+// < [ship, unused ring] < x=64 (Jungle Moon, 150) < x=74 (Cloud Reef, 200)
+// < x=88 (LavaCore, 250).
 //
-// First attempt was top-center (50, 20), which the Playwright harness
-// caught colliding with the "GALAXY HUB" neon sign baked into the
-// background art (same class of bug as the duplicate-title issue this
-// planet's row was already fixed for) — the sign occupies roughly x 38-63%,
-// y 10-19% of the background. Second attempt (82, 14) cleared the sign but
-// broke the new left-to-right price ordering once LavaCore needed to sit
-// to the right of Cloud Reef instead of in the upper-right corner. Now at
-// (88, 48) — continuing the arc's rightward-and-downward curve past Cloud
-// Reef (74, 47), clear of both the sign and the stats panel (top-right).
+// LavaCore was never on a baked ring to begin with (added after the
+// original 5 planets, once Emily sent its art — see the git history of
+// this comment for that positioning story) — Glow Garden now shares that
+// same "floats on its own, no landing pad" treatment on the mirror spot.
 const PLANET_POSITIONS = {
-  glow_garden: { x: 26, y: 47 },
-  frost_ring: { x: 36, y: 35 },
-  robot_relay_city: { x: 50, y: 29 },
+  glow_garden: { x: 12, y: 48 },
+  frost_ring: { x: 26, y: 47 },
+  robot_relay_city: { x: 36, y: 35 },
   jungle_moon: { x: 64, y: 29 },
   cloud_reef: { x: 74, y: 47 },
   lavacore: { x: 88, y: 48 },
