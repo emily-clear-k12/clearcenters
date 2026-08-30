@@ -13,9 +13,18 @@ ALTER TABLE submissions
 -- app actually routes it to Mission Map's engine instead of falling back to
 -- Group Chat. Without a matching row here, `page.js`'s lookup on `cases`
 -- finds nothing and defaults `engine` to "group_chat".
-INSERT INTO cases (standard, engine)
-VALUES ('3.1-MM', 'mission_map')
-ON CONFLICT (standard) DO UPDATE SET engine = EXCLUDED.engine;
+--
+-- title, grade, and subject are included because `cases.title` is NOT NULL
+-- in the real schema (caught by checking supabase_schema.sql directly
+-- before handing this off, rather than assuming the earlier draft of this
+-- file — which only set standard/engine — would have run cleanly).
+INSERT INTO cases (standard, title, engine, grade, subject)
+VALUES ('3.1-MM', 'Rescue the Pollination Path', 'mission_map', 3, 'Science')
+ON CONFLICT (standard) DO UPDATE SET
+  engine = EXCLUDED.engine,
+  title = EXCLUDED.title,
+  grade = EXCLUDED.grade,
+  subject = EXCLUDED.subject;
 
 -- To actually test this end to end, an `assignments` row also needs
 -- `case_standard = '3.1-MM'` pointed at a real class — that's a normal

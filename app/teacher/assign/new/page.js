@@ -25,9 +25,10 @@ const COLORS = {
 // You Be the Judge + Comment Section Challenge + Bracket Battle combined into
 // Comment Court (a placeholder name, pending Emily's final pick). All of
 // these still need real content authored before any go live, so they stay
-// `real: false` ("Coming Soon") until then. Group Chat and Fact-Check Desk
-// (branded "Signal Check" in the UI, engine "fact_check_desk") both have
-// real pilot content now, so both are `real: true`.
+// `real: false` ("Coming Soon") until then. Group Chat, Fact-Check Desk
+// (branded "Signal Check" in the UI, engine "fact_check_desk"), and — as of
+// Aug 30 2026, one case ("3.1-MM") — Mission Map all have real content now,
+// so all three are `real: true`.
 const CHALLENGE_TYPES = [
   { key: "group_chat", label: "Group Chat", image: "/teacher/challenges/group_chat.jpg", real: true,
     description: "Students role-play as characters, concepts, or parts of a system in a live group chat, using evidence to prove what's really going on." },
@@ -39,7 +40,7 @@ const CHALLENGE_TYPES = [
     description: "Students curate a small exhibit from a pile of evidence — choosing the strongest items, rejecting at least one on purpose, and writing placards that explain why." },
   { key: "newsroom", label: "Newsroom", image: "/teacher/challenges/newsroom.jpg", real: false,
     description: "Students gather their own evidence from the scene, then build and produce a report — headline, script, and all — before it airs." },
-  { key: "mission_map", label: "Mission Map", image: "/teacher/challenges/mission_map.jpg", real: false,
+  { key: "mission_map", label: "Mission Map", image: "/teacher/challenges/mission_map.jpg", real: true,
     description: "Students move through locked checkpoints, collecting clues, rejecting a tempting wrong answer, and building a reasoning chain to unlock the final response." },
   { key: "comment_court", label: "Comment Court", image: "/teacher/challenges/comment_court.jpg", real: false,
     description: "A disputed claim shows up as a messy comment thread. Students sort the noise, weigh the evidence, and either rule on the dispute or run it as a bracket when there's more than two sides." },
