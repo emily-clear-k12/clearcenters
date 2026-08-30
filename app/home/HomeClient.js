@@ -202,7 +202,7 @@ export default function HomeClient({ student, studentClass, assignments, mission
           >
             <div style={{ display: "flex", gap: 6, marginBottom: 9, flexWrap: "wrap" }}>
               <span style={{ display: "inline-flex", background: "rgba(123,93,255,.35)", color: "#E4DBFF", fontSize: 10, fontWeight: 700, letterSpacing: .4, padding: "4px 11px", borderRadius: 999 }}>
-                YOUR ACTIVE MISSION · {activeMission.cases?.engine === "fact_check_desk" ? "SIGNAL CHECK" : "GROUP CHAT"}
+                YOUR ACTIVE MISSION · {activeMission.cases?.engine === "fact_check_desk" ? "SIGNAL CHECK" : activeMission.cases?.engine === "mission_map" ? "MISSION MAP" : "GROUP CHAT"}
               </span>
               {activeMission.revisionRequested && (
                 <span style={{ display: "inline-flex", background: "rgba(255,196,77,.3)", color: "#FFE7B0", fontSize: 10, fontWeight: 700, letterSpacing: .4, padding: "4px 11px", borderRadius: 999 }}>

@@ -34,8 +34,27 @@ function subjectRingColor(subject) {
   return SUBJECT_RING_COLORS[subject] || DEFAULT_RING_COLOR;
 }
 
+// Every real engine needs an entry here or it silently falls through to
+// "GROUP CHAT" — that's exactly the bug Mission Map hit on Aug 30 (its
+// cases rendered as "SCIENCE · GROUP CHAT" until this map got a
+// "mission_map" entry). Add new engines here the moment they go live.
+const ENGINE_LABELS = {
+  fact_check_desk: "SIGNAL CHECK",
+  mission_map: "MISSION MAP",
+};
 function engineTag(engine) {
-  return engine === "fact_check_desk" ? "SIGNAL CHECK" : "GROUP CHAT";
+  return ENGINE_LABELS[engine] || "GROUP CHAT";
+}
+
+// Most engines' badge just inherits the subject's ring color (green/gold) —
+// no visual change there. An engine can override that with its own accent
+// here when it should read as visually distinct from a same-subject Group
+// Chat/Signal Check card — Mission Map gets blue, per Emily's Aug 30 call.
+const ENGINE_ACCENT_COLORS = {
+  mission_map: "#3B82F6",
+};
+function engineAccentColor(engine, subject) {
+  return ENGINE_ACCENT_COLORS[engine] || subjectRingColor(subject);
 }
 
 // Floating-pedestal scene (Aug 27) — replaces the old scrolling card grid.
@@ -288,7 +307,7 @@ export default function MissionsClient({ student, assignments }) {
                 borderRadius: 20,
                 overflow: "hidden",
                 background: "rgba(255,255,255,.96)",
-                boxShadow: `0 0 0 3px ${subjectRingColor(selected.cases?.subject)}, 0 14px 40px rgba(40,20,80,.22)`,
+                boxShadow: `0 0 0 3px ${engineAccentColor(selected.cases?.engine, selected.cases?.subject)}, 0 14px 40px rgba(40,20,80,.22)`,
                 zIndex: 4,
               }}
             >
@@ -297,7 +316,7 @@ export default function MissionsClient({ student, assignments }) {
               </div>
               <div style={{ padding: "12px 16px 16px" }}>
                 <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 8 }}>
-                  <span style={{ display: "inline-block", fontSize: 10.5, fontWeight: 700, letterSpacing: .3, padding: "4px 11px", borderRadius: 999, background: `${subjectRingColor(selected.cases?.subject)}26`, color: subjectRingColor(selected.cases?.subject) }}>
+                  <span style={{ display: "inline-block", fontSize: 10.5, fontWeight: 700, letterSpacing: .3, padding: "4px 11px", borderRadius: 999, background: `${engineAccentColor(selected.cases?.engine, selected.cases?.subject)}26`, color: engineAccentColor(selected.cases?.engine, selected.cases?.subject) }}>
                     {selected.cases?.subject ? selected.cases.subject.toUpperCase() : engineTag(selected.cases?.engine)} · {engineTag(selected.cases?.engine)}
                   </span>
                   {selected.revisionRequested && (
