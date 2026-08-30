@@ -3,8 +3,10 @@ import { redirect } from "next/navigation";
 import { supabaseAdmin } from "../../../lib/supabaseAdmin";
 import { getPublicCase } from "../../../lib/cases/index.public";
 import { getSignalCheckPublicCase } from "../../../lib/cases/signal-check/index.public";
+import { getMissionMapPublicCase } from "../../../lib/cases/mission-map/index.public";
 import ActivityClient from "./ActivityClient";
 import SignalCheckClient from "./SignalCheckClient";
+import MissionMapClient from "./MissionMapClient";
 
 export default async function ActivityPage({ params }) {
   const { assignmentId } = params;
@@ -53,8 +55,10 @@ export default async function ActivityPage({ params }) {
   }
 
   // A case's `engine` column decides which challenge type's content and
-  // game engine this assignment uses — "group_chat" (the default) and
-  // "fact_check_desk" (Signal Check). Newsroom ("newsroom_bn" etc.) was
+  // game engine this assignment uses — "group_chat" (the default),
+  // "fact_check_desk" (Signal Check), and "mission_map" (Mission Map,
+  // added Aug 30 2026 as the first of the 8 designed-but-uncoded roster
+  // engines to get real code). Newsroom ("newsroom_bn" etc.) was
   // disconnected on Aug 25 2026 while it's reworked — any case row with a
   // "newsroom*" engine now falls through to the generic "not ready yet"
   // screen below, same as any other unwired case, until it's reconnected.
@@ -66,11 +70,13 @@ export default async function ActivityPage({ params }) {
 
   const engine = (caseRow && caseRow.engine) || "group_chat";
   const isSignalCheck = engine === "fact_check_desk";
+  const isMissionMap = engine === "mission_map";
 
-  const caseEntry = isSignalCheck ? null : getPublicCase(assignment.case_standard);
+  const caseEntry = (isSignalCheck || isMissionMap) ? null : getPublicCase(assignment.case_standard);
   const signalCheckCase = isSignalCheck ? getSignalCheckPublicCase(assignment.case_standard) : null;
+  const missionMapCase = isMissionMap ? getMissionMapPublicCase(assignment.case_standard) : null;
 
-  if (!caseEntry && !signalCheckCase) {
+  if (!caseEntry && !signalCheckCase && !missionMapCase) {
     return (
       <div style={{ minHeight: "100vh", background: "#16243F", display: "flex", alignItems: "center", justifyContent: "center", color: "#FFFFFF", fontFamily: "sans-serif", textAlign: "center", padding: 20 }}>
         <div>
@@ -101,6 +107,20 @@ export default async function ActivityPage({ params }) {
         assignmentId={assignmentId}
         caseStandard={assignment.case_standard}
         publicCase={signalCheckCase}
+        existingSubmission={existingSubmission}
+        alreadySubmitted={alreadySubmitted}
+        revisionRequested={revisionRequested}
+        revisionFeedback={revisionFeedback}
+      />
+    );
+  }
+
+  if (isMissionMap) {
+    return (
+      <MissionMapClient
+        assignmentId={assignmentId}
+        caseStandard={assignment.case_standard}
+        publicCase={missionMapCase}
         existingSubmission={existingSubmission}
         alreadySubmitted={alreadySubmitted}
         revisionRequested={revisionRequested}
