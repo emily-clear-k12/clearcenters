@@ -47,12 +47,28 @@ const CONFIDENCE_LEVELS = [
 // questions must be checked before submit unlocks.
 const REQUIRED_CHECKS = 3;
 
-// The lock-in rule from the design doc (§3.4): a checkpoint missed twice
-// gets a S.A.M. hint; missed a 3rd time, that pick locks in as the recorded
-// answer for that checkpoint — but the mission keeps moving regardless, so
-// one struggle never blocks the rest of the quest.
-const HINT_AFTER_MISSES = 2;
-const LOCK_IN_AFTER_MISSES = 3;
+// Revised checkpoint flow (Aug 30 v4, per Emily's direct live-test feedback):
+// no more instant right/wrong reveal with unlimited retries. A student picks
+// an answer and taps Submit to check it — nothing is graded until that
+// deliberate tap. Get it right the first time: move on immediately. Get it
+// wrong the first time: S.A.M. gives a hint, quietly — no red flash, no X —
+// and the student picks again. Whatever they submit the second time is
+// final and the mission moves on regardless, right or wrong, so one hard
+// checkpoint never blocks the rest of the quest. The right/wrong outcome is
+// still recorded for the teacher; it's just never displayed back to the
+// student as a red mark on the map, which Emily explicitly didn't want.
+const MAX_ATTEMPTS = 2;
+
+// Generic "why did you pick that?" reason chips shown after every checkpoint
+// pick, reused as-is for any future case/checkpoint — grade-3 students tap
+// one instead of typing, per Emily's ask to scale reading/writing by grade
+// (a 4th/5th-grade case can swap this for a short free-text box later; nothing
+// here is written specifically for this case's content).
+const REASON_CHIPS = [
+  { id: "evidence", text: "The evidence showed it" },
+  { id: "ruled_out", text: "I ruled out the others" },
+  { id: "made_sense", text: "It made the most sense" },
+];
 
 // Reveal radii for the fog-of-war mask, in the SVG's own 0-100 coordinate
 // space (see the <svg viewBox="0 0 100 100"> below) — a cleared checkpoint
@@ -64,7 +80,10 @@ const CURRENT_PEEK_RADIUS = 9;
 function EvidenceBlock({ evidence }) {
   if (!evidence) return null;
   const icon = evidence.type === "data" ? "📊" : "📖";
-  const label = evidence.type === "data" ? "FIELD DATA" : "FIELD NOTES";
+  // A checkpoint can override the label (e.g. "FIELD NOTE — VOLUNTEER A") for
+  // a conflicting-report checkpoint where two evidence blocks sit side by
+  // side and need to read as distinct sources, not two copies of the same one.
+  const label = evidence.label || (evidence.type === "data" ? "FIELD DATA" : "FIELD NOTES");
   return (
     <div style={{ background: "rgba(31,42,68,.05)", border: "1px solid rgba(31,42,68,.14)", borderRadius: 12, padding: 14, marginBottom: 14 }}>
       <div style={{ fontSize: 10.5, letterSpacing: 1, color: COLORS.gold, fontWeight: 700, marginBottom: 6 }}>{icon} {label}</div>
@@ -111,11 +130,10 @@ export default function MissionMapClient({
     alreadySubmitted && !revisionRequested ? "finalUnlock" : draft.phase || "brief"
   );
 
-  // checkpointState[id] = { attempts, resolved, correct, choiceId }
+  // checkpointState[id] = { attempts, resolved, correct, choiceId, reasonId }
   const [checkpointState, setCheckpointState] = useState(draft.checkpointState || {});
   const [currentIndex, setCurrentIndex] = useState(draft.currentIndex || 0);
   const [evidenceLog, setEvidenceLog] = useState(draft.evidenceLog || []);
-  const [wrongFlashChoiceId, setWrongFlashChoiceId] = useState(null);
   const [showCelebration, setShowCelebration] = useState(false);
   const [mapImageFailed, setMapImageFailed] = useState(false);
   // Click-to-open: the current checkpoint's question doesn't show until the
@@ -123,8 +141,19 @@ export default function MissionMapClient({
   // closes automatically whenever the mission advances to a new checkpoint.
   const [checkpointOpen, setCheckpointOpen] = useState(false);
 
+  // The tentative pick + reason chip for whichever checkpoint is currently
+  // open — nothing is graded until the student taps Submit (v4 rebuild:
+  // no more instant-feedback-on-tap). Reset whenever the open checkpoint
+  // changes so a fresh attempt starts blank.
+  const [pendingChoiceId, setPendingChoiceId] = useState(null);
+  const [pendingReasonId, setPendingReasonId] = useState(null);
+  // predictions[checkpointId] = the option id the student picked in a
+  // "predict before you see the evidence" step (only present on checkpoints
+  // that define `predictBeforeEvidence`) — set once, then the evidence and
+  // choices reveal below it.
+  const [predictions, setPredictions] = useState(draft.predictions || {});
+
   const [hintTextByCheckpoint, setHintTextByCheckpoint] = useState({});
-  const [hintCount, setHintCount] = useState(0);
 
   const [finalResponseText, setFinalResponseText] = useState(
     draft.finalResponseText || (existingSubmission && existingSubmission.mission_map_data && existingSubmission.mission_map_data.finalResponseText) || ""
@@ -147,15 +176,18 @@ export default function MissionMapClient({
     try {
       localStorage.setItem(
         storageKey,
-        JSON.stringify({ phase, checkpointState, currentIndex, evidenceLog, finalResponseText, checklist, self_confidence: selfConfidence })
+        JSON.stringify({ phase, checkpointState, currentIndex, evidenceLog, predictions, finalResponseText, checklist, self_confidence: selfConfidence })
       );
     } catch (err) {}
-  }, [phase, checkpointState, currentIndex, evidenceLog, finalResponseText, checklist, selfConfidence]);
+  }, [phase, checkpointState, currentIndex, evidenceLog, predictions, finalResponseText, checklist, selfConfidence]);
 
   // Every time the mission moves to a new checkpoint, close the panel again
-  // so the student is back looking at the map and has to tap the next stop.
+  // (so the student is back looking at the map and has to tap the next
+  // stop) and clear any tentative pick/reason left over from the last one.
   useEffect(() => {
     setCheckpointOpen(false);
+    setPendingChoiceId(null);
+    setPendingReasonId(null);
   }, [currentIndex]);
 
   function saveProgress(fields) {
@@ -171,58 +203,66 @@ export default function MissionMapClient({
     saveProgress({ phase: "walk" });
   }
 
-  function requestHint(checkpointId) {
+  // Checkpoint-indexed hints, not a running counter across the whole
+  // mission (fixed Aug 30 v4 while rebuilding this flow) — a hint should
+  // match whichever checkpoint the student is actually stuck on. Falls back
+  // to the shared generic pool if a case hasn't got a hint written for that
+  // checkpoint index yet.
+  function requestHint(checkpoint, checkpointIndex) {
     const caseHints = getCaseHints(caseStandard);
-    const hint = hintCount < caseHints.length
-      ? caseHints[hintCount]
-      : GENERIC_HINTS[(hintCount - caseHints.length) % GENERIC_HINTS.length];
-    setHintTextByCheckpoint((prev) => ({ ...prev, [checkpointId]: hint }));
-    setHintCount((c) => c + 1);
+    const hint = caseHints[checkpointIndex] || GENERIC_HINTS[checkpointIndex % GENERIC_HINTS.length];
+    setHintTextByCheckpoint((prev) => ({ ...prev, [checkpoint.id]: hint }));
   }
 
-  function pickChoice(checkpoint, choiceId) {
+  function selectPrediction(checkpointId, optionId) {
+    setPredictions((prev) => ({ ...prev, [checkpointId]: optionId }));
+  }
+
+  // Submits whatever is currently picked (+ reason chip) for a checkpoint.
+  // Nothing is graded until this deliberate tap — no more instant
+  // right/wrong reveal on the choice buttons themselves. First submit: if
+  // right, move on immediately; if wrong, S.A.M. gives a quiet hint (no red
+  // flash, no X — Emily was clear she doesn't want either) and the student
+  // gets one more try. Second submit is always final, right or wrong, and
+  // the mission keeps moving regardless — one hard checkpoint never blocks
+  // the rest of the quest.
+  function submitCheckpointAnswer(checkpoint, checkpointIndex) {
+    if (!pendingChoiceId) return;
     const existing = checkpointState[checkpoint.id] || { attempts: 0, resolved: false };
-    if (existing.resolved) return; // already cleared or locked in — ignore further taps
+    if (existing.resolved) return;
 
-    const isCorrect = choiceId === checkpoint.correctChoiceId;
     const attempts = existing.attempts + 1;
+    const isCorrect = pendingChoiceId === checkpoint.correctChoiceId;
+    const isFinalAttempt = isCorrect || attempts >= MAX_ATTEMPTS;
 
-    if (isCorrect) {
-      resolveCheckpoint(checkpoint, choiceId, true, attempts);
+    if (!isFinalAttempt) {
+      // First miss: quiet hint, no visual "wrong" reveal, try again.
+      setCheckpointState((prev) => ({ ...prev, [checkpoint.id]: { attempts, resolved: false } }));
+      requestHint(checkpoint, checkpointIndex);
+      setPendingChoiceId(null);
+      setPendingReasonId(null);
       return;
     }
 
-    // Wrong pick: bounce back, no penalty beyond the attempt count itself —
-    // the character just doesn't move yet (design doc §3.3).
-    setWrongFlashChoiceId(choiceId);
-    setTimeout(() => setWrongFlashChoiceId(null), 500);
-
-    if (attempts >= LOCK_IN_AFTER_MISSES) {
-      // 3rd miss: this wrong pick locks in as the recorded answer, but the
-      // mission keeps moving regardless (design doc §3.4).
-      resolveCheckpoint(checkpoint, choiceId, false, attempts);
-      return;
-    }
-
-    setCheckpointState((prev) => ({ ...prev, [checkpoint.id]: { attempts, resolved: false } }));
-
-    if (attempts >= HINT_AFTER_MISSES) {
-      requestHint(checkpoint.id);
-    }
+    resolveCheckpoint(checkpoint, pendingChoiceId, pendingReasonId, isCorrect, attempts);
   }
 
-  function resolveCheckpoint(checkpoint, choiceId, correct, attempts) {
+  function resolveCheckpoint(checkpoint, choiceId, reasonId, correct, attempts) {
     setCheckpointState((prev) => ({
       ...prev,
-      [checkpoint.id]: { attempts, resolved: true, correct, choiceId },
+      [checkpoint.id]: { attempts, resolved: true, correct, choiceId, reasonId },
     }));
     // Evidence Log gets the entry whether the checkpoint was cleared
     // correctly or locked in wrong — a locked-in miss is still a real
     // signal worth keeping visible, not erased from the mission record.
+    // Nothing here reveals right/wrong to the student — that's tracked for
+    // the teacher, not displayed as a red mark, per Emily's explicit ask.
     setEvidenceLog((prev) => [
       ...prev,
       { checkpointId: checkpoint.id, text: checkpoint.evidenceLogEntry, correct },
     ]);
+    setPendingChoiceId(null);
+    setPendingReasonId(null);
 
     const clearedSoFar = currentIndex + 1;
     if (clearedSoFar % 2 === 0 && clearedSoFar < totalCheckpoints) {
@@ -276,13 +316,22 @@ export default function MissionMapClient({
     try {
       const checkpointResults = checkpoints.map((cp) => {
         const st = checkpointState[cp.id] || { attempts: 0, resolved: false };
-        return {
+        const result = {
           id: cp.id,
           finalChoiceId: st.choiceId || null,
           firstTryCorrect: !!st.correct && st.attempts === 1,
           attempts: st.attempts,
           lockedInWrong: st.resolved && !st.correct,
+          // Not shown to the student, not graded — visible to the teacher
+          // as a window into reasoning, and (for a predict-first checkpoint)
+          // whether their guess matched the real result.
+          reasonId: st.reasonId || null,
         };
+        if (cp.predictBeforeEvidence && predictions[cp.id] != null) {
+          result.predictionChoiceId = predictions[cp.id];
+          result.predictionCorrect = predictions[cp.id] === cp.predictBeforeEvidence.correctOptionId;
+        }
+        return result;
       });
 
       const res = await fetch("/api/mission-map/submit", {
@@ -372,9 +421,14 @@ export default function MissionMapClient({
           </div>
         )}
 
-        <svg viewBox="0 0 100 100" preserveAspectRatio="none" style={{ position: "absolute", inset: 0, width: "100%", height: "100%" }}>
+        {/* Explicit width/height attributes + explicit mask units, not just
+            CSS sizing (hardened Aug 30 v4 — Emily reported not seeing any
+            fog at all; this is the most likely real cause, since relying on
+            style-only sizing plus default mask units is known to render
+            inconsistently in some browsers/webviews). */}
+        <svg width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="none" style={{ position: "absolute", inset: 0, width: "100%", height: "100%" }}>
           <defs>
-            <mask id="mm-fog-mask">
+            <mask id="mm-fog-mask" maskUnits="userSpaceOnUse" maskContentUnits="userSpaceOnUse" x="0" y="0" width="100" height="100">
               <rect x="0" y="0" width="100" height="100" fill="white" />
               {revealCircles.map((c, i) => (
                 <circle key={i} cx={c.x} cy={c.y} r={c.r} fill="black" />
@@ -390,7 +444,12 @@ export default function MissionMapClient({
           const cleared = st && st.resolved;
           const isCurrent = i === currentIndex;
           const clickable = interactive && isCurrent && !cleared && !checkpointOpen;
-          const bg = cleared ? (st.correct ? COLORS.success : COLORS.danger) : isCurrent ? COLORS.gold : COLORS.fogGrey;
+          // Cleared checkpoints all get the same neutral "done" look — never
+          // a right/wrong color or a red X. Whether the final pick was
+          // actually correct is recorded for the teacher (see
+          // submitForGrading below) but never shown back to the student on
+          // the map itself, per Emily's explicit ask (Aug 30 v4).
+          const bg = cleared ? COLORS.teal : isCurrent ? COLORS.gold : COLORS.fogGrey;
           return (
             <div
               key={cp.id}
@@ -418,7 +477,7 @@ export default function MissionMapClient({
                 cursor: clickable ? "pointer" : "default",
               }}
             >
-              {cleared ? (st.correct ? "✓" : "✕") : i + 1}
+              {cleared ? "✓" : i + 1}
             </div>
           );
         })}
@@ -482,8 +541,6 @@ export default function MissionMapClient({
         .mm-btn { transition: transform 150ms ease; cursor: pointer; border: none; font-family: 'Inter', sans-serif; }
         .mm-btn:hover:not(:disabled) { transform: translateY(-1px); }
         .mm-choice { transition: all 150ms ease; }
-        .mm-choice.wrong-flash { animation: mm-shake .5s; border-color: ${COLORS.danger} !important; }
-        @keyframes mm-shake { 0%,100%{transform:translateX(0);} 25%{transform:translateX(-6px);} 75%{transform:translateX(6px);} }
         .mm-marker-pulse { animation: mm-marker-pulse 1.6s ease-in-out infinite; }
         @keyframes mm-marker-pulse { 0%,100%{box-shadow:0 0 0 6px ${COLORS.gold}33;} 50%{box-shadow:0 0 0 12px ${COLORS.gold}00;} }
       `}</style>
@@ -539,6 +596,15 @@ export default function MissionMapClient({
               (() => {
                 const cp = checkpoints[currentIndex];
                 const st = checkpointState[cp.id] || { attempts: 0, resolved: false };
+                // Grade-scaled: younger grades tap a reason chip instead of
+                // typing one, so this checkpoint doesn't add reading/writing
+                // load beyond the multiple-choice pick itself (Emily's
+                // explicit ask, Aug 30 — "don't want 3rd graders to have to
+                // type as much as 5th graders"). A future 4th/5th-grade case
+                // can swap this branch for a short free-text box instead.
+                const usesReasonChips = (publicCase.grade || 3) <= 3;
+                const needsPrediction = !!cp.predictBeforeEvidence && predictions[cp.id] == null;
+                const canSubmit = !!pendingChoiceId && (!usesReasonChips || !!pendingReasonId);
                 return (
                   <div key={cp.id} style={{ background: "#FFFFFF", border: "1px solid rgba(31,42,68,.12)", boxShadow: "0 4px 16px rgba(31,42,68,.08)", borderRadius: 16, padding: 18, marginTop: 4 }}>
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 6 }}>
@@ -554,28 +620,105 @@ export default function MissionMapClient({
                       )}
                     </div>
                     <h2 style={{ fontFamily: "'Poppins', sans-serif", fontSize: 19, marginTop: 0 }}>{cp.prompt}</h2>
-                    <EvidenceBlock evidence={cp.evidence} />
-                    <div style={{ display: "grid", gap: 10, marginTop: 4 }}>
-                      {cp.choices.map((choice) => (
-                        <button
-                          key={choice.id}
-                          disabled={st.resolved}
-                          onClick={() => pickChoice(cp, choice.id)}
-                          className={`mm-btn mm-choice${wrongFlashChoiceId === choice.id ? " wrong-flash" : ""}`}
-                          style={{
-                            textAlign: "left",
-                            background: "rgba(31,42,68,.04)",
-                            border: "1px solid rgba(31,42,68,.16)",
-                            borderRadius: 12,
-                            padding: "14px 16px",
-                            color: COLORS.white,
-                            fontSize: 14.5,
-                          }}
-                        >
-                          {choice.text}
-                        </button>
-                      ))}
-                    </div>
+
+                    {needsPrediction ? (
+                      // Predict-before-you-see-it step (only on checkpoints
+                      // that define one, e.g. the caged-experiment gate) —
+                      // tap a guess, then the real evidence reveals below.
+                      <div style={{ background: "rgba(31,42,68,.04)", border: "1px solid rgba(31,42,68,.12)", borderRadius: 12, padding: 14, marginBottom: 14 }}>
+                        <div style={{ fontSize: 13.5, fontWeight: 600, marginBottom: 10 }}>{cp.predictBeforeEvidence.question}</div>
+                        <div style={{ display: "grid", gap: 8 }}>
+                          {cp.predictBeforeEvidence.options.map((opt) => (
+                            <button
+                              key={opt.id}
+                              className="mm-btn"
+                              onClick={() => selectPrediction(cp.id, opt.id)}
+                              style={{ textAlign: "left", background: "#FFFFFF", border: "1px solid rgba(31,42,68,.2)", borderRadius: 10, padding: "10px 14px", color: COLORS.white, fontSize: 13.5 }}
+                            >
+                              {opt.text}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    ) : (
+                      <>
+                        {cp.predictBeforeEvidence && (
+                          <div style={{ fontSize: 12.5, color: COLORS.textMuted, marginBottom: 10, fontStyle: "italic" }}>
+                            Your guess: {cp.predictBeforeEvidence.options.find((o) => o.id === predictions[cp.id])?.text}
+                          </div>
+                        )}
+                        <EvidenceBlock evidence={cp.evidence} />
+                        {cp.secondEvidence && <EvidenceBlock evidence={cp.secondEvidence} />}
+                        <div style={{ display: "grid", gap: 10, marginTop: 4 }}>
+                          {cp.choices.map((choice) => {
+                            const selected = pendingChoiceId === choice.id;
+                            return (
+                              <button
+                                key={choice.id}
+                                disabled={st.resolved}
+                                onClick={() => setPendingChoiceId(choice.id)}
+                                className="mm-btn mm-choice"
+                                style={{
+                                  textAlign: "left",
+                                  background: selected ? "rgba(255,196,77,.18)" : "rgba(31,42,68,.04)",
+                                  border: selected ? `2px solid ${COLORS.gold}` : "1px solid rgba(31,42,68,.16)",
+                                  borderRadius: 12,
+                                  padding: selected ? "13px 15px" : "14px 16px",
+                                  color: COLORS.white,
+                                  fontSize: 14.5,
+                                }}
+                              >
+                                {choice.text}
+                              </button>
+                            );
+                          })}
+                        </div>
+
+                        {pendingChoiceId && usesReasonChips && !st.resolved && (
+                          <div style={{ marginTop: 14 }}>
+                            <div style={{ fontSize: 12, color: COLORS.textMuted, marginBottom: 8 }}>Why'd you pick that?</div>
+                            <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                              {REASON_CHIPS.map((chip) => (
+                                <button
+                                  key={chip.id}
+                                  className="mm-btn"
+                                  onClick={() => setPendingReasonId(chip.id)}
+                                  style={{
+                                    background: pendingReasonId === chip.id ? COLORS.gold : "rgba(31,42,68,.05)",
+                                    border: "1px solid rgba(31,42,68,.16)",
+                                    borderRadius: 20,
+                                    padding: "8px 14px",
+                                    fontSize: 12.5,
+                                    color: COLORS.navy,
+                                  }}
+                                >
+                                  {chip.text}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                        {!st.resolved && (
+                          <button
+                            className="mm-btn"
+                            disabled={!canSubmit}
+                            onClick={() => submitCheckpointAnswer(cp, currentIndex)}
+                            style={{
+                              marginTop: 16,
+                              background: canSubmit ? COLORS.gold : "rgba(31,42,68,.15)",
+                              color: canSubmit ? COLORS.navy : COLORS.textMuted,
+                              borderRadius: 12,
+                              padding: "12px 22px",
+                              fontWeight: 700,
+                              fontSize: 14.5,
+                            }}
+                          >
+                            Submit
+                          </button>
+                        )}
+                      </>
+                    )}
                     <SamHint checkpointId={cp.id} />
                   </div>
                 );
