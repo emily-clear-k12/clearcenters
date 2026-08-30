@@ -24,9 +24,7 @@ const COLORS = {
 // One consistent move at every checkpoint (pick the right clue from a few
 // choices) — see MissionMap_Digital_Design_v1.md §2-3. Only two real phases
 // plus the entry screen: brief the mission, walk the path checkpoint by
-// checkpoint, then unlock the final written response. The Evidence Log
-// isn't its own phase — it's a persistent panel visible through "walk" and
-// "finalUnlock", same spirit as Signal Check's always-reachable evidence.
+// checkpoint, then unlock the final written response.
 const PHASES = ["brief", "walk", "finalUnlock"];
 const PHASE_LABEL = { brief: "Mission Brief", walk: "Walk the Path", finalUnlock: "Final Unlock" };
 
@@ -46,6 +44,25 @@ const REQUIRED_CHECKS = 3;
 // one struggle never blocks the rest of the quest.
 const HINT_AFTER_MISSES = 2;
 const LOCK_IN_AFTER_MISSES = 3;
+
+// Reveal radii for the fog-of-war mask, in the SVG's own 0-100 coordinate
+// space (see the <svg viewBox="0 0 100 100"> below) — a cleared checkpoint
+// burns off a wider patch of fog than the "next stop" peek at the current,
+// unresolved checkpoint, so the path ahead is hinted at, not fully spoiled.
+const CLEARED_REVEAL_RADIUS = 15;
+const CURRENT_PEEK_RADIUS = 9;
+
+function EvidenceBlock({ evidence }) {
+  if (!evidence) return null;
+  const icon = evidence.type === "data" ? "📊" : "📖";
+  const label = evidence.type === "data" ? "FIELD DATA" : "FIELD NOTES";
+  return (
+    <div style={{ background: "rgba(255,255,255,.08)", border: "1px solid rgba(255,255,255,.15)", borderRadius: 12, padding: 14, marginBottom: 14 }}>
+      <div style={{ fontSize: 10.5, letterSpacing: 1, color: COLORS.gold, fontWeight: 700, marginBottom: 6 }}>{icon} {label}</div>
+      <div style={{ fontSize: 13.5, lineHeight: 1.55, color: "rgba(255,255,255,.92)" }}>{evidence.text}</div>
+    </div>
+  );
+}
 
 export default function MissionMapClient({
   assignmentId,
@@ -81,6 +98,11 @@ export default function MissionMapClient({
   const [evidenceLog, setEvidenceLog] = useState(draft.evidenceLog || []);
   const [wrongFlashChoiceId, setWrongFlashChoiceId] = useState(null);
   const [showCelebration, setShowCelebration] = useState(false);
+  const [mapImageFailed, setMapImageFailed] = useState(false);
+  // Click-to-open: the current checkpoint's question doesn't show until the
+  // student taps its marker on the map (Emily's explicit ask, Aug 30 v3) —
+  // closes automatically whenever the mission advances to a new checkpoint.
+  const [checkpointOpen, setCheckpointOpen] = useState(false);
 
   const [hintTextByCheckpoint, setHintTextByCheckpoint] = useState({});
   const [hintCount, setHintCount] = useState(0);
@@ -110,6 +132,12 @@ export default function MissionMapClient({
       );
     } catch (err) {}
   }, [phase, checkpointState, currentIndex, evidenceLog, finalResponseText, checklist, selfConfidence]);
+
+  // Every time the mission moves to a new checkpoint, close the panel again
+  // so the student is back looking at the map and has to tap the next stop.
+  useEffect(() => {
+    setCheckpointOpen(false);
+  }, [currentIndex]);
 
   function saveProgress(fields) {
     return fetch("/api/submission/save", {
@@ -189,9 +217,11 @@ export default function MissionMapClient({
       setTimeout(() => {
         setPhase("finalUnlock");
         saveProgress({ phase: "finalUnlock" });
-      }, 500);
+      }, 700);
     } else {
-      setTimeout(() => setCurrentIndex(clearedSoFar), 500);
+      // The delay lets the character token's CSS transition actually play
+      // out to the next checkpoint's map position before its card appears.
+      setTimeout(() => setCurrentIndex(clearedSoFar), 700);
     }
   }
 
@@ -262,11 +292,6 @@ export default function MissionMapClient({
     submitForGrading();
   }
 
-  // Fog reveal + static-clearing progress, both driven by the same fraction
-  // of checkpoints cleared — two flavors of the same signal, per §5.
-  const clearedCount = Object.values(checkpointState).filter((s) => s.resolved).length;
-  const clearFraction = totalCheckpoints ? clearedCount / totalCheckpoints : 0;
-
   const backgroundStyle = {
     minHeight: "100vh",
     background: `linear-gradient(180deg, ${COLORS.navy} 0%, ${COLORS.indigo} 100%)`,
@@ -283,6 +308,118 @@ export default function MissionMapClient({
         <div>
           <div style={{ fontSize: 11, fontWeight: 700, color: COLORS.gold, marginBottom: 2 }}>S.A.M.</div>
           <div style={{ fontSize: 13.5, color: "rgba(255,255,255,.9)" }}>{text}</div>
+        </div>
+      </div>
+    );
+  }
+
+  // --- The map itself -------------------------------------------------
+  // A background image (Emily supplies one per case at publicCase.mapImage)
+  // with checkpoint markers and a character token positioned by percentage
+  // coordinates, a dashed path line connecting the gates in order, and a
+  // fog-of-war layer with circular cutouts that "burn off" as checkpoints
+  // clear. If the image isn't there yet, a themed placeholder gradient
+  // stands in so nothing looks broken — same graceful-degradation approach
+  // already used for missing case thumbnails elsewhere in the app.
+  function MissionMap({ interactive } = {}) {
+    const clearedIds = Object.keys(checkpointState).filter((id) => checkpointState[id].resolved);
+    const revealCircles = [
+      ...checkpoints
+        .filter((cp) => clearedIds.includes(cp.id))
+        .map((cp) => ({ x: cp.position.x, y: cp.position.y, r: CLEARED_REVEAL_RADIUS })),
+    ];
+    if (currentIndex < totalCheckpoints) {
+      const cur = checkpoints[currentIndex];
+      if (!clearedIds.includes(cur.id)) {
+        revealCircles.push({ x: cur.position.x, y: cur.position.y, r: CURRENT_PEEK_RADIUS });
+      }
+    }
+    const pathPoints = checkpoints.map((cp) => `${cp.position.x},${cp.position.y}`).join(" ");
+    const tokenCp = checkpoints[Math.min(currentIndex, totalCheckpoints - 1)];
+
+    return (
+      <div style={{ position: "relative", width: "100%", aspectRatio: "16/10", borderRadius: 16, overflow: "hidden", background: `linear-gradient(135deg, ${COLORS.indigo}, ${COLORS.navy})`, marginBottom: 18, boxShadow: "0 8px 30px rgba(0,0,0,.35)" }}>
+        {!mapImageFailed && (
+          <img
+            src={publicCase.mapImage}
+            alt=""
+            onError={() => setMapImageFailed(true)}
+            style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }}
+          />
+        )}
+        {mapImageFailed && (
+          <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <div style={{ fontSize: 11, color: "rgba(255,255,255,.35)", letterSpacing: 1 }}>MAP ART PENDING</div>
+          </div>
+        )}
+
+        <svg viewBox="0 0 100 100" preserveAspectRatio="none" style={{ position: "absolute", inset: 0, width: "100%", height: "100%" }}>
+          <defs>
+            <mask id="mm-fog-mask">
+              <rect x="0" y="0" width="100" height="100" fill="white" />
+              {revealCircles.map((c, i) => (
+                <circle key={i} cx={c.x} cy={c.y} r={c.r} fill="black" />
+              ))}
+            </mask>
+          </defs>
+          <polyline points={pathPoints} fill="none" stroke="rgba(255,196,77,.65)" strokeWidth="0.8" strokeDasharray="2,2" />
+          <rect x="0" y="0" width="100" height="100" fill="rgba(8,10,24,.72)" mask="url(#mm-fog-mask)" />
+        </svg>
+
+        {checkpoints.map((cp, i) => {
+          const st = checkpointState[cp.id];
+          const cleared = st && st.resolved;
+          const isCurrent = i === currentIndex;
+          const clickable = interactive && isCurrent && !cleared && !checkpointOpen;
+          const bg = cleared ? (st.correct ? COLORS.success : COLORS.danger) : isCurrent ? COLORS.gold : COLORS.fogGrey;
+          return (
+            <div
+              key={cp.id}
+              title={clickable ? `Tap to investigate Checkpoint ${i + 1}` : `Checkpoint ${i + 1}`}
+              onClick={clickable ? () => setCheckpointOpen(true) : undefined}
+              className={clickable ? "mm-marker-pulse" : undefined}
+              style={{
+                position: "absolute",
+                left: `${cp.position.x}%`,
+                top: `${cp.position.y}%`,
+                transform: "translate(-50%, -50%)",
+                width: isCurrent ? 26 : 18,
+                height: isCurrent ? 26 : 18,
+                borderRadius: "50%",
+                background: bg,
+                border: "2px solid rgba(255,255,255,.85)",
+                boxShadow: isCurrent ? `0 0 0 6px ${COLORS.gold}33` : "none",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                fontSize: 10,
+                fontWeight: 700,
+                color: COLORS.navy,
+                zIndex: 2,
+                cursor: clickable ? "pointer" : "default",
+              }}
+            >
+              {cleared ? (st.correct ? "✓" : "✕") : i + 1}
+            </div>
+          );
+        })}
+
+        {/* Character token — a cheap emoji placeholder standing in for real
+            character art, positioned at the current checkpoint and animated
+            there via a CSS transition whenever currentIndex advances. */}
+        <div
+          style={{
+            position: "absolute",
+            left: `${tokenCp.position.x}%`,
+            top: `${tokenCp.position.y}%`,
+            transform: "translate(-50%, -140%)",
+            transition: "left 700ms ease, top 700ms ease",
+            fontSize: 26,
+            zIndex: 3,
+            filter: "drop-shadow(0 3px 6px rgba(0,0,0,.5))",
+          }}
+        >
+          🧑‍🚀
         </div>
       </div>
     );
@@ -328,6 +465,8 @@ export default function MissionMapClient({
         .mm-choice { transition: all 150ms ease; }
         .mm-choice.wrong-flash { animation: mm-shake .5s; border-color: ${COLORS.danger} !important; }
         @keyframes mm-shake { 0%,100%{transform:translateX(0);} 25%{transform:translateX(-6px);} 75%{transform:translateX(6px);} }
+        .mm-marker-pulse { animation: mm-marker-pulse 1.6s ease-in-out infinite; }
+        @keyframes mm-marker-pulse { 0%,100%{box-shadow:0 0 0 6px ${COLORS.gold}33;} 50%{box-shadow:0 0 0 12px ${COLORS.gold}00;} }
       `}</style>
 
       <div style={{ maxWidth: 720, margin: "0 auto", padding: "24px 20px 80px" }}>
@@ -355,12 +494,7 @@ export default function MissionMapClient({
               <div style={{ fontSize: 11, letterSpacing: 1, color: COLORS.gold, fontWeight: 700, marginBottom: 6 }}>MISSION GOAL</div>
               <div>{publicCase.mission.goal}</div>
             </div>
-            {/* Fog-covered map preview — a locked node per checkpoint, all shrouded until Walk the Path begins. */}
-            <div style={{ display: "flex", gap: 8, margin: "20px 0" }}>
-              {checkpoints.map((cp, i) => (
-                <div key={cp.id} style={{ flex: 1, height: 8, borderRadius: 4, background: COLORS.fogGrey }} />
-              ))}
-            </div>
+            <MissionMap />
             <button className="mm-btn" onClick={startWalking}
               style={{ background: COLORS.gold, color: COLORS.navy, borderRadius: 12, padding: "14px 24px", fontWeight: 700, fontSize: 15 }}>
               Begin Mission
@@ -370,35 +504,39 @@ export default function MissionMapClient({
 
         {phase === "walk" && (
           <div>
-            {/* Fog reveal + static-clearing bar — one shared component, driven purely by clearFraction, reused identically across every case. */}
-            <div style={{ display: "flex", gap: 8, marginBottom: 20 }}>
-              {checkpoints.map((cp, i) => {
-                const st = checkpointState[cp.id];
-                const cleared = st && st.resolved;
-                const active = i === currentIndex;
-                return (
-                  <div key={cp.id} style={{
-                    flex: 1, height: 10, borderRadius: 5,
-                    background: cleared ? (st.correct ? COLORS.success : COLORS.danger) : active ? COLORS.teal : COLORS.fogGrey,
-                    opacity: cleared || active ? 1 : 0.5,
-                  }} />
-                );
-              })}
-            </div>
+            <MissionMap interactive />
 
             {showCelebration && (
               <div style={{ textAlign: "center", padding: 10, color: COLORS.gold, fontWeight: 700 }}>✨ Signal clearing — nice work, Cadet ✨</div>
             )}
 
-            {currentIndex < totalCheckpoints ? (
+            {currentIndex < totalCheckpoints && !checkpointOpen && (
+              <div style={{ textAlign: "center", padding: "10px 0 4px", color: COLORS.textMuted, fontSize: 13 }}>
+                📍 Tap the glowing marker on the map to check out Checkpoint {currentIndex + 1}
+              </div>
+            )}
+
+            {currentIndex < totalCheckpoints && checkpointOpen ? (
               (() => {
                 const cp = checkpoints[currentIndex];
                 const st = checkpointState[cp.id] || { attempts: 0, resolved: false };
                 return (
-                  <div key={cp.id}>
-                    <div style={{ fontSize: 12, color: COLORS.textMuted, marginBottom: 6 }}>Checkpoint {currentIndex + 1} of {totalCheckpoints}</div>
-                    <h2 style={{ fontFamily: "'Poppins', sans-serif", fontSize: 19 }}>{cp.prompt}</h2>
-                    <div style={{ display: "grid", gap: 10, marginTop: 14 }}>
+                  <div key={cp.id} style={{ background: "rgba(255,255,255,.04)", border: "1px solid rgba(255,255,255,.12)", borderRadius: 16, padding: 18, marginTop: 4 }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 6 }}>
+                      <div style={{ fontSize: 12, color: COLORS.textMuted }}>Checkpoint {currentIndex + 1} of {totalCheckpoints}</div>
+                      {!st.resolved && (
+                        <button
+                          className="mm-btn"
+                          onClick={() => setCheckpointOpen(false)}
+                          style={{ background: "transparent", color: COLORS.textMuted, fontSize: 12, padding: 0 }}
+                        >
+                          ← Back to map
+                        </button>
+                      )}
+                    </div>
+                    <h2 style={{ fontFamily: "'Poppins', sans-serif", fontSize: 19, marginTop: 0 }}>{cp.prompt}</h2>
+                    <EvidenceBlock evidence={cp.evidence} />
+                    <div style={{ display: "grid", gap: 10, marginTop: 4 }}>
                       {cp.choices.map((choice) => (
                         <button
                           key={choice.id}
@@ -456,7 +594,7 @@ export default function MissionMapClient({
               value={finalResponseText}
               onChange={(e) => setFinalResponseText(e.target.value)}
               placeholder="Write your answer using what you collected..."
-              rows={7}
+              rows={9}
               disabled={submitted}
               style={{ width: "100%", borderRadius: 12, padding: 14, fontSize: 14.5, border: "1px solid rgba(255,255,255,.25)", background: "rgba(255,255,255,.06)", color: COLORS.white, fontFamily: "inherit", resize: "vertical" }}
             />
