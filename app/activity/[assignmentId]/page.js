@@ -119,6 +119,7 @@ export default async function ActivityPage({ params }) {
     return (
       <MissionMapClient
         assignmentId={assignmentId}
+        studentId={studentId}
         caseStandard={assignment.case_standard}
         publicCase={missionMapCase}
         existingSubmission={existingSubmission}

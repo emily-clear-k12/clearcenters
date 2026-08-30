@@ -5,20 +5,29 @@ import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
 import { GENERIC_HINTS, getCaseHints } from "../../../lib/hints";
 
-// Mission Map's own locked palette — deep space navy/indigo with a signal-
-// gold accent for cleared ground, distinct from Signal Check (navy/teal/
-// violet/gold) and Group Chat (violet-led) so it reads as its own activity
-// even though it shares the app shell.
+// Mission Map's own locked palette — light sky-blue with a signal-gold
+// accent for cleared ground (revised Aug 30 v3: replaced an initial dark
+// "deep space" navy/indigo backdrop per Emily's direct ask after live-
+// testing), distinct from Signal Check (navy/teal/violet/gold) and Group
+// Chat (violet-led) so it still reads as its own activity even though it
+// shares the app shell. The map itself keeps a darker, fog-of-war feel
+// (see the SVG mask below) — only the surrounding page chrome went light.
 const COLORS = {
   navy: "#0F1830",
   indigo: "#2A2F6B",
+  // Light sky-blue surface colors (Emily's ask, Aug 30 — replaced the dark
+  // navy/indigo "deep space" backdrop). navy/indigo stay defined above only
+  // because they're still used as dark text-on-gold-button / marker-number
+  // colors, which read fine in a light theme too.
+  skyTop: "#EAF4FF",
+  skyBottom: "#BEE0FF",
   gold: "#FFC44D",
   teal: "#00C2C7",
   fogGrey: "#3B4260",
-  white: "#FFFFFF",
-  danger: "#FF6B6B",
-  success: "#22C55E",
-  textMuted: "rgba(255,255,255,.65)",
+  white: "#1F2A44",
+  danger: "#E5484D",
+  success: "#1FA35C",
+  textMuted: "rgba(31,42,68,.62)",
 };
 
 // One consistent move at every checkpoint (pick the right clue from a few
@@ -57,15 +66,16 @@ function EvidenceBlock({ evidence }) {
   const icon = evidence.type === "data" ? "📊" : "📖";
   const label = evidence.type === "data" ? "FIELD DATA" : "FIELD NOTES";
   return (
-    <div style={{ background: "rgba(255,255,255,.08)", border: "1px solid rgba(255,255,255,.15)", borderRadius: 12, padding: 14, marginBottom: 14 }}>
+    <div style={{ background: "rgba(31,42,68,.05)", border: "1px solid rgba(31,42,68,.14)", borderRadius: 12, padding: 14, marginBottom: 14 }}>
       <div style={{ fontSize: 10.5, letterSpacing: 1, color: COLORS.gold, fontWeight: 700, marginBottom: 6 }}>{icon} {label}</div>
-      <div style={{ fontSize: 13.5, lineHeight: 1.55, color: "rgba(255,255,255,.92)" }}>{evidence.text}</div>
+      <div style={{ fontSize: 13.5, lineHeight: 1.55, color: "rgba(31,42,68,.88)" }}>{evidence.text}</div>
     </div>
   );
 }
 
 export default function MissionMapClient({
   assignmentId,
+  studentId,
   caseStandard,
   publicCase,
   existingSubmission,
@@ -74,7 +84,16 @@ export default function MissionMapClient({
   revisionFeedback,
 }) {
   const router = useRouter();
-  const storageKey = `cc_missionmap_draft_${assignmentId}`;
+  // Scoped by studentId as well as assignmentId (fixed Aug 30, caught by a
+  // real live-test bug report): a shared class-wide assignment has ONE
+  // assignmentId for every student, but localStorage is shared per browser,
+  // not per logged-in student. Without studentId in the key, switching
+  // student accounts in the same browser without a hard refresh could show
+  // the wrong student's saved-but-never-submitted draft phase (e.g. landing
+  // straight on Final Unlock for a student who never got there). The real
+  // submitted/graded state was always safe — it's read from the database,
+  // scoped by student_id there too — only this transient local draft wasn't.
+  const storageKey = `cc_missionmap_draft_${assignmentId}_${studentId || "anon"}`;
   const checkpoints = publicCase.checkpoints;
   const totalCheckpoints = checkpoints.length;
 
@@ -294,7 +313,7 @@ export default function MissionMapClient({
 
   const backgroundStyle = {
     minHeight: "100vh",
-    background: `linear-gradient(180deg, ${COLORS.navy} 0%, ${COLORS.indigo} 100%)`,
+    background: `linear-gradient(180deg, ${COLORS.skyTop} 0%, ${COLORS.skyBottom} 100%)`,
     fontFamily: "'Inter', sans-serif",
     color: COLORS.white,
   };
@@ -303,11 +322,11 @@ export default function MissionMapClient({
     const text = hintTextByCheckpoint[checkpointId];
     if (!text) return null;
     return (
-      <div style={{ display: "flex", gap: 10, alignItems: "flex-start", background: "rgba(255,255,255,.08)", borderRadius: 12, padding: 12, marginTop: 12 }}>
+      <div style={{ display: "flex", gap: 10, alignItems: "flex-start", background: "rgba(31,42,68,.05)", border: "1px solid rgba(31,42,68,.1)", borderRadius: 12, padding: 12, marginTop: 12 }}>
         <img src="/icons/robot_point.png" alt="S.A.M." style={{ width: 32, height: 32, objectFit: "contain", flexShrink: 0 }} />
         <div>
           <div style={{ fontSize: 11, fontWeight: 700, color: COLORS.gold, marginBottom: 2 }}>S.A.M.</div>
-          <div style={{ fontSize: 13.5, color: "rgba(255,255,255,.9)" }}>{text}</div>
+          <div style={{ fontSize: 13.5, color: "rgba(31,42,68,.85)" }}>{text}</div>
         </div>
       </div>
     );
@@ -338,7 +357,7 @@ export default function MissionMapClient({
     const tokenCp = checkpoints[Math.min(currentIndex, totalCheckpoints - 1)];
 
     return (
-      <div style={{ position: "relative", width: "100%", aspectRatio: "16/10", borderRadius: 16, overflow: "hidden", background: `linear-gradient(135deg, ${COLORS.indigo}, ${COLORS.navy})`, marginBottom: 18, boxShadow: "0 8px 30px rgba(0,0,0,.35)" }}>
+      <div style={{ position: "relative", width: "100%", aspectRatio: "16/10", borderRadius: 16, overflow: "hidden", background: `linear-gradient(135deg, ${COLORS.skyBottom}, ${COLORS.skyTop})`, marginBottom: 18, boxShadow: "0 8px 20px rgba(31,42,68,.18)" }}>
         {!mapImageFailed && (
           <img
             src={publicCase.mapImage}
@@ -349,7 +368,7 @@ export default function MissionMapClient({
         )}
         {mapImageFailed && (
           <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
-            <div style={{ fontSize: 11, color: "rgba(255,255,255,.35)", letterSpacing: 1 }}>MAP ART PENDING</div>
+            <div style={{ fontSize: 11, color: "rgba(31,42,68,.45)", letterSpacing: 1 }}>MAP ART PENDING</div>
           </div>
         )}
 
@@ -439,7 +458,7 @@ export default function MissionMapClient({
               <div style={{ display: "flex", gap: 10, justifyContent: "center" }}>
                 {CONFIDENCE_LEVELS.map((c) => (
                   <button key={c.id} className="mm-btn" onClick={() => pickConfidence(c.id)}
-                    style={{ background: "rgba(255,255,255,.08)", border: "1px solid rgba(255,255,255,.2)", borderRadius: 12, padding: "10px 16px", color: COLORS.white }}>
+                    style={{ background: "rgba(31,42,68,.05)", border: "1px solid rgba(31,42,68,.18)", borderRadius: 12, padding: "10px 16px", color: COLORS.white }}>
                     <div style={{ fontSize: 22 }}>{c.emoji}</div>
                     <div style={{ fontSize: 11 }}>{c.label}</div>
                   </button>
@@ -473,7 +492,7 @@ export default function MissionMapClient({
         {revisionRequested && (
           <div style={{ background: "rgba(255,196,77,.15)", border: `1px solid ${COLORS.gold}`, borderRadius: 12, padding: 14, marginBottom: 20 }}>
             <div style={{ fontWeight: 700, marginBottom: 4 }}>Your teacher asked you to take another pass.</div>
-            {revisionFeedback && <div style={{ fontSize: 13.5, color: "rgba(255,255,255,.85)" }}>{revisionFeedback}</div>}
+            {revisionFeedback && <div style={{ fontSize: 13.5, color: "rgba(31,42,68,.8)" }}>{revisionFeedback}</div>}
           </div>
         )}
 
@@ -481,7 +500,7 @@ export default function MissionMapClient({
           <div style={{ fontSize: 12, letterSpacing: 1, color: COLORS.teal, fontWeight: 700 }}>{PHASE_LABEL[phase]}</div>
           <div style={{ display: "flex", gap: 5 }}>
             {PHASES.map((p) => (
-              <div key={p} style={{ width: 8, height: 8, borderRadius: 4, background: p === phase ? COLORS.gold : "rgba(255,255,255,.25)" }} />
+              <div key={p} style={{ width: 8, height: 8, borderRadius: 4, background: p === phase ? COLORS.gold : "rgba(31,42,68,.18)" }} />
             ))}
           </div>
         </div>
@@ -489,8 +508,8 @@ export default function MissionMapClient({
         {phase === "brief" && (
           <div>
             <h1 style={{ fontFamily: "'Poppins', sans-serif", fontSize: 24 }}>{publicCase.title}</h1>
-            <p style={{ color: "rgba(255,255,255,.9)", lineHeight: 1.6 }}>{publicCase.mission.briefText}</p>
-            <div style={{ background: "rgba(255,255,255,.06)", borderRadius: 12, padding: 16, margin: "16px 0" }}>
+            <p style={{ color: "rgba(31,42,68,.85)", lineHeight: 1.6 }}>{publicCase.mission.briefText}</p>
+            <div style={{ background: "rgba(31,42,68,.05)", border: "1px solid rgba(31,42,68,.1)", borderRadius: 12, padding: 16, margin: "16px 0" }}>
               <div style={{ fontSize: 11, letterSpacing: 1, color: COLORS.gold, fontWeight: 700, marginBottom: 6 }}>MISSION GOAL</div>
               <div>{publicCase.mission.goal}</div>
             </div>
@@ -521,7 +540,7 @@ export default function MissionMapClient({
                 const cp = checkpoints[currentIndex];
                 const st = checkpointState[cp.id] || { attempts: 0, resolved: false };
                 return (
-                  <div key={cp.id} style={{ background: "rgba(255,255,255,.04)", border: "1px solid rgba(255,255,255,.12)", borderRadius: 16, padding: 18, marginTop: 4 }}>
+                  <div key={cp.id} style={{ background: "#FFFFFF", border: "1px solid rgba(31,42,68,.12)", boxShadow: "0 4px 16px rgba(31,42,68,.08)", borderRadius: 16, padding: 18, marginTop: 4 }}>
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 6 }}>
                       <div style={{ fontSize: 12, color: COLORS.textMuted }}>Checkpoint {currentIndex + 1} of {totalCheckpoints}</div>
                       {!st.resolved && (
@@ -545,8 +564,8 @@ export default function MissionMapClient({
                           className={`mm-btn mm-choice${wrongFlashChoiceId === choice.id ? " wrong-flash" : ""}`}
                           style={{
                             textAlign: "left",
-                            background: "rgba(255,255,255,.07)",
-                            border: "1px solid rgba(255,255,255,.2)",
+                            background: "rgba(31,42,68,.04)",
+                            border: "1px solid rgba(31,42,68,.16)",
                             borderRadius: 12,
                             padding: "14px 16px",
                             color: COLORS.white,
@@ -564,11 +583,11 @@ export default function MissionMapClient({
             ) : null}
 
             {evidenceLog.length > 0 && (
-              <div style={{ marginTop: 28, borderTop: "1px solid rgba(255,255,255,.15)", paddingTop: 16 }}>
+              <div style={{ marginTop: 28, borderTop: "1px solid rgba(31,42,68,.14)", paddingTop: 16 }}>
                 <div style={{ fontSize: 11, letterSpacing: 1, color: COLORS.gold, fontWeight: 700, marginBottom: 8 }}>EVIDENCE LOG</div>
                 <div style={{ display: "grid", gap: 6 }}>
                   {evidenceLog.map((e, i) => (
-                    <div key={i} style={{ fontSize: 13, color: "rgba(255,255,255,.85)" }}>• {e.text}</div>
+                    <div key={i} style={{ fontSize: 13, color: "rgba(31,42,68,.8)" }}>• {e.text}</div>
                   ))}
                 </div>
               </div>
@@ -579,13 +598,13 @@ export default function MissionMapClient({
         {phase === "finalUnlock" && (
           <div>
             <h2 style={{ fontFamily: "'Poppins', sans-serif" }}>Final Unlock</h2>
-            <p style={{ color: "rgba(255,255,255,.9)" }}>{publicCase.finalResponsePrompt}</p>
+            <p style={{ color: "rgba(31,42,68,.85)" }}>{publicCase.finalResponsePrompt}</p>
 
             <div style={{ marginBottom: 16 }}>
               <div style={{ fontSize: 11, letterSpacing: 1, color: COLORS.gold, fontWeight: 700, marginBottom: 8 }}>YOUR EVIDENCE LOG</div>
-              <div style={{ display: "grid", gap: 6, background: "rgba(255,255,255,.06)", borderRadius: 12, padding: 12 }}>
+              <div style={{ display: "grid", gap: 6, background: "rgba(31,42,68,.04)", border: "1px solid rgba(31,42,68,.1)", borderRadius: 12, padding: 12 }}>
                 {evidenceLog.map((e, i) => (
-                  <div key={i} style={{ fontSize: 13, color: "rgba(255,255,255,.85)" }}>• {e.text}</div>
+                  <div key={i} style={{ fontSize: 13, color: "rgba(31,42,68,.8)" }}>• {e.text}</div>
                 ))}
               </div>
             </div>
@@ -596,7 +615,7 @@ export default function MissionMapClient({
               placeholder="Write your answer using what you collected..."
               rows={9}
               disabled={submitted}
-              style={{ width: "100%", borderRadius: 12, padding: 14, fontSize: 14.5, border: "1px solid rgba(255,255,255,.25)", background: "rgba(255,255,255,.06)", color: COLORS.white, fontFamily: "inherit", resize: "vertical" }}
+              style={{ width: "100%", borderRadius: 12, padding: 14, fontSize: 14.5, border: "1px solid rgba(31,42,68,.2)", background: "#FFFFFF", color: COLORS.white, fontFamily: "inherit", resize: "vertical" }}
             />
 
             <div style={{ marginTop: 20 }}>
@@ -631,11 +650,11 @@ export default function MissionMapClient({
 
       {showSubmitConfirm && (
         <div style={{ position: "fixed", inset: 0, background: "rgba(8,10,20,.7)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 10 }}>
-          <div style={{ background: COLORS.indigo, borderRadius: 16, padding: 24, maxWidth: 360, textAlign: "center" }}>
+          <div style={{ background: "#FFFFFF", border: "1px solid rgba(31,42,68,.12)", boxShadow: "0 12px 30px rgba(31,42,68,.2)", borderRadius: 16, padding: 24, maxWidth: 360, textAlign: "center" }}>
             <h3 style={{ marginTop: 0 }}>Submit this mission?</h3>
-            <p style={{ color: "rgba(255,255,255,.8)", fontSize: 13.5 }}>You can't change your answer after this.</p>
+            <p style={{ color: "rgba(31,42,68,.75)", fontSize: 13.5 }}>You can't change your answer after this.</p>
             <div style={{ display: "flex", gap: 10, justifyContent: "center", marginTop: 16 }}>
-              <button className="mm-btn" onClick={() => setShowSubmitConfirm(false)} style={{ background: "transparent", border: "1px solid rgba(255,255,255,.3)", color: COLORS.white, borderRadius: 10, padding: "10px 18px" }}>Not yet</button>
+              <button className="mm-btn" onClick={() => setShowSubmitConfirm(false)} style={{ background: "transparent", border: "1px solid rgba(31,42,68,.25)", color: COLORS.white, borderRadius: 10, padding: "10px 18px" }}>Not yet</button>
               <button className="mm-btn" onClick={confirmSubmit} style={{ background: COLORS.gold, color: COLORS.navy, borderRadius: 10, padding: "10px 18px", fontWeight: 700 }}>Submit</button>
             </div>
           </div>
