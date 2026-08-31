@@ -145,6 +145,17 @@ export default function MissionMapClient({
   const [currentIndex, setCurrentIndex] = useState(draft.currentIndex || 0);
   const [evidenceLog, setEvidenceLog] = useState(draft.evidenceLog || []);
   const [showCelebration, setShowCelebration] = useState(false);
+  // Feature #3 (Aug 31 v7, Emily's ask — "make the Evidence Log itself a
+  // bigger payoff" instead of trying to make the map spatially interactive,
+  // which is Sector Survey's lane, not Mission Map's — see
+  // MissionMap_Digital_Design_v1.md §7). Engine-level, not per-case: works
+  // off totalCheckpoints/currentIndex alone, so every current and future
+  // Mission Map case gets it for free with zero case-data changes.
+  // finalPreviewSeen persists across reloads (it's part of the draft) so the
+  // one-time auto-expand only ever fires once per mission attempt; the
+  // student can still re-open the collapsed chip as many times as they want.
+  const [finalPreviewSeen, setFinalPreviewSeen] = useState(draft.finalPreviewSeen || false);
+  const [finalPreviewExpanded, setFinalPreviewExpanded] = useState(false);
   const [mapImageFailed, setMapImageFailed] = useState(false);
   // Click-to-open: the current checkpoint's question doesn't show until the
   // student taps its marker on the map (Emily's explicit ask, Aug 30 v3) —
@@ -204,10 +215,10 @@ export default function MissionMapClient({
     try {
       localStorage.setItem(
         storageKey,
-        JSON.stringify({ phase, checkpointState, currentIndex, evidenceLog, predictions, finalResponseText, checklist, self_confidence: selfConfidence })
+        JSON.stringify({ phase, checkpointState, currentIndex, evidenceLog, predictions, finalResponseText, checklist, self_confidence: selfConfidence, finalPreviewSeen })
       );
     } catch (err) {}
-  }, [phase, checkpointState, currentIndex, evidenceLog, predictions, finalResponseText, checklist, selfConfidence]);
+  }, [phase, checkpointState, currentIndex, evidenceLog, predictions, finalResponseText, checklist, selfConfidence, finalPreviewSeen]);
 
   // Every time the mission moves to a new checkpoint, close the panel again
   // (so the student is back looking at the map and has to tap the next
@@ -217,6 +228,20 @@ export default function MissionMapClient({
     setPendingChoiceId(null);
     setPendingReasonId(null);
   }, [currentIndex]);
+
+  // Final-case preview trigger: with 2 checkpoints left to go (scaled to
+  // whatever length the case is — see previewThreshold below), auto-expand
+  // the "here's what you'll need to explain at the end" card once. Skipped
+  // entirely for a 1- or 2-checkpoint case — there's no real "mid-mission"
+  // moment to build toward on something that short.
+  const previewThreshold = totalCheckpoints > 2 ? totalCheckpoints - 2 : null;
+  const reachedFinalPreviewPoint = previewThreshold !== null && currentIndex >= previewThreshold;
+  useEffect(() => {
+    if (reachedFinalPreviewPoint && !finalPreviewSeen) {
+      setFinalPreviewSeen(true);
+      setFinalPreviewExpanded(true);
+    }
+  }, [reachedFinalPreviewPoint, finalPreviewSeen]);
 
   function saveProgress(fields) {
     return fetch("/api/submission/save", {
@@ -394,6 +419,57 @@ export default function MissionMapClient({
     fontFamily: "'Inter', sans-serif",
     color: COLORS.white,
   };
+
+  // The Evidence Log rendered as a growing "case file" instead of a plain
+  // bullet list — a stack of slightly-askew index cards that visibly gets
+  // thicker as the mission goes, with a running "X of Y collected" counter.
+  // Same component powers both the compact in-progress view (walk phase)
+  // and the full view on Final Unlock, so the payoff reads as one
+  // continuous object the student has been building the whole time, not two
+  // different lists. Pure engine-level presentation — reads only
+  // evidenceLog/totalCheckpoints, no case-data changes needed.
+  function CaseFileLog({ compact }) {
+    const count = evidenceLog.length;
+    if (count === 0) {
+      if (compact) return null;
+      return (
+        <div style={{ fontSize: 12.5, color: COLORS.textMuted, fontStyle: "italic", padding: "4px 2px" }}>
+          Your case file is still empty — evidence collects here as you clear checkpoints.
+        </div>
+      );
+    }
+    return (
+      <div>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 10 }}>
+          <div style={{ fontSize: 11, letterSpacing: 1, color: COLORS.gold, fontWeight: 700 }}>
+            {compact ? "📁 CASE FILE" : "📁 YOUR CASE FILE"}
+          </div>
+          <div style={{ fontSize: 11, color: COLORS.textMuted }}>{count} of {totalCheckpoints} collected</div>
+        </div>
+        <div style={{ display: "grid", gap: 8 }}>
+          {evidenceLog.map((e, i) => (
+            <div
+              key={i}
+              style={{
+                background: "#FFFFFF",
+                border: "1px solid rgba(31,42,68,.14)",
+                borderRadius: 8,
+                padding: "10px 12px",
+                fontSize: 13,
+                lineHeight: 1.4,
+                color: "rgba(31,42,68,.85)",
+                boxShadow: "0 2px 6px rgba(31,42,68,.1)",
+                transform: `rotate(${(i % 2 === 0 ? -1 : 1) * (0.5 + (i % 3) * 0.35)}deg)`,
+              }}
+            >
+              <span style={{ color: COLORS.gold, fontWeight: 700, marginRight: 6 }}>#{i + 1}</span>
+              {e.text}
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   function SamHint({ checkpointId }) {
     const text = hintTextByCheckpoint[checkpointId];
@@ -614,6 +690,39 @@ export default function MissionMapClient({
               <div style={{ textAlign: "center", padding: 10, color: COLORS.gold, fontWeight: 700 }}>✨ Signal clearing — nice work, Cadet ✨</div>
             )}
 
+            {reachedFinalPreviewPoint && (
+              <div style={{ marginTop: 4, marginBottom: 14 }}>
+                {finalPreviewExpanded ? (
+                  <div style={{ background: "rgba(255,196,77,.14)", border: `1px solid ${COLORS.gold}`, borderRadius: 14, padding: 16 }}>
+                    <div style={{ fontSize: 11, letterSpacing: 1, color: COLORS.gold, fontWeight: 700, marginBottom: 8 }}>
+                      📂 PREVIEW: YOUR FINAL CASE
+                    </div>
+                    <div style={{ fontSize: 12.5, color: COLORS.textMuted, marginBottom: 8, fontStyle: "italic" }}>
+                      Keep this in mind for the rest of your mission —
+                    </div>
+                    <div style={{ fontSize: 13.5, color: "rgba(31,42,68,.9)", lineHeight: 1.55, marginBottom: 12 }}>
+                      {publicCase.finalResponsePrompt}
+                    </div>
+                    <button
+                      className="mm-btn"
+                      onClick={() => setFinalPreviewExpanded(false)}
+                      style={{ background: COLORS.gold, color: COLORS.navy, borderRadius: 10, padding: "8px 16px", fontWeight: 700, fontSize: 13 }}
+                    >
+                      Got it — keep going →
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    className="mm-btn"
+                    onClick={() => setFinalPreviewExpanded(true)}
+                    style={{ background: "rgba(255,196,77,.12)", border: `1px solid ${COLORS.gold}`, borderRadius: 999, padding: "8px 14px", fontSize: 12.5, fontWeight: 600, color: COLORS.navy }}
+                  >
+                    📌 Final case preview — tap to view again
+                  </button>
+                )}
+              </div>
+            )}
+
             {currentIndex < totalCheckpoints && !checkpointOpen && (
               <div style={{ textAlign: "center", padding: "10px 0 4px", color: COLORS.textMuted, fontSize: 13 }}>
                 📍 Tap the glowing marker on the map to check out Checkpoint {currentIndex + 1}
@@ -755,12 +864,7 @@ export default function MissionMapClient({
 
             {evidenceLog.length > 0 && (
               <div style={{ marginTop: 28, borderTop: "1px solid rgba(31,42,68,.14)", paddingTop: 16 }}>
-                <div style={{ fontSize: 11, letterSpacing: 1, color: COLORS.gold, fontWeight: 700, marginBottom: 8 }}>EVIDENCE LOG</div>
-                <div style={{ display: "grid", gap: 6 }}>
-                  {evidenceLog.map((e, i) => (
-                    <div key={i} style={{ fontSize: 13, color: "rgba(31,42,68,.8)" }}>• {e.text}</div>
-                  ))}
-                </div>
+                <CaseFileLog compact />
               </div>
             )}
           </div>
@@ -771,13 +875,8 @@ export default function MissionMapClient({
             <h2 style={{ fontFamily: "'Poppins', sans-serif" }}>Final Unlock</h2>
             <p style={{ color: "rgba(31,42,68,.85)" }}>{publicCase.finalResponsePrompt}</p>
 
-            <div style={{ marginBottom: 16 }}>
-              <div style={{ fontSize: 11, letterSpacing: 1, color: COLORS.gold, fontWeight: 700, marginBottom: 8 }}>YOUR EVIDENCE LOG</div>
-              <div style={{ display: "grid", gap: 6, background: "rgba(31,42,68,.04)", border: "1px solid rgba(31,42,68,.1)", borderRadius: 12, padding: 12 }}>
-                {evidenceLog.map((e, i) => (
-                  <div key={i} style={{ fontSize: 13, color: "rgba(31,42,68,.8)" }}>• {e.text}</div>
-                ))}
-              </div>
+            <div style={{ marginBottom: 16, background: "rgba(31,42,68,.04)", border: "1px solid rgba(31,42,68,.1)", borderRadius: 12, padding: 14 }}>
+              <CaseFileLog />
             </div>
 
             <div style={{ marginBottom: 10 }}>
