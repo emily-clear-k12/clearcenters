@@ -168,6 +168,12 @@ export default function MissionMapClient({
   // changes so a fresh attempt starts blank.
   const [pendingChoiceId, setPendingChoiceId] = useState(null);
   const [pendingReasonId, setPendingReasonId] = useState(null);
+  // Grade 4/5 counterpart to pendingReasonId — a short typed sentence instead
+  // of a tapped chip (v8, built alongside the first real grade 4/5 cases,
+  // completing the branch the schema always anticipated — see
+  // MissionMap_Digital_Design_v1.md §7's grade-scaling note). Reset the same
+  // way pendingReasonId is.
+  const [pendingReasonText, setPendingReasonText] = useState("");
   // predictions[checkpointId] = the option id the student picked in a
   // "predict before you see the evidence" step (only present on checkpoints
   // that define `predictBeforeEvidence`) — set once, then the evidence and
@@ -227,6 +233,7 @@ export default function MissionMapClient({
     setCheckpointOpen(false);
     setPendingChoiceId(null);
     setPendingReasonId(null);
+    setPendingReasonText("");
   }, [currentIndex]);
 
   // Final-case preview trigger: with 2 checkpoints left to go (scaled to
@@ -294,16 +301,17 @@ export default function MissionMapClient({
       requestHint(checkpoint, checkpointIndex);
       setPendingChoiceId(null);
       setPendingReasonId(null);
+      setPendingReasonText("");
       return;
     }
 
-    resolveCheckpoint(checkpoint, pendingChoiceId, pendingReasonId, isCorrect, attempts);
+    resolveCheckpoint(checkpoint, pendingChoiceId, pendingReasonId, isCorrect, attempts, pendingReasonText);
   }
 
-  function resolveCheckpoint(checkpoint, choiceId, reasonId, correct, attempts) {
+  function resolveCheckpoint(checkpoint, choiceId, reasonId, correct, attempts, reasonText) {
     setCheckpointState((prev) => ({
       ...prev,
-      [checkpoint.id]: { attempts, resolved: true, correct, choiceId, reasonId },
+      [checkpoint.id]: { attempts, resolved: true, correct, choiceId, reasonId, reasonText: reasonText || null },
     }));
     // Evidence Log gets the entry whether the checkpoint was cleared
     // correctly or locked in wrong — a locked-in miss is still a real
@@ -316,6 +324,7 @@ export default function MissionMapClient({
     ]);
     setPendingChoiceId(null);
     setPendingReasonId(null);
+    setPendingReasonText("");
 
     const clearedSoFar = currentIndex + 1;
     if (clearedSoFar % 2 === 0 && clearedSoFar < totalCheckpoints) {
@@ -377,8 +386,12 @@ export default function MissionMapClient({
           lockedInWrong: st.resolved && !st.correct,
           // Not shown to the student, not graded — visible to the teacher
           // as a window into reasoning, and (for a predict-first checkpoint)
-          // whether their guess matched the real result.
+          // whether their guess matched the real result. reasonId is the
+          // grade-≤3 tapped-chip path; reasonText is the grade-4/5 typed
+          // path — a case only ever populates one of the two, depending on
+          // publicCase.grade.
           reasonId: st.reasonId || null,
+          reasonText: st.reasonText || null,
         };
         if (cp.predictBeforeEvidence && predictions[cp.id] != null) {
           result.predictionChoiceId = predictions[cp.id];
@@ -737,11 +750,16 @@ export default function MissionMapClient({
                 // typing one, so this checkpoint doesn't add reading/writing
                 // load beyond the multiple-choice pick itself (Emily's
                 // explicit ask, Aug 30 — "don't want 3rd graders to have to
-                // type as much as 5th graders"). A future 4th/5th-grade case
-                // can swap this branch for a short free-text box instead.
+                // type as much as 5th graders"). Grade 4/5 gets a short
+                // free-text box instead (v8, built alongside the first real
+                // grade 4/5 cases) — same reasoning-required discipline, just
+                // typed instead of tapped, since older students should be
+                // writing more, not skipping the step entirely.
                 const usesReasonChips = (publicCase.grade || 3) <= 3;
                 const needsPrediction = !!cp.predictBeforeEvidence && predictions[cp.id] == null;
-                const canSubmit = !!pendingChoiceId && (!usesReasonChips || !!pendingReasonId);
+                const canSubmit =
+                  !!pendingChoiceId &&
+                  (usesReasonChips ? !!pendingReasonId : pendingReasonText.trim().length > 0);
                 return (
                   <div key={cp.id} style={{ background: "#FFFFFF", border: "1px solid rgba(31,42,68,.12)", boxShadow: "0 4px 16px rgba(31,42,68,.08)", borderRadius: 16, padding: 18, marginTop: 4 }}>
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 6 }}>
@@ -833,6 +851,19 @@ export default function MissionMapClient({
                                 </button>
                               ))}
                             </div>
+                          </div>
+                        )}
+
+                        {pendingChoiceId && !usesReasonChips && !st.resolved && (
+                          <div style={{ marginTop: 14 }}>
+                            <div style={{ fontSize: 12, color: COLORS.textMuted, marginBottom: 8 }}>Why'd you pick that? (one sentence is fine)</div>
+                            <textarea
+                              value={pendingReasonText}
+                              onChange={(e) => setPendingReasonText(e.target.value)}
+                              placeholder="I picked this because..."
+                              rows={2}
+                              style={{ width: "100%", borderRadius: 10, padding: 10, fontSize: 13.5, border: "1px solid rgba(31,42,68,.2)", background: "#FFFFFF", color: COLORS.white, fontFamily: "inherit", resize: "vertical" }}
+                            />
                           </div>
                         )}
 
