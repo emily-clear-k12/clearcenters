@@ -70,6 +70,16 @@ const REASON_CHIPS = [
   { id: "made_sense", text: "It made the most sense" },
 ];
 
+// Sentence stems for the Final Unlock response box — tap one and it drops
+// into the textarea instead of the student having to compose a sentence
+// from scratch. Emily's ask, Aug 30 v4: "the writing needs to have sentence
+// stems (even for 4th grade) but ones that they can just click on." Each
+// case supplies its own `responseStems` (tied to its specific final-answer
+// requirement) in its PUBLIC_CASE; this generic opener is always shown
+// first so every case gets at least one stem for free, including future
+// 4th/5th-grade cases that haven't defined their own yet.
+const GENERIC_OPENER_STEM = "In this mission, I found out that ___.";
+
 // Reveal radii for the fog-of-war mask, in the SVG's own 0-100 coordinate
 // space (see the <svg viewBox="0 0 100 100"> below) — a cleared checkpoint
 // burns off a wider patch of fog than the "next stop" peek at the current,
@@ -158,6 +168,24 @@ export default function MissionMapClient({
   const [finalResponseText, setFinalResponseText] = useState(
     draft.finalResponseText || (existingSubmission && existingSubmission.mission_map_data && existingSubmission.mission_map_data.finalResponseText) || ""
   );
+  // Ref so a tapped sentence stem can land in the textarea and put the
+  // cursor at the end, instead of just updating state with no visual focus.
+  const finalResponseRef = useRef(null);
+  function insertResponseStem(stemText) {
+    if (submitted) return;
+    setFinalResponseText((prev) => {
+      const trimmed = prev.replace(/\s+$/, "");
+      return trimmed ? trimmed + " " + stemText + " " : stemText + " ";
+    });
+    requestAnimationFrame(() => {
+      const el = finalResponseRef.current;
+      if (el) {
+        el.focus();
+        const end = el.value.length;
+        el.setSelectionRange(end, end);
+      }
+    });
+  }
   const [checklist, setChecklist] = useState(
     draft.checklist || publicCase.selfCheckQuestions.map(() => false)
   );
@@ -752,10 +780,38 @@ export default function MissionMapClient({
               </div>
             </div>
 
+            <div style={{ marginBottom: 10 }}>
+              <div style={{ fontSize: 11, letterSpacing: 1, color: COLORS.gold, fontWeight: 700, marginBottom: 8 }}>TAP A SENTENCE STARTER</div>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                {[GENERIC_OPENER_STEM, ...(publicCase.responseStems || [])].map((stem, i) => (
+                  <button
+                    key={i}
+                    type="button"
+                    disabled={submitted}
+                    onClick={() => insertResponseStem(stem)}
+                    style={{
+                      background: "rgba(0,194,199,.12)",
+                      border: "1px solid rgba(0,194,199,.5)",
+                      color: "rgba(31,42,68,.9)",
+                      borderRadius: 999,
+                      padding: "8px 14px",
+                      fontSize: 12.5,
+                      fontWeight: 600,
+                      cursor: submitted ? "default" : "pointer",
+                      opacity: submitted ? 0.5 : 1,
+                    }}
+                  >
+                    {stem}
+                  </button>
+                ))}
+              </div>
+            </div>
+
             <textarea
+              ref={finalResponseRef}
               value={finalResponseText}
               onChange={(e) => setFinalResponseText(e.target.value)}
-              placeholder="Write your answer using what you collected..."
+              placeholder="Write your answer using what you collected... or tap a sentence starter above"
               rows={9}
               disabled={submitted}
               style={{ width: "100%", borderRadius: 12, padding: 14, fontSize: 14.5, border: "1px solid rgba(31,42,68,.2)", background: "#FFFFFF", color: COLORS.white, fontFamily: "inherit", resize: "vertical" }}
