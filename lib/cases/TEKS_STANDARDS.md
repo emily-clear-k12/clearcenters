@@ -41,6 +41,15 @@ TEKS — for the complete standard text, use the source PDFs.
 | `SS.4.9A-SC` | 4.9A | 4 | Social Studies | Early economic activity in Texas |
 | `SS.4.11C-SC` | 4.11C | 4 | Social Studies | Factors in Texas's economic growth |
 | `SS.4.17B-SC` | 4.17B | 4 | Social Studies | Texas cultural contributions |
+| `SS.5.2A-SC` | 5.2A | 5 | Social Studies | Causes/effects leading to the American Revolution |
+| `SS.5.4A-SC` | 5.4A | 5 | Social Studies | Causes/effects of the War of 1812 |
+| `SS.5.4D-SC` | 5.4D | 5 | Social Studies | Causes/effects of the Civil War |
+| `SS.5.4E-SC` | 5.4E | 5 | Social Studies | Effects of Reconstruction and the 13th Amendment |
+| `SS.5.7B-SC` | 5.7B | 5 | Social Studies | Geographic factors in settlement patterns |
+| `SS.5.8B-SC` | 5.8B | 5 | Social Studies | Consequences of modifying the physical environment |
+| `SS.5.13B-SC` | 5.13B | 5 | Social Studies | Colonial governments and representative institutions |
+| `SS.5.14B-SC` | 5.14B | 5 | Social Studies | Purposes of government in the Constitution's Preamble |
+| `SS.5.15A-SC` | 5.15A | 5 | Social Studies | Powers of the three branches of government |
 
 Note the `-SC` suffix: several of these TEKS roots (e.g. `3.6A`) are already
 used by an existing Group Chat case with the bare code. The suffix keeps the

@@ -161,11 +161,11 @@ line reworded into a new wrapper.
 | SS.5.12C | Social Studies | The City That Kept Growing | "Immigration and migration mainly make places more crowded." | Strong | Economic growth data tied to migration directly tests the claim |
 | SS.5.12D | Social Studies | The 500-Order Disaster | "Every worker builds each one start to finish." | Strong | Production-time comparison data is a near-perfect evidence-log fit |
 | SS.5.13A | Social Studies | Who Gets the Final Say? | "Colonial governments were all basically monarchies." | Maybe | Comparing governance structures needs careful reshaping |
-| SS.5.13B | Social Studies | The Meeting Nobody Asked For | "Colonial meetings/assemblies weren't really representative government." | Strong | Compact/House of Burgesses texts provide concrete self-governance evidence |
+| SS.5.13B | Social Studies | The Meeting Nobody Asked For | "Colonial meetings/assemblies weren't really representative government." | Already exists | Built Sept 2026 as "Nobody Really Had a Say?" (`SS.5.13B-SC`) |
 | SS.5.14A | Social Studies | The Breakup Letter | "The Declaration was basically a complaint letter." | Strong | Declaration's distinct sections are natural discrete evidence signals |
-| SS.5.14B | Social Studies | Six Jobs, One Constitution | "The Constitution has one main job: make laws." | Strong | Preamble's six purposes split cleanly into evidence signals |
+| SS.5.14B | Social Studies | Six Jobs, One Constitution | "The Constitution has one main job: make laws." | Already exists | Built Sept 2026 as "Just One Job?" (`SS.5.14B-SC`) |
 | SS.5.14C | Social Studies | Why Add Ten More? | "The Bill of Rights was unnecessary extra paperwork." | Maybe | Necessity-of-rights argument is more historical debate |
-| SS.5.15A | Social Studies | Everybody Wants the Gavel | "The executive branch basically makes laws and decides what they mean too." | Strong | Constitutional text on branch powers directly refutes the claim |
+| SS.5.15A | Social Studies | Everybody Wants the Gavel | "The executive branch basically makes laws and decides what they mean too." | Already exists | Built Sept 2026 as "One Branch, Every Job?" (`SS.5.15A-SC`) |
 | SS.5.15B | Social Studies | The President Said Yes. Case Closed? | "The other branches cannot do anything about it." | Strong | Veto override, judicial review, oversight are clean evidence signals |
 | SS.5.15C | Social Studies | Whose Job Is This Anyway? | "If a problem is important, it must be the national government's job." | Maybe | Federalism jurisdiction is often genuinely shared/contextual |
 | SS.5.17A | Social Studies | Why Bother? | "One person cannot change anything anyway." | Skip | Civic-duty claim is a value judgment, not checkable against evidence |
@@ -176,15 +176,15 @@ line reworded into a new wrapper.
 | SS.5.21B | Social Studies | Who Gets to Be "American"? | "We should choose the one culture that really created American identity." | Maybe | Sensitive, values-laden topic; workable but needs careful framing |
 | SS.5.22B | Social Studies | The Railroad Was Just Transportation | "That's basically the whole economic story." | Strong | Railroad's markets/mail/town-growth effects give concrete evidence |
 | SS.5.22C | Social Studies | It Only Changed One Thing | "One invention, one benefit." | Strong | Each innovation's several distinct benefits are natural signals |
-| SS.5.2A | Social Studies | The Tea Party Blame Game | "Before that, Britain and colonies weren't really fighting." | Strong | Pre-Tea-Party timeline events are discrete evidence signals |
-| SS.5.4A | Social Studies | The One-Reason War | "The War of 1812 was basically a fight over land." | Strong | War's multiple causes split into discrete evidence signals |
+| SS.5.2A | Social Studies | The Tea Party Blame Game | "Before that, Britain and colonies weren't really fighting." | Already exists | Built Sept 2026 as "One Bad Law?" (`SS.5.2A-SC`) |
+| SS.5.4A | Social Studies | The One-Reason War | "The War of 1812 was basically a fight over land." | Already exists | Built Sept 2026 as "Blame It on the Land" (`SS.5.4A-SC`) |
 | SS.5.4B | Social Studies | Same Country, Different Future | "Industrialization is making every region more alike." | Strong | Regional economic data directly test the "more alike" claim |
-| SS.5.4D | Social Studies | The Cause File | "Slavery, states' rights, and sectionalism were three separate causes." | Strong | Each "separate" cause traces back to slavery via distinct evidence |
-| SS.5.4E | Social Studies | Freedom: Case Closed? | "The 13th Amendment basically finished the job." | Strong | Post-13th-Amendment gaps are discrete evidence signals |
+| SS.5.4D | Social Studies | The Cause File | "Slavery, states' rights, and sectionalism were three separate causes." | Already exists | Built Sept 2026 as "Three Names, One Root" (`SS.5.4D-SC`) |
+| SS.5.4E | Social Studies | Freedom: Case Closed? | "The 13th Amendment basically finished the job." | Already exists | Built Sept 2026 as "Freedom on Paper" (`SS.5.4E-SC`) |
 | SS.5.4F | Social Studies | Opportunity for Who? | "Everybody benefited the same way." | Strong | Differing group experiences are natural discrete evidence signals |
-| SS.5.7B | Social Studies | The Town That Picked the Wrong Spot | "A town can grow almost anywhere if enough people move there." | Strong | Cedar Junction's specific geographic features are natural evidence |
+| SS.5.7B | Social Studies | The Town That Picked the Wrong Spot | "A town can grow almost anywhere if enough people move there." | Already exists | Built Sept 2026 as "Anywhere Will Do?" (`SS.5.7B-SC`) — fresh fictional towns (Rowan's Ford/Gault Hollow), not Cedar Junction, per rule 8 |
 | SS.5.8A | Social Studies | Adapt or Change It? | "Adapting and modifying are basically the same thing." | Strong | Clothing vs. dam examples make adapt-vs-modify directly testable |
-| SS.5.8B | Social Studies | The Dam Debate | "The dam provides water and power, so it's clearly good." | Strong | Costs/benefits split naturally into evidence signals for a "misleading" verdict |
+| SS.5.8B | Social Studies | The Dam Debate | "The dam provides water and power, so it's clearly good." | Already exists | Built Sept 2026 as "Good For Everyone?" (`SS.5.8B-SC`) |
 
 ---
 
