@@ -449,13 +449,14 @@ export default function ActivityClient(props) {
 
   if (appPhase === "coldopen") {
     return (
-      <div onClick={coldPhase !== "think" ? advanceColdOpen : undefined} style={{ minHeight: "100vh", background: "linear-gradient(160deg, " + COLORS.navy + " 0%, " + COLORS.deepNavy + " 100%)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", cursor: coldPhase !== "think" ? "pointer" : "default", color: COLORS.white, fontFamily: "'Inter', sans-serif", padding: 24, userSelect: "none", position: "relative" }}>
-        <style>{"@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@600;700&family=Inter:wght@400;500;600;700&display=swap');"}</style>
+      <div onClick={coldPhase !== "think" ? advanceColdOpen : undefined} style={{ minHeight: "100vh", backgroundImage: 'url("/group-chat/window.jpg")', backgroundSize: "cover", backgroundPosition: "center", backgroundAttachment: "fixed", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", cursor: coldPhase !== "think" ? "pointer" : "default", color: COLORS.white, fontFamily: "'Inter', sans-serif", padding: 24, userSelect: "none", position: "relative" }}>
+        <style>{"@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@600;700&family=Inter:wght@400;500;600;700&display=swap'); .gc-scrim { position: fixed; inset: 0; background: linear-gradient(160deg, rgba(22,36,63,.72) 0%, rgba(27,45,77,.8) 100%); z-index: 0; pointer-events: none; }"}</style>
+        <div className="gc-scrim" />
         <div style={{ position: "absolute", top: 18, left: 22, fontWeight: 700, fontSize: 15 }}>ClearCenters <span style={{ color: COLORS.gold }}>· Group Chat</span></div>
         <div style={{ position: "absolute", top: 16, right: 22, background: COLORS.violet, fontWeight: 700, fontSize: 11, letterSpacing: 1.5, padding: "5px 12px", borderRadius: 999 }}>COLD OPEN</div>
 
         {coldPhase === "intro" && (
-          <div style={{ textAlign: "center", maxWidth: 520 }}>
+          <div style={{ textAlign: "center", maxWidth: 520, position: "relative", zIndex: 2 }}>
             <div style={{ fontSize: 56, marginBottom: 10 }}>📱</div>
             <h1 style={{ fontFamily: "'Poppins', sans-serif", fontSize: 32, marginBottom: 10, fontWeight: 700 }}>The Cast</h1>
             {Object.values(cast).map(function (c) { return (<div key={c.name} style={{ color: "rgba(255,255,255,.75)", fontSize: 15, margin: "3px 0" }}>{c.emoji} {c.name}</div>); })}
@@ -464,7 +465,7 @@ export default function ActivityClient(props) {
         )}
 
         {coldPhase === "messages" && (
-          <div style={{ width: "min(680px, 92vw)", height: "min(72vh, 620px)", background: COLORS.cream, borderRadius: 22, overflow: "hidden", display: "flex", flexDirection: "column", boxShadow: "0 24px 60px rgba(0,0,0,.45)" }}>
+          <div style={{ width: "min(680px, 92vw)", height: "min(72vh, 620px)", background: COLORS.cream, borderRadius: 22, overflow: "hidden", display: "flex", flexDirection: "column", boxShadow: "0 24px 60px rgba(0,0,0,.45)", position: "relative", zIndex: 2 }}>
             <div style={{ background: COLORS.violet, color: COLORS.white, padding: "12px 18px", textAlign: "left" }}>
               <div style={{ fontWeight: 700, fontSize: 17 }}>The Cast</div>
               <div style={{ fontSize: 12, opacity: 0.85 }}>{Object.values(cast).map(function (c) { return c.name; }).join(", ")}</div>
@@ -488,14 +489,14 @@ export default function ActivityClient(props) {
         )}
 
         {coldPhase === "trap" && (
-          <div style={{ textAlign: "center", maxWidth: 800 }}>
+          <div style={{ textAlign: "center", maxWidth: 800, position: "relative", zIndex: 2 }}>
             <div style={{ color: "rgba(255,255,255,.6)", fontSize: 17, marginBottom: 12 }}>{Object.values(cast)[0].name} says:</div>
             <div style={{ fontFamily: "'Poppins', sans-serif", fontSize: "clamp(26px, 5vw, 44px)", fontWeight: 700, lineHeight: 1.25 }}>"{publicCase.trapLine}"</div>
           </div>
         )}
 
         {coldPhase === "think" && (
-          <div style={{ textAlign: "center", maxWidth: 720 }}>
+          <div style={{ textAlign: "center", maxWidth: 720, position: "relative", zIndex: 2 }}>
             <div style={{ color: COLORS.gold, fontWeight: 700, letterSpacing: 2, fontSize: 13, marginBottom: 10 }}>LET'S THINK ABOUT IT</div>
             <h2 style={{ fontFamily: "'Poppins', sans-serif", fontSize: "clamp(22px, 4vw, 34px)", fontWeight: 700, marginBottom: 18, lineHeight: 1.25 }}>{publicCase.bigQuestion}</h2>
             <div style={{ display: "flex", flexWrap: "wrap", gap: 8, justifyContent: "center", marginBottom: 22 }}>
@@ -511,10 +512,11 @@ export default function ActivityClient(props) {
   }
 
   return (
-    <div style={{ minHeight: "100vh", background: "linear-gradient(180deg, " + COLORS.navy + " 0%, " + COLORS.deepNavy + " 100%)", fontFamily: "'Inter', sans-serif", color: COLORS.textDark, display: "flex", flexDirection: "column" }}>
-      <style>{"\n        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@600;700&family=Inter:wght@400;500;600;700&display=swap');\n        .gc-btn { transition: transform 150ms ease; cursor: pointer; border: none; font-family: 'Inter', sans-serif; }\n        .gc-btn:hover { transform: translateY(-1px); }\n        .gc-fade-in { animation: gcFadeIn 220ms ease-out; }\n        @keyframes gcFadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }\n        .gc-dot { animation: gcPulse 1.2s ease-in-out infinite; }\n        @keyframes gcPulse { 0%,100% { opacity: .3; } 50% { opacity: 1; } }\n      "}</style>
+    <div style={{ minHeight: "100vh", backgroundImage: 'url("/group-chat/window.jpg")', backgroundSize: "cover", backgroundPosition: "center", backgroundAttachment: "fixed", fontFamily: "'Inter', sans-serif", color: COLORS.textDark, display: "flex", flexDirection: "column", position: "relative" }}>
+      <style>{"\n        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@600;700&family=Inter:wght@400;500;600;700&display=swap');\n        .gc-btn { transition: transform 150ms ease; cursor: pointer; border: none; font-family: 'Inter', sans-serif; }\n        .gc-btn:hover { transform: translateY(-1px); }\n        .gc-fade-in { animation: gcFadeIn 220ms ease-out; }\n        @keyframes gcFadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }\n        .gc-dot { animation: gcPulse 1.2s ease-in-out infinite; }\n        @keyframes gcPulse { 0%,100% { opacity: .3; } 50% { opacity: 1; } }\n        .gc-scrim { position: fixed; inset: 0; background: linear-gradient(180deg, rgba(22,36,63,.72) 0%, rgba(27,45,77,.8) 100%); z-index: 0; pointer-events: none; }\n      "}</style>
+      <div className="gc-scrim" />
 
-      <div style={{ background: COLORS.slate, padding: "12px 20px", display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap" }}>
+      <div style={{ background: COLORS.slate, padding: "12px 20px", display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap", position: "relative", zIndex: 2 }}>
         <button onClick={function () { router.push("/home"); router.refresh(); }} className="gc-btn" style={{ background: "none", color: COLORS.white, display: "flex", alignItems: "center", padding: 6, borderRadius: 8 }}>← Home</button>
         <div style={{ marginRight: "auto" }}>
           <div style={{ fontFamily: "'Poppins', sans-serif", color: COLORS.white, fontWeight: 700, fontSize: 16, lineHeight: 1.2 }}>{publicCase.title}</div>
@@ -543,7 +545,7 @@ export default function ActivityClient(props) {
       </div>
 
       {appPhase === "organizer" && (
-        <div style={{ flex: 1, padding: "20px 20px 32px", display: "flex", justifyContent: "center" }}>
+        <div style={{ flex: 1, padding: "20px 20px 32px", display: "flex", justifyContent: "center", position: "relative", zIndex: 2 }}>
           <div style={{ width: "100%", maxWidth: 640 }}>
             <div className="gc-fade-in" style={{ background: COLORS.violetSoft, borderRadius: 14, padding: 16, marginBottom: 16 }}>
               <div style={{ fontSize: 11, fontWeight: 700, color: COLORS.violet, letterSpacing: 0.5, marginBottom: 4 }}>BIG QUESTION</div>
@@ -575,7 +577,7 @@ export default function ActivityClient(props) {
       )}
 
       {appPhase === "discuss" && (
-        <div style={{ flex: 1, padding: "16px 20px 32px", display: "flex", flexDirection: "column", alignItems: "center" }}>
+        <div style={{ flex: 1, padding: "16px 20px 32px", display: "flex", flexDirection: "column", alignItems: "center", position: "relative", zIndex: 2 }}>
           <div style={{ width: "100%", maxWidth: 1080, marginBottom: 14 }}>
             <div className="gc-fade-in" style={{ background: COLORS.violetSoft, borderRadius: 14, padding: "14px 18px" }}>
               <div style={{ fontSize: 11, fontWeight: 700, color: COLORS.violet, letterSpacing: 0.5, marginBottom: 4 }}>KEEP THIS IN MIND · YOU'LL ANSWER THIS IN THINK</div>
@@ -659,7 +661,7 @@ export default function ActivityClient(props) {
       )}
 
       {appPhase === "think" && (
-        <div style={{ flex: 1, padding: "16px 20px 32px", display: "flex", justifyContent: "center" }}>
+        <div style={{ flex: 1, padding: "16px 20px 32px", display: "flex", justifyContent: "center", position: "relative", zIndex: 2 }}>
           <div style={{ width: "100%", maxWidth: 900, display: "flex", flexDirection: "column", gap: 14 }}>
             <div className="gc-fade-in" style={{ background: COLORS.violetSoft, borderRadius: 14, padding: 16 }}>
               <div style={{ fontSize: 11, fontWeight: 700, color: COLORS.violet, letterSpacing: 0.5, marginBottom: 4 }}>BIG QUESTION</div>
@@ -697,7 +699,7 @@ export default function ActivityClient(props) {
       )}
 
       {appPhase === "revise" && (
-        <div style={{ flex: 1, padding: "16px 20px 32px", display: "flex", flexDirection: "column", alignItems: "center" }}>
+        <div style={{ flex: 1, padding: "16px 20px 32px", display: "flex", flexDirection: "column", alignItems: "center", position: "relative", zIndex: 2 }}>
           <div style={{ width: "100%", maxWidth: 1080, marginBottom: 14 }}>
             {revisionRequested && (
               <div className="gc-fade-in" style={{ background: "#FFF4E5", border: "1.5px solid " + COLORS.gold, borderRadius: 14, padding: "14px 18px", marginBottom: 14, display: "flex", gap: 12, alignItems: "flex-start" }}>
@@ -775,7 +777,7 @@ export default function ActivityClient(props) {
       )}
 
       {appPhase === "share" && (
-        <div style={{ flex: 1, padding: "16px 20px 32px", display: "flex", justifyContent: "center" }}>
+        <div style={{ flex: 1, padding: "16px 20px 32px", display: "flex", justifyContent: "center", position: "relative", zIndex: 2 }}>
           <div style={{ width: "100%", maxWidth: 760, display: "flex", flexDirection: "column", gap: 16 }}>
             <div className="gc-fade-in" style={{ background: COLORS.violetSoft, borderRadius: 14, padding: 16 }}>
               <div style={{ fontSize: 11, fontWeight: 700, color: COLORS.violet, letterSpacing: 0.5, marginBottom: 4 }}>BIG QUESTION</div>

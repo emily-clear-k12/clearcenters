@@ -88,6 +88,14 @@ const CLEARED_REVEAL_RADIUS = 15;
 const CURRENT_PEEK_RADIUS = 9;
 
 function EvidenceBlock({ evidence }) {
+  // Optional `evidence.image` support (v9, Aug 31) — added ahead of Emily
+  // actually generating any images, so "connecting" one later is just
+  // dropping the file at its path and adding one `image: "..."` line to
+  // that checkpoint's evidence object, not another round of client code.
+  // Same graceful-degradation convention as the background map art: if the
+  // path 404s (or nothing's been generated yet), it silently renders
+  // nothing rather than a broken-image icon — never blocks the checkpoint.
+  const [imageFailed, setImageFailed] = useState(false);
   if (!evidence) return null;
   const icon = evidence.type === "data" ? "📊" : "📖";
   // A checkpoint can override the label (e.g. "FIELD NOTE — VOLUNTEER A") for
@@ -97,6 +105,14 @@ function EvidenceBlock({ evidence }) {
   return (
     <div style={{ background: "rgba(31,42,68,.05)", border: "1px solid rgba(31,42,68,.14)", borderRadius: 12, padding: 14, marginBottom: 14 }}>
       <div style={{ fontSize: 10.5, letterSpacing: 1, color: COLORS.gold, fontWeight: 700, marginBottom: 6 }}>{icon} {label}</div>
+      {evidence.image && !imageFailed && (
+        <img
+          src={evidence.image}
+          alt=""
+          onError={() => setImageFailed(true)}
+          style={{ width: "100%", maxHeight: 220, objectFit: "cover", borderRadius: 8, marginBottom: 10, display: "block" }}
+        />
+      )}
       <div style={{ fontSize: 13.5, lineHeight: 1.55, color: "rgba(31,42,68,.88)" }}>{evidence.text}</div>
     </div>
   );
