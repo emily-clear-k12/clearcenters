@@ -32,6 +32,15 @@ TEKS — for the complete standard text, use the source PDFs.
 | `SS.3.7C-SC` | 3.7C | 3 | Social Studies | Matching services to government level |
 | `SS.3.8A-SC` | 3.8A | 3 | Social Studies | Purposes of founding documents |
 | `SS.3.9E-SC` | 3.9E | 3 | Social Studies | Voting for group decisions |
+| `SS.4.1B-SC` | 4.1B | 4 | Social Studies | American Indian ways of life in Texas |
+| `SS.4.2A-SC` | 4.2A | 4 | Social Studies | European exploration motives |
+| `SS.4.2C-SC` | 4.2C | 4 | Social Studies | Spanish mission site selection |
+| `SS.4.3D-SC` | 4.3D | 4 | Social Studies | Challenges of the Republic of Texas |
+| `SS.4.4B-SC` | 4.4B | 4 | Social Studies | Growth of the cattle industry |
+| `SS.4.6B-SC` | 4.6B | 4 | Social Studies | Comparing Texas's physical regions |
+| `SS.4.9A-SC` | 4.9A | 4 | Social Studies | Early economic activity in Texas |
+| `SS.4.11C-SC` | 4.11C | 4 | Social Studies | Factors in Texas's economic growth |
+| `SS.4.17B-SC` | 4.17B | 4 | Social Studies | Texas cultural contributions |
 
 Note the `-SC` suffix: several of these TEKS roots (e.g. `3.6A`) are already
 used by an existing Group Chat case with the bare code. The suffix keeps the
