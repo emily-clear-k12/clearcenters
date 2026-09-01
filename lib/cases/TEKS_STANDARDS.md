@@ -20,6 +20,18 @@ TEKS — for the complete standard text, use the source PDFs.
 | `3.6A-SC` | 3.6A | 3 | Science | Physical properties of matter incl. magnetism |
 | `4.10B-SC` | 4.10B | 4 | Science | Weathering, erosion & deposition |
 | `5.13B-SC` | 5.13B | 5 | Science | Instinctual vs. learned behavior |
+| `SS.3.6A-SC` | 3.6A | 3 | Social Studies | Supply and demand (SS pilot) |
+| `SS.4.3A-SC` | 4.3A | 4 | Social Studies | Texas Revolution causes (SS pilot) |
+| `SS.5.4C-SC` | 5.4C | 5 | Social Studies | Lewis and Clark expedition (SS pilot) |
+| `SS.3.2B-SC` | 3.2B | 3 | Social Studies | Meeting community needs |
+| `SS.3.3A-SC` | 3.3A | 3 | Social Studies | Physical environments |
+| `SS.3.3C-SC` | 3.3C | 3 | Social Studies | Human impact on landscapes |
+| `SS.3.5B-SC` | 3.5B | 3 | Social Studies | Creating a budget |
+| `SS.3.6B-SC` | 3.6B | 3 | Social Studies | Scarcity |
+| `SS.3.6C-SC` | 3.6C | 3 | Social Studies | Costs, prices, and profit |
+| `SS.3.7C-SC` | 3.7C | 3 | Social Studies | Matching services to government level |
+| `SS.3.8A-SC` | 3.8A | 3 | Social Studies | Purposes of founding documents |
+| `SS.3.9E-SC` | 3.9E | 3 | Social Studies | Voting for group decisions |
 
 Note the `-SC` suffix: several of these TEKS roots (e.g. `3.6A`) are already
 used by an existing Group Chat case with the bare code. The suffix keeps the

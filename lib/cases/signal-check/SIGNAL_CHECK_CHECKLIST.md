@@ -108,7 +108,20 @@ story, characters, or specific scenario is not — a student who did Group
 Chat for a standard should not feel like Signal Check is the identical
 question in a different costume.
 
-## 9. Process
+## 9. Answer-position randomization (fixed Sept 2026, code-level — nothing to author)
+
+`SignalCheckClient.js` used to render `evidenceReadings` (the Sensor Tray,
+the raw Sensor Log fallback, and the "because ___ and ___" dropdowns) in
+whatever order they were authored in a case's `.public.js` file — so the
+correct evidence for a signal could end up in the same position case after
+case, letting a student pattern-match instead of read. This is now fixed
+with a `seededShuffle(evidenceReadings, seed)` (same technique Mission Map
+uses for its checkpoint choices), seeded per student + case so the order is
+stable across one student's attempt but differs student to student and
+case to case. This is a rendering-layer fix, not a content-authoring one —
+nothing to do differently when writing new `evidenceReadings` arrays below.
+
+## 10. Process
 
 - Hold all code and content locally once written; batch images together;
   one combined push once everything in a batch is ready — not a push per

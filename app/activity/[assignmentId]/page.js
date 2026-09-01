@@ -110,6 +110,7 @@ export default async function ActivityPage({ params }) {
     return (
       <SignalCheckClient
         assignmentId={assignmentId}
+        studentId={studentId}
         caseStandard={assignment.case_standard}
         publicCase={signalCheckCase}
         existingSubmission={existingSubmission}

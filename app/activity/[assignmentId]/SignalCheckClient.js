@@ -41,6 +41,34 @@ const CONFIDENCE_LEVELS = [
 // questions must be checked before a student can submit for grading.
 const REQUIRED_CHECKS = 3;
 
+// Sept 2026: ported from Mission Map's seededShuffle — evidence readings
+// used to always render in the order authored in the case's .public.js
+// file, which meant the correct evidence for a dropdown ("because ___")
+// or the Sensor Tray was often in the same position case after case. This
+// deterministically reshuffles per student + case (not per render, so a
+// student sees a stable order across the whole attempt) without touching
+// any id-based correctness logic.
+function seededShuffle(array, seed) {
+  let h = 0;
+  for (let i = 0; i < seed.length; i++) {
+    h = (Math.imul(h, 31) + seed.charCodeAt(i)) | 0;
+  }
+  function rand() {
+    h ^= h << 13; h |= 0;
+    h ^= h >>> 17;
+    h ^= h << 5; h |= 0;
+    return ((h >>> 0) % 100000) / 100000;
+  }
+  const result = array.slice();
+  for (let i = result.length - 1; i > 0; i--) {
+    const j = Math.floor(rand() * (i + 1));
+    const tmp = result[i];
+    result[i] = result[j];
+    result[j] = tmp;
+  }
+  return result;
+}
+
 // Grade 4 ("dropdown-open") is the middle rung: verdict is still a button,
 // but reasoning blends a sentence stem with open writing instead of either
 // a blank textarea (too hard to start) or full chip-built sentences (too
@@ -238,7 +266,8 @@ function SubmitConfirmModal({ open, onCancel, onConfirm }) {
 // panel and the Sensor Sort screen's evidence modal — same content, same
 // fallback rule (field report photo when the case has one, the raw sensor
 // log otherwise), pulled out once so both stay in sync automatically.
-function EvidenceContent({ publicCase, compact }) {
+function EvidenceContent({ publicCase, compact, evidenceOrder }) {
+  const orderedEvidence = evidenceOrder || publicCase.evidenceReadings;
   if (publicCase.fieldReport) {
     return (
       <div style={{ borderRadius: 14, overflow: "hidden", border: "1px solid rgba(255,255,255,.15)" }}>
@@ -258,7 +287,7 @@ function EvidenceContent({ publicCase, compact }) {
   }
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-      {publicCase.evidenceReadings.map((e, i) => (
+      {orderedEvidence.map((e, i) => (
         <div key={e.id} style={{ display: "flex", gap: 10, background: "rgba(255,255,255,.05)", border: "1px solid rgba(255,255,255,.15)", borderRadius: 12, padding: "10px 14px" }}>
           <div style={{ fontFamily: "'Space Mono', monospace", fontSize: 10, fontWeight: 700, color: COLORS.teal, flexShrink: 0, width: 22 }}>#{i + 1}</div>
           <div>
@@ -273,7 +302,7 @@ function EvidenceContent({ publicCase, compact }) {
 
 // Pop-up version of EvidenceContent for screens (like Sensor Sort) that
 // don't have a natural place to show it inline.
-function EvidenceModal({ open, onClose, publicCase }) {
+function EvidenceModal({ open, onClose, publicCase, evidenceOrder }) {
   if (!open) return null;
   return (
     <div style={{ position: "fixed", inset: 0, background: "rgba(6,8,16,.75)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 100, padding: 20 }} onClick={onClose}>
@@ -282,7 +311,7 @@ function EvidenceModal({ open, onClose, publicCase }) {
           <div style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 700, fontSize: 15, color: COLORS.white }}>📋 Review the Evidence</div>
           <button onClick={onClose} className="sc-btn" style={{ background: "rgba(255,255,255,.1)", border: "none", color: COLORS.white, borderRadius: 999, width: 28, height: 28, cursor: "pointer", fontSize: 14, lineHeight: 1 }}>✕</button>
         </div>
-        <EvidenceContent publicCase={publicCase} compact />
+        <EvidenceContent publicCase={publicCase} compact evidenceOrder={evidenceOrder} />
       </div>
     </div>
   );
@@ -303,9 +332,16 @@ function CelebrationModal({ open, onGoHome }) {
   );
 }
 
-export default function SignalCheckClient({ assignmentId, caseStandard, publicCase, existingSubmission, alreadySubmitted, revisionRequested, revisionFeedback }) {
+export default function SignalCheckClient({ assignmentId, studentId, caseStandard, publicCase, existingSubmission, alreadySubmitted, revisionRequested, revisionFeedback }) {
   const router = useRouter();
   const storageKey = "cc_signalcheck_draft_" + assignmentId;
+
+  // Stable per student+case (not per render/reload) so the shuffle doesn't
+  // visibly jump around mid-attempt, but two different students (or the
+  // same student on a different case) get different orders. Falls back to
+  // assignmentId when studentId isn't available so this still shuffles
+  // (just class-wide-identical) rather than silently no-op'ing.
+  const shuffledEvidence = seededShuffle(publicCase.evidenceReadings, `${caseStandard}-evidence-${studentId || assignmentId || ""}`);
 
   const draft = existingSubmission || {};
   const draftAnswers = (draft.signal_data && draft.signal_data.statementAnswers) || {};
@@ -400,7 +436,7 @@ export default function SignalCheckClient({ assignmentId, caseStandard, publicCa
   const statementById = {};
   publicCase.statements.forEach((s) => { statementById[s.id] = s; });
 
-  const unplacedItems = publicCase.evidenceReadings.filter((e) => !placements[e.id]);
+  const unplacedItems = shuffledEvidence.filter((e) => !placements[e.id]);
   const allSorted = Object.keys(placements).length === publicCase.evidenceReadings.length;
 
   function pickItem(itemId) {
@@ -651,7 +687,7 @@ export default function SignalCheckClient({ assignmentId, caseStandard, publicCa
               <>
                 <div style={{ textAlign: "center", fontFamily: "'Space Mono', monospace", fontSize: 11, letterSpacing: 2, color: COLORS.teal }}>⟶ SENSOR LOG · {publicCase.evidenceReadings.length} RAW READINGS</div>
                 <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                  {publicCase.evidenceReadings.map((e, i) => (
+                  {shuffledEvidence.map((e, i) => (
                     <div key={e.id} style={{ display: "flex", gap: 12, background: "rgba(8,10,22,.55)", border: "1px solid rgba(255,255,255,.2)", borderRadius: 14, padding: "12px 16px" }}>
                       <div style={{ fontFamily: "'Space Mono', monospace", fontSize: 11, fontWeight: 700, color: COLORS.teal, flexShrink: 0, width: 26 }}>#{i + 1}</div>
                       <div>
@@ -762,12 +798,12 @@ export default function SignalCheckClient({ assignmentId, caseStandard, publicCa
                             because{" "}
                             <select className="sc-select" value={a.evidence1 || ""} onChange={(e) => setAnswer(s.id, "evidence1", e.target.value)}>
                               <option value="">choose ▾</option>
-                              {publicCase.evidenceReadings.map((e) => <option key={e.id} value={e.id}>{e.label}</option>)}
+                              {shuffledEvidence.map((e) => <option key={e.id} value={e.id}>{e.label}</option>)}
                             </select>{" "}
                             and{" "}
                             <select className="sc-select" value={a.evidence2 || ""} onChange={(e) => setAnswer(s.id, "evidence2", e.target.value)}>
                               <option value="">choose ▾</option>
-                              {publicCase.evidenceReadings.map((e) => <option key={e.id} value={e.id}>{e.label}</option>)}
+                              {shuffledEvidence.map((e) => <option key={e.id} value={e.id}>{e.label}</option>)}
                             </select>.
                           </div>
                         </>
@@ -806,7 +842,7 @@ export default function SignalCheckClient({ assignmentId, caseStandard, publicCa
                     // summarized version — so "checking the evidence again"
                     // really means the same evidence, not something new.
                     <div style={{ marginTop: 14 }}>
-                      <EvidenceContent publicCase={publicCase} compact />
+                      <EvidenceContent publicCase={publicCase} compact evidenceOrder={shuffledEvidence} />
                     </div>
                   )}
                 </GlassCard>
@@ -890,7 +926,7 @@ export default function SignalCheckClient({ assignmentId, caseStandard, publicCa
 
       </div>
 
-      <EvidenceModal open={evidenceModalOpen} onClose={() => setEvidenceModalOpen(false)} publicCase={publicCase} />
+      <EvidenceModal open={evidenceModalOpen} onClose={() => setEvidenceModalOpen(false)} publicCase={publicCase} evidenceOrder={shuffledEvidence} />
       <SubmitConfirmModal open={showSubmitConfirm} onCancel={() => setShowSubmitConfirm(false)} onConfirm={confirmSubmit} />
       <CelebrationModal open={selfConfidence !== null && phase === "answer" && submitted} onGoHome={() => router.push("/missions")} />
     </div>
