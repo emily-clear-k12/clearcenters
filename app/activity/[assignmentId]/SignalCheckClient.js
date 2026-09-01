@@ -63,16 +63,48 @@ function hasRealReasoning(verdict, reasoning) {
   return true;
 }
 
-function TopBar({ standard, subject }) {
+// Added a manual Save Progress button (Sept 1, 2026) — Emily asked for the
+// same "save, close the tab, come back later" affordance Group Chat already
+// has. Signal Check already writes self_confidence to the server the moment
+// it's picked (see saveProgress/pickConfidence below), and already hydrates
+// statementAnswers/checklist/self_confidence from existingSubmission.signal_data
+// on load — what was missing was a single button that saves EVERYTHING
+// (including the Sensor Sort practice state, which only lived in
+// localStorage before this) on demand, the same real server-backed pattern
+// Group Chat's handleManualSave uses, not just the step-by-step autosaves.
+function TopBar({ standard, subject, onSave, saveState, showSave }) {
   return (
-    <div style={{ position: "relative", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "20px 24px 0", zIndex: 2 }}>
+    <div style={{ position: "relative", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "20px 24px 0", zIndex: 2, flexWrap: "wrap", gap: 10 }}>
       <div style={{ display: "flex", alignItems: "center", gap: 10, fontFamily: "'Poppins', sans-serif", fontWeight: 700, fontSize: 15, letterSpacing: 3, color: COLORS.white }}>
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke={COLORS.teal} strokeWidth="2" /><path d="M20 20L16 16" stroke={COLORS.teal} strokeWidth="2" strokeLinecap="round" /></svg>
         SIGNAL CHECK
       </div>
-      <span style={{ fontFamily: "'Space Mono', monospace", fontSize: 11, fontWeight: 700, letterSpacing: 1, color: "rgba(255,255,255,.85)", background: "rgba(10,8,20,.5)", border: "1px solid rgba(255,255,255,.22)", padding: "6px 12px", borderRadius: 999 }}>
-        {standard} · SECTOR: {(subject || "").toUpperCase()}
-      </span>
+      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+        {showSave && (
+          <button
+            type="button"
+            onClick={onSave}
+            className="sc-btn"
+            disabled={saveState === "saving"}
+            style={{
+              background: saveState === "saved" ? COLORS.success : saveState === "error" ? COLORS.danger : "rgba(255,255,255,.12)",
+              color: COLORS.white,
+              border: "1px solid rgba(255,255,255,.25)",
+              borderRadius: 999,
+              padding: "7px 14px",
+              fontWeight: 700,
+              fontSize: 11.5,
+              whiteSpace: "nowrap",
+              fontFamily: "'Inter', sans-serif",
+            }}
+          >
+            {saveState === "saving" ? "Saving…" : saveState === "saved" ? "✓ Saved" : saveState === "error" ? "Couldn't save — try again" : "💾 Save Progress"}
+          </button>
+        )}
+        <span style={{ fontFamily: "'Space Mono', monospace", fontSize: 11, fontWeight: 700, letterSpacing: 1, color: "rgba(255,255,255,.85)", background: "rgba(10,8,20,.5)", border: "1px solid rgba(255,255,255,.22)", padding: "6px 12px", borderRadius: 999 }}>
+          {standard} · SECTOR: {(subject || "").toUpperCase()}
+        </span>
+      </div>
     </div>
   );
 }
@@ -258,15 +290,22 @@ export default function SignalCheckClient({ assignmentId, caseStandard, publicCa
 
   const draft = existingSubmission || {};
   const draftAnswers = (draft.signal_data && draft.signal_data.statementAnswers) || {};
+  // Sept 1 2026: the Sensor Sort state used to hydrate from localStorage
+  // only, even though handleManualSave now writes it to the server too —
+  // this fallback is what actually makes "close it and come back later" work
+  // on a different device or after clearing site data, not just same-browser.
+  const draftPlacements = (draft.signal_data && draft.signal_data.placements) || {};
+  const draftAttemptsByItem = (draft.signal_data && draft.signal_data.attemptsByItem) || {};
+  const draftFirstTryCorrect = (draft.signal_data && draft.signal_data.firstTryCorrect) || 0;
   const selfCheckQuestions = publicCase.selfCheckQuestions || [];
 
   const [phase, setPhase] = useState(alreadySubmitted && !revisionRequested ? "answer" : "main");
 
   // Sensor Sort game state — self-check practice, never graded.
   const [selectedItemId, setSelectedItemId] = useState(null);
-  const [placements, setPlacements] = useState({}); // { itemId: binId }
-  const [attemptsByItem, setAttemptsByItem] = useState({}); // { itemId: n }
-  const [firstTryCorrect, setFirstTryCorrect] = useState(0);
+  const [placements, setPlacements] = useState(draftPlacements); // { itemId: binId }
+  const [attemptsByItem, setAttemptsByItem] = useState(draftAttemptsByItem); // { itemId: n }
+  const [firstTryCorrect, setFirstTryCorrect] = useState(draftFirstTryCorrect);
   const [wrongFlashBinId, setWrongFlashBinId] = useState(null);
 
   // Answer phase state, shape depends on publicCase.stemMode.
@@ -299,6 +338,8 @@ export default function SignalCheckClient({ assignmentId, caseStandard, publicCa
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState(null);
   const [submitted, setSubmitted] = useState(alreadySubmitted);
+
+  const [manualSaveState, setManualSaveState] = useState("idle"); // idle | saving | saved | error
 
   const hydrated = useRef(false);
 
@@ -436,6 +477,23 @@ export default function SignalCheckClient({ assignmentId, caseStandard, publicCa
     saveProgress({ self_confidence: id });
   }
 
+  // The manual Save Progress button — writes the FULL current state
+  // (including the Sensor Sort practice state, which used to live only in
+  // localStorage) to the real server-side signal_data column, so a student
+  // can close the tab, come back on any device, and pick up where they left
+  // off — not just wherever the step-by-step autosaves above happened to
+  // already cover.
+  async function handleManualSave() {
+    setManualSaveState("saving");
+    const ok = await saveProgress({
+      signal_data: { phase, placements, attemptsByItem, firstTryCorrect, statementAnswers },
+      checklist,
+      self_confidence: selfConfidence,
+    });
+    setManualSaveState(ok ? "saved" : "error");
+    if (ok) setTimeout(() => setManualSaveState("idle"), 2000);
+  }
+
   async function submitForGrading() {
     setSubmitting(true);
     setSubmitError(null);
@@ -512,7 +570,13 @@ export default function SignalCheckClient({ assignmentId, caseStandard, publicCa
       `}</style>
       <div className="sc-scrim" />
 
-      <TopBar standard={publicCase.teksLabel} subject={publicCase.subject} />
+      <TopBar
+        standard={publicCase.teksLabel}
+        subject={publicCase.subject}
+        onSave={handleManualSave}
+        saveState={manualSaveState}
+        showSave={!submitted}
+      />
       <Dots phase={phase} />
 
       {revisionRequested && phase === "main" && (

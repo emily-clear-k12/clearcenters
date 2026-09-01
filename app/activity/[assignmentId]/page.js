@@ -55,10 +55,8 @@ export default async function ActivityPage({ params }) {
   }
 
   // A case's `engine` column decides which challenge type's content and
-  // game engine this assignment uses — "group_chat" (the default),
-  // "fact_check_desk" (Signal Check), and "mission_map" (Mission Map,
-  // added Aug 30 2026 as the first of the 8 designed-but-uncoded roster
-  // engines to get real code). Newsroom ("newsroom_bn" etc.) was
+  // game engine this assignment uses — "group_chat" (the default) and
+  // "fact_check_desk" (Signal Check). Newsroom ("newsroom_bn" etc.) was
   // disconnected on Aug 25 2026 while it's reworked — any case row with a
   // "newsroom*" engine now falls through to the generic "not ready yet"
   // screen below, same as any other unwired case, until it's reconnected.
@@ -70,9 +68,16 @@ export default async function ActivityPage({ params }) {
 
   const engine = (caseRow && caseRow.engine) || "group_chat";
   const isSignalCheck = engine === "fact_check_desk";
+  // Mission Map's own branch — this was missing entirely until Sept 1, 2026,
+  // which meant every Mission Map assignment (3.1-MM, 4.1-MM, 5.1-MM) fell
+  // through to the generic group_chat lookup below (which has never heard of
+  // these standards, since they live in their own lib/cases/mission-map/
+  // registry, not lib/cases/index.public.js) and landed on the "This mission
+  // isn't ready yet" screen instead of MissionMapClient. Caught while adding
+  // the Save Progress button to Mission Map, not by a live report.
   const isMissionMap = engine === "mission_map";
 
-  const caseEntry = (isSignalCheck || isMissionMap) ? null : getPublicCase(assignment.case_standard);
+  const caseEntry = isSignalCheck || isMissionMap ? null : getPublicCase(assignment.case_standard);
   const signalCheckCase = isSignalCheck ? getSignalCheckPublicCase(assignment.case_standard) : null;
   const missionMapCase = isMissionMap ? getMissionMapPublicCase(assignment.case_standard) : null;
 

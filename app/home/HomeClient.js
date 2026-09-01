@@ -47,6 +47,15 @@ export default function HomeClient({ student, studentClass, assignments, mission
   const [samOpen, setSamOpen] = useState(false);
   const [notif, setNotif] = useState(null);
 
+  // Added Sept 1, 2026 — Home is the hub every student lands on and the one
+  // real nav screen that doesn't render the shared BackToHubButton (see that
+  // file for the matching Log Out pill added there), so it needs its own
+  // way to log out rather than relying on it existing somewhere else.
+  async function handleLogout() {
+    await fetch("/api/student-logout", { method: "POST" });
+    router.push("/login");
+  }
+
   useEffect(() => {
     fetch("/api/student/notifications")
       .then((res) => (res.ok ? res.json() : null))
@@ -150,6 +159,14 @@ export default function HomeClient({ student, studentClass, assignments, mission
             {student.crystal_points}
           </div>
         </div>
+        <button
+          type="button"
+          onClick={handleLogout}
+          className="gc-btn"
+          style={{ marginTop: 10, background: "none", color: COLORS.textMuted, fontSize: 11.5, fontWeight: 600, padding: 0, textDecoration: "underline" }}
+        >
+          Log Out
+        </button>
       </div>
 
       {/* Centered column: notification (if any) + Active Mission + Up Next */}

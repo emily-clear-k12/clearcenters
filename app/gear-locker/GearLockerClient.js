@@ -208,8 +208,14 @@ export default function GearLockerClient({ student, planets, visitedPlanetKeys, 
           the map) — the opaque foreground content further down simply
           covers it once scrolled that far, same trick ProgressClient.js
           already uses for its hero background. */}
+      {/* Sept 1 2026 (Emily's ask, "make the background more transparent"):
+          faded the photo itself down instead of adding a dark scrim on top
+          of it — a scrim would have fought with the planet nodes' own
+          drop-shadows and the stats panels' existing translucent glass
+          look, while a faded image just reads as lighter/quieter behind
+          everything else on the page. */}
       <div style={{ position: "fixed", inset: 0, zIndex: 0, background: "#0D0B2A" }}>
-        <img src="/student/galaxy_hub_bg.jpg" alt="Galaxy Hub" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+        <img src="/student/galaxy_hub_bg.jpg" alt="Galaxy Hub" style={{ width: "100%", height: "100%", objectFit: "cover", opacity: 0.55 }} />
       </div>
 
       {/* No HTML title here on purpose — the background art already has a
@@ -286,7 +292,7 @@ export default function GearLockerClient({ student, planets, visitedPlanetKeys, 
                 onClick={() => openPlanet(planet)}
                 style={{ position: "absolute", left: `${pos.x}%`, top: `${pos.y}%`, transform: "translate(-50%, -100%)", zIndex: 2, textAlign: "center" }}
               >
-                <div style={{ position: "relative", width: "clamp(48px, 9vw, 100px)", height: "clamp(48px, 9vw, 100px)" }}>
+                <div style={{ position: "relative", width: "clamp(64px, 12vw, 140px)", height: "clamp(64px, 12vw, 140px)" }}>
                   <img
                     src={planet.image_path}
                     alt={planet.name}

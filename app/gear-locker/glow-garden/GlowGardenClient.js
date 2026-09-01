@@ -387,7 +387,12 @@ export default function GlowGardenClient({ planet, crystalPoints, discoveredKeys
           overflow: "hidden",
         }}
       >
-        <div style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg, rgba(13,27,42,.62) 0%, rgba(13,27,42,.12) 30%, rgba(13,27,42,.6) 100%)", pointerEvents: "none", zIndex: 1 }} />
+        {/* Lightened Sept 1 2026 (Emily's ask, "make grow garden open so we
+            can see the parts of it") — was rgba(13,27,42,.62)/.12/.6, dark
+            enough to hide most of the hero art. Kept the same shape (darker
+            top and bottom, lighter middle band for text/UI contrast), just
+            faded every stop down so the scenery reads through clearly. */}
+        <div style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg, rgba(13,27,42,.32) 0%, rgba(13,27,42,.06) 30%, rgba(13,27,42,.32) 100%)", pointerEvents: "none", zIndex: 1 }} />
 
         {twinkles.map((t, i) => (
           <div key={i} className="gg-twinkle" style={{ width: t.size, height: t.size, left: `${t.left}%`, top: `${t.top}%`, animationDuration: `${t.duration}s`, animationDelay: `${t.delay}s`, zIndex: 2 }} />

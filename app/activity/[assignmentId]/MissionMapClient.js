@@ -80,6 +80,84 @@ const REASON_CHIPS = [
 // 4th/5th-grade cases that haven't defined their own yet.
 const GENERIC_OPENER_STEM = "In this mission, I found out that ___.";
 
+// Deterministic shuffle so a checkpoint's answer choices don't always land
+// in the same position (audited Sept 1, 2026: every single checkpoint
+// across all 3 authored cases — 18 for 18 — had its correct answer authored
+// as choice "a", since choices are simply written in whatever order reads
+// most naturally, with correctness tracked by `id`, never by position — see
+// `correctChoiceId`/`correctOptionId` below, both compared by id). Shuffling
+// the DISPLAY order here can never change what counts as correct. Seeded
+// off (case standard + checkpoint id + a per-choice/option salt + studentId)
+// so the order is stable across re-renders and reloads for one student's
+// one attempt — it doesn't visibly reshuffle out from under them mid-pick —
+// but varies checkpoint to checkpoint and student to student, so no fixed
+// position is ever a safe bet. This is the actual, permanent fix: not
+// relocating "a" to a different fixed spot in the case data (which just
+// moves the same bias somewhere else), but randomizing at render time so it
+// can never regress no matter how a future case's choices get authored.
+function seededShuffle(array, seed) {
+  let h = 0;
+  for (let i = 0; i < seed.length; i++) {
+    h = (Math.imul(h, 31) + seed.charCodeAt(i)) | 0;
+  }
+  function rand() {
+    h ^= h << 13; h |= 0;
+    h ^= h >>> 17;
+    h ^= h << 5; h |= 0;
+    return ((h >>> 0) % 100000) / 100000;
+  }
+  const result = array.slice();
+  for (let i = result.length - 1; i > 0; i--) {
+    const j = Math.floor(rand() * (i + 1));
+    const tmp = result[i];
+    result[i] = result[j];
+    result[j] = tmp;
+  }
+  return result;
+}
+
+// Every finalResponsePrompt across all 3 authored cases follows the same
+// "<intro>. Your answer should: (1) ..., (2) ..., and (3) ..." shape — a
+// dense wall of prose with the actual checklist buried inline. Parses that
+// into a lead sentence + a real bullet list so a student can use it as a
+// checklist while writing (Emily's ask, Sept 1, 2026), without rewriting
+// any case's actual content. A prompt that doesn't match this exact shape
+// (a future case authored differently) just falls back to one paragraph,
+// same as before this existed.
+function splitResponsePrompt(text) {
+  if (!text) return { lead: "", parts: [] };
+  const match = text.match(/^([\s\S]*?Your answer should:)\s*(\(1\)[\s\S]*)$/i);
+  if (!match) return { lead: text, parts: [] };
+  const lead = match[1].trim();
+  const parts = match[2]
+    .split(/\(\d+\)\s*/)
+    .map((s) => s.trim())
+    .filter(Boolean)
+    .map((s) =>
+      s
+        .replace(/,?\s*and\s*$/i, "")
+        .replace(/,\s*$/, "")
+        .trim()
+        .replace(/\.?$/, ".")
+    );
+  return { lead, parts };
+}
+
+function PromptText({ text, style }) {
+  const { lead, parts } = splitResponsePrompt(text);
+  if (parts.length === 0) return <p style={style}>{text}</p>;
+  return (
+    <div style={style}>
+      <p style={{ margin: "0 0 8px 0" }}>{lead}</p>
+      <ul style={{ margin: 0, paddingLeft: 20 }}>
+        {parts.map((p, i) => (
+          <li key={i} style={{ marginBottom: 6 }}>{p}</li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
 // Reveal radii for the fog-of-war mask, in the SVG's own 0-100 coordinate
 // space (see the <svg viewBox="0 0 100 100"> below) — a cleared checkpoint
 // burns off a wider patch of fog than the "next stop" peek at the current,
@@ -204,11 +282,23 @@ export default function MissionMapClient({
   // Ref so a tapped sentence stem can land in the textarea and put the
   // cursor at the end, instead of just updating state with no visual focus.
   const finalResponseRef = useRef(null);
+  // Strips a trailing blank placeholder (e.g. "...the sparrow could ___.")
+  // before inserting, so the student doesn't have to manually delete it
+  // themselves before they can keep typing (Emily's ask, Sept 1 2026: "for
+  // any sentence starter buttons that you have -- remove the line at the
+  // end so the student doesn't have to"). Only trims a blank run sitting at
+  // the very end of the stem — a mid-sentence blank like "Energy moves from
+  // the ___ to the ___ to the ___ in this food chain." is left alone, since
+  // those are meant to be filled in, not trimmed off.
+  function stripTrailingBlank(text) {
+    return text.replace(/\s*_{2,}\s*\.?\s*$/, "");
+  }
   function insertResponseStem(stemText) {
     if (submitted) return;
+    const cleaned = stripTrailingBlank(stemText);
     setFinalResponseText((prev) => {
       const trimmed = prev.replace(/\s+$/, "");
-      return trimmed ? trimmed + " " + stemText + " " : stemText + " ";
+      return trimmed ? trimmed + " " + cleaned + " " : cleaned + " ";
     });
     requestAnimationFrame(() => {
       const el = finalResponseRef.current;
@@ -229,6 +319,12 @@ export default function MissionMapClient({
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState(null);
   const [submitted, setSubmitted] = useState(alreadySubmitted);
+  // Manual "Save Progress" — Emily's ask, Sept 1 2026 ("make sure that on
+  // signal check and mission map that we have a save progress button where
+  // the student can save progress close it and come back to it - i believe
+  // we have something like that already set up in group chat"). Same
+  // idle/saving/saved/error state-machine as Group Chat's manualSaveState.
+  const [manualSaveState, setManualSaveState] = useState("idle");
 
   // Autosave the in-progress mission to localStorage, same convention as
   // Signal Check — this is client-side draft resilience, separate from the
@@ -277,6 +373,32 @@ export default function MissionMapClient({
   function startWalking() {
     setPhase("walk");
     saveProgress({ phase: "walk" });
+  }
+
+  // The manual Save Progress button — writes the FULL current state (not
+  // just whatever one field a phase-transition autosave happens to touch)
+  // to the real server-side mission_map_data column, the same column
+  // existingSubmission.mission_map_data is read back from on load. Combined
+  // with the client-side localStorage autosave above, this means a student
+  // can close the tab and come back on a different device and still land
+  // back where they left off, not just in the same browser.
+  async function handleManualSave() {
+    setManualSaveState("saving");
+    const ok = await saveProgress({
+      mission_map_data: {
+        phase,
+        checkpointState,
+        currentIndex,
+        evidenceLog,
+        predictions,
+        finalResponseText,
+        checklist,
+        finalPreviewSeen,
+      },
+      self_confidence: selfConfidence,
+    });
+    setManualSaveState(ok ? "saved" : "error");
+    if (ok) setTimeout(() => setManualSaveState("idle"), 2000);
   }
 
   // Checkpoint-indexed hints, not a running counter across the whole
@@ -442,11 +564,23 @@ export default function MissionMapClient({
     submitForGrading();
   }
 
+  // Real background photo added Sept 1 2026 (Emily supplied the image
+  // directly) — same convention as Group Chat's and Signal Check's
+  // /group-chat/window.jpg and /signal-check/window.jpg: a fixed cover photo
+  // plus a CSS scrim layered on top via a positioned sibling div, never a
+  // solid `background` color alone. Mission Map's theme is the light
+  // sky-blue palette (not Signal Check's dark navy), so the scrim here is a
+  // light wash instead of a dark one — just enough to keep white cards and
+  // dark text readable over the photo without hiding it.
   const backgroundStyle = {
     minHeight: "100vh",
-    background: `linear-gradient(180deg, ${COLORS.skyTop} 0%, ${COLORS.skyBottom} 100%)`,
+    backgroundImage: 'url("/mission-map/window.jpg")',
+    backgroundSize: "cover",
+    backgroundPosition: "center",
+    backgroundAttachment: "fixed",
     fontFamily: "'Inter', sans-serif",
     color: COLORS.white,
+    position: "relative",
   };
 
   // The Evidence Log rendered as a growing "case file" instead of a plain
@@ -475,24 +609,32 @@ export default function MissionMapClient({
           </div>
           <div style={{ fontSize: 11, color: COLORS.textMuted }}>{count} of {totalCheckpoints} collected</div>
         </div>
-        <div style={{ display: "grid", gap: 8 }}>
+        {/* Redesigned Sept 1 2026 (Emily's ask, from a screenshot of the old
+            single-column rotated-card stack): a horizontal grid of squarish
+            tiles instead of one long vertical list, so a student can see
+            every piece of evidence collected at a glance while writing their
+            final response, instead of scrolling through a tall stack. */}
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(150px, 1fr))", gap: 10 }}>
           {evidenceLog.map((e, i) => (
             <div
               key={i}
               style={{
                 background: "#FFFFFF",
                 border: "1px solid rgba(31,42,68,.14)",
-                borderRadius: 8,
-                padding: "10px 12px",
-                fontSize: 13,
+                borderRadius: 10,
+                padding: "12px 12px",
+                fontSize: 12.5,
                 lineHeight: 1.4,
                 color: "rgba(31,42,68,.85)",
                 boxShadow: "0 2px 6px rgba(31,42,68,.1)",
-                transform: `rotate(${(i % 2 === 0 ? -1 : 1) * (0.5 + (i % 3) * 0.35)}deg)`,
+                minHeight: compact ? 70 : 90,
+                display: "flex",
+                flexDirection: "column",
+                gap: 4,
               }}
             >
-              <span style={{ color: COLORS.gold, fontWeight: 700, marginRight: 6 }}>#{i + 1}</span>
-              {e.text}
+              <span style={{ color: COLORS.gold, fontWeight: 700 }}>#{i + 1}</span>
+              <span>{e.text}</span>
             </div>
           ))}
         </div>
@@ -639,7 +781,9 @@ export default function MissionMapClient({
   if (submitted) {
     return (
       <div style={backgroundStyle}>
-        <div style={{ maxWidth: 640, margin: "0 auto", padding: "60px 20px", textAlign: "center" }}>
+        <style>{`.mm-scrim { position: fixed; inset: 0; background: linear-gradient(180deg, rgba(234,244,255,.82) 0%, rgba(190,224,255,.86) 100%); z-index: 0; pointer-events: none; }`}</style>
+        <div className="mm-scrim" />
+        <div style={{ position: "relative", zIndex: 2, maxWidth: 640, margin: "0 auto", padding: "60px 20px", textAlign: "center" }}>
           <h1 style={{ fontFamily: "'Poppins', sans-serif" }}>Transmission received, Cadet.</h1>
           <p style={{ color: COLORS.textMuted }}>
             Your mission report is in. ECHO's read is just a first pass — your teacher is always the scorer of record.
@@ -676,9 +820,11 @@ export default function MissionMapClient({
         .mm-choice { transition: all 150ms ease; }
         .mm-marker-pulse { animation: mm-marker-pulse 1.6s ease-in-out infinite; }
         @keyframes mm-marker-pulse { 0%,100%{box-shadow:0 0 0 6px ${COLORS.gold}33;} 50%{box-shadow:0 0 0 12px ${COLORS.gold}00;} }
+        .mm-scrim { position: fixed; inset: 0; background: linear-gradient(180deg, rgba(234,244,255,.82) 0%, rgba(190,224,255,.86) 100%); z-index: 0; pointer-events: none; }
       `}</style>
+      <div className="mm-scrim" />
 
-      <div style={{ maxWidth: 720, margin: "0 auto", padding: "24px 20px 80px" }}>
+      <div style={{ position: "relative", zIndex: 2, maxWidth: 720, margin: "0 auto", padding: "24px 20px 80px" }}>
         {revisionRequested && (
           <div style={{ background: "rgba(255,196,77,.15)", border: `1px solid ${COLORS.gold}`, borderRadius: 12, padding: 14, marginBottom: 20 }}>
             <div style={{ fontWeight: 700, marginBottom: 4 }}>Your teacher asked you to take another pass.</div>
@@ -686,12 +832,31 @@ export default function MissionMapClient({
           </div>
         )}
 
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 18 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 18, flexWrap: "wrap", gap: 10 }}>
           <div style={{ fontSize: 12, letterSpacing: 1, color: COLORS.teal, fontWeight: 700 }}>{PHASE_LABEL[phase]}</div>
-          <div style={{ display: "flex", gap: 5 }}>
-            {PHASES.map((p) => (
-              <div key={p} style={{ width: 8, height: 8, borderRadius: 4, background: p === phase ? COLORS.gold : "rgba(31,42,68,.18)" }} />
-            ))}
+          <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+            <button
+              type="button"
+              className="mm-btn"
+              onClick={handleManualSave}
+              disabled={manualSaveState === "saving"}
+              style={{
+                background: "rgba(31,42,68,.06)",
+                border: "1px solid rgba(31,42,68,.18)",
+                borderRadius: 999,
+                padding: "6px 14px",
+                fontSize: 12,
+                fontWeight: 700,
+                color: COLORS.white,
+              }}
+            >
+              {manualSaveState === "saving" ? "Saving…" : manualSaveState === "saved" ? "✓ Saved" : manualSaveState === "error" ? "Couldn't save — try again" : "💾 Save Progress"}
+            </button>
+            <div style={{ display: "flex", gap: 5 }}>
+              {PHASES.map((p) => (
+                <div key={p} style={{ width: 8, height: 8, borderRadius: 4, background: p === phase ? COLORS.gold : "rgba(31,42,68,.18)" }} />
+              ))}
+            </div>
           </div>
         </div>
 
@@ -729,9 +894,10 @@ export default function MissionMapClient({
                     <div style={{ fontSize: 12.5, color: COLORS.textMuted, marginBottom: 8, fontStyle: "italic" }}>
                       Keep this in mind for the rest of your mission —
                     </div>
-                    <div style={{ fontSize: 13.5, color: "rgba(31,42,68,.9)", lineHeight: 1.55, marginBottom: 12 }}>
-                      {publicCase.finalResponsePrompt}
-                    </div>
+                    <PromptText
+                      text={publicCase.finalResponsePrompt}
+                      style={{ fontSize: 13.5, color: "rgba(31,42,68,.9)", lineHeight: 1.55, marginBottom: 12 }}
+                    />
                     <button
                       className="mm-btn"
                       onClick={() => setFinalPreviewExpanded(false)}
@@ -762,20 +928,30 @@ export default function MissionMapClient({
               (() => {
                 const cp = checkpoints[currentIndex];
                 const st = checkpointState[cp.id] || { attempts: 0, resolved: false };
-                // Grade-scaled: younger grades tap a reason chip instead of
-                // typing one, so this checkpoint doesn't add reading/writing
-                // load beyond the multiple-choice pick itself (Emily's
-                // explicit ask, Aug 30 — "don't want 3rd graders to have to
-                // type as much as 5th graders"). Grade 4/5 gets a short
-                // free-text box instead (v8, built alongside the first real
-                // grade 4/5 cases) — same reasoning-required discipline, just
-                // typed instead of tapped, since older students should be
-                // writing more, not skipping the step entirely.
-                const usesReasonChips = (publicCase.grade || 3) <= 3;
+                // Was grade-scaled (3rd tapped a chip, 4th/5th typed a
+                // sentence) until Sept 1 2026, when Emily asked for the tap
+                // chip for every grade — "for 5th and 4th grade -- can also
+                // just put a button like in 3rd grade." Left as a named
+                // constant (not inlined `true`) so the free-text path below
+                // stays intact and easy to bring back per-grade later if
+                // that's ever wanted again.
+                const usesReasonChips = true;
                 const needsPrediction = !!cp.predictBeforeEvidence && predictions[cp.id] == null;
                 const canSubmit =
                   !!pendingChoiceId &&
                   (usesReasonChips ? !!pendingReasonId : pendingReasonText.trim().length > 0);
+                // Every checkpoint across all 3 authored cases had
+                // correctChoiceId: "a" — the FIRST authored choice, every
+                // time (confirmed by a full grep audit, Sept 1 2026). The
+                // correctness check itself is id-based and untouched here;
+                // only the DISPLAY order is shuffled, deterministically per
+                // student+checkpoint (same seed => same order on reload, no
+                // re-shuffle-to-cheat by refreshing), so this is fixed for
+                // good regardless of how future cases happen to be authored.
+                const displayChoices = seededShuffle(cp.choices, `${caseStandard}-${cp.id}-${studentId || ""}`);
+                const displayPredictOptions = cp.predictBeforeEvidence
+                  ? seededShuffle(cp.predictBeforeEvidence.options, `${caseStandard}-${cp.id}-predict-${studentId || ""}`)
+                  : [];
                 return (
                   <div key={cp.id} style={{ background: "#FFFFFF", border: "1px solid rgba(31,42,68,.12)", boxShadow: "0 4px 16px rgba(31,42,68,.08)", borderRadius: 16, padding: 18, marginTop: 4 }}>
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 6 }}>
@@ -799,7 +975,7 @@ export default function MissionMapClient({
                       <div style={{ background: "rgba(31,42,68,.04)", border: "1px solid rgba(31,42,68,.12)", borderRadius: 12, padding: 14, marginBottom: 14 }}>
                         <div style={{ fontSize: 13.5, fontWeight: 600, marginBottom: 10 }}>{cp.predictBeforeEvidence.question}</div>
                         <div style={{ display: "grid", gap: 8 }}>
-                          {cp.predictBeforeEvidence.options.map((opt) => (
+                          {displayPredictOptions.map((opt) => (
                             <button
                               key={opt.id}
                               className="mm-btn"
@@ -821,7 +997,7 @@ export default function MissionMapClient({
                         <EvidenceBlock evidence={cp.evidence} />
                         {cp.secondEvidence && <EvidenceBlock evidence={cp.secondEvidence} />}
                         <div style={{ display: "grid", gap: 10, marginTop: 4 }}>
-                          {cp.choices.map((choice) => {
+                          {displayChoices.map((choice) => {
                             const selected = pendingChoiceId === choice.id;
                             return (
                               <button
@@ -920,7 +1096,7 @@ export default function MissionMapClient({
         {phase === "finalUnlock" && (
           <div>
             <h2 style={{ fontFamily: "'Poppins', sans-serif" }}>Final Unlock</h2>
-            <p style={{ color: "rgba(31,42,68,.85)" }}>{publicCase.finalResponsePrompt}</p>
+            <PromptText text={publicCase.finalResponsePrompt} style={{ color: "rgba(31,42,68,.85)" }} />
 
             <div style={{ marginBottom: 16, background: "rgba(31,42,68,.04)", border: "1px solid rgba(31,42,68,.1)", borderRadius: 12, padding: 14 }}>
               <CaseFileLog />
