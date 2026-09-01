@@ -833,7 +833,22 @@ export default function MissionMapClient({
         )}
 
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 18, flexWrap: "wrap", gap: 10 }}>
-          <div style={{ fontSize: 12, letterSpacing: 1, color: COLORS.teal, fontWeight: 700 }}>{PHASE_LABEL[phase]}</div>
+          <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+            {/* Added Sept 1 2026 (Emily's ask: "once they save the activity
+                they might need to get back to the home screen but i dont
+                see a button to do that") — Mission Map previously only had
+                a "Back to Home" button on the post-submit screen, nothing
+                reachable from the Brief/Walk/Final Unlock phases at all. */}
+            <button
+              type="button"
+              className="mm-btn"
+              onClick={() => router.push("/home")}
+              style={{ background: "none", color: COLORS.white, padding: 0, fontWeight: 700, fontSize: 13 }}
+            >
+              ← Home
+            </button>
+            <div style={{ fontSize: 12, letterSpacing: 1, color: COLORS.teal, fontWeight: 700 }}>{PHASE_LABEL[phase]}</div>
+          </div>
           <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
             <button
               type="button"
