@@ -70,6 +70,51 @@ const REASON_CHIPS = [
   { id: "made_sense", text: "It made the most sense" },
 ];
 
+// S.A.M.'s reactive in-line dialogue — added Sept 1 2026 after Emily played
+// a finished mission and flagged something "blah" about it even though
+// nothing was broken. Root cause, worked out together: S.A.M. was a static
+// icon that only ever spoke when a student got something wrong (the hint
+// text below). It never once reacted to anything going RIGHT, and never
+// said a word between checkpoints — so the one character riding along on
+// the mission had no presence. These lines are generic and reusable across
+// every current and future case (no case-data changes needed), same
+// convention as REASON_CHIPS below — picked at random each time so a
+// replay doesn't feel scripted. Purely flavor: never affects grading, never
+// changes the correct/incorrect record, never shown as a judgment (no
+// "wrong!" language even in lockedWrong — same no-shame rule the rest of
+// this engine already follows for misses).
+const SAM_REACTIONS = {
+  firstTry: [
+    "Nice read, Cadet — first try, clean signal.",
+    "That's the one. You didn't even blink.",
+    "Locked in — that's exactly what the evidence was pointing at.",
+    "Sharp eyes on that one. Moving you forward.",
+    "Yes! Clean catch, Cadet.",
+  ],
+  recovered: [
+    "There it is — knew you'd spot it on a second look.",
+    "Good recovery. That's the real signal.",
+    "That's it — the extra look paid off.",
+    "Nailed it that time. Onward.",
+  ],
+  lockedWrong: [
+    "Tricky one — I've flagged it for your teacher to go over with you.",
+    "That didn't land, but the mission keeps moving. Don't let it slow you down.",
+    "Not the one I'd have called either, honestly. Pressing on.",
+  ],
+  arrival: [
+    "Next stop's just ahead, Cadet.",
+    "Something new to check out up there.",
+    "Signal's coming from that marker — go take a look.",
+    "One more stop before we're through this stretch.",
+    "Eyes open on this next one.",
+  ],
+};
+function pickSamLine(category) {
+  const pool = SAM_REACTIONS[category];
+  return pool[Math.floor(Math.random() * pool.length)];
+}
+
 // Sentence stems for the Final Unlock response box — tap one and it drops
 // into the textarea instead of the student having to compose a sentence
 // from scratch. Emily's ask, Aug 30 v4: "the writing needs to have sentence
@@ -268,6 +313,10 @@ export default function MissionMapClient({
   // MissionMap_Digital_Design_v1.md §7's grade-scaling note). Reset the same
   // way pendingReasonId is.
   const [pendingReasonText, setPendingReasonText] = useState("");
+  // "sequence"-type checkpoints track an ordered array of item ids the
+  // student has tapped into place, instead of a single pendingChoiceId —
+  // every other checkpoint type still uses pendingChoiceId above.
+  const [pendingSequenceOrder, setPendingSequenceOrder] = useState([]);
   // predictions[checkpointId] = the option id the student picked in a
   // "predict before you see the evidence" step (only present on checkpoints
   // that define `predictBeforeEvidence`) — set once, then the evidence and
@@ -275,6 +324,30 @@ export default function MissionMapClient({
   const [predictions, setPredictions] = useState(draft.predictions || {});
 
   const [hintTextByCheckpoint, setHintTextByCheckpoint] = useState({});
+  // S.A.M.'s reactive line — set right after a checkpoint resolves (correct
+  // first try / correct after a hint / locked in wrong) and cleared a few
+  // seconds later. Separate from arrivalLine below so the two never fight
+  // for the same instant: a fresh reaction always takes priority over
+  // arrival banter until it clears itself.
+  const [samReaction, setSamReaction] = useState(null);
+  const samReactionTimer = useRef(null);
+  function showSamReaction(category) {
+    setSamReaction(pickSamLine(category));
+    if (samReactionTimer.current) clearTimeout(samReactionTimer.current);
+    samReactionTimer.current = setTimeout(() => setSamReaction(null), 3400);
+  }
+  // Light arrival banter — a line chosen once per new checkpoint (never on
+  // the very first one, and only shown while no fresher reaction is up), so
+  // S.A.M. has something to say even on stretches where every answer is
+  // right the first time and the reaction line above clears fast.
+  const [arrivalLine, setArrivalLine] = useState(null);
+  useEffect(() => {
+    if (currentIndex > 0 && currentIndex < totalCheckpoints) {
+      setArrivalLine(pickSamLine("arrival"));
+    } else {
+      setArrivalLine(null);
+    }
+  }, [currentIndex, totalCheckpoints]);
 
   const [finalResponseText, setFinalResponseText] = useState(
     draft.finalResponseText || (existingSubmission && existingSubmission.mission_map_data && existingSubmission.mission_map_data.finalResponseText) || ""
@@ -319,6 +392,28 @@ export default function MissionMapClient({
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState(null);
   const [submitted, setSubmitted] = useState(alreadySubmitted);
+  // "Clean run" badge — server-verified (never a bare client flag, see the
+  // submit route), read back from the submit response. Positive-only: no
+  // badge and no message at all when a run isn't clean, never a penalty.
+  const [missionCleanRun, setMissionCleanRun] = useState(
+    !!(existingSubmission && existingSubmission.mission_map_data && existingSubmission.mission_map_data.cleanRun)
+  );
+  // Live streak — how many checkpoints in a row (from the start of the
+  // mission) were solved on the first try. Since Mission Map is a fixed,
+  // sequential path, "consecutive from the start up to wherever the student
+  // currently is" IS the current streak — no separate counter/state needed,
+  // just read straight off checkpointState each render. Purely a visible,
+  // positive momentum cue (Emily's "add light stakes" ask) — never punishes
+  // a broken streak, just quietly stops showing until a new one builds.
+  const currentStreak = (() => {
+    let s = 0;
+    for (let i = 0; i < checkpoints.length; i++) {
+      const st = checkpointState[checkpoints[i].id];
+      if (st && st.resolved && st.correct && st.attempts === 1) s++;
+      else break;
+    }
+    return s;
+  })();
   // Manual "Save Progress" — Emily's ask, Sept 1 2026 ("make sure that on
   // signal check and mission map that we have a save progress button where
   // the student can save progress close it and come back to it - i believe
@@ -346,6 +441,7 @@ export default function MissionMapClient({
     setPendingChoiceId(null);
     setPendingReasonId(null);
     setPendingReasonText("");
+    setPendingSequenceOrder([]);
   }, [currentIndex]);
 
   // Final-case preview trigger: with 2 checkpoints left to go (scaled to
@@ -425,12 +521,29 @@ export default function MissionMapClient({
   // the mission keeps moving regardless — one hard checkpoint never blocks
   // the rest of the quest.
   function submitCheckpointAnswer(checkpoint, checkpointIndex) {
-    if (!pendingChoiceId) return;
+    const cpType = checkpoint.type || "standard";
+    // "sequence" checkpoints answer with an ordered array, not a single id —
+    // everything else (standard/quickScan/showdown) still uses pendingChoiceId.
+    const hasAnswer =
+      cpType === "sequence"
+        ? pendingSequenceOrder.length > 0 && pendingSequenceOrder.length === (checkpoint.items || []).length
+        : !!pendingChoiceId;
+    if (!hasAnswer) return;
     const existing = checkpointState[checkpoint.id] || { attempts: 0, resolved: false };
     if (existing.resolved) return;
 
     const attempts = existing.attempts + 1;
-    const isCorrect = pendingChoiceId === checkpoint.correctChoiceId;
+    let isCorrect, recordedChoiceId;
+    if (cpType === "sequence") {
+      recordedChoiceId = pendingSequenceOrder.join(">");
+      isCorrect = JSON.stringify(pendingSequenceOrder) === JSON.stringify(checkpoint.correctOrder || []);
+    } else if (cpType === "showdown") {
+      recordedChoiceId = pendingChoiceId;
+      isCorrect = pendingChoiceId === checkpoint.correctSide;
+    } else {
+      recordedChoiceId = pendingChoiceId;
+      isCorrect = pendingChoiceId === checkpoint.correctChoiceId;
+    }
     const isFinalAttempt = isCorrect || attempts >= MAX_ATTEMPTS;
 
     if (!isFinalAttempt) {
@@ -440,10 +553,11 @@ export default function MissionMapClient({
       setPendingChoiceId(null);
       setPendingReasonId(null);
       setPendingReasonText("");
+      setPendingSequenceOrder([]);
       return;
     }
 
-    resolveCheckpoint(checkpoint, pendingChoiceId, pendingReasonId, isCorrect, attempts, pendingReasonText);
+    resolveCheckpoint(checkpoint, recordedChoiceId, pendingReasonId, isCorrect, attempts, pendingReasonText);
   }
 
   function resolveCheckpoint(checkpoint, choiceId, reasonId, correct, attempts, reasonText) {
@@ -463,6 +577,11 @@ export default function MissionMapClient({
     setPendingChoiceId(null);
     setPendingReasonId(null);
     setPendingReasonText("");
+    setPendingSequenceOrder([]);
+
+    // S.A.M. reacts to every checkpoint's real outcome — first real presence
+    // beyond the miss-only hint text below (see SAM_REACTIONS above).
+    showSamReaction(correct ? (attempts === 1 ? "firstTry" : "recovered") : "lockedWrong");
 
     const clearedSoFar = currentIndex + 1;
     if (clearedSoFar % 2 === 0 && clearedSoFar < totalCheckpoints) {
@@ -518,6 +637,7 @@ export default function MissionMapClient({
         const st = checkpointState[cp.id] || { attempts: 0, resolved: false };
         const result = {
           id: cp.id,
+          type: cp.type || "standard",
           finalChoiceId: st.choiceId || null,
           firstTryCorrect: !!st.correct && st.attempts === 1,
           attempts: st.attempts,
@@ -550,6 +670,8 @@ export default function MissionMapClient({
         }),
       });
       if (!res.ok) throw new Error("submit failed");
+      const data = await res.json().catch(() => ({}));
+      setMissionCleanRun(!!data.cleanRun);
       try { localStorage.removeItem(storageKey); } catch (err) {}
       setSubmitted(true);
     } catch (err) {
@@ -637,6 +759,25 @@ export default function MissionMapClient({
               <span>{e.text}</span>
             </div>
           ))}
+        </div>
+      </div>
+    );
+  }
+
+  // A small persistent-feeling companion line — reuses the same visual
+  // shape as SamHint (icon + label + text) so S.A.M. reads as one character
+  // whether it's hinting, reacting, or just chatting between checkpoints.
+  // Shows samReaction when there is one (a fresh outcome always wins),
+  // otherwise falls back to arrivalLine so the map never sits silent.
+  function SamBanner() {
+    const text = samReaction || arrivalLine;
+    if (!text) return null;
+    return (
+      <div style={{ display: "flex", gap: 10, alignItems: "flex-start", background: "rgba(255,196,77,.1)", border: `1px solid ${COLORS.gold}55`, borderRadius: 12, padding: 12, marginBottom: 14 }}>
+        <img src="/icons/robot_point.png" alt="S.A.M." style={{ width: 28, height: 28, objectFit: "contain", flexShrink: 0 }} />
+        <div>
+          <div style={{ fontSize: 10.5, fontWeight: 700, color: COLORS.gold, marginBottom: 2, letterSpacing: 0.5 }}>S.A.M.</div>
+          <div style={{ fontSize: 13.5, color: "rgba(31,42,68,.88)" }}>{text}</div>
         </div>
       </div>
     );
@@ -785,6 +926,11 @@ export default function MissionMapClient({
         <div className="mm-scrim" />
         <div style={{ position: "relative", zIndex: 2, maxWidth: 640, margin: "0 auto", padding: "60px 20px", textAlign: "center" }}>
           <h1 style={{ fontFamily: "'Poppins', sans-serif" }}>Transmission received, Cadet.</h1>
+          {missionCleanRun && (
+            <div style={{ display: "inline-block", background: "rgba(255,196,77,.18)", border: `1px solid ${COLORS.gold}`, borderRadius: 999, padding: "8px 18px", fontWeight: 700, color: COLORS.navy, marginBottom: 14 }}>
+              🌟 Clean run — every checkpoint solved on the first try!
+            </div>
+          )}
           <p style={{ color: COLORS.textMuted }}>
             Your mission report is in. ECHO's read is just a first pass — your teacher is always the scorer of record.
           </p>
@@ -848,6 +994,14 @@ export default function MissionMapClient({
               ← Home
             </button>
             <div style={{ fontSize: 12, letterSpacing: 1, color: COLORS.teal, fontWeight: 700 }}>{PHASE_LABEL[phase]}</div>
+            {phase === "walk" && currentStreak >= 2 && (
+              <div
+                title={`${currentStreak} checkpoints in a row on the first try`}
+                style={{ display: "flex", alignItems: "center", gap: 4, background: "rgba(255,196,77,.18)", border: `1px solid ${COLORS.gold}`, borderRadius: 999, padding: "3px 10px", fontSize: 12, fontWeight: 700, color: COLORS.navy }}
+              >
+                ⚡ {currentStreak}
+              </div>
+            )}
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
             <button
@@ -898,6 +1052,8 @@ export default function MissionMapClient({
             {showCelebration && (
               <div style={{ textAlign: "center", padding: 10, color: COLORS.gold, fontWeight: 700 }}>✨ Signal clearing — nice work, Cadet ✨</div>
             )}
+
+            {!checkpointOpen && <SamBanner />}
 
             {reachedFinalPreviewPoint && (
               <div style={{ marginTop: 4, marginBottom: 14 }}>
@@ -952,9 +1108,22 @@ export default function MissionMapClient({
                 // that's ever wanted again.
                 const usesReasonChips = true;
                 const needsPrediction = !!cp.predictBeforeEvidence && predictions[cp.id] == null;
+                // Checkpoint types (added Sept 1 2026, alongside S.A.M.'s
+                // reactive dialogue and the streak/clean-run work — all part
+                // of the same "something's missing" fix): a checkpoint with
+                // no `type` field behaves EXACTLY as before ("standard"), so
+                // none of the 3 existing authored cases needed a single edit.
+                // "quickScan" skips the reason-chip/textarea step entirely,
+                // to actually feel faster, not just be labeled that way.
+                const cpType = cp.type || "standard";
+                const needsReason = cpType !== "quickScan";
+                const hasAnswer =
+                  cpType === "sequence"
+                    ? pendingSequenceOrder.length > 0 && pendingSequenceOrder.length === (cp.items || []).length
+                    : !!pendingChoiceId;
                 const canSubmit =
-                  !!pendingChoiceId &&
-                  (usesReasonChips ? !!pendingReasonId : pendingReasonText.trim().length > 0);
+                  hasAnswer &&
+                  (!needsReason || (usesReasonChips ? !!pendingReasonId : pendingReasonText.trim().length > 0));
                 // Every checkpoint across all 3 authored cases had
                 // correctChoiceId: "a" — the FIRST authored choice, every
                 // time (confirmed by a full grep audit, Sept 1 2026). The
@@ -963,10 +1132,25 @@ export default function MissionMapClient({
                 // student+checkpoint (same seed => same order on reload, no
                 // re-shuffle-to-cheat by refreshing), so this is fixed for
                 // good regardless of how future cases happen to be authored.
-                const displayChoices = seededShuffle(cp.choices, `${caseStandard}-${cp.id}-${studentId || ""}`);
+                const displayChoices = cp.choices ? seededShuffle(cp.choices, `${caseStandard}-${cp.id}-${studentId || ""}`) : [];
                 const displayPredictOptions = cp.predictBeforeEvidence
                   ? seededShuffle(cp.predictBeforeEvidence.options, `${caseStandard}-${cp.id}-predict-${studentId || ""}`)
                   : [];
+                // Showdown: which evidence block renders first — shuffled
+                // the same deterministic way as choices, so "trust A" isn't
+                // a free pattern-match across cases.
+                const showdownOrder = cpType === "showdown"
+                  ? seededShuffle(["A", "B"], `${caseStandard}-${cp.id}-showdown-${studentId || ""}`)
+                  : [];
+                // Sequence: the pool of not-yet-placed pieces, in shuffled
+                // display order (never pre-sorted correctly) — placed pieces
+                // are removed from the pool and shown in the ordered strip
+                // above it instead.
+                const sequenceItems = cp.items || [];
+                const sequenceDisplayItems = cpType === "sequence"
+                  ? seededShuffle(sequenceItems, `${caseStandard}-${cp.id}-seq-${studentId || ""}`)
+                  : [];
+                const sequenceAvailable = sequenceDisplayItems.filter((it) => !pendingSequenceOrder.includes(it.id));
                 return (
                   <div key={cp.id} style={{ background: "#FFFFFF", border: "1px solid rgba(31,42,68,.12)", boxShadow: "0 4px 16px rgba(31,42,68,.08)", borderRadius: 16, padding: 18, marginTop: 4 }}>
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 6 }}>
@@ -1009,34 +1193,123 @@ export default function MissionMapClient({
                             Your guess: {cp.predictBeforeEvidence.options.find((o) => o.id === predictions[cp.id])?.text}
                           </div>
                         )}
-                        <EvidenceBlock evidence={cp.evidence} />
-                        {cp.secondEvidence && <EvidenceBlock evidence={cp.secondEvidence} />}
-                        <div style={{ display: "grid", gap: 10, marginTop: 4 }}>
-                          {displayChoices.map((choice) => {
-                            const selected = pendingChoiceId === choice.id;
-                            return (
-                              <button
-                                key={choice.id}
-                                disabled={st.resolved}
-                                onClick={() => setPendingChoiceId(choice.id)}
-                                className="mm-btn mm-choice"
-                                style={{
-                                  textAlign: "left",
-                                  background: selected ? "rgba(255,196,77,.18)" : "rgba(31,42,68,.04)",
-                                  border: selected ? `2px solid ${COLORS.gold}` : "1px solid rgba(31,42,68,.16)",
-                                  borderRadius: 12,
-                                  padding: selected ? "13px 15px" : "14px 16px",
-                                  color: COLORS.white,
-                                  fontSize: 14.5,
-                                }}
-                              >
-                                {choice.text}
-                              </button>
-                            );
-                          })}
-                        </div>
+                        {cpType === "showdown" ? (
+                          // Showdown: two competing evidence blocks, pick
+                          // which one actually holds up — no separate choice
+                          // list, the evidence IS the answer.
+                          <div style={{ display: "grid", gap: 12, marginTop: 4 }}>
+                            {showdownOrder.map((side) => {
+                              const ev = side === "A" ? cp.evidenceA : cp.evidenceB;
+                              if (!ev) return null;
+                              const selected = pendingChoiceId === side;
+                              return (
+                                <div
+                                  key={side}
+                                  style={{
+                                    borderRadius: 14,
+                                    border: selected ? `2px solid ${COLORS.gold}` : "1px solid rgba(31,42,68,.14)",
+                                    padding: 10,
+                                    background: selected ? "rgba(255,196,77,.06)" : "transparent",
+                                  }}
+                                >
+                                  <EvidenceBlock evidence={ev} />
+                                  <button
+                                    disabled={st.resolved}
+                                    onClick={() => setPendingChoiceId(side)}
+                                    className="mm-btn"
+                                    style={{
+                                      width: "100%",
+                                      background: selected ? COLORS.gold : "rgba(31,42,68,.05)",
+                                      border: selected ? "none" : "1px solid rgba(31,42,68,.18)",
+                                      color: selected ? COLORS.navy : COLORS.white,
+                                      borderRadius: 10,
+                                      padding: "10px 14px",
+                                      fontWeight: 700,
+                                      fontSize: 13.5,
+                                    }}
+                                  >
+                                    {selected ? "✓ " : ""}{ev.choiceLabel || "Trust this one"}
+                                  </button>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        ) : cpType === "sequence" ? (
+                          // Sequence: tap pieces into order; tap a placed
+                          // piece again to send it back to the pool. Submit
+                          // only enables once every piece has a slot.
+                          <div style={{ marginTop: 4 }}>
+                            {cp.evidence && <EvidenceBlock evidence={cp.evidence} />}
+                            <div style={{ fontSize: 12, color: COLORS.textMuted, marginBottom: 8 }}>Tap the pieces into order:</div>
+                            <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 14, minHeight: 20 }}>
+                              {pendingSequenceOrder.length === 0 && (
+                                <span style={{ fontSize: 12.5, color: COLORS.textMuted, fontStyle: "italic" }}>Nothing placed yet — tap a piece below.</span>
+                              )}
+                              {pendingSequenceOrder.map((id, i) => {
+                                const it = sequenceItems.find((x) => x.id === id);
+                                return (
+                                  <button
+                                    key={id}
+                                    disabled={st.resolved}
+                                    onClick={() => setPendingSequenceOrder((prev) => prev.filter((x) => x !== id))}
+                                    className="mm-btn"
+                                    style={{ background: COLORS.gold, color: COLORS.navy, borderRadius: 10, padding: "8px 12px", fontSize: 13, fontWeight: 700 }}
+                                  >
+                                    {i + 1}. {it ? it.text : id}
+                                  </button>
+                                );
+                              })}
+                            </div>
+                            <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                              {sequenceAvailable.map((it) => (
+                                <button
+                                  key={it.id}
+                                  disabled={st.resolved}
+                                  onClick={() => setPendingSequenceOrder((prev) => [...prev, it.id])}
+                                  className="mm-btn"
+                                  style={{ background: "rgba(31,42,68,.05)", border: "1px solid rgba(31,42,68,.18)", color: COLORS.white, borderRadius: 10, padding: "8px 12px", fontSize: 13 }}
+                                >
+                                  {it.text}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        ) : (
+                          // "standard" and "quickScan" both use this same
+                          // evidence + choice-list shape — quickScan is just
+                          // a lighter case of it (smaller evidence, 2
+                          // choices, no reason step) rather than its own UI.
+                          <>
+                            <EvidenceBlock evidence={cp.evidence} />
+                            {cp.secondEvidence && <EvidenceBlock evidence={cp.secondEvidence} />}
+                            <div style={{ display: "grid", gap: 10, marginTop: 4 }}>
+                              {displayChoices.map((choice) => {
+                                const selected = pendingChoiceId === choice.id;
+                                return (
+                                  <button
+                                    key={choice.id}
+                                    disabled={st.resolved}
+                                    onClick={() => setPendingChoiceId(choice.id)}
+                                    className="mm-btn mm-choice"
+                                    style={{
+                                      textAlign: "left",
+                                      background: selected ? "rgba(255,196,77,.18)" : "rgba(31,42,68,.04)",
+                                      border: selected ? `2px solid ${COLORS.gold}` : "1px solid rgba(31,42,68,.16)",
+                                      borderRadius: 12,
+                                      padding: selected ? "13px 15px" : "14px 16px",
+                                      color: COLORS.white,
+                                      fontSize: 14.5,
+                                    }}
+                                  >
+                                    {choice.text}
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          </>
+                        )}
 
-                        {pendingChoiceId && usesReasonChips && !st.resolved && (
+                        {hasAnswer && needsReason && usesReasonChips && !st.resolved && (
                           <div style={{ marginTop: 14 }}>
                             <div style={{ fontSize: 12, color: COLORS.textMuted, marginBottom: 8 }}>Why'd you pick that?</div>
                             <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
@@ -1061,7 +1334,7 @@ export default function MissionMapClient({
                           </div>
                         )}
 
-                        {pendingChoiceId && !usesReasonChips && !st.resolved && (
+                        {hasAnswer && needsReason && !usesReasonChips && !st.resolved && (
                           <div style={{ marginTop: 14 }}>
                             <div style={{ fontSize: 12, color: COLORS.textMuted, marginBottom: 8 }}>Why'd you pick that? (one sentence is fine)</div>
                             <textarea

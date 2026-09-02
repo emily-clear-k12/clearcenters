@@ -20,15 +20,30 @@ function summarizeForHumans(caseData, checkpointResults, finalResponseText) {
 // Deterministic scoring for the checkpoint portion, mirroring Signal Check's
 // gradeDropdown() — the correct choice per checkpoint is re-verified here
 // against the server's own copy, never trusted from the client.
+//
+// Type-aware as of Sept 1 2026 (added alongside the client's 3 new
+// checkpoint types — showdown, sequence, quickScan): a checkpoint with no
+// `type` on the server case is still treated as "standard", so every
+// existing case (all correctChoiceId, no type field) scores exactly as
+// before. "sequence" checks against `correctOrder` (joined the same way the
+// client joins its submitted order, so the two representations line up);
+// "showdown" checks against `correctSide`.
+function expectedAnswerFor(cp) {
+  const type = cp.type || "standard";
+  if (type === "sequence") return (cp.correctOrder || []).join(">");
+  if (type === "showdown") return cp.correctSide;
+  return cp.correctChoiceId;
+}
 function scoreCheckpoints(caseData, checkpointResults) {
   if (!caseData || !caseData.checkpoints || caseData.checkpoints.length === 0) {
     return { correctCount: 0, total: 0 };
   }
-  const answerKey = {};
-  caseData.checkpoints.forEach((cp) => { answerKey[cp.id] = cp.correctChoiceId; });
+  const byId = {};
+  checkpointResults.forEach((r) => { byId[r.id] = r; });
   let correctCount = 0;
-  checkpointResults.forEach((r) => {
-    if (answerKey[r.id] && r.finalChoiceId === answerKey[r.id]) correctCount++;
+  caseData.checkpoints.forEach((cp) => {
+    const r = byId[cp.id];
+    if (r && r.finalChoiceId === expectedAnswerFor(cp)) correctCount++;
   });
   return { correctCount, total: caseData.checkpoints.length };
 }
@@ -78,6 +93,16 @@ export async function POST(request) {
 
   const { correctCount, total } = scoreCheckpoints(caseData, checkpointResults || []);
 
+  // "Clean run" recognition — added Sept 1 2026 alongside S.A.M.'s reactive
+  // dialogue, both aimed at the same feedback ("something's missing, feels
+  // blah"). Computed server-side from the client's own per-checkpoint
+  // results (never trusted as a bare client-sent flag) so a student can't
+  // just claim one. Purely a positive callout, never a penalty: a run that
+  // isn't clean gets no badge and no negative language anywhere — same
+  // no-shame rule the rest of this engine follows for misses.
+  const results = checkpointResults || [];
+  const cleanRun = results.length > 0 && results.every((r) => r.firstTryCorrect);
+
   let aiScore = null;
   let aiRationale = null;
   if (caseData) {
@@ -93,6 +118,7 @@ export async function POST(request) {
       checkpointResults: checkpointResults || [],
       checkpointScore: total ? { correctCount, total } : null,
       finalResponseText: finalResponseText || "",
+      cleanRun,
     },
     ai_score: aiScore,
     ai_rationale: aiRationale,
@@ -123,5 +149,5 @@ export async function POST(request) {
     // ignore — streak is a nice-to-have, not worth failing the submit over
   }
 
-  return NextResponse.json({ success: true });
+  return NextResponse.json({ success: true, cleanRun });
 }
