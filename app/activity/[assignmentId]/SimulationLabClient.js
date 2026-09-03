@@ -13,11 +13,17 @@ import { Loader2 } from "lucide-react";
 // Simulation Lab's own locked palette — a dark "control room" theme (deep
 // steel/navy panel with an amber gauge glow), deliberately distinct from
 // Mission Map's light sky-blue, Signal Check's navy/teal/violet/gold, and
-// Group Chat's violet. No background photo is used anywhere in this engine
-// (see SimulationLab_Digital_Design_v1.md — zero image dependency is a
-// deliberate cost-discipline feature of this engine, not a placeholder
-// waiting on art): the "control room" look comes entirely from CSS gradients
-// and the gauge glow, so this case ships and looks finished with no assets.
+// Group Chat's violet.
+//
+// v3 note (see SimulationLab_Digital_Design_v1.md §10.4): this engine
+// originally shipped with a deliberate "zero image assets anywhere" rule
+// — the control-room look came entirely from CSS gradients. Emily's live
+// test of v2 showed that discipline left the console too abstract for
+// students to follow, so v3 deliberately reverses the "no images" half of
+// that rule (pre-trial step images, an optional shared machine-background
+// image) while keeping the other half intact: there is still no bespoke
+// per-case simulation engine, and the gauge is still driven by a shared,
+// lookup-table-based component, never custom art or a custom render.
 const COLORS = {
   bgTop: "#141C28",
   bgBottom: "#0B1017",
@@ -32,13 +38,31 @@ const COLORS = {
   success: "#3ED6C8",
 };
 
-// Three phases, same shape as every other engine's top-level state machine
+// Percentage-based hotspot positions tuned against the actual console
+// artwork Emily supplied Sept 3 (public/simulation-lab/console.jpg) — a
+// single image reused across every Simulation Lab case, not authored per
+// case, so these coordinates live here rather than in case data (design
+// doc §10.3/§10.5). The art has 3 usable zones: a circular gauge display
+// (upper-left), a horizontal slider slot (center), and a blank rectangular
+// readout panel (upper-right). Adjust these if the art ever changes.
+const CONSOLE_HOTSPOTS = {
+  gaugeCircle: { xPct: 30, yPct: 32, wPct: 34, hPct: 34 }, // outcome readout
+  slotTrack: { xPct: 15, yPct: 59, wPct: 70 }, // the real angle slider
+  readoutPanel: { xPct: 43, yPct: 16, wPct: 45, hPct: 32 }, // predicted/actual/gap
+};
+
+// Three top-level phases, same shape as every other engine's state machine
 // (Mission Map's brief/walk/finalUnlock): brief the mission, run the lab
-// (console loop + the two checkpoint-style comprehension checks approved in
-// the v2 design), then the Generalize + Defend written phase.
+// (now a richer v3 flow — see labStep below), then Generalize + Defend.
 const PHASES = ["brief", "lab", "finalUnlock"];
 const PHASE_LABEL = { brief: "Mission Brief", lab: "The Lab", finalUnlock: "Generalize & Defend" };
 
+// The v3 lab flow (design doc §10.2), linear except "console" is reused
+// for both rounds (distinguished by the `round` state):
+//   pretrialAnchor -> pretrialVariables -> pretrialHypothesis (hyp
+//   checkpoint) -> console (Round 1 trials) -> checkpoint1 ->
+//   roundTwoReveal -> console (Round 2 trials) -> dataTable ->
+//   checkpoint2 -> complete (Generalize unlock button)
 const CONFIDENCE_LEVELS = [
   { id: "shaky", emoji: "😕", label: "Still shaky" },
   { id: "solid", emoji: "🙂", label: "Pretty solid" },
@@ -53,11 +77,11 @@ const GENERIC_OPENER_STEM = "In this mission, I found out that ___.";
 
 // S.A.M.'s reactive lines for this engine — generic and reusable across
 // every current and future Simulation Lab case, same convention as Mission
-// Map's SAM_REACTIONS. Simulation Lab's checkpoints are single-attempt (see
-// the design doc §7 note in the client build) and never show a right/wrong
-// mark back to the student — S.A.M.'s line after a checkpoint or the
-// data-table step is always a neutral, encouraging acknowledgement, never a
-// judgment, same "no shame" rule the rest of the app follows for misses.
+// Map's SAM_REACTIONS. Simulation Lab's checkpoints are single-attempt and
+// never show a right/wrong mark back to the student — S.A.M.'s line after
+// a checkpoint or the data-table step is always a neutral, encouraging
+// acknowledgement, never a judgment, same "no shame" rule the rest of the
+// app follows for misses.
 const SAM_REACTIONS = {
   trialLogged: [
     "Logged, Cadet. What's next on the dial?",
@@ -72,12 +96,17 @@ const SAM_REACTIONS = {
     "Got your answer — let's keep testing.",
   ],
   dataTableSubmitted: [
-    "Nice recall, Cadet — that's a real data table now.",
-    "Logged. Your trial strip is doing its job.",
-    "Good — that's exactly what real scientists do with their own data.",
+    "Nice thinking, Cadet — that's a real prediction, not just a guess.",
+    "Logged. That's exactly how scientists use their own data.",
+    "Good — you used the pattern instead of copying a number off the screen.",
+  ],
+  roundTwoBegin: [
+    "New conditions, Cadet — let's see if the pattern holds.",
+    "Something changed. Time to find out what stays true.",
+    "Same test, new twist. Watch closely.",
   ],
   arrival: [
-    "Set the angle, make your prediction, then hit Run.",
+    "Set the dial, make your prediction, then hit Run.",
     "Try a setting you haven't tested yet.",
     "Watch the gap between your prediction and the real result.",
     "The pattern gets clearer with every trial.",
@@ -88,20 +117,19 @@ function pickSamLine(category) {
   return pool[Math.floor(Math.random() * pool.length)];
 }
 
-// Picks which of the student's own already-run trials get blanked in the
-// Data Table Fill-In step — first, middle, most-recent — same "own data,
-// never a case-authored key" rule described in the design doc §7. Computed
-// once (see the effect below) so the row set doesn't shift under the
-// student if they keep running trials afterward.
-function pickFirstMiddleLastIds(trialLog) {
-  const n = trialLog.length;
-  if (n === 0) return [];
-  if (n <= 3) return trialLog.map((t) => t.id);
-  const first = 0;
-  const mid = Math.floor((n - 1) / 2);
-  const last = n - 1;
-  const idxs = Array.from(new Set([first, mid, last]));
-  return idxs.map((i) => trialLog[i].id);
+// Graceful-degradation image helper for the v3 pre-trial steps and the
+// optional machine-background console image (design doc §10.2 point 4 and
+// §10.3) — renders nothing at all when no imageUrl is supplied yet, same
+// pattern as Mission Map's mapImage.
+function StepImage({ src, alt }) {
+  if (!src) return null;
+  return (
+    <img
+      src={src}
+      alt={alt || ""}
+      style={{ width: "100%", borderRadius: 12, margin: "10px 0 14px", display: "block" }}
+    />
+  );
 }
 
 export default function SimulationLabClient({
@@ -133,40 +161,36 @@ export default function SimulationLabClient({
 
   const variable = publicCase.variables[0];
   const outcome = publicCase.outcome;
-  const minCp1 = publicCase.minTrialsForCheckpoint1 || 3;
-  const minTable = publicCase.minTrialsForDataTable || 6;
-  const cp1 = publicCase.checkpoints.find((c) => c.type === "mc");
-  const cp2 = publicCase.checkpoints.find((c) => c.type === "fillBlank");
+  const cpHyp = publicCase.checkpoints.find((c) => c.id === "hyp");
+  const cp1 = publicCase.checkpoints.find((c) => c.id === "cp1");
+  const cp2 = publicCase.checkpoints.find((c) => c.id === "cp2");
 
   const [phase, setPhase] = useState(
     alreadySubmitted && !revisionRequested ? "finalUnlock" : draft.phase || "brief"
   );
 
-  // labStep walks: "console" (predict/run/log loop) -> "checkpoint1" ->
-  // (back to console until minTable reached) -> "dataTable" ->
-  // "checkpoint2" -> back to "console", where a "Move on" button then
-  // appears once checkpoint2 is done. See the effect below for the actual
-  // trigger logic.
-  const [labStep, setLabStep] = useState(draft.labStep || "console");
-  const [trialLog, setTrialLog] = useState(draft.trialLog || []);
-  const [currentAngle, setCurrentAngle] = useState(draft.currentAngle ?? variable.min);
+  const [labStep, setLabStep] = useState(draft.labStep || "pretrialAnchor");
+  const [round, setRound] = useState(draft.round || "roundOne"); // "roundOne" | "roundTwo"
+
+  const [trialLogRoundOne, setTrialLogRoundOne] = useState(draft.trialLogRoundOne || []);
+  const [trialLogRoundTwo, setTrialLogRoundTwo] = useState(draft.trialLogRoundTwo || []);
+  const [currentSetting, setCurrentSetting] = useState(draft.currentSetting ?? variable.min);
   const [currentPrediction, setCurrentPrediction] = useState(
     draft.currentPrediction ?? Math.round((outcome.displayMin + outcome.displayMax) / 2)
   );
   const [predictionTouched, setPredictionTouched] = useState(false);
-  const [lastRun, setLastRun] = useState(null); // { angle, prediction, actual, gap }
+  const [lastRun, setLastRun] = useState(null); // { setting, prediction, actual, gap }
 
-  const [checkpoint1Done, setCheckpoint1Done] = useState(draft.checkpoint1Done || false);
-  const [checkpoint1ChoiceId, setCheckpoint1ChoiceId] = useState(draft.checkpoint1ChoiceId || null);
-  const [pendingCp1Choice, setPendingCp1Choice] = useState(null);
+  // checkpointAnswers holds { [cpId]: { submittedChoiceId } | { submittedChoiceIds } }
+  // for hyp/cp1/cp2 — a generic shape shared by the mc/dropdown/multiSelect
+  // CheckpointCard below, mirroring what the submit route expects.
+  const [checkpointAnswers, setCheckpointAnswers] = useState(draft.checkpointAnswers || {});
+  const [pendingChoiceId, setPendingChoiceId] = useState(null);
+  const [pendingChoiceIds, setPendingChoiceIds] = useState([]);
 
+  const [dataTableSetting, setDataTableSetting] = useState(draft.dataTableSetting ?? null);
+  const [dataTablePrediction, setDataTablePrediction] = useState(draft.dataTablePrediction ?? "");
   const [dataTableDone, setDataTableDone] = useState(draft.dataTableDone || false);
-  const [dataTableRowIds, setDataTableRowIds] = useState(draft.dataTableRowIds || []);
-  const [dataTableAnswers, setDataTableAnswers] = useState(draft.dataTableAnswers || {});
-
-  const [checkpoint2Done, setCheckpoint2Done] = useState(draft.checkpoint2Done || false);
-  const [checkpoint2Text, setCheckpoint2Text] = useState(draft.checkpoint2Text || "");
-  const [pendingCp2Text, setPendingCp2Text] = useState("");
 
   const [samLine, setSamLine] = useState(null);
   const samTimerRef = useRef(null);
@@ -203,16 +227,15 @@ export default function SimulationLabClient({
         JSON.stringify({
           phase,
           labStep,
-          trialLog,
-          currentAngle,
+          round,
+          trialLogRoundOne,
+          trialLogRoundTwo,
+          currentSetting,
           currentPrediction,
-          checkpoint1Done,
-          checkpoint1ChoiceId,
+          checkpointAnswers,
+          dataTableSetting,
+          dataTablePrediction,
           dataTableDone,
-          dataTableRowIds,
-          dataTableAnswers,
-          checkpoint2Done,
-          checkpoint2Text,
           finalResponseText,
           checklist,
           self_confidence: selfConfidence,
@@ -222,37 +245,35 @@ export default function SimulationLabClient({
   }, [
     phase,
     labStep,
-    trialLog,
-    currentAngle,
+    round,
+    trialLogRoundOne,
+    trialLogRoundTwo,
+    currentSetting,
     currentPrediction,
-    checkpoint1Done,
-    checkpoint1ChoiceId,
+    checkpointAnswers,
+    dataTableSetting,
+    dataTablePrediction,
     dataTableDone,
-    dataTableRowIds,
-    dataTableAnswers,
-    checkpoint2Done,
-    checkpoint2Text,
     finalResponseText,
     checklist,
     selfConfidence,
   ]);
 
-  // The checkpoint/data-table trigger cascade (design doc §7). Only checked
-  // while the student is in the plain console step, so an already-open
-  // checkpoint or data-table card is never interrupted mid-answer.
+  const activeCfg = round === "roundOne" ? publicCase.roundOne : publicCase.roundTwo;
+  const activeLog = round === "roundOne" ? trialLogRoundOne : trialLogRoundTwo;
+  const atMax = activeLog.length >= activeCfg.maxTrials;
+
+  // Force the student onward once a round's maxTrials is reached — between
+  // minTrials and maxTrials, a "I'm ready" button (rendered below) lets the
+  // student choose when to stop, matching Emily's "min 3, max 5, their
+  // choice" framing (design doc §10.2 point 4).
   useEffect(() => {
     if (labStep !== "console") return;
-    const trials = trialLog.length;
-    if (!checkpoint1Done && trials >= minCp1) {
-      setLabStep("checkpoint1");
-      return;
+    if (activeLog.length >= activeCfg.maxTrials) {
+      setLabStep(round === "roundOne" ? "checkpoint1" : "dataTable");
     }
-    if (checkpoint1Done && !dataTableDone && trials >= minTable) {
-      if (dataTableRowIds.length === 0) setDataTableRowIds(pickFirstMiddleLastIds(trialLog));
-      setLabStep("dataTable");
-      return;
-    }
-  }, [labStep, trialLog, checkpoint1Done, dataTableDone, dataTableRowIds, minCp1, minTable]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [labStep, round, trialLogRoundOne, trialLogRoundTwo]);
 
   function saveProgress(fields) {
     return fetch("/api/submission/save", {
@@ -273,14 +294,13 @@ export default function SimulationLabClient({
       simulation_lab_data: {
         phase,
         labStep,
-        trialLog,
-        checkpoint1Done,
-        checkpoint1ChoiceId,
+        round,
+        trialLogRoundOne,
+        trialLogRoundTwo,
+        checkpointAnswers,
+        dataTableSetting,
+        dataTablePrediction,
         dataTableDone,
-        dataTableRowIds,
-        dataTableAnswers,
-        checkpoint2Done,
-        checkpoint2Text,
         finalResponseText,
         checklist,
       },
@@ -291,51 +311,51 @@ export default function SimulationLabClient({
   }
 
   function runTrial() {
-    if (!predictionTouched) return;
-    const row = publicCase.lookupTable.find((r) => r[variable.id] === currentAngle);
+    if (!predictionTouched || atMax) return;
+    const row = activeCfg.lookupTable.find((r) => r[variable.id] === currentSetting);
     const actual = row ? row[outcome.id] : 0;
-    setLastRun({ angle: currentAngle, prediction: currentPrediction, actual, gap: Math.abs(actual - currentPrediction) });
+    setLastRun({ setting: currentSetting, prediction: currentPrediction, actual, gap: Math.abs(actual - currentPrediction) });
   }
 
   function logTrialAndContinue() {
     if (!lastRun) return;
-    const id = `t${trialLog.length + 1}`;
-    setTrialLog((prev) => [...prev, { id, angle: lastRun.angle, prediction: lastRun.prediction, actual: lastRun.actual, gap: lastRun.gap }]);
+    const entry = {
+      id: `${round}-t${activeLog.length + 1}`,
+      [variable.id]: lastRun.setting,
+      prediction: lastRun.prediction,
+      actual: lastRun.actual,
+      gap: lastRun.gap,
+    };
+    if (round === "roundOne") setTrialLogRoundOne((prev) => [...prev, entry]);
+    else setTrialLogRoundTwo((prev) => [...prev, entry]);
     setLastRun(null);
     setPredictionTouched(false);
     showSam("trialLogged");
   }
 
-  function submitCheckpoint1() {
-    if (!pendingCp1Choice) return;
-    setCheckpoint1ChoiceId(pendingCp1Choice);
-    setCheckpoint1Done(true);
-    setPendingCp1Choice(null);
+  function beginRoundTwo() {
+    setRound("roundTwo");
+    setCurrentSetting(variable.min);
+    setCurrentPrediction(Math.round((outcome.displayMin + outcome.displayMax) / 2));
+    setPredictionTouched(false);
+    setLastRun(null);
     setLabStep("console");
-    showSam("checkpointAnswered");
+    showSam("roundTwoBegin");
   }
 
-  const dataTableRows = dataTableRowIds
-    .map((id) => trialLog.find((t) => t.id === id))
-    .filter(Boolean);
-  const dataTableFilled = dataTableRows.every(
-    (r) => dataTableAnswers[r.id] !== undefined && String(dataTableAnswers[r.id]).trim() !== ""
-  );
+  // Every possible setting for the variable — used to compute which
+  // settings are still "untested" for the v3 Data Table step (predict an
+  // untested value, design doc §10.2 point 2 / §10.5).
+  const allSettings = [];
+  for (let v = variable.min; v <= variable.max; v += variable.step) allSettings.push(v);
+  const testedInRoundTwo = new Set(trialLogRoundTwo.map((t) => t[variable.id]));
+  const untestedSettings = allSettings.filter((v) => !testedInRoundTwo.has(v));
 
   function submitDataTable() {
-    if (!dataTableFilled) return;
+    if (dataTableSetting === null || dataTablePrediction === "" || isNaN(Number(dataTablePrediction))) return;
     setDataTableDone(true);
     setLabStep("checkpoint2");
     showSam("dataTableSubmitted");
-  }
-
-  function submitCheckpoint2() {
-    if (!pendingCp2Text.trim()) return;
-    setCheckpoint2Text(pendingCp2Text.trim());
-    setCheckpoint2Done(true);
-    setPendingCp2Text("");
-    setLabStep("console");
-    showSam("checkpointAnswered");
   }
 
   function goToFinal() {
@@ -378,11 +398,17 @@ export default function SimulationLabClient({
     setSubmitting(true);
     setSubmitError(null);
     try {
-      const checkpointResults = [
-        { id: cp1.id, type: "mc", submittedChoiceId: checkpoint1ChoiceId },
-        { id: cp2.id, type: "fillBlank", submittedText: checkpoint2Text },
-      ];
-      const dataTableResults = dataTableRowIds.map((id) => ({ trialId: id, submittedValue: dataTableAnswers[id] }));
+      const checkpointResults = publicCase.checkpoints.map((cp) => {
+        const ans = checkpointAnswers[cp.id] || {};
+        if (cp.type === "multiSelect") {
+          return { id: cp.id, type: cp.type, submittedChoiceIds: ans.submittedChoiceIds || [] };
+        }
+        return { id: cp.id, type: cp.type, submittedChoiceId: ans.submittedChoiceId || null };
+      });
+      const dataTableResults =
+        dataTableSetting !== null
+          ? [{ settingValue: dataTableSetting, submittedValue: dataTablePrediction }]
+          : [];
 
       const res = await fetch("/api/simulation-lab/submit", {
         method: "POST",
@@ -390,7 +416,7 @@ export default function SimulationLabClient({
         body: JSON.stringify({
           assignmentId,
           caseStandard,
-          trialLog,
+          roundTrialLogs: { roundOne: trialLogRoundOne, roundTwo: trialLogRoundTwo },
           checkpointResults,
           dataTableResults,
           finalResponseText,
@@ -414,9 +440,17 @@ export default function SimulationLabClient({
     submitForGrading();
   }
 
+  // Real background art Emily supplied Sept 3 (the "Cadet science bay"
+  // scene) — a lighter scrim than a typical dark-panel overlay, per her
+  // direct ask, so the room itself stays visible behind the activity card
+  // below rather than being mostly obscured.
   const backgroundStyle = {
     minHeight: "100vh",
-    background: `radial-gradient(1200px 700px at 50% -10%, ${COLORS.panel} 0%, ${COLORS.bgTop} 45%, ${COLORS.bgBottom} 100%)`,
+    backgroundImage:
+      "linear-gradient(rgba(20,28,40,.32), rgba(11,16,23,.5)), url('/simulation-lab/background.jpg')",
+    backgroundSize: "cover",
+    backgroundPosition: "center",
+    backgroundAttachment: "fixed",
     fontFamily: "'Inter', sans-serif",
     color: COLORS.white,
     position: "relative",
@@ -426,9 +460,11 @@ export default function SimulationLabClient({
   const actualPercent = lastRun ? ((lastRun.actual - outcome.displayMin) / outcomeRange) * 100 : 0;
   const predictionPercent = ((currentPrediction - outcome.displayMin) / outcomeRange) * 100;
 
+  const showTrialLogPanel = !["pretrialAnchor", "pretrialVariables", "pretrialHypothesis"].includes(labStep);
+
   // --- Trial strip (the running log) ----------------------------------
-  function TrialStrip() {
-    if (trialLog.length === 0) {
+  function TrialStrip({ log }) {
+    if (!log || log.length === 0) {
       return (
         <div style={{ fontSize: 12.5, color: COLORS.textMuted, fontStyle: "italic", padding: "4px 2px" }}>
           No trials logged yet — set the dial, make your prediction, and hit Run.
@@ -448,10 +484,10 @@ export default function SimulationLabClient({
             </tr>
           </thead>
           <tbody>
-            {trialLog.map((t, i) => (
+            {log.map((t, i) => (
               <tr key={t.id} style={{ borderTop: `1px solid ${COLORS.steelLine}` }}>
                 <td style={{ padding: "6px 8px", color: COLORS.textMuted }}>{i + 1}</td>
-                <td style={{ padding: "6px 8px" }}>{t.angle}{variable.unit}</td>
+                <td style={{ padding: "6px 8px" }}>{t[variable.id]}{variable.unit}</td>
                 <td style={{ padding: "6px 8px" }}>{t.prediction}</td>
                 <td style={{ padding: "6px 8px", color: COLORS.amber, fontWeight: 700 }}>{t.actual}</td>
                 <td style={{ padding: "6px 8px", color: COLORS.textMuted }}>{t.gap}</td>
@@ -476,28 +512,277 @@ export default function SimulationLabClient({
     );
   }
 
-  // --- The Console (predict / run / compare) ---------------------------
-  function Console() {
+  // --- Pre-trial steps (new in v3) --------------------------------------
+  function PretrialAnchor() {
+    const step = publicCase.pretrialSteps.anchor;
     return (
       <div style={{ background: COLORS.panel, border: `1px solid ${COLORS.steelLine}`, borderRadius: 16, padding: 18, marginBottom: 18 }}>
-        <div style={{ fontSize: 11, letterSpacing: 1, color: COLORS.amber, fontWeight: 700, marginBottom: 12 }}>CONSOLE</div>
+        <div style={{ fontSize: 11, letterSpacing: 1, color: COLORS.amber, fontWeight: 700, marginBottom: 10 }}>{step.title.toUpperCase()}</div>
+        <StepImage src={step.imageUrl} alt={step.title} />
+        <p style={{ color: "rgba(234,240,246,.85)", lineHeight: 1.6 }}>{step.text}</p>
+        <button className="sl-btn" onClick={() => setLabStep("pretrialVariables")}
+          style={{ background: COLORS.amber, color: "#1A1200", borderRadius: 12, padding: "12px 22px", fontWeight: 700, fontSize: 14.5 }}>
+          Next →
+        </button>
+      </div>
+    );
+  }
 
-        <div style={{ marginBottom: 18 }}>
-          <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13, marginBottom: 6 }}>
-            <span>{variable.label}</span>
-            <span style={{ color: COLORS.amber, fontWeight: 700 }}>{currentAngle}{variable.unit}</span>
-          </div>
-          <input
-            type="range"
-            min={variable.min}
-            max={variable.max}
-            step={variable.step}
-            value={currentAngle}
-            disabled={!!lastRun}
-            onChange={(e) => setCurrentAngle(Number(e.target.value))}
-            style={{ width: "100%" }}
-          />
+  function PretrialVariables() {
+    const step = publicCase.pretrialSteps.chooseVariables;
+    return (
+      <div style={{ background: COLORS.panel, border: `1px solid ${COLORS.steelLine}`, borderRadius: 16, padding: 18, marginBottom: 18 }}>
+        <div style={{ fontSize: 11, letterSpacing: 1, color: COLORS.amber, fontWeight: 700, marginBottom: 10 }}>{step.title.toUpperCase()}</div>
+        <StepImage src={step.imageUrl} alt={step.title} />
+        <p style={{ color: "rgba(234,240,246,.85)", lineHeight: 1.6 }}>{step.text}</p>
+        <div style={{ marginBottom: 14 }}>
+          <div style={{ fontSize: 11.5, color: COLORS.textMuted, marginBottom: 6, letterSpacing: 0.5 }}>WHAT STAYS THE SAME:</div>
+          <ul style={{ margin: 0, paddingLeft: 20 }}>
+            {step.keepTheSame.map((item, i) => (
+              <li key={i} style={{ fontSize: 13.5, marginBottom: 4, color: "rgba(234,240,246,.9)" }}>{item}</li>
+            ))}
+          </ul>
         </div>
+        <div style={{ fontSize: 13.5, color: COLORS.cyan, fontWeight: 700, marginBottom: 16 }}>Testing: {step.testing}</div>
+        <button className="sl-btn" onClick={() => setLabStep("pretrialHypothesis")}
+          style={{ background: COLORS.amber, color: "#1A1200", borderRadius: 12, padding: "12px 22px", fontWeight: 700, fontSize: 14.5 }}>
+          Next →
+        </button>
+      </div>
+    );
+  }
+
+  // --- Generic checkpoint card — handles mc / dropdown / multiSelect,
+  // reused for the pre-trial hypothesis check, Checkpoint 1, and
+  // Checkpoint 2 (design doc §10.2 point 3 / §10.5). --------------------
+  function CheckpointCard({ cp, nextLabStep, samCategory = "checkpointAnswered" }) {
+    if (!cp) return null;
+    const promptText = cp.prompt || cp.promptTemplate;
+    const isMc = cp.type === "mc";
+    const isDropdown = cp.type === "dropdown";
+    const isMulti = cp.type === "multiSelect";
+    const canSubmit = isMulti ? pendingChoiceIds.length > 0 : !!pendingChoiceId;
+
+    function toggleMulti(id) {
+      setPendingChoiceIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
+    }
+
+    function handleSubmit() {
+      if (!canSubmit) return;
+      if (isMulti) {
+        setCheckpointAnswers((prev) => ({ ...prev, [cp.id]: { submittedChoiceIds: pendingChoiceIds } }));
+      } else {
+        setCheckpointAnswers((prev) => ({ ...prev, [cp.id]: { submittedChoiceId: pendingChoiceId } }));
+      }
+      setPendingChoiceId(null);
+      setPendingChoiceIds([]);
+      setLabStep(nextLabStep);
+      showSam(samCategory);
+    }
+
+    return (
+      <div style={{ background: COLORS.panel, border: `1px solid ${COLORS.amber}55`, borderRadius: 16, padding: 18, marginBottom: 18 }}>
+        <div style={{ fontSize: 11, letterSpacing: 1, color: COLORS.amber, fontWeight: 700, marginBottom: 10 }}>CHECKPOINT</div>
+        <div style={{ fontSize: 15, marginBottom: 14 }}>{promptText}</div>
+
+        {isMc && (
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            {cp.choices.map((c) => (
+              <button
+                key={c.id}
+                className="sl-btn"
+                onClick={() => setPendingChoiceId(c.id)}
+                style={{
+                  textAlign: "left",
+                  background: pendingChoiceId === c.id ? "rgba(255,166,48,.18)" : "rgba(255,255,255,.04)",
+                  border: `1px solid ${pendingChoiceId === c.id ? COLORS.amber : COLORS.steelLine}`,
+                  borderRadius: 10, padding: "12px 14px", fontSize: 13.5, color: COLORS.white,
+                }}
+              >
+                {c.text}
+              </button>
+            ))}
+          </div>
+        )}
+
+        {isDropdown && (
+          <select
+            value={pendingChoiceId || ""}
+            onChange={(e) => setPendingChoiceId(e.target.value || null)}
+            style={{ width: "100%", borderRadius: 10, padding: 10, fontSize: 13.5, border: `1px solid ${COLORS.steelLine}`, background: "rgba(255,255,255,.06)", color: COLORS.white, fontFamily: "inherit" }}
+          >
+            <option value="" disabled>Choose one…</option>
+            {cp.choices.map((c) => (
+              <option key={c.id} value={c.id}>{c.text}</option>
+            ))}
+          </select>
+        )}
+
+        {isMulti && (
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            {cp.choices.map((c) => (
+              <label key={c.id} style={{ display: "flex", gap: 8, alignItems: "center", fontSize: 13.5, cursor: "pointer" }}>
+                <input type="checkbox" checked={pendingChoiceIds.includes(c.id)} onChange={() => toggleMulti(c.id)} />
+                <span>{c.text}</span>
+              </label>
+            ))}
+          </div>
+        )}
+
+        <button
+          className="sl-btn"
+          disabled={!canSubmit}
+          onClick={handleSubmit}
+          style={{
+            marginTop: 16,
+            background: canSubmit ? COLORS.amber : "rgba(255,255,255,.08)",
+            color: canSubmit ? "#1A1200" : COLORS.textMuted,
+            borderRadius: 12, padding: "12px 22px", fontWeight: 700, fontSize: 14.5,
+          }}
+        >
+          Submit
+        </button>
+      </div>
+    );
+  }
+
+  // --- The Console (predict / run / compare), reused for both rounds ---
+  function Console() {
+    const bg = publicCase.machineBackground;
+    const hasBgImage = !!(bg && bg.imageUrl);
+    const readoutColor = "#4A3B70"; // dark plum — readable against the art's cream panels
+    const H = CONSOLE_HOTSPOTS;
+
+    return (
+      <div style={{ background: COLORS.panel, border: `1px solid ${COLORS.steelLine}`, borderRadius: 16, padding: 18, marginBottom: 18 }}>
+        <div style={{ fontSize: 11, letterSpacing: 1, color: COLORS.amber, fontWeight: 700, marginBottom: 12 }}>
+          CONSOLE — {round === "roundOne" ? "ROUND 1" : "ROUND 2 (heavier ball)"}
+        </div>
+
+        {hasBgImage ? (
+          // Real console art (design doc §10.3) — the angle slider and the
+          // outcome/prediction readouts are positioned directly on the
+          // image's own gauge circle / slider slot / readout panel via
+          // CONSOLE_HOTSPOTS, tuned against this exact image. Prediction
+          // and Run/Log stay below as plain controls, since the art has no
+          // dedicated zone for them.
+          <div style={{ position: "relative", marginBottom: 16 }}>
+            <img src={bg.imageUrl} alt="" style={{ width: "100%", borderRadius: 12, display: "block" }} />
+
+            <div
+              style={{
+                position: "absolute",
+                left: `${H.gaugeCircle.xPct}%`, top: `${H.gaugeCircle.yPct}%`,
+                width: `${H.gaugeCircle.wPct}%`, height: `${H.gaugeCircle.hPct}%`,
+                transform: "translate(-50%, -50%)",
+                display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
+                textAlign: "center", pointerEvents: "none",
+              }}
+            >
+              <div style={{ fontSize: "clamp(8px, 1.3vw, 12px)", color: readoutColor, fontWeight: 700, letterSpacing: 0.5 }}>
+                {outcome.label.toUpperCase()}
+              </div>
+              <div style={{ fontSize: "clamp(18px, 3.6vw, 32px)", fontWeight: 800, color: "#1E9E90", lineHeight: 1.1 }}>
+                {lastRun ? lastRun.actual : "—"}
+              </div>
+              <div style={{ fontSize: "clamp(7px, 1vw, 10px)", color: readoutColor }}>{outcome.unit}</div>
+            </div>
+
+            <div
+              style={{
+                position: "absolute",
+                left: `${H.readoutPanel.xPct}%`, top: `${H.readoutPanel.yPct}%`,
+                width: `${H.readoutPanel.wPct}%`, height: `${H.readoutPanel.hPct}%`,
+                display: "flex", flexDirection: "column", justifyContent: "center", gap: "6%",
+                pointerEvents: "none",
+              }}
+            >
+              <div style={{ fontSize: "clamp(9px, 1.3vw, 13px)", color: readoutColor, fontWeight: 700 }}>
+                Prediction: <span style={{ color: "#7B5FD9" }}>{predictionTouched ? `${currentPrediction} ${outcome.unit}` : "—"}</span>
+              </div>
+              {lastRun && (
+                <>
+                  <div style={{ fontSize: "clamp(9px, 1.3vw, 13px)", color: readoutColor, fontWeight: 700 }}>
+                    Actual: <span style={{ color: "#1E9E90" }}>{lastRun.actual} {outcome.unit}</span>
+                  </div>
+                  <div style={{ fontSize: "clamp(9px, 1.3vw, 13px)", color: readoutColor, fontWeight: 700 }}>
+                    Gap: <span>{lastRun.gap}</span>
+                  </div>
+                </>
+              )}
+            </div>
+
+            <div
+              style={{
+                position: "absolute",
+                left: `${H.slotTrack.xPct}%`, top: `${H.slotTrack.yPct}%`,
+                width: `${H.slotTrack.wPct}%`,
+              }}
+            >
+              <input
+                type="range"
+                min={variable.min}
+                max={variable.max}
+                step={variable.step}
+                value={currentSetting}
+                disabled={!!lastRun || atMax}
+                onChange={(e) => setCurrentSetting(Number(e.target.value))}
+                style={{ width: "100%", accentColor: COLORS.amber }}
+              />
+              <div style={{ textAlign: "center", fontSize: "clamp(9px, 1.3vw, 13px)", color: readoutColor, fontWeight: 700, marginTop: 2 }}>
+                {variable.label}: {currentSetting}{variable.unit}
+              </div>
+            </div>
+          </div>
+        ) : (
+          <>
+            <div style={{ marginBottom: 18 }}>
+              <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13, marginBottom: 6 }}>
+                <span>{variable.label}</span>
+                <span style={{ color: COLORS.amber, fontWeight: 700 }}>{currentSetting}{variable.unit}</span>
+              </div>
+              <input
+                type="range"
+                min={variable.min}
+                max={variable.max}
+                step={variable.step}
+                value={currentSetting}
+                disabled={!!lastRun || atMax}
+                onChange={(e) => setCurrentSetting(Number(e.target.value))}
+                style={{ width: "100%" }}
+              />
+            </div>
+
+            <div style={{ marginBottom: 14 }}>
+              <div style={{ fontSize: 11, color: COLORS.textMuted, marginBottom: 6 }}>
+                {outcome.label} ({outcome.unit})
+              </div>
+              <div style={{ position: "relative", height: 26, background: "rgba(255,255,255,.06)", borderRadius: 999, overflow: "hidden", border: `1px solid ${COLORS.steelLine}` }}>
+                <div
+                  className="sl-gauge-fill"
+                  style={{
+                    position: "absolute", inset: 0, width: `${lastRun ? actualPercent : 0}%`,
+                    background: `linear-gradient(90deg, ${COLORS.amber}99, ${COLORS.amber})`,
+                  }}
+                />
+                <div
+                  title="Your prediction"
+                  style={{
+                    position: "absolute", top: 0, bottom: 0, left: `${predictionPercent}%`,
+                    width: 3, background: COLORS.cyan, boxShadow: `0 0 6px ${COLORS.cyan}`,
+                  }}
+                />
+              </div>
+              {lastRun && (
+                <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, marginTop: 6, color: COLORS.textMuted }}>
+                  <span>Predicted: <b style={{ color: COLORS.cyan }}>{lastRun.prediction}</b></span>
+                  <span>Actual: <b style={{ color: COLORS.amber }}>{lastRun.actual}</b></span>
+                  <span>Gap: <b>{lastRun.gap}</b></span>
+                </div>
+              )}
+            </div>
+          </>
+        )}
 
         <div style={{ marginBottom: 16 }}>
           <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13, marginBottom: 6 }}>
@@ -512,52 +797,20 @@ export default function SimulationLabClient({
             max={outcome.displayMax}
             step={1}
             value={currentPrediction}
-            disabled={!!lastRun}
+            disabled={!!lastRun || atMax}
             onChange={(e) => { setCurrentPrediction(Number(e.target.value)); setPredictionTouched(true); }}
             style={{ width: "100%", accentColor: COLORS.cyan }}
           />
         </div>
 
-        {/* The gauge — a fill bar that CSS-transitions to the real value on
-            Run, with the prediction marker shown as a fixed vertical line so
-            the gap between prediction and result is visible at a glance. */}
-        <div style={{ marginBottom: 14 }}>
-          <div style={{ fontSize: 11, color: COLORS.textMuted, marginBottom: 6 }}>
-            {outcome.label} ({outcome.unit})
-          </div>
-          <div style={{ position: "relative", height: 26, background: "rgba(255,255,255,.06)", borderRadius: 999, overflow: "hidden", border: `1px solid ${COLORS.steelLine}` }}>
-            <div
-              className="sl-gauge-fill"
-              style={{
-                position: "absolute", inset: 0, width: `${lastRun ? actualPercent : 0}%`,
-                background: `linear-gradient(90deg, ${COLORS.amber}99, ${COLORS.amber})`,
-              }}
-            />
-            <div
-              title="Your prediction"
-              style={{
-                position: "absolute", top: 0, bottom: 0, left: `${predictionPercent}%`,
-                width: 3, background: COLORS.cyan, boxShadow: `0 0 6px ${COLORS.cyan}`,
-              }}
-            />
-          </div>
-          {lastRun && (
-            <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, marginTop: 6, color: COLORS.textMuted }}>
-              <span>Predicted: <b style={{ color: COLORS.cyan }}>{lastRun.prediction}</b></span>
-              <span>Actual: <b style={{ color: COLORS.amber }}>{lastRun.actual}</b></span>
-              <span>Gap: <b>{lastRun.gap}</b></span>
-            </div>
-          )}
-        </div>
-
         {!lastRun ? (
           <button
             className="sl-btn"
-            disabled={!predictionTouched}
+            disabled={!predictionTouched || atMax}
             onClick={runTrial}
             style={{
-              background: predictionTouched ? COLORS.amber : "rgba(255,255,255,.08)",
-              color: predictionTouched ? "#1A1200" : COLORS.textMuted,
+              background: predictionTouched && !atMax ? COLORS.amber : "rgba(255,255,255,.08)",
+              color: predictionTouched && !atMax ? "#1A1200" : COLORS.textMuted,
               borderRadius: 12, padding: "12px 22px", fontWeight: 700, fontSize: 14.5,
             }}
           >
@@ -576,118 +829,66 @@ export default function SimulationLabClient({
     );
   }
 
-  function Checkpoint1Card() {
+  function RoundTwoReveal() {
     return (
-      <div style={{ background: COLORS.panel, border: `1px solid ${COLORS.amber}55`, borderRadius: 16, padding: 18, marginBottom: 18 }}>
-        <div style={{ fontSize: 11, letterSpacing: 1, color: COLORS.amber, fontWeight: 700, marginBottom: 10 }}>CHECKPOINT</div>
-        <div style={{ fontSize: 15, marginBottom: 14 }}>{cp1.prompt}</div>
-        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-          {cp1.choices.map((c) => (
-            <button
-              key={c.id}
-              className="sl-btn"
-              onClick={() => setPendingCp1Choice(c.id)}
-              style={{
-                textAlign: "left",
-                background: pendingCp1Choice === c.id ? "rgba(255,166,48,.18)" : "rgba(255,255,255,.04)",
-                border: `1px solid ${pendingCp1Choice === c.id ? COLORS.amber : COLORS.steelLine}`,
-                borderRadius: 10, padding: "12px 14px", fontSize: 13.5, color: COLORS.white,
-              }}
-            >
-              {c.text}
-            </button>
-          ))}
-        </div>
+      <div style={{ background: COLORS.panel, border: `1px solid ${COLORS.cyan}55`, borderRadius: 16, padding: 18, marginBottom: 18, textAlign: "center" }}>
+        <div style={{ fontSize: 11, letterSpacing: 1, color: COLORS.cyan, fontWeight: 700, marginBottom: 10 }}>CONDITIONS CHANGED</div>
+        <p style={{ fontSize: 15, lineHeight: 1.6, color: "rgba(234,240,246,.9)" }}>{publicCase.roundTwo.conditionChangeDescription}</p>
         <button
           className="sl-btn"
-          disabled={!pendingCp1Choice}
-          onClick={submitCheckpoint1}
-          style={{
-            marginTop: 16,
-            background: pendingCp1Choice ? COLORS.amber : "rgba(255,255,255,.08)",
-            color: pendingCp1Choice ? "#1A1200" : COLORS.textMuted,
-            borderRadius: 12, padding: "12px 22px", fontWeight: 700, fontSize: 14.5,
-          }}
+          onClick={beginRoundTwo}
+          style={{ marginTop: 6, background: COLORS.cyan, color: "#08201D", borderRadius: 12, padding: "12px 22px", fontWeight: 700, fontSize: 14.5 }}
         >
-          Submit
+          Begin Round 2
         </button>
       </div>
     );
   }
 
   function DataTableCard() {
+    const step = publicCase.dataTableStep;
+    const canSubmit = dataTableSetting !== null && dataTablePrediction !== "" && !isNaN(Number(dataTablePrediction));
     return (
       <div style={{ background: COLORS.panel, border: `1px solid ${COLORS.cyan}55`, borderRadius: 16, padding: 18, marginBottom: 18 }}>
         <div style={{ fontSize: 11, letterSpacing: 1, color: COLORS.cyan, fontWeight: 700, marginBottom: 10 }}>DATA TABLE</div>
-        <div style={{ fontSize: 13.5, color: "rgba(234,240,246,.85)", marginBottom: 14 }}>{publicCase.dataTableStep.instructions}</div>
-        <div style={{ overflowX: "auto" }}>
-          <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13.5 }}>
-            <thead>
-              <tr style={{ textAlign: "left", color: COLORS.textMuted }}>
-                <th style={{ padding: "4px 8px" }}>{variable.label}</th>
-                <th style={{ padding: "4px 8px" }}>Your Prediction</th>
-                <th style={{ padding: "4px 8px" }}>{outcome.label}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {dataTableRows.map((r) => (
-                <tr key={r.id} style={{ borderTop: `1px solid ${COLORS.steelLine}` }}>
-                  <td style={{ padding: "6px 8px" }}>{r.angle}{variable.unit}</td>
-                  <td style={{ padding: "6px 8px", color: COLORS.textMuted }}>{r.prediction}</td>
-                  <td style={{ padding: "6px 8px" }}>
-                    <input
-                      type="number"
-                      value={dataTableAnswers[r.id] ?? ""}
-                      onChange={(e) => setDataTableAnswers((prev) => ({ ...prev, [r.id]: e.target.value }))}
-                      style={{ width: 70, borderRadius: 8, padding: "6px 8px", border: `1px solid ${COLORS.steelLine}`, background: "rgba(255,255,255,.06)", color: COLORS.white }}
-                    />
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        <div style={{ fontSize: 13.5, color: "rgba(234,240,246,.85)", marginBottom: 14 }}>{step.instructions}</div>
+
+        <div style={{ marginBottom: 14 }}>
+          <div style={{ fontSize: 12, color: COLORS.textMuted, marginBottom: 6 }}>Pick a {variable.label.toLowerCase()} you never tried this round:</div>
+          <select
+            value={dataTableSetting ?? ""}
+            onChange={(e) => setDataTableSetting(e.target.value === "" ? null : Number(e.target.value))}
+            style={{ width: "100%", borderRadius: 10, padding: 10, fontSize: 13.5, border: `1px solid ${COLORS.steelLine}`, background: "rgba(255,255,255,.06)", color: COLORS.white, fontFamily: "inherit" }}
+          >
+            <option value="" disabled>Choose an untested {variable.label.toLowerCase()}…</option>
+            {untestedSettings.map((v) => (
+              <option key={v} value={v}>{v}{variable.unit}</option>
+            ))}
+          </select>
         </div>
+
+        <div style={{ marginBottom: 6 }}>
+          <div style={{ fontSize: 12, color: COLORS.textMuted, marginBottom: 6 }}>Your predicted {outcome.label.toLowerCase()} ({outcome.unit}):</div>
+          <input
+            type="number"
+            value={dataTablePrediction}
+            onChange={(e) => setDataTablePrediction(e.target.value)}
+            style={{ width: 100, borderRadius: 8, padding: "8px 10px", border: `1px solid ${COLORS.steelLine}`, background: "rgba(255,255,255,.06)", color: COLORS.white }}
+          />
+        </div>
+
         <button
           className="sl-btn"
-          disabled={!dataTableFilled}
+          disabled={!canSubmit}
           onClick={submitDataTable}
           style={{
             marginTop: 16,
-            background: dataTableFilled ? COLORS.cyan : "rgba(255,255,255,.08)",
-            color: dataTableFilled ? "#08201D" : COLORS.textMuted,
+            background: canSubmit ? COLORS.cyan : "rgba(255,255,255,.08)",
+            color: canSubmit ? "#08201D" : COLORS.textMuted,
             borderRadius: 12, padding: "12px 22px", fontWeight: 700, fontSize: 14.5,
           }}
         >
-          Submit Table
-        </button>
-      </div>
-    );
-  }
-
-  function Checkpoint2Card() {
-    return (
-      <div style={{ background: COLORS.panel, border: `1px solid ${COLORS.amber}55`, borderRadius: 16, padding: 18, marginBottom: 18 }}>
-        <div style={{ fontSize: 11, letterSpacing: 1, color: COLORS.amber, fontWeight: 700, marginBottom: 10 }}>CHECKPOINT</div>
-        <div style={{ fontSize: 15, marginBottom: 14 }}>{cp2.prompt}</div>
-        <input
-          type="text"
-          value={pendingCp2Text}
-          onChange={(e) => setPendingCp2Text(e.target.value)}
-          placeholder={cp2.placeholder}
-          style={{ width: "100%", borderRadius: 10, padding: 10, fontSize: 13.5, border: `1px solid ${COLORS.steelLine}`, background: "rgba(255,255,255,.06)", color: COLORS.white, fontFamily: "inherit" }}
-        />
-        <button
-          className="sl-btn"
-          disabled={!pendingCp2Text.trim()}
-          onClick={submitCheckpoint2}
-          style={{
-            marginTop: 16,
-            background: pendingCp2Text.trim() ? COLORS.amber : "rgba(255,255,255,.08)",
-            color: pendingCp2Text.trim() ? "#1A1200" : COLORS.textMuted,
-            borderRadius: 12, padding: "12px 22px", fontWeight: 700, fontSize: 14.5,
-          }}
-        >
-          Submit
+          Submit Prediction
         </button>
       </div>
     );
@@ -697,11 +898,11 @@ export default function SimulationLabClient({
     return (
       <div style={backgroundStyle}>
         <style>{`.sl-scrim { position: fixed; inset: 0; background: radial-gradient(1200px 700px at 50% -10%, ${COLORS.panel} 0%, ${COLORS.bgTop} 45%, ${COLORS.bgBottom} 100%); z-index: 0; pointer-events: none; }`}</style>
-        <div style={{ position: "relative", zIndex: 2, maxWidth: 640, margin: "0 auto", padding: "60px 20px", textAlign: "center" }}>
+        <div style={{ position: "relative", zIndex: 2, maxWidth: 640, margin: "40px auto", padding: "60px 20px", textAlign: "center", background: "rgba(26,36,50,.88)", borderRadius: 20, boxShadow: "0 20px 60px rgba(0,0,0,.45)", border: `1px solid ${COLORS.steelLine}` }}>
           <h1 style={{ fontFamily: "'Poppins', sans-serif" }}>Transmission received, Cadet.</h1>
           {cleanRun && (
             <div style={{ display: "inline-block", background: "rgba(255,166,48,.18)", border: `1px solid ${COLORS.amber}`, borderRadius: 999, padding: "8px 18px", fontWeight: 700, color: COLORS.amber, marginBottom: 14 }}>
-              🌟 Clean run — every checkpoint and data-table cell correct!
+              🌟 Clean run — every checkpoint and data-table prediction correct!
             </div>
           )}
           <p style={{ color: COLORS.textMuted }}>
@@ -750,7 +951,13 @@ export default function SimulationLabClient({
         input[type="range"] { accent-color: ${COLORS.amber}; }
       `}</style>
 
-      <div style={{ position: "relative", zIndex: 2, maxWidth: 720, margin: "0 auto", padding: "24px 20px 80px" }}>
+      <div
+        style={{
+          position: "relative", zIndex: 2, maxWidth: 760, margin: "40px auto", padding: "28px 24px 40px",
+          background: "rgba(26,36,50,.88)", borderRadius: 20, boxShadow: "0 20px 60px rgba(0,0,0,.45)",
+          border: `1px solid ${COLORS.steelLine}`,
+        }}
+      >
         {revisionRequested && (
           <div style={{ background: "rgba(255,166,48,.15)", border: `1px solid ${COLORS.amber}`, borderRadius: 12, padding: 14, marginBottom: 20 }}>
             <div style={{ fontWeight: 700, marginBottom: 4 }}>Your teacher asked you to take another pass.</div>
@@ -810,20 +1017,64 @@ export default function SimulationLabClient({
         {phase === "lab" && (
           <div>
             <SamBanner />
-            {labStep === "checkpoint1" && <Checkpoint1Card />}
+
+            {labStep === "pretrialAnchor" && <PretrialAnchor />}
+            {labStep === "pretrialVariables" && <PretrialVariables />}
+            {labStep === "pretrialHypothesis" && (
+              <div>
+                <div style={{ background: COLORS.panel, border: `1px solid ${COLORS.steelLine}`, borderRadius: 16, padding: 18, marginBottom: 12 }}>
+                  <div style={{ fontSize: 11, letterSpacing: 1, color: COLORS.amber, fontWeight: 700, marginBottom: 10 }}>
+                    {publicCase.pretrialSteps.hypothesis.title.toUpperCase()}
+                  </div>
+                  <StepImage src={publicCase.pretrialSteps.hypothesis.imageUrl} alt={publicCase.pretrialSteps.hypothesis.title} />
+                  <p style={{ color: "rgba(234,240,246,.85)", lineHeight: 1.6, margin: 0 }}>{publicCase.pretrialSteps.hypothesis.text}</p>
+                </div>
+                <CheckpointCard cp={cpHyp} nextLabStep="console" />
+              </div>
+            )}
+            {labStep === "checkpoint1" && <CheckpointCard cp={cp1} nextLabStep="roundTwoReveal" />}
+            {labStep === "roundTwoReveal" && <RoundTwoReveal />}
             {labStep === "dataTable" && <DataTableCard />}
-            {labStep === "checkpoint2" && <Checkpoint2Card />}
+            {labStep === "checkpoint2" && <CheckpointCard cp={cp2} nextLabStep="complete" />}
+            {labStep === "complete" && (
+              <div style={{ background: COLORS.panel, border: `1px solid ${COLORS.amber}55`, borderRadius: 16, padding: 18, marginBottom: 18, textAlign: "center" }}>
+                <div style={{ fontSize: 15, marginBottom: 6 }}>Nice work, Cadet — you've run trials in both rounds and answered every checkpoint.</div>
+                <div style={{ fontSize: 12.5, color: COLORS.textMuted }}>Ready to explain what you found?</div>
+              </div>
+            )}
             {labStep === "console" && <Console />}
 
-            <div style={{ background: COLORS.panel, border: `1px solid ${COLORS.steelLine}`, borderRadius: 16, padding: 18 }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 10 }}>
-                <div style={{ fontSize: 11, letterSpacing: 1, color: COLORS.amber, fontWeight: 700 }}>TRIAL LOG</div>
-                <div style={{ fontSize: 11, color: COLORS.textMuted }}>{trialLog.length} logged</div>
-              </div>
-              <TrialStrip />
-            </div>
+            {showTrialLogPanel && (
+              <div style={{ background: COLORS.panel, border: `1px solid ${COLORS.steelLine}`, borderRadius: 16, padding: 18 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 10 }}>
+                  <div style={{ fontSize: 11, letterSpacing: 1, color: COLORS.amber, fontWeight: 700 }}>TRIAL LOG — ROUND 1</div>
+                  <div style={{ fontSize: 11, color: COLORS.textMuted }}>{trialLogRoundOne.length} logged</div>
+                </div>
+                <TrialStrip log={trialLogRoundOne} />
 
-            {checkpoint2Done && labStep === "console" && (
+                {(round === "roundTwo" || trialLogRoundTwo.length > 0) && (
+                  <div style={{ marginTop: 18 }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 10 }}>
+                      <div style={{ fontSize: 11, letterSpacing: 1, color: COLORS.cyan, fontWeight: 700 }}>TRIAL LOG — ROUND 2 (heavier ball)</div>
+                      <div style={{ fontSize: 11, color: COLORS.textMuted }}>{trialLogRoundTwo.length} logged</div>
+                    </div>
+                    <TrialStrip log={trialLogRoundTwo} />
+                  </div>
+                )}
+              </div>
+            )}
+
+            {labStep === "console" && activeLog.length >= activeCfg.minTrials && activeLog.length < activeCfg.maxTrials && (
+              <button
+                className="sl-btn"
+                onClick={() => setLabStep(round === "roundOne" ? "checkpoint1" : "dataTable")}
+                style={{ marginTop: 14, background: "rgba(255,255,255,.08)", border: `1px solid ${COLORS.steelLine}`, color: COLORS.white, borderRadius: 12, padding: "10px 18px", fontWeight: 700, fontSize: 13.5 }}
+              >
+                {round === "roundOne" ? "I'm ready for the checkpoint →" : "I'm ready for the data table →"}
+              </button>
+            )}
+
+            {labStep === "complete" && (
               <button
                 className="sl-btn"
                 onClick={goToFinal}
@@ -841,8 +1092,10 @@ export default function SimulationLabClient({
             <p style={{ color: "rgba(234,240,246,.85)", lineHeight: 1.6 }}>{publicCase.generalizePrompt}</p>
 
             <div style={{ marginBottom: 16, background: COLORS.panel, border: `1px solid ${COLORS.steelLine}`, borderRadius: 12, padding: 14 }}>
-              <div style={{ fontSize: 11, letterSpacing: 1, color: COLORS.amber, fontWeight: 700, marginBottom: 10 }}>YOUR TRIAL LOG</div>
-              <TrialStrip />
+              <div style={{ fontSize: 11, letterSpacing: 1, color: COLORS.amber, fontWeight: 700, marginBottom: 10 }}>ROUND 1 TRIAL LOG</div>
+              <TrialStrip log={trialLogRoundOne} />
+              <div style={{ fontSize: 11, letterSpacing: 1, color: COLORS.cyan, fontWeight: 700, margin: "16px 0 10px" }}>ROUND 2 TRIAL LOG (heavier ball)</div>
+              <TrialStrip log={trialLogRoundTwo} />
             </div>
 
             <div style={{ marginBottom: 10 }}>
