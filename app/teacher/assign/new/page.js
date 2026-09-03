@@ -26,9 +26,14 @@ const COLORS = {
 // Comment Court (a placeholder name, pending Emily's final pick). All of
 // these still need real content authored before any go live, so they stay
 // `real: false` ("Coming Soon") until then. Group Chat, Fact-Check Desk
-// (branded "Signal Check" in the UI, engine "fact_check_desk"), and — as of
-// Aug 30 2026, one case ("3.1-MM") — Mission Map all have real content now,
-// so all three are `real: true`.
+// (branded "Signal Check" in the UI, engine "fact_check_desk"), Mission Map
+// (as of Aug 30 2026), and — as of Sept 3 2026, one case ("3.8B-SL", "Ramp
+// Test") — Simulation Lab all have real content now, so all four are
+// `real: true`. NOTE (Sept 3 2026): this exact flag was the reason Mission
+// Map's tile sat un-clickable as "Coming Soon" the day its first case shipped
+// (see ClearCenters_STATE.md's fourth Aug 30 session-log entry) — flip this
+// flag to `real: true` the same day a new engine's first case is authored,
+// not as an afterthought once someone notices the tile is disabled.
 const CHALLENGE_TYPES = [
   { key: "group_chat", label: "Group Chat", image: "/teacher/challenges/group_chat.jpg", real: true,
     description: "Students role-play as characters, concepts, or parts of a system in a live group chat, using evidence to prove what's really going on." },
@@ -44,7 +49,7 @@ const CHALLENGE_TYPES = [
     description: "Students move through locked checkpoints, collecting clues, rejecting a tempting wrong answer, and building a reasoning chain to unlock the final response." },
   { key: "comment_court", label: "Comment Court", image: "/teacher/challenges/comment_court.jpg", real: false,
     description: "A disputed claim shows up as a messy comment thread. Students sort the noise, weigh the evidence, and either rule on the dispute or run it as a bracket when there's more than two sides." },
-  { key: "simulation_lab", label: "Simulation Lab", image: "/teacher/challenges/simulation_lab.jpg", real: false,
+  { key: "simulation_lab", label: "Simulation Lab", image: "/teacher/challenges/simulation_lab.jpg", real: true,
     description: "Students adjust real variables with sliders and dials, watch the results happen live, and explain the pattern using data they generated themselves." },
   { key: "classification_lab", label: "Classification Lab", image: "/teacher/challenges/classification_lab.jpg", real: false,
     description: "Items come down a conveyor belt. Students sort them into the correct bins, then justify one deliberately tricky case in writing." },
