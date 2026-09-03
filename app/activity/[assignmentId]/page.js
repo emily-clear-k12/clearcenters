@@ -4,9 +4,11 @@ import { supabaseAdmin } from "../../../lib/supabaseAdmin";
 import { getPublicCase } from "../../../lib/cases/index.public";
 import { getSignalCheckPublicCase } from "../../../lib/cases/signal-check/index.public";
 import { getMissionMapPublicCase } from "../../../lib/cases/mission-map/index.public";
+import { getSimulationLabPublicCase } from "../../../lib/cases/simulation-lab/index.public";
 import ActivityClient from "./ActivityClient";
 import SignalCheckClient from "./SignalCheckClient";
 import MissionMapClient from "./MissionMapClient";
+import SimulationLabClient from "./SimulationLabClient";
 
 export default async function ActivityPage({ params }) {
   const { assignmentId } = params;
@@ -76,12 +78,18 @@ export default async function ActivityPage({ params }) {
   // isn't ready yet" screen instead of MissionMapClient. Caught while adding
   // the Save Progress button to Mission Map, not by a live report.
   const isMissionMap = engine === "mission_map";
+  // Simulation Lab's own branch, added Sept 3 2026 alongside the engine's
+  // first case (3.8B-SL) — added up front this time, precisely to avoid
+  // repeating the exact missing-branch bug class documented above for
+  // Mission Map.
+  const isSimulationLab = engine === "simulation_lab";
 
-  const caseEntry = isSignalCheck || isMissionMap ? null : getPublicCase(assignment.case_standard);
+  const caseEntry = isSignalCheck || isMissionMap || isSimulationLab ? null : getPublicCase(assignment.case_standard);
   const signalCheckCase = isSignalCheck ? getSignalCheckPublicCase(assignment.case_standard) : null;
   const missionMapCase = isMissionMap ? getMissionMapPublicCase(assignment.case_standard) : null;
+  const simulationLabCase = isSimulationLab ? getSimulationLabPublicCase(assignment.case_standard) : null;
 
-  if (!caseEntry && !signalCheckCase && !missionMapCase) {
+  if (!caseEntry && !signalCheckCase && !missionMapCase && !simulationLabCase) {
     return (
       <div style={{ minHeight: "100vh", background: "#16243F", display: "flex", alignItems: "center", justifyContent: "center", color: "#FFFFFF", fontFamily: "sans-serif", textAlign: "center", padding: 20 }}>
         <div>
@@ -128,6 +136,21 @@ export default async function ActivityPage({ params }) {
         studentId={studentId}
         caseStandard={assignment.case_standard}
         publicCase={missionMapCase}
+        existingSubmission={existingSubmission}
+        alreadySubmitted={alreadySubmitted}
+        revisionRequested={revisionRequested}
+        revisionFeedback={revisionFeedback}
+      />
+    );
+  }
+
+  if (isSimulationLab) {
+    return (
+      <SimulationLabClient
+        assignmentId={assignmentId}
+        studentId={studentId}
+        caseStandard={assignment.case_standard}
+        publicCase={simulationLabCase}
         existingSubmission={existingSubmission}
         alreadySubmitted={alreadySubmitted}
         revisionRequested={revisionRequested}
