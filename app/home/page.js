@@ -34,6 +34,7 @@ export default async function HomePage() {
   const studentId = cookieStore.get("cc_student_id")?.value;
 
   if (!studentId) {
+    console.error("[home/page.js] no cc_student_id cookie present — redirecting to /login");
     redirect("/login");
   }
 
@@ -56,6 +57,7 @@ export default async function HomePage() {
   // means a missing/uncached column degrades gracefully (no equipped
   // trail shown) instead of locking students out of Home entirely.
   if (studentError) {
+    console.error("[home/page.js] primary student select failed, retrying without equipped_world_trail:", JSON.stringify(studentError));
     const fallback = await supabaseAdmin
       .from("students")
       .select(BASE_STUDENT_FIELDS)
@@ -63,9 +65,13 @@ export default async function HomePage() {
       .single();
     student = fallback.data ? { ...fallback.data, equipped_world_trail: null } : fallback.data;
     studentError = fallback.error;
+    if (studentError) {
+      console.error("[home/page.js] fallback student select ALSO failed:", JSON.stringify(studentError));
+    }
   }
 
   if (studentError || !student) {
+    console.error("[home/page.js] redirecting to /login — studentId:", studentId, "studentError:", JSON.stringify(studentError), "student:", JSON.stringify(student));
     redirect("/login");
   }
 
