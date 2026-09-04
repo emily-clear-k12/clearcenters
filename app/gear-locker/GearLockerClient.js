@@ -18,49 +18,41 @@ const COLORS = {
   danger: "#E4574C",
 };
 
-// Fixed spots on the map, read off Emily's background/mockup — percent of
-// the full viewport as of the Aug 27 full-screen pass (see MissionsClient.js
-// for the same change, made the same day for the same reason: Emily wants
-// this page edge-to-edge like Home instead of sitting in a bordered card,
-// and accepted that a `cover`-cropped background can nudge these spots
-// slightly off-pixel on an unusually-shaped window).
+// Sept 4, 2026 rebuild: Emily replaced the abstract open-space background
+// with a real illustrated "Galaxy Hub" room — six portal windows built
+// directly into the art (Glow Garden / Ice World / Lavacore / Sandspire /
+// Sky Isles / Robot World), plus its own baked-in ship out the center
+// window. The old floating planet-icon-on-open-sky metaphor (a rocket
+// emoji "current location" marker, dashed lines connecting it to six
+// separate orb images) doesn't fit this grounded, literal room — the art
+// itself now shows "you are here" and "these are the doors to other
+// worlds," so that whole decorative overlay system is retired here, not
+// just repositioned. What's left: an invisible clickable hotspot sized to
+// each portal's real position in the art (so the portal itself is the
+// link), plus the same name/crystal-threshold/lock-state readout that
+// used to float under each icon, now anchored under its portal instead.
 //
-// Rebalanced again Aug 27 (later still) per Emily's request: 3 planets on
-// each side of the ship, mirrored, instead of 5 planets plus one sitting
-// dead-center. The background art has 5 baked-in "landing ring" anchors at
-// x = 26/36/50/64/74 (see the price-ordering note this replaces, below) —
-// an odd number, so there's no way to split them 3-and-3 without leaving
-// the center ring (50, 29) empty. Emily confirmed that trade-off directly
-// ("move it anyway") rather than have it picked silently. The fix: Robot
-// Relay City moves off the center ring into the ring at x=36 (previously
-// Frost Ring's spot), Frost Ring shifts one ring outward to x=26 (glow
-// Garden's old spot), and Glow Garden moves to a new ringless spot at
-// x=12 — mirroring LavaCore's existing ringless spot at x=88 exactly
-// (50-12 = 88-50 = 38; same y, 48, on both). The center ring (50, 29) is
-// now unused — a real, deliberate side effect, not an oversight. Jungle
-// Moon / Cloud Reef / LavaCore (the right half) are untouched, since they
-// already mirror this pattern's spacing.
+// Four of the six planet_keys kept their DB identity (frost_ring,
+// robot_relay_city, jungle_moon, cloud_reef are still the real keys
+// student_planet_visits references) but their DISPLAY NAME was renamed to
+// match the new art's baked-in labels (Ice World, Robot World, Sandspire,
+// Sky Isles respectively) — see the Sept 4 SQL for that rename. Glow
+// Garden and Lavacore matched already.
 //
-// Left-to-right cheapest-to-most-expensive (Group S's rule) still holds
-// across all 6, it's just measured outward-in-from-each-edge now instead
-// of one continuous left-to-right sweep through a center point: x=12
-// (Glow Garden, 50) < x=26 (Frost Ring, 80) < x=36 (Robot Relay City, 120)
-// < [ship, unused ring] < x=64 (Jungle Moon, 150) < x=74 (Cloud Reef, 200)
-// < x=88 (LavaCore, 250).
-//
-// LavaCore was never on a baked ring to begin with (added after the
-// original 5 planets, once Emily sent its art — see the git history of
-// this comment for that positioning story) — Glow Garden now shares that
-// same "floats on its own, no landing pad" treatment on the mirror spot.
-const PLANET_POSITIONS = {
-  glow_garden: { x: 12, y: 48 },
-  frost_ring: { x: 26, y: 47 },
-  robot_relay_city: { x: 36, y: 35 },
-  jungle_moon: { x: 64, y: 29 },
-  cloud_reef: { x: 74, y: 47 },
-  lavacore: { x: 88, y: 48 },
+// Hotspot boxes were measured directly off the real art (percent of image
+// width/height, oval left/right/top/bottom edges read from a gridded
+// crop) rather than guessed — same discipline as Simulation Lab's
+// CONSOLE_HOTSPOTS. Like that constant, these are "tuned by eye against
+// the source image," not pixel-perfect, and may want a small nudge once
+// Emily sees it live on a real screen.
+const PORTAL_HOTSPOTS = {
+  glow_garden: { x: 13, y: 39, w: 12, h: 39 },
+  frost_ring: { x: 26.5, y: 43, w: 12, h: 31 }, // "Ice World" portal
+  lavacore: { x: 41, y: 43, w: 12, h: 29 },
+  jungle_moon: { x: 64.5, y: 44, w: 12, h: 29 }, // "Sandspire" portal
+  cloud_reef: { x: 74.5, y: 43.5, w: 10, h: 31 }, // "Sky Isles" portal
+  robot_relay_city: { x: 85.5, y: 43, w: 12, h: 31 }, // "Robot World" portal
 };
-const SHIP_POSITION = { x: 50, y: 52 };
 
 function formatShortDate(dateStr) {
   return new Date(dateStr).toLocaleDateString(undefined, { month: "short", day: "numeric" });
@@ -195,7 +187,11 @@ export default function GearLockerClient({ student, planets, visitedPlanetKeys, 
         .gc-btn { transition: transform 150ms ease, box-shadow 150ms ease; cursor: pointer; border: none; font-family: 'Inter', sans-serif; }
         .gc-btn:hover { transform: translateY(-1px); }
         .planet-node { transition: transform 150ms ease, filter 150ms ease; cursor: pointer; border: none; background: none; padding: 0; font-family: inherit; }
-        .planet-node:hover { transform: translate(-50%, -100%) scale(1.06) !important; }
+        /* Sept 4, 2026: base transform changed from translate(-50%,-100%)
+           (anchored above a floating icon) to translate(-50%,-50%)
+           (centered over the portal hotspot box) — this hover override
+           has to match the new base or it'll jump the button on hover. */
+        .planet-node:hover { transform: translate(-50%, -50%) scale(1.06) !important; }
         .nav-pill { transition: transform 120ms ease; cursor: pointer; border: none; font-family: 'Inter', sans-serif; }
         .nav-pill:hover { transform: translateY(-1px); }
       `}</style>
@@ -250,38 +246,17 @@ export default function GearLockerClient({ student, planets, visitedPlanetKeys, 
             </div>
           </div>
 
-          {/* Dashed connector lines */}
-          <svg viewBox="0 0 100 100" preserveAspectRatio="none" style={{ position: "absolute", inset: 0, width: "100%", height: "100%" }}>
-            {planets.map((p) => {
-              const pos = PLANET_POSITIONS[p.planet_key];
-              if (!pos) return null;
-              return (
-                <line
-                  key={p.planet_key}
-                  x1={SHIP_POSITION.x} y1={SHIP_POSITION.y}
-                  x2={pos.x} y2={pos.y}
-                  stroke="rgba(160,180,255,.4)"
-                  strokeWidth="0.3"
-                  strokeDasharray="1.2 1.2"
-                />
-              );
-            })}
-          </svg>
-
-          {/* Ship / current location */}
-          <div style={{ position: "absolute", left: `${SHIP_POSITION.x}%`, top: `${SHIP_POSITION.y}%`, transform: "translate(-50%, -50%)", textAlign: "center", zIndex: 3 }}>
-            <div style={{ width: "clamp(30px, 5vw, 52px)", height: "clamp(30px, 5vw, 52px)", borderRadius: "50%", background: "radial-gradient(circle, rgba(123,93,255,.9), rgba(123,93,255,.15))", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "clamp(14px, 2.2vw, 24px)", boxShadow: "0 0 24px rgba(123,93,255,.7)", margin: "0 auto 6px" }}>
-              🚀
-            </div>
-            <div style={{ background: "rgba(20,16,50,.8)", borderRadius: 999, padding: "3px 12px", fontSize: "clamp(7px, 0.9vw, 10px)", fontWeight: 700, color: COLORS.white, whiteSpace: "nowrap" }}>
-              CURRENT LOCATION · Crystal Command
-            </div>
-          </div>
-
-          {/* Planet nodes */}
+          {/* Portal hotspots — Sept 4, 2026 rebuild. Each portal baked into
+              the new art IS the link now; no floating icon, no dashed
+              lines, no separate ship marker (see the big comment above
+              PORTAL_HOTSPOTS for why those were retired rather than just
+              repositioned). The clickable button covers the portal oval
+              itself; the name/threshold/lock readout floats just below it,
+              same information as before, just anchored to the art instead
+              of to an icon. */}
           {planets.map((planet) => {
-            const pos = PLANET_POSITIONS[planet.planet_key];
-            if (!pos) return null;
+            const spot = PORTAL_HOTSPOTS[planet.planet_key];
+            if (!spot) return null;
             const unlocked = isUnlocked(planet);
             const visited = visitedSet.has(planet.planet_key);
             return (
@@ -290,31 +265,42 @@ export default function GearLockerClient({ student, planets, visitedPlanetKeys, 
                 type="button"
                 className="planet-node"
                 onClick={() => openPlanet(planet)}
-                style={{ position: "absolute", left: `${pos.x}%`, top: `${pos.y}%`, transform: "translate(-50%, -100%)", zIndex: 2, textAlign: "center" }}
+                aria-label={planet.name}
+                style={{
+                  position: "absolute",
+                  left: `${spot.x}%`, top: `${spot.y}%`,
+                  width: `${spot.w}%`, height: `${spot.h}%`,
+                  transform: "translate(-50%, -50%)",
+                  zIndex: 2, textAlign: "center",
+                  background: "none", border: "none", padding: 0, cursor: "pointer",
+                }}
               >
-                <div style={{ position: "relative", width: "clamp(64px, 12vw, 140px)", height: "clamp(64px, 12vw, 140px)" }}>
-                  <img
-                    src={planet.image_path}
-                    alt={planet.name}
-                    style={{ width: "100%", height: "100%", objectFit: "contain", filter: unlocked ? "drop-shadow(0 6px 14px rgba(0,0,0,.4))" : "drop-shadow(0 6px 10px rgba(0,0,0,.4))" }}
-                  />
+                {/* Invisible click target over the portal art itself — no
+                    icon image here anymore, the portal in the background
+                    IS the button. */}
+                <div style={{ position: "absolute", inset: 0 }}>
                   {unlocked ? (
                     visited && (
-                      <div style={{ position: "absolute", top: -2, right: -2, width: 20, height: 20, borderRadius: "50%", background: "#22C55E", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, boxShadow: "0 2px 6px rgba(0,0,0,.3)" }}>✓</div>
+                      <div style={{ position: "absolute", top: "2%", right: "6%", width: 22, height: 22, borderRadius: "50%", background: "#22C55E", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, boxShadow: "0 2px 6px rgba(0,0,0,.4)" }}>✓</div>
                     )
                   ) : (
-                    <div style={{ position: "absolute", top: -2, right: -2, width: 20, height: 20, borderRadius: "50%", background: "rgba(20,16,50,.85)", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, boxShadow: "0 2px 6px rgba(0,0,0,.3)" }}>🔒</div>
+                    <div style={{ position: "absolute", top: "2%", right: "6%", width: 22, height: 22, borderRadius: "50%", background: "rgba(20,16,50,.85)", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, boxShadow: "0 2px 6px rgba(0,0,0,.4)" }}>🔒</div>
                   )}
                 </div>
-                <div style={{ marginTop: 4, fontSize: "clamp(8px, 1vw, 11px)", fontWeight: 700, color: COLORS.white, textShadow: "0 1px 4px rgba(0,0,0,.6)", whiteSpace: "nowrap" }}>{planet.name}</div>
-                <div style={{ display: "inline-flex", alignItems: "center", gap: 3, marginTop: 2, background: unlocked ? `${planet.theme_color}CC` : "rgba(20,16,50,.75)", color: "#fff", borderRadius: 999, padding: "2px 8px", fontSize: "clamp(7px, 0.85vw, 10px)", fontWeight: 700 }}>
-                  💎 {planet.threshold}
-                </div>
-                {lockedTip === planet.planet_key && (
-                  <div style={{ marginTop: 4, background: "#1B1440", color: "#fff", borderRadius: 8, padding: "3px 8px", fontSize: 9.5, whiteSpace: "nowrap" }}>
-                    Need {Math.max(0, planet.threshold - student.crystal_points)} more!
+                {/* Name + crystal-threshold pill, anchored just below the
+                    portal so it reads correctly no matter the portal's
+                    height. */}
+                <div style={{ position: "absolute", top: "100%", left: "50%", transform: "translateX(-50%)", marginTop: 6, whiteSpace: "nowrap" }}>
+                  <div style={{ fontSize: "clamp(8px, 1vw, 11px)", fontWeight: 700, color: COLORS.white, textShadow: "0 1px 4px rgba(0,0,0,.6)" }}>{planet.name}</div>
+                  <div style={{ display: "inline-flex", alignItems: "center", gap: 3, marginTop: 2, background: unlocked ? `${planet.theme_color}CC` : "rgba(20,16,50,.75)", color: "#fff", borderRadius: 999, padding: "2px 8px", fontSize: "clamp(7px, 0.85vw, 10px)", fontWeight: 700 }}>
+                    💎 {planet.threshold}
                   </div>
-                )}
+                  {lockedTip === planet.planet_key && (
+                    <div style={{ marginTop: 4, background: "#1B1440", color: "#fff", borderRadius: 8, padding: "3px 8px", fontSize: 9.5 }}>
+                      Need {Math.max(0, planet.threshold - student.crystal_points)} more!
+                    </div>
+                  )}
+                </div>
               </button>
             );
           })}
