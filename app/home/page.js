@@ -13,26 +13,33 @@ export default async function HomePage() {
     redirect("/login");
   }
 
-  // Sept 4, 2026: one of several Home backgrounds, picked at random by
-  // student-login and held for the whole session (HOME_BACKGROUNDS is
-  // that route's list, imported rather than duplicated so there's one
-  // source of truth). Re-validated against the real list here rather than
-  // trusting the cookie value directly — a stale value from before this
-  // feature shipped, or anything unexpected, just falls back to the
-  // original background instead of passing an arbitrary string into an
-  // image src.
   const cookieBg = cookieStore.get("cc_home_bg")?.value;
-  const homeBackground = HOME_BACKGROUNDS.includes(cookieBg) ? cookieBg : HOME_BACKGROUNDS[0];
 
   const { data: student, error: studentError } = await supabaseAdmin
     .from("students")
-    .select("id, first_name, crystal_points, streak_days, class_id")
+    .select("id, first_name, crystal_points, streak_days, class_id, home_background")
     .eq("id", studentId)
     .single();
 
   if (studentError || !student) {
     redirect("/login");
   }
+
+  // Sept 4, 2026: which of the several Home backgrounds this student sees.
+  // A student's own saved choice (set via the Home settings panel, stored
+  // durably on students.home_background) always wins once they've made one.
+  // Until then, fall back to the per-login random pick from student-login
+  // (held in the cc_home_bg cookie for the session). Both values are
+  // re-validated against the real HOME_BACKGROUNDS list here rather than
+  // trusted directly — a stale cookie from before this feature shipped, a
+  // removed background, or anything unexpected just falls back to the
+  // original background instead of passing an arbitrary string into an
+  // image src.
+  const homeBackground = HOME_BACKGROUNDS.includes(student.home_background)
+    ? student.home_background
+    : HOME_BACKGROUNDS.includes(cookieBg)
+    ? cookieBg
+    : HOME_BACKGROUNDS[0];
 
   const { data: studentClass } = await supabaseAdmin
     .from("classes")

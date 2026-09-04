@@ -2,6 +2,21 @@
 
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { HOME_BACKGROUNDS } from "../../lib/homeBackgrounds";
+
+// Sept 4, 2026 — display names for the Home settings panel's background
+// picker (added alongside the gear-icon settings window). Keyed by the same
+// paths HOME_BACKGROUNDS holds so the picker always matches the real list;
+// a background added there without an entry here just shows a plain
+// fallback label instead of breaking.
+const HOME_BACKGROUND_LABELS = {
+  "/student/hub_background.jpg": "Main Deck",
+  "/student/hub_background_library.jpg": "Library",
+  "/student/hub_background_bridge.jpg": "The Bridge",
+  "/student/hub_background_mess_hall.jpg": "Mess Hall",
+  "/student/hub_background_observatory.jpg": "Observatory",
+  "/student/hub_background_work_room.jpg": "Work Room",
+};
 
 const COLORS = {
   violet: "#7B5DFF",
@@ -45,7 +60,15 @@ function subjectRingColor(subject) {
 export default function HomeClient({ student, studentClass, assignments, missionsCompleted, badgeTiers, homeBackground }) {
   const router = useRouter();
   const [samOpen, setSamOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const [notif, setNotif] = useState(null);
+
+  // Sept 4, 2026 — the background actually shown, starting from whatever
+  // page.js resolved (the student's saved choice, or this session's random
+  // pick). Kept in its own state so picking a new one in the settings panel
+  // updates the screen immediately, without a full page reload.
+  const [currentBg, setCurrentBg] = useState(homeBackground);
+  const [bgSaving, setBgSaving] = useState(false);
 
   // Added Sept 1, 2026 — Home is the hub every student lands on and the one
   // real nav screen that doesn't render the shared BackToHubButton (see that
@@ -54,6 +77,29 @@ export default function HomeClient({ student, studentClass, assignments, mission
   async function handleLogout() {
     await fetch("/api/student-logout", { method: "POST" });
     router.push("/login");
+  }
+
+  // Sept 4, 2026 — saves a permanent background choice from the new
+  // settings panel (POST /api/student/set-background). Applied optimistically
+  // so the screen updates right away; reverted if the save actually fails,
+  // so the picker never shows a choice that didn't stick.
+  async function handlePickBackground(path) {
+    if (path === currentBg || bgSaving) return;
+    const previous = currentBg;
+    setCurrentBg(path);
+    setBgSaving(true);
+    try {
+      const res = await fetch("/api/student/set-background", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ background: path }),
+      });
+      if (!res.ok) throw new Error("save failed");
+    } catch (e) {
+      setCurrentBg(previous);
+    } finally {
+      setBgSaving(false);
+    }
   }
 
   useEffect(() => {
@@ -85,7 +131,7 @@ export default function HomeClient({ student, studentClass, assignments, mission
         // lib/homeBackgrounds.js. Falls back to the original single image
         // if the prop is ever missing (shouldn't happen, page.js always
         // resolves one, but a safe default costs nothing).
-        backgroundImage: `url(${homeBackground || "/student/hub_background.jpg"})`,
+        backgroundImage: `url(${currentBg || "/student/hub_background.jpg"})`,
         backgroundSize: "cover",
         backgroundPosition: "center 30%",
         backgroundRepeat: "no-repeat",
@@ -128,7 +174,25 @@ export default function HomeClient({ student, studentClass, assignments, mission
           zIndex: 5,
         }}
       >
-        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 3 }}>
+        {/* Sept 4, 2026 — settings gear, top-right corner of the header
+            tile per Emily's ask ("the gear symbol link in their box in the
+            top left"). Opens the personalization panel below rather than
+            navigating anywhere, same toggle pattern as the S.A.M. button. */}
+        <button
+          type="button"
+          onClick={() => setSettingsOpen(!settingsOpen)}
+          className="gc-btn"
+          title="Settings"
+          style={{
+            position: "absolute", top: 10, right: 10, width: 26, height: 26, borderRadius: "50%",
+            background: "rgba(255,255,255,.85)", border: "none", cursor: "pointer",
+            display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14,
+            boxShadow: "0 2px 8px rgba(0,0,0,.12)", padding: 0,
+          }}
+        >
+          ⚙️
+        </button>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 3, paddingRight: 22 }}>
           {currentTier && (
             <img
               src={`/badges/transparent/${currentTier.tier_key}.png`}
@@ -173,6 +237,72 @@ export default function HomeClient({ student, studentClass, assignments, mission
           Log Out
         </button>
       </div>
+
+      {/* Sept 4, 2026 — Settings panel, opened from the header tile's gear
+          icon. For now this just holds the background picker (6 options,
+          HOME_BACKGROUNDS) plus a second, more visible Log Out button —
+          Emily reported the small text-link Log Out felt "lost"; it's
+          actually still there (see above), just easy to miss, so this adds
+          an obvious duplicate rather than replacing it. The picker isn't
+          gated by Galaxy Hub unlocks yet — that tie-in needs a real
+          background-to-planet mapping decided with Emily first, the same
+          way the portal-name mapping was, rather than guessed at here. */}
+      {settingsOpen && (
+        <div
+          style={{
+            position: "absolute", top: 18, left: 262, width: 296,
+            background: COLORS.white, borderRadius: 18, boxShadow: "0 10px 28px rgba(0,0,0,.22)",
+            padding: 18, zIndex: 6,
+          }}
+        >
+          <p style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 700, fontSize: 14.5, margin: "0 0 12px 0", color: COLORS.textDark }}>
+            ⚙️ Settings
+          </p>
+          <p style={{ fontSize: 10.5, fontWeight: 700, letterSpacing: .4, textTransform: "uppercase", color: COLORS.textMuted, margin: "0 0 8px 0" }}>
+            Choose your background
+          </p>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, marginBottom: 14 }}>
+            {HOME_BACKGROUNDS.map((path) => {
+              const selected = path === currentBg;
+              return (
+                <button
+                  key={path}
+                  type="button"
+                  onClick={() => handlePickBackground(path)}
+                  className="gc-btn"
+                  style={{
+                    position: "relative", padding: 0, borderRadius: 10, overflow: "hidden",
+                    border: selected ? `2.5px solid ${COLORS.violet}` : "2.5px solid transparent",
+                    background: "none", cursor: bgSaving ? "default" : "pointer", opacity: bgSaving && !selected ? 0.6 : 1,
+                  }}
+                >
+                  <img src={path} alt={HOME_BACKGROUND_LABELS[path] || "Background"} style={{ width: "100%", height: 50, objectFit: "cover", display: "block" }} />
+                  <span style={{
+                    position: "absolute", bottom: 0, left: 0, right: 0, fontSize: 8.5, fontWeight: 700,
+                    color: COLORS.white, background: "rgba(20,26,50,.6)", padding: "2px 0", textAlign: "center",
+                  }}>
+                    {HOME_BACKGROUND_LABELS[path] || "Background"}
+                  </span>
+                  {selected && (
+                    <span style={{ position: "absolute", top: 2, right: 3, fontSize: 11, textShadow: "0 1px 3px rgba(0,0,0,.6)" }}>✓</span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+          <button
+            type="button"
+            onClick={handleLogout}
+            className="gc-btn"
+            style={{
+              width: "100%", background: "none", border: `1.5px solid ${COLORS.textMuted}`, borderRadius: 10,
+              color: COLORS.textDark, fontWeight: 700, fontSize: 12.5, padding: "9px 0",
+            }}
+          >
+            Log Out
+          </button>
+        </div>
+      )}
 
       {/* Centered column: notification (if any) + Active Mission + Up Next */}
       <div
