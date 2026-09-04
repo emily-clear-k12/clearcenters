@@ -26,11 +26,24 @@ export default async function WorldPage({ params }) {
     redirect("/login");
   }
 
-  const { data: student, error: studentError } = await supabaseAdmin
+  // Same defensive fallback as app/home/page.js — equipped_world_trail is
+  // a brand-new column; a missing/not-yet-cached column here degrades to
+  // "no trail shown" instead of bouncing the student back to /login.
+  let { data: student, error: studentError } = await supabaseAdmin
     .from("students")
     .select("id, first_name, crystal_points, equipped_world_trail")
     .eq("id", studentId)
     .single();
+
+  if (studentError) {
+    const fallback = await supabaseAdmin
+      .from("students")
+      .select("id, first_name, crystal_points")
+      .eq("id", studentId)
+      .single();
+    student = fallback.data ? { ...fallback.data, equipped_world_trail: null } : fallback.data;
+    studentError = fallback.error;
+  }
 
   if (studentError || !student) {
     redirect("/login");

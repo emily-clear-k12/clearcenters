@@ -39,11 +39,31 @@ export default async function HomePage() {
 
   const cookieBg = cookieStore.get("cc_home_bg")?.value;
 
-  const { data: student, error: studentError } = await supabaseAdmin
+  const BASE_STUDENT_FIELDS = "id, first_name, crystal_points, streak_days, class_id, home_background, equipped_sam_skin, sam_nickname, teacher_unlocked_sam_skins";
+
+  let { data: student, error: studentError } = await supabaseAdmin
     .from("students")
-    .select("id, first_name, crystal_points, streak_days, class_id, home_background, equipped_sam_skin, sam_nickname, teacher_unlocked_sam_skins, equipped_world_trail")
+    .select(`${BASE_STUDENT_FIELDS}, equipped_world_trail`)
     .eq("id", studentId)
     .single();
+
+  // Sept 4/5, 2026 — defensive fallback: equipped_world_trail is a brand-new
+  // column (World Reward Station SQL). If that migration hasn't landed on
+  // this Supabase project yet, or PostgREST's schema cache just hasn't
+  // picked it up (a well-known lag right after an ALTER TABLE), selecting
+  // it 500s this whole query — which used to send EVERY student straight
+  // back to /login, not just break the trail feature. Retrying without it
+  // means a missing/uncached column degrades gracefully (no equipped
+  // trail shown) instead of locking students out of Home entirely.
+  if (studentError) {
+    const fallback = await supabaseAdmin
+      .from("students")
+      .select(BASE_STUDENT_FIELDS)
+      .eq("id", studentId)
+      .single();
+    student = fallback.data ? { ...fallback.data, equipped_world_trail: null } : fallback.data;
+    studentError = fallback.error;
+  }
 
   if (studentError || !student) {
     redirect("/login");
