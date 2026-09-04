@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
 import { GENERIC_HINTS, getCaseHints } from "../../../lib/hints";
 import SamIcon from "../../../components/SamIcon";
+import SamStage from "../../../components/SamStage";
 
 // Signal Check's own locked palette — navy/teal/violet/gold, distinct from
 // Group Chat (violet-led) and Newsroom (navy/gold-led) so it reads as its
@@ -942,6 +943,12 @@ export default function SignalCheckClient({ assignmentId, studentId, caseStandar
       <EvidenceModal open={evidenceModalOpen} onClose={() => setEvidenceModalOpen(false)} publicCase={publicCase} evidenceOrder={shuffledEvidence} />
       <SubmitConfirmModal open={showSubmitConfirm} onCancel={() => setShowSubmitConfirm(false)} onConfirm={confirmSubmit} />
       <CelebrationModal open={selfConfidence !== null && phase === "answer" && submitted} onGoHome={() => router.push("/missions")} />
+
+      {/* Sept 4, 2026 — S.A.M. follows the student through the whole
+          mission now, same 150px companion as Home/Missions/ActivityClient.
+          Decorative only (no onClick) — this screen already has its own
+          "Get a hint" button for real hint requests. */}
+      <SamStage skinKey={samSkin} alt={samLabel} size={150} style={{ position: "fixed", right: 12, bottom: 12, zIndex: 4 }} />
     </div>
   );
 }

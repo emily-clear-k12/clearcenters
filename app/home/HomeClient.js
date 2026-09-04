@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { HOME_BACKGROUNDS } from "../../lib/homeBackgrounds";
 import { SAM_SKINS, DEFAULT_SAM_SKIN } from "../../lib/samSkins";
 import SamIcon from "../../components/SamIcon";
+import SamStage from "../../components/SamStage";
 
 // Sept 4, 2026 — display names for the Home settings panel's background
 // picker (added alongside the gear-icon settings window). Keyed by the same
@@ -601,15 +602,21 @@ export default function HomeClient({ student, studentClass, assignments, mission
         </button>
       </div>
 
-      <button
-        type="button"
+      {/* Sept 4, 2026 — grown from a 58px corner button to a real 150px
+          "companion" presence (SamStage), per Emily's flag that S.A.M. was
+          too small anywhere for the new animation packs to ever read. Same
+          corner spot, same click-to-toggle-tooltip behavior — just big
+          enough to actually be seen, with a soft shadow "platform"
+          grounding it instead of floating at an arbitrary size. */}
+      <SamStage
+        skinKey={samSkinKey}
+        alt={samLabel}
+        size={150}
         onClick={() => setSamOpen(!samOpen)}
-        style={{ position: "absolute", right: 26, bottom: 26, width: 58, height: 58, borderRadius: "50%", background: "rgba(255,255,255,.75)", backdropFilter: "blur(6px)", WebkitBackdropFilter: "blur(6px)", boxShadow: "0 8px 22px rgba(0,0,0,.2)", border: "none", cursor: "pointer", padding: 6, zIndex: 5 }}
-      >
-        <SamIcon skinKey={samSkinKey} alt={samLabel} size="100%" />
-      </button>
+        style={{ position: "absolute", right: 10, bottom: 10, zIndex: 5 }}
+      />
       {samOpen && (
-        <div style={{ position: "absolute", right: 26, bottom: 92, width: 240, background: COLORS.white, borderRadius: 16, boxShadow: "0 8px 24px rgba(0,0,0,.2)", padding: 16, zIndex: 5 }}>
+        <div style={{ position: "absolute", right: 26, bottom: 186, width: 240, background: COLORS.white, borderRadius: 16, boxShadow: "0 8px 24px rgba(0,0,0,.2)", padding: 16, zIndex: 5 }}>
           <p style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 700, fontSize: 14, margin: "0 0 4px 0" }}>
             {samLabel} <span style={{ color: COLORS.teal }}>· ClearCenters Assistant for Missions</span>
           </p>

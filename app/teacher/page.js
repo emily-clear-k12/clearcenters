@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { supabase } from "../../lib/supabaseClient";
 import TeacherSidebar from "../../components/TeacherSidebar";
 import TeacherPageBanner from "../../components/TeacherPageBanner";
-import { SAM_SKINS } from "../../lib/samSkins";
+import { SAM_SKINS, FALLBACK_ICON } from "../../lib/samSkins";
 
 // Palette updated Aug 27 (evening pass) — violet and teal sampled from the
 // new sci-fi banner art (the crystal's glow and the desk's edge lighting)
@@ -223,7 +223,7 @@ function RewardsModal({ open, classes, rawStudents, defaultClassId, awarding, on
                   onClick={() => setSkinKey(skin.key)}
                   style={{ padding: "10px 4px", borderRadius: 10, border: skinKey === skin.key ? `2px solid ${COLORS.violet}` : `1.5px solid ${COLORS.border}`, background: skinKey === skin.key ? COLORS.violetSoft : COLORS.white, textAlign: "center" }}
                 >
-                  <img src={skin.image} alt="" style={{ width: 36, height: 36, objectFit: "contain", marginBottom: 4 }} onError={(e) => { e.currentTarget.src = SAM_SKINS[0].image; }} />
+                  <img src={skin.image} alt="" style={{ width: 36, height: 36, objectFit: "contain", marginBottom: 4 }} onError={(e) => { e.currentTarget.src = FALLBACK_ICON; }} />
                   <div style={{ fontSize: 10.5, fontWeight: 700, color: COLORS.textDark }}>{skin.name}</div>
                 </button>
               ))}

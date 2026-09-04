@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import BackToHubButton from "../../components/BackToHubButton";
 import SamIcon from "../../components/SamIcon";
+import SamStage from "../../components/SamStage";
 
 const COLORS = {
   violet: "#7B5DFF",
@@ -424,15 +425,19 @@ export default function MissionsClient({ student, assignments }) {
         </div>
       )}
 
-      <button
-        type="button"
+      {/* Sept 4, 2026 — grown from a 64px corner button to a real 150px
+          "companion" presence (SamStage), matching Home's same upgrade —
+          see HomeClient.js for the full reasoning. Same corner spot, same
+          click-to-toggle-tooltip behavior. */}
+      <SamStage
+        skinKey={student.equipped_sam_skin}
+        alt={samLabel}
+        size={150}
         onClick={() => setSamOpen(!samOpen)}
-        style={{ position: "fixed", right: 28, bottom: 28, width: 64, height: 64, borderRadius: "50%", background: COLORS.tealSoft, boxShadow: "0 8px 24px rgba(0,0,0,.12)", border: "none", cursor: "pointer", padding: 6 }}
-      >
-        <SamIcon skinKey={student.equipped_sam_skin} alt={samLabel} size="100%" />
-      </button>
+        style={{ position: "fixed", right: 12, bottom: 12 }}
+      />
       {samOpen && (
-        <div style={{ position: "fixed", right: 28, bottom: 104, width: 240, background: COLORS.white, borderRadius: 16, boxShadow: "0 8px 24px rgba(0,0,0,.12)", padding: 16 }}>
+        <div style={{ position: "fixed", right: 28, bottom: 188, width: 240, background: COLORS.white, borderRadius: 16, boxShadow: "0 8px 24px rgba(0,0,0,.12)", padding: 16 }}>
           <p style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 700, fontSize: 14, margin: "0 0 4px 0" }}>
             {samLabel} <span style={{ color: COLORS.teal }}>· ClearCenters Assistant for Missions</span>
           </p>

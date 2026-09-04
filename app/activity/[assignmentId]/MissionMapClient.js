@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
 import { GENERIC_HINTS, getCaseHints } from "../../../lib/hints";
 import SamIcon from "../../../components/SamIcon";
+import SamStage from "../../../components/SamStage";
 
 // Mission Map's own locked palette — light sky-blue with a signal-gold
 // accent for cleared ground (revised Aug 30 v3: replaced an initial dark
@@ -968,6 +969,7 @@ export default function MissionMapClient({
             Back to Home
           </button>
         </div>
+        <SamStage skinKey={samSkin} alt={samLabel} size={150} style={{ position: "fixed", right: 12, bottom: 12, zIndex: 4 }} />
       </div>
     );
   }
@@ -1484,6 +1486,12 @@ export default function MissionMapClient({
           </div>
         </div>
       )}
+
+      {/* Sept 4, 2026 — S.A.M. follows the student through the whole
+          mission now, same 150px companion as Home/Missions/other engines.
+          Decorative only — Mission Map's own hint mechanic is
+          checkpoint-triggered, not a click on S.A.M. itself. */}
+      <SamStage skinKey={samSkin} alt={samLabel} size={150} style={{ position: "fixed", right: 12, bottom: 12, zIndex: 4 }} />
     </div>
   );
 }

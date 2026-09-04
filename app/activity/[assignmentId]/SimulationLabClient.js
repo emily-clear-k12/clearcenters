@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
 import SamIcon from "../../../components/SamIcon";
+import SamStage from "../../../components/SamStage";
 // Note: unlike Mission Map/Group Chat, Simulation Lab doesn't use
 // lib/hints.js's per-checkpoint hint bank — its checkpoints are
 // single-attempt with no "wrong, try again" reveal to hint against (see the
@@ -1145,6 +1146,7 @@ export default function SimulationLabClient({
             ← Back to Home
           </button>
         </div>
+        <SamStage skinKey={samSkin} alt={samLabel} size={150} style={{ position: "fixed", right: 12, bottom: 12, zIndex: 4 }} />
       </div>
     );
   }
@@ -1396,6 +1398,12 @@ export default function SimulationLabClient({
           </div>
         </div>
       )}
+
+      {/* Sept 4, 2026 — S.A.M. follows the student through the whole
+          mission now, same 150px companion as Home/Missions/other engines.
+          Decorative only, alongside the existing SamBanner() hint messages
+          within the page. */}
+      <SamStage skinKey={samSkin} alt={samLabel} size={150} style={{ position: "fixed", right: 12, bottom: 12, zIndex: 4 }} />
     </div>
   );
 }

@@ -6,6 +6,7 @@ import { Send, Loader2 } from "lucide-react";
 import { MAX_DISCUSS_TURNS } from "../../../lib/constants";
 import { GENERIC_HINTS, getCaseHints } from "../../../lib/hints";
 import SamIcon from "../../../components/SamIcon";
+import SamStage from "../../../components/SamStage";
 
 const COLORS = {
   navy: "#16243F",
@@ -846,6 +847,17 @@ export default function ActivityClient(props) {
       <p style={{ fontSize: 11.5, color: "rgba(255,255,255,.55)", textAlign: "center", marginTop: 4, marginBottom: 12, lineHeight: 1.5 }}>
         The characters and AI are never the judge — your teacher is always the scorer of record.
       </p>
+
+      {/* Sept 4, 2026 — S.A.M. now follows the student through the whole
+          mission, not just the hub screens (Home/Missions) — same 150px
+          companion, same corner spot, matching SamStage's usage there.
+          Purely a presence here, not a click target: this screen already
+          has its own "Get a hint" button doing real hint work, so a second
+          clickable S.A.M. would just be a confusing second way to do the
+          same thing. Skipped on the "coldopen" cinematic intro phase
+          above (its own early return) since that's a short, deliberately
+          uncluttered dramatic beat, not a working screen. */}
+      <SamStage skinKey={samSkin} alt={samLabel} size={150} style={{ position: "fixed", right: 12, bottom: 12, zIndex: 4 }} />
     </div>
   );
 }
