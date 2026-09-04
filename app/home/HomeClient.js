@@ -3,6 +3,8 @@
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { HOME_BACKGROUNDS } from "../../lib/homeBackgrounds";
+import { SAM_SKINS, DEFAULT_SAM_SKIN } from "../../lib/samSkins";
+import SamIcon from "../../components/SamIcon";
 
 // Sept 4, 2026 — display names for the Home settings panel's background
 // picker (added alongside the gear-icon settings window). Keyed by the same
@@ -57,11 +59,37 @@ function subjectRingColor(subject) {
 // portals always line up with the glowing floor rings baked into the
 // background art, and so the whole thing fits on one screen with no
 // scrolling — that was the point of the redesign.
-export default function HomeClient({ student, studentClass, assignments, missionsCompleted, badgeTiers, homeBackground }) {
+export default function HomeClient({ student, studentClass, assignments, missionsCompleted, badgeTiers, homeBackground, shoutout }) {
   const router = useRouter();
   const [samOpen, setSamOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [notif, setNotif] = useState(null);
+
+  // Sept 4, 2026 — Teacher-facing S.A.M. expansion, Feature B: an encouraging
+  // note a teacher sent "as S.A.M." from the Rewards modal. page.js only
+  // ever hands this down when there's an unseen one, so its mere presence is
+  // the signal to show it — dismissing marks it seen server-side so it never
+  // shows again.
+  const [shoutoutVisible, setShoutoutVisible] = useState(!!shoutout);
+  const [dismissingShoutout, setDismissingShoutout] = useState(false);
+
+  async function handleDismissShoutout() {
+    if (dismissingShoutout || !shoutout) return;
+    setDismissingShoutout(true);
+    setShoutoutVisible(false);
+    try {
+      await fetch("/api/student/mark-shoutout-seen", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ shoutoutId: shoutout.id }),
+      });
+    } catch (e) {
+      // Best-effort — if this fails the note just may reappear next login,
+      // which is a far better failure mode than blocking the dismiss.
+    } finally {
+      setDismissingShoutout(false);
+    }
+  }
 
   // Sept 4, 2026 — the background actually shown, starting from whatever
   // page.js resolved (the student's saved choice, or this session's random
@@ -69,6 +97,18 @@ export default function HomeClient({ student, studentClass, assignments, mission
   // updates the screen immediately, without a full page reload.
   const [currentBg, setCurrentBg] = useState(homeBackground);
   const [bgSaving, setBgSaving] = useState(false);
+
+  // Sept 4, 2026 — first real piece of the S.A.M. expansion: which skin is
+  // equipped (drives every SamIcon on this page and, once page.js's props
+  // reach an activity, everywhere else too) and the student's own nickname
+  // for S.A.M., if they've set one. Same optimistic-save shape as the
+  // background picker above.
+  const [samSkinKey, setSamSkinKey] = useState(student.equipped_sam_skin || DEFAULT_SAM_SKIN);
+  const [samSkinSaving, setSamSkinSaving] = useState(false);
+  const [samNickname, setSamNickname] = useState(student.sam_nickname || "");
+  const [nicknameDraft, setNicknameDraft] = useState(student.sam_nickname || "");
+  const [nicknameSaving, setNicknameSaving] = useState(false);
+  const samLabel = samNickname || "S.A.M.";
 
   // Added Sept 1, 2026 — Home is the hub every student lands on and the one
   // real nav screen that doesn't render the shared BackToHubButton (see that
@@ -99,6 +139,55 @@ export default function HomeClient({ student, studentClass, assignments, mission
       setCurrentBg(previous);
     } finally {
       setBgSaving(false);
+    }
+  }
+
+  // Sept 4, 2026 — equips a S.A.M. skin the student has actually unlocked.
+  // The picker UI below already hides the click for locked skins, but this
+  // still handles a failed save the same optimistic-then-revert way as
+  // handlePickBackground — including the case where the server rejects it
+  // (e.g. a stale crystal_points count made something look unlocked that
+  // isn't really, server-side, quite yet).
+  async function handlePickSamSkin(skinKey, unlocked) {
+    if (!unlocked || skinKey === samSkinKey || samSkinSaving) return;
+    const previous = samSkinKey;
+    setSamSkinKey(skinKey);
+    setSamSkinSaving(true);
+    try {
+      const res = await fetch("/api/student/set-sam-skin", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ skin: skinKey }),
+      });
+      if (!res.ok) throw new Error("save failed");
+    } catch (e) {
+      setSamSkinKey(previous);
+    } finally {
+      setSamSkinSaving(false);
+    }
+  }
+
+  // Sept 4, 2026 — saves a custom nickname for S.A.M. Trims and caps length
+  // client-side too (the route re-checks), and clearing the field back to
+  // empty is a real, supported way to go back to calling it "S.A.M."
+  async function handleSaveNickname() {
+    const trimmed = nicknameDraft.trim().slice(0, 20);
+    if (trimmed === samNickname || nicknameSaving) return;
+    const previous = samNickname;
+    setSamNickname(trimmed);
+    setNicknameSaving(true);
+    try {
+      const res = await fetch("/api/student/set-sam-nickname", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ nickname: trimmed }),
+      });
+      if (!res.ok) throw new Error("save failed");
+    } catch (e) {
+      setSamNickname(previous);
+      setNicknameDraft(previous);
+    } finally {
+      setNicknameSaving(false);
     }
   }
 
@@ -239,14 +328,18 @@ export default function HomeClient({ student, studentClass, assignments, mission
       </div>
 
       {/* Sept 4, 2026 — Settings panel, opened from the header tile's gear
-          icon. For now this just holds the background picker (6 options,
-          HOME_BACKGROUNDS) plus a second, more visible Log Out button —
-          Emily reported the small text-link Log Out felt "lost"; it's
-          actually still there (see above), just easy to miss, so this adds
-          an obvious duplicate rather than replacing it. The picker isn't
-          gated by Galaxy Hub unlocks yet — that tie-in needs a real
-          background-to-planet mapping decided with Emily first, the same
-          way the portal-name mapping was, rather than guessed at here. */}
+          icon. Holds the background picker (6 options, HOME_BACKGROUNDS),
+          the S.A.M. skin picker + nickname field (first real UI for the
+          S.A.M. expansion — see SAM_Companion_Concept_v1.md), and a second,
+          more visible Log Out button — Emily reported the small text-link
+          Log Out felt "lost"; it's actually still there (see above), just
+          easy to miss, so this adds an obvious duplicate rather than
+          replacing it. Neither picker is gated by Galaxy Hub unlocks yet —
+          S.A.M. skins gate on crystal_points directly (server-verified in
+          set-sam-skin/route.js), same mechanism as planets/badges, but a
+          real background-to-planet mapping and a S.A.M.-specific tie-in
+          both still need deciding with Emily first, the same way the
+          portal-name mapping was, rather than guessed at here. */}
       {settingsOpen && (
         <div
           style={{
@@ -290,6 +383,79 @@ export default function HomeClient({ student, studentClass, assignments, mission
               );
             })}
           </div>
+
+          <p style={{ fontSize: 10.5, fontWeight: 700, letterSpacing: .4, textTransform: "uppercase", color: COLORS.textMuted, margin: "0 0 8px 0" }}>
+            Customize S.A.M.
+          </p>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, marginBottom: 10 }}>
+            {SAM_SKINS.map((skin) => {
+              // Sept 4, 2026 — a skin is unlocked by crystal_points OR by a
+              // teacher granting it directly from the Rewards modal's Skin
+              // tab (Feature B) — matches the server-side check in
+              // set-sam-skin/route.js.
+              const teacherUnlocked = (student.teacher_unlocked_sam_skins || []).includes(skin.key);
+              const unlocked = student.crystal_points >= skin.threshold || teacherUnlocked;
+              const selected = skin.key === samSkinKey;
+              return (
+                <button
+                  key={skin.key}
+                  type="button"
+                  onClick={() => handlePickSamSkin(skin.key, unlocked)}
+                  className="gc-btn"
+                  style={{
+                    position: "relative", padding: "8px 4px 6px", borderRadius: 10,
+                    border: selected ? `2.5px solid ${COLORS.violet}` : "2.5px solid transparent",
+                    background: unlocked ? COLORS.violetSoft : "rgba(31,42,68,.05)",
+                    cursor: unlocked && !samSkinSaving ? "pointer" : "default",
+                    opacity: !unlocked ? 0.8 : (samSkinSaving && !selected ? 0.6 : 1),
+                    display: "flex", flexDirection: "column", alignItems: "center", gap: 4,
+                  }}
+                >
+                  <SamIcon skinKey={skin.key} size={34} alt={skin.name} />
+                  <span style={{ fontSize: 8.5, fontWeight: 700, color: COLORS.textDark, textAlign: "center" }}>
+                    {skin.name.replace(" S.A.M.", "")}
+                  </span>
+                  {unlocked ? (
+                    selected && <span style={{ position: "absolute", top: 2, right: 3, fontSize: 11 }}>✓</span>
+                  ) : (
+                    <span style={{ display: "inline-flex", alignItems: "center", gap: 2, background: "rgba(31,42,68,.1)", color: COLORS.textMuted, borderRadius: 999, padding: "1px 6px", fontSize: 8, fontWeight: 700 }}>
+                      🔒 💎{skin.threshold}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+
+          <p style={{ fontSize: 10.5, fontWeight: 700, letterSpacing: .4, textTransform: "uppercase", color: COLORS.textMuted, margin: "0 0 6px 0" }}>
+            Give S.A.M. a nickname
+          </p>
+          <div style={{ display: "flex", gap: 6, marginBottom: 14 }}>
+            <input
+              type="text"
+              value={nicknameDraft}
+              onChange={(e) => setNicknameDraft(e.target.value)}
+              onKeyDown={(e) => { if (e.key === "Enter") handleSaveNickname(); }}
+              placeholder="S.A.M."
+              maxLength={20}
+              style={{ flex: 1, minWidth: 0, border: `1.5px solid ${COLORS.violetSoft}`, borderRadius: 8, padding: "7px 9px", fontSize: 12.5, fontFamily: "'Inter', sans-serif", color: COLORS.textDark }}
+            />
+            <button
+              type="button"
+              onClick={handleSaveNickname}
+              disabled={nicknameSaving || nicknameDraft.trim() === samNickname}
+              className="gc-btn"
+              style={{
+                background: COLORS.violet, color: COLORS.white, border: "none", borderRadius: 8,
+                padding: "7px 12px", fontWeight: 700, fontSize: 12,
+                opacity: nicknameSaving || nicknameDraft.trim() === samNickname ? 0.6 : 1,
+                cursor: nicknameSaving ? "default" : "pointer",
+              }}
+            >
+              Save
+            </button>
+          </div>
+
           <button
             type="button"
             onClick={handleLogout}
@@ -440,16 +606,40 @@ export default function HomeClient({ student, studentClass, assignments, mission
         onClick={() => setSamOpen(!samOpen)}
         style={{ position: "absolute", right: 26, bottom: 26, width: 58, height: 58, borderRadius: "50%", background: "rgba(255,255,255,.75)", backdropFilter: "blur(6px)", WebkitBackdropFilter: "blur(6px)", boxShadow: "0 8px 22px rgba(0,0,0,.2)", border: "none", cursor: "pointer", padding: 6, zIndex: 5 }}
       >
-        <img src="/icons/robot_point.png" alt="S.A.M." style={{ width: "100%", height: "100%", objectFit: "contain" }} />
+        <SamIcon skinKey={samSkinKey} alt={samLabel} size="100%" />
       </button>
       {samOpen && (
         <div style={{ position: "absolute", right: 26, bottom: 92, width: 240, background: COLORS.white, borderRadius: 16, boxShadow: "0 8px 24px rgba(0,0,0,.2)", padding: 16, zIndex: 5 }}>
           <p style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 700, fontSize: 14, margin: "0 0 4px 0" }}>
-            S.A.M. <span style={{ color: COLORS.teal }}>· ClearCenters Assistant for Missions</span>
+            {samLabel} <span style={{ color: COLORS.teal }}>· ClearCenters Assistant for Missions</span>
           </p>
           <p style={{ fontSize: 12.5, color: COLORS.textDark, margin: 0, lineHeight: 1.45 }}>
             Click me anytime you're working on a mission and need a hint!
           </p>
+        </div>
+      )}
+
+      {shoutout && shoutoutVisible && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(13,20,35,.55)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 50, padding: 20 }}>
+          <div style={{ background: COLORS.white, borderRadius: 20, width: "min(380px, 100%)", padding: 26, boxShadow: "0 20px 50px rgba(0,0,0,.35)", textAlign: "center" }}>
+            <div style={{ width: 72, height: 72, margin: "0 auto 14px" }}>
+              <SamIcon skinKey={samSkinKey} alt={samLabel} size="100%" />
+            </div>
+            <p style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 700, fontSize: 16, color: COLORS.textDark, margin: "0 0 10px 0" }}>
+              A note from {samLabel}!
+            </p>
+            <p style={{ fontSize: 14, color: COLORS.textDark, lineHeight: 1.55, margin: "0 0 20px 0" }}>
+              {shoutout.message}
+            </p>
+            <button
+              type="button"
+              onClick={handleDismissShoutout}
+              className="gc-btn"
+              style={{ background: `linear-gradient(135deg, ${COLORS.violet}, ${COLORS.teal})`, color: COLORS.white, borderRadius: 999, padding: "11px 28px", fontWeight: 700, fontSize: 14 }}
+            >
+              Thanks, {samLabel}!
+            </button>
+          </div>
         </div>
       )}
     </div>

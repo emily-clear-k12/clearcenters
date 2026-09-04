@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
 import { GENERIC_HINTS, getCaseHints } from "../../../lib/hints";
+import SamIcon from "../../../components/SamIcon";
 
 // Signal Check's own locked palette — navy/teal/violet/gold, distinct from
 // Group Chat (violet-led) and Newsroom (navy/gold-led) so it reads as its
@@ -332,8 +333,11 @@ function CelebrationModal({ open, onGoHome }) {
   );
 }
 
-export default function SignalCheckClient({ assignmentId, studentId, caseStandard, publicCase, existingSubmission, alreadySubmitted, revisionRequested, revisionFeedback }) {
+export default function SignalCheckClient({ assignmentId, studentId, caseStandard, publicCase, existingSubmission, alreadySubmitted, revisionRequested, revisionFeedback, samSkin, samNickname }) {
   const router = useRouter();
+  // Sept 4, 2026 — S.A.M. expansion: samLabel replaces every literal
+  // "S.A.M." text label so a student's chosen nickname shows up everywhere.
+  const samLabel = samNickname || "S.A.M.";
   const storageKey = "cc_signalcheck_draft_" + assignmentId;
 
   // Stable per student+case (not per render/reload) so the shuffle doesn't
@@ -591,6 +595,15 @@ export default function SignalCheckClient({ assignmentId, studentId, caseStandar
       : GENERIC_HINTS[(hintCount - caseHints.length) % GENERIC_HINTS.length];
     setHintText(hint);
     setHintCount((c) => c + 1);
+
+    // Sept 4, 2026 — Teacher-facing S.A.M. expansion, Feature A: same
+    // fire-and-forget hint-usage log as ActivityClient.js and
+    // MissionMapClient.js — never awaited, never blocks the hint.
+    fetch("/api/student/log-hint-request", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ assignmentId, caseStandard }),
+    }).catch(() => {});
   }
 
   const backgroundStyle = {
@@ -855,9 +868,9 @@ export default function SignalCheckClient({ assignmentId, studentId, caseStandar
                   </button>
                   {hintText && (
                     <div className="sc-fade-in" style={{ marginTop: 12, background: "rgba(0,194,199,.12)", border: "1px solid rgba(0,194,199,.35)", borderRadius: 14, padding: 14, display: "flex", gap: 10 }}>
-                      <img src="/icons/robot_point.png" alt="S.A.M." style={{ width: 36, height: 36, objectFit: "contain", flexShrink: 0 }} />
+                      <SamIcon skinKey={samSkin} alt={samLabel} size={36} />
                       <div>
-                        <div style={{ fontWeight: 700, fontSize: 12, color: COLORS.teal, marginBottom: 3 }}>S.A.M.</div>
+                        <div style={{ fontWeight: 700, fontSize: 12, color: COLORS.teal, marginBottom: 3 }}>{samLabel}</div>
                         <div style={{ fontSize: 13, color: "rgba(255,255,255,.9)", lineHeight: 1.5 }}>{hintText}</div>
                       </div>
                     </div>

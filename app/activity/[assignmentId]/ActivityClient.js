@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Send, Loader2 } from "lucide-react";
 import { MAX_DISCUSS_TURNS } from "../../../lib/constants";
 import { GENERIC_HINTS, getCaseHints } from "../../../lib/hints";
+import SamIcon from "../../../components/SamIcon";
 
 const COLORS = {
   navy: "#16243F",
@@ -229,6 +230,13 @@ export default function ActivityClient(props) {
   const alreadySubmitted = props.alreadySubmitted;
   const revisionRequested = props.revisionRequested;
   const revisionFeedback = props.revisionFeedback;
+  // Sept 4, 2026 — S.A.M. expansion: which skin this student has equipped
+  // (page.js resolves this from students.equipped_sam_skin) and their
+  // custom nickname for S.A.M., if they've set one. samLabel is what every
+  // "S.A.M." text label in this file should render instead of the literal
+  // string, so a nickname change shows up everywhere at once.
+  const samSkin = props.samSkin;
+  const samLabel = props.samNickname || "S.A.M.";
 
   const router = useRouter();
   const draft = existingSubmission || {};
@@ -389,6 +397,17 @@ export default function ActivityClient(props) {
     }
     setHintText(hint);
     setHintCount(function (c) { return c + 1; });
+
+    // Sept 4, 2026 — Teacher-facing S.A.M. expansion, Feature A: fire-and-
+    // forget log so the teacher dashboard's "Needs Support/Check-In" card
+    // can flag heavy hint use. Never awaited, never blocks the hint itself,
+    // and a failure here is silently ignored — logging hint usage should
+    // never be the reason a student's hint doesn't show up.
+    fetch("/api/student/log-hint-request", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ assignmentId: assignmentId, caseStandard: caseStandard }),
+    }).catch(function () {});
   }
 
   function toggleChecklistItem(i) {
@@ -678,9 +697,9 @@ export default function ActivityClient(props) {
               </button>
               {hintText && (
                 <div className="gc-fade-in" style={{ marginTop: 12, background: "#E6F8F9", borderRadius: 14, padding: 14, display: "flex", gap: 10 }}>
-                  <img src="/icons/robot_point.png" alt="S.A.M." style={{ width: 40, height: 40, objectFit: "contain", flexShrink: 0 }} />
+                  <SamIcon skinKey={samSkin} alt={samLabel} size={40} />
                   <div>
-                    <div style={{ fontWeight: 700, fontSize: 12, color: COLORS.teal, marginBottom: 3 }}>S.A.M.</div>
+                    <div style={{ fontWeight: 700, fontSize: 12, color: COLORS.teal, marginBottom: 3 }}>{samLabel}</div>
                     <div style={{ fontSize: 13.5, color: COLORS.textDark, lineHeight: 1.5 }}>{hintText}</div>
                   </div>
                 </div>
@@ -735,9 +754,9 @@ export default function ActivityClient(props) {
                 </button>
                 {hintText && (
                   <div className="gc-fade-in" style={{ marginTop: 12, background: "#E6F8F9", borderRadius: 14, padding: 14, display: "flex", gap: 10 }}>
-                    <img src="/icons/robot_point.png" alt="S.A.M." style={{ width: 40, height: 40, objectFit: "contain", flexShrink: 0 }} />
+                    <SamIcon skinKey={samSkin} alt={samLabel} size={40} />
                     <div>
-                      <div style={{ fontWeight: 700, fontSize: 12, color: COLORS.teal, marginBottom: 3 }}>S.A.M.</div>
+                      <div style={{ fontWeight: 700, fontSize: 12, color: COLORS.teal, marginBottom: 3 }}>{samLabel}</div>
                       <div style={{ fontSize: 13.5, color: COLORS.textDark, lineHeight: 1.5 }}>{hintText}</div>
                     </div>
                   </div>
@@ -788,7 +807,7 @@ export default function ActivityClient(props) {
               <div style={{ background: COLORS.cream, borderRadius: 10, padding: 12, fontSize: 14, lineHeight: 1.5, color: COLORS.textDark }}>{currentDraftText() || <span style={{ color: COLORS.textMuted, fontStyle: "italic" }}>(no answer written)</span>}</div>
             </div>
             <div className="gc-fade-in" style={{ background: "#E6F8F9", borderRadius: 14, padding: 16, display: "flex", gap: 12, alignItems: "flex-start" }}>
-              <img src="/icons/robot_point.png" alt="" style={{ width: 44, height: 44, objectFit: "contain", flexShrink: 0 }} />
+              <SamIcon skinKey={samSkin} alt={samLabel} size={44} />
               <div>
                 <div style={{ fontWeight: 700, fontSize: 14, color: COLORS.teal, marginBottom: 3 }}>{submitting ? "Submitting..." : "Submitted! Nice work."}</div>
                 <div style={{ fontSize: 13, color: COLORS.textDark, lineHeight: 1.5 }}>Your teacher will release your official grade soon. In the meantime, take a moment to think about how your answer went.</div>

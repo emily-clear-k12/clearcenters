@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { supabase } from "../../lib/supabaseClient";
 import TeacherSidebar from "../../components/TeacherSidebar";
 import TeacherPageBanner from "../../components/TeacherPageBanner";
+import { SAM_SKINS } from "../../lib/samSkins";
 
 // Palette updated Aug 27 (evening pass) — violet and teal sampled from the
 // new sci-fi banner art (the crystal's glow and the desk's edge lighting)
@@ -76,80 +77,190 @@ function Donut({ segments, size = 150, centerLabel, centerSub }) {
 
 const POINT_PRESETS = [5, 10, 25, 50];
 
-function AwardPointsModal({ open, classes, rawStudents, defaultClassId, awarding, onCancel, onAward }) {
+// Sept 4, 2026 — Teacher-facing S.A.M. expansion, Feature B (see
+// SAM_Companion_Concept_v1.md §9/§10). What was AwardPointsModal is now a
+// 3-tab Rewards modal (Points / S.A.M. Skin / Shoutout) sharing one Class +
+// student picker, instead of three separate modals or screens — folded into
+// the flow teachers already use, per Emily's ask to keep this low-friction.
+// Points behaves exactly as it always has; Skin and Shoutout are new.
+const SHOUTOUT_PRESETS = [
+  "Great job today — keep up the awesome thinking!",
+  "So proud of the effort you put in!",
+  "Loved how carefully you worked through that one!",
+];
+
+function RewardsModal({ open, classes, rawStudents, defaultClassId, awarding, onCancel, onAwardPoints, onGrantSkin, onSendShoutout }) {
+  const [tab, setTab] = useState("points"); // "points" | "skin" | "shoutout"
   const [classId, setClassId] = useState(defaultClassId || (classes[0] && classes[0].id) || "");
   const [mode, setMode] = useState("class"); // "class" | "student"
   const [studentId, setStudentId] = useState("");
   const [amount, setAmount] = useState(10);
+  const [skinKey, setSkinKey] = useState(SAM_SKINS[0] ? SAM_SKINS[0].key : "");
+  const [message, setMessage] = useState("");
 
   useEffect(() => {
     if (open) {
+      setTab("points");
       setClassId(defaultClassId || (classes[0] && classes[0].id) || "");
       setMode("class");
       setStudentId("");
       setAmount(10);
+      setSkinKey(SAM_SKINS[0] ? SAM_SKINS[0].key : "");
+      setMessage("");
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
+
+  // A Shoutout is always personal — force single-student mode the moment
+  // that tab is opened, rather than letting a teacher accidentally send the
+  // same private-feeling note to an entire class at once.
+  useEffect(() => {
+    if (tab === "shoutout" && mode !== "student") setMode("student");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tab]);
 
   if (!open) return null;
 
   const classStudents = rawStudents.filter((s) => s.class_id === classId);
   const selectedClass = classes.find((c) => c.id === classId);
-  const canAward = amount > 0 && classId && (mode === "class" ? classStudents.length > 0 : !!studentId);
+
+  const canAwardPoints = amount > 0 && classId && (mode === "class" ? classStudents.length > 0 : !!studentId);
+  const canGrantSkin = !!skinKey && classId && (mode === "class" ? classStudents.length > 0 : !!studentId);
+  const canSendShoutout = !!studentId && message.trim().length > 0;
+  const canConfirm = tab === "points" ? canAwardPoints : tab === "skin" ? canGrantSkin : canSendShoutout;
+
+  function handleConfirm() {
+    if (tab === "points") {
+      onAwardPoints({ classId, mode, studentId, amount, studentCount: classStudents.length });
+    } else if (tab === "skin") {
+      onGrantSkin({ classId, mode, studentId, skinKey, studentCount: classStudents.length });
+    } else {
+      onSendShoutout({ studentId, message: message.trim() });
+    }
+  }
+
+  const confirmLabel = awarding
+    ? "Sending..."
+    : tab === "points"
+    ? `Award +${amount}`
+    : tab === "skin"
+    ? "Grant Skin"
+    : "Send Shoutout";
 
   return (
     <div style={{ position: "fixed", inset: 0, background: "rgba(13,20,35,.65)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 100, padding: 20 }}>
-      <div style={{ background: COLORS.white, borderRadius: 18, width: "min(440px, 100%)", padding: 24, boxShadow: "0 24px 60px rgba(0,0,0,.4)" }}>
-        <div style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 700, fontSize: 18, color: COLORS.textDark, marginBottom: 4 }}>🔮 Award Crystal Points</div>
-        <div style={{ fontSize: 13, color: COLORS.textMuted, marginBottom: 18 }}>Give a class or a single student a bonus — great for a great question, a kind classmate moment, or anything else that doesn't fit a rubric.</div>
+      <div style={{ background: COLORS.white, borderRadius: 18, width: "min(460px, 100%)", padding: 24, boxShadow: "0 24px 60px rgba(0,0,0,.4)" }}>
+        <div style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 700, fontSize: 18, color: COLORS.textDark, marginBottom: 4 }}>🔮 Rewards & S.A.M.</div>
+        <div style={{ fontSize: 13, color: COLORS.textMuted, marginBottom: 16 }}>Award points, unlock a S.A.M. skin early, or send an encouraging note as S.A.M.</div>
+
+        <div style={{ display: "flex", gap: 6, marginBottom: 16, background: COLORS.canvas, borderRadius: 12, padding: 4 }}>
+          {[["points", "🔮 Points"], ["skin", "🎨 Skin"], ["shoutout", "💬 Shoutout"]].map(([key, label]) => (
+            <button
+              key={key}
+              type="button"
+              className="gc-btn"
+              onClick={() => setTab(key)}
+              style={{ flex: 1, padding: "8px 4px", borderRadius: 9, fontWeight: 700, fontSize: 12.5, background: tab === key ? COLORS.white : "transparent", color: tab === key ? COLORS.violet : COLORS.textMuted, boxShadow: tab === key ? "0 2px 6px rgba(13,27,42,.1)" : "none" }}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
 
         <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: COLORS.textMuted, marginBottom: 6 }}>Class</label>
         <select value={classId} onChange={(e) => { setClassId(e.target.value); setStudentId(""); }} style={{ width: "100%", padding: "10px 12px", borderRadius: 10, border: `1.5px solid ${COLORS.border}`, fontSize: 13.5, marginBottom: 14, fontFamily: "inherit" }}>
           {classes.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
         </select>
 
-        <div style={{ display: "flex", gap: 8, marginBottom: 14 }}>
-          <button type="button" className="gc-btn" onClick={() => setMode("class")} style={{ flex: 1, padding: "9px 8px", borderRadius: 10, fontWeight: 700, fontSize: 13, background: mode === "class" ? COLORS.violet : COLORS.canvas, color: mode === "class" ? COLORS.white : COLORS.textDark }}>
-            Whole Class{selectedClass ? ` (${classStudents.length})` : ""}
-          </button>
-          <button type="button" className="gc-btn" onClick={() => setMode("student")} style={{ flex: 1, padding: "9px 8px", borderRadius: 10, fontWeight: 700, fontSize: 13, background: mode === "student" ? COLORS.violet : COLORS.canvas, color: mode === "student" ? COLORS.white : COLORS.textDark }}>
-            One Student
-          </button>
-        </div>
+        {tab !== "shoutout" && (
+          <div style={{ display: "flex", gap: 8, marginBottom: 14 }}>
+            <button type="button" className="gc-btn" onClick={() => setMode("class")} style={{ flex: 1, padding: "9px 8px", borderRadius: 10, fontWeight: 700, fontSize: 13, background: mode === "class" ? COLORS.violet : COLORS.canvas, color: mode === "class" ? COLORS.white : COLORS.textDark }}>
+              Whole Class{selectedClass ? ` (${classStudents.length})` : ""}
+            </button>
+            <button type="button" className="gc-btn" onClick={() => setMode("student")} style={{ flex: 1, padding: "9px 8px", borderRadius: 10, fontWeight: 700, fontSize: 13, background: mode === "student" ? COLORS.violet : COLORS.canvas, color: mode === "student" ? COLORS.white : COLORS.textDark }}>
+              One Student
+            </button>
+          </div>
+        )}
 
-        {mode === "student" && (
+        {(mode === "student" || tab === "shoutout") && (
           <select value={studentId} onChange={(e) => setStudentId(e.target.value)} style={{ width: "100%", padding: "10px 12px", borderRadius: 10, border: `1.5px solid ${COLORS.border}`, fontSize: 13.5, marginBottom: 14, fontFamily: "inherit" }}>
             <option value="">Choose a student...</option>
             {classStudents.map((s) => <option key={s.id} value={s.id}>{s.first_name}</option>)}
           </select>
         )}
 
-        <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: COLORS.textMuted, marginBottom: 6 }}>Points</label>
-        <div style={{ display: "flex", gap: 8, marginBottom: 10 }}>
-          {POINT_PRESETS.map((p) => (
-            <button key={p} type="button" className="gc-btn" onClick={() => setAmount(p)} style={{ flex: 1, padding: "9px 4px", borderRadius: 10, fontWeight: 700, fontSize: 13, background: amount === p ? COLORS.gold : COLORS.canvas, color: COLORS.textDark }}>
-              +{p}
-            </button>
-          ))}
-        </div>
-        <input
-          type="number"
-          min={1}
-          value={amount}
-          onChange={(e) => setAmount(parseInt(e.target.value, 10) || 0)}
-          style={{ width: "100%", padding: "10px 12px", borderRadius: 10, border: `1.5px solid ${COLORS.border}`, fontSize: 13.5, marginBottom: 18, fontFamily: "inherit", boxSizing: "border-box" }}
-        />
+        {tab === "points" && (
+          <>
+            <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: COLORS.textMuted, marginBottom: 6 }}>Points</label>
+            <div style={{ display: "flex", gap: 8, marginBottom: 10 }}>
+              {POINT_PRESETS.map((p) => (
+                <button key={p} type="button" className="gc-btn" onClick={() => setAmount(p)} style={{ flex: 1, padding: "9px 4px", borderRadius: 10, fontWeight: 700, fontSize: 13, background: amount === p ? COLORS.gold : COLORS.canvas, color: COLORS.textDark }}>
+                  +{p}
+                </button>
+              ))}
+            </div>
+            <input
+              type="number"
+              min={1}
+              value={amount}
+              onChange={(e) => setAmount(parseInt(e.target.value, 10) || 0)}
+              style={{ width: "100%", padding: "10px 12px", borderRadius: 10, border: `1.5px solid ${COLORS.border}`, fontSize: 13.5, marginBottom: 6, fontFamily: "inherit", boxSizing: "border-box" }}
+            />
+          </>
+        )}
 
-        <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
+        {tab === "skin" && (
+          <>
+            <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: COLORS.textMuted, marginBottom: 6 }}>S.A.M. Skin to Grant</label>
+            <div style={{ fontSize: 11.5, color: COLORS.textMuted, marginBottom: 10, lineHeight: 1.4 }}>Unlocks it early for {mode === "class" ? "the whole class" : "this student"} — doesn't touch crystal points.</div>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 8, marginBottom: 6 }}>
+              {SAM_SKINS.map((skin) => (
+                <button
+                  key={skin.key}
+                  type="button"
+                  className="gc-btn"
+                  onClick={() => setSkinKey(skin.key)}
+                  style={{ padding: "10px 4px", borderRadius: 10, border: skinKey === skin.key ? `2px solid ${COLORS.violet}` : `1.5px solid ${COLORS.border}`, background: skinKey === skin.key ? COLORS.violetSoft : COLORS.white, textAlign: "center" }}
+                >
+                  <img src={skin.image} alt="" style={{ width: 36, height: 36, objectFit: "contain", marginBottom: 4 }} onError={(e) => { e.currentTarget.src = SAM_SKINS[0].image; }} />
+                  <div style={{ fontSize: 10.5, fontWeight: 700, color: COLORS.textDark }}>{skin.name}</div>
+                </button>
+              ))}
+            </div>
+          </>
+        )}
+
+        {tab === "shoutout" && (
+          <>
+            <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: COLORS.textMuted, marginBottom: 6 }}>Message from S.A.M.</label>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 8 }}>
+              {SHOUTOUT_PRESETS.map((preset) => (
+                <button key={preset} type="button" className="gc-btn" onClick={() => setMessage(preset)} style={{ padding: "6px 10px", borderRadius: 999, background: COLORS.canvas, color: COLORS.textDark, fontSize: 11.5, fontWeight: 600 }}>
+                  {preset}
+                </button>
+              ))}
+            </div>
+            <textarea
+              value={message}
+              onChange={(e) => setMessage(e.target.value.slice(0, 240))}
+              placeholder="Write a quick encouraging note..."
+              rows={3}
+              style={{ width: "100%", padding: "10px 12px", borderRadius: 10, border: `1.5px solid ${COLORS.border}`, fontSize: 13.5, marginBottom: 6, fontFamily: "inherit", resize: "vertical", boxSizing: "border-box" }}
+            />
+            <div style={{ textAlign: "right", fontSize: 11, color: COLORS.textMuted, marginBottom: 8 }}>{message.length}/240</div>
+          </>
+        )}
+
+        <div style={{ display: "flex", gap: 10, justifyContent: "flex-end", marginTop: 12 }}>
           <button onClick={onCancel} className="gc-btn" style={{ background: COLORS.canvas, color: COLORS.textDark, borderRadius: 999, padding: "11px 20px", fontWeight: 700, fontSize: 13.5 }}>Cancel</button>
           <button
-            onClick={() => onAward({ classId, mode, studentId, amount, studentCount: classStudents.length })}
-            disabled={!canAward || awarding}
+            onClick={handleConfirm}
+            disabled={!canConfirm || awarding}
             className="gc-btn"
-            style={{ background: COLORS.violet, color: COLORS.white, borderRadius: 999, padding: "11px 20px", fontWeight: 700, fontSize: 13.5, opacity: canAward ? 1 : 0.5 }}
+            style={{ background: COLORS.violet, color: COLORS.white, borderRadius: 999, padding: "11px 20px", fontWeight: 700, fontSize: 13.5, opacity: canConfirm ? 1 : 0.5 }}
           >
-            {awarding ? "Awarding..." : `Award +${amount}`}
+            {confirmLabel}
           </button>
         </div>
       </div>
@@ -174,6 +285,11 @@ export default function TeacherOverview() {
   const [rawStudents, setRawStudents] = useState([]);
   const [rawAssignments, setRawAssignments] = useState([]);
   const [rawSubmissions, setRawSubmissions] = useState([]);
+  // Sept 4, 2026 — Teacher-facing S.A.M. expansion, Feature A: one row per
+  // "Get a hint" tap, logged by app/api/student/log-hint-request. Only
+  // student_id/assignment_id are needed here — just enough to count usage
+  // per student, scoped to whichever class tab is selected below.
+  const [rawHintRequests, setRawHintRequests] = useState([]);
   const [targetsByAssignment, setTargetsByAssignment] = useState({});
   const [caseMap, setCaseMap] = useState({});
   const [selectedClassId, setSelectedClassId] = useState("all");
@@ -236,6 +352,15 @@ export default function TeacherOverview() {
     }
     setRawSubmissions(allSubmissions);
 
+    // Sept 4, 2026 — Feature A: hint usage, scoped the same way submissions
+    // are (only this teacher's own assignments).
+    let hintRequests = [];
+    if (assignmentIds.length > 0) {
+      const { data } = await supabase.from("hint_requests").select("student_id, assignment_id").in("assignment_id", assignmentIds);
+      hintRequests = data || [];
+    }
+    setRawHintRequests(hintRequests);
+
     const targetsMap = {};
     targetRows.forEach((t) => {
       if (!targetsMap[t.assignment_id]) targetsMap[t.assignment_id] = new Set();
@@ -263,6 +388,46 @@ export default function TeacherOverview() {
     const className = classMap[classId] || "the class";
     setAwardSuccess(mode === "student" ? `+${amount} points awarded!` : `+${amount} points awarded to all ${targetIds.length} students in ${className}!`);
     if (teacherId) await loadDashboard(teacherId);
+    setTimeout(() => setAwardSuccess(null), 4000);
+  }
+
+  // Sept 4, 2026 — Teacher-facing S.A.M. expansion, Feature B: grants a
+  // S.A.M. skin outside its normal crystal_points threshold, via the
+  // SECURITY DEFINER grant_sam_skin() RPC (same shape as
+  // increment_crystal_points above — one call per target student, so a
+  // class-wide grant can't race with itself).
+  async function handleGrantSkin({ classId, mode, studentId, skinKey, studentCount }) {
+    setAwarding(true);
+    const targetIds = mode === "student" ? [studentId] : rawStudents.filter((s) => s.class_id === classId).map((s) => s.id);
+    const skin = SAM_SKINS.find((s) => s.key === skinKey);
+
+    await Promise.all(targetIds.map((id) => supabase.rpc("grant_sam_skin", { p_student_id: id, p_skin_key: skinKey })));
+
+    setAwarding(false);
+    setAwardModalOpen(false);
+    const className = classMap[classId] || "the class";
+    const skinName = skin ? skin.name : "S.A.M. skin";
+    setAwardSuccess(mode === "student" ? `${skinName} granted!` : `${skinName} granted to all ${targetIds.length} students in ${className}!`);
+    if (teacherId) await loadDashboard(teacherId);
+    setTimeout(() => setAwardSuccess(null), 4000);
+  }
+
+  // Sept 4, 2026 — Feature B: sends a personal encouraging note that shows up
+  // "from S.A.M." the next time that one student opens Home — always a
+  // single student, via the SECURITY DEFINER send_sam_shoutout() RPC.
+  async function handleSendShoutout({ studentId, message }) {
+    setAwarding(true);
+    const student = rawStudents.find((s) => s.id === studentId);
+    await supabase.rpc("send_sam_shoutout", {
+      p_teacher_id: teacherId,
+      p_class_id: student ? student.class_id : null,
+      p_student_id: studentId,
+      p_message: message,
+    });
+
+    setAwarding(false);
+    setAwardModalOpen(false);
+    setAwardSuccess(`Shoutout sent${student ? ` to ${student.first_name}` : ""}! S.A.M. will share it next time they're on Home.`);
     setTimeout(() => setAwardSuccess(null), 4000);
   }
 
@@ -326,7 +491,35 @@ export default function TeacherOverview() {
     // Only students actually below "Proficient" count as needing a
     // check-in — unlike the old design, a class that's doing great no
     // longer shows its top 5 students dressed up as a worry list.
-    const needsCheckIn = insights.filter((i) => i.band.label === "Needs Support" || i.band.label === "Developing");
+    const needsCheckInBase = insights.filter((i) => i.band.label === "Needs Support" || i.band.label === "Developing");
+
+    // Sept 4, 2026 — Teacher-facing S.A.M. expansion, Feature A: fold hint
+    // usage into this same card rather than a new screen. Two things
+    // happen here: (1) every student already on the check-in list gets
+    // their hint count tacked on, so a teacher can see at a glance whether
+    // a struggling student is also leaning hard on S.A.M.; (2) a student
+    // who ISN'T on the list — grades look fine — but has requested a lot of
+    // hints gets added anyway, since heavy hint use can be worth a look
+    // before it ever shows up in a grade. Built off `insights`/`byStudent`,
+    // not `needsCheckInBase`, so this never mutates the array `studentInsights`
+    // below is built from.
+    const hintCountsByStudent = {};
+    rawHintRequests.forEach((h) => {
+      if (!assignmentIds.has(h.assignment_id)) return;
+      hintCountsByStudent[h.student_id] = (hintCountsByStudent[h.student_id] || 0) + 1;
+    });
+    const HINT_FLAG_THRESHOLD = 5;
+    const checkInIds = new Set(needsCheckInBase.map((i) => i.studentId));
+    const studentIdsInScope = new Set(students.map((s) => s.id));
+    const hintOnlyFlags = [];
+    Object.entries(hintCountsByStudent).forEach(([studentId, count]) => {
+      if (count < HINT_FLAG_THRESHOLD || checkInIds.has(studentId) || !studentIdsInScope.has(studentId)) return;
+      hintOnlyFlags.push({ studentId, name: studentMap[studentId] || "Unknown", avgPct: null, band: { label: "Leaning on Hints", color: COLORS.gold }, hintCount: count });
+    });
+    const needsCheckIn = [
+      ...needsCheckInBase.map((i) => ({ ...i, hintCount: hintCountsByStudent[i.studentId] || 0 })),
+      ...hintOnlyFlags,
+    ];
 
     // Due-date-driven, not creation-date-driven, and sorted so anything
     // already overdue floats to the very top — that's the version of
@@ -385,7 +578,7 @@ export default function TeacherOverview() {
       recentAssignments,
       standardRows,
     };
-  }, [selectedClassId, rawStudents, rawAssignments, rawSubmissions, targetsByAssignment, caseMap, classMap, studentMap]);
+  }, [selectedClassId, rawStudents, rawAssignments, rawSubmissions, rawHintRequests, targetsByAssignment, caseMap, classMap, studentMap]);
 
   const {
     studentCount,
@@ -481,7 +674,8 @@ export default function TeacherOverview() {
             <div style={{ display: "grid", gap: 6, marginBottom: 14, minHeight: 34 }}>
               {needsCheckIn.length > 0 ? needsCheckIn.slice(0, 2).map((s) => (
                 <div key={s.studentId} style={{ fontSize: 12.5, color: COLORS.textMuted, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                  <b style={{ color: COLORS.textDark, fontWeight: 600 }}>{s.name}</b> — {s.avgPct}% avg, {s.band.label}
+                  <b style={{ color: COLORS.textDark, fontWeight: 600 }}>{s.name}</b> — {s.avgPct !== null ? `${s.avgPct}% avg, ${s.band.label}` : s.band.label}
+                  {s.hintCount > 0 ? ` · 💡${s.hintCount}` : ""}
                 </div>
               )) : <div style={{ fontSize: 12.5, color: COLORS.textMuted }}>Everyone's on track right now!</div>}
             </div>
@@ -530,7 +724,7 @@ export default function TeacherOverview() {
             <img src="/teacher/action_create_assignment.png" alt="" style={{ width: 18, height: 18 }} /> Create New Assignment
           </button>
           <button onClick={() => setAwardModalOpen(true)} disabled={classes.length === 0} className="gc-btn" style={{ display: "flex", alignItems: "center", gap: 8, background: COLORS.white, border: `1px solid ${COLORS.border}`, borderRadius: 999, padding: "10px 18px", fontSize: 13, fontWeight: 700, color: COLORS.textDark, opacity: classes.length === 0 ? 0.5 : 1 }}>
-            <img src="/teacher/action_award_crystal_points.png" alt="" style={{ width: 18, height: 18 }} /> Award Crystal Points
+            <img src="/teacher/action_award_crystal_points.png" alt="" style={{ width: 18, height: 18 }} /> Rewards & S.A.M.
           </button>
           <button onClick={() => router.push("/teacher/reports")} disabled={classes.length === 0} className="gc-btn" style={{ display: "flex", alignItems: "center", gap: 8, background: COLORS.white, border: `1px solid ${COLORS.border}`, borderRadius: 999, padding: "10px 18px", fontSize: 13, fontWeight: 700, color: COLORS.textDark, opacity: classes.length === 0 ? 0.5 : 1 }}>
             <img src="/teacher/action_generate_report.png" alt="" style={{ width: 18, height: 18 }} /> Generate Class Report
@@ -616,14 +810,16 @@ export default function TeacherOverview() {
         </div>
       )}
 
-      <AwardPointsModal
+      <RewardsModal
         open={awardModalOpen}
         classes={classes}
         rawStudents={rawStudents}
         defaultClassId={selectedClassId !== "all" ? selectedClassId : undefined}
         awarding={awarding}
         onCancel={() => setAwardModalOpen(false)}
-        onAward={handleAwardPoints}
+        onAwardPoints={handleAwardPoints}
+        onGrantSkin={handleGrantSkin}
+        onSendShoutout={handleSendShoutout}
       />
     </div>
   );

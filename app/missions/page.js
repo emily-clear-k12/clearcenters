@@ -14,7 +14,7 @@ export default async function MissionsPage() {
 
   const { data: student, error: studentError } = await supabaseAdmin
     .from("students")
-    .select("id, first_name, crystal_points, class_id")
+    .select("id, first_name, crystal_points, class_id, equipped_sam_skin, sam_nickname")
     .eq("id", studentId)
     .single();
 

@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import BackToHubButton from "../../components/BackToHubButton";
+import SamIcon from "../../components/SamIcon";
 
 const COLORS = {
   violet: "#7B5DFF",
@@ -83,6 +84,9 @@ const SLOTS = [
 const CENTER_SLOT = { x: 50, y: 63 };
 
 export default function MissionsClient({ student, assignments }) {
+  // Sept 4, 2026 — S.A.M. expansion: samLabel replaces every literal
+  // "S.A.M." text label so a student's chosen nickname shows up everywhere.
+  const samLabel = student.sam_nickname || "S.A.M.";
   const router = useRouter();
   const [samOpen, setSamOpen] = useState(false);
 
@@ -425,12 +429,12 @@ export default function MissionsClient({ student, assignments }) {
         onClick={() => setSamOpen(!samOpen)}
         style={{ position: "fixed", right: 28, bottom: 28, width: 64, height: 64, borderRadius: "50%", background: COLORS.tealSoft, boxShadow: "0 8px 24px rgba(0,0,0,.12)", border: "none", cursor: "pointer", padding: 6 }}
       >
-        <img src="/icons/robot_point.png" alt="S.A.M." style={{ width: "100%", height: "100%", objectFit: "contain" }} />
+        <SamIcon skinKey={student.equipped_sam_skin} alt={samLabel} size="100%" />
       </button>
       {samOpen && (
         <div style={{ position: "fixed", right: 28, bottom: 104, width: 240, background: COLORS.white, borderRadius: 16, boxShadow: "0 8px 24px rgba(0,0,0,.12)", padding: 16 }}>
           <p style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 700, fontSize: 14, margin: "0 0 4px 0" }}>
-            S.A.M. <span style={{ color: COLORS.teal }}>· ClearCenters Assistant for Missions</span>
+            {samLabel} <span style={{ color: COLORS.teal }}>· ClearCenters Assistant for Missions</span>
           </p>
           <p style={{ fontSize: 12.5, color: COLORS.textDark, margin: 0, lineHeight: 1.45 }}>
             Click me anytime you're working on a mission and need a hint!

@@ -17,7 +17,7 @@ export default async function HomePage() {
 
   const { data: student, error: studentError } = await supabaseAdmin
     .from("students")
-    .select("id, first_name, crystal_points, streak_days, class_id, home_background")
+    .select("id, first_name, crystal_points, streak_days, class_id, home_background, equipped_sam_skin, sam_nickname, teacher_unlocked_sam_skins")
     .eq("id", studentId)
     .single();
 
@@ -68,6 +68,20 @@ export default async function HomePage() {
     .select("*")
     .order("sort_order");
 
+  // Sept 4, 2026 — Teacher-facing S.A.M. expansion, Feature B: a teacher can
+  // send an encouraging note "as S.A.M." from the Rewards modal. At most one
+  // unseen note is ever surfaced at a time (oldest-unseen-first would let
+  // them pile up unreadably, so newest wins and older unseen ones are simply
+  // superseded) — shown once on Home, then marked seen so it never repeats.
+  const { data: shoutout } = await supabaseAdmin
+    .from("sam_shoutouts")
+    .select("id, message, created_at")
+    .eq("student_id", studentId)
+    .is("seen_at", null)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
   return (
     <HomeClient
       student={student}
@@ -76,6 +90,7 @@ export default async function HomePage() {
       missionsCompleted={missionsCompleted || 0}
       badgeTiers={badgeTiers || []}
       homeBackground={homeBackground}
+      shoutout={shoutout || null}
     />
   );
 }

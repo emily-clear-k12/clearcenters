@@ -21,7 +21,7 @@ export default async function ActivityPage({ params }) {
 
   const { data: student } = await supabaseAdmin
     .from("students")
-    .select("id, first_name, class_id")
+    .select("id, first_name, class_id, equipped_sam_skin, sam_nickname")
     .eq("id", studentId)
     .single();
 
@@ -125,6 +125,8 @@ export default async function ActivityPage({ params }) {
         alreadySubmitted={alreadySubmitted}
         revisionRequested={revisionRequested}
         revisionFeedback={revisionFeedback}
+        samSkin={student.equipped_sam_skin}
+        samNickname={student.sam_nickname}
       />
     );
   }
@@ -140,6 +142,8 @@ export default async function ActivityPage({ params }) {
         alreadySubmitted={alreadySubmitted}
         revisionRequested={revisionRequested}
         revisionFeedback={revisionFeedback}
+        samSkin={student.equipped_sam_skin}
+        samNickname={student.sam_nickname}
       />
     );
   }
@@ -155,6 +159,8 @@ export default async function ActivityPage({ params }) {
         alreadySubmitted={alreadySubmitted}
         revisionRequested={revisionRequested}
         revisionFeedback={revisionFeedback}
+        samSkin={student.equipped_sam_skin}
+        samNickname={student.sam_nickname}
       />
     );
   }
@@ -170,6 +176,8 @@ export default async function ActivityPage({ params }) {
       alreadySubmitted={alreadySubmitted}
       revisionRequested={revisionRequested}
       revisionFeedback={revisionFeedback}
+      samSkin={student.equipped_sam_skin}
+      samNickname={student.sam_nickname}
     />
   );
 }

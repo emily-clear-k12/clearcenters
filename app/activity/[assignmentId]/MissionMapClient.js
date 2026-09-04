@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
 import { GENERIC_HINTS, getCaseHints } from "../../../lib/hints";
+import SamIcon from "../../../components/SamIcon";
 
 // Mission Map's own locked palette — light sky-blue with a signal-gold
 // accent for cleared ground (revised Aug 30 v3: replaced an initial dark
@@ -250,8 +251,13 @@ export default function MissionMapClient({
   alreadySubmitted,
   revisionRequested,
   revisionFeedback,
+  samSkin,
+  samNickname,
 }) {
   const router = useRouter();
+  // Sept 4, 2026 — S.A.M. expansion: samLabel replaces every literal
+  // "S.A.M." text label so a student's chosen nickname shows up everywhere.
+  const samLabel = samNickname || "S.A.M.";
   // Scoped by studentId as well as assignmentId (fixed Aug 30, caught by a
   // real live-test bug report): a shared class-wide assignment has ONE
   // assignmentId for every student, but localStorage is shared per browser,
@@ -506,6 +512,15 @@ export default function MissionMapClient({
     const caseHints = getCaseHints(caseStandard);
     const hint = caseHints[checkpointIndex] || GENERIC_HINTS[checkpointIndex % GENERIC_HINTS.length];
     setHintTextByCheckpoint((prev) => ({ ...prev, [checkpoint.id]: hint }));
+
+    // Sept 4, 2026 — Teacher-facing S.A.M. expansion, Feature A: same
+    // fire-and-forget hint-usage log as ActivityClient.js and
+    // SignalCheckClient.js — never awaited, never blocks the hint.
+    fetch("/api/student/log-hint-request", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ assignmentId, caseStandard }),
+    }).catch(() => {});
   }
 
   function selectPrediction(checkpointId, optionId) {
@@ -774,9 +789,9 @@ export default function MissionMapClient({
     if (!text) return null;
     return (
       <div style={{ display: "flex", gap: 10, alignItems: "flex-start", background: "rgba(255,196,77,.1)", border: `1px solid ${COLORS.gold}55`, borderRadius: 12, padding: 12, marginBottom: 14 }}>
-        <img src="/icons/robot_point.png" alt="S.A.M." style={{ width: 28, height: 28, objectFit: "contain", flexShrink: 0 }} />
+        <SamIcon skinKey={samSkin} alt={samLabel} size={28} />
         <div>
-          <div style={{ fontSize: 10.5, fontWeight: 700, color: COLORS.gold, marginBottom: 2, letterSpacing: 0.5 }}>S.A.M.</div>
+          <div style={{ fontSize: 10.5, fontWeight: 700, color: COLORS.gold, marginBottom: 2, letterSpacing: 0.5 }}>{samLabel}</div>
           <div style={{ fontSize: 13.5, color: "rgba(31,42,68,.88)" }}>{text}</div>
         </div>
       </div>
@@ -788,9 +803,9 @@ export default function MissionMapClient({
     if (!text) return null;
     return (
       <div style={{ display: "flex", gap: 10, alignItems: "flex-start", background: "rgba(31,42,68,.05)", border: "1px solid rgba(31,42,68,.1)", borderRadius: 12, padding: 12, marginTop: 12 }}>
-        <img src="/icons/robot_point.png" alt="S.A.M." style={{ width: 32, height: 32, objectFit: "contain", flexShrink: 0 }} />
+        <SamIcon skinKey={samSkin} alt={samLabel} size={32} />
         <div>
-          <div style={{ fontSize: 11, fontWeight: 700, color: COLORS.gold, marginBottom: 2 }}>S.A.M.</div>
+          <div style={{ fontSize: 11, fontWeight: 700, color: COLORS.gold, marginBottom: 2 }}>{samLabel}</div>
           <div style={{ fontSize: 13.5, color: "rgba(31,42,68,.85)" }}>{text}</div>
         </div>
       </div>

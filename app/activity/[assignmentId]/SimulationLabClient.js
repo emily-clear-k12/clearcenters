@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
+import SamIcon from "../../../components/SamIcon";
 // Note: unlike Mission Map/Group Chat, Simulation Lab doesn't use
 // lib/hints.js's per-checkpoint hint bank — its checkpoints are
 // single-attempt with no "wrong, try again" reveal to hint against (see the
@@ -252,8 +253,13 @@ export default function SimulationLabClient({
   alreadySubmitted,
   revisionRequested,
   revisionFeedback,
+  samSkin,
+  samNickname,
 }) {
   const router = useRouter();
+  // Sept 4, 2026 — S.A.M. expansion: samLabel replaces every literal
+  // "S.A.M." text label so a student's chosen nickname shows up everywhere.
+  const samLabel = samNickname || "S.A.M.";
   // Scoped by studentId as well as assignmentId — same fix Mission Map
   // needed after a real live-test bug (a shared class assignmentId plus a
   // browser shared across student logins could otherwise show one
@@ -616,9 +622,9 @@ export default function SimulationLabClient({
     if (!samLine) return null;
     return (
       <div style={{ display: "flex", gap: 10, alignItems: "flex-start", background: "rgba(255,166,48,.1)", border: `1px solid ${COLORS.amber}55`, borderRadius: 12, padding: 12, marginBottom: 14 }}>
-        <img src="/icons/robot_point.png" alt="S.A.M." style={{ width: 28, height: 28, objectFit: "contain", flexShrink: 0 }} />
+        <SamIcon skinKey={samSkin} alt={samLabel} size={28} />
         <div>
-          <div style={{ fontSize: 10.5, fontWeight: 700, color: COLORS.amber, marginBottom: 2, letterSpacing: 0.5 }}>S.A.M.</div>
+          <div style={{ fontSize: 10.5, fontWeight: 700, color: COLORS.amber, marginBottom: 2, letterSpacing: 0.5 }}>{samLabel}</div>
           <div style={{ fontSize: 13.5, color: "rgba(234,240,246,.9)" }}>{samLine}</div>
         </div>
       </div>
