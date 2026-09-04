@@ -205,13 +205,18 @@ export default function GearLockerClient({ student, planets, visitedPlanetKeys, 
           covers it once scrolled that far, same trick ProgressClient.js
           already uses for its hero background. */}
       {/* Sept 1 2026 (Emily's ask, "make the background more transparent"):
-          faded the photo itself down instead of adding a dark scrim on top
-          of it — a scrim would have fought with the planet nodes' own
-          drop-shadows and the stats panels' existing translucent glass
-          look, while a faded image just reads as lighter/quieter behind
-          everything else on the page. */}
+          faded the OLD abstract-sky art down to 55% opacity so the
+          floating planet-icon images and their drop-shadows would stand
+          out against it, without needing a dark scrim that would've
+          fought with the stats panels' translucent glass look.
+          Sept 4 2026: that reasoning no longer applies — the floating
+          icons are gone, and the new art's own baked-in portals are now
+          the clickable UI, so dimming it works against legibility instead
+          of helping it. Emily also flagged it read as "dark" once the new
+          art was live. Back up near full opacity so the portals and their
+          labels are clearly readable. */}
       <div style={{ position: "fixed", inset: 0, zIndex: 0, background: "#0D0B2A" }}>
-        <img src="/student/galaxy_hub_bg.jpg" alt="Galaxy Hub" style={{ width: "100%", height: "100%", objectFit: "cover", opacity: 0.55 }} />
+        <img src="/student/galaxy_hub_bg.jpg" alt="Galaxy Hub" style={{ width: "100%", height: "100%", objectFit: "cover", opacity: 0.97 }} />
       </div>
 
       {/* No HTML title here on purpose — the background art already has a
