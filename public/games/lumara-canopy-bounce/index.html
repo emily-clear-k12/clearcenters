@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#42c55a">
+  <meta name="description" content="Bounce through Lumara's glowing jungle canopy in a fast 45-second platform game.">
+  <title>Lumara: Canopy Bounce</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main class="shell">
+    <section class="game-card" aria-label="Lumara Canopy Bounce game">
+      <div class="game-stage" id="stage">
+        <canvas id="game" width="960" height="540" aria-label="Lumara jumping game"></canvas>
+
+        <div class="hud" id="hud" hidden>
+          <div class="hud-chip"><span>TIME</span><strong id="time">45</strong></div>
+          <div class="hud-chip"><span>HEIGHT</span><strong id="height">0m</strong></div>
+          <div class="hud-chip boost-chip"><span>BOOST</span><strong id="boostStatus">READY</strong></div>
+          <div class="hud-chip score"><span>SCORE</span><strong id="score">0</strong></div>
+          <div class="hud-chip"><span>ENERGY</span><strong id="energy">● ● ●</strong></div>
+          <button class="sound-button" id="sound" type="button" aria-label="Mute sound">♪</button>
+        </div>
+
+        <section class="screen start-screen" id="startScreen">
+          <div class="title-lockup">
+            <span class="eyebrow">LUMARA JUNGLE MISSION</span>
+            <h1>Canopy<br><em>Bounce</em></h1>
+            <p>Spring from leaf to leaf, collect glowing seeds, and climb as high as you can before time runs out.</p>
+          </div>
+          <div class="launch-art" aria-hidden="true">
+            <img class="hero-robot" src="assets/plant-robot.webp" alt="">
+            <img class="hero-platform" src="assets/plant-platform.webp" alt="">
+          </div>
+          <div class="start-actions">
+            <div class="controls-copy"><kbd>←</kbd><kbd>→</kbd> steer · <kbd>SPACE</kbd> gives one midair boost</div>
+            <button class="primary-button" id="startButton" type="button"><span>Start 45-Second Climb</span><b>▲</b></button>
+          </div>
+        </section>
+
+        <section class="screen result-screen" id="resultScreen" hidden>
+          <div class="result-badge" id="resultBadge">LEAF HOPPER</div>
+          <h2>Canopy Reached!</h2>
+          <div class="final-score"><span>FINAL SCORE</span><strong id="finalScore">0</strong></div>
+          <div class="result-stats">
+            <div><strong id="heightStat">0m</strong><span>Height</span></div>
+            <div><strong id="seedsStat">0</strong><span>Seeds</span></div>
+            <div><strong id="bestStat">0</strong><span>Best</span></div>
+          </div>
+          <p id="resultMessage">The glowing garden is growing brighter!</p>
+          <button class="primary-button" id="playAgain" type="button"><span>Bounce Again</span><b>↻</b></button>
+        </section>
+
+        <div class="countdown" id="countdown" aria-live="polite"></div>
+        <div class="streak" id="streak">PERFECT LANDING ×2</div>
+        <div class="flash" id="flash"></div>
+        <div class="touch-controls" id="touchControls" hidden>
+          <button id="touchLeft" type="button" aria-label="Move left">◀</button>
+          <button class="boost-button" id="touchBoost" type="button" aria-label="Use midair boost">BOOST</button>
+          <button id="touchRight" type="button" aria-label="Move right">▶</button>
+        </div>
+        <div class="sr-only" id="announcer" aria-live="polite"></div>
+      </div>
+      <footer><span>Land on <b class="leaf">leaves</b></span><span>Collect <b class="seed">glowing seeds</b></span><span>Avoid <b class="thorn">thorn pads</b></span></footer>
+    </section>
+  </main>
+  <script src="game.js"></script>
+</body>
+</html>

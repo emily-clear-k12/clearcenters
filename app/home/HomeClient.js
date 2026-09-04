@@ -4,8 +4,10 @@ import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { HOME_BACKGROUNDS } from "../../lib/homeBackgrounds";
 import { SAM_SKINS, DEFAULT_SAM_SKIN } from "../../lib/samSkins";
+import { getWorldStory } from "../../lib/worldStories";
 import SamIcon from "../../components/SamIcon";
 import SamStage from "../../components/SamStage";
+import SamTrail from "../../components/SamTrail";
 
 // Sept 4, 2026 — display names for the Home settings panel's background
 // picker (added alongside the gear-icon settings window). Keyed by the same
@@ -60,7 +62,7 @@ function subjectRingColor(subject) {
 // portals always line up with the glowing floor rings baked into the
 // background art, and so the whole thing fits on one screen with no
 // scrolling — that was the point of the redesign.
-export default function HomeClient({ student, studentClass, assignments, missionsCompleted, badgeTiers, homeBackground, shoutout }) {
+export default function HomeClient({ student, studentClass, assignments, missionsCompleted, badgeTiers, homeBackground, shoutout, earnedWorldBackgrounds }) {
   const router = useRouter();
   const [samOpen, setSamOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -110,6 +112,55 @@ export default function HomeClient({ student, studentClass, assignments, mission
   const [nicknameDraft, setNicknameDraft] = useState(student.sam_nickname || "");
   const [nicknameSaving, setNicknameSaving] = useState(false);
   const samLabel = samNickname || "S.A.M.";
+
+  // Sept 5, 2026 — Galaxy Hub world-reward-station work: which world's
+  // S.A.M. trail is equipped (null = none) and which world backgrounds
+  // this student has actually earned (read that world's story — see
+  // app/gear-locker/world/[planetKey]). Same optimistic-save shape as the
+  // skin/background pickers above. Trail colors come straight from
+  // lib/worldStories.js — a trail is just a 3-hex-color palette, no image
+  // asset, so there's nothing else to fetch for it.
+  const [equippedTrail, setEquippedTrail] = useState(student.equipped_world_trail || null);
+  const [trailSaving, setTrailSaving] = useState(false);
+  const equippedTrailColors = equippedTrail ? getWorldStory(equippedTrail)?.trailColors : null;
+
+  async function handlePickWorldTrail(planetKey) {
+    if (planetKey === equippedTrail || trailSaving) return;
+    const previous = equippedTrail;
+    setEquippedTrail(planetKey);
+    setTrailSaving(true);
+    try {
+      const res = await fetch("/api/student/set-world-trail", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ planetKey }),
+      });
+      if (!res.ok) throw new Error("save failed");
+    } catch (e) {
+      setEquippedTrail(previous);
+    } finally {
+      setTrailSaving(false);
+    }
+  }
+
+  async function handlePickEarnedBackground(planetKey, imagePath) {
+    if (imagePath === currentBg || bgSaving) return;
+    const previous = currentBg;
+    setCurrentBg(imagePath);
+    setBgSaving(true);
+    try {
+      const res = await fetch("/api/student/set-background", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ worldKey: planetKey }),
+      });
+      if (!res.ok) throw new Error("save failed");
+    } catch (e) {
+      setCurrentBg(previous);
+    } finally {
+      setBgSaving(false);
+    }
+  }
 
   // Added Sept 1, 2026 — Home is the hub every student lands on and the one
   // real nav screen that doesn't render the shared BackToHubButton (see that
@@ -385,6 +436,49 @@ export default function HomeClient({ student, studentClass, assignments, mission
             })}
           </div>
 
+          {/* Sept 5, 2026 — earned world backgrounds, its own separate
+              section per Emily's ask ("needs to be its own separate
+              section and doesn't need to show the student anything until
+              they have unlocked a background") — this whole block simply
+              doesn't render until earnedWorldBackgrounds has at least one
+              entry, unlike the always-visible free grid above. */}
+          {earnedWorldBackgrounds && earnedWorldBackgrounds.length > 0 && (
+            <>
+              <p style={{ fontSize: 10.5, fontWeight: 700, letterSpacing: .4, textTransform: "uppercase", color: COLORS.textMuted, margin: "0 0 8px 0" }}>
+                🌟 Earned Backgrounds
+              </p>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, marginBottom: 14 }}>
+                {earnedWorldBackgrounds.map((world) => {
+                  const selected = world.image_path === currentBg;
+                  return (
+                    <button
+                      key={world.planet_key}
+                      type="button"
+                      onClick={() => handlePickEarnedBackground(world.planet_key, world.image_path)}
+                      className="gc-btn"
+                      style={{
+                        position: "relative", padding: 0, borderRadius: 10, overflow: "hidden",
+                        border: selected ? `2.5px solid ${COLORS.violet}` : "2.5px solid transparent",
+                        background: "none", cursor: bgSaving ? "default" : "pointer", opacity: bgSaving && !selected ? 0.6 : 1,
+                      }}
+                    >
+                      <img src={world.image_path} alt={world.name} style={{ width: "100%", height: 50, objectFit: "cover", display: "block" }} />
+                      <span style={{
+                        position: "absolute", bottom: 0, left: 0, right: 0, fontSize: 8.5, fontWeight: 700,
+                        color: COLORS.white, background: "rgba(20,26,50,.6)", padding: "2px 0", textAlign: "center",
+                      }}>
+                        {world.name}
+                      </span>
+                      {selected && (
+                        <span style={{ position: "absolute", top: 2, right: 3, fontSize: 11, textShadow: "0 1px 3px rgba(0,0,0,.6)" }}>✓</span>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            </>
+          )}
+
           <p style={{ fontSize: 10.5, fontWeight: 700, letterSpacing: .4, textTransform: "uppercase", color: COLORS.textMuted, margin: "0 0 8px 0" }}>
             Customize S.A.M.
           </p>
@@ -427,6 +521,60 @@ export default function HomeClient({ student, studentClass, assignments, mission
               );
             })}
           </div>
+
+          {/* Sept 5, 2026 — world trails, earned by reading a world's story
+              at its reward station. Same "don't render until there's
+              something to show" rule as the earned-backgrounds section
+              above. */}
+          {earnedWorldBackgrounds && earnedWorldBackgrounds.length > 0 && (
+            <>
+              <p style={{ fontSize: 10.5, fontWeight: 700, letterSpacing: .4, textTransform: "uppercase", color: COLORS.textMuted, margin: "0 0 8px 0" }}>
+                S.A.M. Trails
+              </p>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 14 }}>
+                <button
+                  type="button"
+                  onClick={() => handlePickWorldTrail(null)}
+                  disabled={trailSaving}
+                  className="gc-btn"
+                  style={{
+                    border: !equippedTrail ? `2px solid ${COLORS.violet}` : "2px solid transparent",
+                    background: COLORS.violetSoft, borderRadius: 999, padding: "6px 12px",
+                    fontSize: 11, fontWeight: 700, color: COLORS.textDark,
+                  }}
+                >
+                  None
+                </button>
+                {earnedWorldBackgrounds.map((world) => {
+                  const storyData = getWorldStory(world.planet_key);
+                  if (!storyData) return null;
+                  const selected = world.planet_key === equippedTrail;
+                  return (
+                    <button
+                      key={world.planet_key}
+                      type="button"
+                      onClick={() => handlePickWorldTrail(world.planet_key)}
+                      disabled={trailSaving}
+                      className="gc-btn"
+                      style={{
+                        display: "flex", alignItems: "center", gap: 5,
+                        border: selected ? `2px solid ${COLORS.violet}` : "2px solid transparent",
+                        background: COLORS.violetSoft, borderRadius: 999, padding: "6px 12px",
+                        fontSize: 11, fontWeight: 700, color: COLORS.textDark,
+                      }}
+                    >
+                      <span style={{ display: "flex", gap: 2 }}>
+                        {storyData.trailColors.slice(0, 3).map((c, i) => (
+                          <span key={i} style={{ width: 7, height: 7, borderRadius: "50%", background: c, display: "inline-block" }} />
+                        ))}
+                      </span>
+                      {world.name}
+                    </button>
+                  );
+                })}
+              </div>
+            </>
+          )}
 
           <p style={{ fontSize: 10.5, fontWeight: 700, letterSpacing: .4, textTransform: "uppercase", color: COLORS.textMuted, margin: "0 0 6px 0" }}>
             Give S.A.M. a nickname
@@ -615,6 +763,14 @@ export default function HomeClient({ student, studentClass, assignments, mission
         onClick={() => setSamOpen(!samOpen)}
         style={{ position: "absolute", right: 10, bottom: 10, zIndex: 5 }}
       />
+
+      {/* Sept 5, 2026 — World Reward Station cosmetic: a mouse-following
+          sparkle trail earned by reading a world's "learn about this
+          world" story (see lib/worldStories.js + set-world-trail route).
+          Same code-only Bloom Trail mechanic Glow Garden's old activity
+          used, just recolored per equipped world — no new art needed. */}
+      <SamTrail colors={equippedTrailColors} active={Boolean(equippedTrail)} />
+
       {samOpen && (
         <div style={{ position: "absolute", right: 26, bottom: 186, width: 240, background: COLORS.white, borderRadius: 16, boxShadow: "0 8px 24px rgba(0,0,0,.2)", padding: 16, zIndex: 5 }}>
           <p style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 700, fontSize: 14, margin: "0 0 4px 0" }}>

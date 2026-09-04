@@ -20,8 +20,7 @@ const COLORS = {
 
 // Sept 4, 2026 rebuild: Emily replaced the abstract open-space background
 // with a real illustrated "Galaxy Hub" room — six portal windows built
-// directly into the art (Glow Garden / Ice World / Lavacore / Sandspire /
-// Sky Isles / Robot World), plus its own baked-in ship out the center
+// directly into the art, plus its own baked-in ship out the center
 // window. The old floating planet-icon-on-open-sky metaphor (a rocket
 // emoji "current location" marker, dashed lines connecting it to six
 // separate orb images) doesn't fit this grounded, literal room — the art
@@ -32,26 +31,26 @@ const COLORS = {
 // link), plus the same name/crystal-threshold/lock-state readout that
 // used to float under each icon, now anchored under its portal instead.
 //
-// Four of the six planet_keys kept their DB identity (frost_ring,
-// robot_relay_city, jungle_moon, cloud_reef are still the real keys
-// student_planet_visits references) but their DISPLAY NAME was renamed to
-// match the new art's baked-in labels (Ice World, Robot World, Sandspire,
-// Sky Isles respectively) — see the Sept 4 SQL for that rename. Glow
-// Garden and Lavacore matched already.
+// Sept 5, 2026: second art refresh, second rename pass — same 6 stable
+// planet_keys (glow_garden, frost_ring, lavacore, jungle_moon, cloud_reef,
+// robot_relay_city; nothing in the database moved), but the DISPLAY NAMEs
+// changed again to match this newest art's baked-in labels: Lumara,
+// Frostveil, Cindara, Solara, Cloudreach, Mechara respectively (see the
+// Sept 5 SQL). This is on top of the Sept 4 rename (Ice World/Robot
+// World/Sandspire/Sky Isles) — that one's fully superseded now.
 //
-// Hotspot boxes were measured directly off the real art (percent of image
-// width/height, oval left/right/top/bottom edges read from a gridded
-// crop) rather than guessed — same discipline as Simulation Lab's
-// CONSOLE_HOTSPOTS. Like that constant, these are "tuned by eye against
-// the source image," not pixel-perfect, and may want a small nudge once
-// Emily sees it live on a real screen.
+// Hotspot boxes were re-measured directly off the new art (percent of
+// image width/height, oval left/right/top/bottom edges read from a
+// gridded crop) — same discipline as before, and same caveat as before:
+// "tuned by eye against the source image," not pixel-perfect, may want a
+// small nudge once Emily sees it live on a real screen.
 const PORTAL_HOTSPOTS = {
-  glow_garden: { x: 13, y: 39, w: 12, h: 39 },
-  frost_ring: { x: 26.5, y: 43, w: 12, h: 31 }, // "Ice World" portal
-  lavacore: { x: 41, y: 43, w: 12, h: 29 },
-  jungle_moon: { x: 64.5, y: 44, w: 12, h: 29 }, // "Sandspire" portal
-  cloud_reef: { x: 74.5, y: 43.5, w: 10, h: 31 }, // "Sky Isles" portal
-  robot_relay_city: { x: 85.5, y: 43, w: 12, h: 31 }, // "Robot World" portal
+  glow_garden: { x: 18, y: 44, w: 18, h: 40 }, // "Lumara" portal
+  frost_ring: { x: 32.5, y: 44, w: 15, h: 34 }, // "Frostveil" portal
+  lavacore: { x: 45.5, y: 44, w: 15, h: 34 }, // "Cindara" portal
+  jungle_moon: { x: 69.5, y: 44, w: 15, h: 34 }, // "Solara" portal
+  cloud_reef: { x: 83, y: 44, w: 16, h: 40 }, // "Cloudreach" portal
+  robot_relay_city: { x: 92, y: 44, w: 15, h: 40 }, // "Mechara" portal
 };
 
 function formatShortDate(dateStr) {
@@ -155,41 +154,26 @@ export default function GearLockerClient({ student, planets, visitedPlanetKeys, 
   // signal left. See the `filter` props below (and PlanetDetailModal above)
   // for where the grayscale used to be applied.
 
-  async function openPlanet(planet) {
+  function openPlanet(planet) {
     const unlocked = isUnlocked(planet);
     if (!unlocked) {
       setLockedTip(planet.planet_key);
       setTimeout(() => setLockedTip(null), 1800);
-    }
-
-    // Glow Garden is the pilot for a real per-planet arrival scene (built
-    // Aug 27) — once unlocked, it gets its own page instead of the generic
-    // modal below. Every other planet is untouched and still opens
-    // PlanetDetailModal; this branch is the only thing that changed here.
-    // A still-locked Glow Garden falls through exactly like every other
-    // locked planet (tooltip + the modal's own locked view) — only an
-    // unlocked visit routes to the new page. The new page records its own
-    // "visit" server-side on mount, so we don't also fire /api/planets/visit
-    // for it here.
-    if (unlocked && planet.planet_key === "glow_garden") {
-      router.push("/gear-locker/glow-garden");
+      // Locked planets still fall through to PlanetDetailModal's locked
+      // view below, same as before — only the unlocked path changed here.
+      setSelectedPlanet({ ...planet, __studentPoints: student.crystal_points });
       return;
     }
 
-    setSelectedPlanet({ ...planet, __studentPoints: student.crystal_points });
-    if (unlocked && !visitedSet.has(planet.planet_key)) {
-      try {
-        await fetch("/api/planets/visit", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ planetKey: planet.planet_key }),
-        });
-        router.refresh();
-      } catch (err) {
-        // A hiccup here just means the "visited" checkmark takes one more
-        // visit to appear — not worth blocking the arrival scene over.
-      }
-    }
+    // Sept 5, 2026: every unlocked planet now routes to the unified world
+    // reward-station page (see app/gear-locker/world/[planetKey]) instead
+    // of the old generic PlanetDetailModal — Glow Garden was the pilot for
+    // this (a real per-planet page instead of a modal); every other planet
+    // now gets the same treatment, even before it has its own real story
+    // and game (it renders a "coming soon" state instead). The new page
+    // records its own "visit" server-side on mount, so this no longer
+    // needs to call /api/planets/visit itself.
+    router.push(`/gear-locker/world/${planet.planet_key}`);
   }
 
   return (

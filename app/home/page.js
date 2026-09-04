@@ -5,6 +5,30 @@ import { getVisibleAssignmentsForStudent } from "../../lib/getStudentAssignments
 import { HOME_BACKGROUNDS } from "../../lib/homeBackgrounds";
 import HomeClient from "./HomeClient";
 
+// Sept 5, 2026 — worlds whose "learn about this world" story a student has
+// already read (see app/gear-locker/world/[planetKey]) each earn that
+// world's background image as an additional, non-free Home background
+// option. Only planet_keys with a real story in lib/worldStories.js can
+// ever have story_read_at set, so this list only ever contains worlds
+// that genuinely have art to offer as a background.
+async function getEarnedWorldBackgrounds(studentId) {
+  const { data: visits } = await supabaseAdmin
+    .from("student_planet_visits")
+    .select("planet_key")
+    .eq("student_id", studentId)
+    .not("story_read_at", "is", null);
+
+  const planetKeys = (visits || []).map((v) => v.planet_key);
+  if (planetKeys.length === 0) return [];
+
+  const { data: planets } = await supabaseAdmin
+    .from("planets")
+    .select("planet_key, name, image_path")
+    .in("planet_key", planetKeys);
+
+  return (planets || []).filter((p) => p.image_path);
+}
+
 export default async function HomePage() {
   const cookieStore = cookies();
   const studentId = cookieStore.get("cc_student_id")?.value;
@@ -17,7 +41,7 @@ export default async function HomePage() {
 
   const { data: student, error: studentError } = await supabaseAdmin
     .from("students")
-    .select("id, first_name, crystal_points, streak_days, class_id, home_background, equipped_sam_skin, sam_nickname, teacher_unlocked_sam_skins")
+    .select("id, first_name, crystal_points, streak_days, class_id, home_background, equipped_sam_skin, sam_nickname, teacher_unlocked_sam_skins, equipped_world_trail")
     .eq("id", studentId)
     .single();
 
@@ -25,17 +49,21 @@ export default async function HomePage() {
     redirect("/login");
   }
 
+  const earnedWorldBackgrounds = await getEarnedWorldBackgrounds(studentId);
+  const earnedBackgroundPaths = earnedWorldBackgrounds.map((w) => w.image_path);
+
   // Sept 4, 2026: which of the several Home backgrounds this student sees.
   // A student's own saved choice (set via the Home settings panel, stored
   // durably on students.home_background) always wins once they've made one.
   // Until then, fall back to the per-login random pick from student-login
-  // (held in the cc_home_bg cookie for the session). Both values are
-  // re-validated against the real HOME_BACKGROUNDS list here rather than
-  // trusted directly — a stale cookie from before this feature shipped, a
-  // removed background, or anything unexpected just falls back to the
-  // original background instead of passing an arbitrary string into an
-  // image src.
-  const homeBackground = HOME_BACKGROUNDS.includes(student.home_background)
+  // (held in the cc_home_bg cookie for the session). Values are
+  // re-validated against the real HOME_BACKGROUNDS list — or, as of Sept 5,
+  // an earned world background path — here rather than trusted directly;
+  // a stale cookie from before this feature shipped, a removed background,
+  // or anything unexpected just falls back to the original background
+  // instead of passing an arbitrary string into an image src.
+  const validBackgrounds = [...HOME_BACKGROUNDS, ...earnedBackgroundPaths];
+  const homeBackground = validBackgrounds.includes(student.home_background)
     ? student.home_background
     : HOME_BACKGROUNDS.includes(cookieBg)
     ? cookieBg
@@ -91,6 +119,7 @@ export default async function HomePage() {
       badgeTiers={badgeTiers || []}
       homeBackground={homeBackground}
       shoutout={shoutout || null}
+      earnedWorldBackgrounds={earnedWorldBackgrounds}
     />
   );
 }
