@@ -844,7 +844,7 @@ export default function SimulationLabClient({
     return (
       <div style={{ background: COLORS.panel, border: `1px solid ${COLORS.steelLine}`, borderRadius: 16, padding: 18, marginBottom: 18 }}>
         <div style={{ fontSize: 11, letterSpacing: 1, color: COLORS.amber, fontWeight: 700, marginBottom: 12 }}>
-          CONSOLE — {round === "roundOne" ? "ROUND 1" : "ROUND 2 (heavier ball)"}
+          CONSOLE — {round === "roundOne" ? "ROUND 1" : `ROUND 2 (${publicCase.roundTwoLabel || "condition changed"})`}
         </div>
 
         {hasBgImage ? (
@@ -1272,7 +1272,7 @@ export default function SimulationLabClient({
                 {(round === "roundTwo" || trialLogRoundTwo.length > 0) && (
                   <div style={{ marginTop: 18 }}>
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 10 }}>
-                      <div style={{ fontSize: 11, letterSpacing: 1, color: COLORS.cyan, fontWeight: 700 }}>TRIAL LOG — ROUND 2 (heavier ball)</div>
+                      <div style={{ fontSize: 11, letterSpacing: 1, color: COLORS.cyan, fontWeight: 700 }}>TRIAL LOG — ROUND 2 ({publicCase.roundTwoLabel || "condition changed"})</div>
                       <div style={{ fontSize: 11, color: COLORS.textMuted }}>{trialLogRoundTwo.length} logged</div>
                     </div>
                     <TrialStrip log={trialLogRoundTwo} />
@@ -1311,7 +1311,7 @@ export default function SimulationLabClient({
             <div style={{ marginBottom: 16, background: COLORS.panel, border: `1px solid ${COLORS.steelLine}`, borderRadius: 12, padding: 14 }}>
               <div style={{ fontSize: 11, letterSpacing: 1, color: COLORS.amber, fontWeight: 700, marginBottom: 10 }}>ROUND 1 TRIAL LOG</div>
               <TrialStrip log={trialLogRoundOne} />
-              <div style={{ fontSize: 11, letterSpacing: 1, color: COLORS.cyan, fontWeight: 700, margin: "16px 0 10px" }}>ROUND 2 TRIAL LOG (heavier ball)</div>
+              <div style={{ fontSize: 11, letterSpacing: 1, color: COLORS.cyan, fontWeight: 700, margin: "16px 0 10px" }}>ROUND 2 TRIAL LOG ({publicCase.roundTwoLabel || "condition changed"})</div>
               <TrialStrip log={trialLogRoundTwo} />
             </div>
 
