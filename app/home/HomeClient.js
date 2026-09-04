@@ -42,7 +42,7 @@ function subjectRingColor(subject) {
 // portals always line up with the glowing floor rings baked into the
 // background art, and so the whole thing fits on one screen with no
 // scrolling — that was the point of the redesign.
-export default function HomeClient({ student, studentClass, assignments, missionsCompleted, badgeTiers }) {
+export default function HomeClient({ student, studentClass, assignments, missionsCompleted, badgeTiers, homeBackground }) {
   const router = useRouter();
   const [samOpen, setSamOpen] = useState(false);
   const [notif, setNotif] = useState(null);
@@ -80,7 +80,12 @@ export default function HomeClient({ student, studentClass, assignments, mission
         width: "100%",
         height: "100vh",
         overflow: "hidden",
-        backgroundImage: "url(/student/hub_background.jpg)",
+        // Sept 4, 2026: one of 6 backgrounds, picked at random per login by
+        // student-login/route.js and passed down through page.js — see
+        // lib/homeBackgrounds.js. Falls back to the original single image
+        // if the prop is ever missing (shouldn't happen, page.js always
+        // resolves one, but a safe default costs nothing).
+        backgroundImage: `url(${homeBackground || "/student/hub_background.jpg"})`,
         backgroundSize: "cover",
         backgroundPosition: "center 30%",
         backgroundRepeat: "no-repeat",

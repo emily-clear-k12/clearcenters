@@ -1,5 +1,15 @@
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "../../../lib/supabaseAdmin";
+import { HOME_BACKGROUNDS } from "../../../lib/homeBackgrounds";
+
+// Sept 4, 2026 (Emily's ask): Home's background is now one of several
+// (see lib/homeBackgrounds.js), picked at random each time a student
+// actually logs in, and held steady for that whole session — a page
+// refresh or clicking around the app should NOT reshuffle it, only a
+// fresh login should. Tying the pick to this route (the one place a new
+// session actually begins) gets that for free: it's chosen once here and
+// carried in its own cookie alongside the session cookie, with the same
+// lifetime, so it naturally "expires" the same time the session does.
 
 export async function POST(request) {
   const { classCode, firstName, pin } = await request.json();
@@ -44,5 +54,18 @@ export async function POST(request) {
     path: "/",
     maxAge: 60 * 60 * 8, // 8 hours — a school day
   });
+
+  // Random Home background for this session (see HOME_BACKGROUNDS above)
+  // — same cookie lifetime as the session itself, so it lives and dies
+  // with the login, not with individual page loads.
+  const homeBackground = HOME_BACKGROUNDS[Math.floor(Math.random() * HOME_BACKGROUNDS.length)];
+  response.cookies.set("cc_home_bg", homeBackground, {
+    httpOnly: true,
+    secure: true,
+    sameSite: "lax",
+    path: "/",
+    maxAge: 60 * 60 * 8,
+  });
+
   return response;
 }

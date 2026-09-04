@@ -2,6 +2,7 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { supabaseAdmin } from "../../lib/supabaseAdmin";
 import { getVisibleAssignmentsForStudent } from "../../lib/getStudentAssignments";
+import { HOME_BACKGROUNDS } from "../../lib/homeBackgrounds";
 import HomeClient from "./HomeClient";
 
 export default async function HomePage() {
@@ -11,6 +12,17 @@ export default async function HomePage() {
   if (!studentId) {
     redirect("/login");
   }
+
+  // Sept 4, 2026: one of several Home backgrounds, picked at random by
+  // student-login and held for the whole session (HOME_BACKGROUNDS is
+  // that route's list, imported rather than duplicated so there's one
+  // source of truth). Re-validated against the real list here rather than
+  // trusting the cookie value directly — a stale value from before this
+  // feature shipped, or anything unexpected, just falls back to the
+  // original background instead of passing an arbitrary string into an
+  // image src.
+  const cookieBg = cookieStore.get("cc_home_bg")?.value;
+  const homeBackground = HOME_BACKGROUNDS.includes(cookieBg) ? cookieBg : HOME_BACKGROUNDS[0];
 
   const { data: student, error: studentError } = await supabaseAdmin
     .from("students")
@@ -56,6 +68,7 @@ export default async function HomePage() {
       assignments={assignments || []}
       missionsCompleted={missionsCompleted || 0}
       badgeTiers={badgeTiers || []}
+      homeBackground={homeBackground}
     />
   );
 }

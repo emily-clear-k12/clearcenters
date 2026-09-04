@@ -133,7 +133,19 @@ export default function GearLockerClient({ student, planets, visitedPlanetKeys, 
   const badgesEarnedCount = tiers.filter((t) => student.crystal_points >= t.threshold).length;
   const planetsVisitedCount = planets.filter((p) => visitedSet.has(p.planet_key)).length;
 
+  // TEMP — Sept 4, 2026, Emily's ask while she's working on the Galaxy Hub
+  // redesign ("unlock all of the planets just so we can see them... for
+  // now as we're working"): force every planet open regardless of real
+  // crystal_points, so every portal/description/arrival-page can be
+  // clicked through and previewed. The 💎 threshold pill still shows the
+  // real cost everywhere (it reads planet.threshold directly, untouched)
+  // — only the lock GATE is bypassed, not the displayed price. No student
+  // data changed; nothing in Supabase touched. Flip DEV_FORCE_UNLOCK_ALL
+  // back to false (or delete it and restore the real comparison below)
+  // once the design pass is done — don't ship this true.
+  const DEV_FORCE_UNLOCK_ALL = true;
   function isUnlocked(planet) {
+    if (DEV_FORCE_UNLOCK_ALL) return true;
     return student.crystal_points >= planet.threshold;
   }
 
