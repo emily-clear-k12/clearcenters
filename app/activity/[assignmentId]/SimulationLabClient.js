@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
 import SamIcon from "../../../components/SamIcon";
 import SamStage from "../../../components/SamStage";
+import DistressCallBadge from "../../../components/DistressCallBadge";
 // Note: unlike Mission Map/Group Chat, Simulation Lab doesn't use
 // lib/hints.js's per-checkpoint hint bank — its checkpoints are
 // single-attempt with no "wrong, try again" reveal to hint against (see the
@@ -1175,6 +1176,9 @@ export default function SimulationLabClient({
         }
         .sl-slider::-moz-range-track { height: 10px; border-radius: 999px; background: rgba(255,255,255,.35); }
       `}</style>
+      {/* Distress Call (Sept 8 2026) — renders nothing unless this specific
+          assignment was flagged as one; see components/DistressCallBadge.js. */}
+      <DistressCallBadge assignmentId={assignmentId} />
 
       <div
         style={{

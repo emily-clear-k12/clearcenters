@@ -6,6 +6,7 @@ import { Loader2 } from "lucide-react";
 import { GENERIC_HINTS, getCaseHints } from "../../../lib/hints";
 import SamIcon from "../../../components/SamIcon";
 import SamStage from "../../../components/SamStage";
+import DistressCallBadge from "../../../components/DistressCallBadge";
 
 // Mission Map's own locked palette — light sky-blue with a signal-gold
 // accent for cleared ground (revised Aug 30 v3: replaced an initial dark
@@ -986,6 +987,9 @@ export default function MissionMapClient({
         .mm-scrim { position: fixed; inset: 0; background: linear-gradient(180deg, rgba(234,244,255,.82) 0%, rgba(190,224,255,.86) 100%); z-index: 0; pointer-events: none; }
       `}</style>
       <div className="mm-scrim" />
+      {/* Distress Call (Sept 8 2026) — renders nothing unless this specific
+          assignment was flagged as one; see components/DistressCallBadge.js. */}
+      <DistressCallBadge assignmentId={assignmentId} />
 
       <div style={{ position: "relative", zIndex: 2, maxWidth: 720, margin: "0 auto", padding: "24px 20px 80px" }}>
         {revisionRequested && (

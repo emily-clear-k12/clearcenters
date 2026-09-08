@@ -4,6 +4,7 @@ import React, { useState, useEffect, useCallback, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Search, Calendar, ChevronLeft } from "lucide-react";
 import { supabase } from "../../../../lib/supabaseClient";
+import { engineSupportsDistressCall } from "../../../../lib/distressCallEngines";
 import TeacherSidebar from "../../../../components/TeacherSidebar";
 import TeacherPageBanner from "../../../../components/TeacherPageBanner";
 
@@ -96,6 +97,15 @@ function NewAssignmentContent() {
   const [dueDate, setDueDate] = useState("");
   const [assigning, setAssigning] = useState(false);
   const [assignedSuccess, setAssignedSuccess] = useState(false);
+  const [newAssignmentId, setNewAssignmentId] = useState(null);
+
+  // Distress Call (Sept 7 design doc §4) — a flag on this assignment, not a
+  // new engine. Only offered when the picked case's engine has an
+  // instant-graded portion to actually count (see lib/distressCallEngines.js
+  // for which ones, and lib/distressCall.js for why Group Chat isn't one).
+  const [distressCallEnabled, setDistressCallEnabled] = useState(false);
+  const [distressCallTarget, setDistressCallTarget] = useState("");
+  const [distressCallDeadline, setDistressCallDeadline] = useState("");
 
   const [challengeStep, setChallengeStep] = useState("library");
   const [selectedChallenge, setSelectedChallenge] = useState(null);
@@ -151,9 +161,18 @@ function NewAssignmentContent() {
     }
     setAssigning(true);
     setError(null);
+
+    const distressCallSupported = engineSupportsDistressCall(selectedCase.engine);
+    const assignmentFields = { class_id: assignClassId, case_standard: selectedCase.standard, due_date: dueDate || null };
+    if (distressCallSupported && distressCallEnabled) {
+      assignmentFields.distress_call = true;
+      assignmentFields.distress_call_target = distressCallTarget ? parseInt(distressCallTarget, 10) : null;
+      assignmentFields.distress_call_deadline = distressCallDeadline || null;
+    }
+
     const { data: newAssignment, error: insertError } = await supabase
       .from("assignments")
-      .insert({ class_id: assignClassId, case_standard: selectedCase.standard, due_date: dueDate || null })
+      .insert(assignmentFields)
       .select()
       .single();
     if (insertError) {
@@ -173,6 +192,7 @@ function NewAssignmentContent() {
     }
 
     setAssigning(false);
+    setNewAssignmentId(newAssignment.id);
     setAssignedSuccess(true);
   }
 
@@ -182,8 +202,12 @@ function NewAssignmentContent() {
     setChallengeStep("library");
     setSelectedChallenge(null);
     setAssignedSuccess(false);
+    setNewAssignmentId(null);
     setTargetMode("whole");
     setSelectedStudentIds([]);
+    setDistressCallEnabled(false);
+    setDistressCallTarget("");
+    setDistressCallDeadline("");
   }
 
   if (loadingAuth) {
@@ -247,9 +271,14 @@ function NewAssignmentContent() {
             <div style={{ background: COLORS.white, border: `1px solid ${COLORS.border}`, borderRadius: 16, padding: 32, textAlign: "center", boxShadow: "0 4px 16px rgba(13,27,42,.06)" }}>
               <div style={{ fontSize: 36, marginBottom: 10 }}>✅</div>
               <div style={{ fontWeight: 700, fontSize: 17, marginBottom: 6 }}>Assigned!</div>
-              <p style={{ color: COLORS.textMuted, fontSize: 13.5, marginBottom: 20 }}>
+              <p style={{ color: COLORS.textMuted, fontSize: 13.5, marginBottom: distressCallEnabled ? 10 : 20 }}>
                 "{selectedCase.title}" is now assigned to {targetMode === "specific" ? `${selectedStudentIds.length} student${selectedStudentIds.length === 1 ? "" : "s"} in` : "everyone in"} {targetClass?.name}.
               </p>
+              {distressCallEnabled && (
+                <p style={{ color: COLORS.violet, fontSize: 12.5, fontWeight: 700, marginBottom: 20, background: COLORS.violetSoft, borderRadius: 10, padding: "8px 12px", display: "inline-block" }}>
+                  🚨 Distress Call is live{distressCallTarget ? ` — target: ${distressCallTarget} checkpoints` : ""}. Students will see the meter update as they work.
+                </p>
+              )}
               <div style={{ display: "flex", gap: 10, justifyContent: "center" }}>
                 <button onClick={assignAnother} className="gc-btn" style={{ background: COLORS.violetSoft, color: COLORS.violet, borderRadius: 999, padding: "11px 20px", fontWeight: 700, fontSize: 13.5 }}>Assign Another</button>
                 <button onClick={() => router.push("/teacher/assign")} className="gc-btn" style={{ background: COLORS.violet, color: COLORS.white, borderRadius: 999, padding: "11px 20px", fontWeight: 700, fontSize: 13.5 }}>Back to My Classes</button>
@@ -469,6 +498,50 @@ function NewAssignmentContent() {
                     <Calendar size={14} style={{ position: "absolute", left: 10, top: 11, color: COLORS.textMuted }} />
                     <input type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} style={{ width: "100%", border: "2px solid #ECEAF5", borderRadius: 10, padding: "8px 10px 8px 32px", fontSize: 13, boxSizing: "border-box" }} />
                   </div>
+
+                  {engineSupportsDistressCall(selectedCase?.engine) && (
+                    <div style={{ marginBottom: 14, border: `1.5px solid ${distressCallEnabled ? COLORS.violet : COLORS.border}`, borderRadius: 12, padding: 12, background: distressCallEnabled ? COLORS.violetSoft : COLORS.white }}>
+                      <button
+                        type="button"
+                        className="gc-btn"
+                        onClick={() => setDistressCallEnabled((v) => !v)}
+                        style={{ display: "flex", alignItems: "center", gap: 8, background: "transparent", border: "none", padding: 0, width: "100%", textAlign: "left" }}
+                      >
+                        <div style={{ width: 16, height: 16, borderRadius: 4, background: distressCallEnabled ? COLORS.violet : COLORS.white, border: `1.5px solid ${distressCallEnabled ? COLORS.violet : COLORS.border}`, display: "flex", alignItems: "center", justifyContent: "center", color: COLORS.white, fontSize: 11, fontWeight: 700, flexShrink: 0 }}>
+                          {distressCallEnabled ? "✓" : ""}
+                        </div>
+                        <span style={{ fontWeight: 700, fontSize: 13 }}>🚨 Make this a Distress Call</span>
+                      </button>
+                      <p style={{ fontSize: 11.5, color: COLORS.textMuted, margin: "6px 0 0 24px" }}>
+                        Turns this into a shared goal — students see a live meter as checkpoints get cleared across the group.
+                      </p>
+                      {distressCallEnabled && (
+                        <div style={{ display: "flex", gap: 10, marginTop: 10, marginLeft: 24 }}>
+                          <div style={{ flex: 1 }}>
+                            <label style={{ fontSize: 11, fontWeight: 700, color: COLORS.textMuted }}>Target (checkpoints)</label>
+                            <input
+                              type="number"
+                              min="1"
+                              value={distressCallTarget}
+                              onChange={(e) => setDistressCallTarget(e.target.value)}
+                              placeholder="e.g. 50"
+                              style={{ width: "100%", border: "2px solid #ECEAF5", borderRadius: 10, padding: "7px 10px", fontSize: 13, boxSizing: "border-box", marginTop: 3 }}
+                            />
+                          </div>
+                          <div style={{ flex: 1 }}>
+                            <label style={{ fontSize: 11, fontWeight: 700, color: COLORS.textMuted }}>Deadline (optional)</label>
+                            <input
+                              type="datetime-local"
+                              value={distressCallDeadline}
+                              onChange={(e) => setDistressCallDeadline(e.target.value)}
+                              style={{ width: "100%", border: "2px solid #ECEAF5", borderRadius: 10, padding: "7px 10px", fontSize: 13, boxSizing: "border-box", marginTop: 3 }}
+                            />
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
                   <button className="gc-btn" onClick={handleAssign} disabled={assigning || !assignClassId} style={{ width: "100%", background: assignClassId ? COLORS.violet : "#D8D4E8", color: COLORS.white, borderRadius: 999, padding: "12px 20px", fontWeight: 700, fontSize: 14.5 }}>
                     {assigning
                       ? "Assigning..."

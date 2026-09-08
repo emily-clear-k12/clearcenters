@@ -6,6 +6,7 @@ import { Loader2 } from "lucide-react";
 import { GENERIC_HINTS, getCaseHints } from "../../../lib/hints";
 import SamIcon from "../../../components/SamIcon";
 import SamStage from "../../../components/SamStage";
+import DistressCallBadge from "../../../components/DistressCallBadge";
 
 // Signal Check's own locked palette — navy/teal/violet/gold, distinct from
 // Group Chat (violet-led) and Newsroom (navy/gold-led) so it reads as its
@@ -638,6 +639,9 @@ export default function SignalCheckClient({ assignmentId, studentId, caseStandar
         @keyframes sc-fadein { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
       `}</style>
       <div className="sc-scrim" />
+      {/* Distress Call (Sept 8 2026) — renders nothing unless this specific
+          assignment was flagged as one; see components/DistressCallBadge.js. */}
+      <DistressCallBadge assignmentId={assignmentId} />
 
       <TopBar
         standard={publicCase.teksLabel}
