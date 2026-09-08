@@ -51,6 +51,13 @@ const CHALLENGE_TYPES = [
     description: "A disputed claim shows up as a messy comment thread. Students sort the noise, weigh the evidence, and either rule on the dispute or run it as a bracket when there's more than two sides." },
   { key: "simulation_lab", label: "Simulation Lab", image: "/teacher/challenges/simulation_lab.jpg", real: true,
     description: "Students adjust real variables with sliders and dials, watch the results happen live, and explain the pattern using data they generated themselves." },
+  // Added Sept 8 2026 alongside its first (smoke-test) case, per the Sept 7
+  // design doc's week-1 scope: Individual Practice, Lock the Signal format
+  // only, Grade 3 Science only. `real: true` per the exact rule above — one
+  // real case exists (frequency_rush_words has data), even though it's a
+  // placeholder unit until the real Grade 3 vocabulary content is loaded.
+  { key: "frequency_rush", label: "Frequency Rush", image: "/teacher/challenges/frequency_rush.jpg", real: true,
+    description: "Students race the clock to lock onto the right definition before the signal scrambles — fast vocabulary review with streaks and speed bonuses, replayable anytime as practice." },
   { key: "classification_lab", label: "Classification Lab", image: "/teacher/challenges/classification_lab.jpg", real: false,
     description: "Items come down a conveyor belt. Students sort them into the correct bins, then justify one deliberately tricky case in writing." },
   { key: "territory_builder", label: "Territory Builder", image: "/teacher/challenges/territory_builder.jpg", real: false,

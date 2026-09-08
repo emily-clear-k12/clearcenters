@@ -9,6 +9,7 @@ import ActivityClient from "./ActivityClient";
 import SignalCheckClient from "./SignalCheckClient";
 import MissionMapClient from "./MissionMapClient";
 import SimulationLabClient from "./SimulationLabClient";
+import FrequencyRushClient from "./FrequencyRushClient";
 
 export default async function ActivityPage({ params }) {
   const { assignmentId } = params;
@@ -64,12 +65,28 @@ export default async function ActivityPage({ params }) {
   // screen below, same as any other unwired case, until it's reconnected.
   const { data: caseRow } = await supabaseAdmin
     .from("cases")
-    .select("engine")
+    .select("engine, title")
     .eq("standard", assignment.case_standard)
     .maybeSingle();
 
   const engine = (caseRow && caseRow.engine) || "group_chat";
   const isSignalCheck = engine === "fact_check_desk";
+  // Frequency Rush's own branch, added Sept 8 2026 alongside its first
+  // Individual Practice cases — added up front rather than as an
+  // afterthought, per the exact lesson from the Mission Map miss documented
+  // below. Frequency Rush skips the shared existingSubmission/alreadySubmitted
+  // gating entirely: Individual Practice is deliberately replayable
+  // (unlimited replays, per the design doc), so there's no "already done,
+  // go to Share" state here the way every other engine has one.
+  const isFrequencyRush = engine === "frequency_rush";
+  if (isFrequencyRush) {
+    return (
+      <FrequencyRushClient
+        assignmentId={assignmentId}
+        caseTitle={caseRow ? caseRow.title : null}
+      />
+    );
+  }
   // Mission Map's own branch — this was missing entirely until Sept 1, 2026,
   // which meant every Mission Map assignment (3.1-MM, 4.1-MM, 5.1-MM) fell
   // through to the generic group_chat lookup below (which has never heard of
