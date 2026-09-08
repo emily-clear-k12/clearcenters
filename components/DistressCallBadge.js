@@ -48,6 +48,7 @@ export default function DistressCallBadge({ assignmentId }) {
   if (!progress) return null;
 
   const pct = progress.target ? Math.min(100, Math.round((progress.current / progress.target) * 100)) : null;
+  const hasReward = progress.rewardPoints > 0;
 
   return (
     <div
@@ -64,7 +65,7 @@ export default function DistressCallBadge({ assignmentId }) {
         color: "#FFFFFF",
         fontFamily: "'Inter', sans-serif",
         minWidth: 150,
-        boxShadow: pulse ? "0 0 0 3px #6FD8F5" : "0 4px 14px rgba(0,0,0,.25)",
+        boxShadow: progress.rewardGiven ? "0 0 0 3px #FFC44D" : pulse ? "0 0 0 3px #6FD8F5" : "0 4px 14px rgba(0,0,0,.25)",
         transition: "box-shadow .3s ease",
       }}
     >
@@ -77,6 +78,16 @@ export default function DistressCallBadge({ assignmentId }) {
       {pct !== null && (
         <div style={{ height: 5, background: "rgba(255,255,255,.2)", borderRadius: 999, overflow: "hidden" }}>
           <div style={{ height: "100%", width: `${pct}%`, background: "#6FD8F5", transition: "width .4s ease" }} />
+        </div>
+      )}
+      {/* The prize: shown as a preview while the class is still working
+          toward it, then swaps to a one-line celebration the moment the
+          server confirms points went out (progress.rewardGiven) — never
+          awarded from here, this badge only ever reflects what already
+          happened server-side in lib/distressCall.js. */}
+      {hasReward && (
+        <div style={{ fontSize: 10.5, fontWeight: 700, marginTop: 6, color: progress.rewardGiven ? "#FFC44D" : "rgba(255,255,255,.75)" }}>
+          {progress.rewardGiven ? `🎉 +${progress.rewardPoints} crystal points earned!` : `💎 +${progress.rewardPoints} pts for everyone at the goal`}
         </div>
       )}
     </div>

@@ -117,7 +117,7 @@ export default function MyClassesPage() {
 
     const { data: assigned } = await supabase
       .from("assignments")
-      .select("id, due_date, case_standard, created_at, distress_call, distress_call_target, cases(title, learning_target, lesson_summary, misconception_note)")
+      .select("id, due_date, case_standard, created_at, distress_call, distress_call_target, distress_call_reward_points, distress_call_reward_given, cases(title, learning_target, lesson_summary, misconception_note)")
       .eq("class_id", selectedClassId)
       .order("created_at", { ascending: false });
     const assignmentList = assigned || [];
@@ -507,6 +507,14 @@ export default function MyClassesPage() {
                 >
                   📡 Project on Live Ops Board
                 </button>
+              )}
+
+              {caseDetailAssignment.distress_call && caseDetailAssignment.distress_call_reward_points > 0 && (
+                <div style={{ fontSize: 12, fontWeight: 700, color: caseDetailAssignment.distress_call_reward_given ? "#B8860B" : COLORS.violet, background: caseDetailAssignment.distress_call_reward_given ? "#FFF4E5" : COLORS.violetSoft, borderRadius: 10, padding: "8px 12px", marginBottom: 16, textAlign: "center" }}>
+                  {caseDetailAssignment.distress_call_reward_given
+                    ? `🎉 +${caseDetailAssignment.distress_call_reward_points} crystal points already awarded to the class`
+                    : `💎 +${caseDetailAssignment.distress_call_reward_points} crystal points will go out to everyone when the target is hit`}
+                </div>
               )}
 
               {caseDetailAssignment.cases?.learning_target && (

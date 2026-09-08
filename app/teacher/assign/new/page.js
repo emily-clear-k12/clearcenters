@@ -106,6 +106,12 @@ function NewAssignmentContent() {
   const [distressCallEnabled, setDistressCallEnabled] = useState(false);
   const [distressCallTarget, setDistressCallTarget] = useState("");
   const [distressCallDeadline, setDistressCallDeadline] = useState("");
+  // The prize for hitting the target — set now, up front, rather than
+  // decided after the fact (Emily's Sept 8 call: promising the reward before
+  // the class starts is what makes it motivating, and it means the points go
+  // out the instant the goal is cleared even if no teacher is watching).
+  // 0/blank means no reward, just the shared meter.
+  const [distressCallRewardPoints, setDistressCallRewardPoints] = useState("");
 
   const [challengeStep, setChallengeStep] = useState("library");
   const [selectedChallenge, setSelectedChallenge] = useState(null);
@@ -168,6 +174,7 @@ function NewAssignmentContent() {
       assignmentFields.distress_call = true;
       assignmentFields.distress_call_target = distressCallTarget ? parseInt(distressCallTarget, 10) : null;
       assignmentFields.distress_call_deadline = distressCallDeadline || null;
+      assignmentFields.distress_call_reward_points = distressCallRewardPoints ? parseInt(distressCallRewardPoints, 10) : 0;
     }
 
     const { data: newAssignment, error: insertError } = await supabase
@@ -208,6 +215,7 @@ function NewAssignmentContent() {
     setDistressCallEnabled(false);
     setDistressCallTarget("");
     setDistressCallDeadline("");
+    setDistressCallRewardPoints("");
   }
 
   if (loadingAuth) {
@@ -277,6 +285,7 @@ function NewAssignmentContent() {
               {distressCallEnabled && (
                 <p style={{ color: COLORS.violet, fontSize: 12.5, fontWeight: 700, marginBottom: 20, background: COLORS.violetSoft, borderRadius: 10, padding: "8px 12px", display: "inline-block" }}>
                   🚨 Distress Call is live{distressCallTarget ? ` — target: ${distressCallTarget} checkpoints` : ""}. Students will see the meter update as they work.
+                  {!!distressCallRewardPoints && parseInt(distressCallRewardPoints, 10) > 0 && ` Everyone gets +${distressCallRewardPoints} crystal points when they hit it.`}
                 </p>
               )}
               <div style={{ display: "flex", gap: 10, justifyContent: "center", flexWrap: "wrap" }}>
@@ -519,26 +528,72 @@ function NewAssignmentContent() {
                         Turns this into a shared goal — students see a live meter as checkpoints get cleared across the group.
                       </p>
                       {distressCallEnabled && (
-                        <div style={{ display: "flex", gap: 10, marginTop: 10, marginLeft: 24 }}>
-                          <div style={{ flex: 1 }}>
-                            <label style={{ fontSize: 11, fontWeight: 700, color: COLORS.textMuted }}>Target (checkpoints)</label>
-                            <input
-                              type="number"
-                              min="1"
-                              value={distressCallTarget}
-                              onChange={(e) => setDistressCallTarget(e.target.value)}
-                              placeholder="e.g. 50"
-                              style={{ width: "100%", border: "2px solid #ECEAF5", borderRadius: 10, padding: "7px 10px", fontSize: 13, boxSizing: "border-box", marginTop: 3 }}
-                            />
+                        <div style={{ marginTop: 10, marginLeft: 24 }}>
+                          <div style={{ display: "flex", gap: 10 }}>
+                            <div style={{ flex: 1 }}>
+                              <label style={{ fontSize: 11, fontWeight: 700, color: COLORS.textMuted }}>Target (checkpoints)</label>
+                              <input
+                                type="number"
+                                min="1"
+                                value={distressCallTarget}
+                                onChange={(e) => setDistressCallTarget(e.target.value)}
+                                placeholder="e.g. 50"
+                                style={{ width: "100%", border: "2px solid #ECEAF5", borderRadius: 10, padding: "7px 10px", fontSize: 13, boxSizing: "border-box", marginTop: 3 }}
+                              />
+                            </div>
+                            <div style={{ flex: 1 }}>
+                              <label style={{ fontSize: 11, fontWeight: 700, color: COLORS.textMuted }}>Deadline (optional)</label>
+                              <input
+                                type="datetime-local"
+                                value={distressCallDeadline}
+                                onChange={(e) => setDistressCallDeadline(e.target.value)}
+                                style={{ width: "100%", border: "2px solid #ECEAF5", borderRadius: 10, padding: "7px 10px", fontSize: 13, boxSizing: "border-box", marginTop: 3 }}
+                              />
+                            </div>
                           </div>
-                          <div style={{ flex: 1 }}>
-                            <label style={{ fontSize: 11, fontWeight: 700, color: COLORS.textMuted }}>Deadline (optional)</label>
-                            <input
-                              type="datetime-local"
-                              value={distressCallDeadline}
-                              onChange={(e) => setDistressCallDeadline(e.target.value)}
-                              style={{ width: "100%", border: "2px solid #ECEAF5", borderRadius: 10, padding: "7px 10px", fontSize: 13, boxSizing: "border-box", marginTop: 3 }}
-                            />
+
+                          {/* The prize, promised up front (see the state comment above
+                              for why) — every student targeted by this assignment gets
+                              +N crystal points the moment the class clears the target,
+                              automatically, with no teacher action needed. Presets match
+                              the same 5/10/25/50 quick-picks the Rewards & S.A.M. modal
+                              on the teacher home page already uses. */}
+                          <div style={{ marginTop: 10 }}>
+                            <label style={{ fontSize: 11, fontWeight: 700, color: COLORS.textMuted }}>💎 Crystal reward when the target is hit (optional)</label>
+                            <div style={{ display: "flex", gap: 6, marginTop: 4, flexWrap: "wrap", alignItems: "center" }}>
+                              {[0, 5, 10, 25, 50].map((amt) => (
+                                <button
+                                  key={amt}
+                                  type="button"
+                                  onClick={() => setDistressCallRewardPoints(amt === 0 ? "" : String(amt))}
+                                  className="gc-btn"
+                                  style={{
+                                    background: (amt === 0 ? !distressCallRewardPoints : distressCallRewardPoints === String(amt)) ? COLORS.violet : COLORS.white,
+                                    color: (amt === 0 ? !distressCallRewardPoints : distressCallRewardPoints === String(amt)) ? COLORS.white : COLORS.textDark,
+                                    border: `1.5px solid ${COLORS.border}`,
+                                    borderRadius: 999,
+                                    padding: "5px 12px",
+                                    fontWeight: 700,
+                                    fontSize: 12,
+                                  }}
+                                >
+                                  {amt === 0 ? "None" : `+${amt}`}
+                                </button>
+                              ))}
+                              <input
+                                type="number"
+                                min="0"
+                                value={distressCallRewardPoints}
+                                onChange={(e) => setDistressCallRewardPoints(e.target.value)}
+                                placeholder="Custom"
+                                style={{ width: 84, border: "2px solid #ECEAF5", borderRadius: 10, padding: "5px 8px", fontSize: 12.5, boxSizing: "border-box" }}
+                              />
+                            </div>
+                            {!!distressCallRewardPoints && parseInt(distressCallRewardPoints, 10) > 0 && (
+                              <p style={{ fontSize: 11, color: COLORS.violet, fontWeight: 600, margin: "6px 0 0 0" }}>
+                                🎉 Every targeted student gets +{distressCallRewardPoints} crystal points the instant the class hits the target.
+                              </p>
+                            )}
                           </div>
                         </div>
                       )}

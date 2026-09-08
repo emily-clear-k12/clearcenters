@@ -158,7 +158,10 @@ function LiveOpsBoardContent() {
 
   return (
     <div style={{ display: "flex", minHeight: "100vh", background: COLORS.canvas, fontFamily: "'Inter', sans-serif", color: COLORS.textDark }}>
-      <style>{`@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@600;700&family=Inter:wght@400;500;600;700&display=swap');`}</style>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@600;700&family=Inter:wght@400;500;600;700&display=swap');
+        @keyframes lob-goal-glow { 0%, 100% { box-shadow: 0 0 18px rgba(255,196,77,.35); } 50% { box-shadow: 0 0 32px rgba(255,196,77,.7); } }
+      `}</style>
       {!isFullscreen && <TeacherSidebar teacherEmail={teacherEmail} />}
 
       <main style={{ flex: 1, padding: isFullscreen ? 0 : "32px 36px", maxWidth: isFullscreen ? "none" : 1100, margin: isFullscreen ? 0 : "0 auto", display: "flex", flexDirection: "column" }}>
@@ -185,6 +188,9 @@ function LiveOpsBoardContent() {
                 </p>
                 <p style={{ fontSize: 13, color: COLORS.textDark, lineHeight: 1.6, margin: "10px 0 0 0" }}>
                   Hit "Present" to put it up on the projector — it updates on its own every few seconds as students work, so you can just let it run in the background while kids race to clear the target together.
+                </p>
+                <p style={{ fontSize: 13, color: COLORS.textDark, lineHeight: 1.6, margin: "10px 0 0 0" }}>
+                  💎 If you set a crystal-point reward when you created it, every targeted student gets those points automatically the instant the class clears the target — no extra step from you.
                 </p>
               </div>
             )}
@@ -273,20 +279,45 @@ function LiveOpsBoardContent() {
               <div style={{ color: "rgba(255,255,255,.6)", maxWidth: 420, textAlign: "center" }}>This case's engine doesn't have an instant-graded portion to track yet.</div>
             ) : (
               <>
-                <div style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 700, fontSize: "clamp(56px, 10vw, 130px)", color: COLORS.white, lineHeight: 1 }}>
+                {progress.rewardGiven && (
+                  <div
+                    style={{
+                      background: "rgba(255,196,77,.15)",
+                      border: "1.5px solid #FFC44D",
+                      borderRadius: 999,
+                      padding: "8px 22px",
+                      color: "#FFC44D",
+                      fontWeight: 700,
+                      fontSize: "clamp(13px, 1.6vw, 16px)",
+                      marginBottom: 18,
+                      textAlign: "center",
+                      animation: "lob-goal-glow 1.8s ease-in-out infinite",
+                    }}
+                  >
+                    🎉 Goal reached — +{progress.rewardPoints} crystal points awarded to everyone!
+                  </div>
+                )}
+
+                <div style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 700, fontSize: "clamp(56px, 10vw, 130px)", color: progress.rewardGiven ? "#FFC44D" : COLORS.white, lineHeight: 1 }}>
                   {progress.current}{progress.target ? <span style={{ color: "rgba(255,255,255,.4)", fontSize: "0.5em" }}> / {progress.target}</span> : null}
                 </div>
                 <div style={{ color: "rgba(255,255,255,.7)", fontSize: 15, margin: "6px 0 28px 0" }}>checkpoints cleared</div>
 
                 {pct !== null && (
                   <div style={{ width: "min(600px, 80%)", height: 20, background: "rgba(255,255,255,.12)", borderRadius: 999, overflow: "hidden", marginBottom: 24 }}>
-                    <div style={{ height: "100%", width: `${pct}%`, background: `linear-gradient(90deg, ${COLORS.violet}, ${COLORS.teal})`, transition: "width .6s ease" }} />
+                    <div style={{ height: "100%", width: `${pct}%`, background: progress.rewardGiven ? "linear-gradient(90deg, #FFC44D, #FF9F43)" : `linear-gradient(90deg, ${COLORS.violet}, ${COLORS.teal})`, transition: "width .6s ease" }} />
                   </div>
                 )}
 
                 <div style={{ color: "rgba(255,255,255,.55)", fontSize: 13.5 }}>
                   {progress.studentsSubmitted} of {progress.studentsTargeted} students have submitted work
                 </div>
+
+                {!progress.rewardGiven && progress.rewardPoints > 0 && (
+                  <div style={{ color: COLORS.teal, fontSize: 13, fontWeight: 700, marginTop: 14 }}>
+                    💎 Reward: +{progress.rewardPoints} crystal points for everyone when the class hits the target
+                  </div>
+                )}
               </>
             )}
           </div>
