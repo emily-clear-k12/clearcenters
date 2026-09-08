@@ -117,7 +117,7 @@ export default function MyClassesPage() {
 
     const { data: assigned } = await supabase
       .from("assignments")
-      .select("id, due_date, case_standard, created_at, cases(title, learning_target, lesson_summary, misconception_note)")
+      .select("id, due_date, case_standard, created_at, distress_call, distress_call_target, cases(title, learning_target, lesson_summary, misconception_note)")
       .eq("class_id", selectedClassId)
       .order("created_at", { ascending: false });
     const assignmentList = assigned || [];
@@ -395,7 +395,14 @@ export default function MyClassesPage() {
                             <img src={caseImagePath(a.case_standard)} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                           </div>
                           <div style={{ flex: 1, minWidth: 0 }}>
-                            <div style={{ fontSize: 12.5, fontWeight: 600 }}>{a.cases?.title || a.case_standard}</div>
+                            <div style={{ fontSize: 12.5, fontWeight: 600, display: "flex", alignItems: "center", gap: 6 }}>
+                              {a.cases?.title || a.case_standard}
+                              {a.distress_call && (
+                                <span title="Distress Call is live — project it from here or from the Live Ops Board" style={{ fontSize: 9.5, fontWeight: 700, color: COLORS.violet, background: COLORS.violetSoft, borderRadius: 999, padding: "1px 7px" }}>
+                                  📡 Live
+                                </span>
+                              )}
+                            </div>
                             <div style={{ fontSize: 10.5, color: COLORS.textMuted, display: "flex", alignItems: "center", gap: 6 }}>
                               {a.due_date ? `Due ${a.due_date}` : "No due date"}
                               <span style={{ fontWeight: 700, color: a.isTargeted ? COLORS.violet : COLORS.teal }}>
@@ -490,6 +497,17 @@ export default function MyClassesPage() {
               <div style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 700, fontSize: 19, color: COLORS.textDark, marginBottom: 14 }}>
                 {caseDetailAssignment.cases?.title || caseDetailAssignment.case_standard}
               </div>
+
+              {caseDetailAssignment.distress_call && (
+                <button
+                  type="button"
+                  onClick={() => router.push(`/teacher/live-ops-board?assignmentId=${caseDetailAssignment.id}`)}
+                  className="gc-btn"
+                  style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, width: "100%", background: "#0D1B2A", color: COLORS.white, borderRadius: 12, padding: "12px 14px", fontWeight: 700, fontSize: 13.5, marginBottom: 16 }}
+                >
+                  📡 Project on Live Ops Board
+                </button>
+              )}
 
               {caseDetailAssignment.cases?.learning_target && (
                 <div style={{ marginBottom: 16 }}>

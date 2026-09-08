@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useState, useEffect, useCallback, useRef } from "react";
-import { useRouter } from "next/navigation";
+import React, { useState, useEffect, useCallback, useRef, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Maximize2, Minimize2, Radio } from "lucide-react";
 import { supabase } from "../../../lib/supabaseClient";
 import TeacherSidebar from "../../../components/TeacherSidebar";
@@ -27,8 +27,14 @@ const POLL_MS = 4000;
 // (week-1 scope is Individual Practice only) — for now this board only ever
 // has Distress Call meters to show, one at a time, per the design doc's own
 // rule: "only one thing displays on the physical board at a time."
-export default function LiveOpsBoardPage() {
+function LiveOpsBoardContent() {
   const router = useRouter();
+  // Supports being deep-linked straight to one signal — e.g. a "Project This"
+  // button sitting on the assignment itself (My Classes, or right after
+  // assigning) — via /teacher/live-ops-board?assignmentId=<id>, instead of
+  // making a teacher land here and hunt for it in the picker chips.
+  const searchParams = useSearchParams();
+  const deepLinkedAssignmentId = searchParams.get("assignmentId");
   const [loadingAuth, setLoadingAuth] = useState(true);
   const [teacherId, setTeacherId] = useState(null);
   const [teacherEmail, setTeacherEmail] = useState("");
@@ -36,12 +42,20 @@ export default function LiveOpsBoardPage() {
 
   const [classesById, setClassesById] = useState({});
   const [signals, setSignals] = useState([]); // [{ assignmentId, label, className }]
-  const [selectedAssignmentId, setSelectedAssignmentId] = useState(null);
+  const [selectedAssignmentId, setSelectedAssignmentId] = useState(deepLinkedAssignmentId || null);
   const [loadingSignals, setLoadingSignals] = useState(true);
 
   const [progress, setProgress] = useState(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const boardRef = useRef(null);
+
+  // A plain-language explainer for a teacher who lands on this page cold —
+  // clicked the sidebar link, or a "Project This" button, without having
+  // seen a walkthrough of what Distress Call actually is. Closed by
+  // default so it doesn't clutter the screen for teachers who already know,
+  // but one click away. Not shown in fullscreen/projected mode — that view
+  // is for the class, not a teacher-facing explanation.
+  const [showExplainer, setShowExplainer] = useState(false);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data, error }) => {
@@ -155,6 +169,26 @@ export default function LiveOpsBoardPage() {
               <p style={{ color: "rgba(255,255,255,.85)", fontSize: 13, margin: "4px 0 0 0" }}>Project this screen for the class. Only one signal shows at a time.</p>
             </TeacherPageBanner>
 
+            <button
+              type="button"
+              onClick={() => setShowExplainer((v) => !v)}
+              className="gc-btn"
+              style={{ display: "inline-flex", alignItems: "center", gap: 6, background: "none", border: "none", color: COLORS.violet, fontWeight: 700, fontSize: 12.5, padding: "0 2px", marginBottom: showExplainer ? 8 : 16 }}
+            >
+              ℹ️ What is this? {showExplainer ? "▲" : "▼"}
+            </button>
+
+            {showExplainer && (
+              <div style={{ background: COLORS.white, border: `1px solid ${COLORS.border}`, borderRadius: 14, padding: 16, marginBottom: 16, boxShadow: "0 4px 16px rgba(13,27,42,.06)" }}>
+                <p style={{ fontSize: 13, color: COLORS.textDark, lineHeight: 1.6, margin: 0 }}>
+                  <strong>🚨 Distress Call</strong> turns an assignment into a shared goal for the whole class. When you flag an assignment this way, every correct/completed checkpoint from every student counts toward one group target — not individual scores. This screen shows that live: the big number is how many checkpoints the class has cleared so far, out of the target you set.
+                </p>
+                <p style={{ fontSize: 13, color: COLORS.textDark, lineHeight: 1.6, margin: "10px 0 0 0" }}>
+                  Hit "Present" to put it up on the projector — it updates on its own every few seconds as students work, so you can just let it run in the background while kids race to clear the target together.
+                </p>
+              </div>
+            )}
+
             {!loadingSignals && signals.length > 1 && (
               <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 16 }}>
                 {signals.map((s) => (
@@ -259,5 +293,13 @@ export default function LiveOpsBoardPage() {
         )}
       </main>
     </div>
+  );
+}
+
+export default function LiveOpsBoardPage() {
+  return (
+    <Suspense fallback={<div style={{ minHeight: "100vh", background: COLORS.canvas, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Inter', sans-serif", color: COLORS.textMuted }}>Loading...</div>}>
+      <LiveOpsBoardContent />
+    </Suspense>
   );
 }
