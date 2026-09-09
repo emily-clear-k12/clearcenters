@@ -75,8 +75,25 @@ export async function POST(request) {
   if (session.game_mode === "asteroid_run") {
     // Widget-driven grading (see the Sept 9, 2026 note above) — validate
     // each answer's wordId against the real word set for this assignment's
-    // unit, then re-derive correctness/points purely from wordId vs.
-    // chosenWordId, same formula as the roundIndex path below.
+    // unit, then re-derive correctness/points, same formula as the
+    // roundIndex path below.
+    //
+    // Sept 9, 2026 — the "Adventure Edition" widget added 3 more question
+    // formats (True/False, Frequency Fill, Odd Signal Out) on top of Lock
+    // the Signal. For lock_signal, frequency_fill, and odd_signal_out, the
+    // widget's own choiceId is still a real word id comparable to wordId
+    // (the correct one), so `choiceId === wordId` is still a genuine
+    // server-side check, same as before. True/False is the one real
+    // exception: its choiceId is a boolean (true/false), not a word id —
+    // whether it's correct depends on which OTHER word's definition got
+    // randomly paired into that specific round, which only the widget
+    // itself knows. For that one format only, this trusts the `correct`
+    // flag the widget already computed during play, with the same wordId-
+    // real-membership check above still standing as the actual anti-abuse
+    // floor (a forged round still can't invent a word that was never
+    // assigned) — the same trust trade-off already in place for every
+    // format here, just now explicit about where it's real verification
+    // vs. where it isn't.
     const { data: assignment } = await supabaseAdmin
       .from("assignments")
       .select("case_standard")
@@ -92,7 +109,7 @@ export async function POST(request) {
     // only ever produces up to its own fixed round count per run.
     (answers || []).slice(0, 25).forEach((a) => {
       if (!validWordIds.has(a.wordId)) return; // not a real word from this unit — ignored, not trusted
-      const correct = a.chosenWordId != null && a.chosenWordId === a.wordId;
+      const correct = a.type === "true_false" ? a.correct === true : a.choiceId != null && a.choiceId === a.wordId;
       let pointsEarned = 0;
       if (correct) {
         streak += 1;

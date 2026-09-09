@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#090d25">
-<title>Asteroid Run - Pilot Edition | ClearCenters</title>
+<title>Asteroid Run - Adventure Edition | ClearCenters</title>
 <style>
 :root {
   color-scheme: dark;
@@ -87,6 +87,35 @@ button:disabled{cursor:default}button,summary{touch-action:manipulation}
  .scene-hud{top:9px;left:14px;right:14px}.vital{width:114px;padding:6px 8px}.vital-head{font-size:8px;letter-spacing:.6px}.vital-pct{font-size:9px}.meter-track{margin-top:5px;height:4px}.combo{padding:5px 8px;gap:8px}.combo-count{font-size:20px}.combo-label{font-size:7px}.combo-goals{margin-top:4px}.combo-dot{height:3px;width:11px}.leg-progress{top:9px;bottom:auto;left:55%;width:150px;padding:6px 9px}.leg-progress-head{font-size:7px}.leg-progress-track{margin-top:6px;height:3px}.leg-progress-head strong{font-size:9px}.flight-alert{top:53px;font-size:9px;padding:6px 11px}.boost-banner{top:51px;font-size:8px;padding:6px 8px}.ship-label{bottom:9px;left:15px}.ship-label strong{font-size:8px}.ship-label span,.flight-caption{display:none!important}.countdown-number{font-size:64px}.countdown-label{font-size:9px;margin-top:11px}.question-layer{padding:8px}.question-card{padding:14px 20px}.question-heading{margin-bottom:10px}.question-signal h2{font-size:25px}.signal-emblem{width:38px;height:38px}.signal-emblem .icon{width:23px;height:23px}.freeze-note{margin:8px 0;font-size:10px}.question-card .choice{min-height:65px;padding:9px 10px}.question-card .choice-text{font-size:11px}.question-card .deck{padding-top:9px}.question-card .deck-head{margin-bottom:10px}.question-card .feedback{font-size:10px}
 }
 
+/* Adventure additions: the accepted scene, controls, and meters are retained. */
+.fuel .meter-fill{background:linear-gradient(90deg,#9d7aed,#d6b2ff)}.vital.fuel .icon{color:#c7a5ff}
+.fuel.pickup{box-shadow:0 0 18px #bc90ff66;border-color:#d5b0ff99}
+.format-settings{margin-top:14px;max-width:440px;border:1px solid #b5baff2b;border-radius:12px;background:#111b34dd;padding:10px 12px;font-size:11px}
+.format-settings summary{cursor:pointer;color:#c9d5ed;list-style:none;font-size:11px}.format-settings summary:after{content:'+';float:right;color:var(--purple)}.format-settings[open] summary:after{content:'-'}
+.format-options{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:12px}.format-options label{display:flex;align-items:center;gap:8px;font-size:10px;min-height:36px;cursor:pointer}.format-options input{accent-color:#b89aff;width:16px;height:16px}.format-options .unavailable{opacity:.5}.format-note{font-size:10px;line-height:1.65;color:#acbddd;margin:10px 0 0}
+.sample-button{display:inline-flex;align-items:center;gap:8px;margin-top:10px;min-height:40px;background:#c6a3ff12;border:1px solid #c7a3ff44;border-radius:10px;padding:10px 13px;color:#decaff;font-weight:800;letter-spacing:1px;font-size:10px}.sample-button:hover{background:#c6a3ff25}
+.intro-content{max-width:570px}.intro-description{max-width:440px}.intro-stats{margin:22px 0}.intro-tagline{margin-top:19px}.intro-controls{margin-bottom:0}.timed-option{margin-top:10px}
+.game-frame[data-mode="intro"] .scene{height:760px;min-height:760px}.intro{padding-top:26px;padding-bottom:26px}.intro[hidden]{display:none!important}
+.companion-status{position:absolute;z-index:3;left:29px;bottom:45px;font-size:8px;letter-spacing:1.5px;color:#c4b8eb;pointer-events:none;display:flex;align-items:center;gap:7px}.companion-status .orb-dot{width:5px;height:5px;border-radius:50%;background:#c9b1ff;box-shadow:0 0 10px #bdabff}
+.passenger-chip{position:absolute;right:29px;bottom:44px;z-index:3;pointer-events:none;border:1px solid #b3b9ff44;border-radius:7px;padding:6px 9px;font-size:8px;letter-spacing:1px;background:#172b49bb;color:#c6eaf5}
+.encounter-label{font-size:8px;color:#abbedc;letter-spacing:1.6px;margin:5px 0 0}
+.question-prompt{font-size:20px;line-height:1.6;color:#e4edff;margin:17px 0 5px;overflow-wrap:anywhere;padding:15px 18px;background:#09152c70;border:1px solid #a3c8f52b;border-radius:12px}
+.question-prompt.true_false{font-size:19px}.question-prompt.odd_signal_out{font-size:18px}.missing-word{display:inline-block;min-width:95px;color:#ddcaff;border-bottom:2px solid #ba94ff;text-align:center;letter-spacing:2px;line-height:1.1}.restored-word{font-weight:850;color:#96f1cc;background:#85edbf12;border-radius:5px;padding:0 4px}
+[data-format="true_false"] .choice{min-height:90px;justify-content:center}[data-format="true_false"] .choice-text{font-size:19px;font-weight:850;letter-spacing:1.8px}
+[data-format="frequency_fill"] .choice-text,[data-format="odd_signal_out"] .choice-text{font-size:17px;font-weight:750}
+.question-signal>div{min-width:0}.question-signal h2{line-height:1.2}
+.flight-alert{max-width:calc(100% - 32px);white-space:normal;line-height:1.5;text-align:center}.flight-alert.good{color:#b4f5d3;border-color:#92e8c544}.flight-alert.hit{max-width:calc(100% - 28px)}
+.game-frame[data-mode="question"] .boost-banner,.game-frame[data-mode="feedback"] .boost-banner{display:none!important}
+.arrival-wrap{height:119px;position:relative;overflow:hidden;border:1px solid #9dbfff2e;border-radius:15px;margin:0 0 17px;background:#0a1229}.arrival-wrap canvas{display:block;width:100%;height:100%}.arrival-caption{position:absolute;bottom:8px;left:13px;font-size:8px;letter-spacing:1.6px;color:#bdd7f2;pointer-events:none}
+.recap-card .modal-badge{display:none}.recap-adventure{color:#d8c4ff;font-size:11px;line-height:1.6;margin:-5px 0 14px}.recap-card{padding:24px 28px}.recap-note{line-height:1.5}
+@media(min-width:1100px){.game-frame[data-mode="intro"] .scene{height:800px;min-height:800px}.intro{padding-left:54px}.intro-content{max-width:570px}.intro h1{font-size:82px}.intro-signal{right:35px;bottom:39px}}
+@media(max-width:760px){.game-frame[data-mode="intro"] .scene{height:880px;min-height:880px}.intro-content{max-width:100%}.intro-description{font-size:12px}.intro h1{font-size:66px}.intro-stats{margin:18px 0}.intro-signal{display:none}.intro-scanner{display:none}.companion-status{left:15px;bottom:43px;font-size:7px}.passenger-chip{right:15px;bottom:65px;font-size:7px}.question-prompt{font-size:17px;padding:12px;margin:13px 0 4px}.question-prompt.true_false,.question-prompt.odd_signal_out{font-size:16px}.question-signal h2{font-size:28px}.question-card .choice-text{font-size:12px}[data-format="true_false"] .choice-text{font-size:17px}[data-format="frequency_fill"] .choice-text,[data-format="odd_signal_out"] .choice-text{font-size:15px}.recap-card{padding:20px}.arrival-wrap{height:105px}}
+@media(max-width:480px){.intro{padding:27px 23px;align-items:flex-start}.intro h1{font-size:60px}.eyebrow{margin-bottom:14px}.intro-tagline{margin-top:15px}.intro-description{margin:15px 0;line-height:1.8}.intro-stats{margin:15px 0}.intro-content>.launch-button{min-width:0;width:100%;justify-content:center}.sample-button{width:100%;justify-content:center}.format-settings{font-size:10px}.format-options{grid-template-columns:1fr}.format-options label{min-height:32px}.intro:has(.format-settings[open]){overflow:auto}.question-card{padding:17px 15px}.question-prompt{font-size:16px}.question-signal{gap:11px}.question-signal h2{font-size:24px}.signal-emblem{width:44px;height:44px;border-radius:12px}.signal-overline{font-size:7px;letter-spacing:1.5px}.encounter-label{font-size:7px;letter-spacing:1px}.recap-buttons{flex-wrap:wrap}.recap-buttons .launch-button{min-width:0}}
+@media(max-height:520px) and (orientation:landscape){.question-prompt{font-size:15px;padding:8px 11px;margin:8px 0}.question-signal h2{font-size:22px}.question-card .choice{min-height:55px}.question-heading{margin-bottom:9px}.companion-status{bottom:27px}.passenger-chip{bottom:26px}.game-frame[data-mode="intro"] .scene{height:730px;min-height:730px}}
+@media(prefers-reduced-motion:reduce){.sample-button,.fuel{transition:none}}.calm .fuel{transition:none}
+/* Keep the small launch badge compact; never stretch between top and bottom. */
+@media(min-width:761px){.intro-signal{top:24%;bottom:auto;height:auto;right:5%}}
+
 </style>
 </head>
 <body>
@@ -95,6 +124,9 @@ button:disabled{cursor:default}button,summary{touch-action:manipulation}
 <symbol id="i-home" viewBox="0 0 24 24"><path d="m14 6-6 6 6 6"/></symbol>
 <symbol id="i-ship" viewBox="0 0 24 24"><path d="m12 3 8 17-8-4-8 4 8-17Zm0 8v5"/></symbol>
 <symbol id="i-shield" viewBox="0 0 24 24"><path d="m12 3 8 3v6c0 5-8 9-8 9s-8-4-8-9V6l8-3Z"/><path d="m8 11 3 3 5-6"/></symbol>
+<symbol id="i-satellite" viewBox="0 0 24 24"><path d="M8 7h8v10H8zM2 8h4v8H2zm16 0h4v8h-4zM12 7V3m-2 0h4M6 12h2m8 0h2"/></symbol>
+<symbol id="i-relay" viewBox="0 0 24 24"><path d="M4 4h16v16H4zM7 8h3m4 0h3M7 12h10M7 16h3m4 0h3"/></symbol>
+<symbol id="i-scanner" viewBox="0 0 24 24"><path d="M7 3H3v4m14-4h4v4M3 17v4h4m10 0h4v-4"/><circle cx="8" cy="8" r="2"/><circle cx="16" cy="8" r="2"/><circle cx="8" cy="16" r="2"/><path d="m16 13 3 3-3 3-3-3z"/></symbol>
 <symbol id="i-fuel" viewBox="0 0 24 24"><path d="m13 2-9 12h7l-1 8 10-13h-8l1-7Z"/></symbol>
 <symbol id="i-crystal" viewBox="0 0 24 24"><path d="m12 2 8 6v8l-8 6-8-6V8l8-6Zm0 0v20M4 8l8 5 8-5M4 16l8-3 8 3"/></symbol>
 <symbol id="i-volume" viewBox="0 0 24 24"><path d="m11 4-5 4H3v8h3l5 4V4Zm4 4a6 6 0 0 1 0 8m3-11a10 10 0 0 1 0 14"/></symbol>
@@ -142,6 +174,7 @@ button:disabled{cursor:default}button,summary{touch-action:manipulation}
     </div>
     <div class="target-label" id="target-label" hidden><div class="target-kicker" id="target-kicker">INCOMING WORD</div><h2 class="target-word" id="word">Evaporation</h2><div class="target-instruction">MATCH THE DEFINITION TO FIRE</div></div>
     <div class="ship-label" id="ship-label" hidden><strong>SCOUT-01</strong><span>MANUAL FLIGHT</span></div>
+    <div class="companion-status" id="companion-status" hidden><span class="orb-dot"></span><span id="companion-label">ORBIT / COPILOT ONLINE</span></div><div class="passenger-chip" id="passenger-chip" hidden>PASSENGER ABOARD</div>
     <div class="flight-caption" id="flight-caption" hidden><span class="live-dot"></span>DESTINATION: YOUR OUTPOST</div>
     <div class="boost-banner" id="boost-banner" hidden><svg class="icon" style="width:13px;height:13px"><use href="#i-fuel"/></svg>BOOST + HULL REPAIR</div>
     <div class="points-float" id="points-float" hidden></div>
@@ -150,14 +183,21 @@ button:disabled{cursor:default}button,summary{touch-action:manipulation}
     <section class="intro" id="intro" aria-labelledby="intro-title">
       <div class="intro-content"><div class="eyebrow"><span class="line"></span>YOUR NEXT MISSION</div>
         <h1 id="intro-title">ASTEROID<span>RUN</span></h1>
-        <div class="intro-tagline">You fly. You dodge. You decode.</div>
-        <p class="intro-description">Pilot your ship through the asteroid belt. Hit a rock and purple fuel crystals scatter into space — collect them to stabilize your ship. When a signal arrives, flight freezes for a question.</p>
+        <div class="intro-tagline">A little pilot. A big adventure.</div>
+        <p class="intro-description">Fly with Orbit, dodge asteroids, and follow purple crystals to recover lost fuel. Decode incoming signals and keep an eye out for a little passenger who needs a ride home.</p>
         <div class="intro-stats"><div class="intro-stat"><strong>10</strong><span>Signals</span></div><div class="intro-stat"><strong>8<span style="display:inline;font-size:13px;letter-spacing:0;color:inherit"> sec</span></strong><span>Flight legs</span></div><div class="intro-stat"><strong>2 &middot; 4 &middot; 7</strong><span>Streak boosts</span></div></div>
         <button class="launch-button" id="launch-button">LET'S FLY<svg class="icon"><use href="#i-arrow"/></svg></button>
         <p class="intro-controls">STEER: arrow keys / WASD, or hold and drag.<br>ANSWER: click, tap, or press 1-4. Flight pauses to think.</p>
+        <button class="sample-button" id="sample-mission-button">TRY ALL 4 FORMATS <span aria-hidden="true">&#8594;</span></button>
+        <details class="format-settings" id="format-settings"><summary id="format-summary">Question formats</summary><div class="format-options">
+        <label><input type="checkbox" data-format-choice value="lock_signal" checked> Lock the Signal</label>
+        <label><input type="checkbox" data-format-choice value="true_false"> True / False Signal</label>
+        <label><input type="checkbox" data-format-choice value="frequency_fill"> Frequency Fill</label>
+        <label><input type="checkbox" data-format-choice value="odd_signal_out"> Odd Signal Out</label></div>
+        <p class="format-note" id="format-note"></p></details>
         <label class="timed-option"><input type="checkbox" id="timed-option"> Add an 8-second question timer <span>(optional)</span></label>
       </div>
-      <div class="intro-signal"><span>NEW FLIGHT MODE</span><strong>YOU ARE THE PILOT</strong></div>
+      <div class="intro-signal"><span>MEET YOUR LITTLE COPILOT</span><strong>ORBIT IS READY TO FLY</strong></div>
       <div class="intro-scanner">SCOUT-01 &nbsp; / &nbsp; READY FOR LAUNCH</div>
     </section>
     <div class="countdown" id="countdown" hidden><div class="countdown-inner"><div class="countdown-number" id="countdown-number">3</div><div class="countdown-label" id="countdown-label">ENGINES ONLINE</div></div></div>
@@ -175,10 +215,11 @@ button:disabled{cursor:default}button,summary{touch-action:manipulation}
   <section class="question-layer" id="question-layer" role="region" aria-labelledby="question-word" hidden>
     <div class="question-card">
       <div class="question-heading"><span class="freeze-chip"><svg class="icon"><use href="#i-pause"/></svg> FLIGHT ON HOLD</span><span class="question-index" id="question-index">SIGNAL 01 / 10</span></div>
-      <div class="question-signal"><span class="signal-emblem"><svg class="icon"><use href="#i-target"/></svg></span><div><div class="signal-overline">DECODE THE SIGNAL</div><h2 id="question-word">Evaporation</h2></div></div>
+      <div class="question-signal"><span class="signal-emblem"><svg class="icon"><use id="signal-icon" href="#i-target"/></svg></span><div><div class="signal-overline" id="format-label">LOCK THE SIGNAL</div><h2 id="question-word">Evaporation</h2><div class="encounter-label" id="encounter-label">COMMUNICATIONS BEACON</div></div></div>
+      <p id="question-prompt" class="question-prompt" hidden></p>
       <p class="freeze-note">Your ship, asteroids, and fuel are paused. Take a moment to think, then jump right back into flight.</p>
   <section class="deck" id="deck" aria-label="Definition controls" hidden>
-    <div class="deck-head"><div class="deck-title">Which definition matches?<span>Click an answer or press 1-4.</span></div><div class="round-clock" id="round-clock"><div class="clock-track" role="meter" aria-label="Time remaining" aria-valuemin="0" aria-valuemax="8" aria-valuenow="8" id="clock-aria"><div class="clock-fill" id="clock-fill"></div></div><div class="clock-text" id="clock-text">NO TIMER</div></div></div>
+    <div class="deck-head"><div class="deck-title"><b id="deck-instruction">Which definition matches?</b><span id="answer-key-hint">Click an answer or press 1-4.</span></div><div class="round-clock" id="round-clock"><div class="clock-track" role="meter" aria-label="Time remaining" aria-valuemin="0" aria-valuemax="8" aria-valuenow="8" id="clock-aria"><div class="clock-fill" id="clock-fill"></div></div><div class="clock-text" id="clock-text">NO TIMER</div></div></div>
     <div class="choices" id="choices" aria-labelledby="question-word"></div>
     <div class="deck-footer"><div class="feedback" id="feedback" role="status" aria-live="polite"><svg class="icon"><use href="#i-target"/></svg><span id="feedback-text">Lock onto the right signal.</span></div><div class="keyboard-hint"><span class="key">1</span><span class="key">2</span><span class="key">3</span><span class="key">4</span><span>to answer &nbsp; / &nbsp; P to pause</span></div></div>
   </section>
@@ -190,18 +231,20 @@ button:disabled{cursor:default}button,summary{touch-action:manipulation}
     <button class="launch-button" id="resume-button">BACK TO THE FLIGHT<svg class="icon"><use href="#i-play"/></svg></button><button class="plain-button" id="restart-button">Return to launch screen</button>
     <div class="pause-settings"><span>Reduced motion</span><button class="switch" id="motion-switch" role="switch" aria-label="Reduced motion" aria-checked="false"></button></div>
   </div></section>
-  <section class="modal-layer recap-layer" id="recap-layer" role="dialog" aria-modal="true" aria-labelledby="recap-title" hidden><div class="modal-card recap-card">
+  <section class="modal-layer recap-layer" id="recap-layer" role="dialog" aria-modal="true" aria-labelledby="recap-title" hidden><div class="modal-card recap-card"><div class="arrival-wrap"><canvas id="arrival-canvas" aria-hidden="true"></canvas><span class="arrival-caption" id="arrival-caption">DOCKING AT YOUR OUTPOST</span></div>
     <div class="modal-badge"><svg class="icon"><use id="recap-icon" href="#i-trophy"/></svg></div><div class="modal-eyebrow" id="recap-eyebrow">CLEAR SKIES, CAPTAIN</div><h2 id="recap-title">Run complete!</h2><p id="recap-copy"></p>
-    <div class="recap-flight" id="recap-flight"></div><div class="recap-stats"><div class="recap-stat"><strong id="recap-resources">0</strong><span>RESOURCES EARNED</span></div><div class="recap-stat"><strong id="recap-correct">0 / 10</strong><span>CORRECT / ATTEMPTED</span></div><div class="recap-stat"><strong id="recap-streak">0</strong><span>BEST STREAK</span></div></div>
+    <div class="recap-flight" id="recap-flight"></div><div class="recap-adventure" id="recap-adventure"></div><div class="recap-stats"><div class="recap-stat"><strong id="recap-resources">0</strong><span>RESOURCES EARNED</span></div><div class="recap-stat"><strong id="recap-correct">0 / 10</strong><span>CORRECT / ATTEMPTED</span></div><div class="recap-stat"><strong id="recap-streak">0</strong><span>BEST STREAK</span></div></div>
     <div class="outpost"><div class="outpost-top"><div><div class="outpost-kicker" id="outpost-kicker">YOUR OUTPOST</div><div class="outpost-name" id="outpost-name">Landing Pad</div><div class="outpost-desc" id="outpost-desc">A little closer to your next upgrade.</div></div><div class="outpost-art" id="outpost-art" aria-hidden="true"></div></div><div class="outpost-track"><div class="outpost-fill" id="outpost-fill"></div></div><div class="outpost-caption"><span id="outpost-caption"></span><span id="outpost-total"></span></div></div>
     <details class="review" id="review" hidden><summary id="review-summary">Review missed signals</summary><div class="review-items" id="review-items"></div></details>
     <div class="recap-buttons"><button class="launch-button" id="again-button"><svg class="icon"><use href="#i-replay"/></svg>FLY AGAIN</button><button class="plain-button" id="recap-home">Back to launch</button></div><div class="recap-note">Demo resources only. Not connected to student accounts.</div>
   </div></section>
 </main>
-<footer class="bottom-bar"><span><svg class="icon"><use href="#i-shield"/></svg><strong>Fly. Dodge. Decode.</strong>&nbsp; A ClearCenters vocabulary adventure.</span><span class="version">PILOT EDITION &nbsp; / &nbsp; LOCAL DEMO</span></footer>
+<footer class="bottom-bar"><span><svg class="icon"><use href="#i-shield"/></svg><strong>Fly. Dodge. Decode.</strong>&nbsp; A ClearCenters vocabulary adventure.</span><span class="version">ADVENTURE EDITION &nbsp; / &nbsp; LOCAL DEMO</span></footer>
 </div>
+<div id="adventure-live" class="sr-only" role="status" aria-live="polite"></div>
 <div id="toast" class="toast" role="status" hidden></div>
 <script>
+
 
 'use strict';
 /* ASTEROID RUN - visual rebuild of the supplied local demo.
@@ -242,7 +285,177 @@ let priorFocus = null, lastFrame = performance.now(), lastHUD = 0, toastUntil = 
 let completionCallback = null;
 function rng(seed) { return () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
 function shuffle(items) { const a = [...items]; for (let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];} return a; }
-function buildRounds(){ let pool=shuffle(WORDS);const rounds=[];while(rounds.length<ROUND_COUNT){if(!pool.length)pool=shuffle(WORDS);const w=pool.pop();const choices=shuffle([w,...shuffle(WORDS.filter(o=>o.id!==w.id)).slice(0,3)]).map(o=>({id:o.id,definition:o.definition}));rounds.push({promptWordId:w.id,word:w.word,choices});}return rounds; }
+// Backward-compatible question content. Legacy callers still get Lock the Signal.
+const FORMAT_INFO = Object.freeze({
+ lock_signal:{name:'Lock the Signal',icon:'target',encounter:'COMMUNICATIONS BEACON',instruction:'Which definition matches?'},
+ true_false:{name:'True Signal / False Signal',icon:'satellite',encounter:'TRANSMISSION CHECK',instruction:'Is this signal true or false?'},
+ frequency_fill:{name:'Frequency Fill',icon:'relay',encounter:'MESSAGE RELAY',instruction:'Choose the missing word.'},
+ odd_signal_out:{name:'Odd Signal Out',icon:'scanner',encounter:'DEEP-SPACE SCANNER',instruction:'Choose the word that does not belong.'}
+});
+let selectedFormats=['lock_signal'], oddGroups=[], usingSampleContent=false;
+const SAMPLE_SENTENCES={
+ 1:'During evaporation, puddles dry up as liquid water changes into water vapor.',
+ 2:'Condensation forms tiny water droplets on the outside of a cold glass.',
+ 3:'A pond is a habitat where many plants and animals live.',
+ 4:'An owl is a predator that hunts mice for food.',
+ 5:'A herbivore eats plants rather than other animals.',
+ 6:'The pond ecosystem includes living things interacting with water, soil, and sunlight.',
+ 7:'As the water slows down, sediment settles to the bottom of the stream.',
+ 8:'Erosion moves pieces of rock and soil away from a stream bank.'
+};
+const SAMPLE_WORDS=[...WORDS.map(w=>({...w,sentence:SAMPLE_SENTENCES[w.id]})),
+ {id:9,word:'Solid',definition:'A state of matter with a definite shape and a definite volume.',sentence:'Ice is a solid that keeps its shape in a bowl.'},
+ {id:10,word:'Liquid',definition:'A state of matter with a definite volume that takes the shape of its container.',sentence:'Water is a liquid that takes the shape of a cup.'},
+ {id:11,word:'Gas',definition:'A state of matter with no definite shape or volume that spreads to fill its container.',sentence:'Water vapor is a gas that mixes with the air.'}
+];
+// Authored examples for testing only, never silently added to a host's word bank.
+const SAMPLE_GROUPS=[
+ {id:'demo-states',items:[9,10,11,1],oddId:1,prompt:'Which word is NOT a state of matter?',explanation:'Evaporation is a process. Solid, liquid, and gas are states of matter.'},
+ {id:'demo-processes',items:[1,2,8,11],oddId:11,prompt:'Which word names a state of matter instead of a process?',explanation:'Gas is a state of matter. Evaporation, condensation, and erosion are processes.'}
+];
+function editableContent(){if(!['intro','recap'].includes(state.mode))throw new Error('Return to the launch screen before changing question settings.');}
+function blankSentence(word){
+ if(typeof word.sentence!=='string'||!word.sentence.trim())return null;
+ const sentence=word.sentence, lower=sentence.toLowerCase(), term=word.word.toLowerCase();
+ const isWord=c=>!!c&&/[\p{L}\p{N}_]/u.test(c);
+ const spans=[];let from=0,at;
+ while((at=lower.indexOf(term,from))!==-1){const end=at+term.length;
+  if(!isWord(sentence[at-1])&&!isWord(sentence[end]))spans.push([at,end]);
+  from=end;
+ }
+ if(!spans.length)return null;
+ const parts=[];let cursor=0;
+ for(const [a,b]of spans){parts.push({text:sentence.slice(cursor,a),blank:false},{text:sentence.slice(a,b),blank:true});cursor=b;}
+ parts.push({text:sentence.slice(cursor),blank:false});
+ return {parts,text:parts.map(p=>p.blank?'______':p.text).join('')};
+}
+function validOddGroups(){const ids=new Set(WORDS.map(w=>String(w.id)));return oddGroups.filter(g=>g.items.every(id=>ids.has(String(id))));}
+function availableFormats(){return selectedFormats.filter(f=>f!=='frequency_fill'&&f!=='odd_signal_out'||f==='frequency_fill'&&WORDS.some(w=>blankSentence(w))||f==='odd_signal_out'&&validOddGroups().length>0);}
+function effectiveFormats(){const usable=availableFormats();return usable.length?usable:['lock_signal'];}
+function formatEligibility(f){return f==='frequency_fill'?WORDS.some(w=>blankSentence(w)):f==='odd_signal_out'?validOddGroups().length>0:true;}
+function setWordBank(words){
+ editableContent();if(!Array.isArray(words)||words.length<4)throw new TypeError('Provide at least four unique words and definitions.');
+ const ids=new Set(),defs=new Set();
+ const clean=words.map(w=>{
+  if(!w||!['string','number'].includes(typeof w.id)||(typeof w.id==='number'&&!Number.isFinite(w.id))||typeof w.word!=='string'||!w.word.trim()||typeof w.definition!=='string'||!w.definition.trim())throw new TypeError('Each word needs an id, word, and definition.');
+  if(ids.has(String(w.id))||defs.has(w.definition.trim()))throw new Error('Word ids and definitions must be unique.');
+  if(w.sentence!==undefined&&w.sentence!==null&&typeof w.sentence!=='string')throw new TypeError('A sentence must be text when provided.');
+  ids.add(String(w.id));defs.add(w.definition.trim());
+  const out={id:w.id,word:w.word.trim(),definition:w.definition.trim()};
+  if(typeof w.sentence==='string')out.sentence=w.sentence.trim();return out;
+ });
+ WORDS=clean;oddGroups=[];usingSampleContent=false;refreshFormatSettings();
+}
+function setOddGroups(groups){
+ editableContent();if(!Array.isArray(groups))throw new TypeError('Odd groups must be an array.');
+ const bank=new Map(WORDS.map(w=>[String(w.id),w.id])),groupIds=new Set();
+ const clean=groups.map(g=>{
+  if(!g||!['string','number'].includes(typeof g.id)||(typeof g.id==='number'&&!Number.isFinite(g.id))||!String(g.id).trim()||groupIds.has(String(g.id)))throw new TypeError('Each group needs a unique id.');
+  if(!Array.isArray(g.items)||g.items.length!==4||new Set(g.items.map(String)).size!==4||g.items.some(id=>!['string','number'].includes(typeof id)||!bank.has(String(id))))throw new TypeError('Each group needs four distinct word ids from the current bank.');
+  if(!g.items.some(id=>String(id)===String(g.oddId)))throw new TypeError('oddId must be one of the four items.');
+  for(const k of ['prompt','explanation'])if(g[k]!==undefined&&typeof g[k]!=='string')throw new TypeError(k+' must be text.');
+  groupIds.add(String(g.id));return {id:g.id,items:g.items.map(id=>bank.get(String(id))),oddId:bank.get(String(g.oddId)),prompt:(g.prompt||'').trim(),explanation:(g.explanation||'').trim()};
+ });oddGroups=clean;refreshFormatSettings();
+}
+function setFormats(formats){editableContent();if(!Array.isArray(formats)||!formats.length||formats.some(f=>!Object.hasOwn(FORMAT_INFO,f)))throw new TypeError('Choose one or more supported formats.');selectedFormats=[...new Set(formats)];refreshFormatSettings();}
+function refreshFormatSettings(){
+ if(!$('format-settings'))return;
+ for(const input of document.querySelectorAll('[data-format-choice]')){input.checked=selectedFormats.includes(input.value);input.disabled=!formatEligibility(input.value);input.closest('label').classList.toggle('unavailable',input.disabled);}
+ $('format-summary').textContent='Question formats \u00b7 '+selectedFormats.length+' selected';
+ const missing=selectedFormats.filter(f=>!formatEligibility(f));
+ $('format-note').textContent=missing.length?'Missing content: '+missing.map(f=>FORMAT_INFO[f].name).join(', ')+'. Usable formats will be used; Lock the Signal is the final fallback.':usingSampleContent?'Sample science content and two authored demo groups. Replace with your approved curriculum before publishing.':'Legacy word banks work unchanged. Try the sample mission to preview sentences and authored odd groups.';
+}
+function loadSampleMission(){
+ if(!['intro','recap'].includes(state.mode))return;
+ setWordBank(SAMPLE_WORDS);setOddGroups(SAMPLE_GROUPS);setFormats(Object.keys(FORMAT_INFO));usingSampleContent=true;refreshFormatSettings();startRun();
+}
+function buildRounds(){
+ const active=effectiveFormats(),plan=[];let previous=null;
+ while(plan.length<ROUND_COUNT){const batch=shuffle(active);if(batch.length>1&&batch[0]===previous)[batch[0],batch[1]]=[batch[1],batch[0]];plan.push(...batch);previous=batch[batch.length-1];}
+ const pools=new Map(),groups=validOddGroups();let groupPool=[],truthPool=[];
+ function takeWord(type){let pool=pools.get(type);if(!pool||!pool.length){pool=shuffle(type==='frequency_fill'?WORDS.filter(w=>blankSentence(w)):WORDS);pools.set(type,pool);}return pool.pop();}
+ const rounds=[];
+ for(const type of plan.slice(0,ROUND_COUNT)){
+  let w,choices,round;
+  if(type==='odd_signal_out'){
+   if(!groupPool.length)groupPool=shuffle(groups);const group=groupPool.pop();w=WORDS.find(w=>w.id===group.oddId);
+   choices=shuffle(group.items).map(id=>{const item=WORDS.find(w=>w.id===id);return {id,text:item.word,definition:item.definition};});
+   round={groupId:group.id,prompt:group.prompt||'Which word does not belong?',explanation:group.explanation||('The authored group identifies '+w.word+' as the odd signal.'),correctChoiceId:w.id};
+  }else{
+   w=takeWord(type);
+   if(type==='true_false'){
+    if(!truthPool.length)truthPool=shuffle([true,false]);const truth=truthPool.pop(),defWord=truth?w:shuffle(WORDS.filter(o=>o.id!==w.id))[0];
+    choices=[{id:true,text:'TRUE'},{id:false,text:'FALSE'}];
+    round={correctChoiceId:truth,definitionWordId:defWord.id,statementDefinition:defWord.definition,prompt:w.word+' means: '+defWord.definition,explanation:truth?'This definition matches '+w.word+'.':('This definition belongs to '+defWord.word+', not '+w.word+'.')};
+   }else{
+    choices=shuffle([w,...shuffle(WORDS.filter(o=>o.id!==w.id)).slice(0,3)]).map(o=>({id:o.id,text:type==='lock_signal'?o.definition:o.word,definition:o.definition}));
+    round={correctChoiceId:w.id};
+    if(type==='frequency_fill'){const blanked=blankSentence(w);Object.assign(round,{sentence:w.sentence,sentenceParts:blanked.parts,prompt:blanked.text,explanation:w.sentence});}
+   }
+  }
+  rounds.push({type,promptWordId:w.id,word:w.word,definition:w.definition,choices,...round});
+ }
+ return rounds;
+}
+function renderSentence(round,revealed=false){
+ const root=$('question-prompt');root.replaceChildren();
+ for(const part of round.sentenceParts){if(!part.blank){root.appendChild(document.createTextNode(part.text));continue;}const span=document.createElement('span');span.className=revealed?'restored-word':'missing-word';span.textContent=revealed?part.text:'______';if(!revealed)span.setAttribute('aria-label','missing word');root.appendChild(span);}
+}
+function renderRoundChoices(){
+ const round=state.rounds[state.roundIndex],info=FORMAT_INFO[round.type];
+ $('question-layer').dataset.format=round.type;$('word').textContent=round.word;
+ $('question-word').textContent=round.type==='lock_signal'||round.type==='true_false'?round.word:round.type==='frequency_fill'?'Restore the message.':'Find the odd signal.';
+ $('question-index').textContent=`SIGNAL ${String(state.roundIndex+1).padStart(2,'0')} / ${ROUND_COUNT}`;
+ $('format-label').textContent=info.name.toUpperCase();$('encounter-label').textContent=info.encounter;
+ $('signal-icon').setAttribute('href','#i-'+info.icon);
+ const prompt=$('question-prompt');prompt.hidden=round.type==='lock_signal';prompt.className='question-prompt '+round.type;
+ if(round.type==='frequency_fill')renderSentence(round);else prompt.textContent=round.type==='true_false'?'Transmission: "'+round.statementDefinition+'"':round.prompt||'';
+ $('deck-instruction').textContent=info.instruction;$('deck').setAttribute('aria-label',info.name+' answer controls');
+ $('answer-key-hint').textContent=round.choices.length===2?'Press 1 for True or 2 for False.':'Click an answer or press 1-4.';
+ const root=$('choices');root.replaceChildren();
+ round.choices.forEach((choice,i)=>{
+  const button=document.createElement('button');button.className='choice';button.dataset.choiceId=String(choice.id);button.setAttribute('aria-keyshortcuts',String(i+1));
+  const key=document.createElement('span');key.className='choice-key';key.textContent=i+1;key.setAttribute('aria-hidden','true');
+  const text=document.createElement('span');text.className='choice-text';text.textContent=choice.text;
+  button.setAttribute('aria-label',`${i+1}. ${choice.text}`);button.append(key,text);button.addEventListener('click',()=>answer(choice.id));root.appendChild(button);
+ });
+}
+function answer(choiceId){
+ if(state.mode!=='question'||state.paused)return;
+ const round=state.rounds[state.roundIndex],ms=state.questionElapsed*1000;
+ if(choiceId!==null&&!round.choices.some(c=>c.id===choiceId))return;
+ const correct=choiceId!==null&&choiceId===round.correctChoiceId;
+ state.attempted++;state.feedbackCorrect=correct;state.feedbackElapsed=0;setMode('feedback');
+ const result={word:round.word,wordId:round.promptWordId,definition:round.definition,choiceId,correct,timedOut:choiceId===null,responseTimeMs:Math.round(ms),points:0,type:round.type,...(round.explanation?{explanation:round.explanation}:{}),shownChoiceIds:round.choices.map(c=>c.id)};
+ if(round.type==='true_false')Object.assign(result,{definitionWordId:round.definitionWordId,statement:round.prompt});
+ if(round.type==='frequency_fill')result.sentence=round.sentence;
+ if(round.type==='odd_signal_out')Object.assign(result,{groupId:round.groupId,prompt:round.prompt,explanation:round.explanation});
+ [...$('choices').children].forEach((button,i)=>{
+  button.disabled=true;const id=round.choices[i].id;
+  if(id===round.correctChoiceId){button.classList.add('good');button.insertAdjacentHTML('beforeend',icon('check','icon choice-mark'));button.setAttribute('aria-label',button.getAttribute('aria-label')+' Correct answer.');}
+  else if(id===choiceId){button.classList.add('bad');button.insertAdjacentHTML('beforeend',icon('close','icon choice-mark'));button.setAttribute('aria-label',button.getAttribute('aria-label')+' Incorrect.');}
+  else button.classList.add('dim');
+ });
+ if(round.type==='frequency_fill')renderSentence(round,true);
+ const explanation=round.type==='lock_signal'?'':round.explanation+' ';
+ if(correct){
+  state.streak++;state.correctCount++;state.bestStreak=Math.max(state.bestStreak,state.streak);
+  // The legacy scoring formula is intentionally unchanged, including its 8 s speed-bonus window.
+  const earned=FLIGHT_SETTINGS.questionSeconds?pointsForCorrectAnswer(ms,state.streak):Math.round(BASE_POINTS*STREAK_MULTIPLIERS[Math.min(state.streak,STREAK_MULTIPLIERS.length-1)]);
+  state.score+=earned;result.points=earned;state.fuel=Math.min(FUEL_MAX,state.fuel+FUEL_REFILL_PER_CORRECT);
+  const boost=BOOST_STREAKS.includes(state.streak);
+  if(boost){state.hull=Math.min(HULL_MAX,state.hull+HULL_REPAIR_ON_BOOST);state.boostRemaining=3;sfx('boost');}else sfx('laser');
+  setFeedback('Correct! '+explanation+`+${earned} resources and +10 fuel (up to 100%). `+(boost?'Hull repaired +20. Orbit will check the repairs when we fly.':'Ready to keep flying?'),'good');
+  $('score').classList.remove('score-pop');void $('score').offsetWidth;$('score').classList.add('score-pop');
+ }else{
+  state.streak=0;state.hull=Math.max(0,state.hull-HULL_DAMAGE_PER_WRONG);
+  setFeedback((choiceId===null?'Time is up. ':'Not quite. ')+`-25 hull. `+(explanation||`${round.word}: ${round.definition}`),'bad');sfx('hit');
+ }
+ state.results.push(result);
+ const last=state.roundIndex+1>=state.rounds.length||state.hull<=0,cont=$('continue-button');
+ cont.innerHTML=(last?'VIEW FLIGHT REPORT':'KEEP FLYING')+icon(last?'trophy':'arrow');cont.hidden=false;cont.disabled=true;updateHUD();
+}
+
 function pointsForCorrectAnswer(ms,streak){const left=Math.max(0,ROUND_SECONDS*1000-ms);const bonus=Math.round(MAX_SPEED_BONUS*left/(ROUND_SECONDS*1000));return Math.round((BASE_POINTS+bonus)*STREAK_MULTIPLIERS[Math.min(streak,STREAK_MULTIPLIERS.length-1)]);}
 function getOutpostProgress(total){let index=0;OUTPOST_STAGES.forEach((s,i)=>{if(total>=s.threshold)index=i;});const current=OUTPOST_STAGES[index],next=OUTPOST_STAGES[index+1]||null;return {index,current,next,pct:next?clamp(Math.round((total-current.threshold)/(next.threshold-current.threshold)*100),0,100):100};}
 function icon(name,cls='icon'){return `<svg class="${cls}" aria-hidden="true"><use href="#i-${name}"/></svg>`;}
@@ -251,7 +464,7 @@ function toast(text){$('toast').textContent=text;$('toast').hidden=false;toastUn
 // Short synthesized effects. Sound is OFF until the player explicitly enables it.
 function initAudio(){try{if(!audio){const Audio=window.AudioContext||window.webkitAudioContext;if(!Audio)return;audio=new Audio();masterGain=audio.createGain();masterGain.gain.value=.13;masterGain.connect(audio.destination);}if(audio.state==='suspended')audio.resume().catch(()=>{});}catch(e){soundOn=false;}}
 function tone(start,end,duration,type='sine',delay=0,volume=1){if(!soundOn||!audio||!masterGain)return;try{const t=audio.currentTime+delay;const osc=audio.createOscillator(),gain=audio.createGain();osc.type=type;osc.frequency.setValueAtTime(start,t);osc.frequency.exponentialRampToValueAtTime(Math.max(1,end),t+duration);gain.gain.setValueAtTime(.001,t);gain.gain.exponentialRampToValueAtTime(Math.max(.002,volume),t+.012);gain.gain.exponentialRampToValueAtTime(.001,t+duration);osc.connect(gain);gain.connect(masterGain);osc.start(t);osc.stop(t+duration+.02);}catch(e){}}
-function sfx(name){if(!soundOn)return;initAudio();if(name==='laser'){tone(1200,130,.18,'sawtooth',0,.35);tone(880,1760,.18,'sine',.13,.4);tone(1320,1800,.2,'sine',.22,.3);}if(name==='hit'){tone(160,45,.28,'triangle',0,.8);tone(95,40,.25,'sawtooth',.08,.2);}if(name==='boost'){[440,554,660,880].forEach((f,i)=>tone(f,f*1.02,.2,'sine',i*.08,.6));}if(name==='launch'){tone(90,450,.65,'triangle',0,.4);tone(440,880,.25,'sine',.6,.35);}if(name==='complete'){[523,659,784,1046].forEach((f,i)=>tone(f,f,.32,'sine',i*.1,.5));}if(name==='click')tone(480,650,.08,'sine',0,.3);}
+function sfx(name){if(!soundOn)return;initAudio();if(name==='laser'){tone(1200,130,.18,'sawtooth',0,.35);tone(880,1760,.18,'sine',.13,.4);tone(1320,1800,.2,'sine',.22,.3);}if(name==='hit'){tone(160,45,.28,'triangle',0,.8);tone(95,40,.25,'sawtooth',.08,.2);}if(name==='boost'){[440,554,660,880].forEach((f,i)=>tone(f,f*1.02,.2,'sine',i*.08,.6));}if(name==='launch'){tone(90,450,.65,'triangle',0,.4);tone(440,880,.25,'sine',.6,.35);}if(name==='complete'){[523,659,784,1046].forEach((f,i)=>tone(f,f,.32,'sine',i*.1,.5));}if(name==='click')tone(480,650,.08,'sine',0,.3);if(name==='pickup'){const notes=[523,659,784,1046,1175,1319,1568];const n=notes[Math.min((state.pickupIndex||1)-1,6)];tone(n,n*1.04,.13,'sine',0,.40);}if(name==='passenger'){tone(659,659,.15,'sine',0,.35);tone(880,880,.18,'sine',.12,.35);}}
 function toggleSound(){soundOn=!soundOn;if(soundOn)initAudio();$('sound-button').setAttribute('aria-pressed',String(soundOn));$('sound-button').setAttribute('aria-label',soundOn?'Turn sound off':'Turn sound on');$('sound-icon').setAttribute('href',soundOn?'#i-volume':'#i-mute');if(soundOn)sfx('click');}
 function applyMotion(){document.body.classList.toggle('calm',reducedMotion);$('motion-switch').setAttribute('aria-checked',String(reducedMotion));}
 applyMotion();
@@ -327,7 +540,7 @@ function resizeSceneBase(){const box=$('scene').getBoundingClientRect();if(box.w
 
 function geometry(t){const mobile=W<740,intro=state.mode==='intro';const ship=intro?{x:W*(mobile?.52:.73),y:H*(mobile?.83:.66),w:Math.min(mobile?W*.88:W*.34,mobile?370:465)}:{x:W*(mobile?.20:.195),y:H*.61,w:Math.min(mobile?W*.37:W*.235,mobile?220:295)};const target=intro?{x:W*(mobile?.89:.865),y:H*(mobile?.71:.31),r:H*(mobile?.057:.105)}:{x:W*.67,y:H*(W<740?.49:.47),r:Math.min(W*.21,H*.267,W<740?86:112)};if(!reducedMotion){ship.y+=Math.sin(t*1.4)*3;target.y+=Math.sin(t*.9)*2;}return {ship,target};}
 function drawRock(g,rock,x,y,r,rot=0,alpha=1){g.save();g.globalAlpha=alpha;g.translate(x,y);g.rotate(rot);g.drawImage(rock,-r*1.15,-r*1.15,r*2.3,r*2.3);g.restore();}
-function drawCrystal(g,x,y,s,rotation,alpha=1){g.save();g.globalAlpha=alpha;g.translate(x,y);g.rotate(rotation);g.beginPath();g.moveTo(0,-s);g.lineTo(s*.56,-s*.28);g.lineTo(s*.45,s*.45);g.lineTo(0,s);g.lineTo(-s*.45,s*.45);g.lineTo(-s*.56,-s*.28);g.closePath();g.fillStyle='#bc9ff8';g.shadowColor='#b5b0ff';g.shadowBlur=8;g.fill();g.shadowBlur=0;g.beginPath();g.moveTo(0,-s);g.lineTo(0,s);g.lineTo(s*.45,s*.45);g.lineTo(s*.56,-s*.28);g.closePath();g.fillStyle='#7c9ae5';g.fill();g.beginPath();g.moveTo(0,-s);g.lineTo(-s*.56,-s*.28);g.lineTo(0,0);g.lineTo(s*.56,-s*.28);g.closePath();g.fillStyle='#dcddff';g.fill();g.restore();}
+function drawCrystal(g,x,y,s,rotation,alpha=1){g.save();g.globalAlpha=alpha;g.translate(x,y);g.rotate(rotation);g.beginPath();g.moveTo(0,-s);g.lineTo(s*.56,-s*.28);g.lineTo(s*.45,s*.45);g.lineTo(0,s);g.lineTo(-s*.45,s*.45);g.lineTo(-s*.56,-s*.28);g.closePath();g.fillStyle='#bc9ff8';g.shadowColor='#b5b0ff';g.shadowBlur=8;g.fill();g.shadowBlur=0;g.beginPath();g.moveTo(0,-s);g.lineTo(0,s);g.lineTo(s*.45,s*.45);g.lineTo(s*.56,-s*.28);g.closePath();g.fillStyle='#8b68d5';g.fill();g.beginPath();g.moveTo(0,-s);g.lineTo(-s*.56,-s*.28);g.lineTo(0,0);g.lineTo(s*.56,-s*.28);g.closePath();g.fillStyle='#dcddff';g.fill();g.restore();}
 function drawShip(g,s,t,boost){g.save();g.translate(s.x,s.y);g.rotate(-.085+(s.bank||0));const scale=s.w/440;g.scale(scale,scale);const pulse=reducedMotion?1:.94+Math.sin(t*25)*.05;const length=(boost?255:160)*pulse;
  // Two layered exhaust plumes, each aligned to an engine nozzle.
  [112,184].forEach(y=>{const yy=y-150;g.save();g.translate(-158,yy);g.globalCompositeOperation='lighter';let grd=g.createRadialGradient(-22,0,0,-60,0,100);grd.addColorStop(0,boost?'#ffdf9077':'#55cfff77');grd.addColorStop(1,'#327aba00');g.fillStyle=grd;g.fillRect(-160,-56,215,112);grd=g.createLinearGradient(0,0,-length,0);grd.addColorStop(0,'#f8ffff');grd.addColorStop(.18,boost?'#ffefb3':'#9af7ff');grd.addColorStop(.45,boost?'#eca774bb':'#6faaffbb');grd.addColorStop(1,'#9983ff00');g.fillStyle=grd;g.beginPath();g.moveTo(4,-9);g.bezierCurveTo(-length*.35,-15,-length*.6,-7,-length,0);g.bezierCurveTo(-length*.6,7,-length*.35,15,4,9);g.closePath();g.fill();g.fillStyle='#ecffff';g.beginPath();g.moveTo(3,-4);g.lineTo(-length*.43,0);g.lineTo(3,4);g.fill();g.restore();});
@@ -368,7 +581,7 @@ function originalRender(t,dt,now){if(!backdrop)return;const paused=state.paused;
 
 /* PILOT EDITION
  * - 8 seconds of active flight precede each of the original 10 questions.
- * - Question, feedback, and countdown phases NEVER update world physics or fuel.
+ * - Question and feedback phases NEVER update world physics or fuel.
  * - Untimed questions are the default. The optional timer uses the original 8 s.
  * - Collision damage: 10 hull, followed by 1.6 s of protection; answer misses: 25.
  * - Correct answers: +10 fuel; streaks 2/4/7: +20 hull and 3 s of flight protection.
@@ -385,12 +598,12 @@ state=INIT_STATE();
 function shipWidth(){return clamp(Math.min(W,H)*.215,72,124);}
 function pilotBounds(){const w=shipWidth();return {left:w*.60,right:Math.max(w*.7,W-w*.62),top:(H<300?50:Math.min(H*.30,112))+w*.23,bottom:H-(H<300?28:66)-w*.23};}
 function clampPilot(){if(!state.pilot)return;const b=pilotBounds();state.pilot.x=clamp(state.pilot.x,b.left,b.right);state.pilot.y=clamp(state.pilot.y,b.top,b.bottom);}
-function resize(){const oldW=W,oldH=H;resizeSceneBase();if(state.pilot&&oldW>0&&oldH>0){state.pilot.x*=W/oldW;state.pilot.y*=H/oldH;state.pilot.vx*=W/oldW;state.pilot.vy*=H/oldH;const ratio=Math.min(W,H)/Math.min(oldW,oldH);obstacles.forEach(o=>{o.x*=W/oldW;o.y*=H/oldH;o.r*=ratio;o.vx*=W/oldW;});if(POINTER.active){POINTER.x*=W/oldW;POINTER.y*=H/oldH;}clampPilot();}}
+function resize(){const oldW=W,oldH=H;resizeSceneBase();if(state.pilot&&oldW>0&&oldH>0){state.pilot.x*=W/oldW;state.pilot.y*=H/oldH;state.pilot.vx*=W/oldW;state.pilot.vy*=H/oldH;const ratio=Math.min(W,H)/Math.min(oldW,oldH);obstacles.forEach(o=>{o.x*=W/oldW;o.y*=H/oldH;o.r*=ratio;o.vx*=W/oldW;});if(POINTER.active){POINTER.x*=W/oldW;POINTER.y*=H/oldH;}clampPilot();resizeAdventure(oldW,oldH);}}
 new ResizeObserver(resize).observe($('scene'));
 function setMode(mode){state.mode=mode;$('game').dataset.mode=mode;}
 function clearInput(){heldKeys.clear();heldButtons.clear();POINTER.active=false;if(POINTER.id!==null){try{$('scene').releasePointerCapture(POINTER.id);}catch(_){}}POINTER.id=null;if(state.pilot){state.pilot.vx=0;state.pilot.vy=0;}document.querySelectorAll('.steer').forEach(b=>b.classList.remove('pressed'));}
-function setBackgroundInert(inert){$('intro').inert=inert;$('question-layer').inert=inert;$('flight-controls').inert=inert;$('scene').inert=inert;document.querySelector('.site-header').inert=inert;}
-function showFlight(on){['route','score-box','scene-hud','ship-label','flight-caption','leg-progress','flight-controls'].forEach(id=>$(id).hidden=!on);$('target-label').hidden=true;$('deck').hidden=!on;$('intro').hidden=on;$('intro-sector').hidden=on;}
+function setBackgroundInert(inert){const reading=['question','feedback'].includes(state.mode);$('intro').inert=inert;$('question-layer').inert=inert;$('flight-controls').inert=inert||reading;$('scene').inert=inert||reading;document.querySelector('.site-header').inert=inert;}
+function showFlight(on){['route','score-box','scene-hud','ship-label','flight-caption','leg-progress','flight-controls','companion-status'].forEach(id=>$(id).hidden=!on);$('target-label').hidden=true;$('deck').hidden=!on;$('intro').hidden=on;$('intro-sector').hidden=on;}
 function makeRoute(){const root=$('route-nodes');root.replaceChildren();for(let i=0;i<ROUND_COUNT;i++){const d=document.createElement('span');d.className='route-node';root.appendChild(d);}}
 function setFeedback(text,type=''){const root=$('feedback');root.className='feedback'+(type?' '+type:'');root.querySelector('use').setAttribute('href',type==='good'?'#i-check':type==='bad'?'#i-shield':'#i-target');$('feedback-text').textContent=text;}
 function alertFlight(text,seconds=2.5,type=''){state.flightAlert=text;state.alertUntil=state.simTime+seconds;$('flight-alert').textContent=text;$('flight-alert').className='flight-alert'+(type?' '+type:'');$('flight-alert').hidden=false;}
@@ -414,15 +627,24 @@ function updateHUD(){if(!state.rounds.length)return;
  }
  const timed=FLIGHT_SETTINGS.questionSeconds>0;const remain=Math.max(0,state.remaining??FLIGHT_SETTINGS.questionSeconds);$('round-clock').classList.toggle('untimed',!timed);$('clock-text').textContent=timed?remain.toFixed(1)+'s':'NO TIMER';$('clock-fill').style.width=(timed?clamp(remain/FLIGHT_SETTINGS.questionSeconds,0,1)*100:100)+'%';$('clock-aria').setAttribute('aria-valuemax',timed?FLIGHT_SETTINGS.questionSeconds:1);$('clock-aria').setAttribute('aria-valuenow',timed?remain.toFixed(1):1);$('clock-aria').setAttribute('aria-label',timed?'Question time remaining':'Untimed question');$('round-clock').classList.toggle('urgent',timed&&remain<=2&&state.mode==='question');
  $('boost-banner').hidden=!(state.boostRemaining>0);$('boost-banner').innerHTML=icon('shield')+'BOOST SHIELD + HULL REPAIR';
+ $('companion-label').textContent=['question','feedback'].includes(state.mode)?'ORBIT / DOCKED':state.recoveryActive?'ORBIT / FUEL SCOUT':state.boostRemaining>0?'ORBIT / REPAIR CHECK':'ORBIT / COPILOT ONLINE';
+ $('passenger-chip').hidden=state.hitchhiker?.status!=='aboard';
+ $('fuel-meter').classList.toggle('pickup',state.mode==='flight'&&state.simTime-(state.lastPickupAt??-99)<.4);
+
 }
-function startRun(){clearInput();state={...INIT_STATE(),rounds:buildRounds(),correctCount:0,attempted:0,bestStreak:0,remaining:FLIGHT_SETTINGS.questionSeconds,resultPosted:false,spawnIn:.55,protectRemaining:1.8};obstacles=[];particles=[];shards=[];fuelCrystals=[];obstacleSerial=0;setBackgroundInert(false);['pause-layer','recap-layer','question-layer','target-label','points-float','boost-banner','flight-alert'].forEach(id=>$(id).hidden=true);setMode('launch');showFlight(true);makeRoute();resize();const b=pilotBounds();state.pilot={x:W*.20,y:(b.top+b.bottom)/2,vx:0,vy:0,bank:0};clampPilot();startCountdown(false);updateHUD();sfx('launch');}
+function startRun(){clearInput();state={...INIT_STATE(),rounds:buildRounds(),correctCount:0,attempted:0,bestStreak:0,remaining:FLIGHT_SETTINGS.questionSeconds,resultPosted:false,spawnIn:.55,protectRemaining:1.8};obstacles=[];particles=[];shards=[];fuelCrystals=[];obstacleSerial=0;setBackgroundInert(false);['pause-layer','recap-layer','question-layer','target-label','points-float','boost-banner','flight-alert'].forEach(id=>$(id).hidden=true);setMode('launch');showFlight(true);makeRoute();resize();const b=pilotBounds();state.pilot={x:W*.20,y:(b.top+b.bottom)/2,vx:0,vy:0,bank:0};clampPilot();initAdventure();startCountdown(false);updateHUD();sfx('launch');}
 function startCountdown(resuming=false){clearInput();state.resuming=resuming;state.legElapsed=resuming?state.legElapsed:0;state.spawnIn=resuming?Math.max(.45,state.spawnIn||0):.55;$('question-layer').hidden=true;$('countdown').hidden=true;beginFlight();lastFrame=performance.now();}
-function beginFlight(){setMode('flight');$('countdown').hidden=true;$('question-layer').hidden=true;$('pilot-instruction').textContent=state.recoveryActive?'FUEL RECOVERY':'YOU ARE THE PILOT';$('pilot-hint').textContent=state.recoveryActive?'Fly through the purple crystals to refuel.':(matchMedia('(pointer: coarse)').matches?'Drag in the flight window, or hold the arrow buttons.':'Arrow keys / WASD, or hold and drag in the flight window.');state.protectRemaining=Math.max(state.protectRemaining||0,1.3);state.pilot.vx=0;state.pilot.vy=0;if(!state.resuming)alertFlight(state.roundIndex===0?'Find the gaps. You are in control.':'Flight resumed. Keep dodging!',2.3);$('scene').focus({preventScroll:true});updateHUD();}
+function beginFlight(){setMode('flight');setBackgroundInert(false);$('countdown').hidden=true;$('question-layer').hidden=true;$('pilot-instruction').textContent=state.recoveryActive?'FUEL RECOVERY':'YOU ARE THE PILOT';$('pilot-hint').textContent=state.recoveryActive?'Fly through the purple crystals to refuel.':(matchMedia('(pointer: coarse)').matches?'Drag in the flight window, or hold the arrow buttons.':'Arrow keys / WASD, or hold and drag in the flight window.');state.protectRemaining=Math.max(state.protectRemaining||0,1.3);state.pilot.vx=0;state.pilot.vy=0;if(!state.resuming)alertFlight(state.roundIndex===0?'Orbit is with you. Find the gaps!':'Back in flight. Keep dodging!',2.3);$('scene').focus({preventScroll:true});updateHUD();}
 function spawnObstacle(initial=false){const b=pilotBounds(),short=Math.min(W,H),difficulty=Math.min(state.roundIndex,7);const r=clamp(short*(.04+Math.random()*.031),15,42);const playableTop=b.top+12,playableBottom=b.bottom-12;
  let y=playableTop+Math.random()*(playableBottom-playableTop);
  // Each obstacle has generous warning time. Never construct solid rock walls.
  if(Math.random()<.42&&state.pilot)y=clamp(state.pilot.y+(Math.random()-.5)*short*.22,playableTop,playableBottom);
  const last=obstacles[obstacles.length-1];if(last&&Math.abs(last.x-W)<W*.20&&Math.abs(last.y-y)<r+last.r+55)y=clamp(y+(y<(playableTop+playableBottom)/2?1:-1)*(r+last.r+78),playableTop,playableBottom);
+ if(state.recoveryActive&&fuelCrystals.some(c=>c.x>W*.65&&Math.abs(c.y-y)<r+shipWidth()*.4+18)){
+  const candidates=[playableTop,playableBottom,(playableTop+playableBottom)/2];
+  const safe=candidates.find(v=>fuelCrystals.every(c=>c.x<W*.65||Math.abs(c.y-v)>r+shipWidth()*.4+18));
+  if(safe!==undefined)y=safe;
+ }
  obstacles.push({id:++obstacleSerial,x:initial?W*.95:W+r*1.4,y,r,vx:W/(4.65-difficulty*.085),rot:Math.random()*6.28,spin:(Math.random()-.5)*.65,image:obstacleSerial%5,hit:false,counted:false});
 }
 function steer(dt){const p=state.pilot;let dx=0,dy=0;const down=(dir,k1,k2)=>heldButtons.has(dir)||heldKeys.has(k1)||heldKeys.has(k2);
@@ -434,32 +656,10 @@ function steer(dt){const p=state.pilot;let dx=0,dy=0;const down=(dir,k1,k2)=>hel
 }
 function collision(o){const p=state.pilot,w=shipWidth();return Math.hypot((o.x-(p.x+w*.055)),(o.y-p.y))<o.r*.78+w*.205;}
 function crystalCollision(c){const p=state.pilot,w=shipWidth();return Math.hypot(c.x-(p.x+w*.02),c.y-p.y)<c.r+w*.20;}
-function spawnFuelCrystals(x,y,count=7){const b=pilotBounds();for(let i=0;i<count;i++){fuelCrystals.push({x:clamp(x+(Math.random()-.5)*70,state.pilot.x+shipWidth()*.55,W-28),y:clamp(y+(Math.random()-.5)*110,b.top+14,b.bottom-14),r:10+Math.random()*4,vx:W/(4.8+Math.random()*.8),vy:(Math.random()-.5)*36,rot:Math.random()*6.28,spin:(Math.random()-.5)*2.2});}}
 function endRecovery(success=true){state.recoveryActive=false;state.recoveryNeed=0;state.recoveryCollected=0;$('pilot-instruction').textContent='YOU ARE THE PILOT';$('pilot-hint').textContent=matchMedia('(pointer: coarse)').matches?'Drag in the flight window, or hold the arrow buttons.':'Arrow keys / WASD, or hold and drag in the flight window.';if(success)alertFlight('Fuel stabilized. Signal route back online.',1.8,'good');}
 function damageFromAsteroid(o){if(o.hit||state.protectRemaining>0||state.boostRemaining>0)return;o.hit=true;state.impacts++;const fuelLoss=18;state.hull=Math.max(0,state.hull-FLIGHT_SETTINGS.collisionDamage);state.fuel=Math.max(0,state.fuel-fuelLoss);state.protectRemaining=1.6;state.lastHitTime=state.simTime;burst(o.x,o.y,false,false);spawnFuelCrystals(Math.max(o.x,state.pilot.x+shipWidth()*.95),o.y,7);state.recoveryActive=true;state.recoveryNeed=4;state.recoveryCollected=0;$('pilot-instruction').textContent='FUEL RECOVERY';$('pilot-hint').textContent='Collect 4 purple crystals to stabilize your fuel.';alertFlight(`Impact! -${FLIGHT_SETTINGS.collisionDamage} hull, -${fuelLoss} fuel. Collect 4 crystals!`,2.6,'hit');sfx('hit');if(state.hull<=0)finishRun('hull_breach');else if(state.fuel<=0)finishRun('out_of_fuel');}
-function advanceFlight(dt){const inRecovery=!!state.recoveryActive;const remaining=Math.max(0,FLIGHT_SETTINGS.flightSeconds-state.legElapsed);if(!inRecovery){dt=Math.min(dt,remaining);if(dt<=0){openQuestion();return;}}
- state.simTime+=dt;state.totalFlightTime+=dt;if(!inRecovery)state.legElapsed+=dt;state.protectRemaining=Math.max(0,state.protectRemaining-dt);state.boostRemaining=Math.max(0,state.boostRemaining-dt);state.fuel=Math.max(0,state.fuel-FUEL_DRAIN_PER_SEC*dt);visualTime+=dt;steer(dt);
- state.spawnIn-=dt;if(state.spawnIn<=0){spawnObstacle();state.spawnIn=(inRecovery?1.2:1.08)-Math.min(state.roundIndex,7)*.025+Math.random()*.20;}
- for(const o of obstacles){o.x-=o.vx*dt;o.rot+=o.spin*dt;if(!o.hit&&collision(o)){if(state.boostRemaining>0){o.hit=true;state.dodged++;o.counted=true;burst(o.x,o.y,true,true);}else damageFromAsteroid(o);if(state.mode!=='flight')return;}
-  if(!o.counted&&o.x+o.r<0){o.counted=true;if(!o.hit)state.dodged++;}}
- obstacles=obstacles.filter(o=>o.x>-o.r*2&&!o.hit);
- for(const c of fuelCrystals){c.x-=c.vx*dt;c.y+=c.vy*dt;c.rot+=c.spin*dt;const b=pilotBounds();if(c.y<c.r+b.top*.02||c.y>H-c.r-20)c.vy*=-1;if(crystalCollision(c)){c.collected=true;state.fuel=Math.min(FUEL_MAX,state.fuel+6);state.fuelRecovered=(state.fuelRecovered||0)+6;burst(c.x,c.y,true,false);if(state.recoveryActive){state.recoveryCollected++;alertFlight(`Fuel crystal collected ${state.recoveryCollected}/${state.recoveryNeed}`,1.0,'good');if(state.recoveryCollected>=state.recoveryNeed)endRecovery(true);}sfx('laser');}}
- fuelCrystals=fuelCrystals.filter(c=>!c.collected&&c.x>-40);
- if(state.recoveryActive&&fuelCrystals.length<Math.max(2,state.recoveryNeed-state.recoveryCollected))spawnFuelCrystals(W*.84,state.pilot.y,Math.max(3,state.recoveryNeed-state.recoveryCollected+1));
- if(state.fuel<=0){finishRun('out_of_fuel');return;}
- if(state.alertUntil&&state.simTime>=state.alertUntil)$('flight-alert').hidden=true;
- if(!state.recoveryActive&&state.legElapsed>=FLIGHT_SETTINGS.flightSeconds-1e-7)openQuestion();
-}
-function renderRoundChoices(){const round=state.rounds[state.roundIndex];$('word').textContent=round.word;$('question-word').textContent=round.word;$('question-index').textContent=`SIGNAL ${String(state.roundIndex+1).padStart(2,'0')} / ${ROUND_COUNT}`;const root=$('choices');root.replaceChildren();round.choices.forEach((choice,i)=>{const button=document.createElement('button');button.className='choice';button.dataset.choiceId=String(choice.id);button.setAttribute('aria-keyshortcuts',String(i+1));const key=document.createElement('span');key.className='choice-key';key.textContent=i+1;key.setAttribute('aria-hidden','true');const text=document.createElement('span');text.className='choice-text';text.textContent=choice.definition;button.setAttribute('aria-label',`${i+1}. ${choice.definition}`);button.append(key,text);button.addEventListener('click',()=>answer(choice.id));root.appendChild(button);});}
-function openQuestion(){if(state.mode!=='flight')return;clearInput();setMode('question');state.questionElapsed=0;state.remaining=FLIGHT_SETTINGS.questionSeconds;state.feedbackCorrect=null;state.feedbackElapsed=0;$('flight-alert').hidden=true;$('countdown').hidden=true;$('question-layer').hidden=false;$('continue-button').hidden=true;$('deck').hidden=false;renderRoundChoices();document.querySelector('.freeze-note').textContent=FLIGHT_SETTINGS.questionSeconds?'Flight and fuel are frozen. Decode this signal before the timer ends.':'Your ship, asteroids, and fuel are paused. Take a moment to think.';setFeedback('Flight resumes only after you answer and choose KEEP FLYING.');$('pilot-instruction').textContent='FLIGHT ON HOLD';$('pilot-hint').textContent='Ship parked. Decode the signal to continue.';$('question-layer').querySelector('.question-card').scrollTop=0;updateHUD();$('question-word').tabIndex=-1;$('question-word').focus({preventScroll:true});sfx('click');}
-function answer(choiceId){if(state.mode!=='question'||state.paused)return;const ms=state.questionElapsed*1000;const round=state.rounds[state.roundIndex];const valid=choiceId===null||round.choices.some(c=>c.id===choiceId);if(!valid)return;const correct=choiceId!==null&&choiceId===round.promptWordId;const correctChoice=round.choices.find(c=>c.id===round.promptWordId);state.attempted++;state.feedbackCorrect=correct;state.feedbackElapsed=0;setMode('feedback');
- const result={word:round.word,wordId:round.promptWordId,definition:correctChoice.definition,choiceId,correct,timedOut:choiceId===null,responseTimeMs:Math.round(ms),points:0};
- [...$('choices').children].forEach((button,i)=>{button.disabled=true;const id=round.choices[i].id;if(id===round.promptWordId){button.classList.add('good');button.insertAdjacentHTML('beforeend',icon('check','icon choice-mark'));button.setAttribute('aria-label',button.getAttribute('aria-label')+' Correct definition.');}else if(id===choiceId){button.classList.add('bad');button.insertAdjacentHTML('beforeend',icon('close','icon choice-mark'));button.setAttribute('aria-label',button.getAttribute('aria-label')+' Incorrect.');}else button.classList.add('dim');});
- if(correct){state.streak++;state.correctCount++;state.bestStreak=Math.max(state.bestStreak,state.streak);const earned=FLIGHT_SETTINGS.questionSeconds?pointsForCorrectAnswer(ms,state.streak):Math.round(BASE_POINTS*STREAK_MULTIPLIERS[Math.min(state.streak,STREAK_MULTIPLIERS.length-1)]);state.score+=earned;result.points=earned;state.fuel=Math.min(FUEL_MAX,state.fuel+FUEL_REFILL_PER_CORRECT);const boost=BOOST_STREAKS.includes(state.streak);if(boost){state.hull=Math.min(HULL_MAX,state.hull+HULL_REPAIR_ON_BOOST);state.boostRemaining=3;sfx('boost');}else sfx('laser');setFeedback(boost?`Correct! +${earned} resources, +10 fuel. Hull repaired +20, and a boost shield is ready for your next flight.`:`Correct! +${earned} resources and +10 fuel (up to 100%). Jump right back into flight when you're ready.`,'good');$('score').classList.remove('score-pop');void $('score').offsetWidth;$('score').classList.add('score-pop');}
- else{state.streak=0;state.hull=Math.max(0,state.hull-HULL_DAMAGE_PER_WRONG);setFeedback((choiceId===null?'Time is up. ':'Not quite. ')+`-25 hull. ${round.word}: ${correctChoice.definition}`,'bad');sfx('hit');}
- state.results.push(result);const last=state.roundIndex+1>=state.rounds.length||state.hull<=0;const cont=$('continue-button');cont.innerHTML=(last?'VIEW FLIGHT REPORT':'KEEP FLYING')+icon(last?'trophy':'arrow');cont.hidden=false;cont.disabled=true;updateHUD();
-}
-function continueAfterAnswer(){if(state.mode!=='feedback'||state.paused||state.feedbackElapsed<.35)return;if(state.hull<=0){finishRun('hull_breach');return;}if(state.roundIndex+1>=state.rounds.length){finishRun('completed');return;}state.roundIndex++;state.feedbackCorrect=null;state.legElapsed=0;state.spawnIn=.55;startCountdown(false);updateHUD();sfx('launch');}
+function openQuestion(){if(state.mode!=='flight')return;clearInput();setMode('question');dockCompanion();setBackgroundInert(false);state.questionElapsed=0;state.remaining=FLIGHT_SETTINGS.questionSeconds;state.feedbackCorrect=null;state.feedbackElapsed=0;$('flight-alert').hidden=true;$('countdown').hidden=true;$('question-layer').hidden=false;$('continue-button').hidden=true;$('deck').hidden=false;renderRoundChoices();document.querySelector('.freeze-note').textContent=FLIGHT_SETTINGS.questionSeconds?'Flight and fuel are frozen. Decode this signal before the timer ends.':'Your ship, asteroids, and fuel are paused. Take a moment to think.';setFeedback('Flight resumes only after you answer and choose KEEP FLYING.');$('pilot-instruction').textContent='FLIGHT ON HOLD';$('pilot-hint').textContent='Ship parked. Decode the signal to continue.';$('question-layer').querySelector('.question-card').scrollTop=0;updateHUD();$('question-word').tabIndex=-1;$('question-word').focus({preventScroll:true});sfx('click');}
+function continueAfterAnswer(){if(state.mode!=='feedback'||state.paused||state.feedbackElapsed<.35)return;if(state.hull<=0){finishRun('hull_breach');return;}if(state.roundIndex+1>=state.rounds.length){finishRun('completed');return;}state.departure={type:state.rounds[state.roundIndex].type,x:W*.75,y:H*.46,life:1.8};state.roundIndex++;state.feedbackCorrect=null;state.legElapsed=0;state.spawnIn=.55;startCountdown(false);updateHUD();sfx('launch');}
 function outpostArtwork(index){return `<svg viewBox="0 0 150 100" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="dome" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#9df5ff"/><stop offset="1" stop-color="#4569a6"/></linearGradient><linearGradient id="base" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#aab8e4"/><stop offset="1" stop-color="#526489"/></linearGradient></defs><ellipse cx="76" cy="84" rx="69" ry="12" fill="#101e38"/><path d="m13 76 43-17 81 11-31 21-64-2Z" fill="#415779"/><path d="m13 76 29 13 64 2 31-21v8l-31 20-64-3-29-12Z" fill="#273d60"/><path d="m22 77 32-11 67 7-24 11-49-1Z" fill="#5c7394"/><path d="M49 76h15m-8-4v8" stroke="#adbdde" stroke-width="2"/>
 ${index>=1?'<path d="M30 63v15m-13-28 27 1-5 16-25-2Z" fill="#5e7cc0" stroke="#83bcdf"/><path d="m26 51-3 15m13-14-4 14m-17-7h25" stroke="#9dc3ed" stroke-width=".8"/>':''}
 ${index>=2?'<path d="M60 68V57a24 24 0 0 1 48 0v11Z" fill="url(#dome)" stroke="#b3edff" stroke-width="1.2"/><path d="M62 61h44M83 34c-10 12-11 21-9 34m9-34c11 12 12 21 10 34" fill="none" stroke="#ecfaff" stroke-opacity=".4"/><path d="M57 68h54v7H57Z" fill="url(#base)"/><path d="M78 73v-9h10v9" fill="#213e69"/>':''}
@@ -468,9 +668,9 @@ ${index>=4?'<path d="m44 74 8-8h21v14H44Z" fill="#84ddcc" fill-opacity=".9"/><pa
 ${index>=5?'<path d="M79 70V48l17-6 14 7v24Z" fill="url(#base)"/><path d="m79 48 17 7 14-6-14-7Z" fill="#d0def4"/><path d="M84 53v9l18 4v-9Z" fill="#23496e"/><path d="m85 55 15 4" stroke="#9af5ff" stroke-width="2"/><path d="m96 43 1-16" stroke="#acbddd" stroke-width="2"/><circle cx="97" cy="26" r="2" fill="#c4b1ff"/>':''}
 <circle cx="28" cy="82" r="1.5" fill="#92ffff"/><circle cx="108" cy="83" r="1.5" fill="#92ffff"/><path d="m129 14 3 5-3 5-3-5Z" fill="#d6b3ff"/></svg>`;}
 
-function finishRun(reason){if(state.resultPosted)return;state.resultPosted=true;setMode('recap');clearInput();$('question-layer').hidden=true;state.paused=false;$('countdown').hidden=true;$('pause-layer').hidden=true;$('target-label').hidden=true;$('points-float').hidden=true;$('boost-banner').hidden=true;const bonus=reason==='completed'?Math.round((state.fuel/FUEL_MAX)*FUEL_COMPLETION_BONUS_MAX):0;const banked=state.score+bonus;const prior=getOutpostProgress(fakeOutpostResourcesTotal);fakeOutpostResourcesTotal+=banked;const progress=getOutpostProgress(fakeOutpostResourcesTotal);const won=reason==='completed';$('recap-title').textContent=won?'Run complete!':'Crew recovered.';$('recap-eyebrow').textContent=won?'CLEAR SKIES, CAPTAIN':'EVERY FLIGHT BUILDS EXPERIENCE';$('recap-icon').setAttribute('href',won?'#i-trophy':'#i-shield');$('recap-copy').textContent=won?`All 10 signals reached. Your flight earned ${state.score.toLocaleString()} resources + ${bonus} for fuel remaining.`:reason==='hull_breach'?'Your escape pod made it home safely. Review the signals and give it another go.':'Your crew is safe. Fuel ran out before the final signal. Refuel with correct answers next time.';$('recap-resources').textContent=banked.toLocaleString();$('recap-correct').textContent=`${state.correctCount} / ${state.attempted}`;$('recap-streak').textContent=state.bestStreak;$('outpost-kicker').textContent=progress.index>prior.index?'OUTPOST UPGRADED':'YOUR OUTPOST';$('outpost-name').textContent=progress.current.name;$('outpost-desc').textContent=progress.next?'Every signal helps your outpost grow.':'Your demo outpost is fully built!';$('outpost-art').innerHTML=outpostArtwork(progress.index);$('outpost-fill').style.width=progress.pct+'%';$('outpost-caption').textContent=progress.next?`${progress.pct}% toward ${progress.next.name}`:'All six outpost stages unlocked';$('outpost-total').textContent=fakeOutpostResourcesTotal.toLocaleString()+' total';const misses=state.results.filter(r=>!r.correct);$('review').hidden=misses.length===0;$('review').open=false;$('review-summary').textContent=`Review ${misses.length} missed signal${misses.length===1?'':'s'}`;$('review-items').replaceChildren();misses.forEach(r=>{const item=document.createElement('div');item.className='review-item';const term=document.createElement('strong'),def=document.createElement('span');term.textContent=r.word;def.textContent=r.definition;item.append(term,def);$('review-items').appendChild(item);});$('recap-layer').hidden=false;setBackgroundInert(true);$('again-button').focus({preventScroll:true});if(won)sfx('complete');$('recap-flight').textContent=`${state.dodged||0} asteroids dodged / ${state.impacts||0} hull impacts`;const result={flightSeconds:state.totalFlightTime||0,asteroidsDodged:state.dodged||0,impacts:state.impacts||0,questionSeconds:FLIGHT_SETTINGS.questionSeconds,reason,score:state.score,fuelBonus:bonus,resourcesEarned:banked,correctCount:state.correctCount,attempted:state.attempted,bestStreak:state.bestStreak,hull:state.hull,fuel:state.fuel,outpostTotal:fakeOutpostResourcesTotal,answers:state.results.map(r=>({...r})),demo:true};window.dispatchEvent(new CustomEvent('asteroid-run:complete',{detail:result}));if(completionCallback){try{completionCallback(result);}catch(err){console.warn('Host completion callback failed:',err);}}}
+function finishRun(reason){if(state.resultPosted)return;state.resultPosted=true;state.finishReason=reason;state.arrivalElapsed=0;$('flight-alert').hidden=true;$('arrival-caption').textContent=reason==='completed'?'DOCKING AT YOUR OUTPOST':'SAFE TOW BACK TO YOUR OUTPOST';$('recap-adventure').textContent=state.hitchhiker?.status==='aboard'?'Your little passenger made it home with you.':'Orbit is docked and ready for another adventure.';setMode('recap');clearInput();$('question-layer').hidden=true;state.paused=false;$('countdown').hidden=true;$('pause-layer').hidden=true;$('target-label').hidden=true;$('points-float').hidden=true;$('boost-banner').hidden=true;const bonus=reason==='completed'?Math.round((state.fuel/FUEL_MAX)*FUEL_COMPLETION_BONUS_MAX):0;const banked=state.score+bonus;const prior=getOutpostProgress(fakeOutpostResourcesTotal);fakeOutpostResourcesTotal+=banked;const progress=getOutpostProgress(fakeOutpostResourcesTotal);const won=reason==='completed';$('recap-title').textContent=won?'Run complete!':'Crew recovered.';$('recap-eyebrow').textContent=won?'CLEAR SKIES, CAPTAIN':'EVERY FLIGHT BUILDS EXPERIENCE';$('recap-icon').setAttribute('href',won?'#i-trophy':'#i-shield');$('recap-copy').textContent=won?`All 10 signals reached. Your flight earned ${state.score.toLocaleString()} resources + ${bonus} for fuel remaining.`:reason==='hull_breach'?'A recovery shuttle brought your crew home safely. Review the signals and give it another go.':'Your crew is safe. Fuel ran out before the final signal. Collect purple crystals and refuel with correct answers next time.';$('recap-resources').textContent=banked.toLocaleString();$('recap-correct').textContent=`${state.correctCount} / ${state.attempted}`;$('recap-streak').textContent=state.bestStreak;$('outpost-kicker').textContent=progress.index>prior.index?'OUTPOST UPGRADED':'YOUR OUTPOST';$('outpost-name').textContent=progress.current.name;$('outpost-desc').textContent=progress.next?'Every signal helps your outpost grow.':'Your demo outpost is fully built!';$('outpost-art').innerHTML=outpostArtwork(progress.index);$('outpost-fill').style.width=progress.pct+'%';$('outpost-caption').textContent=progress.next?`${progress.pct}% toward ${progress.next.name}`:'All six outpost stages unlocked';$('outpost-total').textContent=fakeOutpostResourcesTotal.toLocaleString()+' total';const misses=state.results.filter(r=>!r.correct);$('review').hidden=misses.length===0;$('review').open=false;$('review-summary').textContent=`Review ${misses.length} missed signal${misses.length===1?'':'s'}`;$('review-items').replaceChildren();misses.forEach(r=>{const item=document.createElement('div');item.className='review-item';const term=document.createElement('strong'),def=document.createElement('span');term.textContent=r.word;def.textContent=r.type==='frequency_fill'?r.sentence:r.type==='odd_signal_out'?r.explanation:r.type==='true_false'?(r.explanation||r.definition):r.definition;item.append(term,def);$('review-items').appendChild(item);});$('recap-layer').hidden=false;setBackgroundInert(true);$('again-button').focus({preventScroll:true});if(won)sfx('complete');$('recap-flight').textContent=`${state.dodged||0} asteroids dodged / ${state.impacts||0} hull impacts`;const result={flightSeconds:state.totalFlightTime||0,asteroidsDodged:state.dodged||0,impacts:state.impacts||0,questionSeconds:FLIGHT_SETTINGS.questionSeconds,reason,score:state.score,fuelBonus:bonus,resourcesEarned:banked,correctCount:state.correctCount,attempted:state.attempted,bestStreak:state.bestStreak,hull:state.hull,fuel:state.fuel,outpostTotal:fakeOutpostResourcesTotal,answers:state.results.map(r=>({...r})),adventure:{passengerAboard:state.hitchhiker?.status==='aboard',closeCalls:state.closeCalls||0,crystalsCollected:state.crystalsCollected||0},demo:true};window.dispatchEvent(new CustomEvent('asteroid-run:complete',{detail:result}));if(completionCallback){try{completionCallback(result);}catch(err){console.warn('Host completion callback failed:',err);}}}
 
-function resetDemo(){clearInput();state=INIT_STATE();obstacles=[];particles=[];shards=[];fuelCrystals=[];setMode('intro');setBackgroundInert(false);['pause-layer','recap-layer','countdown','question-layer','points-float','boost-banner','flight-alert'].forEach(id=>$(id).hidden=true);showFlight(false);resize();$('launch-button').focus({preventScroll:true});}
+function resetDemo(){clearInput();pickupPulses=[];$('passenger-chip').hidden=true;state=INIT_STATE();obstacles=[];particles=[];shards=[];fuelCrystals=[];setMode('intro');setBackgroundInert(false);['pause-layer','recap-layer','countdown','question-layer','points-float','boost-banner','flight-alert'].forEach(id=>$(id).hidden=true);showFlight(false);refreshFormatSettings();resize();$('launch-button').focus({preventScroll:true});}
 function pauseFlight(){if(state.paused||state.mode==='recap')return;priorFocus=document.activeElement;clearInput();state.paused=true;state.pausedAt=performance.now();const settings=state.mode==='intro';$('pause-title').textContent=settings?'Flight settings.':'Flight paused.';$('pause-copy').textContent=settings?'Steer with arrow keys, WASD, or hold and drag. Flight pauses for each question. Rock impacts cost hull and spill fuel into space, so collect purple crystals to recover. Missed questions cost 25 hull. Correct answers refuel, and streaks repair your ship.':'Your ship, asteroids, fuel, and any question timer are frozen. Take your time.';$('resume-button').innerHTML=(settings?'BACK TO LAUNCH':'BACK TO THE FLIGHT')+icon('play');$('restart-button').hidden=settings;$('pause-layer').hidden=false;setBackgroundInert(true);$('resume-button').focus({preventScroll:true});}
 function resumeFlight(){if(!state.paused)return;state.paused=false;lastFrame=performance.now();$('pause-layer').hidden=true;setBackgroundInert(false);if(state.mode==='flight')$('scene').focus({preventScroll:true});else if(priorFocus&&priorFocus.isConnected&&!priorFocus.disabled)priorFocus.focus({preventScroll:true});else if(state.mode==='question')$('choices').querySelector('button').focus({preventScroll:true});else if(state.mode==='feedback')$('continue-button').focus({preventScroll:true});else if(state.mode==='launch')$('scene').focus({preventScroll:true});else $('launch-button').focus({preventScroll:true});}
 function togglePause(){state.paused?resumeFlight():pauseFlight();}
@@ -480,19 +680,19 @@ function drawFlightBackground(t,dt,moving){ctx.drawImage(backdrop,0,0,W,H);const
  rocks.forEach(a=>{if(!reducedMotion){a.x-=a.speed*move*.7;a.rot+=a.spin*move*.6;if(a.x<-a.r*2)a.x=W+a.r*2;}drawRock(ctx,rockImages[a.image],a.x,a.y,a.r*.66,a.rot,a.alpha*.38);});
  ctx.save();ctx.setLineDash([2,14]);ctx.strokeStyle='#b1ddff0e';ctx.lineWidth=1;const b=pilotBounds();for(let i=0;i<3;i++){const y=b.top+(b.bottom-b.top)*(i+.5)/3;ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke();}ctx.restore();
 }
-function render(t,dt,now){if(!backdrop)return;if(state.mode==='intro'){originalRender(t,dt,now);return;}const moving=state.mode==='flight'&&!state.paused;ctx.save();drawFlightBackground(t,dt,moving);const p=state.pilot||{x:W*.2,y:H*.5,bank:0},w=shipWidth();
+function render(t,dt,now){if(!backdrop)return;if(state.mode==='intro'){originalRender(t,dt,now);const hero=geometry(t).ship;drawOrbit(ctx,hero.x-hero.w*.37,hero.y-hero.w*.30,clamp(hero.w*.18,35,68),t,'calm');return;}const moving=state.mode==='flight'&&!state.paused;ctx.save();drawFlightBackground(t,dt,moving);drawAdventureUnderlay(t);const p=state.pilot||{x:W*.2,y:H*.5,bank:0},w=shipWidth();
  for(const o of obstacles){if(o.hit)continue;const threat=o.x>W-w*.7;ctx.save();if(threat){ctx.strokeStyle='#ffcf7770';ctx.lineWidth=2;const yy=clamp(o.y,118,H-70);ctx.beginPath();ctx.moveTo(W-9,yy-12);ctx.lineTo(W-16,yy);ctx.lineTo(W-9,yy+12);ctx.stroke();}ctx.shadowColor='#060d23';ctx.shadowBlur=12;drawRock(ctx,rockImages[o.image],o.x,o.y,o.r,o.rot,1);ctx.shadowBlur=0;ctx.strokeStyle='#d0c5ec2e';ctx.lineWidth=1;ctx.beginPath();ctx.arc(o.x,o.y,o.r*.94,-2.8,-.8);ctx.stroke();ctx.restore();}
- for(const c of fuelCrystals){ctx.save();ctx.shadowColor='#b592ff';ctx.shadowBlur=18;drawCrystal(ctx,c.x,c.y,c.r,c.rot,1);ctx.shadowBlur=0;ctx.strokeStyle='#d7c4ff55';ctx.lineWidth=1;ctx.beginPath();ctx.arc(c.x,c.y,c.r*1.2,0,Math.PI*2);ctx.stroke();ctx.restore();}
+
  const shield=state.boostRemaining>0,protectedNow=state.protectRemaining>0;const hit=(state.simTime-(state.lastHitTime??-99))<.6;
  if(shield||protectedNow||hit){ctx.save();ctx.translate(p.x,p.y);ctx.strokeStyle=hit?'#ffc0ceaa':shield?'#ffdd8eb3':'#9be9ff8c';ctx.shadowColor=shield?'#ffe0a0':'#88dfff';ctx.shadowBlur=reducedMotion?0:16;ctx.lineWidth=shield?2:1.4;ctx.beginPath();ctx.ellipse(0,0,w*.52,w*.35,0,0,Math.PI*2);ctx.stroke();if(shield){ctx.setLineDash([4,7]);ctx.globalAlpha=.5;ctx.beginPath();ctx.ellipse(0,0,w*.59,w*.40,0,0,Math.PI*2);ctx.stroke();}ctx.restore();}
- const s={x:p.x,y:p.y,w,bank:reducedMotion?0:p.bank};currentGeometry={ship:s,target:{x:W*.7,y:H*.5,r:80}};drawShip(ctx,s,t,shield);
+ const s={x:p.x,y:p.y,w,bank:reducedMotion?0:p.bank};currentGeometry={ship:s,target:{x:W*.7,y:H*.5,r:80}};drawShip(ctx,s,t,shield);drawAdventureOverlay(t);
  // Pointer reticle appears only while actively steering, never over questions.
  if(POINTER.active&&moving){ctx.save();ctx.strokeStyle='#a7ecff80';ctx.lineWidth=1;ctx.setLineDash([3,4]);ctx.beginPath();ctx.arc(POINTER.x,POINTER.y,12,0,Math.PI*2);ctx.stroke();ctx.restore();}
  for(const q of particles){if(moving){q.x+=q.vx*dt;q.y+=q.vy*dt;q.vx*=.982;q.vy*=.982;q.life-=dt;}ctx.globalAlpha=clamp(q.life/.4,0,1);ctx.fillStyle=q.color;ctx.beginPath();ctx.arc(q.x,q.y,q.size,0,Math.PI*2);ctx.fill();}ctx.globalAlpha=1;particles=particles.filter(q=>q.life>0);
  for(const q of shards){if(moving){q.x+=q.vx*dt;q.y+=q.vy*dt;q.rot+=q.spin*dt;q.life-=dt;}const a=clamp(q.life/.45,0,1);if(q.crystal)drawCrystal(ctx,q.x,q.y,q.r*.75,q.rot,a);else drawRock(ctx,rockImages[q.image],q.x,q.y,q.r,q.rot,a);}shards=shards.filter(q=>q.life>0);
- if(hit){const alpha=.07*(1-clamp((state.simTime-state.lastHitTime)/.6,0,1));ctx.strokeStyle=`rgba(255,130,158,${alpha*5})`;ctx.lineWidth=5;ctx.strokeRect(2,2,W-4,H-4);}ctx.restore();
+ if(hit){const alpha=.07*(1-clamp((state.simTime-state.lastHitTime)/.6,0,1));ctx.strokeStyle=`rgba(255,130,158,${alpha*5})`;ctx.lineWidth=5;ctx.strokeRect(2,2,W-4,H-4);}ctx.restore();drawArrival();
 }
-function stepGame(dt){if(state.paused)return;if(state.mode==='intro'){visualTime+=dt;return;}if(state.mode==='launch'){beginFlight();return;}
+function stepGame(dt){if(state.paused)return;if(state.mode==='intro'){visualTime+=dt;return;}if(state.mode==='recap'){state.arrivalElapsed=(state.arrivalElapsed||0)+dt;return;}if(state.mode==='launch'){beginFlight();return;}
  if(state.mode==='flight'){advanceFlight(dt);return;}
  if(state.mode==='question'){state.questionElapsed+=dt;if(FLIGHT_SETTINGS.questionSeconds>0){state.remaining=Math.max(0,FLIGHT_SETTINGS.questionSeconds-state.questionElapsed);if(state.remaining<=0)answer(null);}return;}
  if(state.mode==='feedback'){const was=state.feedbackElapsed;state.feedbackElapsed+=dt;if(was<.35&&state.feedbackElapsed>=.35){$('continue-button').disabled=false;$('continue-button').focus({preventScroll:true});const card=$('question-layer').querySelector('.question-card');const extra=$('continue-button').getBoundingClientRect().bottom-card.getBoundingClientRect().bottom+14;if(extra>0)card.scrollTop+=extra;}}
@@ -524,18 +724,254 @@ document.addEventListener('keydown',e=>{if(e.ctrlKey||e.altKey||e.metaKey)return
  const modal=!$('pause-layer').hidden?$('pause-layer'):!$('recap-layer').hidden?$('recap-layer'):null;
  if(modal&&e.key==='Tab'){const list=[...modal.querySelectorAll('button:not(:disabled),summary,[tabindex="0"]')].filter(el=>el.offsetParent!==null);const first=list[0],last=list[list.length-1];if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus();}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus();}return;}
  if(key==='p'||key==='Escape'){if(state.mode==='recap')return;e.preventDefault();togglePause();return;}if(key==='m'){e.preventDefault();toggleSound();return;}
- if(/^[1-4]$/.test(e.key)&&state.mode==='question'&&!state.paused){e.preventDefault();answer(state.rounds[state.roundIndex].choices[Number(e.key)-1].id);return;}
+ if(/^[1-4]$/.test(e.key)&&state.mode==='question'&&!state.paused){e.preventDefault();const choice=state.rounds[state.roundIndex].choices[Number(e.key)-1];if(choice)answer(choice.id);return;}
 });
+// Six approved additions. All are cosmetic except the existing crystal pickups.
+// No new points, currencies, collision damage, or answer rules are introduced.
+let crystalBatch=0, pickupPulses=[];
+function initAdventure(){
+ const p=state.pilot,w=shipWidth();
+ state.companion={x:p.x-w*.48,y:p.y-w*.35};
+ state.hitchhiker={status:'waiting',round:2+Math.floor(Math.random()*2),x:0,y:0,r:18,age:0};
+ state.lastCloseCall=-100;state.closeCalls=0;state.closeCallUntil=0;state.pickupIndex=0;state.lastPickupAt=-100;state.departure=null;state.arrivalElapsed=0;state.crystalsCollected=0;
+ pickupPulses=[];crystalBatch=0;
+}
+function dockCompanion(){if(!state.pilot)return;const w=shipWidth();state.companion={x:state.pilot.x-w*.40,y:state.pilot.y-w*.30};}
+function stepAdventure(dt){
+ const p=state.pilot,w=shipWidth(),c=state.companion;
+ if(c){const close=state.closeCallUntil>state.simTime;
+  const tx=p.x-w*(close?.65:.50),ty=p.y-w*(close?.07:.39)+(reducedMotion?0:Math.sin(state.simTime*2.7)*3);
+  c.x=mix(c.x,tx,1-Math.exp(-8*dt));c.y=mix(c.y,ty,1-Math.exp(-8*dt));
+ }
+ const h=state.hitchhiker;
+ if(h&&h.status==='waiting'&&state.roundIndex>=h.round&&state.legElapsed>=1.4&&!state.recoveryActive){
+  const b=pilotBounds();h.status='offered';h.x=W+22;h.y=clamp(p.y+Math.min(50,(b.bottom-b.top)*.16),b.top+30,b.bottom-30);h.r=clamp(w*.18,15,23);h.age=0;
+  // Put the optional passenger in a clear lane, never on an asteroid.
+  const blockers=obstacles.filter(o=>Math.abs(o.x-h.x)<120&&Math.abs(o.y-h.y)<o.r+55);
+  if(blockers.length)h.y=clamp(p.y-50,b.top+30,b.bottom-30);
+  if(state.simTime>state.alertUntil)alertFlight('A little robot needs a ride. Fly close to pick it up!',2.7);
+ }
+ if(h&&h.status==='offered'){
+  h.x-=W/7.5*dt;h.age+=dt;
+  if(Math.hypot(h.x-p.x,h.y-p.y)<h.r+w*.28){h.status='aboard';alertFlight('Passenger aboard! Next stop: your outpost.',2.5,'good');sfx('passenger');}
+  else if(h.x<-h.r*2)h.status='missed';
+ }
+ if(state.departure){state.departure.x-=W*.36*dt;state.departure.life-=dt;if(state.departure.life<=0)state.departure=null;}
+ for(const pulse of pickupPulses)pulse.age+=dt;
+ pickupPulses=pickupPulses.filter(p=>p.age<.65);
+}
+function nearMiss(o){
+ if(o.hit||o.nearChecked||!state.pilot)return;
+ const p=state.pilot,w=shipWidth(),distance=Math.hypot(o.x-(p.x+w*.055),o.y-p.y),gap=distance-(o.r*.78+w*.205);
+ o.closestGap=Math.min(o.closestGap??Infinity,gap);
+ if(o.x+o.r<p.x-w*.25){
+  o.nearChecked=true;
+  if(o.closestGap>2&&o.closestGap<Math.min(19,w*.20)&&state.simTime-state.lastCloseCall>8&&state.closeCalls<3&&!state.recoveryActive&&state.boostRemaining<=0&&state.protectRemaining<=0){
+   state.lastCloseCall=state.simTime;state.closeCallUntil=state.simTime+1.4;state.closeCalls++;
+   $('adventure-live').textContent='Nice flying! A close call, safely avoided.';
+  }
+ }
+}
+function spawnFuelCrystals(x,y,count=7){
+ const b=pilotBounds(),w=shipWidth(),spacing=clamp(W*.058,28,64),batch=++crystalBatch;
+ const start=Math.max(state.pilot.x+w*.77,x),mid=(b.top+b.bottom)/2;
+ const center=clamp(y,b.top+26,b.bottom-26),direction=center>mid?-1:1;
+ const amplitude=Math.min(54,(b.bottom-b.top)*.22),speed=W/5.2;
+ for(let i=0;i<count;i++){
+  const cx=start+i*spacing;
+  let cy=clamp(center+Math.sin(i/Math.max(1,count-1)*Math.PI)*amplitude*direction,b.top+17,b.bottom-17);
+  // Predict the rock positions at this pickup's likely interception time.
+  const intercept=Math.max(0,(cx-state.pilot.x)/speed);
+  const blocked=yy=>obstacles.some(o=>!o.hit&&Math.abs(o.x-o.vx*intercept-state.pilot.x)<o.r+w*.55&&Math.abs(o.y-yy)<o.r+w*.32+12);
+  if(blocked(cy)){
+   const safe=[cy-45,cy+45,cy-85,cy+85].map(v=>clamp(v,b.top+17,b.bottom-17)).find(v=>!blocked(v));
+   if(safe!==undefined)cy=safe;
+  }
+  fuelCrystals.push({x:cx,y:cy,r:clamp(w*.112,10,14),vx:speed,vy:0,rot:(i%2?.11:-.11),spin:0,batch,sequence:i,phase:i*.8});
+ }
+}
+function pickupCrystal(c){
+ if(c.collected)return;c.collected=true;
+ state.fuel=Math.min(FUEL_MAX,state.fuel+6);state.fuelRecovered=(state.fuelRecovered||0)+6;state.crystalsCollected=(state.crystalsCollected||0)+1;
+ if(state.simTime-state.lastPickupAt>1.3)state.pickupIndex=0;
+ state.pickupIndex++;state.lastPickupAt=state.simTime;
+ if(!reducedMotion){
+  const rect=$('fuel-meter').getBoundingClientRect(),scene=$('scene').getBoundingClientRect();
+  pickupPulses.push({x:c.x,y:c.y,toX:rect.left-scene.left+rect.width*.5,toY:rect.top-scene.top+rect.height*.70,age:0});
+  for(let i=0;i<8;i++){const a=i/8*Math.PI*2;particles.push({x:c.x,y:c.y,vx:Math.cos(a)*42,vy:Math.sin(a)*42,life:.36,size:1.5,color:i%2?'#e2c5ff':'#ac81ff'});}
+ }
+ if(state.recoveryActive){state.recoveryCollected++;if(state.recoveryCollected>=state.recoveryNeed)endRecovery(true);else alertFlight(`Fuel recovered: ${state.recoveryCollected} / ${state.recoveryNeed} crystals`,1.1,'good');}
+ sfx('pickup');
+}
+function advanceFlight(dt){
+ const inRecovery=!!state.recoveryActive,remaining=Math.max(0,FLIGHT_SETTINGS.flightSeconds-state.legElapsed);
+ if(!inRecovery){dt=Math.min(dt,remaining);if(dt<=0){openQuestion();return;}}
+ state.simTime+=dt;state.totalFlightTime+=dt;if(!inRecovery)state.legElapsed+=dt;
+ state.protectRemaining=Math.max(0,state.protectRemaining-dt);state.boostRemaining=Math.max(0,state.boostRemaining-dt);
+ state.fuel=Math.max(0,state.fuel-FUEL_DRAIN_PER_SEC*dt);visualTime+=dt;steer(dt);
+ state.spawnIn-=dt;if(state.spawnIn<=0){spawnObstacle();state.spawnIn=(inRecovery?1.2:1.08)-Math.min(state.roundIndex,7)*.025+Math.random()*.20;}
+ for(const o of obstacles){
+  o.x-=o.vx*dt;o.rot+=o.spin*dt;
+  if(!o.hit&&collision(o)){
+   if(state.boostRemaining>0){o.hit=true;state.dodged++;o.counted=true;burst(o.x,o.y,true,true);}else damageFromAsteroid(o);
+   if(state.mode!=='flight')return;
+  }
+  nearMiss(o);
+  if(!o.counted&&o.x+o.r<0){o.counted=true;if(!o.hit)state.dodged++;}
+ }
+ obstacles=obstacles.filter(o=>o.x>-o.r*2&&!o.hit);
+ for(const c of fuelCrystals){c.x-=c.vx*dt;if(crystalCollision(c))pickupCrystal(c);}
+ fuelCrystals=fuelCrystals.filter(c=>!c.collected&&c.x>-40);
+ if(state.recoveryActive&&fuelCrystals.length<Math.max(2,state.recoveryNeed-state.recoveryCollected))spawnFuelCrystals(W*.84,state.pilot.y,Math.max(3,state.recoveryNeed-state.recoveryCollected+1));
+ stepAdventure(dt);
+ if(state.fuel<=0){finishRun('out_of_fuel');return;}
+ if(state.alertUntil&&state.simTime>=state.alertUntil)$('flight-alert').hidden=true;
+ if(!state.recoveryActive&&state.legElapsed>=FLIGHT_SETTINGS.flightSeconds-1e-7)openQuestion();
+}
+function drawOrbit(g,x,y,size,time=0,pose='calm'){
+ g.save();g.translate(x,y);g.scale(size/36,size/36);
+ if(pose==='wobble'&&!reducedMotion)g.rotate(Math.sin(time*22)*.20);
+ g.strokeStyle='#aa87e7';g.lineWidth=2.6;g.beginPath();g.ellipse(0,0,23,8,-.32,Math.PI,Math.PI*2);g.stroke();
+ let grad=g.createLinearGradient(-12,-15,12,16);grad.addColorStop(0,'#f3f8ff');grad.addColorStop(.40,'#ced5f3');grad.addColorStop(1,'#7d82b3');g.fillStyle=grad;g.strokeStyle='#656aa3';g.lineWidth=1.2;
+ g.beginPath();g.ellipse(0,0,16,15,0,0,Math.PI*2);g.fill();g.stroke();
+ g.strokeStyle='#b8bded';g.lineWidth=2;g.beginPath();g.moveTo(-3,-13);g.lineTo(-5,-21);g.stroke();g.fillStyle='#b2f7ff';g.beginPath();g.arc(-5,-22,2.6,0,Math.PI*2);g.fill();
+ g.fillStyle='#192a48';g.beginPath();g.roundRect(-12,-6,24,11,5);g.fill();
+ g.fillStyle='#a2f9ff';for(const eye of [-5,5]){g.beginPath();g.roundRect(eye-1.5,-3,3,5,1.5);g.fill();}
+ g.strokeStyle='#d2b3ff';g.lineWidth=3;g.beginPath();g.ellipse(0,0,23,8,-.32,0,Math.PI);g.stroke();
+ g.fillStyle='#f0d4ff';g.beginPath();g.arc(19,-6,3,0,Math.PI*2);g.fill();
+ g.fillStyle='#8ae5ff';g.beginPath();g.moveTo(-3,15);g.lineTo(0,pose==='docked'?18:22);g.lineTo(3,15);g.fill();
+ if(pose==='repair'){g.strokeStyle='#d3e7f8';g.lineWidth=2;g.beginPath();g.moveTo(12,6);g.lineTo(23,12);g.lineTo(29,8);g.stroke();g.fillStyle='#e4d0ff';g.fillRect(26,5,6,6);}
+ if(pose==='wave'){g.strokeStyle='#bddef0';g.lineWidth=2;g.beginPath();g.moveTo(12,2);g.lineTo(22,-6);g.lineTo(22+Math.sin(time*4)*3,-13);g.stroke();}
+ g.restore();
+}
+function drawPassenger(g,x,y,r,t,aboard=false){
+ g.save();g.translate(x,y);
+ let grad=g.createRadialGradient(-r*.25,-r*.3,0,0,0,r);grad.addColorStop(0,'#a0eaff2e');grad.addColorStop(1,'#5578b244');g.fillStyle=grad;g.strokeStyle='#a9dfffbb';g.lineWidth=1.5;
+ g.beginPath();g.arc(0,0,r,0,Math.PI*2);g.fill();g.stroke();
+ drawOrbit(g,0,0,r*1.14,t,aboard?'docked':'wave');
+ g.fillStyle='#a0b6db';g.beginPath();g.roundRect(-r*.73,r*.67,r*1.46,r*.26,4);g.fill();
+ g.strokeStyle='#efffffaa';g.beginPath();g.arc(0,0,r*.8,-2.8,-2.15);g.stroke();
+ if(!aboard){g.font='700 8px '+getComputedStyle(document.body).fontFamily;g.textAlign='center';g.fillStyle='#d6ebff';g.fillText('RIDE?',0,-r-9);}
+ g.restore();
+}
+function drawBeacon(g,type,x,y,size,t,resolved=false){
+ g.save();g.translate(x,y);g.scale(size/50,size/50);g.rotate(reducedMotion?-.10:Math.sin(t*.8)*.04-.10);
+ g.strokeStyle='#7895c4';g.lineWidth=2;g.fillStyle='#41587e';
+ g.beginPath();g.roundRect(-13,-14,26,28,6);g.fill();g.stroke();
+ if(type==='true_false'||type==='frequency_fill'){
+  for(const sign of [-1,1]){g.fillStyle='#3d5793';g.beginPath();g.roundRect(sign<0?-42:18,-10,24,20,2);g.fill();g.stroke();g.strokeStyle='#849bd4';g.lineWidth=.8;for(let i=1;i<3;i++){g.beginPath();g.moveTo((sign<0?-42:18)+i*8,-10);g.lineTo((sign<0?-42:18)+i*8,10);g.stroke();}g.beginPath();g.moveTo(sign<0?-42:18,0);g.lineTo(sign<0?-18:42,0);g.stroke();g.strokeStyle='#7895c4';g.lineWidth=2;}
+ }
+ g.strokeStyle='#c8e2fa';g.beginPath();g.moveTo(0,-14);g.lineTo(0,-24);g.stroke();g.fillStyle='#b9abff';g.beginPath();g.arc(0,-26,3,0,Math.PI*2);g.fill();
+ g.fillStyle='#13263f';g.beginPath();g.roundRect(-9,-9,18,18,4);g.fill();
+ if(type==='odd_signal_out'){for(let i=0;i<4;i++){g.fillStyle=i===3?'#e1b9ff':'#8fe9f3';g.beginPath();g.arc(i%2*7-3.5,Math.floor(i/2)*7-3.5,2.2,0,Math.PI*2);g.fill();}}
+ else if(type==='frequency_fill'){for(let i=0;i<3;i++){g.fillStyle=i===1&&!resolved?'#354c68':'#bbacff';g.fillRect(-6+i*5,-4,3,8);}}
+ else{g.strokeStyle=resolved?'#9bf4ca':'#9fedff';g.lineWidth=1.6;g.beginPath();g.arc(0,0,5,0,Math.PI*2);g.stroke();g.beginPath();g.moveTo(-8,0);g.lineTo(8,0);g.moveTo(0,-8);g.lineTo(0,8);g.stroke();}
+ if(type==='lock_signal'){g.strokeStyle='#bcd2e8';g.beginPath();g.moveTo(-14,0);g.lineTo(-24,0);g.moveTo(14,0);g.lineTo(24,0);g.stroke();g.strokeStyle='#a4c9f8';for(const sign of [-1,1]){g.beginPath();g.ellipse(sign*26,0,5,13,0,0,Math.PI*2);g.stroke();}}
+ g.restore();
+}
+function drawStation(g,x,y,width,t=0){
+ g.save();g.translate(x,y);g.scale(width/250,width/250);
+ // Floating landing platform with a habitat dome, solar array, and comms mast.
+ g.fillStyle='#101d38';g.beginPath();g.ellipse(0,29,117,21,0,0,Math.PI*2);g.fill();
+ g.fillStyle='#354767';g.beginPath();g.moveTo(-120,3);g.lineTo(10,-32);g.lineTo(126,-2);g.lineTo(13,42);g.lineTo(-111,25);g.closePath();g.fill();
+ g.fillStyle='#1e314c';g.beginPath();g.moveTo(-111,25);g.lineTo(13,42);g.lineTo(126,-2);g.lineTo(126,12);g.lineTo(13,56);g.lineTo(-111,39);g.closePath();g.fill();
+ g.strokeStyle='#82d8e8';g.lineWidth=2;g.beginPath();g.moveTo(-99,31);g.lineTo(13,45);g.lineTo(113,10);g.stroke();
+ g.fillStyle='#5d7296';g.beginPath();g.ellipse(-39,7,40,13,-.07,0,Math.PI*2);g.fill();g.strokeStyle='#b9d5ef';g.lineWidth=1;g.beginPath();g.ellipse(-39,7,34,10,-.07,0,Math.PI*2);g.stroke();g.beginPath();g.moveTo(-48,7);g.lineTo(-30,7);g.moveTo(-39,2);g.lineTo(-39,12);g.stroke();
+ let grad=g.createLinearGradient(18,-63,58,3);grad.addColorStop(0,'#adf7ff');grad.addColorStop(.5,'#6cb7d7');grad.addColorStop(1,'#406494');g.fillStyle=grad;
+ g.beginPath();g.ellipse(42,-16,35,35,0,Math.PI,Math.PI*2);g.lineTo(77,2);g.lineTo(7,2);g.closePath();g.fill();
+ g.strokeStyle='#ddf7ff77';g.beginPath();g.ellipse(42,-17,17,35,0,Math.PI,Math.PI*2);g.stroke();g.beginPath();g.moveTo(10,-26);g.lineTo(74,-26);g.stroke();g.fillStyle='#9cb5cf';g.fillRect(4,1,77,7);g.fillStyle='#263d5e';g.fillRect(35,-4,14,12);
+ g.strokeStyle='#9cbbdd';g.lineWidth=2;g.beginPath();g.moveTo(94,4);g.lineTo(90,-70);g.lineTo(84,4);g.stroke();g.fillStyle='#b1c6e4';g.beginPath();g.ellipse(88,-64,16,6,-.5,0,Math.PI*2);g.fill();g.strokeStyle='#a6deed';g.beginPath();g.moveTo(88,-65);g.lineTo(84,-79);g.stroke();
+ g.fillStyle='#dec4ff';g.beginPath();g.arc(84,-81,3,0,Math.PI*2);g.fill();
+ g.fillStyle='#3c68a1';g.strokeStyle='#94bada';g.lineWidth=1;g.beginPath();g.moveTo(-13,-39);g.lineTo(12,-48);g.lineTo(15,-29);g.lineTo(-10,-19);g.closePath();g.fill();g.stroke();g.beginPath();g.moveTo(0,-44);g.lineTo(2,-25);g.moveTo(-10,-30);g.lineTo(13,-39);g.stroke();
+ for(let i=0;i<5;i++){g.fillStyle=i%2?'#ab8cf4':'#90eaf3';g.beginPath();g.arc(-87+i*32,35+i*1.1,1.5,0,Math.PI*2);g.fill();}
+ g.restore();
+}
+function drawAdventureUnderlay(t){
+ if(state.roundIndex>=ROUND_COUNT-1){const progress=clamp(state.legElapsed/FLIGHT_SETTINGS.flightSeconds,0,1);ctx.save();ctx.globalAlpha=.4+progress*.4;drawStation(ctx,W*(.93-progress*.06),H*.67,clamp(W*.14,78,175)*(1+progress*.12),t);ctx.restore();}
+ const round=state.rounds[state.roundIndex];
+ if(round&&!state.recoveryActive&&state.legElapsed>=FLIGHT_SETTINGS.flightSeconds-1.4){
+  const alpha=clamp((state.legElapsed-FLIGHT_SETTINGS.flightSeconds+1.4)/.65,0,1);
+  ctx.save();ctx.globalAlpha=alpha;drawBeacon(ctx,round.type,W*.75,H*.46,clamp(shipWidth()*.57,40,62),t,state.mode==='feedback');ctx.restore();
+ }
+ if(state.departure){const d=state.departure;ctx.save();ctx.globalAlpha=clamp(d.life/1.1,0,1);drawBeacon(ctx,d.type,d.x,d.y,clamp(shipWidth()*.57,40,62),t,true);ctx.restore();}
+ if(!reducedMotion){
+  const batches=new Map();for(const c of fuelCrystals){if(!batches.has(c.batch))batches.set(c.batch,[]);batches.get(c.batch).push(c);}
+  ctx.save();ctx.strokeStyle='#d3b2ff25';ctx.lineWidth=1;ctx.setLineDash([2,7]);
+  for(const group of batches.values()){ctx.beginPath();group.sort((a,b)=>a.sequence-b.sequence).forEach((c,i)=>i?ctx.lineTo(c.x,c.y):ctx.moveTo(c.x,c.y));ctx.stroke();}ctx.restore();
+ }
+ for(const c of fuelCrystals){
+  ctx.save();const shimmer=reducedMotion?1:1+Math.sin(t*3+c.phase)*.07;
+  ctx.shadowColor='#af79ff';ctx.shadowBlur=reducedMotion?0:17;drawCrystal(ctx,c.x,c.y,c.r*shimmer,c.rot,1);ctx.restore();
+ }
+ if(state.hitchhiker?.status==='offered')drawPassenger(ctx,state.hitchhiker.x,state.hitchhiker.y,state.hitchhiker.r,t);
+}
+function drawAdventureOverlay(t){
+ const p=state.pilot,w=shipWidth(),c=state.companion;if(!p||!c)return;
+ const reading=['question','feedback'].includes(state.mode),hit=state.simTime-(state.lastHitTime??-99)<.8;
+ if(state.recoveryActive&&!reading&&fuelCrystals.length){
+  const target=fuelCrystals.reduce((a,b)=>Math.hypot(a.x-c.x,a.y-c.y)<Math.hypot(b.x-c.x,b.y-c.y)?a:b);
+  ctx.save();ctx.fillStyle='#d2b4ff0c';ctx.strokeStyle='#d2b4ff30';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(c.x,c.y);ctx.lineTo(target.x,target.y-12);ctx.lineTo(target.x,target.y+12);ctx.closePath();ctx.fill();ctx.beginPath();ctx.moveTo(c.x,c.y);ctx.lineTo(target.x,target.y);ctx.stroke();ctx.restore();
+ }
+ if(state.boostRemaining>0&&!reading){
+  ctx.save();ctx.strokeStyle='#acffd6a0';ctx.lineWidth=1.4;ctx.shadowColor='#8dffc4';ctx.shadowBlur=reducedMotion?0:8;ctx.beginPath();ctx.moveTo(c.x+w*.14,c.y+w*.06);ctx.lineTo(p.x-w*.15,p.y-w*.08);ctx.stroke();ctx.restore();
+ }
+ drawOrbit(ctx,c.x,c.y,clamp(w*.29,23,36),t,reading?'docked':hit?'wobble':state.boostRemaining>0?'repair':'calm');
+ if(state.hitchhiker?.status==='aboard')drawPassenger(ctx,p.x-w*.34,p.y+w*.32,clamp(w*.13,11,16),t,true);
+ if(state.closeCallUntil>state.simTime&&!reading){
+  const remain=state.closeCallUntil-state.simTime;ctx.save();ctx.globalAlpha=Math.min(1,remain*2);ctx.font='700 11px '+getComputedStyle(document.body).fontFamily;ctx.textAlign='center';ctx.fillStyle='#ddf9ff';ctx.fillText('Nice flying!',clamp(p.x,w,W-w),p.y-w*.6);
+  if(!reducedMotion){ctx.strokeStyle='#c7edff88';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(p.x-w*.3,p.y+w*.45);ctx.quadraticCurveTo(p.x-w*.9,p.y+w*.6,p.x-w*1.15,p.y);ctx.stroke();}ctx.restore();
+ }
+ for(const pulse of pickupPulses){const a=clamp(pulse.age/.65,0,1),ease=1-Math.pow(1-a,3);ctx.save();ctx.globalAlpha=1-a*.75;ctx.shadowColor='#c297ff';ctx.shadowBlur=12;ctx.fillStyle='#e2c5ff';ctx.beginPath();ctx.arc(mix(pulse.x,pulse.toX,ease),mix(pulse.y,pulse.toY,ease)-Math.sin(a*Math.PI)*25,3*(1-a*.5),0,Math.PI*2);ctx.fill();ctx.restore();}
+}
+function resizeAdventure(oldW,oldH){
+ if(!state.pilot||!oldW||!oldH)return;
+ const sx=W/oldW,sy=H/oldH,ratio=Math.min(W,H)/Math.min(oldW,oldH),b=pilotBounds();
+ for(const c of fuelCrystals){c.x*=sx;c.y=clamp(c.y*sy,b.top+15,b.bottom-15);c.r*=ratio;c.vx*=sx;}
+ if(state.companion){state.companion.x*=sx;state.companion.y*=sy;}
+ if(state.hitchhiker){state.hitchhiker.x*=sx;state.hitchhiker.y=clamp(state.hitchhiker.y*sy,b.top+24,b.bottom-24);state.hitchhiker.r*=ratio;}
+ if(state.departure){state.departure.x*=sx;state.departure.y*=sy;}
+ pickupPulses=[];
+}
+function drawArrival(){
+ const c=$('arrival-canvas');if(!c||state.mode!=='recap')return;
+ const rect=c.getBoundingClientRect();if(!rect.width||!rect.height)return;
+ const ratio=Math.min(window.devicePixelRatio||1,2),width=Math.round(rect.width*ratio),height=Math.round(rect.height*ratio);
+ if(c.width!==width||c.height!==height){c.width=width;c.height=height;}
+ const g=c.getContext('2d'),a=rect.width,h=rect.height;g.setTransform(ratio,0,0,ratio,0,0);g.clearRect(0,0,a,h);
+ const grad=g.createLinearGradient(0,0,a,h);grad.addColorStop(0,'#132441');grad.addColorStop(1,'#212541');g.fillStyle=grad;g.fillRect(0,0,a,h);
+ const rand=rng(381);for(let i=0;i<35;i++){g.fillStyle=i%2?'#ccddff77':'#b197df66';g.beginPath();g.arc(rand()*a,rand()*h,rand()+.4,0,Math.PI*2);g.fill();}
+ const elapsed=reducedMotion?5:state.arrivalElapsed,progress=clamp(elapsed/2.7,0,1),ease=1-Math.pow(1-progress,3),stationX=a*.73,stationY=h*.70;
+ drawStation(g,stationX,stationY,Math.min(a*.44,188),elapsed);
+ const targetX=stationX-Math.min(a*.44,188)*.156,targetY=stationY-12;
+ const shipX=mix(-40,targetX,ease),shipY=mix(h*.34,targetY,ease),shipW=clamp(a*.15,54,80);
+ if(state.finishReason!=='completed'&&progress<.98){
+  g.strokeStyle='#a6def288';g.setLineDash([3,3]);g.beginPath();g.moveTo(shipX+shipW*.3,shipY);g.lineTo(shipX+shipW*.8,shipY-3);g.stroke();g.setLineDash([]);drawOrbit(g,shipX+shipW*.9,shipY-3,20,elapsed,'calm');
+ }
+ if(progress<.99)drawShip(g,{x:shipX,y:shipY,w:shipW,bank:0},elapsed,false);
+ else if(shipImage.complete&&shipImage.naturalWidth)g.drawImage(shipImage,shipX-shipW*.5,shipY-shipW*300/440*.5,shipW,shipW*300/440);
+ drawOrbit(g,shipX-shipW*.40,shipY-shipW*.28,20,elapsed,progress<.99?'calm':'docked');
+ if(state.hitchhiker?.status==='aboard'){
+  if(elapsed<2.7)drawPassenger(g,shipX-shipW*.32,shipY+shipW*.28,9,elapsed,true);
+  else{const hop=clamp((elapsed-2.7)/.6,0,1);drawOrbit(g,mix(shipX-shipW*.32,stationX-1,hop),mix(shipY+shipW*.28,stationY-9,hop)-Math.sin(hop*Math.PI)*16,21,elapsed,'wave');}
+ }
+}
+
 // Integration hooks intentionally do not send data to a parent or award rewards.
 window.AsteroidRun=Object.freeze({
  start:startRun,reset:resetDemo,pause:pauseFlight,resume:resumeFlight,
- getSnapshot(){return {mode:state.mode,paused:state.paused,hull:state.hull,fuel:state.fuel,score:state.score,streak:state.streak,roundIndex:state.roundIndex,attempted:state.attempted||0,correctCount:state.correctCount||0,timeRemaining:FLIGHT_SETTINGS.questionSeconds?(state.remaining??FLIGHT_SETTINGS.questionSeconds):null,outpostTotal:fakeOutpostResourcesTotal,flightElapsed:state.legElapsed||0,flightSeconds:FLIGHT_SETTINGS.flightSeconds,totalFlightSeconds:state.totalFlightTime||0,asteroidsDodged:state.dodged||0,impacts:state.impacts||0,boostSeconds:state.boostRemaining||0,pilot:state.pilot?{x:state.pilot.x/W,y:state.pilot.y/H}:null};},
+ getSnapshot(){return {mode:state.mode,paused:state.paused,hull:state.hull,fuel:state.fuel,score:state.score,streak:state.streak,roundIndex:state.roundIndex,attempted:state.attempted||0,correctCount:state.correctCount||0,timeRemaining:FLIGHT_SETTINGS.questionSeconds?(state.remaining??FLIGHT_SETTINGS.questionSeconds):null,outpostTotal:fakeOutpostResourcesTotal,flightElapsed:state.legElapsed||0,flightSeconds:FLIGHT_SETTINGS.flightSeconds,totalFlightSeconds:state.totalFlightTime||0,asteroidsDodged:state.dodged||0,impacts:state.impacts||0,boostSeconds:state.boostRemaining||0,pilot:state.pilot?{x:state.pilot.x/W,y:state.pilot.y/H}:null,questionFormat:state.rounds[state.roundIndex]?.type||null,activeFormats:effectiveFormats(),recovery:{active:!!state.recoveryActive,needed:state.recoveryNeed||0,collected:state.recoveryCollected||0},adventure:{passenger:state.hitchhiker?.status||'waiting',closeCalls:state.closeCalls||0,crystalsCollected:state.crystalsCollected||0}};},
  configure(options){if(!['intro','recap'].includes(state.mode))throw new Error('Configure before starting a run.');if(!options||typeof options!=='object'||Array.isArray(options))throw new TypeError('Supply a settings object.');const allowed=['flightSeconds','questionSeconds','collisionDamage'];for(const [key,value]of Object.entries(options)){if(!allowed.includes(key))throw new Error('Unknown setting: '+key);const [min,max]=key==='flightSeconds'?[4,20]:key==='questionSeconds'?[0,60]:[0,25];if(!Number.isFinite(value)||value<min||value>max)throw new RangeError(`${key} must be between ${min} and ${max}.`);}Object.assign(FLIGHT_SETTINGS,options);$('timed-option').checked=FLIGHT_SETTINGS.questionSeconds>0;const stat=document.querySelectorAll('.intro-stat strong')[1];stat.innerHTML=FLIGHT_SETTINGS.flightSeconds+'<span style="display:inline;font-size:13px;letter-spacing:0;color:inherit"> sec</span>';},
- setWordBank(words){if(!['intro','recap'].includes(state.mode))throw new Error('Return to the launch screen before changing word banks.');if(!Array.isArray(words)||words.length<4)throw new TypeError('Provide at least four unique words and definitions.');const ids=new Set(),defs=new Set();const clean=words.map(w=>{if(!w||!['string','number'].includes(typeof w.id)||(typeof w.id==='number'&&!Number.isFinite(w.id))||typeof w.word!=='string'||!w.word.trim()||typeof w.definition!=='string'||!w.definition.trim())throw new TypeError('Each word needs an id, word, and definition.');if(ids.has(String(w.id))||defs.has(w.definition.trim()))throw new Error('Word ids and definitions must be unique.');ids.add(String(w.id));defs.add(w.definition.trim());return {id:w.id,word:w.word.trim(),definition:w.definition.trim()};});WORDS=clean;},
+ setWordBank,setOddGroups,setFormats,
  setOutpostTotal(value){if(!Number.isFinite(value)||value<0)throw new TypeError('Outpost total must be nonnegative.');if(!['intro','recap'].includes(state.mode))throw new Error('Set outpost total before starting a run.');fakeOutpostResourcesTotal=Math.floor(value);},
  onComplete(callback){if(callback!==null&&typeof callback!=='function')throw new TypeError('Completion handler must be a function or null.');completionCallback=callback;}
 });
-resize();requestAnimationFrame(frame);
+$('sample-mission-button').addEventListener('click',loadSampleMission);
+for(const input of document.querySelectorAll('[data-format-choice]'))input.addEventListener('change',()=>{
+ const selected=[...document.querySelectorAll('[data-format-choice]:checked')].map(el=>el.value);
+ if(!selected.length){refreshFormatSettings();toast('Keep at least one question format selected.');return;}setFormats(selected);
+});
+refreshFormatSettings();resize();requestAnimationFrame(frame);
+
 
 </script>
 </body>

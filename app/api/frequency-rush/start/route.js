@@ -107,6 +107,20 @@ export async function POST(request) {
     // pool via its window.AsteroidRun.setWordBank() API, rather than using
     // `rounds` above. This is that same unit's word set, unmodified, so the
     // client can hand it straight to the widget.
-    words: words.map((w) => ({ id: w.id, word: w.word, definition: w.definition })),
+    //
+    // Sept 9, 2026 — `sentence` added so the widget's Frequency Fill format
+    // (blanking the word out of its own real-context sentence) has content
+    // to work with. `sentences` can come back as an array (a word can have
+    // several approved example sentences, per the design doc's content-
+    // ingestion rules) or a single string depending on how a given row was
+    // authored — take the first real one either way. A word with none is
+    // sent without a `sentence` key at all; the widget already skips a word
+    // for Frequency Fill when it has no sentence, and still uses it fine
+    // for every other format.
+    words: words.map((w) => {
+      const raw = Array.isArray(w.sentences) ? w.sentences[0] : w.sentences;
+      const sentence = typeof raw === "string" && raw.trim() ? raw.trim() : null;
+      return { id: w.id, word: w.word, definition: w.definition, ...(sentence ? { sentence } : {}) };
+    }),
   });
 }

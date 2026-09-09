@@ -99,9 +99,16 @@ export default function FrequencyRushClient({ assignmentId, caseTitle }) {
           sessionId: thisSessionId,
           endedReason: result.reason,
           fuelBonus: result.fuelBonus,
+          // Sept 9, 2026 — the "Adventure Edition" widget added 3 more
+          // question formats; `type` and `choiceId` (renamed from the old
+          // `chosenWordId`) now travel through so submit/route.js can grade
+          // True/False correctly (its choiceId is a boolean, not a word
+          // id) — see that route's comment for the full reasoning.
           answers: (result.answers || []).map((a) => ({
             wordId: a.wordId,
-            chosenWordId: a.choiceId,
+            type: a.type,
+            choiceId: a.choiceId,
+            correct: a.correct,
             responseTimeMs: a.responseTimeMs,
           })),
         }),
@@ -141,7 +148,23 @@ export default function FrequencyRushClient({ assignmentId, caseTitle }) {
     try {
       win.AsteroidRun.setWordBank(words);
       win.AsteroidRun.setOutpostTotal(outpostResources);
+      // Sept 9, 2026 — Emily's first live playtest feedback: the widget's
+      // own default (8s of flight between each question) felt too long.
+      // configure() only accepts flightSeconds 4-20 (its own validation),
+      // so this is the shortest gap it supports short of the widget file
+      // itself being changed. Tune this one number if it still feels off.
+      win.AsteroidRun.configure({ flightSeconds: 4 });
+      // Sept 9, 2026 — "Adventure Edition": turn on the 3 formats we can
+      // support for real today. odd_signal_out is deliberately left out —
+      // it needs human-curated word groupings (setOddGroups) we haven't
+      // authored yet; per the handoff doc, skipping setOddGroups entirely
+      // just makes the widget skip that format gracefully, so leaving it
+      // out of setFormats too keeps a real student from ever hitting a
+      // half-built round. Add "odd_signal_out" back here once real groups
+      // exist and setOddGroups() is wired up alongside it.
+      win.AsteroidRun.setFormats(["lock_signal", "true_false", "frequency_fill"]);
       win.AsteroidRun.onComplete((result) => { submitRun(result); });
+      hideAuthorOnlyControls(win);
     } catch (err) {
       // Only throws if the widget isn't on its intro/recap screen yet —
       // a genuine race on first load; the iframe's own load event retries
@@ -209,4 +232,31 @@ function Shell({ children, wide }) {
 
 function buttonStyle() {
   return { background: "#7B5DFF", color: "#fff", border: "none", borderRadius: 999, padding: "12px 28px", fontWeight: 700, fontSize: 14.5, cursor: "pointer" };
+}
+
+// Sept 9, 2026 — "Adventure Edition" added two author/QA-only controls to
+// its own intro screen that have no API flag to suppress them: a "Question
+// formats" checkbox panel (#format-settings) letting a player override
+// which formats are active, and a "TRY ALL 4 FORMATS" button
+// (#sample-mission-button) that loads fake demo content over whatever real
+// setWordBank data we gave it. Neither should ever reach a real student —
+// setFormats() above is how WE decide what a run tests, not the player,
+// and the sample mission would silently swap in placeholder words mid-
+// assignment. Rather than a one-time direct-hide (which the widget's own
+// intro/recap re-render could undo on every replay), this injects a <style>
+// tag straight into the iframe's document — CSS survives the widget's own
+// DOM churn between runs, so this only needs to run once per iframe load.
+// Wrapped in try/catch: if the widget's markup ever changes these ids,
+// this silently no-ops rather than breaking anything real.
+function hideAuthorOnlyControls(win) {
+  try {
+    const doc = win.document;
+    if (!doc || doc.getElementById("cc-hide-author-controls")) return;
+    const style = doc.createElement("style");
+    style.id = "cc-hide-author-controls";
+    style.textContent = "#format-settings, #sample-mission-button { display: none !important; }";
+    doc.head.appendChild(style);
+  } catch (err) {
+    // Best-effort cosmetic cleanup only — never worth failing the run over.
+  }
 }
