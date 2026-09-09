@@ -2,11 +2,19 @@ import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { supabaseAdmin } from "../../../../lib/supabaseAdmin";
 import { getFrequencyRushWordSet, buildLockTheSignalRounds, DEFAULT_ROUNDS, ROUND_SECONDS } from "../../../../lib/cases/frequency-rush";
+import { getOutpostProgress } from "../../../../lib/outpostBuilder";
 
 // Starts one Lock the Signal / Individual Practice session. Called fresh
 // every time a student plays OR replays — replays are unlimited by design
 // (§2.2), and each one gets its own session row + its own server-generated
 // round order, same as the first play.
+//
+// Sept 8, 2026 — Asteroid Run: Individual Practice's default visual/game
+// skin (design doc §2.5, §2.6). The round loop and scoring underneath are
+// completely unchanged; this just (a) tags the session with which game
+// skin is wrapping it, for analytics/session history, and (b) hands the
+// client the student's current Outpost Builder standing so the intro
+// screen can show "your station" before the run even starts.
 export async function POST(request) {
   const cookieStore = cookies();
   const studentId = cookieStore.get("cc_student_id")?.value;
@@ -14,7 +22,14 @@ export async function POST(request) {
     return NextResponse.json({ error: "Not logged in." }, { status: 401 });
   }
 
-  const { assignmentId } = await request.json();
+  const body = await request.json().catch(() => ({}));
+  const { assignmentId, gameMode } = body;
+  // Asteroid Run is the default/only Individual Practice game mode for now
+  // (design doc: "Individual Practice defaults to Asteroid Run for timed
+  // play") — accepting it as a param rather than hardcoding keeps this
+  // route ready for Signal Match or a future mode selector without another
+  // route change.
+  const resolvedGameMode = gameMode || "asteroid_run";
 
   const { data: assignment } = await supabaseAdmin
     .from("assignments")
@@ -57,6 +72,7 @@ export async function POST(request) {
       student_id: studentId,
       mode: "individual",
       format: "lock_signal",
+      game_mode: resolvedGameMode,
       length_type: "rounds",
       length_value: rounds.length,
       word_order: wordOrder,
@@ -67,9 +83,18 @@ export async function POST(request) {
     return NextResponse.json({ error: sessionError.message }, { status: 500 });
   }
 
+  const { data: student } = await supabaseAdmin
+    .from("students")
+    .select("outpost_resources")
+    .eq("id", studentId)
+    .single();
+  const outpost = getOutpostProgress(student ? student.outpost_resources : 0);
+
   return NextResponse.json({
     sessionId: session.id,
     roundSeconds: ROUND_SECONDS,
+    gameMode: resolvedGameMode,
+    outpost,
     // promptWordId IS included, same convention Mission Map's checkpoints
     // use — the client needs it immediately to give the student real-time
     // correct/incorrect + streak feedback (§2.1, §2.13a). The submit route
@@ -77,5 +102,11 @@ export async function POST(request) {
     // word_order regardless of what the client reports, so this is about
     // enabling instant feedback, not a secrecy boundary.
     rounds: rounds.map((r) => ({ promptWordId: r.promptWordId, word: r.word, choices: r.choices })),
+    // Sept 9, 2026 — the embedded Asteroid Run widget (public/games/
+    // asteroid-run.html) builds its own rounds internally from a flat word
+    // pool via its window.AsteroidRun.setWordBank() API, rather than using
+    // `rounds` above. This is that same unit's word set, unmodified, so the
+    // client can hand it straight to the widget.
+    words: words.map((w) => ({ id: w.id, word: w.word, definition: w.definition })),
   });
 }
