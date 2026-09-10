@@ -30,16 +30,40 @@ export async function POST(request) {
   }
 
   if (phase === "intelDrop") {
-    const claim = payload?.claim || "";
-    const words = meaningfulWordCount(claim);
-    if (words < (server.intelDrop.minMeaningfulWords || 3)) {
+    const chip = String(payload?.chip || "").trim();
+    const claim = String(payload?.claim || "").trim();
+    const combined = [chip, claim].filter(Boolean).join(" ");
+    if (!chip && !claim) {
+      return NextResponse.json({
+        pass: false,
+        soft: false,
+        message: "Pick a claim chip first.",
+      });
+    }
+    if (server.intelDrop.acceptChipOnly && chip) {
+      const map = server.intelDrop.chipKeywords || {};
+      const keys = map[chip] || [chip];
+      const onTopic =
+        hasAnyKeyword(combined, server.intelDrop.passKeywords) ||
+        hasAnyKeyword(keys.join(" "), server.intelDrop.passKeywords) ||
+        Boolean(map[chip]);
+      return NextResponse.json({
+        pass: true,
+        soft: !onTopic,
+        message: onTopic
+          ? "Claim locked. Nice noticing."
+          : "Claim locked. Keep an eye out for needs like safety, beliefs, or food/jobs as we go.",
+      });
+    }
+    const words = meaningfulWordCount(claim || chip);
+    if (words < (server.intelDrop.minMeaningfulWords || 1)) {
       return NextResponse.json({
         pass: false,
         soft: false,
         message: "HQ needs a real claim — try a short sentence about why this place exists.",
       });
     }
-    const onTopic = hasAnyKeyword(claim, server.intelDrop.passKeywords);
+    const onTopic = hasAnyKeyword(combined, server.intelDrop.passKeywords);
     return NextResponse.json({
       pass: true,
       soft: !onTopic,
@@ -59,25 +83,38 @@ export async function POST(request) {
       results[id] = { correct: ok, expected };
       if (ok) correct += 1;
     }
-    return NextResponse.json({ pass: correct === Object.keys(keys).length, correct, total: Object.keys(keys).length, results });
+    return NextResponse.json({
+      pass: correct === Object.keys(keys).length,
+      correct,
+      total: Object.keys(keys).length,
+      results,
+    });
   }
 
   if (phase === "opsChoice") {
     const picks = payload?.projectIds || [];
-    const justification = [payload?.justification, ...(payload?.chips || [])].filter(Boolean).join(" ");
+    const chips = payload?.chips || [];
+    const justification = [payload?.justification, ...chips].filter(Boolean).join(" ");
     if (picks.length !== (server.opsChoice.requirePickCount || 2)) {
       return NextResponse.json({
         pass: false,
         message: `Pick exactly ${server.opsChoice.requirePickCount || 2} projects.`,
       });
     }
+    if (server.opsChoice.chipsOnlyOk && chips.length === 0 && !String(payload?.justification || "").trim()) {
+      return NextResponse.json({
+        pass: false,
+        message: "Tap at least one why chip.",
+      });
+    }
     const justified = hasAnyKeyword(justification, server.opsChoice.justificationKeywords);
     return NextResponse.json({
-      pass: justified,
+      pass: justified || (server.opsChoice.chipsOnlyOk && chips.length > 0),
       deferred: payload?.allProjectIds?.filter((id) => !picks.includes(id)) || [],
-      message: justified
-        ? "Council vote recorded. Check the debrief — every TEKS reason still matters."
-        : "Say why using community reasons (safe, believe, food/homes/jobs).",
+      message:
+        justified || chips.length
+          ? "Council vote recorded. Check the debrief — every TEKS reason still matters."
+          : "Say why using community reasons (safe, believe, food/homes/jobs).",
     });
   }
 
@@ -110,16 +147,30 @@ export async function POST(request) {
     const keys = server.clearance.answers || {};
     const results = {};
     let autoCorrect = 0;
+    let total = 0;
     for (const [id, expected] of Object.entries(keys)) {
+      total += 1;
+      if (expected == null) {
+        // Dynamic / soft item (e.g. c4 reuse): accept any of the three TEKS reasons
+        // when client sends expectedId, else accept any non-empty answer.
+        const got = String(answers[id] || "").toLowerCase();
+        const expectedId = String(payload?.expectedIds?.[id] || "").toLowerCase();
+        let ok = false;
+        if (expectedId) ok = got === expectedId;
+        else if (server.clearance.c4AcceptAnyReason && id === "c4") ok = ["a", "b", "c"].includes(got);
+        else ok = Boolean(got);
+        results[id] = { correct: ok };
+        if (ok) autoCorrect += 1;
+        continue;
+      }
       const ok = String(answers[id] || "").toLowerCase() === String(expected).toLowerCase();
       results[id] = { correct: ok };
       if (ok) autoCorrect += 1;
     }
-    const c5 = answers.c5 || "";
-    const c5Ok = hasAnyKeyword(c5, server.clearance.c5Keywords || []);
-    results.c5 = { correct: c5Ok };
-    if (c5Ok) autoCorrect += 1;
-    const total = Object.keys(keys).length + 1;
+    // Legacy resume: ignore orphan c5 if present in payload
+    if (answers.c5 != null && keys.c5 == null) {
+      results.c5 = { correct: null, skipped: true };
+    }
     return NextResponse.json({
       pass: autoCorrect >= Math.ceil(total * 0.6),
       correct: autoCorrect,
