@@ -40,6 +40,7 @@ const NAV_GROUPS = [
     items: [
       { label: "My Classes", icon: "/teacher/nav_my_classes.png", href: "/teacher/assign" },
       { label: "Challenge Library", icon: "/teacher/nav_assignments.png", href: "/teacher/assign/new" },
+      { label: "Assign Briefing", icon: "/teacher/nav_assignments.png", href: "/teacher/assign/briefing" },
       // Added Sept 8 2026 alongside Distress Call — the projector screen a
       // teacher displays to the class (design doc §1/§5). Icon art still
       // needed at /teacher/nav_live_ops.png, same placeholder-image gap as
