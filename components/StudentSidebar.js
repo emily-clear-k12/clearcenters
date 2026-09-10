@@ -23,6 +23,7 @@ const COLORS = {
 const NAV_ITEMS = [
   { label: "Home", icon: "/icons/nav_home.png", href: "/home" },
   { label: "My Missions", icon: "/icons/nav_missions.png", href: "/missions" },
+  { label: "Briefings", icon: "/icons/nav_missions.png", href: "/briefings" },
   { label: "Progress", icon: "/icons/nav_progress.png", href: "/progress" },
   { label: "Badges", icon: "/icons/nav_badges.png" },
   { label: "Gear Locker", icon: "/icons/nav_gear.png", href: "/gear-locker" },

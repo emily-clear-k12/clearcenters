@@ -292,6 +292,7 @@ export default function HomeClient({ student, studentClass, assignments, mission
         .hub-portal--missions:hover .hub-orb-wrap { filter: drop-shadow(0 10px 22px rgba(0,0,0,.4)) drop-shadow(0 0 22px #7B5DFF); }
         .hub-portal--progress:hover .hub-orb-wrap { filter: drop-shadow(0 10px 22px rgba(0,0,0,.4)) drop-shadow(0 0 22px #00C2C7); }
         .hub-portal--crystal:hover .hub-orb-wrap { filter: drop-shadow(0 10px 22px rgba(0,0,0,.4)) drop-shadow(0 0 22px #FFC44D); }
+        .hub-portal--briefings:hover .hub-orb-wrap { filter: drop-shadow(0 10px 22px rgba(0,0,0,.4)) drop-shadow(0 0 22px #FFDD40); }
       `}</style>
 
       {/* Header — a compact, more-square stat tile in the top-left corner
@@ -734,19 +735,43 @@ export default function HomeClient({ student, studentClass, assignments, mission
         )}
       </div>
 
-      {/* Portals — the three "screens" a student can navigate to */}
-      <div style={{ position: "absolute", bottom: "6%", left: "50%", transform: "translateX(-50%)", display: "flex", gap: 64, zIndex: 4 }}>
-        <button type="button" className="hub-portal hub-portal--missions" onClick={() => router.push("/missions")}>
-          <div className="hub-orb-wrap"><img src="/student/orb_missions.png" alt="" /></div>
-          <span style={{ fontWeight: 700, fontSize: 13, color: COLORS.white, background: "rgba(20,26,50,.55)", padding: "4px 14px", borderRadius: 999, backdropFilter: "blur(6px)" }}>My Missions</span>
-        </button>
-        <button type="button" className="hub-portal hub-portal--progress" onClick={() => router.push("/progress")}>
-          <div className="hub-orb-wrap"><img src="/student/orb_progress.png" alt="" /></div>
-          <span style={{ fontWeight: 700, fontSize: 13, color: COLORS.white, background: "rgba(20,26,50,.55)", padding: "4px 14px", borderRadius: 999, backdropFilter: "blur(6px)" }}>My Progress</span>
-        </button>
-        <button type="button" className="hub-portal hub-portal--crystal" onClick={() => router.push("/gear-locker")}>
-          <div className="hub-orb-wrap"><img src="/student/orb_crystal.png" alt="" /></div>
-          <span style={{ fontWeight: 700, fontSize: 13, color: COLORS.white, background: "rgba(20,26,50,.55)", padding: "4px 14px", borderRadius: 999, backdropFilter: "blur(6px)" }}>Galaxy Hub</span>
+      {/* Portals — navigation screens on the hub floor */}
+      <div style={{ position: "absolute", bottom: "6%", left: "50%", transform: "translateX(-50%)", display: "flex", flexDirection: "column", alignItems: "center", gap: 14, zIndex: 4 }}>
+        <div style={{ display: "flex", gap: 64 }}>
+          <button type="button" className="hub-portal hub-portal--missions" onClick={() => router.push("/missions")}>
+            <div className="hub-orb-wrap"><img src="/student/orb_missions.png" alt="" /></div>
+            <span style={{ fontWeight: 700, fontSize: 13, color: COLORS.white, background: "rgba(20,26,50,.55)", padding: "4px 14px", borderRadius: 999, backdropFilter: "blur(6px)" }}>My Missions</span>
+          </button>
+          <button type="button" className="hub-portal hub-portal--progress" onClick={() => router.push("/progress")}>
+            <div className="hub-orb-wrap"><img src="/student/orb_progress.png" alt="" /></div>
+            <span style={{ fontWeight: 700, fontSize: 13, color: COLORS.white, background: "rgba(20,26,50,.55)", padding: "4px 14px", borderRadius: 999, backdropFilter: "blur(6px)" }}>My Progress</span>
+          </button>
+          <button type="button" className="hub-portal hub-portal--crystal" onClick={() => router.push("/gear-locker")}>
+            <div className="hub-orb-wrap"><img src="/student/orb_crystal.png" alt="" /></div>
+            <span style={{ fontWeight: 700, fontSize: 13, color: COLORS.white, background: "rgba(20,26,50,.55)", padding: "4px 14px", borderRadius: 999, backdropFilter: "blur(6px)" }}>Galaxy Hub</span>
+          </button>
+        </div>
+        {/* Briefings shelf — separate from My Missions / Challenges (Option A).
+            Emily: My Briefings button at the bottom of student Home → /briefings */}
+        <button
+          type="button"
+          className="hub-portal hub-portal--briefings"
+          onClick={() => router.push("/briefings")}
+          style={{ width: "auto", minWidth: 160 }}
+        >
+          <span style={{
+            fontWeight: 700,
+            fontSize: 14,
+            color: COLORS.white,
+            background: "linear-gradient(135deg, rgba(123,93,255,.85), rgba(0,194,199,.75))",
+            padding: "10px 22px",
+            borderRadius: 999,
+            backdropFilter: "blur(6px)",
+            boxShadow: "0 6px 18px rgba(0,0,0,.28)",
+            border: "1.5px solid rgba(255,255,255,.35)",
+          }}>
+            My Briefings
+          </span>
         </button>
       </div>
 
