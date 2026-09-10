@@ -314,9 +314,17 @@ const SAMPLE_GROUPS=[
  {id:'demo-processes',items:[1,2,8,11],oddId:11,prompt:'Which word names a state of matter instead of a process?',explanation:'Gas is a state of matter. Evaporation, condensation, and erosion are processes.'}
 ];
 function editableContent(){if(!['intro','recap'].includes(state.mode))throw new Error('Return to the launch screen before changing question settings.');}
-function blankSentence(word){
- if(typeof word.sentence!=='string'||!word.sentence.trim())return null;
- const sentence=word.sentence, lower=sentence.toLowerCase(), term=word.word.toLowerCase();
+function sentenceList(word){
+ const fromArr=Array.isArray(word.sentences)?word.sentences.filter(s=>typeof s==='string'&&s.trim()).map(s=>s.trim()):[];
+ if(fromArr.length)return fromArr;
+ if(typeof word.sentence==='string'&&word.sentence.trim())return [word.sentence.trim()];
+ return [];
+}
+function pickSentence(word){const list=sentenceList(word);return list.length?list[Math.floor(Math.random()*list.length)]:null;}
+function blankSentence(word,chosen){
+ const sentence=typeof chosen==='string'&&chosen.trim()?chosen.trim():pickSentence(word);
+ if(!sentence)return null;
+ const lower=sentence.toLowerCase(), term=word.word.toLowerCase();
  const isWord=c=>!!c&&/[\p{L}\p{N}_]/u.test(c);
  const spans=[];let from=0,at;
  while((at=lower.indexOf(term,from))!==-1){const end=at+term.length;
@@ -340,9 +348,13 @@ function setWordBank(words){
   if(!w||!['string','number'].includes(typeof w.id)||(typeof w.id==='number'&&!Number.isFinite(w.id))||typeof w.word!=='string'||!w.word.trim()||typeof w.definition!=='string'||!w.definition.trim())throw new TypeError('Each word needs an id, word, and definition.');
   if(ids.has(String(w.id))||defs.has(w.definition.trim()))throw new Error('Word ids and definitions must be unique.');
   if(w.sentence!==undefined&&w.sentence!==null&&typeof w.sentence!=='string')throw new TypeError('A sentence must be text when provided.');
+  if(w.sentences!==undefined&&w.sentences!==null&&(!Array.isArray(w.sentences)||w.sentences.some(s=>typeof s!=='string')))throw new TypeError('sentences must be an array of text when provided.');
   ids.add(String(w.id));defs.add(w.definition.trim());
   const out={id:w.id,word:w.word.trim(),definition:w.definition.trim()};
-  if(typeof w.sentence==='string')out.sentence=w.sentence.trim();return out;
+  if(Array.isArray(w.sentences)&&w.sentences.length)out.sentences=w.sentences.map(s=>s.trim()).filter(Boolean);
+  if(typeof w.sentence==='string'&&w.sentence.trim())out.sentence=w.sentence.trim();
+  else if(out.sentences&&out.sentences.length)out.sentence=out.sentences[0];
+  return out;
  });
  WORDS=clean;oddGroups=[];usingSampleContent=false;refreshFormatSettings();
 }
@@ -390,7 +402,7 @@ function buildRounds(){
    }else{
     choices=shuffle([w,...shuffle(WORDS.filter(o=>o.id!==w.id)).slice(0,3)]).map(o=>({id:o.id,text:type==='lock_signal'?o.definition:o.word,definition:o.definition}));
     round={correctChoiceId:w.id};
-    if(type==='frequency_fill'){const blanked=blankSentence(w);Object.assign(round,{sentence:w.sentence,sentenceParts:blanked.parts,prompt:blanked.text,explanation:w.sentence});}
+    if(type==='frequency_fill'){const chosen=pickSentence(w);const blanked=blankSentence(w,chosen);Object.assign(round,{sentence:chosen,sentenceParts:blanked.parts,prompt:blanked.text,explanation:chosen});}
    }
   }
   rounds.push({type,promptWordId:w.id,word:w.word,definition:w.definition,choices,...round});

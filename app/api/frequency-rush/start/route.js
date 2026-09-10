@@ -108,19 +108,25 @@ export async function POST(request) {
     // `rounds` above. This is that same unit's word set, unmodified, so the
     // client can hand it straight to the widget.
     //
-    // Sept 9, 2026 — `sentence` added so the widget's Frequency Fill format
-    // (blanking the word out of its own real-context sentence) has content
-    // to work with. `sentences` can come back as an array (a word can have
-    // several approved example sentences, per the design doc's content-
-    // ingestion rules) or a single string depending on how a given row was
-    // authored — take the first real one either way. A word with none is
-    // sent without a `sentence` key at all; the widget already skips a word
-    // for Frequency Fill when it has no sentence, and still uses it fine
-    // for every other format.
+    // Sept 9, 2026 — `sentence` added so Frequency Fill can blank the word
+    // out of a real-context sentence. Sept 10, 2026 — pass the full
+    // `sentences` list when authored, so Asteroid Run can rotate among
+    // several classroom examples for the SAME vocabulary word (more
+    // question variety without inventing uncovered terms). Still include
+    // a single `sentence` (random pick) for backward compatibility.
     words: words.map((w) => {
-      const raw = Array.isArray(w.sentences) ? w.sentences[0] : w.sentences;
-      const sentence = typeof raw === "string" && raw.trim() ? raw.trim() : null;
-      return { id: w.id, word: w.word, definition: w.definition, ...(sentence ? { sentence } : {}) };
+      const list = (Array.isArray(w.sentences) ? w.sentences : [w.sentences])
+        .filter((s) => typeof s === "string" && s.trim())
+        .map((s) => s.trim());
+      if (!list.length) return { id: w.id, word: w.word, definition: w.definition };
+      const sentence = list[Math.floor(Math.random() * list.length)];
+      return {
+        id: w.id,
+        word: w.word,
+        definition: w.definition,
+        sentence,
+        ...(list.length > 1 ? { sentences: list } : {}),
+      };
     }),
   });
 }
