@@ -45,13 +45,19 @@ const COLORS = {
 // artwork Emily supplied Sept 3 (public/simulation-lab/console.jpg) — a
 // single image reused across every Simulation Lab case, not authored per
 // case, so these coordinates live here rather than in case data (design
-// doc §10.3/§10.5). The art has 3 usable zones: a circular gauge display
-// (upper-left), a horizontal slider slot (center), and a blank rectangular
-// readout panel (upper-right). Adjust these if the art ever changes.
+// doc §10.3/§10.5).
+//
+// Sept 11 2026 console UX pass: align overlays to what the art depicts.
+//   circular screen  → outcome gauge (drag to set prediction; shows actual)
+//   horizontal slot  → independent-variable control
+//   rectangular screen → fixed digital readout
+//   amber base button → Run Trial
+//   teal base button  → reserved (decorative for now)
 const CONSOLE_HOTSPOTS = {
-  gaugeCircle: { xPct: 30, yPct: 32, wPct: 34, hPct: 34 }, // outcome readout
-  slotTrack: { xPct: 15, yPct: 59, wPct: 70 }, // the real angle slider
-  readoutPanel: { xPct: 43, yPct: 16, wPct: 45, hPct: 32 }, // predicted/actual/gap
+  gaugeCircle: { xPct: 22, yPct: 28, wPct: 28, hPct: 30 },
+  readoutPanel: { xPct: 62, yPct: 27, wPct: 42, hPct: 28 },
+  slotTrack: { xPct: 18, yPct: 58, wPct: 64 },
+  runButton: { xPct: 27, yPct: 84, wPct: 14, hPct: 14 },
 };
 
 // Three top-level phases, same shape as every other engine's state machine
@@ -242,6 +248,92 @@ function CircularDial({ value, min, max, step, onChange, disabled, color, trackC
         />
       )}
       <circle cx={valuePoint.x} cy={valuePoint.y} r={11} fill={color} stroke="#fff" strokeWidth={2} />
+    </svg>
+  );
+}
+
+
+// Outcome gauge for the art's circular screen. Students drag to set their
+// prediction (cyan); after Run, an amber fill shows the actual measured
+// value so the circle reads as a real instrument, not a second settings dial.
+function OutcomeGauge({ prediction, actual, min, max, step, onPredict, predictEnabled, size = 110 }) {
+  const svgRef = useRef(null);
+  const cx = size / 2;
+  const cy = size / 2;
+  const r = size / 2 - 14;
+
+  function angleFromClientPoint(clientX, clientY) {
+    const el = svgRef.current;
+    if (!el) return null;
+    const rect = el.getBoundingClientRect();
+    const dx = clientX - (rect.left + rect.width / 2);
+    const dy = clientY - (rect.top + rect.height / 2);
+    return pointerToDialAngle(dx, dy);
+  }
+  function handlePointerDown(e) {
+    if (!predictEnabled) return;
+    try { e.currentTarget.setPointerCapture(e.pointerId); } catch (err) {}
+    const angle = angleFromClientPoint(e.clientX, e.clientY);
+    if (angle !== null) onPredict(dialAngleToValue(angle, min, max, step));
+  }
+  function handlePointerMove(e) {
+    if (!predictEnabled || e.buttons === 0) return;
+    const angle = angleFromClientPoint(e.clientX, e.clientY);
+    if (angle !== null) onPredict(dialAngleToValue(angle, min, max, step));
+  }
+
+  const trackStart = dialPoint(cx, cy, r, 225);
+  const trackEnd = dialPoint(cx, cy, r, 495);
+  const predAngle = angleForDialValue(prediction, min, max);
+  const predPoint = dialPoint(cx, cy, r, predAngle);
+  const predSweep = predAngle - 225;
+  const actualAngle = actual == null ? null : angleForDialValue(actual, min, max);
+  const actualPoint = actualAngle == null ? null : dialPoint(cx, cy, r, actualAngle);
+  const actualSweep = actualAngle == null ? 0 : actualAngle - 225;
+
+  return (
+    <svg
+      ref={svgRef}
+      width={size}
+      height={size}
+      style={{ touchAction: "none", cursor: predictEnabled ? "grab" : "default", display: "block", margin: "0 auto" }}
+      onPointerDown={handlePointerDown}
+      onPointerMove={handlePointerMove}
+    >
+      <path
+        d={`M ${trackStart.x} ${trackStart.y} A ${r} ${r} 0 1 1 ${trackEnd.x} ${trackEnd.y}`}
+        fill="none"
+        stroke="rgba(74,59,112,.22)"
+        strokeWidth={10}
+        strokeLinecap="round"
+      />
+      {actual != null && actualSweep > 0 && (
+        <path
+          className="sl-gauge-arc"
+          d={`M ${trackStart.x} ${trackStart.y} A ${r} ${r} 0 ${actualSweep > 180 ? 1 : 0} 1 ${actualPoint.x} ${actualPoint.y}`}
+          fill="none"
+          stroke={COLORS.amber}
+          strokeWidth={10}
+          strokeLinecap="round"
+        />
+      )}
+      {predSweep > 0 && (
+        <path
+          d={`M ${trackStart.x} ${trackStart.y} A ${r} ${r} 0 ${predSweep > 180 ? 1 : 0} 1 ${predPoint.x} ${predPoint.y}`}
+          fill="none"
+          stroke={COLORS.cyan}
+          strokeWidth={4}
+          strokeLinecap="round"
+          opacity={0.95}
+        />
+      )}
+      <circle cx={predPoint.x} cy={predPoint.y} r={9} fill={COLORS.cyan} stroke="#fff" strokeWidth={2} />
+      {actualPoint && (
+        <circle cx={actualPoint.x} cy={actualPoint.y} r={8} fill={COLORS.amber} stroke="#fff" strokeWidth={2} />
+      )}
+      <text x={cx} y={cy + 4} textAnchor="middle" fontSize={11} fontWeight={700} fill="#4A3B70">
+        {actual != null ? actual : "—"}
+      </text>
     </svg>
   );
 }
@@ -844,10 +936,55 @@ export default function SimulationLabClient({
   function Console() {
     const bg = publicCase.machineBackground;
     const hasBgImage = !!(bg && bg.imageUrl);
-    const readoutColor = "#4A3B70"; // dark plum — readable against the art's cream panels
+    const readoutColor = "#4A3B70";
     const H = CONSOLE_HOTSPOTS;
     const hypAnswer = checkpointAnswers.hyp;
     const hypChoice = hypAnswer && cpHyp ? cpHyp.choices.find((c) => c.id === hypAnswer.submittedChoiceId) : null;
+    const canRun = predictionTouched && !atMax;
+    const settingTag = (variable.label || variable.id).toUpperCase().slice(0, 14);
+
+    const digitalReadout = (
+      <div
+        style={{
+          width: "100%",
+          height: "100%",
+          background: "#0B1017",
+          borderRadius: 8,
+          border: `1px solid ${COLORS.cyan}66`,
+          boxShadow: "inset 0 0 12px rgba(62,214,200,.25)",
+          display: "flex",
+          flexDirection: "column",
+          justifyContent: "center",
+          gap: 3,
+          padding: "8px 10px",
+          fontFamily: "'Courier New', monospace",
+          overflow: "hidden",
+          boxSizing: "border-box",
+        }}
+      >
+        {hypChoice && (
+          <div style={{ fontSize: "clamp(7px, 1vw, 10px)", color: COLORS.textMuted, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+            HYP: <span style={{ color: COLORS.amber }}>{hypChoice.text}</span>
+          </div>
+        )}
+        <div style={{ fontSize: "clamp(9px, 1.25vw, 12px)", color: COLORS.cyan, fontWeight: 700, textShadow: `0 0 6px ${COLORS.cyan}88` }}>
+          {settingTag}: {currentSetting}{variable.unit}
+        </div>
+        <div style={{ fontSize: "clamp(9px, 1.25vw, 12px)", color: COLORS.cyan, fontWeight: 700, textShadow: `0 0 6px ${COLORS.cyan}88` }}>
+          PREDICT: {predictionTouched ? `${currentPrediction} ${outcome.unit}` : "— drag gauge —"}
+        </div>
+        {lastRun && (
+          <>
+            <div style={{ fontSize: "clamp(9px, 1.25vw, 12px)", color: COLORS.amber, fontWeight: 700, textShadow: `0 0 6px ${COLORS.amber}88` }}>
+              ACTUAL: {lastRun.actual} {outcome.unit}
+            </div>
+            <div style={{ fontSize: "clamp(9px, 1.25vw, 12px)", color: COLORS.white, fontWeight: 700 }}>
+              GAP: {lastRun.gap}
+            </div>
+          </>
+        )}
+      </div>
+    );
 
     return (
       <div style={{ background: COLORS.panel, border: `1px solid ${COLORS.steelLine}`, borderRadius: 16, padding: 18, marginBottom: 18 }}>
@@ -856,14 +993,10 @@ export default function SimulationLabClient({
         </div>
 
         {hasBgImage ? (
-          // Real console art (design doc §10.3) — the dial and the
-          // screen/prediction readouts are positioned directly on the
-          // image's own gauge circle / slider slot / readout panel via
-          // CONSOLE_HOTSPOTS, tuned against this exact image.
-          <div style={{ position: "relative", marginBottom: 16 }}>
+          <div style={{ position: "relative", marginBottom: 14 }}>
             <img src={bg.imageUrl} alt="" style={{ width: "100%", borderRadius: 12, display: "block" }} />
 
-            {/* Ramp-angle dial — sits in the art's circular gauge zone. */}
+            {/* Circular screen → outcome gauge (drag = prediction) */}
             <div
               style={{
                 position: "absolute",
@@ -873,63 +1006,35 @@ export default function SimulationLabClient({
                 display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
               }}
             >
-              <CircularDial
-                value={currentSetting}
-                min={variable.min}
-                max={variable.max}
-                step={variable.step}
-                onChange={(v) => setCurrentSetting(v)}
-                disabled={atMax}
-                color={COLORS.amber}
-                size={104}
+              <OutcomeGauge
+                prediction={currentPrediction}
+                actual={lastRun ? lastRun.actual : null}
+                min={outcome.displayMin}
+                max={outcome.displayMax}
+                step={1}
+                onPredict={(v) => { setCurrentPrediction(v); setPredictionTouched(true); }}
+                predictEnabled={!atMax}
+                size={118}
               />
-              <div style={{ marginTop: 4, fontSize: "clamp(9px, 1.3vw, 13px)", color: readoutColor, fontWeight: 800, textAlign: "center", lineHeight: 1.3 }}>
-                {variable.label}<br />{currentSetting}{variable.unit}
+              <div style={{ marginTop: 2, fontSize: "clamp(8px, 1.1vw, 11px)", color: readoutColor, fontWeight: 800, textAlign: "center", lineHeight: 1.2 }}>
+                {outcome.label}
+                <div style={{ fontWeight: 600, opacity: 0.85 }}>{predictionTouched ? "drag to predict" : "drag gauge to predict"}</div>
               </div>
             </div>
 
-            {/* Digital "screen" readout — Emily's ask for something in the
-                screen part that "looks like a screen or data coming in,"
-                now also carrying the student's own hypothesis so the
-                console visibly connects back to the choice they made on
-                the previous step. */}
+            {/* Rectangular screen → digital readout (fixed box, no overflow spill) */}
             <div
               style={{
                 position: "absolute",
                 left: `${H.readoutPanel.xPct}%`, top: `${H.readoutPanel.yPct}%`,
                 width: `${H.readoutPanel.wPct}%`, height: `${H.readoutPanel.hPct}%`,
                 transform: "translate(-50%, -50%)",
-                background: "#0B1017", borderRadius: 8, border: `1px solid ${COLORS.cyan}66`,
-                boxShadow: "inset 0 0 12px rgba(62,214,200,.25)",
-                display: "flex", flexDirection: "column", justifyContent: "center", gap: "4%",
-                padding: "6% 8%", fontFamily: "'Courier New', monospace", overflow: "hidden",
               }}
             >
-              {hypChoice && (
-                <div style={{ fontSize: "clamp(6.5px, 0.95vw, 9.5px)", color: COLORS.textMuted, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                  HYP: <span style={{ color: COLORS.amber }}>{hypChoice.text}</span>
-                </div>
-              )}
-              <div style={{ fontSize: "clamp(9px, 1.3vw, 13px)", color: COLORS.cyan, fontWeight: 700, textShadow: `0 0 6px ${COLORS.cyan}88` }}>
-                ANGLE: {currentSetting}{variable.unit}
-              </div>
-              <div style={{ fontSize: "clamp(9px, 1.3vw, 13px)", color: COLORS.cyan, fontWeight: 700, textShadow: `0 0 6px ${COLORS.cyan}88` }}>
-                PREDICT: {predictionTouched ? `${currentPrediction} ${outcome.unit}` : "— set below —"}
-              </div>
-              {lastRun && (
-                <>
-                  <div style={{ fontSize: "clamp(9px, 1.3vw, 13px)", color: COLORS.amber, fontWeight: 700, textShadow: `0 0 6px ${COLORS.amber}88` }}>
-                    ACTUAL: {lastRun.actual} {outcome.unit}
-                  </div>
-                  <div style={{ fontSize: "clamp(9px, 1.3vw, 13px)", color: COLORS.white, fontWeight: 700 }}>
-                    GAP: {lastRun.gap}
-                  </div>
-                </>
-              )}
+              {digitalReadout}
             </div>
 
-            {/* Prediction slider — moved into the art's slot track now that
-                the dial above owns the angle control. */}
+            {/* Horizontal slot → independent variable */}
             <div
               style={{
                 position: "absolute",
@@ -940,18 +1045,41 @@ export default function SimulationLabClient({
               <input
                 className="sl-slider"
                 type="range"
-                min={outcome.displayMin}
-                max={outcome.displayMax}
-                step={1}
-                value={currentPrediction}
+                min={variable.min}
+                max={variable.max}
+                step={variable.step}
+                value={currentSetting}
                 disabled={atMax}
-                onChange={(e) => { setCurrentPrediction(Number(e.target.value)); setPredictionTouched(true); }}
-                style={{ width: "100%", "--thumb-color": COLORS.cyan }}
+                onChange={(e) => setCurrentSetting(Number(e.target.value))}
+                style={{ width: "100%", "--thumb-color": COLORS.amber }}
+                aria-label={variable.label}
               />
               <div style={{ textAlign: "center", fontSize: "clamp(9px, 1.3vw, 13px)", color: readoutColor, fontWeight: 800, marginTop: 2 }}>
-                Prediction — {outcome.label}: {predictionTouched ? `${currentPrediction} ${outcome.unit}` : "drag to predict"}
+                {variable.label}: {currentSetting}{variable.unit}
               </div>
             </div>
+
+            {/* Amber console button → Run Trial */}
+            <button
+              type="button"
+              className="sl-btn sl-run-hotspot"
+              disabled={!canRun}
+              onClick={runTrial}
+              title={canRun ? "Run Trial" : "Set a prediction on the gauge first"}
+              aria-label="Run Trial"
+              style={{
+                position: "absolute",
+                left: `${H.runButton.xPct}%`, top: `${H.runButton.yPct}%`,
+                width: `${H.runButton.wPct}%`, height: `${H.runButton.hPct}%`,
+                transform: "translate(-50%, -50%)",
+                borderRadius: "50%",
+                background: canRun ? "rgba(255,166,48,.35)" : "transparent",
+                boxShadow: canRun ? `0 0 18px ${COLORS.amber}aa` : "none",
+                border: canRun ? `2px solid ${COLORS.amber}` : "2px solid transparent",
+                padding: 0,
+                cursor: canRun ? "pointer" : "default",
+              }}
+            />
           </div>
         ) : (
           <>
@@ -975,7 +1103,7 @@ export default function SimulationLabClient({
 
             <div style={{ marginBottom: 14 }}>
               <div style={{ fontSize: 11, color: COLORS.textMuted, marginBottom: 6 }}>
-                {outcome.label} ({outcome.unit})
+                Predict — {outcome.label} ({outcome.unit})
               </div>
               <div style={{ position: "relative", height: 26, background: "rgba(255,255,255,.06)", borderRadius: 999, overflow: "hidden", border: `1px solid ${COLORS.steelLine}` }}>
                 <div
@@ -993,22 +1121,6 @@ export default function SimulationLabClient({
                   }}
                 />
               </div>
-              {lastRun && (
-                <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, marginTop: 6, color: COLORS.textMuted }}>
-                  <span>Predicted: <b style={{ color: COLORS.cyan }}>{lastRun.prediction}</b></span>
-                  <span>Actual: <b style={{ color: COLORS.amber }}>{lastRun.actual}</b></span>
-                  <span>Gap: <b>{lastRun.gap}</b></span>
-                </div>
-              )}
-            </div>
-
-            <div style={{ marginBottom: 16 }}>
-              <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13, marginBottom: 6 }}>
-                <span>Your Prediction — {outcome.label}</span>
-                <span style={{ color: COLORS.cyan, fontWeight: 700 }}>
-                  {predictionTouched ? `${currentPrediction} ${outcome.unit}` : "drag to predict"}
-                </span>
-              </div>
               <input
                 className="sl-slider"
                 type="range"
@@ -1018,24 +1130,38 @@ export default function SimulationLabClient({
                 value={currentPrediction}
                 disabled={atMax}
                 onChange={(e) => { setCurrentPrediction(Number(e.target.value)); setPredictionTouched(true); }}
-                style={{ width: "100%", "--thumb-color": COLORS.cyan }}
+                style={{ width: "100%", marginTop: 10, "--thumb-color": COLORS.cyan }}
               />
+              {lastRun && (
+                <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, marginTop: 6, color: COLORS.textMuted }}>
+                  <span>Predicted: <b style={{ color: COLORS.cyan }}>{lastRun.prediction}</b></span>
+                  <span>Actual: <b style={{ color: COLORS.amber }}>{lastRun.actual}</b></span>
+                  <span>Gap: <b>{lastRun.gap}</b></span>
+                </div>
+              )}
             </div>
           </>
         )}
 
-        <button
-          className="sl-btn"
-          disabled={!predictionTouched || atMax}
-          onClick={runTrial}
-          style={{
-            background: predictionTouched && !atMax ? COLORS.amber : "rgba(255,255,255,.08)",
-            color: predictionTouched && !atMax ? "#1A1200" : COLORS.textMuted,
-            borderRadius: 12, padding: "12px 22px", fontWeight: 700, fontSize: 14.5,
-          }}
-        >
-          ▶ Run Trial
-        </button>
+        <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
+          <button
+            className="sl-btn"
+            disabled={!canRun}
+            onClick={runTrial}
+            style={{
+              background: canRun ? COLORS.amber : "rgba(255,255,255,.08)",
+              color: canRun ? "#1A1200" : COLORS.textMuted,
+              borderRadius: 12, padding: "12px 22px", fontWeight: 700, fontSize: 14.5,
+            }}
+          >
+            ▶ Run Trial
+          </button>
+          {hasBgImage && (
+            <span style={{ fontSize: 12, color: COLORS.textMuted }}>
+              Tip: set the <b style={{ color: COLORS.amber }}>slot</b>, drag the <b style={{ color: COLORS.cyan }}>circle</b> to predict, then tap the amber button or Run.
+            </span>
+          )}
+        </div>
       </div>
     );
   }
@@ -1160,6 +1286,8 @@ export default function SimulationLabClient({
         .sl-btn:hover:not(:disabled) { transform: translateY(-1px); }
         .sl-btn:disabled { cursor: default; }
         .sl-gauge-fill { transition: width 900ms cubic-bezier(.34,1.56,.64,1); }
+        .sl-gauge-arc { transition: d 900ms ease; }
+        .sl-run-hotspot:disabled { opacity: 1; }
         input[type="range"] { accent-color: ${COLORS.amber}; }
         .sl-slider { -webkit-appearance: none; appearance: none; height: 10px; border-radius: 999px; background: rgba(255,255,255,.35); outline: none; }
         .sl-slider:disabled { opacity: .5; }
