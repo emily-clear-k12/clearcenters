@@ -22,15 +22,20 @@ const COLORS = {
 const PHASES = [
   { id: "intelDrop", label: "Intel Drop" },
   { id: "fieldBrief", label: "Field Brief" },
+  { id: "reasonSort", label: "Reason Sort" },
   { id: "opsChoice", label: "Ops Choice" },
   { id: "evidenceDrop", label: "Evidence Drop" },
   { id: "clearance", label: "Clearance" },
 ];
 
+/** Phases that imply Reason Sort was already past (pre-P2 saves). */
+const PHASES_AFTER_REASON_SORT = ["opsChoice", "evidenceDrop", "clearance"];
+
 const SAM_ANCHORS = {
   home: { right: 18, bottom: 18 },
   image: { left: 24, bottom: 24 },
   qc: { right: 24, top: "42%" },
+  sort: { right: 18, bottom: 140 },
   chips: { right: 18, bottom: 120 },
   postcard: { left: "42%", bottom: 28 },
   stamp: { right: 28, top: 100 },
@@ -54,8 +59,14 @@ function migratePhaseState(saved) {
   const ops = s.ops || {};
   const evidence = s.evidence || {};
   const clearance = s.clearance || {};
+  const rs = s.reasonSort || {};
+  const currentPhase = s.currentPhase || "intelDrop";
+  // Pre-P2 saves that already passed Field Brief into Ops/Evidence/Clearance
+  // never had reasonSort — treat as complete so Clearance gates don't brick resume.
+  const legacyPastSort =
+    !s.reasonSort && PHASES_AFTER_REASON_SORT.includes(currentPhase);
   return {
-    currentPhase: s.currentPhase || "intelDrop",
+    currentPhase,
     intel: {
       notice: intel.notice || "",
       wonder: intel.wonder || "",
@@ -68,6 +79,14 @@ function migratePhaseState(saved) {
       answers: s.field?.answers || {},
       graded: Boolean(s.field?.graded),
       results: s.field?.results || null,
+    },
+    reasonSort: {
+      assignments: rs.assignments || {},
+      selectedItemId: rs.selectedItemId || "",
+      checked: Boolean(rs.checked),
+      results: rs.results || null,
+      passed: Boolean(rs.passed) || legacyPastSort,
+      legacySkipped: Boolean(rs.legacySkipped) || legacyPastSort,
     },
     ops: {
       picks: ops.picks || [],
@@ -86,6 +105,7 @@ function migratePhaseState(saved) {
     },
     clearance: {
       answers: clearance.answers || {},
+      // Legacy honesty taps ignored for gating; kept for old payload shape.
       selfCheck: clearance.selfCheck || [],
       graded: Boolean(clearance.graded),
       results: clearance.results || null,
@@ -137,6 +157,7 @@ export default function BriefingClient({ student, assignment, briefing, initialS
     setSamState(phaseId === "clearance" && status === "cleared" ? "celebrating" : "helping");
     if (phaseId === "intelDrop") setSamAnchor("image");
     else if (phaseId === "fieldBrief") setSamAnchor("qc");
+    else if (phaseId === "reasonSort") setSamAnchor("sort");
     else if (phaseId === "opsChoice") setSamAnchor("chips");
     else if (phaseId === "evidenceDrop") setSamAnchor("postcard");
     else if (phaseId === "clearance") setSamAnchor(status === "cleared" ? "stamp" : "home");
@@ -200,6 +221,11 @@ export default function BriefingClient({ student, assignment, briefing, initialS
     updateState({ currentPhase: nextPhase }, { phase: nextPhase });
   }
 
+  function goToPhase(phaseKey) {
+    const idx = PHASES.findIndex((p) => p.id === phaseKey);
+    if (idx >= 0) goTo(idx);
+  }
+
   const card = {
     background: COLORS.white,
     borderRadius: 18,
@@ -215,21 +241,39 @@ export default function BriefingClient({ student, assignment, briefing, initialS
     return (
       <div style={card}>
         <div style={{ display: "grid", gridTemplateColumns: "1.25fr 1fr", gap: 18, alignItems: "stretch" }}>
-          <div
-            style={{
-              borderRadius: 16,
-              overflow: "hidden",
-              background: COLORS.violetSoft,
-              minHeight: 320,
-              height: "100%",
-              boxShadow: "inset 0 0 0 2px rgba(123,93,255,.12)",
-            }}
-          >
-            <img
-              src={art.intel}
-              alt="Mystery place"
-              style={{ width: "100%", height: "100%", minHeight: 320, objectFit: "cover", display: "block" }}
-            />
+          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            <div
+              style={{
+                borderRadius: 16,
+                overflow: "hidden",
+                background: COLORS.violetSoft,
+                minHeight: 280,
+                flex: 1,
+                boxShadow: "inset 0 0 0 2px rgba(123,93,255,.12)",
+              }}
+            >
+              <img
+                src={art.intel}
+                alt="Mystery place"
+                style={{ width: "100%", height: "100%", minHeight: 280, objectFit: "cover", display: "block" }}
+              />
+            </div>
+            <div
+              style={{
+                background: COLORS.violetSoft,
+                borderRadius: 14,
+                padding: "12px 14px",
+                borderLeft: `4px solid ${COLORS.violet}`,
+              }}
+            >
+              <div style={{ fontSize: 11, fontWeight: 800, color: COLORS.violet, letterSpacing: 0.4, marginBottom: 4 }}>
+                AGENT TIP
+              </div>
+              <p style={{ margin: 0, fontSize: 13.5, color: COLORS.textDark, lineHeight: 1.45 }}>
+                {briefing.intelDrop.kidParagraph ||
+                  "Look at this place. Don't name the town yet. Your job: pick why people might live here. Tap the reason that fits best."}
+              </p>
+            </div>
           </div>
           <div>
             <h2 style={{ fontFamily: "'Poppins', sans-serif", margin: "0 0 8px 0", color: COLORS.textDark }}>
@@ -293,7 +337,7 @@ export default function BriefingClient({ student, assignment, briefing, initialS
               <div style={{ marginTop: 12, background: COLORS.tealSoft, borderRadius: 12, padding: 12 }}>
                 <p style={{ margin: "0 0 8px 0", fontSize: 13.5, color: COLORS.textDark }}>{renderBold(briefing.intelDrop.reveal)}</p>
                 <p style={{ margin: 0, fontSize: 13.5, color: COLORS.textDark }}>{renderBold(briefing.intelDrop.learningTarget)}</p>
-                <button type="button" className="gc-btn" onClick={() => goTo(1)} style={{ ...primaryBtn, marginTop: 12 }}>
+                <button type="button" className="gc-btn" onClick={() => goToPhase("fieldBrief")} style={{ ...primaryBtn, marginTop: 12 }}>
                   Continue to Field Brief →
                 </button>
               </div>
@@ -418,8 +462,8 @@ export default function BriefingClient({ student, assignment, briefing, initialS
                   Check answers
                 </button>
               ) : (
-                <button type="button" className="gc-btn" onClick={() => goTo(2)} style={primaryBtn}>
-                  Continue to Ops Choice →
+                <button type="button" className="gc-btn" onClick={() => goToPhase("reasonSort")} style={primaryBtn}>
+                  Continue to Reason Sort →
                 </button>
               )}
               {field.beatIndex > 0 && (
@@ -435,6 +479,244 @@ export default function BriefingClient({ student, assignment, briefing, initialS
             </div>
           </div>
         </div>
+      </div>
+    );
+  }
+
+
+  function ReasonSort() {
+    const rs = phaseState.reasonSort;
+    const pack = briefing.reasonSort || {};
+    const bins = pack.bins || [];
+    const items = pack.items || [];
+    const assignments = rs.assignments || {};
+    const selectedItemId = rs.selectedItemId || "";
+    const results = rs.results?.results || null;
+    const allAssigned = items.length > 0 && items.every((it) => assignments[it.id]);
+
+    function selectItem(id) {
+      if (rs.passed) return;
+      setSamAnchor("sort");
+      setSamState("thinking");
+      updateState({ reasonSort: { ...rs, selectedItemId: id } }, { skipSave: true });
+    }
+
+    function assignToBin(binId) {
+      if (rs.passed || !selectedItemId) return;
+      const nextAssign = { ...assignments, [selectedItemId]: binId };
+      updateState(
+        {
+          reasonSort: {
+            ...rs,
+            assignments: nextAssign,
+            selectedItemId: "",
+            checked: false,
+            results: null,
+          },
+        },
+        { skipSave: true }
+      );
+    }
+
+    function unassign(itemId) {
+      if (rs.passed) return;
+      // After a check, keep correct tiles locked; only misses can be pulled back.
+      if (results?.[itemId]?.correct) return;
+      const nextAssign = { ...assignments };
+      delete nextAssign[itemId];
+      updateState(
+        { reasonSort: { ...rs, assignments: nextAssign, checked: false, results: rs.results } },
+        { skipSave: true }
+      );
+    }
+
+    const unassigned = items.filter((it) => !assignments[it.id]);
+
+    return (
+      <div style={card}>
+        <h2 style={{ fontFamily: "'Poppins', sans-serif", margin: "0 0 4px 0" }}>
+          {pack.title || "Community Reason Sort"}
+        </h2>
+        <p style={{ fontSize: 14, color: COLORS.textMuted, marginTop: 0 }}>
+          {pack.kidPrompt || "Sort each example under the reason that fits best."}
+        </p>
+        <p style={{ fontSize: 12.5, color: COLORS.textMuted, marginTop: -4 }}>
+          Tip: tap a clue, then tap a reason bin. Tap a sorted clue to pull it back.
+        </p>
+
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 8, margin: "12px 0 16px" }}>
+          {unassigned.map((it) => {
+            const on = selectedItemId === it.id;
+            return (
+              <button
+                key={it.id}
+                type="button"
+                className="gc-btn"
+                onClick={() => selectItem(it.id)}
+                style={{
+                  borderRadius: 12,
+                  padding: "10px 12px",
+                  maxWidth: 280,
+                  textAlign: "left",
+                  fontSize: 13,
+                  fontWeight: 600,
+                  border: `2px solid ${on ? COLORS.violet : "#E1E2EE"}`,
+                  background: on ? COLORS.violetSoft : COLORS.white,
+                  color: COLORS.textDark,
+                  boxShadow: on ? "0 6px 14px rgba(123,93,255,.18)" : "0 2px 8px rgba(13,27,42,.05)",
+                }}
+              >
+                {it.text}
+              </button>
+            );
+          })}
+          {unassigned.length === 0 && !rs.passed && (
+            <span style={{ fontSize: 13, color: COLORS.textMuted }}>All clues sorted — check your work.</span>
+          )}
+        </div>
+
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: 12 }}>
+          {bins.map((bin) => {
+            const inBin = items.filter((it) => assignments[it.id] === bin.id);
+            return (
+              <div
+                key={bin.id}
+                style={{
+                  borderRadius: 14,
+                  border: `2px solid ${bin.color || COLORS.violet}`,
+                  background: COLORS.white,
+                  minHeight: 180,
+                  padding: 10,
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 8,
+                }}
+              >
+                <button
+                  type="button"
+                  className="gc-btn"
+                  onClick={() => assignToBin(bin.id)}
+                  disabled={!selectedItemId || rs.passed}
+                  style={{
+                    width: "100%",
+                    borderRadius: 10,
+                    padding: "10px 8px",
+                    background: `${bin.color || COLORS.violet}22`,
+                    border: `1.5px dashed ${bin.color || COLORS.violet}`,
+                    color: COLORS.textDark,
+                    fontWeight: 800,
+                    fontSize: 12.5,
+                    fontFamily: "'Poppins', sans-serif",
+                    opacity: !selectedItemId || rs.passed ? 0.75 : 1,
+                  }}
+                >
+                  <span aria-hidden="true" style={{ marginRight: 4 }}>{bin.emoji || "📁"}</span>
+                  {bin.label}
+                  {selectedItemId && !rs.passed ? " · tap to place" : ""}
+                </button>
+                <div style={{ display: "flex", flexDirection: "column", gap: 6, flex: 1 }}>
+                  {inBin.map((it) => {
+                    const mark = results?.[it.id];
+                    const border =
+                      mark == null
+                        ? "#E1E2EE"
+                        : mark.correct
+                          ? COLORS.success
+                          : "#EF4444";
+                    return (
+                      <button
+                        key={it.id}
+                        type="button"
+                        className="gc-btn"
+                        onClick={() => unassign(it.id)}
+                        style={{
+                          textAlign: "left",
+                          borderRadius: 10,
+                          padding: "8px 10px",
+                          fontSize: 12.5,
+                          fontWeight: 600,
+                          background: COLORS.cream,
+                          border: `2px solid ${border}`,
+                          color: COLORS.textDark,
+                        }}
+                      >
+                        {mark?.correct === false ? "✗ " : mark?.correct ? "✓ " : ""}
+                        {it.text}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {!rs.passed ? (
+          <button
+            type="button"
+            className="gc-btn"
+            disabled={busy || !allAssigned}
+            onClick={async () => {
+              const result = await grade("reasonSort", { assignments });
+              setToast(result.message || "");
+              if (result.pass) {
+                setSamLine(pack.helpPass || result.message || "Nice sorting!");
+                setSamState("celebrating");
+                updateState(
+                  {
+                    reasonSort: {
+                      ...rs,
+                      assignments,
+                      checked: true,
+                      results: result,
+                      passed: true,
+                      selectedItemId: "",
+                    },
+                  },
+                  { scores: { ...scores, reasonSort: result } }
+                );
+              } else {
+                setSamLine(pack.helpWrong || result.message || "Try another bin.");
+                setSamState("helping");
+                setSamAnchor("sort");
+                // Clear missed assignments so student can retry those tiles
+                const missIds = result.missIds || [];
+                const nextAssign = { ...assignments };
+                missIds.forEach((id) => {
+                  delete nextAssign[id];
+                });
+                updateState(
+                  {
+                    reasonSort: {
+                      ...rs,
+                      assignments: nextAssign,
+                      checked: true,
+                      results: result,
+                      passed: false,
+                      selectedItemId: "",
+                    },
+                  },
+                  { scores: { ...scores, reasonSort: result }, skipSave: false }
+                );
+              }
+            }}
+            style={{ ...primaryBtn, opacity: !allAssigned ? 0.5 : 1 }}
+          >
+            Check Reason Sort
+          </button>
+        ) : (
+          <div style={{ marginTop: 12, background: COLORS.tealSoft, borderRadius: 12, padding: 12 }}>
+            <p style={{ margin: 0, fontSize: 13.5 }}>{pack.helpPass || "Reason Sort complete."}</p>
+            <button
+              type="button"
+              className="gc-btn"
+              onClick={() => goToPhase("opsChoice")}
+              style={{ ...primaryBtn, marginTop: 12 }}
+            >
+              Continue to Ops Choice →
+            </button>
+          </div>
+        )}
       </div>
     );
   }
@@ -536,7 +818,7 @@ export default function BriefingClient({ student, assignment, briefing, initialS
         ) : (
           <div style={{ marginTop: 12, background: COLORS.tealSoft, borderRadius: 12, padding: 12 }}>
             <p style={{ margin: 0, fontSize: 13.5 }}>{renderBold(briefing.opsChoice.debrief)}</p>
-            <button type="button" className="gc-btn" onClick={() => goTo(3)} style={{ ...primaryBtn, marginTop: 12 }}>
+            <button type="button" className="gc-btn" onClick={() => goToPhase("evidenceDrop")} style={{ ...primaryBtn, marginTop: 12 }}>
               Continue to Evidence Drop →
             </button>
           </div>
@@ -766,7 +1048,7 @@ export default function BriefingClient({ student, assignment, briefing, initialS
         ) : (
           <div style={{ marginTop: 12, background: COLORS.tealSoft, borderRadius: 12, padding: 12 }}>
             <p style={{ margin: 0, fontSize: 13.5 }}>Score: {ev.score}/2 — postcard received at HQ.</p>
-            <button type="button" className="gc-btn" onClick={() => goTo(4)} style={{ ...primaryBtn, marginTop: 12 }}>
+            <button type="button" className="gc-btn" onClick={() => goToPhase("clearance")} style={{ ...primaryBtn, marginTop: 12 }}>
               Continue to Clearance →
             </button>
           </div>
@@ -777,11 +1059,27 @@ export default function BriefingClient({ student, assignment, briefing, initialS
 
   function Clearance() {
     const cl = phaseState.clearance;
-    const required = briefing.clearance.selfCheckRequired || 3;
     const intelChip = phaseState.intel.chip;
     const opsPicks = phaseState.ops.picks || [];
     const evReason = phaseState.evidence.reason;
     const fundedLabels = opsPicks.map((id) => projectLabel(briefing, id));
+
+    // Progress gates auto-tick from saved work (read-only) — not honesty taps.
+    const gateDefs = briefing.clearance.progressGates || [
+      { id: "claim", label: "Claim locked" },
+      { id: "field", label: "All 3 Field Brief beats + QCs done" },
+      { id: "sort", label: "Reason Sort complete" },
+      { id: "postcard", label: "Postcard transmitted to HQ" },
+    ];
+    const gateDone = {
+      claim: Boolean(phaseState.intel.revealed),
+      field: Boolean(phaseState.field.graded),
+      sort: Boolean(phaseState.reasonSort?.passed),
+      postcard: phaseState.evidence.score != null,
+    };
+    const progressGates = gateDefs.map((g) => ({ ...g, done: Boolean(gateDone[g.id]) }));
+    const gatesOk = progressGates.every((g) => g.done);
+    const answersOk = (briefing.clearance.items || []).every((item) => Boolean(cl.answers[item.id]));
 
     // Dynamic c4: reuse Ops/Evidence when available
     const reuseReason = evReason || reasonFromChip(intelChip);
@@ -801,7 +1099,8 @@ export default function BriefingClient({ student, assignment, briefing, initialS
               {briefing.clearance.hqTitle || "HQ Clearance Check"}
             </h2>
             <p style={{ margin: 0, fontSize: 13.5, color: COLORS.textMuted }}>
-              {briefing.clearance.hqIntro || "Agent report-in. Answer four quick questions, then mark your self-check."}
+              {briefing.clearance.hqIntro ||
+                "Agent report-in. Finish the progress gates from your work, then answer four quick questions."}
             </p>
           </div>
           <div
@@ -870,39 +1169,46 @@ export default function BriefingClient({ student, assignment, briefing, initialS
           );
         })}
 
-        <h3 style={{ fontSize: 14, margin: "8px 0" }}>Self-check (mark at least {required} of 5)</h3>
-        {briefing.clearance.selfCheck.map((line, i) => {
-          const on = cl.selfCheck.includes(i);
-          return (
-            <button
-              key={line}
-              type="button"
-              className="gc-btn"
-              onClick={() => {
-                const selfCheck = on ? cl.selfCheck.filter((x) => x !== i) : [...cl.selfCheck, i];
-                updateState({ clearance: { ...cl, selfCheck } }, { skipSave: true });
+        <h3 style={{ fontSize: 14, margin: "8px 0 6px" }}>Mission progress (auto from your work)</h3>
+        <p style={{ fontSize: 12.5, color: COLORS.textMuted, marginTop: 0 }}>
+          These check themselves when you finish each beat — no need to tap them.
+        </p>
+        <div style={{ display: "grid", gap: 6, marginBottom: 14 }}>
+          {progressGates.map((g) => (
+            <div
+              key={g.id}
+              style={{
+                ...choiceBtn,
+                marginBottom: 0,
+                borderColor: g.done ? COLORS.teal : "#E1E2EE",
+                background: g.done ? COLORS.tealSoft : COLORS.white,
+                cursor: "default",
+                opacity: g.done ? 1 : 0.85,
               }}
-              style={{ ...choiceBtn, borderColor: on ? COLORS.teal : "transparent", background: on ? COLORS.tealSoft : COLORS.white }}
+              aria-checked={g.done}
+              role="checkbox"
             >
-              {on ? "✓ " : ""}
-              {line}
-            </button>
-          );
-        })}
+              <span style={{ fontWeight: 800, color: g.done ? COLORS.success : COLORS.textMuted, marginRight: 8 }}>
+                {g.done ? "✓" : "○"}
+              </span>
+              {g.label}
+            </div>
+          ))}
+        </div>
 
         {status !== "cleared" ? (
           <button
             type="button"
             className="gc-btn"
-            disabled={busy || cl.selfCheck.length < required}
+            disabled={busy || !gatesOk || !answersOk}
             onClick={async () => {
+              if (!gatesOk || !answersOk) return;
               const result = await grade("clearance", {
                 answers: cl.answers,
                 expectedIds: c4Expected ? { c4: c4Expected } : {},
               });
-              setToast(result.pass ? "Clearance checks passed." : "Review missed items — you can still clear with self-check.");
-              const canClear = result.pass || cl.selfCheck.length >= required;
-              if (canClear) {
+              setToast(result.pass ? "Clearance checks passed." : "Review missed questions, then try again.");
+              if (result.pass) {
                 updateState(
                   { clearance: { ...cl, graded: true, results: result } },
                   { scores: { ...scores, clearance: result }, status: "cleared", phase: "clearance" }
@@ -913,9 +1219,11 @@ export default function BriefingClient({ student, assignment, briefing, initialS
                 setSamAnchor("stamp");
               } else {
                 updateState({ clearance: { ...cl, graded: true, results: result } }, { scores: { ...scores, clearance: result } });
+                setSamLine("Check the missed questions — your progress gates are already done.");
+                setSamState("helping");
               }
             }}
-            style={{ ...primaryBtn, opacity: cl.selfCheck.length < required ? 0.5 : 1 }}
+            style={{ ...primaryBtn, opacity: !gatesOk || !answersOk ? 0.5 : 1 }}
           >
             Submit for clearance
           </button>
@@ -934,30 +1242,31 @@ export default function BriefingClient({ student, assignment, briefing, initialS
             <div
               style={{
                 position: "absolute",
-                right: 16,
-                top: 16,
-                width: 110,
-                height: 110,
+                right: 12,
+                top: 12,
+                width: 128,
+                height: 128,
                 borderRadius: "50%",
-                border: `4px solid ${COLORS.success}`,
+                border: `5px solid ${COLORS.success}`,
                 color: COLORS.success,
                 display: "grid",
                 placeItems: "center",
                 fontFamily: "'Poppins', sans-serif",
                 fontWeight: 800,
-                fontSize: 14,
-                transform: "rotate(-12deg)",
-                background: "rgba(255,255,255,.85)",
-                boxShadow: "0 8px 20px rgba(34,197,94,.25)",
+                fontSize: 16,
+                transform: "rotate(-14deg)",
+                background: "rgba(255,255,255,.92)",
+                boxShadow: "0 12px 28px rgba(34,197,94,.35)",
                 textAlign: "center",
-                lineHeight: 1.2,
+                lineHeight: 1.15,
+                letterSpacing: 0.5,
               }}
             >
               CLEARED
               <br />
-              ✓
+              ★ ✓ ★
             </div>
-            <p style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 800, fontSize: 18, margin: "0 0 8px 0", maxWidth: "70%" }}>
+            <p style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 800, fontSize: 20, margin: "0 0 8px 0", maxWidth: "68%" }}>
               Briefing cleared
             </p>
             <p style={{ margin: "0 0 10px", fontSize: 14, color: COLORS.textDark, maxWidth: "72%" }}>
@@ -978,6 +1287,7 @@ export default function BriefingClient({ student, assignment, briefing, initialS
   let body = null;
   if (phaseId === "intelDrop") body = <IntelDrop />;
   else if (phaseId === "fieldBrief") body = <FieldBrief />;
+  else if (phaseId === "reasonSort") body = <ReasonSort />;
   else if (phaseId === "opsChoice") body = <OpsChoice />;
   else if (phaseId === "evidenceDrop") body = <EvidenceDrop />;
   else body = <Clearance />;
