@@ -936,55 +936,20 @@ export default function SimulationLabClient({
   function Console() {
     const bg = publicCase.machineBackground;
     const hasBgImage = !!(bg && bg.imageUrl);
-    const readoutColor = "#4A3B70";
-    const H = CONSOLE_HOTSPOTS;
     const hypAnswer = checkpointAnswers.hyp;
     const hypChoice = hypAnswer && cpHyp ? cpHyp.choices.find((c) => c.id === hypAnswer.submittedChoiceId) : null;
     const canRun = predictionTouched && !atMax;
-    const settingTag = (variable.label || variable.id).toUpperCase().slice(0, 14);
+    const settingOptions = allSettings;
+    const predStep = Math.max(1, Math.round((outcome.displayMax - outcome.displayMin) / 20) || 1);
 
-    const digitalReadout = (
-      <div
-        style={{
-          width: "100%",
-          height: "100%",
-          background: "#0B1017",
-          borderRadius: 8,
-          border: `1px solid ${COLORS.cyan}66`,
-          boxShadow: "inset 0 0 12px rgba(62,214,200,.25)",
-          display: "flex",
-          flexDirection: "column",
-          justifyContent: "center",
-          gap: 3,
-          padding: "8px 10px",
-          fontFamily: "'Courier New', monospace",
-          overflow: "hidden",
-          boxSizing: "border-box",
-        }}
-      >
-        {hypChoice && (
-          <div style={{ fontSize: "clamp(7px, 1vw, 10px)", color: COLORS.textMuted, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-            HYP: <span style={{ color: COLORS.amber }}>{hypChoice.text}</span>
-          </div>
-        )}
-        <div style={{ fontSize: "clamp(9px, 1.25vw, 12px)", color: COLORS.cyan, fontWeight: 700, textShadow: `0 0 6px ${COLORS.cyan}88` }}>
-          {settingTag}: {currentSetting}{variable.unit}
-        </div>
-        <div style={{ fontSize: "clamp(9px, 1.25vw, 12px)", color: COLORS.cyan, fontWeight: 700, textShadow: `0 0 6px ${COLORS.cyan}88` }}>
-          PREDICT: {predictionTouched ? `${currentPrediction} ${outcome.unit}` : "— drag gauge —"}
-        </div>
-        {lastRun && (
-          <>
-            <div style={{ fontSize: "clamp(9px, 1.25vw, 12px)", color: COLORS.amber, fontWeight: 700, textShadow: `0 0 6px ${COLORS.amber}88` }}>
-              ACTUAL: {lastRun.actual} {outcome.unit}
-            </div>
-            <div style={{ fontSize: "clamp(9px, 1.25vw, 12px)", color: COLORS.white, fontWeight: 700 }}>
-              GAP: {lastRun.gap}
-            </div>
-          </>
-        )}
-      </div>
-    );
+    function nudgePrediction(delta) {
+      if (atMax) return;
+      setCurrentPrediction((prev) => {
+        const next = Math.min(outcome.displayMax, Math.max(outcome.displayMin, prev + delta));
+        return next;
+      });
+      setPredictionTouched(true);
+    }
 
     return (
       <div style={{ background: COLORS.panel, border: `1px solid ${COLORS.steelLine}`, borderRadius: 16, padding: 18, marginBottom: 18 }}>
@@ -992,176 +957,203 @@ export default function SimulationLabClient({
           CONSOLE — {round === "roundOne" ? "ROUND 1" : `ROUND 2 (${publicCase.roundTwoLabel || "condition changed"})`}
         </div>
 
-        {hasBgImage ? (
-          <div style={{ position: "relative", marginBottom: 14 }}>
-            <img src={bg.imageUrl} alt="" style={{ width: "100%", borderRadius: 12, display: "block" }} />
-
-            {/* Circular screen → outcome gauge (drag = prediction) */}
+        {hasBgImage && (
+          <div style={{ position: "relative", marginBottom: 14, borderRadius: 12, overflow: "hidden" }}>
+            <img
+              src={bg.imageUrl}
+              alt=""
+              style={{ width: "100%", display: "block", opacity: 0.92 }}
+            />
             <div
               style={{
                 position: "absolute",
-                left: `${H.gaugeCircle.xPct}%`, top: `${H.gaugeCircle.yPct}%`,
-                width: `${H.gaugeCircle.wPct}%`, height: `${H.gaugeCircle.hPct}%`,
-                transform: "translate(-50%, -50%)",
-                display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
-              }}
-            >
-              <OutcomeGauge
-                prediction={currentPrediction}
-                actual={lastRun ? lastRun.actual : null}
-                min={outcome.displayMin}
-                max={outcome.displayMax}
-                step={1}
-                onPredict={(v) => { setCurrentPrediction(v); setPredictionTouched(true); }}
-                predictEnabled={!atMax}
-                size={118}
-              />
-              <div style={{ marginTop: 2, fontSize: "clamp(8px, 1.1vw, 11px)", color: readoutColor, fontWeight: 800, textAlign: "center", lineHeight: 1.2 }}>
-                {outcome.label}
-                <div style={{ fontWeight: 600, opacity: 0.85 }}>{predictionTouched ? "drag to predict" : "drag gauge to predict"}</div>
-              </div>
-            </div>
-
-            {/* Rectangular screen → digital readout (fixed box, no overflow spill) */}
-            <div
-              style={{
-                position: "absolute",
-                left: `${H.readoutPanel.xPct}%`, top: `${H.readoutPanel.yPct}%`,
-                width: `${H.readoutPanel.wPct}%`, height: `${H.readoutPanel.hPct}%`,
-                transform: "translate(-50%, -50%)",
-              }}
-            >
-              {digitalReadout}
-            </div>
-
-            {/* Horizontal slot → independent variable */}
-            <div
-              style={{
-                position: "absolute",
-                left: `${H.slotTrack.xPct}%`, top: `${H.slotTrack.yPct}%`,
-                width: `${H.slotTrack.wPct}%`,
-              }}
-            >
-              <input
-                className="sl-slider"
-                type="range"
-                min={variable.min}
-                max={variable.max}
-                step={variable.step}
-                value={currentSetting}
-                disabled={atMax}
-                onChange={(e) => setCurrentSetting(Number(e.target.value))}
-                style={{ width: "100%", "--thumb-color": COLORS.amber }}
-                aria-label={variable.label}
-              />
-              <div style={{ textAlign: "center", fontSize: "clamp(9px, 1.3vw, 13px)", color: readoutColor, fontWeight: 800, marginTop: 2 }}>
-                {variable.label}: {currentSetting}{variable.unit}
-              </div>
-            </div>
-
-            {/* Amber console button → Run Trial */}
-            <button
-              type="button"
-              className="sl-btn sl-run-hotspot"
-              disabled={!canRun}
-              onClick={runTrial}
-              title={canRun ? "Run Trial" : "Set a prediction on the gauge first"}
-              aria-label="Run Trial"
-              style={{
-                position: "absolute",
-                left: `${H.runButton.xPct}%`, top: `${H.runButton.yPct}%`,
-                width: `${H.runButton.wPct}%`, height: `${H.runButton.hPct}%`,
-                transform: "translate(-50%, -50%)",
-                borderRadius: "50%",
-                background: canRun ? "rgba(255,166,48,.35)" : "transparent",
-                boxShadow: canRun ? `0 0 18px ${COLORS.amber}aa` : "none",
-                border: canRun ? `2px solid ${COLORS.amber}` : "2px solid transparent",
-                padding: 0,
-                cursor: canRun ? "pointer" : "default",
+                inset: 0,
+                background: "linear-gradient(180deg, rgba(11,16,23,.15) 0%, rgba(11,16,23,.55) 70%, rgba(11,16,23,.82) 100%)",
+                pointerEvents: "none",
               }}
             />
           </div>
-        ) : (
-          <>
-            <div style={{ marginBottom: 18 }}>
-              <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13, marginBottom: 6 }}>
-                <span>{variable.label}</span>
-                <span style={{ color: COLORS.amber, fontWeight: 700 }}>{currentSetting}{variable.unit}</span>
-              </div>
-              <input
-                className="sl-slider"
-                type="range"
-                min={variable.min}
-                max={variable.max}
-                step={variable.step}
-                value={currentSetting}
-                disabled={atMax}
-                onChange={(e) => setCurrentSetting(Number(e.target.value))}
-                style={{ width: "100%", "--thumb-color": COLORS.amber }}
-              />
-            </div>
-
-            <div style={{ marginBottom: 14 }}>
-              <div style={{ fontSize: 11, color: COLORS.textMuted, marginBottom: 6 }}>
-                Predict — {outcome.label} ({outcome.unit})
-              </div>
-              <div style={{ position: "relative", height: 26, background: "rgba(255,255,255,.06)", borderRadius: 999, overflow: "hidden", border: `1px solid ${COLORS.steelLine}` }}>
-                <div
-                  className="sl-gauge-fill"
-                  style={{
-                    position: "absolute", inset: 0, width: `${lastRun ? actualPercent : 0}%`,
-                    background: `linear-gradient(90deg, ${COLORS.amber}99, ${COLORS.amber})`,
-                  }}
-                />
-                <div
-                  title="Your prediction"
-                  style={{
-                    position: "absolute", top: 0, bottom: 0, left: `${predictionPercent}%`,
-                    width: 3, background: COLORS.cyan, boxShadow: `0 0 6px ${COLORS.cyan}`,
-                  }}
-                />
-              </div>
-              <input
-                className="sl-slider"
-                type="range"
-                min={outcome.displayMin}
-                max={outcome.displayMax}
-                step={1}
-                value={currentPrediction}
-                disabled={atMax}
-                onChange={(e) => { setCurrentPrediction(Number(e.target.value)); setPredictionTouched(true); }}
-                style={{ width: "100%", marginTop: 10, "--thumb-color": COLORS.cyan }}
-              />
-              {lastRun && (
-                <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, marginTop: 6, color: COLORS.textMuted }}>
-                  <span>Predicted: <b style={{ color: COLORS.cyan }}>{lastRun.prediction}</b></span>
-                  <span>Actual: <b style={{ color: COLORS.amber }}>{lastRun.actual}</b></span>
-                  <span>Gap: <b>{lastRun.gap}</b></span>
-                </div>
-              )}
-            </div>
-          </>
         )}
 
-        <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
-          <button
-            className="sl-btn"
-            disabled={!canRun}
-            onClick={runTrial}
-            style={{
-              background: canRun ? COLORS.amber : "rgba(255,255,255,.08)",
-              color: canRun ? "#1A1200" : COLORS.textMuted,
-              borderRadius: 12, padding: "12px 22px", fontWeight: 700, fontSize: 14.5,
-            }}
-          >
-            ▶ Run Trial
-          </button>
-          {hasBgImage && (
-            <span style={{ fontSize: 12, color: COLORS.textMuted }}>
-              Tip: set the <b style={{ color: COLORS.amber }}>slot</b>, drag the <b style={{ color: COLORS.cyan }}>circle</b> to predict, then tap the amber button or Run.
-            </span>
+        {/* Results strip */}
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit, minmax(120px, 1fr))",
+            gap: 8,
+            marginBottom: 16,
+            padding: "12px 14px",
+            background: "#0B1017",
+            borderRadius: 12,
+            border: `1px solid ${COLORS.cyan}44`,
+            fontFamily: "'Courier New', monospace",
+          }}
+        >
+          {hypChoice && (
+            <div style={{ gridColumn: "1 / -1", fontSize: 12, color: COLORS.textMuted }}>
+              HYP: <span style={{ color: COLORS.amber }}>{hypChoice.text}</span>
+            </div>
           )}
+          <div style={{ fontSize: 13, color: COLORS.cyan, fontWeight: 700 }}>
+            PREDICT<br />
+            <span style={{ fontSize: 18 }}>{predictionTouched ? `${currentPrediction} ${outcome.unit}` : "—"}</span>
+          </div>
+          <div style={{ fontSize: 13, color: COLORS.amber, fontWeight: 700 }}>
+            ACTUAL<br />
+            <span style={{ fontSize: 18 }}>{lastRun ? `${lastRun.actual} ${outcome.unit}` : "—"}</span>
+          </div>
+          <div style={{ fontSize: 13, color: COLORS.white, fontWeight: 700 }}>
+            GAP<br />
+            <span style={{ fontSize: 18 }}>{lastRun ? lastRun.gap : "—"}</span>
+          </div>
         </div>
+
+        {/* Setting — big chips */}
+        <div style={{ marginBottom: 16 }}>
+          <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 8, color: COLORS.white }}>
+            1. Set {variable.label}
+          </div>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+            {settingOptions.map((v) => {
+              const selected = currentSetting === v;
+              return (
+                <button
+                  key={v}
+                  type="button"
+                  className="sl-btn"
+                  disabled={atMax}
+                  onClick={() => { setCurrentSetting(v); setPredictionTouched(true); }}
+                  style={{
+                    minWidth: 56,
+                    minHeight: 48,
+                    padding: "10px 14px",
+                    borderRadius: 12,
+                    fontWeight: 800,
+                    fontSize: 15,
+                    background: selected ? COLORS.amber : "rgba(255,255,255,.08)",
+                    color: selected ? "#1A1200" : COLORS.white,
+                    border: selected ? `2px solid ${COLORS.amber}` : `2px solid ${COLORS.steelLine}`,
+                    boxShadow: selected ? `0 0 14px ${COLORS.amber}66` : "none",
+                  }}
+                >
+                  {v}{variable.unit}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Prediction — big steppers */}
+        <div style={{ marginBottom: 16 }}>
+          <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 8, color: COLORS.white }}>
+            2. Predict {outcome.label}
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+            <button
+              type="button"
+              className="sl-btn"
+              disabled={atMax}
+              onClick={() => nudgePrediction(-predStep * 5)}
+              style={{
+                minWidth: 52, minHeight: 52, borderRadius: 12, fontWeight: 800, fontSize: 14,
+                background: "rgba(62,214,200,.12)", color: COLORS.cyan, border: `2px solid ${COLORS.cyan}55`,
+              }}
+            >
+              −{predStep * 5}
+            </button>
+            <button
+              type="button"
+              className="sl-btn"
+              disabled={atMax}
+              onClick={() => nudgePrediction(-predStep)}
+              style={{
+                minWidth: 52, minHeight: 52, borderRadius: 12, fontWeight: 800, fontSize: 22,
+                background: "rgba(62,214,200,.18)", color: COLORS.cyan, border: `2px solid ${COLORS.cyan}`,
+              }}
+            >
+              −
+            </button>
+            <div
+              style={{
+                flex: "1 1 120px",
+                minHeight: 52,
+                borderRadius: 12,
+                background: "rgba(255,255,255,.06)",
+                border: `2px solid ${COLORS.cyan}66`,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                fontWeight: 800,
+                fontSize: 22,
+                color: COLORS.cyan,
+              }}
+            >
+              {currentPrediction} <span style={{ fontSize: 13, fontWeight: 600, marginLeft: 6, opacity: 0.85 }}>{outcome.unit}</span>
+            </div>
+            <button
+              type="button"
+              className="sl-btn"
+              disabled={atMax}
+              onClick={() => nudgePrediction(predStep)}
+              style={{
+                minWidth: 52, minHeight: 52, borderRadius: 12, fontWeight: 800, fontSize: 22,
+                background: "rgba(62,214,200,.18)", color: COLORS.cyan, border: `2px solid ${COLORS.cyan}`,
+              }}
+            >
+              +
+            </button>
+            <button
+              type="button"
+              className="sl-btn"
+              disabled={atMax}
+              onClick={() => nudgePrediction(predStep * 5)}
+              style={{
+                minWidth: 52, minHeight: 52, borderRadius: 12, fontWeight: 800, fontSize: 14,
+                background: "rgba(62,214,200,.12)", color: COLORS.cyan, border: `2px solid ${COLORS.cyan}55`,
+              }}
+            >
+              +{predStep * 5}
+            </button>
+          </div>
+          {/* Visual compare bar */}
+          <div style={{ position: "relative", height: 18, marginTop: 12, background: "rgba(255,255,255,.06)", borderRadius: 999, overflow: "hidden", border: `1px solid ${COLORS.steelLine}` }}>
+            <div
+              className="sl-gauge-fill"
+              style={{
+                position: "absolute", inset: 0, width: `${lastRun ? actualPercent : 0}%`,
+                background: `linear-gradient(90deg, ${COLORS.amber}99, ${COLORS.amber})`,
+              }}
+            />
+            <div
+              title="Your prediction"
+              style={{
+                position: "absolute", top: 0, bottom: 0, left: `${predictionPercent}%`,
+                width: 4, background: COLORS.cyan, boxShadow: `0 0 6px ${COLORS.cyan}`,
+              }}
+            />
+          </div>
+          <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11, color: COLORS.textMuted, marginTop: 4 }}>
+            <span>{outcome.displayMin}{outcome.unit}</span>
+            <span style={{ color: COLORS.cyan }}>predict</span>
+            <span style={{ color: COLORS.amber }}>actual</span>
+            <span>{outcome.displayMax}{outcome.unit}</span>
+          </div>
+        </div>
+
+        <button
+          className="sl-btn"
+          disabled={!canRun}
+          onClick={runTrial}
+          style={{
+            width: "100%",
+            background: canRun ? COLORS.amber : "rgba(255,255,255,.08)",
+            color: canRun ? "#1A1200" : COLORS.textMuted,
+            borderRadius: 14, padding: "16px 22px", fontWeight: 800, fontSize: 17,
+            boxShadow: canRun ? `0 0 20px ${COLORS.amber}55` : "none",
+          }}
+        >
+          ▶ Run Trial
+        </button>
       </div>
     );
   }
