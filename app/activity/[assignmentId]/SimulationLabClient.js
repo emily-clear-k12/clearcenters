@@ -28,17 +28,19 @@ import DistressCallBadge from "../../../components/DistressCallBadge";
 // per-case simulation engine, and the gauge is still driven by a shared,
 // lookup-table-based component, never custom art or a custom render.
 const COLORS = {
-  bgTop: "#141C28",
-  bgBottom: "#0B1017",
-  panel: "#1A2432",
-  panelLight: "rgba(255,255,255,.04)",
-  steelLine: "rgba(255,255,255,.1)",
-  amber: "#FFA630",
-  cyan: "#3ED6C8",
-  white: "#EAF0F6",
-  textMuted: "rgba(234,240,246,.6)",
-  danger: "#FF6B6B",
-  success: "#3ED6C8",
+  bgTop: "#E8E4F4",
+  bgBottom: "#D4DCE8",
+  panel: "rgba(255,255,255,.88)",
+  panelLight: "rgba(255,255,255,.55)",
+  steelLine: "rgba(74,59,112,.18)",
+  amber: "#E8912D",
+  cyan: "#2BB8AB",
+  white: "#2A2440",
+  textMuted: "rgba(42,36,64,.62)",
+  danger: "#E25555",
+  success: "#2BB8AB",
+  ink: "#2A2440",
+  softBg: "#F4F1FA",
 };
 
 // Percentage-based hotspot positions tuned against the actual console
@@ -54,10 +56,12 @@ const COLORS = {
 //   amber base button → Run Trial
 //   teal base button  → reserved (decorative for now)
 const CONSOLE_HOTSPOTS = {
-  gaugeCircle: { xPct: 22, yPct: 28, wPct: 28, hPct: 30 },
-  readoutPanel: { xPct: 62, yPct: 27, wPct: 42, hPct: 28 },
-  slotTrack: { xPct: 18, yPct: 58, wPct: 64 },
-  runButton: { xPct: 27, yPct: 84, wPct: 14, hPct: 14 },
+  // Tuned for Evie console plate v1 (public/simulation-lab/console.jpg)
+  gaugeCircle: { xPct: 27, yPct: 34, wPct: 28, hPct: 30 },
+  readoutPanel: { xPct: 64, yPct: 33, wPct: 42, hPct: 28 },
+  settingBay: { xPct: 22, yPct: 69, wPct: 30, hPct: 16 },
+  predictBay: { xPct: 52, yPct: 69, wPct: 34, hPct: 16 },
+  runBay: { xPct: 82, yPct: 70, wPct: 15, hPct: 17 },
 };
 
 // Three top-level phases, same shape as every other engine's state machine
@@ -660,12 +664,12 @@ export default function SimulationLabClient({
   const backgroundStyle = {
     minHeight: "100vh",
     backgroundImage:
-      "linear-gradient(rgba(20,28,40,.32), rgba(11,16,23,.5)), url('/simulation-lab/background.jpg')",
+      "linear-gradient(rgba(244,241,250,.72), rgba(220,228,240,.58)), url('/simulation-lab/background.jpg')",
     backgroundSize: "cover",
     backgroundPosition: "center",
     backgroundAttachment: "fixed",
     fontFamily: "'Inter', sans-serif",
-    color: COLORS.white,
+    color: COLORS.ink,
     position: "relative",
   };
 
@@ -941,6 +945,7 @@ export default function SimulationLabClient({
     const canRun = predictionTouched && !atMax;
     const settingOptions = allSettings;
     const predStep = Math.max(1, Math.round((outcome.displayMax - outcome.displayMin) / 20) || 1);
+    const H = CONSOLE_HOTSPOTS;
 
     function nudgePrediction(delta) {
       if (atMax) return;
@@ -951,209 +956,158 @@ export default function SimulationLabClient({
       setPredictionTouched(true);
     }
 
-    return (
-      <div style={{ background: COLORS.panel, border: `1px solid ${COLORS.steelLine}`, borderRadius: 16, padding: 18, marginBottom: 18 }}>
-        <div style={{ fontSize: 11, letterSpacing: 1, color: COLORS.amber, fontWeight: 700, marginBottom: 12 }}>
-          CONSOLE — {round === "roundOne" ? "ROUND 1" : `ROUND 2 (${publicCase.roundTwoLabel || "condition changed"})`}
-        </div>
+    const bay = (zone) => ({
+      position: "absolute",
+      left: `${zone.xPct}%`,
+      top: `${zone.yPct}%`,
+      width: `${zone.wPct}%`,
+      height: zone.hPct != null ? `${zone.hPct}%` : undefined,
+      transform: "translate(-50%, -50%)",
+      boxSizing: "border-box",
+    });
 
-        {hasBgImage && (
-          <div style={{ position: "relative", marginBottom: 14, borderRadius: 12, overflow: "hidden" }}>
-            <img
-              src={bg.imageUrl}
-              alt=""
-              style={{ width: "100%", display: "block", opacity: 0.92 }}
-            />
-            <div
-              style={{
-                position: "absolute",
-                inset: 0,
-                background: "linear-gradient(180deg, rgba(11,16,23,.15) 0%, rgba(11,16,23,.55) 70%, rgba(11,16,23,.82) 100%)",
-                pointerEvents: "none",
-              }}
-            />
-          </div>
-        )}
-
-        {/* Results strip */}
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(120px, 1fr))",
-            gap: 8,
-            marginBottom: 16,
-            padding: "12px 14px",
-            background: "#0B1017",
-            borderRadius: 12,
-            border: `1px solid ${COLORS.cyan}44`,
-            fontFamily: "'Courier New', monospace",
-          }}
-        >
-          {hypChoice && (
-            <div style={{ gridColumn: "1 / -1", fontSize: 12, color: COLORS.textMuted }}>
-              HYP: <span style={{ color: COLORS.amber }}>{hypChoice.text}</span>
-            </div>
-          )}
-          <div style={{ fontSize: 13, color: COLORS.cyan, fontWeight: 700 }}>
-            PREDICT<br />
-            <span style={{ fontSize: 18 }}>{predictionTouched ? `${currentPrediction} ${outcome.unit}` : "—"}</span>
-          </div>
-          <div style={{ fontSize: 13, color: COLORS.amber, fontWeight: 700 }}>
-            ACTUAL<br />
-            <span style={{ fontSize: 18 }}>{lastRun ? `${lastRun.actual} ${outcome.unit}` : "—"}</span>
-          </div>
-          <div style={{ fontSize: 13, color: COLORS.white, fontWeight: 700 }}>
-            GAP<br />
-            <span style={{ fontSize: 18 }}>{lastRun ? lastRun.gap : "—"}</span>
-          </div>
-        </div>
-
-        {/* Setting — big chips */}
-        <div style={{ marginBottom: 16 }}>
-          <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 8, color: COLORS.white }}>
-            1. Set {variable.label}
-          </div>
+    const controlsFallback = (
+      <>
+        <div style={{ marginBottom: 14 }}>
+          <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 8 }}>1. Set {variable.label}</div>
           <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
             {settingOptions.map((v) => {
               const selected = currentSetting === v;
               return (
-                <button
-                  key={v}
-                  type="button"
-                  className="sl-btn"
-                  disabled={atMax}
+                <button key={v} type="button" className="sl-btn" disabled={atMax}
                   onClick={() => { setCurrentSetting(v); setPredictionTouched(true); }}
                   style={{
-                    minWidth: 56,
-                    minHeight: 48,
-                    padding: "10px 14px",
-                    borderRadius: 12,
-                    fontWeight: 800,
-                    fontSize: 15,
-                    background: selected ? COLORS.amber : "rgba(255,255,255,.08)",
-                    color: selected ? "#1A1200" : COLORS.white,
+                    minWidth: 52, minHeight: 44, padding: "8px 12px", borderRadius: 12, fontWeight: 800, fontSize: 14,
+                    background: selected ? COLORS.amber : COLORS.softBg, color: selected ? "#1A1200" : COLORS.ink,
                     border: selected ? `2px solid ${COLORS.amber}` : `2px solid ${COLORS.steelLine}`,
-                    boxShadow: selected ? `0 0 14px ${COLORS.amber}66` : "none",
-                  }}
-                >
-                  {v}{variable.unit}
-                </button>
+                  }}>{v}{variable.unit}</button>
               );
             })}
           </div>
         </div>
-
-        {/* Prediction — big steppers */}
-        <div style={{ marginBottom: 16 }}>
-          <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 8, color: COLORS.white }}>
-            2. Predict {outcome.label}
-          </div>
-          <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
-            <button
-              type="button"
-              className="sl-btn"
-              disabled={atMax}
-              onClick={() => nudgePrediction(-predStep * 5)}
-              style={{
-                minWidth: 52, minHeight: 52, borderRadius: 12, fontWeight: 800, fontSize: 14,
-                background: "rgba(62,214,200,.12)", color: COLORS.cyan, border: `2px solid ${COLORS.cyan}55`,
-              }}
-            >
-              −{predStep * 5}
-            </button>
-            <button
-              type="button"
-              className="sl-btn"
-              disabled={atMax}
-              onClick={() => nudgePrediction(-predStep)}
-              style={{
-                minWidth: 52, minHeight: 52, borderRadius: 12, fontWeight: 800, fontSize: 22,
-                background: "rgba(62,214,200,.18)", color: COLORS.cyan, border: `2px solid ${COLORS.cyan}`,
-              }}
-            >
-              −
-            </button>
-            <div
-              style={{
-                flex: "1 1 120px",
-                minHeight: 52,
-                borderRadius: 12,
-                background: "rgba(255,255,255,.06)",
-                border: `2px solid ${COLORS.cyan}66`,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                fontWeight: 800,
-                fontSize: 22,
-                color: COLORS.cyan,
-              }}
-            >
-              {currentPrediction} <span style={{ fontSize: 13, fontWeight: 600, marginLeft: 6, opacity: 0.85 }}>{outcome.unit}</span>
+        <div style={{ marginBottom: 14 }}>
+          <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 8 }}>2. Predict {outcome.label}</div>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+            <button type="button" className="sl-btn" disabled={atMax} onClick={() => nudgePrediction(-predStep * 5)}
+              style={{ minWidth: 48, minHeight: 48, borderRadius: 12, fontWeight: 800, background: COLORS.softBg, color: COLORS.cyan, border: `2px solid ${COLORS.cyan}` }}>−{predStep * 5}</button>
+            <button type="button" className="sl-btn" disabled={atMax} onClick={() => nudgePrediction(-predStep)}
+              style={{ minWidth: 48, minHeight: 48, borderRadius: 12, fontWeight: 800, fontSize: 20, background: COLORS.softBg, color: COLORS.cyan, border: `2px solid ${COLORS.cyan}` }}>−</button>
+            <div style={{ flex: "1 1 100px", minHeight: 48, borderRadius: 12, background: COLORS.softBg, border: `2px solid ${COLORS.cyan}`, display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 800, fontSize: 20, color: COLORS.cyan }}>
+              {currentPrediction}<span style={{ fontSize: 12, marginLeft: 4 }}>{outcome.unit}</span>
             </div>
-            <button
-              type="button"
-              className="sl-btn"
-              disabled={atMax}
-              onClick={() => nudgePrediction(predStep)}
-              style={{
-                minWidth: 52, minHeight: 52, borderRadius: 12, fontWeight: 800, fontSize: 22,
-                background: "rgba(62,214,200,.18)", color: COLORS.cyan, border: `2px solid ${COLORS.cyan}`,
-              }}
-            >
-              +
-            </button>
-            <button
-              type="button"
-              className="sl-btn"
-              disabled={atMax}
-              onClick={() => nudgePrediction(predStep * 5)}
-              style={{
-                minWidth: 52, minHeight: 52, borderRadius: 12, fontWeight: 800, fontSize: 14,
-                background: "rgba(62,214,200,.12)", color: COLORS.cyan, border: `2px solid ${COLORS.cyan}55`,
-              }}
-            >
-              +{predStep * 5}
-            </button>
-          </div>
-          {/* Visual compare bar */}
-          <div style={{ position: "relative", height: 18, marginTop: 12, background: "rgba(255,255,255,.06)", borderRadius: 999, overflow: "hidden", border: `1px solid ${COLORS.steelLine}` }}>
-            <div
-              className="sl-gauge-fill"
-              style={{
-                position: "absolute", inset: 0, width: `${lastRun ? actualPercent : 0}%`,
-                background: `linear-gradient(90deg, ${COLORS.amber}99, ${COLORS.amber})`,
-              }}
-            />
-            <div
-              title="Your prediction"
-              style={{
-                position: "absolute", top: 0, bottom: 0, left: `${predictionPercent}%`,
-                width: 4, background: COLORS.cyan, boxShadow: `0 0 6px ${COLORS.cyan}`,
-              }}
-            />
-          </div>
-          <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11, color: COLORS.textMuted, marginTop: 4 }}>
-            <span>{outcome.displayMin}{outcome.unit}</span>
-            <span style={{ color: COLORS.cyan }}>predict</span>
-            <span style={{ color: COLORS.amber }}>actual</span>
-            <span>{outcome.displayMax}{outcome.unit}</span>
+            <button type="button" className="sl-btn" disabled={atMax} onClick={() => nudgePrediction(predStep)}
+              style={{ minWidth: 48, minHeight: 48, borderRadius: 12, fontWeight: 800, fontSize: 20, background: COLORS.softBg, color: COLORS.cyan, border: `2px solid ${COLORS.cyan}` }}>+</button>
+            <button type="button" className="sl-btn" disabled={atMax} onClick={() => nudgePrediction(predStep * 5)}
+              style={{ minWidth: 48, minHeight: 48, borderRadius: 12, fontWeight: 800, background: COLORS.softBg, color: COLORS.cyan, border: `2px solid ${COLORS.cyan}` }}>+{predStep * 5}</button>
           </div>
         </div>
-
-        <button
-          className="sl-btn"
-          disabled={!canRun}
-          onClick={runTrial}
-          style={{
-            width: "100%",
-            background: canRun ? COLORS.amber : "rgba(255,255,255,.08)",
-            color: canRun ? "#1A1200" : COLORS.textMuted,
-            borderRadius: 14, padding: "16px 22px", fontWeight: 800, fontSize: 17,
-            boxShadow: canRun ? `0 0 20px ${COLORS.amber}55` : "none",
-          }}
-        >
+        <button className="sl-btn" disabled={!canRun} onClick={runTrial}
+          style={{ width: "100%", background: canRun ? COLORS.amber : COLORS.softBg, color: canRun ? "#1A1200" : COLORS.textMuted, borderRadius: 14, padding: "14px 22px", fontWeight: 800, fontSize: 16 }}>
           ▶ Run Trial
         </button>
+      </>
+    );
+
+    return (
+      <div style={{ background: COLORS.panel, border: `1px solid ${COLORS.steelLine}`, borderRadius: 16, padding: 18, marginBottom: 18, boxShadow: "0 8px 28px rgba(74,59,112,.08)" }}>
+        <div style={{ fontSize: 11, letterSpacing: 1, color: COLORS.amber, fontWeight: 700, marginBottom: 12 }}>
+          CONSOLE — {round === "roundOne" ? "ROUND 1" : `ROUND 2 (${publicCase.roundTwoLabel || "condition changed"})`}
+        </div>
+
+        {hasBgImage ? (
+          <div style={{ position: "relative", borderRadius: 12, overflow: "hidden" }}>
+            <img src={bg.imageUrl} alt="" style={{ width: "100%", display: "block" }} />
+
+            {/* Circular screen — outcome meter */}
+            <div style={{ ...bay(H.gaugeCircle), display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: 6 }}>
+              <div style={{ width: "100%", height: 14, borderRadius: 999, background: "rgba(74,59,112,.12)", overflow: "hidden", border: `1px solid ${COLORS.steelLine}`, position: "relative" }}>
+                <div className="sl-gauge-fill" style={{ position: "absolute", inset: 0, width: `${lastRun ? actualPercent : 0}%`, background: `linear-gradient(90deg, ${COLORS.amber}aa, ${COLORS.amber})` }} />
+                <div style={{ position: "absolute", top: 0, bottom: 0, left: `${predictionPercent}%`, width: 3, background: COLORS.cyan }} />
+              </div>
+              <div style={{ marginTop: 6, fontSize: "clamp(10px, 1.4vw, 13px)", fontWeight: 800, color: COLORS.ink, textAlign: "center", lineHeight: 1.2 }}>
+                {lastRun ? `${lastRun.actual} ${outcome.unit}` : outcome.label}
+              </div>
+            </div>
+
+            {/* Rectangular screen — digital readout */}
+            <div style={{ ...bay(H.readoutPanel), background: "#1A1528", borderRadius: 10, border: `1px solid ${COLORS.cyan}55`, boxShadow: "inset 0 0 10px rgba(62,214,200,.2)", padding: "6% 7%", display: "flex", flexDirection: "column", justifyContent: "center", gap: 3, overflow: "hidden", fontFamily: "'Courier New', monospace" }}>
+              {hypChoice && (
+                <div style={{ fontSize: "clamp(7px, 1vw, 10px)", color: "rgba(234,240,246,.55)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                  HYP: <span style={{ color: COLORS.amber }}>{hypChoice.text}</span>
+                </div>
+              )}
+              <div style={{ fontSize: "clamp(9px, 1.2vw, 12px)", color: COLORS.cyan, fontWeight: 700 }}>
+                SET: {currentSetting}{variable.unit}
+              </div>
+              <div style={{ fontSize: "clamp(9px, 1.2vw, 12px)", color: COLORS.cyan, fontWeight: 700 }}>
+                PREDICT: {predictionTouched ? `${currentPrediction} ${outcome.unit}` : "—"}
+              </div>
+              {lastRun && (
+                <>
+                  <div style={{ fontSize: "clamp(9px, 1.2vw, 12px)", color: COLORS.amber, fontWeight: 700 }}>ACTUAL: {lastRun.actual} {outcome.unit}</div>
+                  <div style={{ fontSize: "clamp(9px, 1.2vw, 12px)", color: "#EAF0F6", fontWeight: 700 }}>GAP: {lastRun.gap}</div>
+                </>
+              )}
+            </div>
+
+            {/* Left bay — setting chips */}
+            <div style={{ ...bay(H.settingBay), display: "flex", flexDirection: "column", justifyContent: "center", padding: 4, overflow: "auto" }}>
+              <div style={{ fontSize: "clamp(8px, 1.1vw, 10px)", fontWeight: 800, color: COLORS.ink, marginBottom: 3, textAlign: "center" }}>{variable.label}</div>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 4, justifyContent: "center", alignContent: "center" }}>
+                {settingOptions.map((v) => {
+                  const selected = currentSetting === v;
+                  return (
+                    <button key={v} type="button" className="sl-btn" disabled={atMax}
+                      onClick={() => { setCurrentSetting(v); setPredictionTouched(true); }}
+                      style={{
+                        minWidth: 36, minHeight: 32, padding: "4px 7px", borderRadius: 8, fontWeight: 800, fontSize: "clamp(10px, 1.3vw, 12px)",
+                        background: selected ? COLORS.amber : "rgba(255,255,255,.92)", color: selected ? "#1A1200" : COLORS.ink,
+                        border: selected ? `2px solid ${COLORS.amber}` : `1px solid ${COLORS.steelLine}`,
+                        boxShadow: selected ? `0 0 8px ${COLORS.amber}66` : "0 1px 2px rgba(0,0,0,.08)",
+                      }}>{v}{variable.unit}</button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Center bay — prediction steppers */}
+            <div style={{ ...bay(H.predictBay), display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", padding: 4, gap: 4 }}>
+              <div style={{ fontSize: "clamp(8px, 1.1vw, 10px)", fontWeight: 800, color: COLORS.ink }}>Predict {outcome.label}</div>
+              <div style={{ display: "flex", alignItems: "center", gap: 4, width: "100%", justifyContent: "center" }}>
+                <button type="button" className="sl-btn" disabled={atMax} onClick={() => nudgePrediction(-predStep)}
+                  style={{ minWidth: 36, minHeight: 36, borderRadius: 10, fontWeight: 900, fontSize: 18, background: "rgba(255,255,255,.95)", color: COLORS.cyan, border: `2px solid ${COLORS.cyan}` }}>−</button>
+                <div style={{ flex: "1 1 auto", maxWidth: 90, minHeight: 36, borderRadius: 10, background: "rgba(255,255,255,.95)", border: `2px solid ${COLORS.cyan}`, display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 900, fontSize: "clamp(12px, 1.6vw, 15px)", color: COLORS.cyan }}>
+                  {currentPrediction}
+                </div>
+                <button type="button" className="sl-btn" disabled={atMax} onClick={() => nudgePrediction(predStep)}
+                  style={{ minWidth: 36, minHeight: 36, borderRadius: 10, fontWeight: 900, fontSize: 18, background: "rgba(255,255,255,.95)", color: COLORS.cyan, border: `2px solid ${COLORS.cyan}` }}>+</button>
+              </div>
+              <div style={{ display: "flex", gap: 4 }}>
+                <button type="button" className="sl-btn" disabled={atMax} onClick={() => nudgePrediction(-predStep * 5)}
+                  style={{ minHeight: 26, padding: "2px 8px", borderRadius: 8, fontWeight: 700, fontSize: 11, background: "rgba(255,255,255,.9)", color: COLORS.cyan, border: `1px solid ${COLORS.cyan}` }}>−{predStep * 5}</button>
+                <button type="button" className="sl-btn" disabled={atMax} onClick={() => nudgePrediction(predStep * 5)}
+                  style={{ minHeight: 26, padding: "2px 8px", borderRadius: 8, fontWeight: 700, fontSize: 11, background: "rgba(255,255,255,.9)", color: COLORS.cyan, border: `1px solid ${COLORS.cyan}` }}>+{predStep * 5}</button>
+              </div>
+            </div>
+
+            {/* Right bay — Run */}
+            <button type="button" className="sl-btn" disabled={!canRun} onClick={runTrial} aria-label="Run Trial"
+              style={{
+                ...bay(H.runBay),
+                borderRadius: "50%",
+                background: canRun ? COLORS.amber : "rgba(255,255,255,.75)",
+                color: canRun ? "#1A1200" : COLORS.textMuted,
+                fontWeight: 900,
+                fontSize: "clamp(11px, 1.5vw, 14px)",
+                border: canRun ? `3px solid #fff` : `2px solid ${COLORS.steelLine}`,
+                boxShadow: canRun ? `0 0 16px ${COLORS.amber}88` : "none",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                padding: 4, lineHeight: 1.1, textAlign: "center",
+              }}>
+              ▶<br />Run
+            </button>
+          </div>
+        ) : controlsFallback}
       </div>
     );
   }
@@ -1303,7 +1257,7 @@ export default function SimulationLabClient({
       <div
         style={{
           position: "relative", zIndex: 2, maxWidth: 760, margin: "40px auto", padding: "28px 24px 40px",
-          background: "rgba(26,36,50,.88)", borderRadius: 20, boxShadow: "0 20px 60px rgba(0,0,0,.45)",
+          background: "rgba(255,255,255,.86)", borderRadius: 20, boxShadow: "0 16px 40px rgba(74,59,112,.12)",
           border: `1px solid ${COLORS.steelLine}`,
         }}
       >
