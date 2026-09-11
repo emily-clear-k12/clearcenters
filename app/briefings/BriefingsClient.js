@@ -83,7 +83,7 @@ export default function BriefingsClient({ student, assignments, catalog }) {
               My Briefings
             </h1>
             <p style={{ color: COLORS.textMuted, fontSize: 14, margin: 0 }}>
-              Social Studies · Grade 3 · teach-first (separate from Challenges)
+              Teach-first lessons · separate from Challenges
             </p>
           </div>
 
@@ -105,6 +105,7 @@ export default function BriefingsClient({ student, assignments, catalog }) {
               <div style={{ display: "grid", gap: 14 }}>
                 {assignments.map((a) => {
                   const b = a.briefings || {};
+                  const thumb = catalog.find((c) => c.id === (b.id || a.briefing_id))?.art || b.art || null;
                   return (
                     <button
                       key={a.id}
@@ -123,11 +124,11 @@ export default function BriefingsClient({ student, assignments, catalog }) {
                       }}
                     >
                       <div style={{ width: 72, height: 72, borderRadius: 12, overflow: "hidden", background: COLORS.violetSoft, flexShrink: 0 }}>
-                        <img
-                          src="/briefings/ss-3-2a-br/01-intel-drop-mystery-gate.png"
+                        {thumb && <img
+                          src={thumb}
                           alt=""
                           style={{ width: "100%", height: "100%", objectFit: "cover" }}
-                        />
+                        />}
                       </div>
                       <div style={{ minWidth: 0, flex: 1 }}>
                         <div style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 700, fontSize: 16, color: COLORS.textDark }}>
@@ -150,7 +151,7 @@ export default function BriefingsClient({ student, assignments, catalog }) {
             <div style={{ ...glass, borderRadius: 16, padding: 18, marginBottom: 24 }}>
               <p style={{ margin: 0, color: COLORS.textDark, fontSize: 14, lineHeight: 1.5 }}>
                 No Briefings assigned yet. Ask your teacher to assign one from <strong>Assign Briefing</strong>,
-                or preview the pilot below once it is assigned.
+                or preview the catalog below once a lesson is assigned.
               </p>
             </div>
           )}
@@ -167,7 +168,7 @@ export default function BriefingsClient({ student, assignments, catalog }) {
                 margin: "0 0 12px 0",
               }}
             >
-              Pilot catalog
+              Catalog
             </h2>
             <div style={{ display: "grid", gap: 14, gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))" }}>
               {catalog.map((b) => (

@@ -129,16 +129,17 @@ function deferredTeksProject(briefing, picks) {
   return waiting.length === 1 ? waiting[0] : null;
 }
 
-function evidenceChipToReasonChoice(chip) {
+function evidenceChipToReasonChoice(chip, extra) {
   const map = {
     "posted rules / firefighters / speed limits": "a",
     "place to worship freely": "b",
     "market, farms, jobs, homes": "c",
+    ...(extra || {}),
   };
   return map[chip] || null;
 }
 
-function reasonIdToChoice(reasonId) {
+function reasonIdToChoice(reasonId, extra) {
   const map = {
     security: "a",
     religious: "b",
@@ -146,6 +147,7 @@ function reasonIdToChoice(reasonId) {
     "security and laws": "a",
     "religious freedom": "b",
     "material well-being": "c",
+    ...(extra || {}),
   };
   return map[reasonId] || null;
 }
@@ -669,7 +671,7 @@ export default function BriefingClient({ student, assignment, briefing, initialS
           )}
         </div>
 
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: 12 }}>
+        <div style={{ display: "grid", gridTemplateColumns: `repeat(${Math.max(bins.length, 1)}, minmax(0, 1fr))`, gap: 12 }}>
           {bins.map((bin) => {
             const inBin = items.filter((it) => assignments[it.id] === bin.id);
             return (
@@ -1531,10 +1533,12 @@ export default function BriefingClient({ student, assignment, briefing, initialS
     const deferredProj = deferredTeksProject(briefing, opsPicks);
     const evidenceText = phaseState.evidence.evidence || "";
     const reuseReason = evReason || reasonFromChip(intelChip);
+    const reasonMap = briefing.clearance?.reasonIdToChoice || {};
+    const evidenceMap = briefing.clearance?.evidenceToReasonChoice || {};
     let c4Expected =
-      reasonIdToChoice(deferredProj?.reasonId) ||
-      evidenceChipToReasonChoice(evidenceText) ||
-      reasonIdToChoice(reuseReason) ||
+      reasonIdToChoice(deferredProj?.reasonId, reasonMap) ||
+      evidenceChipToReasonChoice(evidenceText, evidenceMap) ||
+      reasonIdToChoice(reuseReason, reasonMap) ||
       null;
 
     return (
@@ -1586,11 +1590,13 @@ export default function BriefingClient({ student, assignment, briefing, initialS
           let prompt = item.prompt;
           if (item.dynamicReuse) {
             if (deferredProj) {
-              prompt = "Which reason is Maple Crossing still waiting on?";
+              prompt = briefing.clearance?.dynamicDeferredPrompt || "Which reason is Maple Crossing still waiting on?";
             } else if (evidenceText) {
-              prompt = `Your postcard evidence was “${evidenceText}” — which reason matches?`;
+              const tmpl = briefing.clearance?.dynamicEvidencePrompt || "Your postcard evidence was “{evidence}” — which reason matches?";
+              prompt = tmpl.replace("{evidence}", evidenceText);
             } else if (fundedLabels.length) {
               prompt =
+                briefing.clearance?.dynamicFallbackPrompt ||
                 "Think about the Founders’ Council vote. Which TEKS reason still matters for Maple Crossing even if it waits?";
             }
           }
