@@ -63,6 +63,17 @@ const CHALLENGE_TYPES = [
     description: "Items come down a conveyor belt. Students sort them into the correct bins, then justify one deliberately tricky case in writing." },
   { key: "territory_builder", label: "Territory Builder", image: "/teacher/challenges/territory_builder.jpg", real: false,
     description: "Students place things on an actual map — habitats, settlements, resources — and get feedback on whether the placement actually holds up." },
+  // Added Sept 11 2026 — "Signal Ops" is the new umbrella name for the group
+  // review-game engines (Signal Defense now, Terraform Sprint later — Emily's
+  // still prototyping that one separately). This tile covers Signal Defense:
+  // the whole class defends one shared base together, answering review
+  // questions from the standard's growing question bank to keep it standing.
+  // `real: false` for now, per the exact rule documented above — flip to
+  // `true` the same day the first signal_defense case is actually wired up
+  // and playable end-to-end (content conversion + API routes + client still
+  // need to ship first).
+  { key: "signal_defense", label: "Signal Ops", image: "/teacher/challenges/signal_defense.jpg", real: false,
+    description: "The whole class defends one shared base together — answering review questions to keep power, health, and salvage up before the next wave hits." },
 ];
 
 function caseImagePath(standard) {
