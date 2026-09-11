@@ -240,6 +240,13 @@ export default function BriefingClient({ student, assignment, briefing, initialS
 
   // Clear stale SAM lines on phase change; park at home between beats.
   useEffect(() => {
+    const opsDebrief = phaseId === "opsChoice" && Boolean(phaseState.ops?.debrief);
+    if (opsDebrief) {
+      setSamLine(briefing.opsChoice?.debriefSamLine || "Two funded. One waits until next year.");
+      setSamState("celebrating");
+      setSamAnchor("home");
+      return;
+    }
     setSamLine(samLines[phaseId] || "");
     setSamState(phaseId === "clearance" && status === "cleared" ? "celebrating" : "helping");
     if (phaseId === "intelDrop") setSamAnchor("image");
@@ -249,7 +256,7 @@ export default function BriefingClient({ student, assignment, briefing, initialS
     else if (phaseId === "evidenceDrop") setSamAnchor("postcard");
     else if (phaseId === "clearance") setSamAnchor(status === "cleared" ? "stamp" : "home");
     else setSamAnchor("home");
-  }, [phaseId, status, samLines]);
+  }, [phaseId, status, samLines, phaseState.ops?.debrief, briefing.opsChoice?.debriefSamLine]);
 
   const persist = useCallback(
     async (nextState, nextScores, nextStatus) => {
@@ -841,8 +848,232 @@ export default function BriefingClient({ student, assignment, briefing, initialS
       ops.chips.length > 0 &&
       Boolean(ops.deferredReasonId);
 
+
+    const shortReason = (p) =>
+      (p && (p.shortReasonLabel || p.reason || p.label)) || "";
+
+    const fundedProjects = ops.picks.map((id) => projects.find((x) => x.id === id)).filter(Boolean);
+    const waitingIds = ops.consequence?.waitingIds?.length
+      ? ops.consequence.waitingIds
+      : waitingTeks.map((p) => p.id);
+    const waitingProjects = waitingIds
+      .map((id) => projects.find((x) => x.id === id))
+      .filter((p) => p && !p.distractor);
+
+    // Post-vote: lean visual THIS YEAR / NEXT YEAR board (Grade 3 — picture-first).
+    if (ops.debrief) {
+      return (
+        <div style={card}>
+          <h2 style={{ fontFamily: "'Poppins', sans-serif", margin: "0 0 4px 0" }}>{pack.title}</h2>
+          <p
+            style={{
+              fontSize: 15,
+              fontWeight: 800,
+              fontFamily: "'Poppins', sans-serif",
+              color: COLORS.violet,
+              margin: "0 0 10px 0",
+            }}
+          >
+            {pack.boardTitle || "THIS YEAR / NEXT YEAR"}
+          </p>
+
+          {/* Tiny strip — collapse the four big project cards */}
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 14 }}>
+            {projects.map((p) => {
+              const funded = ops.picks.includes(p.id);
+              const waiting = waitingIds.includes(p.id) && !p.distractor;
+              return (
+                <span
+                  key={`strip-${p.id}`}
+                  title={p.label}
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: 4,
+                    padding: "4px 8px",
+                    borderRadius: 999,
+                    fontSize: 12,
+                    fontWeight: 700,
+                    background: funded ? COLORS.tealSoft : waiting ? "#EEF0F5" : COLORS.cream,
+                    color: funded ? COLORS.teal : COLORS.textMuted,
+                    border: `1.5px solid ${funded ? COLORS.teal : waiting ? "#C9CDD9" : "#E1E2EE"}`,
+                    opacity: p.distractor ? 0.45 : 1,
+                  }}
+                >
+                  <span aria-hidden="true">{p.emoji || "📌"}</span>
+                  {funded ? "NOW" : waiting ? "WAIT" : "—"}
+                </span>
+              );
+            })}
+          </div>
+
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "1.4fr 1fr",
+              gap: 12,
+              marginBottom: 8,
+            }}
+          >
+            {/* THIS YEAR — two green NOW slots */}
+            <div
+              style={{
+                background: "#E8F9EE",
+                borderRadius: 16,
+                padding: 14,
+                border: `2px solid ${COLORS.success}`,
+              }}
+            >
+              <div
+                style={{
+                  fontSize: 11,
+                  fontWeight: 800,
+                  letterSpacing: 0.6,
+                  color: COLORS.success,
+                  marginBottom: 10,
+                }}
+              >
+                {pack.boardThisYearLabel || "THIS YEAR"}
+              </div>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+                {Array.from({ length: pickCount }, (_, i) => {
+                  const p = fundedProjects[i];
+                  return (
+                    <div
+                      key={`now-${i}`}
+                      style={{
+                        minHeight: 88,
+                        borderRadius: 14,
+                        background: COLORS.white,
+                        border: `2.5px solid ${COLORS.success}`,
+                        padding: 12,
+                        display: "flex",
+                        flexDirection: "column",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        textAlign: "center",
+                        gap: 4,
+                        boxShadow: "0 6px 14px rgba(34,197,94,.12)",
+                      }}
+                    >
+                      <div
+                        style={{
+                          fontSize: 10,
+                          fontWeight: 800,
+                          color: COLORS.success,
+                          letterSpacing: 0.5,
+                        }}
+                      >
+                        {pack.nowSlotLabel || "NOW"}
+                      </div>
+                      <div style={{ fontSize: 28, lineHeight: 1 }} aria-hidden="true">
+                        {p?.emoji || "✅"}
+                      </div>
+                      <div
+                        style={{
+                          fontWeight: 800,
+                          fontSize: 14,
+                          fontFamily: "'Poppins', sans-serif",
+                          color: COLORS.textDark,
+                          lineHeight: 1.2,
+                        }}
+                      >
+                        {p ? shortReason(p) : "—"}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* NEXT YEAR — one grey waiting slot */}
+            <div
+              style={{
+                background: "#F3F4F8",
+                borderRadius: 16,
+                padding: 14,
+                border: "2px solid #C9CDD9",
+              }}
+            >
+              <div
+                style={{
+                  fontSize: 11,
+                  fontWeight: 800,
+                  letterSpacing: 0.6,
+                  color: COLORS.textMuted,
+                  marginBottom: 10,
+                }}
+              >
+                {pack.boardNextYearLabel || "NEXT YEAR"}
+              </div>
+              {(waitingProjects.length ? waitingProjects : [null]).map((p, i) => (
+                <div
+                  key={`wait-${p?.id || i}`}
+                  style={{
+                    minHeight: 88,
+                    borderRadius: 14,
+                    background: COLORS.white,
+                    border: "2.5px dashed #B8BCC8",
+                    padding: 12,
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    textAlign: "center",
+                    gap: 4,
+                  }}
+                >
+                  <div
+                    style={{
+                      fontSize: 10,
+                      fontWeight: 800,
+                      color: COLORS.textMuted,
+                      letterSpacing: 0.5,
+                    }}
+                  >
+                    {pack.nextSlotLabel || "WAITING"}
+                  </div>
+                  <div style={{ fontSize: 28, lineHeight: 1 }} aria-hidden="true">
+                    {p?.emoji || "⏳"}
+                  </div>
+                  <div
+                    style={{
+                      fontWeight: 800,
+                      fontSize: 14,
+                      fontFamily: "'Poppins', sans-serif",
+                      color: COLORS.textDark,
+                      lineHeight: 1.2,
+                    }}
+                  >
+                    {p ? shortReason(p) : "—"}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <button
+            type="button"
+            className="gc-btn"
+            onClick={() => goToPhase("evidenceDrop")}
+            style={{
+              ...primaryBtn,
+              marginTop: 16,
+              width: "100%",
+              padding: "14px 20px",
+              fontSize: 15,
+              boxSizing: "border-box",
+            }}
+          >
+            Continue to Evidence Drop →
+          </button>
+        </div>
+      );
+    }
+
     return (
       <div style={card}>
+        <h2 style={{ fontFamily: "'Poppins', sans-serif", margin: "0 0 4px 0" }}>{pack.title}</h2>
         <h2 style={{ fontFamily: "'Poppins', sans-serif", margin: "0 0 4px 0" }}>{pack.title}</h2>
         <p
           style={{
@@ -992,95 +1223,52 @@ export default function BriefingClient({ student, assignment, briefing, initialS
           </p>
         )}
 
-        {!ops.debrief ? (
-          <button
-            type="button"
-            className="gc-btn"
-            disabled={busy || !canSubmit}
-            onClick={async () => {
-              const result = await grade("opsChoice", {
-                projectIds: ops.picks,
-                chips: ops.chips,
-                justification: "",
-                deferredReasonId: ops.deferredReasonId,
-                allProjectIds: projects.map((p) => p.id),
-              });
-              setToast(result.message || "");
-              setSamLine(result.message || pack.distractorFailMessage || "");
-              setSamState(result.pass ? "celebrating" : "helping");
-              if (result.pass) {
-                const funded = ops.picks.map((id) => projects.find((p) => p.id === id)).filter(Boolean);
-                const waiting = (result.deferredProjectIds || [])
-                  .map((id) => projects.find((p) => p.id === id))
-                  .filter(Boolean);
-                updateState(
-                  {
-                    ops: {
-                      ...ops,
-                      debrief: true,
-                      consequence: {
-                        fundedIds: ops.picks.slice(),
-                        deferredReasonId: result.deferredReasonId || ops.deferredReasonId,
-                        waitingIds: waiting.map((p) => p.id),
-                      },
+        <button
+          type="button"
+          className="gc-btn"
+          disabled={busy || !canSubmit}
+          onClick={async () => {
+            const result = await grade("opsChoice", {
+              projectIds: ops.picks,
+              chips: ops.chips,
+              justification: "",
+              deferredReasonId: ops.deferredReasonId,
+              allProjectIds: projects.map((p) => p.id),
+            });
+            setToast(result.message || "");
+            if (result.pass) {
+              setSamLine(pack.debriefSamLine || "Two funded. One waits until next year.");
+              setSamState("celebrating");
+              setSamAnchor("home");
+              const waiting = (result.deferredProjectIds || [])
+                .map((id) => projects.find((p) => p.id === id))
+                .filter(Boolean);
+              updateState(
+                {
+                  ops: {
+                    ...ops,
+                    debrief: true,
+                    consequence: {
+                      fundedIds: ops.picks.slice(),
+                      deferredReasonId: result.deferredReasonId || ops.deferredReasonId,
+                      waitingIds: waiting.map((p) => p.id),
                     },
                   },
-                  { scores: { ...scores, ops: result } }
-                );
-              }
-            }}
-            style={{
-              ...primaryBtn,
-              opacity: !canSubmit ? 0.5 : 1,
-            }}
-          >
-            Submit council vote
-          </button>
-        ) : (
-          <div style={{ marginTop: 12, background: COLORS.tealSoft, borderRadius: 12, padding: 14 }}>
-            <div style={{ fontSize: 12, fontWeight: 800, color: COLORS.teal, letterSpacing: 0.4, marginBottom: 6 }}>
-              {pack.consequenceTitle || "What improves vs what waits"}
-            </div>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 10 }}>
-              <div style={{ background: COLORS.white, borderRadius: 12, padding: 10 }}>
-                <div style={{ fontWeight: 800, fontSize: 13, marginBottom: 6 }}>Improves now</div>
-                <ul style={{ margin: 0, paddingLeft: 18, fontSize: 12.5, color: COLORS.textDark }}>
-                  {ops.picks.map((id) => {
-                    const p = projects.find((x) => x.id === id);
-                    if (!p) return null;
-                    return (
-                      <li key={id} style={{ marginBottom: 4 }}>
-                        <strong>{p.label}</strong>
-                        {p.improves ? ` — ${p.improves}` : ""}
-                      </li>
-                    );
-                  })}
-                </ul>
-              </div>
-              <div style={{ background: COLORS.white, borderRadius: 12, padding: 10 }}>
-                <div style={{ fontWeight: 800, fontSize: 13, marginBottom: 6 }}>Waiting until next year</div>
-                {(ops.consequence?.waitingIds || waitingTeks.map((p) => p.id)).map((id) => {
-                  const p = projects.find((x) => x.id === id);
-                  if (!p || p.distractor) return null;
-                  return (
-                    <p key={id} style={{ margin: "0 0 6px", fontSize: 12.5 }}>
-                      {p.emoji} <strong>{p.label}</strong>
-                      <br />
-                      <span style={{ color: COLORS.textMuted }}>
-                        {(pack.deferredReasonChips || []).find((c) => c.id === (ops.deferredReasonId || p.reasonId))?.label ||
-                          `Waiting on ${p.reason}`}
-                      </span>
-                    </p>
-                  );
-                })}
-              </div>
-            </div>
-            <p style={{ margin: "0 0 8px", fontSize: 13.5 }}>{renderBold(pack.debrief)}</p>
-            <button type="button" className="gc-btn" onClick={() => goToPhase("evidenceDrop")} style={{ ...primaryBtn, marginTop: 8 }}>
-              Continue to Evidence Drop →
-            </button>
-          </div>
-        )}
+                },
+                { scores: { ...scores, ops: result } }
+              );
+            } else {
+              setSamLine(result.message || pack.distractorFailMessage || "");
+              setSamState("helping");
+            }
+          }}
+          style={{
+            ...primaryBtn,
+            opacity: !canSubmit ? 0.5 : 1,
+          }}
+        >
+          Submit council vote
+        </button>
       </div>
     );
   }
