@@ -82,13 +82,38 @@ corrected to `3.6A-SC`, `4.10B-SC`, and `5.13B-SC` (grade 5 content fully
 rewritten to be behavior-only) after checking the real PDFs. The old,
 now-unused files are still in the repo but nothing imports them anymore.
 
-
-### Classification Lab (`classification_lab` engine)
+### Signal Defense (`signal_defense` engine)
 
 | Standard (with suffix) | TEKS code | Grade | Subject | Topic |
 |---|---|---|---|---|
-| `3.6B-CL` | 3.6B | 3 | Science | States of matter (solid / liquid / gas) |
+| `3.6A-SD` | 3.6A | 3 | Science | Physical properties of matter (mass, magnetism, floating/sinking) |
+| `3.6B-SD` | 3.6B | 3 | Science | States of matter (solid / liquid / gas) |
+| `3.6C-SD` | 3.6C | 3 | Science | Changes of state (melting, freezing, evaporation) |
+| `3.6D-SD` | 3.6D | 3 | Science | Material properties & combining materials |
+| `3.7A-SD` | 3.7A | 3 | Science | Types of forces (push/pull, contact forces) |
+| `3.7B-SD` | 3.7B | 3 | Science | Forces and motion (speed, effects of force) |
+| `3.8A-SD` | 3.8A | 3 | Science | Forms of energy (light, heat, sound) |
+| `3.8B-SD` | 3.8B | 3 | Science | Mechanical energy |
+| `3.9A-SD` | 3.9A | 3 | Science | Earth's rotation (day & night) |
+| `3.9B-SD` | 3.9B | 3 | Science | The solar system |
+| `3.10A-SD` | 3.10A | 3 | Science | Weather tools & measurement |
+| `3.10B-SD` | 3.10B | 3 | Science | Soil composition |
+| `3.10C-SD` | 3.10C | 3 | Science | Rapid vs. slow changes to Earth's surface |
+| `3.11A-SD` | 3.11A | 3 | Science | Natural resources & their uses |
+| `3.11B-SD` | 3.11B | 3 | Science | Conservation of natural resources |
+| `3.11C-SD` | 3.11C | 3 | Science | Reduce, reuse, recycle |
+| `3.12A-SD` | 3.12A | 3 | Science | Animal behaviors & adaptation (migration, hibernation, instinct) |
+| `3.12B-SD` | 3.12B | 3 | Science | Food chains & energy flow |
+| `3.12C-SD` | 3.12C | 3 | Science | Environmental changes (floods/droughts) affecting organisms |
+| `3.12D-SD` | 3.12D | 3 | Science | Fossils as evidence of past life/environments |
+| `3.13A-SD` | 3.13A | 3 | Science | External structures & survival adaptations |
+| `3.13B-SD` | 3.13B | 3 | Science | Life cycles (complete/incomplete metamorphosis, plant life cycle) |
 
-Note the `-CL` suffix: bare `3.6B` is already used by Group Chat Science content, and `SS.3.6B-SC` is Social Studies scarcity — the Classification Lab suffix keeps `cases.standard` unique, same convention as `-SC` / `-SL` / `-MM` / `-BN`.
-
-Verified against Emily's Grade 3 Science TEKS PDF (adopted 2021 / effective 2024–2025): **3.6B** — describe and classify matter as solids, liquids, and gases (students also demonstrate definite shape / takes shape of container). Logged Sept 11, 2026 with the Classification Lab pilot case.
+Note the `-SD` suffix: these bare TEKS roots (e.g. `3.6A`) are already used by
+an existing Group Chat case, so the suffix keeps `cases.standard` unique —
+same convention as `-SC` / `-SL` / `-MM` / `-BN` / `-CL`. All 22 are the whole-
+group review-question banks Emily authored in
+`FrequencyRush_ReviewQuestions_<standard>_v1.md` (Grade 3 Science, complete
+set), converted into `lib/cases/signal-defense/<standard>-SD.public.js`.
+Logged Sept 11, 2026 alongside the content-pipeline layered pass — `3.6B-SD`
+was the original pilot case; the other 21 were added in the same pass.

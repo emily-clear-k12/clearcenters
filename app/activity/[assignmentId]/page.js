@@ -5,13 +5,13 @@ import { getPublicCase } from "../../../lib/cases/index.public";
 import { getSignalCheckPublicCase } from "../../../lib/cases/signal-check/index.public";
 import { getMissionMapPublicCase } from "../../../lib/cases/mission-map/index.public";
 import { getSimulationLabPublicCase } from "../../../lib/cases/simulation-lab/index.public";
-import { getClassificationLabPublicCase } from "../../../lib/cases/classification-lab/index.public";
+import { getSignalDefensePublicCase } from "../../../lib/cases/signal-defense/index.public";
 import ActivityClient from "./ActivityClient";
 import SignalCheckClient from "./SignalCheckClient";
 import MissionMapClient from "./MissionMapClient";
 import SimulationLabClient from "./SimulationLabClient";
-import ClassificationLabClient from "./ClassificationLabClient";
 import FrequencyRushClient from "./FrequencyRushClient";
+import SignalDefenseClient from "./SignalDefenseClient";
 
 export default async function ActivityPage({ params }) {
   const { assignmentId } = params;
@@ -89,6 +89,28 @@ export default async function ActivityPage({ params }) {
       />
     );
   }
+  // Signal Ops / Signal Defense's own branch, added Sept 11 2026 alongside
+  // its first case (3.6B-SD) — same early-return shape as Frequency Rush
+  // just above, since this first pass has no submission/grading data to
+  // gate on yet either (see SignalDefenseClient.js for what's deliberately
+  // not wired up yet: live sync, persistence).
+  //
+  // Layered pass #1 (content pipeline, same day): now loads the REAL
+  // per-standard question bank from lib/cases/signal-defense/ by the
+  // assignment's own case_standard, instead of leaving every Signal Defense
+  // assignment stuck on the widget's hardcoded 3.6B bank. Falls back to
+  // `null` (→ widget's built-in bank) if a standard has no authored file yet.
+  const isSignalDefense = engine === "signal_defense";
+  if (isSignalDefense) {
+    const signalDefenseCase = getSignalDefensePublicCase(assignment.case_standard);
+    return (
+      <SignalDefenseClient
+        assignmentId={assignmentId}
+        caseTitle={caseRow ? caseRow.title : null}
+        questionBank={signalDefenseCase ? signalDefenseCase.questions : null}
+      />
+    );
+  }
   // Mission Map's own branch — this was missing entirely until Sept 1, 2026,
   // which meant every Mission Map assignment (3.1-MM, 4.1-MM, 5.1-MM) fell
   // through to the generic group_chat lookup below (which has never heard of
@@ -102,18 +124,11 @@ export default async function ActivityPage({ params }) {
   // repeating the exact missing-branch bug class documented above for
   // Mission Map.
   const isSimulationLab = engine === "simulation_lab";
-  // Classification Lab's own branch, added Sept 11 2026 alongside the engine's
-  // first case (3.6B-CL) — added up front, same lesson as Simulation Lab /
-  // Mission Map: flip the activity route the same day the first case ships.
-  const isClassificationLab = engine === "classification_lab";
-
-  const caseEntry = isSignalCheck || isMissionMap || isSimulationLab || isClassificationLab ? null : getPublicCase(assignment.case_standard);
+  const caseEntry = isSignalCheck || isMissionMap || isSimulationLab ? null : getPublicCase(assignment.case_standard);
   const signalCheckCase = isSignalCheck ? getSignalCheckPublicCase(assignment.case_standard) : null;
   const missionMapCase = isMissionMap ? getMissionMapPublicCase(assignment.case_standard) : null;
   const simulationLabCase = isSimulationLab ? getSimulationLabPublicCase(assignment.case_standard) : null;
-  const classificationLabCase = isClassificationLab ? getClassificationLabPublicCase(assignment.case_standard) : null;
-
-  if (!caseEntry && !signalCheckCase && !missionMapCase && !simulationLabCase && !classificationLabCase) {
+  if (!caseEntry && !signalCheckCase && !missionMapCase && !simulationLabCase) {
     return (
       <div style={{ minHeight: "100vh", background: "#16243F", display: "flex", alignItems: "center", justifyContent: "center", color: "#FFFFFF", fontFamily: "sans-serif", textAlign: "center", padding: 20 }}>
         <div>
@@ -185,24 +200,6 @@ export default async function ActivityPage({ params }) {
         revisionFeedback={revisionFeedback}
         samSkin={student.equipped_sam_skin}
         samNickname={student.sam_nickname}
-      />
-    );
-  }
-
-  if (isClassificationLab) {
-    return (
-      <ClassificationLabClient
-        assignmentId={assignmentId}
-        studentId={studentId}
-        caseStandard={assignment.case_standard}
-        publicCase={classificationLabCase}
-        existingSubmission={existingSubmission}
-        alreadySubmitted={alreadySubmitted}
-        revisionRequested={revisionRequested}
-        revisionFeedback={revisionFeedback}
-        samSkin={student.equipped_sam_skin}
-        samNickname={student.sam_nickname}
-        pacingMode={assignment.pacing_mode || "steady"}
       />
     );
   }

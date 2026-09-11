@@ -47,7 +47,6 @@ const ENGINE_LABELS = {
   mission_map: "MISSION MAP",
   simulation_lab: "SIMULATION LAB",
   frequency_rush: "FREQUENCY RUSH",
-  classification_lab: "CLASSIFICATION LAB",
 };
 function engineTag(engine) {
   return ENGINE_LABELS[engine] || "GROUP CHAT";
