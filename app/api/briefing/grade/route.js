@@ -91,6 +91,34 @@ export async function POST(request) {
     });
   }
 
+  if (phase === "reasonSort") {
+    const assignments = payload?.assignments || {};
+    const keys = server.reasonSort?.answers || {};
+    const results = {};
+    let correct = 0;
+    const total = Object.keys(keys).length;
+    for (const [id, expected] of Object.entries(keys)) {
+      const got = assignments[id];
+      const ok = got === expected;
+      results[id] = { correct: ok, expected, got: got || null };
+      if (ok) correct += 1;
+    }
+    const missIds = Object.entries(results)
+      .filter(([, r]) => !r.correct)
+      .map(([id]) => id);
+    return NextResponse.json({
+      pass: correct === total && total > 0,
+      correct,
+      total,
+      results,
+      missIds,
+      message:
+        correct === total
+          ? "Reason Sort locked — all clues match."
+          : "Some clues need another bin. Tap a miss and try again.",
+    });
+  }
+
   if (phase === "opsChoice") {
     const picks = payload?.projectIds || [];
     const chips = payload?.chips || [];
