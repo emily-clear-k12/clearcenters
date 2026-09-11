@@ -92,7 +92,9 @@ function migratePhaseState(saved) {
       picks: ops.picks || [],
       chips: ops.chips || [],
       justification: ops.justification || "",
+      deferredReasonId: ops.deferredReasonId || "",
       debrief: Boolean(ops.debrief),
+      consequence: ops.consequence || null,
     },
     evidence: {
       sceneId: evidence.sceneId || "",
@@ -115,6 +117,91 @@ function migratePhaseState(saved) {
 
 function projectLabel(briefing, id) {
   return briefing.opsChoice.projects.find((p) => p.id === id)?.label || id;
+}
+
+function teksProjects(briefing) {
+  return (briefing.opsChoice?.projects || []).filter((p) => p.teks !== false && !p.distractor);
+}
+
+function deferredTeksProject(briefing, picks) {
+  const funded = new Set(picks || []);
+  const waiting = teksProjects(briefing).filter((p) => !funded.has(p.id));
+  return waiting.length === 1 ? waiting[0] : null;
+}
+
+function evidenceChipToReasonChoice(chip) {
+  const map = {
+    "posted rules / firefighters / speed limits": "a",
+    "place to worship freely": "b",
+    "market, farms, jobs, homes": "c",
+  };
+  return map[chip] || null;
+}
+
+function reasonIdToChoice(reasonId) {
+  const map = {
+    security: "a",
+    religious: "b",
+    material: "c",
+    "security and laws": "a",
+    "religious freedom": "b",
+    "material well-being": "c",
+  };
+  return map[reasonId] || null;
+}
+
+function PostcardMissionTrail({ briefing, art, evidence, compact }) {
+  const ev = evidence || {};
+  const scene = (briefing.evidenceDrop?.frontScenes || []).find((s) => s.id === ev.sceneId);
+  const img = scene?.imageKey ? art?.[scene.imageKey] : null;
+  if (!ev.sceneId && !ev.reason && !ev.evidence) return null;
+  return (
+    <div
+      style={{
+        marginTop: compact ? 12 : 16,
+        borderRadius: 16,
+        border: `2px solid ${COLORS.violet}`,
+        background: COLORS.white,
+        padding: compact ? 12 : 16,
+        boxShadow: "0 8px 20px rgba(123,93,255,.12)",
+      }}
+    >
+      <div style={{ fontSize: 11, fontWeight: 800, color: COLORS.gold, letterSpacing: 0.5, marginBottom: 8 }}>
+        {briefing.clearance?.postcardReceivedLabel || "HQ received · mission trail postcard"}
+      </div>
+      <div style={{ display: "grid", gridTemplateColumns: compact ? "1fr" : "140px 1fr", gap: 12, alignItems: "center" }}>
+        <div
+          style={{
+            borderRadius: 12,
+            overflow: "hidden",
+            background: COLORS.violetSoft,
+            minHeight: 96,
+            display: "grid",
+            placeItems: "center",
+            fontSize: 36,
+          }}
+        >
+          {img ? (
+            <img src={img} alt="" style={{ width: "100%", height: 110, objectFit: "cover", display: "block" }} />
+          ) : (
+            <span aria-hidden="true">{scene?.sticker || "✉️"}</span>
+          )}
+        </div>
+        <div>
+          <div style={{ fontSize: 12, fontWeight: 700, color: COLORS.teal, marginBottom: 4 }}>POSTCARD · BACK</div>
+          <p style={{ margin: 0, fontSize: 14, color: COLORS.textDark, lineHeight: 1.45 }}>
+            People formed our community for <strong>{ev.reason || "—"}</strong>. You can see it because{" "}
+            <strong>{ev.evidence || "—"}</strong>.
+          </p>
+          {scene?.label && (
+            <p style={{ margin: "8px 0 0", fontSize: 12, color: COLORS.textMuted }}>
+              Front scene: <strong style={{ color: COLORS.textDark }}>{scene.label}</strong>
+            </p>
+          )}
+        </div>
+      </div>
+    </div>
+  );
 }
 
 function reasonFromChip(chip) {
@@ -723,15 +810,40 @@ export default function BriefingClient({ student, assignment, briefing, initialS
 
   function OpsChoice() {
     const ops = phaseState.ops;
+    const pack = briefing.opsChoice;
+    const projects = pack.projects || [];
+    const teksList = teksProjects(briefing);
+    const deferredProj = deferredTeksProject(briefing, ops.picks);
+    const pickCount = pack.pickCount || 2;
+
     const toggle = (id) => {
+      if (ops.debrief) return;
       let picks = ops.picks.includes(id) ? ops.picks.filter((p) => p !== id) : [...ops.picks, id];
-      if (picks.length > briefing.opsChoice.pickCount) picks = picks.slice(-briefing.opsChoice.pickCount);
+      if (picks.length > pickCount) picks = picks.slice(-pickCount);
       setSamAnchor("chips");
-      updateState({ ops: { ...ops, picks } }, { skipSave: true });
+      // Clearing picks resets deferred chip if the waiting project changed.
+      const nextDeferred = deferredTeksProject(briefing, picks);
+      const keepDeferred =
+        nextDeferred && ops.deferredReasonId && nextDeferred.reasonId === ops.deferredReasonId
+          ? ops.deferredReasonId
+          : "";
+      updateState({ ops: { ...ops, picks, deferredReasonId: keepDeferred, consequence: null } }, { skipSave: true });
     };
+
+    const slots = Array.from({ length: pickCount }, (_, i) => {
+      const id = ops.picks[i];
+      return id ? projects.find((p) => p.id === id) || { id, label: id, emoji: "📌" } : null;
+    });
+
+    const waitingTeks = teksList.filter((p) => !ops.picks.includes(p.id));
+    const canSubmit =
+      ops.picks.length === pickCount &&
+      ops.chips.length > 0 &&
+      Boolean(ops.deferredReasonId);
+
     return (
       <div style={card}>
-        <h2 style={{ fontFamily: "'Poppins', sans-serif", margin: "0 0 4px 0" }}>{briefing.opsChoice.title}</h2>
+        <h2 style={{ fontFamily: "'Poppins', sans-serif", margin: "0 0 4px 0" }}>{pack.title}</h2>
         <p
           style={{
             fontSize: 16,
@@ -741,44 +853,103 @@ export default function BriefingClient({ student, assignment, briefing, initialS
             margin: "0 0 6px 0",
           }}
         >
-          {briefing.opsChoice.pickHeader || `Pick exactly ${briefing.opsChoice.pickCount}`}
+          {pack.pickHeader || `Pick exactly ${pickCount}`}
         </p>
-        <p style={{ fontSize: 13.5, color: COLORS.textMuted, marginTop: 0 }}>{renderBold(briefing.opsChoice.constraint)}</p>
+        <p style={{ fontSize: 13.5, color: COLORS.textMuted, marginTop: 0 }}>{renderBold(pack.constraint)}</p>
+
+        {/* Fund meter — two slots */}
+        <div
+          style={{
+            margin: "12px 0 8px",
+            background: COLORS.cream,
+            borderRadius: 14,
+            padding: 12,
+            border: `1.5px solid #E1E2EE`,
+          }}
+        >
+          <div style={{ fontSize: 11.5, fontWeight: 800, color: COLORS.violet, letterSpacing: 0.4, marginBottom: 8 }}>
+            {pack.fundMeterLabel || "Fund meter — fill 2 slots"}
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: `repeat(${pickCount}, minmax(0, 1fr))`, gap: 10 }}>
+            {slots.map((slot, i) => (
+              <div
+                key={`slot-${i}`}
+                style={{
+                  minHeight: 64,
+                  borderRadius: 12,
+                  border: `2px ${slot ? "solid" : "dashed"} ${slot ? COLORS.violet : "#C9CDD9"}`,
+                  background: slot ? COLORS.violetSoft : COLORS.white,
+                  padding: 10,
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 8,
+                }}
+              >
+                <span style={{ fontSize: 22 }} aria-hidden="true">
+                  {slot ? slot.emoji || "✅" : "⬜"}
+                </span>
+                <div style={{ fontSize: 12.5, fontWeight: 700, color: COLORS.textDark, lineHeight: 1.25 }}>
+                  {slot ? slot.label : `Open fund slot ${i + 1}`}
+                </div>
+              </div>
+            ))}
+          </div>
+          {ops.picks.length === pickCount && waitingTeks.length > 0 && !ops.picks.some((id) => projects.find((p) => p.id === id)?.distractor) && (
+            <div style={{ marginTop: 10, fontSize: 12.5, color: COLORS.textMuted }}>
+              <strong style={{ color: COLORS.textDark }}>{pack.waitingLabel || "Waiting until next year"}:</strong>{" "}
+              {waitingTeks.map((p) => `${p.emoji || ""} ${p.label}`).join(" · ")}
+            </div>
+          )}
+        </div>
+
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 12, margin: "14px 0" }}>
-          {briefing.opsChoice.projects.map((p) => {
+          {projects.map((p) => {
             const on = ops.picks.includes(p.id);
+            const isDistractor = Boolean(p.distractor);
             return (
               <button
                 key={p.id}
                 type="button"
                 className="gc-btn"
+                disabled={ops.debrief}
                 onClick={() => toggle(p.id)}
                 style={{
                   textAlign: "left",
                   borderRadius: 16,
                   padding: "18px 16px",
                   minHeight: 118,
-                  border: `2.5px solid ${on ? COLORS.violet : "#E1E2EE"}`,
-                  background: on ? COLORS.violetSoft : COLORS.white,
+                  border: `2.5px solid ${on ? (isDistractor ? "#F59E0B" : COLORS.violet) : "#E1E2EE"}`,
+                  background: on ? (isDistractor ? "#FFF7E6" : COLORS.violetSoft) : COLORS.white,
                   color: COLORS.textDark,
                   boxShadow: on ? "0 8px 18px rgba(123,93,255,.18)" : "0 4px 12px rgba(13,27,42,.06)",
+                  opacity: ops.debrief ? 0.92 : 1,
                 }}
               >
-                <div style={{ fontSize: 28, marginBottom: 6 }} aria-hidden="true">{p.emoji || "📌"}</div>
+                <div style={{ fontSize: 28, marginBottom: 6 }} aria-hidden="true">
+                  {p.emoji || "📌"}
+                </div>
                 <div style={{ fontWeight: 800, fontSize: 14.5, fontFamily: "'Poppins', sans-serif" }}>{p.label}</div>
-                <div style={{ fontSize: 12.5, color: COLORS.textMuted, marginTop: 4 }}>{p.reason}</div>
-                {on && <div style={{ marginTop: 8, fontSize: 12, fontWeight: 700, color: COLORS.violet }}>✓ Funded</div>}
+                <div style={{ fontSize: 12.5, color: isDistractor ? "#B45309" : COLORS.textMuted, marginTop: 4 }}>
+                  {p.reason}
+                </div>
+                {on && (
+                  <div style={{ marginTop: 8, fontSize: 12, fontWeight: 700, color: isDistractor ? "#B45309" : COLORS.violet }}>
+                    {isDistractor ? "★ Tempting pick" : "✓ Funded"}
+                  </div>
+                )}
               </button>
             );
           })}
         </div>
+
         <label style={labelStyle}>Why these two? (pick chips)</label>
         <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 8 }}>
-          {briefing.opsChoice.justificationChips.map((chip) => (
+          {(pack.justificationChips || []).map((chip) => (
             <button
               key={chip}
               type="button"
               className="gc-btn"
+              disabled={ops.debrief}
               onClick={() => {
                 const chips = ops.chips.includes(chip) ? ops.chips.filter((c) => c !== chip) : [...ops.chips, chip];
                 updateState({ ops: { ...ops, chips } }, { skipSave: true });
@@ -789,36 +960,123 @@ export default function BriefingClient({ student, assignment, briefing, initialS
             </button>
           ))}
         </div>
+
+        <label style={labelStyle}>{pack.deferredPrompt || "Name the real community reason that waits until next year:"}</label>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 8 }}>
+          {(pack.deferredReasonChips || []).map((chip) => (
+            <button
+              key={chip.id}
+              type="button"
+              className="gc-btn"
+              disabled={ops.debrief}
+              onClick={() =>
+                updateState(
+                  {
+                    ops: {
+                      ...ops,
+                      deferredReasonId: ops.deferredReasonId === chip.id ? "" : chip.id,
+                    },
+                  },
+                  { skipSave: true }
+                )
+              }
+              style={{ ...chipStyle(ops.deferredReasonId === chip.id), padding: "9px 12px" }}
+            >
+              {chip.label}
+            </button>
+          ))}
+        </div>
+        {deferredProj && ops.deferredReasonId && ops.deferredReasonId !== deferredProj.reasonId && !ops.debrief && (
+          <p style={{ fontSize: 12.5, color: "#B45309", marginTop: 0 }}>
+            Hint: look at which real TEKS project is still waiting in the fund meter.
+          </p>
+        )}
+
         {!ops.debrief ? (
           <button
             type="button"
             className="gc-btn"
-            disabled={busy || ops.picks.length !== briefing.opsChoice.pickCount || ops.chips.length === 0}
+            disabled={busy || !canSubmit}
             onClick={async () => {
               const result = await grade("opsChoice", {
                 projectIds: ops.picks,
                 chips: ops.chips,
                 justification: "",
-                allProjectIds: briefing.opsChoice.projects.map((p) => p.id),
+                deferredReasonId: ops.deferredReasonId,
+                allProjectIds: projects.map((p) => p.id),
               });
               setToast(result.message || "");
-              setSamLine(result.message || "");
-              setSamState(result.pass ? "celebrating" : "thinking");
+              setSamLine(result.message || pack.distractorFailMessage || "");
+              setSamState(result.pass ? "celebrating" : "helping");
               if (result.pass) {
-                updateState({ ops: { ...ops, debrief: true } }, { scores: { ...scores, ops: result } });
+                const funded = ops.picks.map((id) => projects.find((p) => p.id === id)).filter(Boolean);
+                const waiting = (result.deferredProjectIds || [])
+                  .map((id) => projects.find((p) => p.id === id))
+                  .filter(Boolean);
+                updateState(
+                  {
+                    ops: {
+                      ...ops,
+                      debrief: true,
+                      consequence: {
+                        fundedIds: ops.picks.slice(),
+                        deferredReasonId: result.deferredReasonId || ops.deferredReasonId,
+                        waitingIds: waiting.map((p) => p.id),
+                      },
+                    },
+                  },
+                  { scores: { ...scores, ops: result } }
+                );
               }
             }}
             style={{
               ...primaryBtn,
-              opacity: ops.picks.length !== briefing.opsChoice.pickCount || ops.chips.length === 0 ? 0.5 : 1,
+              opacity: !canSubmit ? 0.5 : 1,
             }}
           >
             Submit council vote
           </button>
         ) : (
-          <div style={{ marginTop: 12, background: COLORS.tealSoft, borderRadius: 12, padding: 12 }}>
-            <p style={{ margin: 0, fontSize: 13.5 }}>{renderBold(briefing.opsChoice.debrief)}</p>
-            <button type="button" className="gc-btn" onClick={() => goToPhase("evidenceDrop")} style={{ ...primaryBtn, marginTop: 12 }}>
+          <div style={{ marginTop: 12, background: COLORS.tealSoft, borderRadius: 12, padding: 14 }}>
+            <div style={{ fontSize: 12, fontWeight: 800, color: COLORS.teal, letterSpacing: 0.4, marginBottom: 6 }}>
+              {pack.consequenceTitle || "What improves vs what waits"}
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 10 }}>
+              <div style={{ background: COLORS.white, borderRadius: 12, padding: 10 }}>
+                <div style={{ fontWeight: 800, fontSize: 13, marginBottom: 6 }}>Improves now</div>
+                <ul style={{ margin: 0, paddingLeft: 18, fontSize: 12.5, color: COLORS.textDark }}>
+                  {ops.picks.map((id) => {
+                    const p = projects.find((x) => x.id === id);
+                    if (!p) return null;
+                    return (
+                      <li key={id} style={{ marginBottom: 4 }}>
+                        <strong>{p.label}</strong>
+                        {p.improves ? ` — ${p.improves}` : ""}
+                      </li>
+                    );
+                  })}
+                </ul>
+              </div>
+              <div style={{ background: COLORS.white, borderRadius: 12, padding: 10 }}>
+                <div style={{ fontWeight: 800, fontSize: 13, marginBottom: 6 }}>Waiting until next year</div>
+                {(ops.consequence?.waitingIds || waitingTeks.map((p) => p.id)).map((id) => {
+                  const p = projects.find((x) => x.id === id);
+                  if (!p || p.distractor) return null;
+                  return (
+                    <p key={id} style={{ margin: "0 0 6px", fontSize: 12.5 }}>
+                      {p.emoji} <strong>{p.label}</strong>
+                      <br />
+                      <span style={{ color: COLORS.textMuted }}>
+                        {(pack.deferredReasonChips || []).find((c) => c.id === (ops.deferredReasonId || p.reasonId))?.label ||
+                          `Waiting on ${p.reason}`}
+                      </span>
+                    </p>
+                  );
+                })}
+              </div>
+            </div>
+            <p style={{ margin: "0 0 8px", fontSize: 13.5 }}>{renderBold(pack.debrief)}</p>
+            <button type="button" className="gc-btn" onClick={() => goToPhase("evidenceDrop")} style={{ ...primaryBtn, marginTop: 8 }}>
               Continue to Evidence Drop →
             </button>
           </div>
@@ -832,7 +1090,7 @@ export default function BriefingClient({ student, assignment, briefing, initialS
     const ops = phaseState.ops;
     const funded = (ops.picks || [])
       .map((id) => briefing.opsChoice.projects.find((p) => p.id === id))
-      .filter(Boolean);
+      .filter((p) => p && !p.distractor && p.sceneId);
     const carryPrompt =
       funded.length === 2
         ? (briefing.evidenceDrop.carryForwardPrompt || "You funded {X} & {Y} — pick one to show on your postcard")
@@ -1081,14 +1339,15 @@ export default function BriefingClient({ student, assignment, briefing, initialS
     const gatesOk = progressGates.every((g) => g.done);
     const answersOk = (briefing.clearance.items || []).every((item) => Boolean(cl.answers[item.id]));
 
-    // Dynamic c4: reuse Ops/Evidence when available
+    // Dynamic c4: infer from deferred Ops project or postcard EVIDENCE text — never name the answer in the stem.
+    const deferredProj = deferredTeksProject(briefing, opsPicks);
+    const evidenceText = phaseState.evidence.evidence || "";
     const reuseReason = evReason || reasonFromChip(intelChip);
-    const c4ExpectedMap = {
-      "security and laws": "a",
-      "religious freedom": "b",
-      "material well-being": "c",
-    };
-    const c4Expected = c4ExpectedMap[reuseReason] || null;
+    let c4Expected =
+      reasonIdToChoice(deferredProj?.reasonId) ||
+      evidenceChipToReasonChoice(evidenceText) ||
+      reasonIdToChoice(reuseReason) ||
+      null;
 
     return (
       <div style={card}>
@@ -1137,10 +1396,15 @@ export default function BriefingClient({ student, assignment, briefing, initialS
 
         {briefing.clearance.items.map((item) => {
           let prompt = item.prompt;
-          if (item.dynamicReuse && (fundedLabels.length || reuseReason)) {
-            prompt = reuseReason
-              ? `You showed “${reuseReason}” on your postcard (or claim). Which TEKS reason is that?`
-              : `You funded ${fundedLabels.join(" & ")}. Which TEKS reason matches one of those projects?`;
+          if (item.dynamicReuse) {
+            if (deferredProj) {
+              prompt = "Which reason is Maple Crossing still waiting on?";
+            } else if (evidenceText) {
+              prompt = `Your postcard evidence was “${evidenceText}” — which reason matches?`;
+            } else if (fundedLabels.length) {
+              prompt =
+                "Think about the Founders’ Council vote. Which TEKS reason still matters for Maple Crossing even if it waits?";
+            }
           }
           return (
             <div key={item.id} style={{ marginBottom: 14, background: COLORS.cream, borderRadius: 12, padding: 12 }}>
@@ -1275,6 +1539,7 @@ export default function BriefingClient({ student, assignment, briefing, initialS
             <p style={{ margin: 0, fontSize: 14, fontWeight: 700, color: COLORS.violet }}>
               {briefing.clearance.challengeCta || "Ask your teacher when you're ready for a Challenge"}
             </p>
+            <PostcardMissionTrail briefing={briefing} art={art} evidence={phaseState.evidence} />
             <button type="button" className="gc-btn" onClick={() => router.push("/briefings")} style={{ ...primaryBtn, marginTop: 14 }}>
               Back to My Briefings
             </button>
