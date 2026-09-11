@@ -891,7 +891,7 @@ export default function SimulationLabClient({
           <select
             value={pendingChoiceId || ""}
             onChange={(e) => setPendingChoiceId(e.target.value || null)}
-            style={{ width: "100%", borderRadius: 10, padding: 10, fontSize: 13.5, border: `1px solid ${COLORS.steelLine}`, background: "rgba(255,255,255,.06)", color: COLORS.white, fontFamily: "inherit" }}
+            style={{ width: "100%", borderRadius: 10, padding: 10, fontSize: 13.5, border: `1px solid ${COLORS.steelLine}`, background: "rgba(74,59,112,.06)", color: COLORS.white, fontFamily: "inherit" }}
           >
             <option value="" disabled style={{ color: "#111" }}>Choose one…</option>
             {cp.choices.map((c) => (
@@ -1141,7 +1141,7 @@ export default function SimulationLabClient({
           <select
             value={dataTableSetting ?? ""}
             onChange={(e) => setDataTableSetting(e.target.value === "" ? null : Number(e.target.value))}
-            style={{ width: "100%", borderRadius: 10, padding: 10, fontSize: 13.5, border: `1px solid ${COLORS.steelLine}`, background: "rgba(255,255,255,.06)", color: COLORS.white, fontFamily: "inherit" }}
+            style={{ width: "100%", borderRadius: 10, padding: 10, fontSize: 13.5, border: `1px solid ${COLORS.steelLine}`, background: "rgba(74,59,112,.06)", color: COLORS.white, fontFamily: "inherit" }}
           >
             <option value="" disabled style={{ color: "#111" }}>Choose an untested {variable.label.toLowerCase()}…</option>
             {untestedSettings.map((v) => (
@@ -1181,7 +1181,7 @@ export default function SimulationLabClient({
     return (
       <div style={backgroundStyle}>
         <style>{`.sl-scrim { position: fixed; inset: 0; background: radial-gradient(1200px 700px at 50% -10%, ${COLORS.panel} 0%, ${COLORS.bgTop} 45%, ${COLORS.bgBottom} 100%); z-index: 0; pointer-events: none; }`}</style>
-        <div style={{ position: "relative", zIndex: 2, maxWidth: 640, margin: "40px auto", padding: "60px 20px", textAlign: "center", background: "rgba(26,36,50,.88)", borderRadius: 20, boxShadow: "0 20px 60px rgba(0,0,0,.45)", border: `1px solid ${COLORS.steelLine}` }}>
+        <div style={{ position: "relative", zIndex: 2, maxWidth: 640, margin: "40px auto", padding: "60px 20px", textAlign: "center", background: "rgba(255,255,255,.86)", borderRadius: 20, boxShadow: "0 16px 40px rgba(74,59,112,.12)", border: `1px solid ${COLORS.steelLine}` }}>
           <h1 style={{ fontFamily: "'Poppins', sans-serif" }}>Transmission received, Cadet.</h1>
           {cleanRun && (
             <div style={{ display: "inline-block", background: "rgba(255,166,48,.18)", border: `1px solid ${COLORS.amber}`, borderRadius: 999, padding: "8px 18px", fontWeight: 700, color: COLORS.amber, marginBottom: 14 }}>
@@ -1287,7 +1287,7 @@ export default function SimulationLabClient({
               onClick={handleManualSave}
               disabled={manualSaveState === "saving"}
               style={{
-                background: "rgba(255,255,255,.06)",
+                background: "rgba(74,59,112,.06)",
                 border: `1px solid ${COLORS.steelLine}`,
                 borderRadius: 999, padding: "6px 14px", fontSize: 12, fontWeight: 700, color: COLORS.white,
               }}
