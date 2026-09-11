@@ -123,26 +123,84 @@ export async function POST(request) {
     const picks = payload?.projectIds || [];
     const chips = payload?.chips || [];
     const justification = [payload?.justification, ...chips].filter(Boolean).join(" ");
-    if (picks.length !== (server.opsChoice.requirePickCount || 2)) {
+    const ops = server.opsChoice || {};
+    const requireCount = ops.requirePickCount || 2;
+    const teksIds = ops.teksProjectIds || [];
+    const distractorIds = ops.distractorIds || [];
+    const reasonByProject = ops.projectReasonIds || {};
+
+    if (picks.length !== requireCount) {
       return NextResponse.json({
         pass: false,
-        message: `Pick exactly ${server.opsChoice.requirePickCount || 2} projects.`,
+        softFail: true,
+        message: `Pick exactly ${requireCount} projects.`,
       });
     }
-    if (server.opsChoice.chipsOnlyOk && chips.length === 0 && !String(payload?.justification || "").trim()) {
+
+    const hitDistractor = picks.some((id) => distractorIds.includes(id));
+    if (hitDistractor) {
       return NextResponse.json({
         pass: false,
+        softFail: true,
+        distractor: true,
+        message:
+          "That fun park isn't one of the three community reasons. Pick two projects that help security and laws, religious freedom, or material well-being.",
+      });
+    }
+
+    if (teksIds.length && !picks.every((id) => teksIds.includes(id))) {
+      return NextResponse.json({
+        pass: false,
+        softFail: true,
+        message: "Pick two projects that match real community reasons.",
+      });
+    }
+
+    if (ops.chipsOnlyOk && chips.length === 0 && !String(payload?.justification || "").trim()) {
+      return NextResponse.json({
+        pass: false,
+        softFail: true,
         message: "Tap at least one why chip.",
       });
     }
-    const justified = hasAnyKeyword(justification, server.opsChoice.justificationKeywords);
+
+    const deferredTeks = teksIds.filter((id) => !picks.includes(id));
+    const deferredReasonId = deferredTeks.length === 1 ? reasonByProject[deferredTeks[0]] || null : null;
+    const gotDeferred = String(payload?.deferredReasonId || "").trim();
+    if (ops.requireDeferredReason && deferredReasonId) {
+      if (!gotDeferred) {
+        return NextResponse.json({
+          pass: false,
+          softFail: true,
+          message: "Name the real community reason that waits until next year.",
+          deferredReasonId,
+          deferredProjectIds: deferredTeks,
+        });
+      }
+      if (gotDeferred !== deferredReasonId) {
+        return NextResponse.json({
+          pass: false,
+          softFail: true,
+          message: "Check which real reason is still waiting — then tap that chip.",
+          deferredReasonId,
+          deferredProjectIds: deferredTeks,
+        });
+      }
+    }
+
+    const justified = hasAnyKeyword(justification, ops.justificationKeywords || []);
+    const chipsOk = ops.chipsOnlyOk && chips.length > 0;
+    const pass = justified || chipsOk;
     return NextResponse.json({
-      pass: justified || (server.opsChoice.chipsOnlyOk && chips.length > 0),
+      pass,
+      softFail: !pass,
       deferred: payload?.allProjectIds?.filter((id) => !picks.includes(id)) || [],
-      message:
-        justified || chips.length
-          ? "Council vote recorded. Check the debrief — every TEKS reason still matters."
-          : "Say why using community reasons (safe, believe, food/homes/jobs).",
+      deferredProjectIds: deferredTeks,
+      deferredReasonId,
+      fundedProjectIds: picks,
+      message: pass
+        ? "Council vote recorded. See what improves now — and what waits until next year."
+        : "Say why using community reasons (safe, believe, food/homes/jobs).",
     });
   }
 
