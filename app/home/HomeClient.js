@@ -23,6 +23,24 @@ const HOME_BACKGROUND_LABELS = {
   "/student/hub_background_work_room.jpg": "Work Room",
 };
 
+
+// Every real engine needs an entry here or the Active Mission badge
+// silently falls through to "GROUP CHAT" — Mission Map hit this bug on
+// Aug 30, and Simulation Lab/Frequency Rush hit it again here (this badge
+// was never updated when those two shipped, even though app/missions/
+// MissionsClient.js already has its own copy of this exact map — see that
+// file's ENGINE_LABELS for the same fix). Add new engines here the moment
+// they go live, and keep this in sync with MissionsClient.js's copy.
+const ENGINE_LABELS = {
+  fact_check_desk: "SIGNAL CHECK",
+  mission_map: "MISSION MAP",
+  simulation_lab: "SIMULATION LAB",
+  frequency_rush: "FREQUENCY RUSH",
+  classification_lab: "CLASSIFICATION LAB",
+};
+function engineTag(engine) {
+  return ENGINE_LABELS[engine] || "GROUP CHAT";
+}
 const COLORS = {
   violet: "#7B5DFF",
   violetSoft: "#EDE6FF",
@@ -670,7 +688,7 @@ export default function HomeClient({ student, studentClass, assignments, mission
           >
             <div style={{ display: "flex", gap: 6, marginBottom: 9, flexWrap: "wrap" }}>
               <span style={{ display: "inline-flex", background: "rgba(123,93,255,.35)", color: "#E4DBFF", fontSize: 10, fontWeight: 700, letterSpacing: .4, padding: "4px 11px", borderRadius: 999 }}>
-                YOUR ACTIVE MISSION · {activeMission.cases?.engine === "fact_check_desk" ? "SIGNAL CHECK" : activeMission.cases?.engine === "mission_map" ? "MISSION MAP" : "GROUP CHAT"}
+                YOUR ACTIVE MISSION · {engineTag(activeMission.cases?.engine)}
               </span>
               {activeMission.revisionRequested && (
                 <span style={{ display: "inline-flex", background: "rgba(255,196,77,.3)", color: "#FFE7B0", fontSize: 10, fontWeight: 700, letterSpacing: .4, padding: "4px 11px", borderRadius: 999 }}>

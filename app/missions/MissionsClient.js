@@ -39,10 +39,15 @@ function subjectRingColor(subject) {
 // Every real engine needs an entry here or it silently falls through to
 // "GROUP CHAT" — that's exactly the bug Mission Map hit on Aug 30 (its
 // cases rendered as "SCIENCE · GROUP CHAT" until this map got a
-// "mission_map" entry). Add new engines here the moment they go live.
+// "mission_map" entry), and the same bug Simulation Lab and Frequency Rush
+// hit here until this fix — add new engines here the moment they go live.
+// Keep this in sync with app/home/HomeClient.js's own copy of this map.
 const ENGINE_LABELS = {
   fact_check_desk: "SIGNAL CHECK",
   mission_map: "MISSION MAP",
+  simulation_lab: "SIMULATION LAB",
+  frequency_rush: "FREQUENCY RUSH",
+  classification_lab: "CLASSIFICATION LAB",
 };
 function engineTag(engine) {
   return ENGINE_LABELS[engine] || "GROUP CHAT";

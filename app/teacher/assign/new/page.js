@@ -35,6 +35,7 @@ const COLORS = {
 // (see ClearCenters_STATE.md's fourth Aug 30 session-log entry) — flip this
 // flag to `real: true` the same day a new engine's first case is authored,
 // not as an afterthought once someone notices the tile is disabled.
+// Classification Lab flipped `real: true` Sept 11 2026 with pilot 3.6B-CL.
 const CHALLENGE_TYPES = [
   { key: "group_chat", label: "Group Chat", image: "/teacher/challenges/group_chat.jpg", real: true,
     description: "Students role-play as characters, concepts, or parts of a system in a live group chat, using evidence to prove what's really going on." },
@@ -59,8 +60,9 @@ const CHALLENGE_TYPES = [
   // placeholder unit until the real Grade 3 vocabulary content is loaded.
   { key: "frequency_rush", label: "Frequency Rush", image: "/teacher/challenges/frequency_rush.jpg", real: true,
     description: "Students race the clock to lock onto the right definition before the signal scrambles — fast vocabulary review with streaks and speed bonuses, replayable anytime as practice." },
-  { key: "classification_lab", label: "Classification Lab", image: "/teacher/challenges/classification_lab.jpg", real: false,
+  { key: "classification_lab", label: "Classification Lab", image: "/teacher/challenges/classification_lab.jpg", real: true,
     description: "Items come down a conveyor belt. Students sort them into the correct bins, then justify one deliberately tricky case in writing." },
+  // real:true flipped Sept 11 2026 with pilot case 3.6B-CL (States of Matter).
   { key: "territory_builder", label: "Territory Builder", image: "/teacher/challenges/territory_builder.jpg", real: false,
     description: "Students place things on an actual map — habitats, settlements, resources — and get feedback on whether the placement actually holds up." },
   // Added Sept 11 2026 — "Signal Ops" is the new umbrella name for the group
@@ -123,6 +125,9 @@ function NewAssignmentContent() {
   // out the instant the goal is cleared even if no teacher is watching).
   // 0/blank means no reward, just the shared meter.
   const [distressCallRewardPoints, setDistressCallRewardPoints] = useState("");
+  // Classification Lab pacing (Sept 11 2026 design lock): Steady vs Timed Belt.
+  // Stored on assignments.pacing_mode when that column exists (see docs/classification-lab/3-6B-CL-seed.sql).
+  const [pacingMode, setPacingMode] = useState("steady");
 
   const [challengeStep, setChallengeStep] = useState("library");
   const [selectedChallenge, setSelectedChallenge] = useState(null);
@@ -181,6 +186,9 @@ function NewAssignmentContent() {
 
     const distressCallSupported = engineSupportsDistressCall(selectedCase.engine);
     const assignmentFields = { class_id: assignClassId, case_standard: selectedCase.standard, due_date: dueDate || null };
+    if (selectedCase.engine === "classification_lab") {
+      assignmentFields.pacing_mode = pacingMode === "timed" ? "timed" : "steady";
+    }
     if (distressCallSupported && distressCallEnabled) {
       assignmentFields.distress_call = true;
       assignmentFields.distress_call_target = distressCallTarget ? parseInt(distressCallTarget, 10) : null;
@@ -217,6 +225,7 @@ function NewAssignmentContent() {
   function assignAnother() {
     setSelectedCase(null);
     setDueDate("");
+    setPacingMode("steady");
     setChallengeStep("library");
     setSelectedChallenge(null);
     setAssignedSuccess(false);
@@ -389,7 +398,7 @@ function NewAssignmentContent() {
                       {filteredCases.map((c) => {
                         const isSelected = selectedCase && selectedCase.standard === c.standard;
                         return (
-                          <button key={c.standard} className="gc-btn" onClick={() => setSelectedCase(c)} style={{ textAlign: "left", background: isSelected ? COLORS.violetSoft : COLORS.white, border: isSelected ? `2px solid ${COLORS.violet}` : "2px solid transparent", borderRadius: 14, overflow: "hidden", padding: 0, boxShadow: "0 2px 8px rgba(13,27,42,.05)" }}>
+                          <button key={c.standard} className="gc-btn" onClick={() => { setSelectedCase(c); setPacingMode("steady"); }} style={{ textAlign: "left", background: isSelected ? COLORS.violetSoft : COLORS.white, border: isSelected ? `2px solid ${COLORS.violet}` : "2px solid transparent", borderRadius: 14, overflow: "hidden", padding: 0, boxShadow: "0 2px 8px rgba(13,27,42,.05)" }}>
                             <div style={{ height: 88, overflow: "hidden" }}>
                               <img src={caseImagePath(c.standard)} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
                             </div>
@@ -514,6 +523,23 @@ function NewAssignmentContent() {
                         </div>
                       )}
                     </>
+                  )}
+
+                  {selectedCase.engine === "classification_lab" && (
+                    <div style={{ marginBottom: 14 }}>
+                      <div style={{ fontWeight: 700, fontSize: 13, marginBottom: 8 }}>Pacing</div>
+                      <p style={{ fontSize: 11.5, color: COLORS.textMuted, margin: "0 0 8px" }}>
+                        Steady waits for each sort. Timed Belt auto-advances if time runs out (counts as a miss). Recommended for Grade 3: Steady.
+                      </p>
+                      <div style={{ display: "inline-flex", background: COLORS.cream, borderRadius: 999, padding: 3, gap: 3 }}>
+                        <button type="button" className="gc-btn" onClick={() => setPacingMode("steady")} style={{ border: "none", padding: "7px 16px", borderRadius: 999, fontWeight: 700, fontSize: 12.5, background: pacingMode === "steady" ? COLORS.violet : "transparent", color: pacingMode === "steady" ? COLORS.white : COLORS.textMuted }}>
+                          Steady
+                        </button>
+                        <button type="button" className="gc-btn" onClick={() => setPacingMode("timed")} style={{ border: "none", padding: "7px 16px", borderRadius: 999, fontWeight: 700, fontSize: 12.5, background: pacingMode === "timed" ? COLORS.violet : "transparent", color: pacingMode === "timed" ? COLORS.white : COLORS.textMuted }}>
+                          Timed Belt
+                        </button>
+                      </div>
+                    </div>
                   )}
 
                   <div style={{ fontWeight: 700, fontSize: 13, marginBottom: 10 }}>6. Due date (optional)</div>

@@ -81,3 +81,14 @@ physical-trait concept into a grade 5 behavior standard. All three were
 corrected to `3.6A-SC`, `4.10B-SC`, and `5.13B-SC` (grade 5 content fully
 rewritten to be behavior-only) after checking the real PDFs. The old,
 now-unused files are still in the repo but nothing imports them anymore.
+
+
+### Classification Lab (`classification_lab` engine)
+
+| Standard (with suffix) | TEKS code | Grade | Subject | Topic |
+|---|---|---|---|---|
+| `3.6B-CL` | 3.6B | 3 | Science | States of matter (solid / liquid / gas) |
+
+Note the `-CL` suffix: bare `3.6B` is already used by Group Chat Science content, and `SS.3.6B-SC` is Social Studies scarcity — the Classification Lab suffix keeps `cases.standard` unique, same convention as `-SC` / `-SL` / `-MM` / `-BN`.
+
+Verified against Emily's Grade 3 Science TEKS PDF (adopted 2021 / effective 2024–2025): **3.6B** — describe and classify matter as solids, liquids, and gases (students also demonstrate definite shape / takes shape of container). Logged Sept 11, 2026 with the Classification Lab pilot case.
