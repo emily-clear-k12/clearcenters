@@ -723,7 +723,7 @@ export default function SimulationLabClient({
         <SamIcon skinKey={samSkin} alt={samLabel} size={28} />
         <div>
           <div style={{ fontSize: 10.5, fontWeight: 700, color: COLORS.amber, marginBottom: 2, letterSpacing: 0.5 }}>{samLabel}</div>
-          <div style={{ fontSize: 13.5, color: "rgba(234,240,246,.9)" }}>{samLine}</div>
+          <div style={{ fontSize: 13.5, color: COLORS.ink }}>{samLine}</div>
         </div>
       </div>
     );
@@ -736,7 +736,7 @@ export default function SimulationLabClient({
       <div style={{ background: COLORS.panel, border: `1px solid ${COLORS.steelLine}`, borderRadius: 16, padding: 18, marginBottom: 18 }}>
         <div style={{ fontSize: 11, letterSpacing: 1, color: COLORS.amber, fontWeight: 700, marginBottom: 10 }}>{step.title.toUpperCase()}</div>
         <StepImage src={step.imageUrl} alt={step.title} />
-        <p style={{ color: "rgba(234,240,246,.85)", lineHeight: 1.6 }}>{step.text}</p>
+        <p style={{ color: COLORS.ink, lineHeight: 1.6 }}>{step.text}</p>
         <button className="sl-btn" onClick={() => setLabStep("pretrialVariables")}
           style={{ background: COLORS.amber, color: "#1A1200", borderRadius: 12, padding: "12px 22px", fontWeight: 700, fontSize: 14.5 }}>
           Next →
@@ -779,7 +779,7 @@ export default function SimulationLabClient({
       <div style={{ background: COLORS.panel, border: `1px solid ${COLORS.steelLine}`, borderRadius: 16, padding: 18, marginBottom: 18 }}>
         <div style={{ fontSize: 11, letterSpacing: 1, color: COLORS.amber, fontWeight: 700, marginBottom: 10 }}>{step.title.toUpperCase()}</div>
         <StepImage src={step.imageUrl} alt={step.title} />
-        <p style={{ color: "rgba(234,240,246,.85)", lineHeight: 1.6 }}>{step.text}</p>
+        <p style={{ color: COLORS.ink, lineHeight: 1.6 }}>{step.text}</p>
 
         <div style={{ fontSize: 13, color: COLORS.textMuted, fontWeight: 700, marginBottom: 10, letterSpacing: 0.3 }}>
           TAP THE ONE THING YOU'RE ALLOWED TO CHANGE BETWEEN TRIALS:
@@ -1116,7 +1116,7 @@ export default function SimulationLabClient({
     return (
       <div style={{ background: COLORS.panel, border: `1px solid ${COLORS.cyan}55`, borderRadius: 16, padding: 18, marginBottom: 18, textAlign: "center" }}>
         <div style={{ fontSize: 11, letterSpacing: 1, color: COLORS.cyan, fontWeight: 700, marginBottom: 10 }}>CONDITIONS CHANGED</div>
-        <p style={{ fontSize: 15, lineHeight: 1.6, color: "rgba(234,240,246,.9)" }}>{publicCase.roundTwo.conditionChangeDescription}</p>
+        <p style={{ fontSize: 15, lineHeight: 1.6, color: COLORS.ink }}>{publicCase.roundTwo.conditionChangeDescription}</p>
         <button
           className="sl-btn"
           onClick={beginRoundTwo}
@@ -1134,7 +1134,7 @@ export default function SimulationLabClient({
     return (
       <div style={{ background: COLORS.panel, border: `1px solid ${COLORS.cyan}55`, borderRadius: 16, padding: 18, marginBottom: 18 }}>
         <div style={{ fontSize: 11, letterSpacing: 1, color: COLORS.cyan, fontWeight: 700, marginBottom: 10 }}>DATA TABLE</div>
-        <div style={{ fontSize: 13.5, color: "rgba(234,240,246,.85)", marginBottom: 14 }}>{step.instructions}</div>
+        <div style={{ fontSize: 13.5, color: COLORS.ink, marginBottom: 14 }}>{step.instructions}</div>
 
         <div style={{ marginBottom: 14 }}>
           <div style={{ fontSize: 12, color: COLORS.textMuted, marginBottom: 6 }}>Pick a {variable.label.toLowerCase()} you never tried this round:</div>
@@ -1305,7 +1305,7 @@ export default function SimulationLabClient({
         {phase === "brief" && (
           <div>
             <h1 style={{ fontFamily: "'Poppins', sans-serif", fontSize: 24 }}>{publicCase.title}</h1>
-            <p style={{ color: "rgba(234,240,246,.85)", lineHeight: 1.6 }}>{publicCase.system.framing}</p>
+            <p style={{ color: COLORS.ink, lineHeight: 1.6 }}>{publicCase.system.framing}</p>
             <div style={{ background: COLORS.panel, border: `1px solid ${COLORS.steelLine}`, borderRadius: 12, padding: 16, margin: "16px 0" }}>
               <div style={{ fontSize: 11, letterSpacing: 1, color: COLORS.amber, fontWeight: 700, marginBottom: 6 }}>THE QUESTION</div>
               <div>{publicCase.system.question}</div>
@@ -1330,7 +1330,7 @@ export default function SimulationLabClient({
                     {publicCase.pretrialSteps.hypothesis.title.toUpperCase()}
                   </div>
                   <StepImage src={publicCase.pretrialSteps.hypothesis.imageUrl} alt={publicCase.pretrialSteps.hypothesis.title} />
-                  <p style={{ color: "rgba(234,240,246,.85)", lineHeight: 1.6, margin: 0 }}>{publicCase.pretrialSteps.hypothesis.text}</p>
+                  <p style={{ color: COLORS.ink, lineHeight: 1.6, margin: 0 }}>{publicCase.pretrialSteps.hypothesis.text}</p>
                 </div>
                 <CheckpointCard cp={cpHyp} nextLabStep="console" />
               </div>
@@ -1392,7 +1392,7 @@ export default function SimulationLabClient({
         {phase === "finalUnlock" && (
           <div>
             <h2 style={{ fontFamily: "'Poppins', sans-serif" }}>Generalize & Defend</h2>
-            <p style={{ color: "rgba(234,240,246,.85)", lineHeight: 1.6 }}>{publicCase.generalizePrompt}</p>
+            <p style={{ color: COLORS.ink, lineHeight: 1.6 }}>{publicCase.generalizePrompt}</p>
 
             <div style={{ marginBottom: 16, background: COLORS.panel, border: `1px solid ${COLORS.steelLine}`, borderRadius: 12, padding: 14 }}>
               <div style={{ fontSize: 11, letterSpacing: 1, color: COLORS.amber, fontWeight: 700, marginBottom: 10 }}>ROUND 1 TRIAL LOG</div>
@@ -1413,7 +1413,7 @@ export default function SimulationLabClient({
                     style={{
                       background: "rgba(62,214,200,.12)",
                       border: `1px solid ${COLORS.cyan}88`,
-                      color: "rgba(234,240,246,.9)",
+                      color: COLORS.ink,
                       borderRadius: 999, padding: "8px 14px", fontSize: 12.5, fontWeight: 600,
                       cursor: submitted ? "default" : "pointer", opacity: submitted ? 0.5 : 1,
                     }}
