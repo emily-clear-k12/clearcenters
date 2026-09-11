@@ -245,12 +245,12 @@ export async function POST(request) {
         if (expectedId) ok = got === expectedId;
         else if (server.clearance.c4AcceptAnyReason && id === "c4") ok = ["a", "b", "c"].includes(got);
         else ok = Boolean(got);
-        results[id] = { correct: ok };
+        results[id] = { correct: ok, expected: expectedId || null };
         if (ok) autoCorrect += 1;
         continue;
       }
       const ok = String(answers[id] || "").toLowerCase() === String(expected).toLowerCase();
-      results[id] = { correct: ok };
+      results[id] = { correct: ok, expected: expected };
       if (ok) autoCorrect += 1;
     }
     // Legacy resume: ignore orphan c5 if present in payload

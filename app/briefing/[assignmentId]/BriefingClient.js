@@ -115,6 +115,14 @@ function migratePhaseState(saved) {
   };
 }
 
+
+function fillClaimFrame(frame, chip) {
+  const f = frame || "I think this place exists because __________.";
+  if (!chip) return f;
+  if (f.includes("__________")) return f.replace("__________", chip);
+  return `${f.trim()} ${chip}`;
+}
+
 function projectLabel(briefing, id) {
   return briefing.opsChoice.projects.find((p) => p.id === id)?.label || id;
 }
@@ -393,7 +401,7 @@ export default function BriefingClient({ student, assignment, briefing, initialS
                         intel: {
                           ...intel,
                           chip,
-                          claim: `I think this place exists because ${chip}`,
+                          claim: fillClaimFrame(briefing.intelDrop.claimFrame, chip),
                         },
                       },
                       { skipSave: true }
@@ -407,7 +415,7 @@ export default function BriefingClient({ student, assignment, briefing, initialS
             </div>
             {intel.chip && (
               <p style={{ fontSize: 13, color: COLORS.textMuted, margin: "4px 0 8px" }}>
-                Your claim: <strong style={{ color: COLORS.textDark }}>I think this place exists because {intel.chip}</strong>
+                Your claim: <strong style={{ color: COLORS.textDark }}>{fillClaimFrame(briefing.intelDrop.claimFrame, intel.chip)}</strong>
               </p>
             )}
             {!intel.revealed ? (
@@ -1076,7 +1084,6 @@ export default function BriefingClient({ student, assignment, briefing, initialS
     return (
       <div style={card}>
         <h2 style={{ fontFamily: "'Poppins', sans-serif", margin: "0 0 4px 0" }}>{pack.title}</h2>
-        <h2 style={{ fontFamily: "'Poppins', sans-serif", margin: "0 0 4px 0" }}>{pack.title}</h2>
         <p
           style={{
             fontSize: 16,
@@ -1089,6 +1096,11 @@ export default function BriefingClient({ student, assignment, briefing, initialS
           {pack.pickHeader || `Pick exactly ${pickCount}`}
         </p>
         <p style={{ fontSize: 13.5, color: COLORS.textMuted, marginTop: 0 }}>{renderBold(pack.constraint)}</p>
+        {pack.scenario && (
+          <div style={{ margin: "10px 0 4px", background: COLORS.cream, borderRadius: 12, padding: 12, fontSize: 13.5, color: COLORS.textDark, lineHeight: 1.5 }}>
+            {renderBold(pack.scenario)}
+          </div>
+        )}
 
         {/* Fund meter — two slots */}
         <div
@@ -1122,7 +1134,7 @@ export default function BriefingClient({ student, assignment, briefing, initialS
                   {slot ? slot.emoji || "✅" : "⬜"}
                 </span>
                 <div style={{ fontSize: 12.5, fontWeight: 700, color: COLORS.textDark, lineHeight: 1.25 }}>
-                  {slot ? slot.label : `Open fund slot ${i + 1}`}
+                  {slot ? slot.label : pack.emptySlotLabel ? `${pack.emptySlotLabel} ${i + 1}` : `Open slot ${i + 1}`}
                 </div>
               </div>
             ))}
@@ -1151,8 +1163,8 @@ export default function BriefingClient({ student, assignment, briefing, initialS
                   borderRadius: 16,
                   padding: "18px 16px",
                   minHeight: 118,
-                  border: `2.5px solid ${on ? (isDistractor ? "#F59E0B" : COLORS.violet) : "#E1E2EE"}`,
-                  background: on ? (isDistractor ? "#FFF7E6" : COLORS.violetSoft) : COLORS.white,
+                  border: `2.5px solid ${on ? COLORS.violet : "#E1E2EE"}`,
+                  background: on ? COLORS.violetSoft : COLORS.white,
                   color: COLORS.textDark,
                   boxShadow: on ? "0 8px 18px rgba(123,93,255,.18)" : "0 4px 12px rgba(13,27,42,.06)",
                   opacity: ops.debrief ? 0.92 : 1,
@@ -1162,7 +1174,7 @@ export default function BriefingClient({ student, assignment, briefing, initialS
                   {p.emoji || "📌"}
                 </div>
                 <div style={{ fontWeight: 800, fontSize: 14.5, fontFamily: "'Poppins', sans-serif" }}>{p.label}</div>
-                <div style={{ fontSize: 12.5, color: isDistractor ? "#B45309" : COLORS.textMuted, marginTop: 4 }}>
+                <div style={{ fontSize: 12.5, color: COLORS.textMuted, marginTop: 4 }}>
                   {p.reason}
                 </div>
                 {on && (
@@ -1586,7 +1598,56 @@ export default function BriefingClient({ student, assignment, briefing, initialS
           </div>
         )}
 
-        {briefing.clearance.items.map((item) => {
+
+        {cl.graded && cl.results && status !== "cleared" && !cl.results.pass && (
+          <div style={{ marginTop: 16 }}>
+            <h3 style={{ fontFamily: "'Poppins', sans-serif", margin: "0 0 8px 0" }}>HQ explains</h3>
+            <p style={{ fontSize: 13.5, color: COLORS.textMuted, marginTop: 0 }}>
+              This is a lesson. You don't have to change your answers — here's what HQ wanted you to see.
+            </p>
+            {(briefing.clearance.items || []).map((item) => {
+              const res = cl.results?.results?.[item.id] || {};
+              const picked = (item.choices || []).find((c) => c.id === cl.answers[item.id]);
+              const expectedId = res.expected;
+              const right = (item.choices || []).find((c) => c.id === expectedId);
+              const why = (briefing.clearance.explanations || {})[item.id] || "";
+              return (
+                <div key={`ex-${item.id}`} style={{ marginBottom: 12, background: COLORS.cream, borderRadius: 12, padding: 12 }}>
+                  <div style={{ fontWeight: 700, fontSize: 13.5, marginBottom: 6 }}>{item.prompt}</div>
+                  <div style={{ fontSize: 13, color: COLORS.textDark }}>
+                    You picked: <strong>{picked?.text || "—"}</strong>
+                    {res.correct ? " ✓" : ""}
+                  </div>
+                  {!res.correct && right && (
+                    <div style={{ fontSize: 13, color: COLORS.textDark, marginTop: 4 }}>
+                      HQ's answer: <strong>{right.text}</strong>
+                    </div>
+                  )}
+                  {why && <p style={{ margin: "8px 0 0", fontSize: 13.5, lineHeight: 1.45 }}>{why}</p>}
+                </div>
+              );
+            })}
+            <button
+              type="button"
+              className="gc-btn"
+              onClick={() => {
+                updateState(
+                  { clearance: { ...cl, graded: true, results: cl.results } },
+                  { scores: { ...scores, clearance: cl.results }, status: "cleared", phase: "clearance" }
+                );
+                setStatus("cleared");
+                setSamLine(samLines.cleared || briefing.clearance.clearedMessage);
+                setSamState("celebrating");
+                setSamAnchor("stamp");
+              }}
+              style={{ ...primaryBtn, marginTop: 8 }}
+            >
+              Continue — briefing cleared
+            </button>
+          </div>
+        )}
+
+        {!(cl.graded && cl.results && status !== "cleared" && !cl.results.pass) && briefing.clearance.items.map((item) => {
           let prompt = item.prompt;
           if (item.dynamicReuse) {
             if (deferredProj) {
@@ -1627,34 +1688,51 @@ export default function BriefingClient({ student, assignment, briefing, initialS
           );
         })}
 
+        {!(cl.graded && cl.results && status !== "cleared" && !cl.results.pass) && (<>
         <h3 style={{ fontSize: 14, margin: "8px 0 6px" }}>Mission progress (auto from your work)</h3>
         <p style={{ fontSize: 12.5, color: COLORS.textMuted, marginTop: 0 }}>
-          These check themselves when you finish each beat — no need to tap them.
+          These check themselves when you finish each beat. If a circle is empty, tap Go finish this.
         </p>
         <div style={{ display: "grid", gap: 6, marginBottom: 14 }}>
-          {progressGates.map((g) => (
-            <div
+          {progressGates.map((g) => {
+            const gatePhase = { claim: "intelDrop", field: "fieldBrief", sort: "reasonSort", postcard: "evidenceDrop" }[g.id];
+            return (
+            <button
               key={g.id}
+              type="button"
+              className="gc-btn"
+              onClick={() => { if (!g.done && gatePhase) goToPhase(gatePhase); }}
               style={{
                 ...choiceBtn,
                 marginBottom: 0,
-                borderColor: g.done ? COLORS.teal : "#E1E2EE",
+                borderColor: g.done ? COLORS.teal : COLORS.violet,
                 background: g.done ? COLORS.tealSoft : COLORS.white,
-                cursor: "default",
-                opacity: g.done ? 1 : 0.85,
+                cursor: g.done ? "default" : "pointer",
+                opacity: 1,
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                width: "100%",
               }}
               aria-checked={g.done}
               role="checkbox"
             >
+              <span>
               <span style={{ fontWeight: 800, color: g.done ? COLORS.success : COLORS.textMuted, marginRight: 8 }}>
                 {g.done ? "✓" : "○"}
               </span>
               {g.label}
-            </div>
-          ))}
+              </span>
+              {!g.done && gatePhase && (
+                <span style={{ fontSize: 12, fontWeight: 700, color: COLORS.violet }}>Go finish this →</span>
+              )}
+            </button>
+            );
+          })}
         </div>
+        </>)}
 
-        {status !== "cleared" ? (
+        {status === "cleared" ? null : (cl.graded && cl.results && !cl.results.pass) ? null : (
           <button
             type="button"
             className="gc-btn"
@@ -1665,8 +1743,12 @@ export default function BriefingClient({ student, assignment, briefing, initialS
                 answers: cl.answers,
                 expectedIds: c4Expected ? { c4: c4Expected } : {},
               });
-              setToast(result.pass ? "Clearance checks passed." : "Review missed questions, then try again.");
+              updateState(
+                { clearance: { ...cl, graded: true, results: result } },
+                { scores: { ...scores, clearance: result } }
+              );
               if (result.pass) {
+                setToast("Clearance checks passed.");
                 updateState(
                   { clearance: { ...cl, graded: true, results: result } },
                   { scores: { ...scores, clearance: result }, status: "cleared", phase: "clearance" }
@@ -1676,8 +1758,8 @@ export default function BriefingClient({ student, assignment, briefing, initialS
                 setSamState("celebrating");
                 setSamAnchor("stamp");
               } else {
-                updateState({ clearance: { ...cl, graded: true, results: result } }, { scores: { ...scores, clearance: result } });
-                setSamLine("Check the missed questions — your progress gates are already done.");
+                setToast("");
+                setSamLine("HQ will show you the answers — this is a lesson, not a redo.");
                 setSamState("helping");
               }
             }}
@@ -1685,7 +1767,9 @@ export default function BriefingClient({ student, assignment, briefing, initialS
           >
             Submit for clearance
           </button>
-        ) : (
+        )}
+
+        {status === "cleared" && (
           <div
             style={{
               marginTop: 16,
