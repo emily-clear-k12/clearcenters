@@ -19,8 +19,19 @@ import SamStage from "./SamStage";
  * States: idle | moving | helping | thinking | celebrating
  * During anchor transitions we force `moving`, then settle to `helping` /
  * `thinking` (or the requested resting state) after the CSS transition.
+ *
+ * Speech bubble is a navy comms plate (student HQ chrome), not a white
+ * tooltip. Tokens match Briefings: navy / gold / violet — not the teacher
+ * sidebar's later violet/teal pair.
  */
 const DEFAULT_HOME = { right: 18, bottom: 18 };
+
+const COMMS = {
+  navy: "#0D1B2A",
+  gold: "#FFC44D",
+  cream: "#F2F0FA",
+  violet: "#7B5DFF",
+};
 
 function resolveAnchor(anchors, key) {
   if (!key) return anchors?.home || DEFAULT_HOME;
@@ -94,6 +105,7 @@ export default function SamGuide({
   const pos = toPositionStyle(resolveAnchor(anchors, displayAnchor));
   const bubbleText = tapTip || line;
   const visibleBubble = showLine && bubbleText;
+  const fromLeft = bubbleSide === "left";
 
   function handleTap() {
     if (onTap) onTap();
@@ -114,20 +126,42 @@ export default function SamGuide({
   const bubbleStyle = {
     position: "absolute",
     bottom: size * 0.35,
-    ...(bubbleSide === "left"
-      ? { right: size + 8, left: "auto" }
-      : { left: size + 8, right: "auto" }),
-    width: 200,
+    ...(fromLeft ? { right: size + 8, left: "auto" } : { left: size + 8, right: "auto" }),
+    width: 208,
     maxWidth: "min(220px, 42vw)",
-    background: "#FFFFFF",
+    background: COMMS.navy,
     borderRadius: 14,
-    boxShadow: "0 8px 20px rgba(0,0,0,.15)",
-    padding: "10px 12px",
-    fontSize: 12.5,
-    color: "#1F2A44",
-    lineHeight: 1.4,
-    fontFamily: "'Inter', system-ui, sans-serif",
+    border: `1.5px solid ${COMMS.gold}`,
+    boxShadow: "0 8px 24px rgba(123,93,255,.28), 0 10px 22px rgba(13,27,42,.35)",
+    padding: fromLeft ? "10px 28px 12px 14px" : "10px 14px 12px 28px",
+    fontSize: 13,
+    color: COMMS.cream,
+    lineHeight: 1.35,
+    fontFamily: "'Poppins', system-ui, sans-serif",
+    fontWeight: 500,
     textAlign: "left",
+  };
+
+  const accentStyle = {
+    position: "absolute",
+    top: 10,
+    bottom: 10,
+    width: 2,
+    background: COMMS.gold,
+    borderRadius: 2,
+    ...(fromLeft ? { left: 8 } : { right: 8 }),
+  };
+
+  const tailStyle = {
+    position: "absolute",
+    bottom: 16,
+    width: 10,
+    height: 10,
+    background: COMMS.navy,
+    borderRight: `1.5px solid ${COMMS.gold}`,
+    borderBottom: `1.5px solid ${COMMS.gold}`,
+    transform: fromLeft ? "rotate(-45deg)" : "rotate(135deg)",
+    ...(fromLeft ? { right: -6 } : { left: -6 }),
   };
 
   return (
@@ -150,7 +184,21 @@ export default function SamGuide({
         />
         {visibleBubble && (
           <div style={bubbleStyle} role="status">
-            <div style={{ paddingRight: 16 }}>{bubbleText}</div>
+            <div style={accentStyle} aria-hidden="true" />
+            <div
+              style={{
+                fontSize: 10,
+                fontWeight: 700,
+                letterSpacing: 1.4,
+                textTransform: "uppercase",
+                color: COMMS.gold,
+                marginBottom: 4,
+                paddingRight: 8,
+              }}
+            >
+              {alt || "S.A.M."}
+            </div>
+            <div style={{ paddingRight: 4 }}>{bubbleText}</div>
             <button
               type="button"
               aria-label="Dismiss tip"
@@ -158,18 +206,21 @@ export default function SamGuide({
               style={{
                 position: "absolute",
                 top: 4,
-                right: 6,
+                right: 4,
+                width: 24,
+                height: 24,
                 background: "none",
                 border: "none",
                 cursor: "pointer",
-                color: "#8892A6",
-                fontSize: 14,
+                color: COMMS.gold,
+                fontSize: 16,
                 lineHeight: 1,
-                padding: 2,
+                padding: 0,
               }}
             >
               ×
             </button>
+            <div style={tailStyle} aria-hidden="true" />
           </div>
         )}
       </div>
