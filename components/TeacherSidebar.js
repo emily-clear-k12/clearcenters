@@ -5,7 +5,7 @@ import { useRouter, usePathname } from "next/navigation";
 import { supabase } from "../lib/supabaseClient";
 
 // Palette updated Aug 27 (evening pass) to match the new sci-fi banner art
-// Emily supplied â€” violet and teal sampled directly from that image's
+// Emily supplied — violet and teal sampled directly from that image's
 // crystal glow and edge lighting, replacing the app's older, bluer violet
 // (#7B5DFF) and darker teal (#00C2C7). This same pair now also lives in
 // every app/teacher/*/page.js COLORS object, so the two need to stay in
@@ -23,12 +23,12 @@ const COLORS = {
   textMuted: "#697386",
 };
 
-// Grouped Aug 27 (evening pass) â€” was one flat list of 10 items, which read
+// Grouped Aug 27 (evening pass) — was one flat list of 10 items, which read
 // as 10 equally-weighted destinations with no sense of where to look for
 // something. Grouping into Teach / Track / Grow & Manage (with Overview
 // standing alone up top as the home destination) gives a teacher a smaller
 // set of categories to scan instead of one long list. The hrefs, icons, and
-// destinations themselves are unchanged â€” this is a presentation-only
+// destinations themselves are unchanged — this is a presentation-only
 // reorganization, nothing was renamed or moved.
 const NAV_GROUPS = [
   {
@@ -41,8 +41,8 @@ const NAV_GROUPS = [
       { label: "My Classes", icon: "/teacher/nav_my_classes.png", href: "/teacher/assign" },
       { label: "Challenge Library", icon: "/teacher/nav_assignments.png", href: "/teacher/assign/new" },
       { label: "Assign Briefing", icon: "/teacher/nav_assignments.png", href: "/teacher/assign/briefing" },
-      // Added Sept 8 2026 alongside Distress Call â€” the projector screen a
-      // teacher displays to the class (design doc Â§1/Â§5). Nav icon from Evie.
+      // Added Sept 8 2026 alongside Distress Call — the projector screen a
+      // teacher displays to the class (design doc §1/§5). Nav icon from Evie.
       { label: "Live Ops Board", icon: "/teacher/nav_live_ops.png", href: "/teacher/live-ops-board" },
   { label: "Signal Ops Board", icon: "/teacher/nav_live_ops.png", href: "/teacher/signal-ops-board" },
     ],
@@ -88,7 +88,7 @@ export default function TeacherSidebar({ teacherName, teacherEmail }) {
       }}
     >
       {/* Real ClearCenters logo lockup (Aug 27), replacing the small crystal
-          icon + text wordmark this sidebar used before â€” same transparent
+          icon + text wordmark this sidebar used before — same transparent
           brand asset Emily supplied, just scoped to its own file under
           public/teacher/ rather than reusing the student login page's copy
           (public/clearcenters_logo.png), since there's no confirmation the
@@ -97,7 +97,7 @@ export default function TeacherSidebar({ teacherName, teacherEmail }) {
           entire teacher dashboard at once. Capped at 170px so it comfortably
           fits the sidebar's 216px width with its existing 20px side padding;
           the "PROVE GROW SHINE" tagline is legible but necessarily small at
-          this scale â€” a real, accepted trade-off of a wide 3:1 lockup living
+          this scale — a real, accepted trade-off of a wide 3:1 lockup living
           in a narrow sidebar column, not an oversight. */}
       <div style={{ display: "flex", alignItems: "center", justifyContent: "center", padding: "20px 16px 16px" }}>
         <img src="/teacher/clearcenters_logo.png" alt="ClearCenters" style={{ width: "100%", maxWidth: 170, height: "auto", display: "block" }} />
@@ -137,7 +137,7 @@ export default function TeacherSidebar({ teacherName, teacherEmail }) {
                     border: "none",
                     cursor: "pointer",
                     // Active state is now the violet-to-teal gradient pill
-                    // from the mockup instead of a flat soft-violet fill â€”
+                    // from the mockup instead of a flat soft-violet fill —
                     // ties the sidebar to the same brand gradient used on
                     // buttons throughout the app.
                     background: active ? `linear-gradient(135deg, ${COLORS.violet}, ${COLORS.teal})` : "transparent",
@@ -160,7 +160,7 @@ export default function TeacherSidebar({ teacherName, teacherEmail }) {
                       opacity: active ? 1 : 0.75,
                       // The nav icon art is a single flat violet color, which
                       // would go nearly invisible sitting on top of the new
-                      // gradient pill â€” this forces the icon to solid white
+                      // gradient pill — this forces the icon to solid white
                       // only while active, no new icon art needed.
                       filter: active ? "brightness(0) invert(1)" : "none",
                     }}
@@ -192,4 +192,3 @@ export default function TeacherSidebar({ teacherName, teacherEmail }) {
     </aside>
   );
 }
-
