@@ -2158,7 +2158,20 @@ export default function BriefingClient({ student, assignment, briefing, initialS
   return (
     <div style={{ minHeight: "100vh", background: COLORS.cream, fontFamily: "'Inter', system-ui, sans-serif" }}>
       <BackToHubButton />
-      <main style={{ padding: "22px 28px 100px", position: "relative", maxWidth: 1040, margin: "0 auto" }}>
+      {/* Sept 12, 2026 — bottom padding bumped 100 -> 320 so SamGuide (fixed
+          to the viewport, see SAM_ANCHORS above) always has clear floor
+          space under it. SAM_ANCHORS' bottom-anchored spots (home/image/
+          postcard/sort/chips) sit as close as 18-28px off the bottom edge,
+          and its "side" speech bubble can reach roughly that offset + 38px
+          + its own height above the icon — Emily flagged the bubble
+          covering the Intel Drop "AGENT TIP" panel text on exactly this
+          phase. 320px comfortably clears that reach (worst case ~277px)
+          even at SamGuide.js's capped bubble height (see bubbleStyle's
+          maxHeight there — the two numbers are meant to be read together:
+          this is the reserved floor, that's the guaranteed-not-to-exceed-it
+          ceiling), so the fixed guide always lands on empty background
+          instead of real content, at any anchor or scroll position. */}
+      <main style={{ padding: "22px 28px 320px", position: "relative", maxWidth: 1040, margin: "0 auto" }}>
         <button
           type="button"
           className="gc-btn"
