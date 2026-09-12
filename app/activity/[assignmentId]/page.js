@@ -91,15 +91,17 @@ export default async function ActivityPage({ params }) {
   }
   // Signal Ops / Signal Defense's own branch, added Sept 11 2026 alongside
   // its first case (3.6B-SD) — same early-return shape as Frequency Rush
-  // just above, since this first pass has no submission/grading data to
-  // gate on yet either (see SignalDefenseClient.js for what's deliberately
-  // not wired up yet: live sync, persistence).
+  // just above. Replayable like Individual Practice for now (no
+  // alreadySubmitted lockout); live multiplayer sync is still later work.
   //
-  // Layered pass #1 (content pipeline, same day): now loads the REAL
-  // per-standard question bank from lib/cases/signal-defense/ by the
-  // assignment's own case_standard, instead of leaving every Signal Defense
-  // assignment stuck on the widget's hardcoded 3.6B bank. Falls back to
-  // `null` (→ widget's built-in bank) if a standard has no authored file yet.
+  // Layered pass #1 (content pipeline): loads the REAL per-standard
+  // question bank from lib/cases/signal-defense/ by the assignment's own
+  // case_standard. Falls back to null (widget's built-in bank) if a
+  // standard has no authored file yet.
+  //
+  // Layered pass #2 (Sept 12 2026): SignalDefenseClient injects that bank
+  // via window.SignalDefense.setQuestionBank and posts a score summary on
+  // mission end via /api/signal-defense/submit.
   const isSignalDefense = engine === "signal_defense";
   if (isSignalDefense) {
     const signalDefenseCase = getSignalDefensePublicCase(assignment.case_standard);
@@ -107,6 +109,7 @@ export default async function ActivityPage({ params }) {
       <SignalDefenseClient
         assignmentId={assignmentId}
         caseTitle={caseRow ? caseRow.title : null}
+        caseStandard={assignment.case_standard}
         questionBank={signalDefenseCase ? signalDefenseCase.questions : null}
       />
     );
