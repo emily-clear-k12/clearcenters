@@ -135,18 +135,23 @@ export default function SamGuide({
         textAlign: "left",
       }
     : {
+        // Sept 12, 2026 — was a dark navy "comms plate" (COMMS.navy +
+        // gold trim); Emily flagged the dark color on this exact chip, so
+        // it's now the same light, friendly treatment as the "above"
+        // plate, just in violet instead of teal to keep the two
+        // placements visually distinct.
         position: "absolute",
         bottom: size * 0.35,
         ...(fromLeft ? { right: size + 8, left: "auto" } : { left: size + 8, right: "auto" }),
         width: 208,
         maxWidth: "min(220px, 42vw)",
-        background: COMMS.navy,
+        background: COMMS.cream,
         borderRadius: 14,
-        border: `1.5px solid ${COMMS.gold}`,
-        boxShadow: "0 8px 24px rgba(123,93,255,.28), 0 10px 22px rgba(13,27,42,.35)",
+        border: `1.5px solid ${COMMS.violet}`,
+        boxShadow: "0 8px 20px rgba(123,93,255,.18)",
         padding: fromLeft ? "10px 28px 12px 14px" : "10px 14px 12px 28px",
         fontSize: 13,
-        color: COMMS.cream,
+        color: COMMS.ink,
         lineHeight: 1.35,
         fontFamily: "'Poppins', system-ui, sans-serif",
         fontWeight: 500,
@@ -158,7 +163,7 @@ export default function SamGuide({
     top: 10,
     bottom: 10,
     width: 2,
-    background: above ? COMMS.tealInk : COMMS.gold,
+    background: above ? COMMS.tealInk : COMMS.violet,
     borderRadius: 2,
     left: 8,
   };
@@ -180,14 +185,14 @@ export default function SamGuide({
         bottom: 16,
         width: 10,
         height: 10,
-        background: COMMS.navy,
-        borderRight: `1.5px solid ${COMMS.gold}`,
-        borderBottom: `1.5px solid ${COMMS.gold}`,
+        background: COMMS.cream,
+        borderRight: `1.5px solid ${COMMS.violet}`,
+        borderBottom: `1.5px solid ${COMMS.violet}`,
         transform: fromLeft ? "rotate(-45deg)" : "rotate(135deg)",
         ...(fromLeft ? { right: -6 } : { left: -6 }),
       };
 
-  const labelColor = above ? COMMS.tealInk : COMMS.gold;
+  const labelColor = above ? COMMS.tealInk : COMMS.violet;
 
   return (
     <div
@@ -200,12 +205,18 @@ export default function SamGuide({
       }}
     >
       <div style={{ position: "relative", pointerEvents: "auto" }}>
+        {/* Sept 12, 2026 — showPlatform={false}, matching the same fix on
+            Home's wandering companion: Emily flagged the platform disc
+            under S.A.M. as still showing up here too. SamGuide is a
+            floating guide by nature (it hops between anchors), so no
+            other caller needs the platform layer either. */}
         <SamStage
           skinKey={skinKey}
           alt={alt}
           size={size}
           state={animState}
           onClick={handleTap}
+          showPlatform={false}
         />
         {visibleBubble && (
           <div style={bubbleStyle} role="status">
