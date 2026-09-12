@@ -92,6 +92,49 @@ function PlanetDetailModal({ planet, unlocked, onClose }) {
   );
 }
 
+// Sept 12, 2026 — Emily's ask: the holographic console baked into the
+// bottom-center of the hub art was pure decoration with nothing behind it.
+// Turned it into a "Mission Control" readout: next planet to unlock (and
+// how many more crystals that takes), the highest badge tier already
+// earned, and the current streak — three facts a student otherwise has to
+// piece together from the two corner panels above. All three are derived
+// from props this page already fetches; nothing new queried.
+function MissionControlModal({ open, onClose, nextPlanet, pointsToNext, latestBadge, streakDays }) {
+  if (!open) return null;
+  return (
+    <div onClick={onClose} style={{ position: "fixed", inset: 0, background: "rgba(8,10,30,.72)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 100, padding: 20 }}>
+      <div onClick={(e) => e.stopPropagation()} style={{ background: "linear-gradient(180deg, #1B1440, #0D0B2A)", borderRadius: 24, width: "min(400px, 100%)", overflow: "hidden", boxShadow: "0 24px 70px rgba(0,0,0,.5)", position: "relative", padding: "28px 26px", textAlign: "center" }}>
+        <button onClick={onClose} style={{ position: "absolute", top: 14, right: 14, width: 30, height: 30, borderRadius: "50%", background: "rgba(255,255,255,.12)", color: COLORS.white, border: "none", cursor: "pointer", fontSize: 15 }}>×</button>
+        <div style={{ fontSize: 11, fontWeight: 700, color: "#9B8FE0", textTransform: "uppercase", letterSpacing: 1.2, marginBottom: 4 }}>📡 Mission Control</div>
+        <h2 style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 700, fontSize: 19, color: COLORS.white, margin: "0 0 18px 0" }}>Status Report</h2>
+
+        <div style={{ background: "rgba(255,255,255,.06)", borderRadius: 14, padding: "14px 16px", marginBottom: 10, textAlign: "left" }}>
+          <div style={{ fontSize: 10.5, fontWeight: 700, color: "#8C93B8", textTransform: "uppercase", letterSpacing: .5, marginBottom: 6 }}>Next World</div>
+          {nextPlanet ? (
+            <div style={{ fontSize: 13.5, color: "#E7E9FA", lineHeight: 1.4 }}>
+              🚀 <b style={{ color: COLORS.white }}>{nextPlanet.name}</b> — need <b style={{ color: nextPlanet.theme_color }}>{pointsToNext} more crystal{pointsToNext === 1 ? "" : "s"}</b> to unlock
+            </div>
+          ) : (
+            <div style={{ fontSize: 13.5, color: "#E7E9FA" }}>🎉 Every world is unlocked!</div>
+          )}
+        </div>
+
+        <div style={{ background: "rgba(255,255,255,.06)", borderRadius: 14, padding: "14px 16px", marginBottom: 10, textAlign: "left" }}>
+          <div style={{ fontSize: 10.5, fontWeight: 700, color: "#8C93B8", textTransform: "uppercase", letterSpacing: .5, marginBottom: 6 }}>Latest Badge</div>
+          <div style={{ fontSize: 13.5, color: "#E7E9FA" }}>
+            {latestBadge ? <>🛡️ <b style={{ color: COLORS.white }}>{latestBadge.label}</b></> : "None earned yet — keep going!"}
+          </div>
+        </div>
+
+        <div style={{ background: "rgba(255,255,255,.06)", borderRadius: 14, padding: "14px 16px", textAlign: "left" }}>
+          <div style={{ fontSize: 10.5, fontWeight: 700, color: "#8C93B8", textTransform: "uppercase", letterSpacing: .5, marginBottom: 6 }}>Streak</div>
+          <div style={{ fontSize: 13.5, color: "#E7E9FA" }}>🔥 <b style={{ color: COLORS.white }}>{streakDays}</b> day{streakDays === 1 ? "" : "s"}</div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function CrystalLogModal({ open, onClose, pointsHistory }) {
   if (!open) return null;
   return (
@@ -125,13 +168,28 @@ export default function GearLockerClient({ student, planets, visitedPlanetKeys, 
   const router = useRouter();
   const [selectedPlanet, setSelectedPlanet] = useState(null);
   const [logOpen, setLogOpen] = useState(false);
+  const [missionControlOpen, setMissionControlOpen] = useState(false);
   const [messagesTip, setMessagesTip] = useState(false);
   const [lockedTip, setLockedTip] = useState(null);
 
   const visitedSet = new Set(visitedPlanetKeys);
   const tiers = badgeTiers || [];
-  const badgesEarnedCount = tiers.filter((t) => student.crystal_points >= t.threshold).length;
+  const earnedTiers = tiers.filter((t) => student.crystal_points >= t.threshold);
+  const badgesEarnedCount = earnedTiers.length;
   const planetsVisitedCount = planets.filter((p) => visitedSet.has(p.planet_key)).length;
+
+  // Sept 12, 2026 — feeds the Mission Control popup below. Both use the
+  // student's real crystal_points, same as PlanetDetailModal's own
+  // pointsToUnlock math, so this reads correctly even in the DEV_FORCE_UNLOCK_ALL
+  // preview mode (which only bypasses the click-through gate, not the numbers).
+  const lockedPlanetsByCost = planets
+    .filter((p) => student.crystal_points < p.threshold)
+    .sort((a, b) => a.threshold - b.threshold);
+  const nextPlanet = lockedPlanetsByCost[0] || null;
+  const pointsToNext = nextPlanet ? nextPlanet.threshold - student.crystal_points : 0;
+  // tiers is already sort_order-ascending from the query in page.js, so the
+  // last earned entry is the highest tier reached.
+  const latestBadge = earnedTiers.length ? earnedTiers[earnedTiers.length - 1] : null;
 
   // TEMP — Sept 4, 2026, Emily's ask while she's working on the Galaxy Hub
   // redesign ("unlock all of the planets just so we can see them... for
@@ -195,6 +253,10 @@ export default function GearLockerClient({ student, planets, visitedPlanetKeys, 
         .planet-node:hover { transform: translate(-50%, -50%) scale(1.06) !important; }
         .nav-pill { transition: transform 120ms ease; cursor: pointer; border: none; font-family: 'Inter', sans-serif; }
         .nav-pill:hover { transform: translateY(-1px); }
+        @keyframes console-pulse {
+          0%, 100% { box-shadow: 0 0 0 2px rgba(111,216,245,.35); }
+          50% { box-shadow: 0 0 0 5px rgba(111,216,245,.12); }
+        }
       `}</style>
 
       {/* Full-viewport fixed background (Aug 27 full-screen pass) — replaces
@@ -264,7 +326,6 @@ export default function GearLockerClient({ student, planets, visitedPlanetKeys, 
             const spot = PORTAL_HOTSPOTS[planet.planet_key];
             if (!spot) return null;
             const unlocked = isUnlocked(planet);
-            const visited = visitedSet.has(planet.planet_key);
             return (
               <button
                 key={planet.id}
@@ -283,24 +344,22 @@ export default function GearLockerClient({ student, planets, visitedPlanetKeys, 
               >
                 {/* Invisible click target over the portal art itself — no
                     icon image here anymore, the portal in the background
-                    IS the button. */}
+                    IS the button. Sept 12, 2026: dropped the green "visited"
+                    checkmark badge per Emily's ask — the lock icon is the
+                    only status badge left here now. */}
                 <div style={{ position: "absolute", inset: 0 }}>
-                  {unlocked ? (
-                    visited && (
-                      <div style={{ position: "absolute", top: "2%", right: "6%", width: 22, height: 22, borderRadius: "50%", background: "#22C55E", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, boxShadow: "0 2px 6px rgba(0,0,0,.4)" }}>✓</div>
-                    )
-                  ) : (
+                  {!unlocked && (
                     <div style={{ position: "absolute", top: "2%", right: "6%", width: 22, height: 22, borderRadius: "50%", background: "rgba(20,16,50,.85)", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, boxShadow: "0 2px 6px rgba(0,0,0,.4)" }}>🔒</div>
                   )}
                 </div>
-                {/* Name + crystal-threshold pill, anchored just below the
-                    portal so it reads correctly no matter the portal's
-                    height. */}
+                {/* Name only, anchored just below the portal — Sept 12, 2026:
+                    dropped the crystal-threshold pill that used to sit under
+                    the name here per Emily's ask (it read as a second,
+                    confusing click target next to the portal itself). The
+                    real cost still shows the moment a locked world is
+                    tapped (below) and in the Available Planets list. */}
                 <div style={{ position: "absolute", top: "100%", left: "50%", transform: "translateX(-50%)", marginTop: 6, whiteSpace: "nowrap" }}>
                   <div style={{ fontSize: "clamp(8px, 1vw, 11px)", fontWeight: 700, color: COLORS.white, textShadow: "0 1px 4px rgba(0,0,0,.6)" }}>{planet.name}</div>
-                  <div style={{ display: "inline-flex", alignItems: "center", gap: 3, marginTop: 2, background: unlocked ? `${planet.theme_color}CC` : "rgba(20,16,50,.75)", color: "#fff", borderRadius: 999, padding: "2px 8px", fontSize: "clamp(7px, 0.85vw, 10px)", fontWeight: 700 }}>
-                    💎 {planet.threshold}
-                  </div>
                   {lockedTip === planet.planet_key && (
                     <div style={{ marginTop: 4, background: "#1B1440", color: "#fff", borderRadius: 8, padding: "3px 8px", fontSize: 9.5 }}>
                       Need {Math.max(0, planet.threshold - student.crystal_points)} more!
@@ -310,6 +369,33 @@ export default function GearLockerClient({ student, planets, visitedPlanetKeys, 
               </button>
             );
           })}
+
+          {/* Sept 12, 2026 — the holographic console table baked into the
+              bottom-center of the art had nothing behind it; per Emily's
+              ask this is now a tap target that opens the Mission Control
+              summary popup. Box tuned by eye against the source art, same
+              caveat as PORTAL_HOTSPOTS above (may want a nudge on a real
+              screen). A small pulse ring + label makes clear it's tappable
+              since nothing about a static console otherwise reads that way. */}
+          <button
+            type="button"
+            className="planet-node"
+            onClick={() => setMissionControlOpen(true)}
+            aria-label="Mission Control"
+            style={{
+              position: "absolute",
+              left: "50%", top: "82%",
+              width: "30%", height: "20%",
+              transform: "translate(-50%, -50%)",
+              zIndex: 2,
+              background: "none", border: "none", padding: 0, cursor: "pointer",
+            }}
+          >
+            <div style={{ position: "absolute", inset: 0, borderRadius: 12, boxShadow: "0 0 0 2px rgba(111,216,245,.35)", animation: "console-pulse 2.4s ease-in-out infinite" }} />
+            <div style={{ position: "absolute", bottom: -20, left: "50%", transform: "translateX(-50%)", whiteSpace: "nowrap", fontSize: "clamp(8px, 1vw, 10.5px)", fontWeight: 700, color: "#BFE9F5", textShadow: "0 1px 4px rgba(0,0,0,.7)", letterSpacing: .4 }}>
+              📡 MISSION CONTROL
+            </div>
+          </button>
       </div>
 
       {/* Spacer — pushes the scrollable content below the fold so it
@@ -386,6 +472,14 @@ export default function GearLockerClient({ student, planets, visitedPlanetKeys, 
 
       <PlanetDetailModal planet={selectedPlanet} unlocked={selectedPlanet ? isUnlocked(selectedPlanet) : false} onClose={() => setSelectedPlanet(null)} />
       <CrystalLogModal open={logOpen} onClose={() => setLogOpen(false)} pointsHistory={pointsHistory} />
+      <MissionControlModal
+        open={missionControlOpen}
+        onClose={() => setMissionControlOpen(false)}
+        nextPlanet={nextPlanet}
+        pointsToNext={pointsToNext}
+        latestBadge={latestBadge}
+        streakDays={student.streak_days || 0}
+      />
     </div>
   );
 }
