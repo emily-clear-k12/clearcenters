@@ -19,6 +19,8 @@ const SHELL = {
 
 // Sept 12, 2026 — V1.5 live crew: shared votes, power drain, wave damage.
 // Solo + fake crew remain the fallback when no live session exists.
+// Sept 12, 2026 (playtest fix): hold the iframe until the first session
+// sync so live class play never flashes the prototype setup / demo tools.
 export default function SignalDefenseClient({
   assignmentId,
   caseTitle,
@@ -32,6 +34,7 @@ export default function SignalDefenseClient({
   const widgetReadyRef = useRef(false);
   const lastPayloadRef = useRef(null);
   const [liveBanner, setLiveBanner] = useState(null);
+  const [sessionReady, setSessionReady] = useState(false);
 
   const submitRun = useCallback(async (result) => {
     if (!assignmentId || !result) return;
@@ -171,6 +174,7 @@ export default function SignalDefenseClient({
     if (!win || !win.SignalDefense) return;
     widgetReadyRef.current = true;
     try {
+      // Assigned case bank must win over the HTML file's built-in 3.6B demo bank.
       if (Array.isArray(questionBank) && questionBank.length > 0) {
         win.SignalDefense.setQuestionBank(questionBank);
       }
@@ -187,17 +191,22 @@ export default function SignalDefenseClient({
           castVote(upgradeId);
         });
       }
-      if (liveRef.current.active || lastPayloadRef.current) {
-        fetch(`/api/signal-defense/session?assignmentId=${encodeURIComponent(assignmentId)}`)
+      // Prefer the payload already learned from the pre-iframe session sync so
+      // live mode suppresses prototype UI on the first paint inside the widget.
+      if (lastPayloadRef.current?.session) {
+        pushLiveToWidget(lastPayloadRef.current);
+      } else {
+        fetch(`/api/signal-defense/session?assignmentId=${encodeURIComponent(assignmentId)}&includeEnded=1`)
           .then((r) => r.json())
           .then((data) => {
-            if (data?.session) {
+            if (data?.session && (data.active || data.session.status === "ended")) {
               liveRef.current = {
-                active: !!data.active,
+                active: !!data.active || data.session.status === "ended",
                 status: data.session.status,
                 sessionId: data.session.id,
                 outcome: data.session.outcome || "ongoing",
               };
+              lastPayloadRef.current = data;
               pushLiveToWidget(data);
             }
           })
@@ -234,6 +243,7 @@ export default function SignalDefenseClient({
           sessionId: data.session.id,
           outcome: data.session.outcome || "ongoing",
         };
+        lastPayloadRef.current = data;
         if (data.session.outcome === "regroup") {
           setLiveBanner("The base held on as long as it could — regroup for the next wave. Ask your teacher to relaunch.");
         } else if (data.session.outcome === "victory") {
@@ -255,6 +265,7 @@ export default function SignalDefenseClient({
           sessionId: data.session.id,
           outcome: data.session.outcome || "ongoing",
         };
+        lastPayloadRef.current = data;
         setLiveBanner(
           data.session.status === "lobby"
             ? "Live crew lobby — waiting for your teacher to begin."
@@ -263,6 +274,7 @@ export default function SignalDefenseClient({
         if (widgetReadyRef.current) pushLiveToWidget(data);
       } else {
         liveRef.current = { active: false, status: null, sessionId: null, outcome: null };
+        lastPayloadRef.current = null;
         setLiveBanner(null);
       }
     }
@@ -281,6 +293,8 @@ export default function SignalDefenseClient({
         await applyPayload(data);
       } catch (err) {
         // Solo fallback if the session tables aren't migrated yet.
+      } finally {
+        if (!cancelled) setSessionReady(true);
       }
     }
 
@@ -330,14 +344,36 @@ export default function SignalDefenseClient({
             <span style={{ color: SHELL.muted }}>{liveBanner}</span>
           </div>
         )}
-        <iframe
-          ref={iframeRef}
-          src="/games/signal-defense-3-6b-gameplay-v4.html"
-          title={caseTitle || "Signal Defense"}
-          onLoad={wireWidget}
-          style={{ width: "100%", maxWidth: 1320, height: "88vh", minHeight: 640, border: `1px solid ${SHELL.border}`, borderRadius: 16, display: "block", background: "#fff", boxShadow: "0 8px 28px rgba(31,42,68,.08)" }}
-          allow="fullscreen"
-        />
+        {!sessionReady ? (
+          <div
+            style={{
+              width: "100%",
+              maxWidth: 1320,
+              minHeight: 320,
+              background: SHELL.card,
+              border: `1px solid ${SHELL.border}`,
+              borderRadius: 16,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              color: SHELL.muted,
+              fontSize: 15,
+              fontWeight: 600,
+              boxShadow: "0 8px 28px rgba(31,42,68,.08)",
+            }}
+          >
+            Connecting to Signal Ops...
+          </div>
+        ) : (
+          <iframe
+            ref={iframeRef}
+            src="/games/signal-defense-3-6b-gameplay-v4.html"
+            title={caseTitle || "Signal Defense"}
+            onLoad={wireWidget}
+            style={{ width: "100%", maxWidth: 1320, height: "88vh", minHeight: 640, border: `1px solid ${SHELL.border}`, borderRadius: 16, display: "block", background: "#fff", boxShadow: "0 8px 28px rgba(31,42,68,.08)" }}
+            allow="fullscreen"
+          />
+        )}
       </div>
     </div>
   );
