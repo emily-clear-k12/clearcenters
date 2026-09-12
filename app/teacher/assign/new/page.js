@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Search, Calendar, ChevronLeft } from "lucide-react";
 import { supabase } from "../../../../lib/supabaseClient";
 import { engineSupportsDistressCall } from "../../../../lib/distressCallEngines";
+import { GAME_SKINS, DEFAULT_GAME_SKIN } from "../../../../lib/frequencyRushSkins";
 import TeacherSidebar from "../../../../components/TeacherSidebar";
 import TeacherPageBanner from "../../../../components/TeacherPageBanner";
 
@@ -122,6 +123,13 @@ function NewAssignmentContent() {
   // 0/blank means no reward, just the shared meter.
   const [distressCallRewardPoints, setDistressCallRewardPoints] = useState("");
 
+  // Sept 12, 2026 — Frequency Rush "world skin" (design note in
+  // lib/frequencyRushSkins.js): which static widget file the assignment's
+  // students play, chosen here by the teacher rather than per-student —
+  // same "one more conditional field on the assign form" pattern as
+  // Distress Call above, just for a different engine.
+  const [gameSkin, setGameSkin] = useState(DEFAULT_GAME_SKIN);
+
   const [challengeStep, setChallengeStep] = useState("library");
   const [selectedChallenge, setSelectedChallenge] = useState(null);
   const [browseGrade, setBrowseGrade] = useState("5");
@@ -185,6 +193,9 @@ function NewAssignmentContent() {
       assignmentFields.distress_call_deadline = distressCallDeadline || null;
       assignmentFields.distress_call_reward_points = distressCallRewardPoints ? parseInt(distressCallRewardPoints, 10) : 0;
     }
+    if (selectedCase.engine === "frequency_rush") {
+      assignmentFields.game_skin = gameSkin;
+    }
 
     const { data: newAssignment, error: insertError } = await supabase
       .from("assignments")
@@ -225,6 +236,7 @@ function NewAssignmentContent() {
     setDistressCallTarget("");
     setDistressCallDeadline("");
     setDistressCallRewardPoints("");
+    setGameSkin(DEFAULT_GAME_SKIN);
   }
 
   if (loadingAuth) {
@@ -519,6 +531,36 @@ function NewAssignmentContent() {
                     <Calendar size={14} style={{ position: "absolute", left: 10, top: 11, color: COLORS.textMuted }} />
                     <input type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} style={{ width: "100%", border: "2px solid #ECEAF5", borderRadius: 10, padding: "8px 10px 8px 32px", fontSize: 13, boxSizing: "border-box" }} />
                   </div>
+
+                  {selectedCase?.engine === "frequency_rush" && (
+                    <div style={{ marginBottom: 14 }}>
+                      <div style={{ fontWeight: 700, fontSize: 13, marginBottom: 8 }}>🛰️ Game world</div>
+                      <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                        {GAME_SKINS.map((skin) => (
+                          <button
+                            key={skin.id}
+                            type="button"
+                            className="gc-btn"
+                            onClick={() => setGameSkin(skin.id)}
+                            style={{
+                              background: gameSkin === skin.id ? COLORS.violet : COLORS.white,
+                              color: gameSkin === skin.id ? COLORS.white : COLORS.textDark,
+                              border: `1.5px solid ${gameSkin === skin.id ? COLORS.violet : COLORS.border}`,
+                              borderRadius: 999,
+                              padding: "7px 14px",
+                              fontWeight: 700,
+                              fontSize: 12.5,
+                            }}
+                          >
+                            {skin.label}
+                          </button>
+                        ))}
+                      </div>
+                      <p style={{ fontSize: 11.5, color: COLORS.textMuted, margin: "6px 0 0 0" }}>
+                        Same words, same scoring — just a different look for the run.
+                      </p>
+                    </div>
+                  )}
 
                   {engineSupportsDistressCall(selectedCase?.engine) && (
                     <div style={{ marginBottom: 14, border: `1.5px solid ${distressCallEnabled ? COLORS.violet : COLORS.border}`, borderRadius: 12, padding: 12, background: distressCallEnabled ? COLORS.violetSoft : COLORS.white }}>

@@ -287,7 +287,7 @@ export default function BriefingClient({ student, assignment, briefing, initialS
       const chipId = phaseState.field?.pageChips?.[page.id];
       const sam = page.sam || {};
       const alreadyRight = Boolean(sam.correct && chipId === sam.correct);
-      setSamAnchor("qc");
+      setSamAnchor("home");
       if (isProjectMode) {
         setSamLine(alreadyRight ? sam.afterCorrect || "" : "");
         setSamState(alreadyRight ? "celebrating" : "idle");
@@ -527,14 +527,14 @@ export default function BriefingClient({ student, assignment, briefing, initialS
     function pickChip(chipId) {
       const nextChips = { ...(field.pageChips || {}), [page.id]: chipId };
       const ok = chipId === sam.correct;
-      setSamAnchor("qc");
+      setSamAnchor("home");
       setSamState(ok ? "celebrating" : "thinking");
       setSamLine(ok ? sam.afterCorrect || "Nice." : sam.afterWrong || "Try again.");
       updateState({ field: { ...field, pageChips: nextChips } }, { skipSave: true });
     }
 
     function pickQc(qcId, choiceId) {
-      setSamAnchor("qc");
+      setSamAnchor("home");
       setSamState("thinking");
       updateState(
         { field: { ...field, answers: { ...field.answers, [qcId]: choiceId } } },
@@ -686,8 +686,9 @@ export default function BriefingClient({ student, assignment, briefing, initialS
                           ...chipStyle(on),
                           padding: "10px 14px",
                           fontSize: 13.5,
-                          borderColor: right ? COLORS.success : wrong ? "#EF4444" : on ? COLORS.violet : "#E1E2EE",
-                          background: right ? "#ECFDF3" : wrong ? "#FEF2F2" : on ? COLORS.violetSoft : COLORS.white,
+                          color: COLORS.textDark,
+                          borderColor: right ? COLORS.success : wrong ? "#EF4444" : on ? COLORS.teal : "#9EE6E8",
+                          background: right ? "#ECFDF3" : wrong ? "#FEF2F2" : COLORS.tealSoft,
                         }}
                       >
                         {c.label}
@@ -1926,7 +1927,7 @@ export default function BriefingClient({ student, assignment, briefing, initialS
             </h2>
             <p style={{ margin: 0, fontSize: 13.5, color: COLORS.textMuted }}>
               {briefing.clearance.hqIntro ||
-                "Agent report-in. Finish the progress gates from your work, then answer four quick questions."}
+                "Agent report-in. Answer four quick questions."}
             </p>
           </div>
           <div
@@ -2051,57 +2052,13 @@ export default function BriefingClient({ student, assignment, briefing, initialS
           );
         })}
 
-        {!(cl.graded && cl.results && status !== "cleared" && !cl.results.pass) && (<>
-        <h3 style={{ fontSize: 14, margin: "8px 0 6px" }}>Mission progress (auto from your work)</h3>
-        <p style={{ fontSize: 12.5, color: COLORS.textMuted, marginTop: 0 }}>
-          These check themselves when you finish each beat. If a circle is empty, tap Go finish this.
-        </p>
-        <div style={{ display: "grid", gap: 6, marginBottom: 14 }}>
-          {progressGates.map((g) => {
-            const gatePhase = { claim: "intelDrop", field: "fieldBrief", sort: "reasonSort", postcard: "evidenceDrop" }[g.id];
-            return (
-            <button
-              key={g.id}
-              type="button"
-              className="gc-btn"
-              onClick={() => { if (!g.done && gatePhase) goToPhase(gatePhase); }}
-              style={{
-                ...choiceBtn,
-                marginBottom: 0,
-                borderColor: g.done ? COLORS.teal : COLORS.violet,
-                background: g.done ? COLORS.tealSoft : COLORS.white,
-                cursor: g.done ? "default" : "pointer",
-                opacity: 1,
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-                width: "100%",
-              }}
-              aria-checked={g.done}
-              role="checkbox"
-            >
-              <span>
-              <span style={{ fontWeight: 800, color: g.done ? COLORS.success : COLORS.textMuted, marginRight: 8 }}>
-                {g.done ? "✓" : "○"}
-              </span>
-              {g.label}
-              </span>
-              {!g.done && gatePhase && (
-                <span style={{ fontSize: 12, fontWeight: 700, color: COLORS.violet }}>Go finish this →</span>
-              )}
-            </button>
-            );
-          })}
-        </div>
-        </>)}
-
         {status === "cleared" ? null : (cl.graded && cl.results && !cl.results.pass) ? null : (
           <button
             type="button"
             className="gc-btn"
-            disabled={busy || !gatesOk || !answersOk}
+            disabled={busy || !answersOk}
             onClick={async () => {
-              if (!gatesOk || !answersOk) return;
+              if (!answersOk) return;
               const result = await grade("clearance", {
                 answers: cl.answers,
                 expectedIds: c4Expected ? { c4: c4Expected } : {},
@@ -2126,7 +2083,7 @@ export default function BriefingClient({ student, assignment, briefing, initialS
                 setSamState("helping");
               }
             }}
-            style={{ ...primaryBtn, opacity: !gatesOk || !answersOk ? 0.5 : 1 }}
+            style={{ ...primaryBtn, opacity: !answersOk ? 0.5 : 1 }}
           >
             Submit for clearance
           </button>
@@ -2279,6 +2236,7 @@ export default function BriefingClient({ student, assignment, briefing, initialS
           tipOnTap={tipOnTap}
           onDismiss={() => setSamLine("")}
           bubbleSide={samAnchor === "image" || samAnchor === "postcard" ? "right" : "left"}
+          bubblePlacement={phaseId === "fieldBrief" ? "above" : "side"}
         />
       </main>
     </div>

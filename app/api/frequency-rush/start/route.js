@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import { supabaseAdmin } from "../../../../lib/supabaseAdmin";
 import { getFrequencyRushWordSet, getFrequencyRushClassificationSet, buildLockTheSignalRounds, DEFAULT_ROUNDS, ROUND_SECONDS } from "../../../../lib/cases/frequency-rush";
 import { getOutpostProgress } from "../../../../lib/outpostBuilder";
+import { DEFAULT_GAME_SKIN } from "../../../../lib/frequencyRushSkins";
 
 // Starts one Lock the Signal / Individual Practice session. Called fresh
 // every time a student plays OR replays — replays are unlimited by design
@@ -33,12 +34,19 @@ export async function POST(request) {
 
   const { data: assignment } = await supabaseAdmin
     .from("assignments")
-    .select("id, case_standard")
+    .select("id, case_standard, game_skin")
     .eq("id", assignmentId)
     .single();
   if (!assignment) {
     return NextResponse.json({ error: "Assignment not found." }, { status: 404 });
   }
+  // Sept 12, 2026 — world skin (Asteroid Run / Cloudreach Run / future
+  // exports of Emily's Run Engine) is a teacher-set, assignment-level choice
+  // (assignments.game_skin), not a student pick — see lib/frequencyRushSkins.js
+  // for why. Resolved here rather than trusted from the client's own `gameMode`
+  // param, same "server decides, client just plays" rule as everything else
+  // in this route.
+  const gameSkin = assignment.game_skin || DEFAULT_GAME_SKIN;
 
   const { data: caseRow } = await supabaseAdmin
     .from("cases")
@@ -100,6 +108,7 @@ export async function POST(request) {
     sessionId: session.id,
     roundSeconds: ROUND_SECONDS,
     gameMode: resolvedGameMode,
+    gameSkin,
     outpost,
     // promptWordId IS included, same convention Mission Map's checkpoints
     // use — the client needs it immediately to give the student real-time

@@ -6,23 +6,9 @@ import SamStage from "./SamStage";
 /**
  * SamGuide — reusable floating S.A.M. companion (Briefings-first).
  *
- * How other pages (Home / Missions) can reuse later:
- *   1. Import SamGuide and pass `skinKey` from the student record.
- *   2. Define named `anchors` as % or px offsets within a positioned parent
- *      (or the viewport if `fixed` is true — default). Example:
- *        anchors={{ home: { right: 18, bottom: 18 }, tip: { left: "18%", top: "42%" } }}
- *   3. Drive `activeAnchor` + short `line` from your phase / beat state.
- *   4. Clear `line` on phase change so tips don't auto-dump.
- *   5. Optional: pass `tipOnTap` for a short kid tip when S.A.M. is tapped;
- *      do not force-open long tip sheets.
- *
- * States: idle | moving | helping | thinking | celebrating
- * During anchor transitions we force `moving`, then settle to `helping` /
- * `thinking` (or the requested resting state) after the CSS transition.
- *
- * Speech bubble is a navy comms plate (student HQ chrome), not a white
- * tooltip. Tokens match Briefings: navy / gold / violet — not the teacher
- * sidebar's later violet/teal pair.
+ * Speech bubble: navy comms plate by default (side). Field Brief pages pass
+ * bubblePlacement="above" for a light teal plate sitting over S.A.M. so it
+ * does not cover the story text.
  */
 const DEFAULT_HOME = { right: 18, bottom: 18 };
 
@@ -31,6 +17,9 @@ const COMMS = {
   gold: "#FFC44D",
   cream: "#F2F0FA",
   violet: "#7B5DFF",
+  teal: "#E6F8F9",
+  tealInk: "#00C2C7",
+  ink: "#1F2A44",
 };
 
 function resolveAnchor(anchors, key) {
@@ -68,6 +57,7 @@ export default function SamGuide({
   fixed = true,
   zIndex = 30,
   bubbleSide = "left",
+  bubblePlacement = "side",
 }) {
   const [displayAnchor, setDisplayAnchor] = useState(activeAnchor);
   const [animState, setAnimState] = useState(state === "moving" ? "idle" : state);
@@ -106,6 +96,7 @@ export default function SamGuide({
   const bubbleText = tapTip || line;
   const visibleBubble = showLine && bubbleText;
   const fromLeft = bubbleSide === "left";
+  const above = bubblePlacement === "above";
 
   function handleTap() {
     if (onTap) onTap();
@@ -123,46 +114,80 @@ export default function SamGuide({
     if (onDismiss) onDismiss();
   }
 
-  const bubbleStyle = {
-    position: "absolute",
-    bottom: size * 0.35,
-    ...(fromLeft ? { right: size + 8, left: "auto" } : { left: size + 8, right: "auto" }),
-    width: 208,
-    maxWidth: "min(220px, 42vw)",
-    background: COMMS.navy,
-    borderRadius: 14,
-    border: `1.5px solid ${COMMS.gold}`,
-    boxShadow: "0 8px 24px rgba(123,93,255,.28), 0 10px 22px rgba(13,27,42,.35)",
-    padding: fromLeft ? "10px 28px 12px 14px" : "10px 14px 12px 28px",
-    fontSize: 13,
-    color: COMMS.cream,
-    lineHeight: 1.35,
-    fontFamily: "'Poppins', system-ui, sans-serif",
-    fontWeight: 500,
-    textAlign: "left",
-  };
+  const bubbleStyle = above
+    ? {
+        position: "absolute",
+        left: "50%",
+        bottom: size + 6,
+        transform: "translateX(-50%)",
+        width: 260,
+        maxWidth: "min(280px, 72vw)",
+        background: COMMS.teal,
+        borderRadius: 14,
+        border: `1.5px solid ${COMMS.tealInk}`,
+        boxShadow: "0 8px 20px rgba(13,27,42,.12)",
+        padding: "10px 28px 12px 14px",
+        fontSize: 14,
+        color: COMMS.ink,
+        lineHeight: 1.4,
+        fontFamily: "'Poppins', system-ui, sans-serif",
+        fontWeight: 500,
+        textAlign: "left",
+      }
+    : {
+        position: "absolute",
+        bottom: size * 0.35,
+        ...(fromLeft ? { right: size + 8, left: "auto" } : { left: size + 8, right: "auto" }),
+        width: 208,
+        maxWidth: "min(220px, 42vw)",
+        background: COMMS.navy,
+        borderRadius: 14,
+        border: `1.5px solid ${COMMS.gold}`,
+        boxShadow: "0 8px 24px rgba(123,93,255,.28), 0 10px 22px rgba(13,27,42,.35)",
+        padding: fromLeft ? "10px 28px 12px 14px" : "10px 14px 12px 28px",
+        fontSize: 13,
+        color: COMMS.cream,
+        lineHeight: 1.35,
+        fontFamily: "'Poppins', system-ui, sans-serif",
+        fontWeight: 500,
+        textAlign: "left",
+      };
 
   const accentStyle = {
     position: "absolute",
     top: 10,
     bottom: 10,
     width: 2,
-    background: COMMS.gold,
+    background: above ? COMMS.tealInk : COMMS.gold,
     borderRadius: 2,
-    ...(fromLeft ? { left: 8 } : { right: 8 }),
+    left: 8,
   };
 
-  const tailStyle = {
-    position: "absolute",
-    bottom: 16,
-    width: 10,
-    height: 10,
-    background: COMMS.navy,
-    borderRight: `1.5px solid ${COMMS.gold}`,
-    borderBottom: `1.5px solid ${COMMS.gold}`,
-    transform: fromLeft ? "rotate(-45deg)" : "rotate(135deg)",
-    ...(fromLeft ? { right: -6 } : { left: -6 }),
-  };
+  const tailStyle = above
+    ? {
+        position: "absolute",
+        left: "50%",
+        bottom: -5,
+        width: 10,
+        height: 10,
+        background: COMMS.teal,
+        borderRight: `1.5px solid ${COMMS.tealInk}`,
+        borderBottom: `1.5px solid ${COMMS.tealInk}`,
+        transform: "translateX(-50%) rotate(45deg)",
+      }
+    : {
+        position: "absolute",
+        bottom: 16,
+        width: 10,
+        height: 10,
+        background: COMMS.navy,
+        borderRight: `1.5px solid ${COMMS.gold}`,
+        borderBottom: `1.5px solid ${COMMS.gold}`,
+        transform: fromLeft ? "rotate(-45deg)" : "rotate(135deg)",
+        ...(fromLeft ? { right: -6 } : { left: -6 }),
+      };
+
+  const labelColor = above ? COMMS.tealInk : COMMS.gold;
 
   return (
     <div
@@ -191,7 +216,7 @@ export default function SamGuide({
                 fontWeight: 700,
                 letterSpacing: 1.4,
                 textTransform: "uppercase",
-                color: COMMS.gold,
+                color: labelColor,
                 marginBottom: 4,
                 paddingRight: 8,
               }}
@@ -212,7 +237,7 @@ export default function SamGuide({
                 background: "none",
                 border: "none",
                 cursor: "pointer",
-                color: COMMS.gold,
+                color: labelColor,
                 fontSize: 16,
                 lineHeight: 1,
                 padding: 0,

@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import BackToHubButton from "../../../components/BackToHubButton";
+import { getGameSkinFile, DEFAULT_GAME_SKIN } from "../../../lib/frequencyRushSkins";
 
 // Sept 9, 2026 — Asteroid Run now embeds the "Pilot Edition" widget Emily's
 // game generator produced (public/games/asteroid-run.html) instead of the
@@ -39,6 +40,12 @@ export default function FrequencyRushClient({ assignmentId, caseTitle }) {
   // word bank does (frequency_rush_classifications), not a separate file
   // pipeline — see lib/cases/frequency-rush.js.
   const [classifications, setClassifications] = useState([]);
+  // Sept 12, 2026 — which static widget file to load into the iframe below,
+  // teacher-chosen at assignment time (assignments.game_skin) and handed
+  // back by /api/frequency-rush/start as `gameSkin` — see
+  // lib/frequencyRushSkins.js for the full "world skins" design. Defaults
+  // to Asteroid Run until the real value comes back from initialize().
+  const [gameSkinFile, setGameSkinFile] = useState(getGameSkinFile(DEFAULT_GAME_SKIN));
 
   const iframeRef = useRef(null);
   const pendingSessionIdRef = useRef(null); // sessionId reserved for the NEXT completion to submit against
@@ -72,6 +79,7 @@ export default function FrequencyRushClient({ assignmentId, caseTitle }) {
       setWords(data.words);
       setOutpostResources(data.outpost ? data.outpost.resources : 0);
       setClassifications(Array.isArray(data.classifications) ? data.classifications : []);
+      setGameSkinFile(getGameSkinFile(data.gameSkin));
       pendingSessionIdRef.current = data.sessionId;
       setPhase("ready");
     } catch (err) {
@@ -224,7 +232,7 @@ export default function FrequencyRushClient({ assignmentId, caseTitle }) {
     <Shell wide>
       <iframe
         ref={iframeRef}
-        src="/games/asteroid-run.html"
+        src={gameSkinFile}
         title={caseTitle || "Asteroid Run"}
         onLoad={wireWidget}
         style={{ width: "100%", maxWidth: 1320, height: "88vh", minHeight: 640, border: "none", borderRadius: 16, display: "block" }}
