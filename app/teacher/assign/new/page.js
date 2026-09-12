@@ -87,6 +87,7 @@ function formatFromStandard(standard) {
   return { id: "verdict", label: "Verdict" };
 }
 
+
 function isClassicStandard(standard) {
   return /-SC$/i.test(standard) && !/-SC-(WI|TH)$/i.test(standard);
 }
@@ -327,7 +328,7 @@ function NewAssignmentContent() {
         <TeacherSidebar teacherEmail={teacherEmail} />
 
         <div style={{ flex: 1, padding: "32px 36px", display: "flex", justifyContent: "center" }}>
-        <div style={{ width: "100%", maxWidth: challengeStep === "library" ? 1240 : challengeStep === "caseList" ? 920 : 640 }}>
+        <div style={{ width: "100%", maxWidth: challengeStep === "library" ? 1240 : challengeStep === "caseList" && selectedChallenge?.key === "fact_check_desk" ? 1180 : challengeStep === "caseList" ? 920 : 640 }}>
           <button onClick={() => router.push("/teacher/assign")} className="gc-btn" style={{ display: "flex", alignItems: "center", gap: 6, background: "none", color: COLORS.textMuted, fontSize: 13, fontWeight: 600, marginBottom: 10 }}>
             <ChevronLeft size={16} /> Back to My Classes
           </button>
@@ -368,7 +369,8 @@ function NewAssignmentContent() {
             </div>
           ) : (
             <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-              <div style={{ background: COLORS.white, border: `1px solid ${COLORS.border}`, borderRadius: 16, padding: 16, boxShadow: "0 4px 16px rgba(13,27,42,.06)" }}>
+              <div style={{ display: "flex", gap: 14, alignItems: "flex-start" }}>
+              <div style={{ flex: 1, minWidth: 0, background: COLORS.white, border: `1px solid ${COLORS.border}`, borderRadius: 16, padding: 16, boxShadow: "0 4px 16px rgba(13,27,42,.06)" }}>
                 {challengeStep === "library" && (
                   <>
                     <div style={{ fontWeight: 700, fontSize: 13, marginBottom: 12 }}>1. Choose a Challenge Type</div>
@@ -530,6 +532,25 @@ function NewAssignmentContent() {
                     )}
                   </>
                 )}
+              </div>
+              {challengeStep === "caseList" && selectedChallenge?.key === "fact_check_desk" && (
+                <div style={{ width: 280, flexShrink: 0, background: COLORS.white, border: `1px solid ${COLORS.border}`, borderRadius: 16, padding: 16, boxShadow: "0 4px 16px rgba(13,27,42,.06)" }}>
+                  <div style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 700, fontSize: 14, marginBottom: 4 }}>What kids do</div>
+                  <div style={{ fontSize: 11.5, color: COLORS.textMuted, marginBottom: 12 }}>Same TEKS. Three formats. Here’s the difference:</div>
+                  <div style={{ fontSize: 12.5, color: COLORS.textDark, lineHeight: 1.45, marginBottom: 10 }}>
+                    <span style={{ fontWeight: 700 }}>Verdict</span>
+                    <div style={{ color: COLORS.textMuted, marginTop: 2 }}>Kids stamp one claim True, Misleading, or False using the evidence.</div>
+                  </div>
+                  <div style={{ fontSize: 12.5, color: COLORS.textDark, lineHeight: 1.45, marginBottom: 10 }}>
+                    <span style={{ fontWeight: 700 }}>Weigh-In</span>
+                    <div style={{ color: COLORS.textMuted, marginTop: 2 }}>Two sides disagree. Kids pick who’s right and prove it.</div>
+                  </div>
+                  <div style={{ fontSize: 12.5, color: COLORS.textDark, lineHeight: 1.45 }}>
+                    <span style={{ fontWeight: 700 }}>Thread</span>
+                    <div style={{ color: COLORS.textMuted, marginTop: 2 }}>Kids flag comments on a claim, then write a short reply.</div>
+                  </div>
+                </div>
+              )}
               </div>
 
               {selectedCase && (selectedCase.learning_target || selectedCase.lesson_summary || selectedCase.misconception_note) && (
