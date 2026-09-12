@@ -4,7 +4,7 @@
 -- All reads/writes go through Next.js API routes using the service-role
 -- admin client (same pattern as /api/signal-defense/submit). RLS is
 -- enabled with no anon policies so the browser cannot touch these tables
--- directly. Wrong answers are never written here — only correct
+-- directly. Wrong answers are never written here - only correct
 -- contributions bump shared meters.
 
 CREATE TABLE IF NOT EXISTS signal_ops_sessions (
