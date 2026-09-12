@@ -172,7 +172,7 @@ export default function GearLockerClient({ student, planets, visitedPlanetKeys, 
 
     // Sept 5, 2026: every unlocked planet now routes to the unified world
     // reward-station page (see app/gear-locker/world/[planetKey]) instead
-    // of the old generic PlanetDetailModal — Glow Garden was the pilot for
+    // of the old generic PlanetDetailModal — Lumara was the pilot for
     // this (a real per-planet page instead of a modal); every other planet
     // now gets the same treatment, even before it has its own real story
     // and game (it renders a "coming soon" state instead). The new page

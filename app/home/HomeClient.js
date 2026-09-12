@@ -792,7 +792,7 @@ export default function HomeClient({ student, studentClass, assignments, mission
       {/* Sept 5, 2026 — World Reward Station cosmetic: a mouse-following
           sparkle trail earned by reading a world's "learn about this
           world" story (see lib/worldStories.js + set-world-trail route).
-          Same code-only Bloom Trail mechanic Glow Garden's old activity
+          Same code-only sparkle-trail mechanic an earlier one-off activity
           used, just recolored per equipped world — no new art needed. */}
       <SamTrail colors={equippedTrailColors} active={Boolean(equippedTrail)} />
 

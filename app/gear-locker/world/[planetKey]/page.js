@@ -7,10 +7,11 @@ import WorldRewardStationClient from "./WorldRewardStationClient";
 
 // Sept 5, 2026 — the unified "world reward station" page every Galaxy Hub
 // planet now routes to once unlocked, replacing both the old generic
-// PlanetDetailModal-for-unlocked-planets behavior AND Glow Garden's old
-// bespoke page/component (retired outright, per Emily's "don't want to
-// keep any of the old stuff, let's build going forward") — see
-// GearLockerClient.js's openPlanet() and SAM_Companion_Concept_v1.md.
+// PlanetDetailModal-for-unlocked-planets behavior AND Lumara's original
+// one-off bespoke page/component (deleted outright — Sept 12, 2026 cleanup
+// — per Emily's "don't want to keep any of the old stuff, let's build going
+// forward") — see GearLockerClient.js's openPlanet() and
+// SAM_Companion_Concept_v1.md.
 //
 // One dynamic route serves all 6 planet_keys: a world with a real story in
 // lib/worldStories.js (Lumara, today — the reference build) gets the full
@@ -73,7 +74,7 @@ export default async function WorldPage({ params }) {
   // Counts as a real visit the moment the page loads — same idempotent
   // upsert every planet used to record via /api/planets/visit, done
   // directly here since this page already has an admin client (same
-  // pattern Glow Garden's old page.js used).
+  // pattern the old one-off bespoke page.js used).
   await supabaseAdmin
     .from("student_planet_visits")
     .upsert({ student_id: studentId, planet_key: planetKey }, { onConflict: "student_id,planet_key", ignoreDuplicates: true });

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { supabaseAdmin } from "../../../../lib/supabaseAdmin";
-import { nextGameState } from "../../../gear-locker/glow-garden/glowGardenLogic";
+import { nextGameState } from "../../../../lib/planetGameState";
 
 // Records the outcome of a planet mini-game round. Unlike /api/planets/visit
 // (a one-time flag), this is called every time a student finishes a round —
