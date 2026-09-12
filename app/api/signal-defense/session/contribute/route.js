@@ -7,14 +7,15 @@ import {
   fetchParticipants,
   serializeSession,
 } from "../../../../../lib/signal-ops/sessionHelpers";
+import {
+  advanceLiveSession,
+  maybeOpenVoteAfterContribute,
+} from "../../../../../lib/signal-ops/sessionSim";
+import { SALVAGE_PER_CORRECT, POWER_PER_CORRECT } from "../../../../../lib/signal-ops/gameConfig";
 
 // Correct-answer contribution only. Wrong answers must never call this.
-// Mirrors solo grantTeam(1): +3 salvage, +3 power (capped), personal blast
-// stays client-side. Base health is synced but not damaged in V1 (wave
-// damage deferred to V1.5).
-const SALVAGE_PER_CORRECT = 3;
-const POWER_PER_CORRECT = 3;
-
+// Personal blast stays client-side. V1.5 also restores Power against drain
+// and may open a class upgrade vote when Salvage crosses the threshold.
 export async function POST(request) {
   const body = await request.json().catch(() => ({}));
   const { assignmentId } = body || {};
@@ -33,12 +34,15 @@ export async function POST(request) {
     return NextResponse.json({ error: access.error }, { status: access.status });
   }
 
-  const session = await fetchOpenSessionForAssignment(assignmentId);
+  let session = await fetchOpenSessionForAssignment(assignmentId);
   if (!session) {
     return NextResponse.json({ error: "No live session." }, { status: 404 });
   }
   if (session.status !== "live") {
     return NextResponse.json({ error: "Session is not live yet." }, { status: 409 });
+  }
+  if (session.outcome && session.outcome !== "ongoing") {
+    return NextResponse.json({ error: "Session already wrapped." }, { status: 409 });
   }
 
   const { data: participant } = await supabaseAdmin
@@ -50,6 +54,22 @@ export async function POST(request) {
 
   if (!participant) {
     return NextResponse.json({ error: "Join the session first." }, { status: 403 });
+  }
+
+  // Tick first so drain/vote/wave stay authoritative before the bump.
+  try {
+    session = await advanceLiveSession(session);
+  } catch (err) {
+    console.error("Signal Ops pre-contribute tick failed:", err);
+  }
+  if (!session || session.status !== "live" || (session.outcome && session.outcome !== "ongoing")) {
+    const participants = session ? await fetchParticipants(session.id) : [];
+    return NextResponse.json(
+      session
+        ? serializeSession(session, participants, { myStudentId: student.id })
+        : { error: "Session ended." },
+      { status: session ? 200 : 409 }
+    );
   }
 
   const nextSalvage = session.salvage + SALVAGE_PER_CORRECT;
@@ -80,6 +100,13 @@ export async function POST(request) {
     })
     .eq("id", participant.id);
 
+  let finalSession = updated;
+  try {
+    finalSession = await maybeOpenVoteAfterContribute(updated);
+  } catch (err) {
+    console.error("Signal Ops vote-open failed:", err);
+  }
+
   const participants = await fetchParticipants(session.id);
-  return NextResponse.json(serializeSession(updated, participants));
+  return NextResponse.json(serializeSession(finalSession, participants, { myStudentId: student.id }));
 }

@@ -10,6 +10,7 @@ import {
 
 // Teacher opens a live Signal Ops session for an assignment. Kids auto-join
 // from the assignment page — no join code. Starts in "lobby" until Begin.
+// Fresh base each time (including regroup retries).
 export async function POST(request) {
   const body = await request.json().catch(() => ({}));
   const { assignmentId, accessToken } = body || {};
@@ -48,6 +49,12 @@ export async function POST(request) {
       power: 100,
       base_health: 100,
       total_correct: 0,
+      wave_index: 0,
+      next_vote_threshold: 48,
+      upgrades: {},
+      vote: null,
+      outcome: "ongoing",
+      last_upgrade_id: null,
     })
     .select("*")
     .single();

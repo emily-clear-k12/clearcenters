@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useCallback, useRef, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Maximize2, Minimize2, Radio, Users } from "lucide-react";
+import { Maximize2, Minimize2, Radio, Users, Shield, Zap } from "lucide-react";
 import { supabase } from "../../../lib/supabaseClient";
 import TeacherSidebar from "../../../components/TeacherSidebar";
 import TeacherPageBanner from "../../../components/TeacherPageBanner";
@@ -57,6 +57,7 @@ function SignalOpsBoardContent() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [nowMs, setNowMs] = useState(() => Date.now());
   const boardRef = useRef(null);
 
   useEffect(() => {
@@ -116,10 +117,11 @@ function SignalOpsBoardContent() {
   const poll = useCallback(async () => {
     if (!selectedAssignmentId || !accessToken) return;
     try {
-      const res = await fetch(`/api/signal-defense/session?assignmentId=${encodeURIComponent(selectedAssignmentId)}&accessToken=${encodeURIComponent(accessToken)}`);
+      const res = await fetch(`/api/signal-defense/session?assignmentId=${encodeURIComponent(selectedAssignmentId)}&accessToken=${encodeURIComponent(accessToken)}&includeEnded=1`);
       if (!res.ok) return;
       const data = await res.json();
       setSessionPayload(data);
+      setNowMs(Date.now());
     } catch (err) {
       // Missed poll — board stays on last frame for a moment.
     }
@@ -137,6 +139,11 @@ function SignalOpsBoardContent() {
     function onFullscreenChange() { setIsFullscreen(!!document.fullscreenElement); }
     document.addEventListener("fullscreenchange", onFullscreenChange);
     return () => document.removeEventListener("fullscreenchange", onFullscreenChange);
+  }, []);
+
+  useEffect(() => {
+    const t = setInterval(() => setNowMs(Date.now()), 250);
+    return () => clearInterval(t);
   }, []);
 
   function togglePresent() {
@@ -172,6 +179,42 @@ function SignalOpsBoardContent() {
   const session = sessionPayload?.session || null;
   const participants = sessionPayload?.participants || [];
   const status = session?.status || null;
+  const outcome = session?.outcome || "ongoing";
+  const vote = session?.vote || null;
+  const upgrades = session?.upgrades || { shield: false, turret: 0, online: true };
+  const voteOpen = !!(vote && vote.open);
+  const voteRemaining = voteOpen
+    ? Math.max(0, Math.ceil(((vote.endsAt ? new Date(vote.endsAt).getTime() : nowMs) - nowMs) / 1000))
+    : 0;
+  const salvageMax = Math.max(60, session?.nextVoteThreshold || 48, (session?.salvage || 0) + 12);
+  const waveLabel = session?.waveIndex
+    ? `Wave ${String(session.waveIndex).padStart(2, "0")} / ${String(session.maxWaves || 4).padStart(2, "0")}`
+    : "Perimeter scan";
+
+  let statusChip = "NO SESSION — start one above";
+  let statusBg = COLORS.violetSoft;
+  let statusFg = COLORS.violet;
+  if (outcome === "regroup") {
+    statusChip = "REGROUP — fresh base ready when you relaunch";
+    statusBg = COLORS.goldSoft;
+    statusFg = COLORS.gold;
+  } else if (outcome === "victory") {
+    statusChip = "OUTPOST SECURED";
+    statusBg = COLORS.tealSoft;
+    statusFg = COLORS.teal;
+  } else if (status === "live" && voteOpen) {
+    statusChip = `CREW VOTE — ${voteRemaining}s`;
+    statusBg = COLORS.goldSoft;
+    statusFg = COLORS.gold;
+  } else if (status === "live") {
+    statusChip = "MISSION LIVE";
+    statusBg = COLORS.tealSoft;
+    statusFg = COLORS.teal;
+  } else if (status === "lobby") {
+    statusChip = "LOBBY OPEN";
+    statusBg = COLORS.goldSoft;
+    statusFg = COLORS.gold;
+  }
 
   return (
     <div style={{ display: "flex", minHeight: "100vh", background: COLORS.canvas, fontFamily: "'Inter', sans-serif", color: COLORS.textDark }}>
@@ -186,7 +229,7 @@ function SignalOpsBoardContent() {
             <TeacherPageBanner>
               <h1 style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 700, fontSize: 28, margin: 0, color: COLORS.white }}>Signal Ops Board</h1>
               <p style={{ color: "rgba(255,255,255,.85)", fontSize: 13, margin: "4px 0 0 0" }}>
-                Start a live crew session, then project meters and roster. Kids join from the assignment — no code.
+                Start a live crew session, then project meters, votes, and waves. Kids join from the assignment — no code.
               </p>
             </TeacherPageBanner>
 
@@ -222,7 +265,7 @@ function SignalOpsBoardContent() {
               <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginBottom: 16 }}>
                 {!session || status === "ended" ? (
                   <button disabled={busy} onClick={() => teacherAction("/api/signal-defense/session/start")} className="gc-btn" style={{ background: COLORS.violet, color: COLORS.white, border: "none", borderRadius: 999, padding: "11px 18px", fontWeight: 700, fontSize: 13.5, cursor: "pointer" }}>
-                    Start Live Session
+                    {outcome === "regroup" ? "Regroup — Start Fresh Session" : "Start Live Session"}
                   </button>
                 ) : null}
                 {status === "lobby" ? (
@@ -281,39 +324,127 @@ function SignalOpsBoardContent() {
               <div style={{ fontSize: 12, letterSpacing: 1.6, textTransform: "uppercase", color: COLORS.teal, fontWeight: 800, marginBottom: 8 }}>Signal Ops · Live Crew</div>
               <h2 style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 700, fontSize: "clamp(22px, 3.5vw, 40px)", color: COLORS.textDark, margin: "0 0 6px 0" }}>{selected.caseTitle}</h2>
               <div style={{ color: COLORS.textMuted, fontSize: 15 }}>{selected.className}</div>
-              <div style={{ marginTop: 10, display: "inline-flex", alignItems: "center", gap: 8, background: status === "live" ? COLORS.tealSoft : status === "lobby" ? COLORS.goldSoft : COLORS.violetSoft, color: status === "live" ? COLORS.teal : status === "lobby" ? COLORS.gold : COLORS.violet, borderRadius: 999, padding: "6px 14px", fontWeight: 800, fontSize: 12.5 }}>
-                {status === "live" ? "MISSION LIVE" : status === "lobby" ? "LOBBY OPEN" : "NO SESSION — start one above"}
+              <div style={{ marginTop: 10, display: "inline-flex", alignItems: "center", gap: 8, background: statusBg, color: statusFg, borderRadius: 999, padding: "6px 14px", fontWeight: 800, fontSize: 12.5 }}>
+                {statusChip}
               </div>
+              {status === "live" || outcome === "regroup" || outcome === "victory" ? (
+                <div style={{ marginTop: 10, fontSize: 13, fontWeight: 700, color: COLORS.textMuted }}>{waveLabel}</div>
+              ) : null}
             </div>
 
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 14, maxWidth: 920, width: "100%", margin: "0 auto" }}>
-              <Meter label="Salvage" value={session?.salvage ?? 0} max={Math.max(60, (session?.salvage || 0) + 20)} color={COLORS.gold} note="Built from every correct signal" />
-              <Meter label="Power" value={session?.power ?? 100} max={100} color={COLORS.teal} note="Restored by correct answers" />
-              <Meter label="Base Health" value={session?.baseHealth ?? 100} max={100} color={COLORS.violet} note="V1: holds steady (wave damage later)" />
-            </div>
-
-            <div style={{ maxWidth: 920, width: "100%", margin: "0 auto", background: COLORS.white, border: `1px solid ${COLORS.border}`, borderRadius: 18, padding: 18, boxShadow: "0 4px 16px rgba(140,82,242,.06)" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
-                <Users size={16} color={COLORS.violet} />
-                <div style={{ fontWeight: 800, fontSize: 13, color: COLORS.textDark }}>Crew roster</div>
-                <div style={{ marginLeft: "auto", fontSize: 12.5, color: COLORS.textMuted, fontWeight: 600 }}>{participants.length} joined</div>
+            {outcome === "regroup" && (
+              <div style={{ maxWidth: 920, width: "100%", margin: "0 auto", background: COLORS.goldSoft, border: `1.5px solid ${COLORS.gold}`, borderRadius: 18, padding: 18, textAlign: "center" }}>
+                <div style={{ fontWeight: 800, color: COLORS.gold, letterSpacing: 1, fontSize: 12, marginBottom: 6 }}>TEAM REGROUP</div>
+                <div style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 700, fontSize: 22, color: COLORS.textDark, marginBottom: 6 }}>The base held on as long as it could</div>
+                <div style={{ color: COLORS.textMuted, fontSize: 14 }}>No individual callouts — this is a crew outcome. Start a fresh session for a full Health / Power base.</div>
               </div>
-              {participants.length === 0 ? (
-                <p style={{ margin: 0, color: COLORS.textMuted, fontSize: 13.5 }}>Waiting for cadets to open the assignment…</p>
-              ) : (
-                <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
-                  {participants.map((p) => (
-                    <span key={p.id} style={{ background: COLORS.violetSoft, color: COLORS.violet, borderRadius: 999, padding: "7px 12px", fontWeight: 700, fontSize: 12.5 }}>
-                      {p.callsign ? `${p.callsign} · ${p.displayName}` : p.displayName}
-                    </span>
+            )}
+
+            {voteOpen && (
+              <div style={{ maxWidth: 920, width: "100%", margin: "0 auto", background: COLORS.white, border: `1.5px solid ${COLORS.violet}`, borderRadius: 18, padding: 20, boxShadow: "0 8px 24px rgba(140,82,242,.12)" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 12, gap: 12, flexWrap: "wrap" }}>
+                  <div>
+                    <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: 1.4, color: COLORS.violet, textTransform: "uppercase" }}>Crew upgrade vote</div>
+                    <div style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 700, fontSize: 22, color: COLORS.textDark }}>What should we build?</div>
+                  </div>
+                  <div style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 700, fontSize: 28, color: COLORS.gold }}>{voteRemaining}s</div>
+                </div>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 12 }}>
+                  {(vote.options || []).map((opt) => (
+                    <div key={opt.id} style={{ background: COLORS.violetSoft, borderRadius: 14, padding: 14 }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
+                        <strong style={{ color: COLORS.textDark }}>{opt.name}</strong>
+                        <span style={{ fontWeight: 800, color: COLORS.violet, fontSize: 18 }}>{opt.tally || 0}</span>
+                      </div>
+                      <div style={{ fontSize: 12.5, color: COLORS.textMuted, marginTop: 6, lineHeight: 1.45 }}>{opt.desc}</div>
+                      <div style={{ marginTop: 8, fontSize: 11, fontWeight: 800, color: COLORS.gold }}>{opt.cost} SALVAGE</div>
+                    </div>
                   ))}
                 </div>
-              )}
-              {session ? (
-                <div style={{ marginTop: 14, fontSize: 12.5, color: COLORS.textMuted }}>
-                  Class signals decoded: <strong style={{ color: COLORS.textDark }}>{session.totalCorrect || 0}</strong>
+              </div>
+            )}
+
+            {!voteOpen && vote?.resolved && vote.resolved !== "none" && vote.resolved !== "cancelled" && status === "live" && (
+              <div style={{ maxWidth: 920, width: "100%", margin: "0 auto", background: COLORS.tealSoft, borderRadius: 14, padding: "12px 16px", color: COLORS.teal, fontWeight: 700, textAlign: "center" }}>
+                Upgrade online: {(vote.options || []).find((o) => o.id === vote.resolved)?.name || session?.lastUpgradeId || vote.resolved}
+              </div>
+            )}
+
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 14, maxWidth: 920, width: "100%", margin: "0 auto" }}>
+              <Meter
+                label="Salvage"
+                value={session?.salvage ?? 0}
+                max={salvageMax}
+                color={COLORS.gold}
+                note={session ? `Next vote at ${session.nextVoteThreshold || 48}` : "Built from every correct signal"}
+              />
+              <Meter
+                label="Power"
+                value={session?.power ?? 100}
+                max={100}
+                color={COLORS.teal}
+                note={(session?.power ?? 100) <= 0 ? "Upgrades offline until restored" : "Drains over time — correct answers restore"}
+              />
+              <Meter
+                label="Base Health"
+                value={session?.baseHealth ?? 100}
+                max={100}
+                color={COLORS.violet}
+                note="Waves deal team damage if defenses are light"
+              />
+            </div>
+
+            <div style={{ maxWidth: 920, width: "100%", margin: "0 auto", display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 14 }}>
+              <div style={{ background: COLORS.white, border: `1px solid ${COLORS.border}`, borderRadius: 18, padding: 18, boxShadow: "0 4px 16px rgba(140,82,242,.06)" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
+                  <Shield size={16} color={COLORS.violet} />
+                  <div style={{ fontWeight: 800, fontSize: 13, color: COLORS.textDark }}>Installed upgrades</div>
+                  <div style={{ marginLeft: "auto", fontSize: 12, fontWeight: 700, color: upgrades.online ? COLORS.teal : COLORS.gold }}>
+                    {upgrades.online ? "ONLINE" : "OFFLINE — restore Power"}
+                  </div>
                 </div>
-              ) : null}
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                  <span style={{ background: upgrades.shield ? COLORS.violetSoft : COLORS.canvas, color: upgrades.shield ? COLORS.violet : COLORS.textMuted, borderRadius: 999, padding: "7px 12px", fontWeight: 700, fontSize: 12.5, opacity: upgrades.online || !upgrades.shield ? 1 : 0.55 }}>
+                    Shield {upgrades.shield ? "charged" : "ready to buy"}
+                  </span>
+                  <span style={{ background: upgrades.turret > 0 ? COLORS.tealSoft : COLORS.canvas, color: upgrades.turret > 0 ? COLORS.teal : COLORS.textMuted, borderRadius: 999, padding: "7px 12px", fontWeight: 700, fontSize: 12.5, opacity: upgrades.online || !upgrades.turret ? 1 : 0.55 }}>
+                    Turret × {upgrades.turret || 0}
+                  </span>
+                  <span style={{ background: COLORS.goldSoft, color: COLORS.gold, borderRadius: 999, padding: "7px 12px", fontWeight: 700, fontSize: 12.5 }}>
+                    Repair / Overcharge via vote
+                  </span>
+                </div>
+                {session?.lastUpgradeId ? (
+                  <div style={{ marginTop: 12, fontSize: 12.5, color: COLORS.textMuted }}>
+                    Last crew pick: <strong style={{ color: COLORS.textDark }}>{session.lastUpgradeId}</strong>
+                  </div>
+                ) : null}
+              </div>
+
+              <div style={{ background: COLORS.white, border: `1px solid ${COLORS.border}`, borderRadius: 18, padding: 18, boxShadow: "0 4px 16px rgba(140,82,242,.06)" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
+                  <Users size={16} color={COLORS.violet} />
+                  <div style={{ fontWeight: 800, fontSize: 13, color: COLORS.textDark }}>Crew roster</div>
+                  <div style={{ marginLeft: "auto", fontSize: 12.5, color: COLORS.textMuted, fontWeight: 600 }}>{participants.length} joined</div>
+                </div>
+                {participants.length === 0 ? (
+                  <p style={{ margin: 0, color: COLORS.textMuted, fontSize: 13.5 }}>Waiting for cadets to open the assignment…</p>
+                ) : (
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                    {participants.map((p) => (
+                      <span key={p.id} style={{ background: COLORS.violetSoft, color: COLORS.violet, borderRadius: 999, padding: "7px 12px", fontWeight: 700, fontSize: 12.5 }}>
+                        {p.callsign ? `${p.callsign} · ${p.displayName}` : p.displayName}
+                      </span>
+                    ))}
+                  </div>
+                )}
+                {session ? (
+                  <div style={{ marginTop: 14, fontSize: 12.5, color: COLORS.textMuted, display: "flex", alignItems: "center", gap: 6 }}>
+                    <Zap size={14} color={COLORS.teal} />
+                    Class signals decoded: <strong style={{ color: COLORS.textDark }}>{session.totalCorrect || 0}</strong>
+                  </div>
+                ) : null}
+              </div>
             </div>
           </div>
         )}

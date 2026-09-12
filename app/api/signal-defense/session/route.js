@@ -9,10 +9,12 @@ import {
   serializeSession,
   loadAssignmentWithTeacher,
 } from "../../../../lib/signal-ops/sessionHelpers";
+import { advanceLiveSession } from "../../../../lib/signal-ops/sessionSim";
 
 // GET /api/signal-defense/session?assignmentId=...
 // Teacher: pass accessToken. Student: cookie. Returns open session + roster
 // + shared meters, or { active:false } when solo/fake-crew should run.
+// Live polls also advance power drain / votes / waves server-side.
 export async function GET(request) {
   const { searchParams } = new URL(request.url);
   const assignmentId = searchParams.get("assignmentId");
@@ -22,6 +24,8 @@ export async function GET(request) {
   if (!assignmentId) {
     return NextResponse.json({ error: "Missing assignmentId." }, { status: 400 });
   }
+
+  let myStudentId = null;
 
   if (accessToken) {
     const teacher = await getTeacherFromAccessToken(accessToken);
@@ -41,6 +45,7 @@ export async function GET(request) {
     if (!access.ok) {
       return NextResponse.json({ error: access.error }, { status: access.status });
     }
+    myStudentId = student.id;
   }
 
   let session = await fetchOpenSessionForAssignment(assignmentId);
@@ -59,6 +64,14 @@ export async function GET(request) {
     return NextResponse.json({ active: false, session: null, participants: [] });
   }
 
+  if (session.status === "live") {
+    try {
+      session = await advanceLiveSession(session);
+    } catch (err) {
+      console.error("Signal Ops tick failed:", err);
+    }
+  }
+
   const participants = await fetchParticipants(session.id);
-  return NextResponse.json(serializeSession(session, participants));
+  return NextResponse.json(serializeSession(session, participants, { myStudentId }));
 }

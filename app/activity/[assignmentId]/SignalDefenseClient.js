@@ -17,9 +17,7 @@ const SHELL = {
   border: "#E1E2EE",
 };
 
-// Sept 12, 2026 — wires the assigned question bank into Emily's Signal Defense
-// widget, posts scores on mission end, and (when a teacher has an open live
-// session) auto-joins classmates with shared Salvage / Power / Base Health.
+// Sept 12, 2026 — V1.5 live crew: shared votes, power drain, wave damage.
 // Solo + fake crew remain the fallback when no live session exists.
 export default function SignalDefenseClient({
   assignmentId,
@@ -30,8 +28,9 @@ export default function SignalDefenseClient({
 }) {
   const iframeRef = useRef(null);
   const submittingRef = useRef(false);
-  const liveRef = useRef({ active: false, status: null, sessionId: null });
+  const liveRef = useRef({ active: false, status: null, sessionId: null, outcome: null });
   const widgetReadyRef = useRef(false);
+  const lastPayloadRef = useRef(null);
   const [liveBanner, setLiveBanner] = useState(null);
 
   const submitRun = useCallback(async (result) => {
@@ -76,12 +75,14 @@ export default function SignalDefenseClient({
   const pushLiveToWidget = useCallback((payload) => {
     const win = iframeRef.current?.contentWindow;
     if (!win || !win.SignalDefense || !payload?.session) return;
+    lastPayloadRef.current = payload;
     try {
       if (typeof win.SignalDefense.configureLive === "function") {
         win.SignalDefense.configureLive({
           enabled: payload.active && payload.session.status !== "ended",
           status: payload.session.status,
           playerName: studentFirstName || "YOU",
+          outcome: payload.session.outcome || "ongoing",
         });
       }
       if (typeof win.SignalDefense.applySharedMeters === "function") {
@@ -90,13 +91,26 @@ export default function SignalDefenseClient({
           power: payload.session.power,
           baseHealth: payload.session.baseHealth,
           totalCorrect: payload.session.totalCorrect,
+          waveIndex: payload.session.waveIndex,
+          waveRemainingMs: payload.session.waveRemainingMs,
+          nextVoteThreshold: payload.session.nextVoteThreshold,
+          maxWaves: payload.session.maxWaves,
+        });
+      }
+      if (typeof win.SignalDefense.applyLiveOps === "function") {
+        win.SignalDefense.applyLiveOps({
+          upgrades: payload.session.upgrades,
+          vote: payload.session.vote,
+          lastUpgradeId: payload.session.lastUpgradeId,
+          outcome: payload.session.outcome,
+          status: payload.session.status,
         });
       }
       if (typeof win.SignalDefense.setRoster === "function") {
         win.SignalDefense.setRoster(payload.participants || []);
       }
       if (typeof win.SignalDefense.setLivePhase === "function") {
-        win.SignalDefense.setLivePhase(payload.session.status);
+        win.SignalDefense.setLivePhase(payload.session.status, payload.session.outcome);
       }
     } catch (err) {
       console.error("Signal Defense live push failed:", err);
@@ -106,6 +120,7 @@ export default function SignalDefenseClient({
   const contributeCorrect = useCallback(async () => {
     if (!assignmentId || !liveRef.current.active) return;
     if (liveRef.current.status !== "live") return;
+    if (liveRef.current.outcome && liveRef.current.outcome !== "ongoing") return;
     try {
       const res = await fetch("/api/signal-defense/session/contribute", {
         method: "POST",
@@ -118,11 +133,36 @@ export default function SignalDefenseClient({
           active: data.active,
           status: data.session.status,
           sessionId: data.session.id,
+          outcome: data.session.outcome || "ongoing",
         };
         pushLiveToWidget(data);
       }
     } catch (err) {
       console.error("Signal Defense contribute failed:", err);
+    }
+  }, [assignmentId, pushLiveToWidget]);
+
+  const castVote = useCallback(async (upgradeId) => {
+    if (!assignmentId || !liveRef.current.active) return;
+    if (!upgradeId) return;
+    try {
+      const res = await fetch("/api/signal-defense/session/vote", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ assignmentId, upgradeId }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok && data.session) {
+        liveRef.current = {
+          active: data.active,
+          status: data.session.status,
+          sessionId: data.session.id,
+          outcome: data.session.outcome || "ongoing",
+        };
+        pushLiveToWidget(data);
+      }
+    } catch (err) {
+      console.error("Signal Defense vote failed:", err);
     }
   }, [assignmentId, pushLiveToWidget]);
 
@@ -142,8 +182,12 @@ export default function SignalDefenseClient({
           contributeCorrect();
         });
       }
-      if (liveRef.current.active) {
-        // Re-apply last known live state after iframe (re)load.
+      if (typeof win.SignalDefense.onVote === "function") {
+        win.SignalDefense.onVote((upgradeId) => {
+          castVote(upgradeId);
+        });
+      }
+      if (liveRef.current.active || lastPayloadRef.current) {
         fetch(`/api/signal-defense/session?assignmentId=${encodeURIComponent(assignmentId)}`)
           .then((r) => r.json())
           .then((data) => {
@@ -152,6 +196,7 @@ export default function SignalDefenseClient({
                 active: !!data.active,
                 status: data.session.status,
                 sessionId: data.session.id,
+                outcome: data.session.outcome || "ongoing",
               };
               pushLiveToWidget(data);
             }
@@ -161,7 +206,7 @@ export default function SignalDefenseClient({
     } catch (err) {
       console.error("Signal Defense: could not configure widget:", err);
     }
-  }, [questionBank, submitRun, contributeCorrect, assignmentId, pushLiveToWidget]);
+  }, [questionBank, submitRun, contributeCorrect, castVote, assignmentId, pushLiveToWidget]);
 
   useEffect(() => {
     if (!assignmentId) return;
@@ -181,11 +226,34 @@ export default function SignalDefenseClient({
 
     async function applyPayload(data) {
       if (cancelled) return;
-      if (data?.session && data.active) {
+      if (data?.session && (data.active || data.session.outcome === "regroup" || data.session.outcome === "victory")) {
+        const active = !!data.active;
+        liveRef.current = {
+          active: active || data.session.status === "ended",
+          status: data.session.status,
+          sessionId: data.session.id,
+          outcome: data.session.outcome || "ongoing",
+        };
+        if (data.session.outcome === "regroup") {
+          setLiveBanner("The base held on as long as it could — regroup for the next wave. Ask your teacher to relaunch.");
+        } else if (data.session.outcome === "victory") {
+          setLiveBanner("Outpost secured — great crew work.");
+        } else if (data.session.vote?.open) {
+          setLiveBanner("Class upgrade vote — same options on every device. Majority wins.");
+        } else if (data.session.status === "lobby") {
+          setLiveBanner("Live crew lobby — waiting for your teacher to begin.");
+        } else if ((data.session.power || 0) <= 0) {
+          setLiveBanner("Power is out — upgrades are offline until correct answers restore the grid.");
+        } else {
+          setLiveBanner("Live Signal Ops — shared meters with your class.");
+        }
+        if (widgetReadyRef.current) pushLiveToWidget(data);
+      } else if (data?.session && data.active) {
         liveRef.current = {
           active: true,
           status: data.session.status,
           sessionId: data.session.id,
+          outcome: data.session.outcome || "ongoing",
         };
         setLiveBanner(
           data.session.status === "lobby"
@@ -194,7 +262,7 @@ export default function SignalDefenseClient({
         );
         if (widgetReadyRef.current) pushLiveToWidget(data);
       } else {
-        liveRef.current = { active: false, status: null, sessionId: null };
+        liveRef.current = { active: false, status: null, sessionId: null, outcome: null };
         setLiveBanner(null);
       }
     }
@@ -207,7 +275,7 @@ export default function SignalDefenseClient({
           data = await joinOnce();
           joinedOnce = true;
         } else {
-          const res = await fetch(`/api/signal-defense/session?assignmentId=${encodeURIComponent(assignmentId)}`);
+          const res = await fetch(`/api/signal-defense/session?assignmentId=${encodeURIComponent(assignmentId)}&includeEnded=1`);
           data = await res.json().catch(() => ({}));
         }
         await applyPayload(data);

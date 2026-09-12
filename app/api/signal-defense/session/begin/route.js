@@ -9,6 +9,7 @@ import {
 } from "../../../../../lib/signal-ops/sessionHelpers";
 
 // Lobby -> live. Students polling the session auto-launch when they see live.
+// V1.5 starts wave 1 + meter tick clock.
 export async function POST(request) {
   const body = await request.json().catch(() => ({}));
   const { assignmentId, accessToken, sessionId } = body || {};
@@ -48,9 +49,21 @@ export async function POST(request) {
     return NextResponse.json(serializeSession(session, participants));
   }
 
+  const now = new Date().toISOString();
   const { data: updated, error } = await supabaseAdmin
     .from("signal_ops_sessions")
-    .update({ status: "live", started_at: new Date().toISOString() })
+    .update({
+      status: "live",
+      started_at: now,
+      wave_index: 1,
+      wave_started_at: now,
+      meters_ticked_at: now,
+      outcome: "ongoing",
+      vote: null,
+      upgrades: {},
+      next_vote_threshold: 48,
+      last_upgrade_id: null,
+    })
     .eq("id", session.id)
     .select("*")
     .single();
