@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { supabaseAdmin } from "../../../../lib/supabaseAdmin";
 import { SAM_SKINS } from "../../../../lib/samSkins";
+import { DEV_FORCE_UNLOCK_ALL } from "../../../../lib/devFlags";
 
 // Sept 4, 2026 — first real API piece of the S.A.M. expansion (see
 // SAM_Companion_Concept_v1.md). Modeled on app/api/student/set-background,
@@ -38,8 +39,14 @@ export async function POST(request) {
   // threshold OR by a teacher granting it directly (Feature B, the Rewards
   // modal's Skin tab) — either path is enough, checked the same way the
   // picker UI checks it in HomeClient.js.
+  //
+  // Sept 12, 2026: DEV_FORCE_UNLOCK_ALL (lib/devFlags.js) skips this check
+  // entirely, matching the picker UI's bypass in HomeClient.js — otherwise
+  // a student could see every skin unlocked there and then have equipping
+  // one silently rejected here, same bug this exact flag already fixed
+  // once for the Galaxy Hub world pages.
   const teacherUnlocked = (student.teacher_unlocked_sam_skins || []).includes(skinKey);
-  if ((student.crystal_points || 0) < skin.threshold && !teacherUnlocked) {
+  if (!DEV_FORCE_UNLOCK_ALL && (student.crystal_points || 0) < skin.threshold && !teacherUnlocked) {
     return NextResponse.json({ error: "That S.A.M. skin isn't unlocked yet." }, { status: 403 });
   }
 

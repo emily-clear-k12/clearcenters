@@ -1,13 +1,35 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { HOME_BACKGROUNDS } from "../../lib/homeBackgrounds";
 import { SAM_SKINS, DEFAULT_SAM_SKIN } from "../../lib/samSkins";
 import { getWorldStory } from "../../lib/worldStories";
+import { DEV_FORCE_UNLOCK_ALL } from "../../lib/devFlags";
 import SamIcon from "../../components/SamIcon";
 import SamStage from "../../components/SamStage";
 import SamTrail from "../../components/SamTrail";
+import SamMotionTrail from "../../components/SamMotionTrail";
+
+// Sept 12, 2026 — five hand-picked "parking spots" for S.A.M. to wander
+// between on Home, per Emily's "have SAM fly/float around... not just
+// bobbing in the bottom corner." Positions are percentages of the hub
+// stage (which fills the viewport) chosen to clear the header tile
+// (top-left, roughly x 1.5-20%, y 2-30%) and the centered mission column
+// (roughly x 23-77%, y 8-60%) and the portal row (roughly x 22-78%, y
+// 75-94%) — same "tuned by eye, not pixel-perfect" approach
+// GearLockerClient.js's PORTAL_HOTSPOTS already uses, may want a nudge
+// once this is actually seen live. `tooltip` is a hand-picked position for
+// the "click me" popup next to each spot rather than computed at runtime,
+// since there are only five of these and runtime geometry math is more
+// likely to place it off-screen than a value chosen to look right here.
+const SAM_WAYPOINTS = [
+  { key: "corner-br", left: "82%", top: "76%", tooltip: { right: "6%", bottom: "26%" } },
+  { key: "corner-bl", left: "4%", top: "76%", tooltip: { left: "6%", bottom: "26%" } },
+  { key: "corner-tr", left: "82%", top: "4%", tooltip: { right: "6%", top: "24%" } },
+  { key: "edge-mr", left: "82%", top: "38%", tooltip: { right: "6%", top: "34%" } },
+  { key: "edge-ml", left: "4%", top: "45%", tooltip: { left: "6%", top: "40%" } },
+];
 
 // Sept 4, 2026 — display names for the Home settings panel's background
 // picker (added alongside the gear-icon settings window). Keyed by the same
@@ -129,6 +151,38 @@ export default function HomeClient({ student, studentClass, assignments, mission
   const [nicknameDraft, setNicknameDraft] = useState(student.sam_nickname || "");
   const [nicknameSaving, setNicknameSaving] = useState(false);
   const samLabel = samNickname || "S.A.M.";
+
+  // Sept 12, 2026 — S.A.M. wanders between SAM_WAYPOINTS instead of sitting
+  // fixed in the bottom-right corner, per Emily's ask. `samSpotIndex`
+  // picks the current waypoint (CSS transitions the actual movement — see
+  // the wrapping div's style below); `samMoving` swaps SamStage to its
+  // "moving" animation state for the glide (the art for this state already
+  // existed and was unused — see lib/samSkins.js) and also gates the
+  // motion trail below. `samRef` is the DOM node SamMotionTrail polls for
+  // its live position — see that component for why polling
+  // getBoundingClientRect works fine on a CSS-transitioned element.
+  const [samSpotIndex, setSamSpotIndex] = useState(0);
+  const [samMoving, setSamMoving] = useState(false);
+  const samRef = useRef(null);
+  const samSpot = SAM_WAYPOINTS[samSpotIndex];
+
+  useEffect(() => {
+    // Paused while a panel anchored to S.A.M.'s current spot is open
+    // (the "click me" tooltip, and the settings panel since it occupies a
+    // big chunk of the left side) — moving out from under an open tooltip
+    // would leave it pointing at an empty spot.
+    if (samOpen || settingsOpen) return undefined;
+    const id = setInterval(() => {
+      setSamSpotIndex((prev) => {
+        let next = prev;
+        while (next === prev) next = Math.floor(Math.random() * SAM_WAYPOINTS.length);
+        return next;
+      });
+      setSamMoving(true);
+      setTimeout(() => setSamMoving(false), 2200);
+    }, 9000);
+    return () => clearInterval(id);
+  }, [samOpen, settingsOpen]);
 
   // Sept 5, 2026 — Galaxy Hub world-reward-station work: which world's
   // S.A.M. trail is equipped (null = none) and which world backgrounds
@@ -506,8 +560,16 @@ export default function HomeClient({ student, studentClass, assignments, mission
               // teacher granting it directly from the Rewards modal's Skin
               // tab (Feature B) — matches the server-side check in
               // set-sam-skin/route.js.
+              //
+              // Sept 12, 2026: DEV_FORCE_UNLOCK_ALL (lib/devFlags.js) shows
+              // every skin unlocked for now, per Emily's ask — same
+              // display-bypass-only rule as the Galaxy Hub planets and
+              // world games (the 💎 threshold pill just never renders
+              // while this is true, since it only shows in the `!unlocked`
+              // branch below). set-sam-skin/route.js has the matching
+              // server-side bypass so equipping one actually saves.
               const teacherUnlocked = (student.teacher_unlocked_sam_skins || []).includes(skin.key);
-              const unlocked = student.crystal_points >= skin.threshold || teacherUnlocked;
+              const unlocked = DEV_FORCE_UNLOCK_ALL || student.crystal_points >= skin.threshold || teacherUnlocked;
               const selected = skin.key === samSkinKey;
               return (
                 <button
@@ -777,17 +839,31 @@ export default function HomeClient({ student, studentClass, assignments, mission
 
       {/* Sept 4, 2026 — grown from a 58px corner button to a real 150px
           "companion" presence (SamStage), per Emily's flag that S.A.M. was
-          too small anywhere for the new animation packs to ever read. Same
-          corner spot, same click-to-toggle-tooltip behavior — just big
-          enough to actually be seen, with a soft shadow "platform"
-          grounding it instead of floating at an arbitrary size. */}
-      <SamStage
-        skinKey={samSkinKey}
-        alt={samLabel}
-        size={150}
-        onClick={() => setSamOpen(!samOpen)}
-        style={{ position: "absolute", right: 10, bottom: 10, zIndex: 5 }}
-      />
+          too small anywhere for the new animation packs to ever read.
+          Same click-to-toggle-tooltip behavior — just big enough to
+          actually be seen, with a soft shadow "platform" grounding it
+          instead of floating at an arbitrary size.
+          Sept 12, 2026: no longer pinned to one corner — this wrapper div
+          carries the position/transition now (SAM_WAYPOINTS above) so
+          S.A.M. glides between spots instead of sitting fixed at
+          right:10, bottom:10; SamStage itself just fills it. `samRef` is
+          what SamMotionTrail polls to draw sparkles behind it mid-flight. */}
+      <div
+        ref={samRef}
+        style={{
+          position: "absolute", left: samSpot.left, top: samSpot.top,
+          transition: "left 2.2s ease-in-out, top 2.2s ease-in-out",
+          zIndex: 5,
+        }}
+      >
+        <SamStage
+          skinKey={samSkinKey}
+          alt={samLabel}
+          size={150}
+          state={samMoving ? "moving" : "idle"}
+          onClick={() => setSamOpen(!samOpen)}
+        />
+      </div>
 
       {/* Sept 5, 2026 — World Reward Station cosmetic: a mouse-following
           sparkle trail earned by reading a world's "learn about this
@@ -796,8 +872,15 @@ export default function HomeClient({ student, studentClass, assignments, mission
           used, just recolored per equipped world — no new art needed. */}
       <SamTrail colors={equippedTrailColors} active={Boolean(equippedTrail)} />
 
+      {/* Sept 12, 2026 — the same equipped trail, but following S.A.M.'s
+          own body instead of the mouse while it's mid-flight between
+          waypoints, per Emily's ask. Only active with a trail actually
+          equipped (same "only show it if it's earned" rule SamTrail
+          follows) AND while samMoving is true. */}
+      <SamMotionTrail targetRef={samRef} active={samMoving && Boolean(equippedTrail)} colors={equippedTrailColors} />
+
       {samOpen && (
-        <div style={{ position: "absolute", right: 26, bottom: 186, width: 240, background: COLORS.white, borderRadius: 16, boxShadow: "0 8px 24px rgba(0,0,0,.2)", padding: 16, zIndex: 5 }}>
+        <div style={{ position: "absolute", ...samSpot.tooltip, width: 240, background: COLORS.white, borderRadius: 16, boxShadow: "0 8px 24px rgba(0,0,0,.2)", padding: 16, zIndex: 5 }}>
           <p style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 700, fontSize: 14, margin: "0 0 4px 0" }}>
             {samLabel} <span style={{ color: COLORS.teal }}>· ClearCenters Assistant for Missions</span>
           </p>
