@@ -4,7 +4,19 @@ import { supabaseAdmin } from "../../../../lib/supabaseAdmin";
 import { callClaude, extractJSON } from "../../../../lib/anthropic";
 import { getSignalCheckServerCase } from "../../../../lib/cases/signal-check/index.server";
 
-function summarizeForHumans(caseData, stemMode, statementAnswers) {
+function summarizeForHumans(caseData, stemMode, statementAnswers, extras = {}) {
+  const shape = extras.caseShape || caseData?.caseShape || "classic";
+  if (shape === "weigh_in") {
+    const side = extras.sideId || "(no side)";
+    const evid = (extras.reasonEvidenceIds || []).filter(Boolean).join(", ") || "(none)";
+    return `Weigh-In side: ${side} — evidence: ${evid}`;
+  }
+  if (shape === "thread") {
+    const flags = extras.commentFlags || {};
+    const flagLine = Object.keys(flags).map((id) => `${id}=${flags[id]}`).join("; ") || "(none)";
+    const evid = (extras.replyEvidenceIds || []).filter(Boolean).join(", ") || "(none)";
+    return `Thread flags: ${flagLine}\nReply evidence: ${evid}`;
+  }
   // Human-readable text for the generic `attempt2` column every other page
   // already knows how to display (Reports, Progress, notifications) — the
   // full structured breakdown lives in signal_data for the grading page.
@@ -35,6 +47,48 @@ function gradeDropdown(caseData, statementAnswers) {
   const score = ratio === 1 ? 2 : ratio > 0 ? 1 : 0;
   const rationale = `Matched ${correct} of ${ids.length} signal verdicts exactly.`;
   return { score, rationale };
+}
+
+function gradeWeighIn(caseData, sideId, reasonEvidenceIds) {
+  if (!caseData?.correctSideId) return { score: null, rationale: null };
+  const sideOk = sideId === caseData.correctSideId;
+  const picks = (reasonEvidenceIds || []).filter(Boolean);
+  const must = caseData.rulingMustInclude || [];
+  // Soft check: at least one must-include token appears in joined pick ids
+  // (dropdown mode stores evidence ids, not prose).
+  const joined = picks.join(" ").toLowerCase();
+  const hintHits = must.filter((m) => joined.includes(String(m).toLowerCase())).length;
+  if (sideOk && picks.length >= 2) {
+    return { score: 2, rationale: `Picked correct side (${caseData.correctSideId}) with ${picks.length} evidence picks.` };
+  }
+  if (sideOk || hintHits > 0) {
+    return { score: 1, rationale: sideOk ? "Correct side, but evidence picks were thin or missing." : "Side missed; some related evidence tokens present." };
+  }
+  return { score: 0, rationale: `Expected side ${caseData.correctSideId}; student picked ${sideId || "(none)"}.` };
+}
+
+function gradeThread(caseData, commentFlags, replyEvidenceIds) {
+  const map = caseData?.commentFlags || {};
+  const ids = Object.keys(map);
+  if (ids.length === 0) return { score: null, rationale: null };
+  let correct = 0;
+  ids.forEach((id) => {
+    if ((commentFlags || {})[id] === map[id]) correct++;
+  });
+  const mustIds = caseData.mustFlagIds || ids;
+  let mustCorrect = 0;
+  mustIds.forEach((id) => {
+    if ((commentFlags || {})[id] === map[id]) mustCorrect++;
+  });
+  const replyOk = (replyEvidenceIds || []).filter(Boolean).length >= 2;
+  const ratio = mustIds.length ? mustCorrect / mustIds.length : 0;
+  if (ratio === 1 && replyOk) {
+    return { score: 2, rationale: `Flagged ${correct}/${ids.length} comments correctly; reply cited evidence.` };
+  }
+  if (ratio >= 0.5 || (mustCorrect > 0 && replyOk)) {
+    return { score: 1, rationale: `Matched ${mustCorrect}/${mustIds.length} key flags.` };
+  }
+  return { score: 0, rationale: `Matched ${mustCorrect}/${mustIds.length} key flags.` };
 }
 
 async function gradeWithClaude(caseData, stemMode, statementAnswers) {
@@ -76,14 +130,6 @@ ${studentText}`;
     const parsed = extractJSON(raw);
     return { score: parsed.score, rationale: parsed.rationale };
   } catch (err) {
-    // Scoring failure shouldn't block the student's submission — a teacher
-    // can still grade manually if this is null. But swallowing the actual
-    // error to a bare null/null made this impossible to diagnose from the
-    // outside (every failure just showed "AI scoring wasn't available",
-    // whether the cause was a bad API key, an invalid model name, or a
-    // parsing miss). Stash the real error message in rationale, prefixed so
-    // the grading UI can tell a genuine diagnostic apart from a real AI
-    // rationale and render it distinctly.
     return { score: null, rationale: "[AI grading error] " + (err && err.message ? err.message : String(err)) };
   }
 }
@@ -96,14 +142,37 @@ export async function POST(request) {
     return NextResponse.json({ error: "Not logged in." }, { status: 401 });
   }
 
-  const { assignmentId, caseStandard, stemMode, statementAnswers, checklist, practiceContext } = await request.json();
+  const body = await request.json();
+  const {
+    assignmentId,
+    caseStandard,
+    stemMode,
+    statementAnswers,
+    checklist,
+    practiceContext,
+    caseShape: bodyShape,
+    sideId,
+    reasonEvidenceIds,
+    commentFlags,
+    replyEvidenceIds,
+  } = body;
+
   const caseData = getSignalCheckServerCase(caseStandard);
+  const caseShape = bodyShape || caseData?.caseShape || "classic";
 
   let aiScore = null;
   let aiRationale = null;
 
   if (caseData) {
-    if (stemMode === "dropdown") {
+    if (caseShape === "weigh_in") {
+      const result = gradeWeighIn(caseData, sideId, reasonEvidenceIds);
+      aiScore = result.score;
+      aiRationale = result.rationale;
+    } else if (caseShape === "thread") {
+      const result = gradeThread(caseData, commentFlags, replyEvidenceIds);
+      aiScore = result.score;
+      aiRationale = result.rationale;
+    } else if (stemMode === "dropdown") {
       const result = gradeDropdown(caseData, statementAnswers);
       aiScore = result.score;
       aiRationale = result.rationale;
@@ -115,11 +184,22 @@ export async function POST(request) {
   }
 
   const fields = {
-    attempt2: summarizeForHumans(caseData, stemMode, statementAnswers),
+    attempt2: summarizeForHumans(caseData, stemMode, statementAnswers, {
+      caseShape,
+      sideId,
+      reasonEvidenceIds,
+      commentFlags,
+      replyEvidenceIds,
+    }),
     checklist: checklist || null,
     signal_data: {
+      caseShape,
       stemMode: stemMode || null,
       statementAnswers: statementAnswers || {},
+      sideId: sideId || null,
+      reasonEvidenceIds: reasonEvidenceIds || null,
+      commentFlags: commentFlags || null,
+      replyEvidenceIds: replyEvidenceIds || null,
       // Sensor Sort is practice only — shown to the teacher as context,
       // never factored into ai_score or teacher_grade.
       practiceContext: practiceContext || null,

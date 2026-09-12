@@ -31,8 +31,44 @@ const COLORS = {
 // False, can revise those picks freely, can reopen the evidence to double
 // check themselves, self-check, and submit — all without leaving the page
 // or losing their place. No separate locked "review" screen in between.
-const PHASES = ["main", "scan", "sort", "answer"];
-const PHASE_LABEL = { main: "Transmission", scan: "Scan", sort: "Sensor Sort", answer: "Verdict & Submit" };
+const CLASSIC_PHASES = ["main", "scan", "sort", "answer"];
+const WEIGH_IN_PHASES = ["main", "sort", "answer"];
+const THREAD_PHASES = ["main", "flag", "answer"];
+const PHASE_LABEL = {
+  main: "Transmission",
+  scan: "Scan",
+  sort: "Sensor Sort",
+  flag: "Flag Thread",
+  answer: "Verdict & Submit",
+  pick: "Pick a Side",
+};
+const FLAG_OPTIONS = [
+  { id: "helpful", label: "Helpful" },
+  { id: "misleading", label: "Misleading" },
+  { id: "off_topic", label: "Off-topic" },
+  { id: "needs_evidence", label: "Needs evidence" },
+];
+function phasesForShape(shape) {
+  if (shape === "weigh_in") return WEIGH_IN_PHASES;
+  if (shape === "thread") return THREAD_PHASES;
+  return CLASSIC_PHASES;
+}
+function normalizeEvidence(publicCase, shape) {
+  if (shape === "classic") {
+    return (publicCase.evidenceReadings || []).map((e) => ({
+      id: e.id,
+      label: e.label || e.id,
+      reading: e.reading || e.attribute || "",
+      supports: null,
+    }));
+  }
+  return (publicCase.evidence || []).map((e) => ({
+    id: e.id,
+    label: (e.label || e.id || "").replace(/_/g, " "),
+    reading: e.text || e.reading || "",
+    supports: e.supports || null,
+  }));
+}
 
 const CONFIDENCE_LEVELS = [
   { id: "shaky", emoji: "😕", label: "Still shaky" },
@@ -159,11 +195,12 @@ function TopBar({ standard, subject, onSave, saveState, showSave }) {
   );
 }
 
-function Dots({ phase }) {
-  const idx = PHASES.indexOf(phase);
+function Dots({ phase, phases }) {
+  const list = phases || CLASSIC_PHASES;
+  const idx = list.indexOf(phase);
   return (
     <div style={{ position: "relative", display: "flex", gap: 8, justifyContent: "center", margin: "14px 0 0", zIndex: 2 }}>
-      {PHASES.map((p, i) => (
+      {list.map((p, i) => (
         <span key={p} style={{ width: 8, height: 8, borderRadius: "50%", background: i <= idx ? COLORS.teal : "rgba(255,255,255,.28)", boxShadow: i <= idx ? `0 0 8px ${COLORS.teal}` : "none" }} />
       ))}
     </div>
@@ -341,13 +378,16 @@ export default function SignalCheckClient({ assignmentId, studentId, caseStandar
   // "S.A.M." text label so a student's chosen nickname shows up everywhere.
   const samLabel = samNickname || "S.A.M.";
   const storageKey = "cc_signalcheck_draft_" + assignmentId;
+  const caseShape = publicCase.caseShape || "classic";
+  const PHASES = phasesForShape(caseShape);
+  const evidenceSource = normalizeEvidence(publicCase, caseShape);
 
   // Stable per student+case (not per render/reload) so the shuffle doesn't
   // visibly jump around mid-attempt, but two different students (or the
   // same student on a different case) get different orders. Falls back to
   // assignmentId when studentId isn't available so this still shuffles
   // (just class-wide-identical) rather than silently no-op'ing.
-  const shuffledEvidence = seededShuffle(publicCase.evidenceReadings, `${caseStandard}-evidence-${studentId || assignmentId || ""}`);
+  const shuffledEvidence = seededShuffle(evidenceSource, `${caseStandard}-evidence-${studentId || assignmentId || ""}`);
 
   const draft = existingSubmission || {};
   const draftAnswers = (draft.signal_data && draft.signal_data.statementAnswers) || {};
@@ -372,6 +412,17 @@ export default function SignalCheckClient({ assignmentId, studentId, caseStandar
   // Answer phase state, shape depends on publicCase.stemMode.
   const [statementAnswers, setStatementAnswers] = useState(draftAnswers);
   const [errors, setErrors] = useState({});
+
+  // Weigh-In / Thread answer state (classic ignores these).
+  const draftSideId = (draft.signal_data && draft.signal_data.sideId) || null;
+  const draftReasonEvidence = (draft.signal_data && draft.signal_data.reasonEvidenceIds) || [];
+  const draftCommentFlags = (draft.signal_data && draft.signal_data.commentFlags) || {};
+  const draftReplyEvidence = (draft.signal_data && draft.signal_data.replyEvidenceIds) || [];
+  const [sideId, setSideId] = useState(draftSideId);
+  const [reasonEvidenceIds, setReasonEvidenceIds] = useState(draftReasonEvidence);
+  const [commentFlags, setCommentFlags] = useState(draftCommentFlags);
+  const [replyEvidenceIds, setReplyEvidenceIds] = useState(draftReplyEvidence);
+  const [shapeErrors, setShapeErrors] = useState({});
 
   // Self-check checklist, confirm modal, real submit, post-submit
   // confidence — same pattern as Group Chat's revise/share steps, folded
@@ -418,6 +469,10 @@ export default function SignalCheckClient({ assignmentId, studentId, caseStandar
         setAttemptsByItem(d.attemptsByItem || {});
         setFirstTryCorrect(d.firstTryCorrect || 0);
         setStatementAnswers(d.statementAnswers || {});
+        setSideId(d.sideId || null);
+        setReasonEvidenceIds(d.reasonEvidenceIds || []);
+        setCommentFlags(d.commentFlags || {});
+        setReplyEvidenceIds(d.replyEvidenceIds || []);
         setChecklist(d.checklist || selfCheckQuestions.map(() => false));
       }
     } catch (err) {}
@@ -427,9 +482,9 @@ export default function SignalCheckClient({ assignmentId, studentId, caseStandar
 
   useEffect(() => {
     if (!hydrated.current || submitted) return;
-    const d = { phase, placements, attemptsByItem, firstTryCorrect, statementAnswers, checklist };
+    const d = { phase, placements, attemptsByItem, firstTryCorrect, statementAnswers, checklist, sideId, reasonEvidenceIds, commentFlags, replyEvidenceIds };
     try { localStorage.setItem(storageKey, JSON.stringify(d)); } catch (err) {}
-  }, [phase, placements, attemptsByItem, firstTryCorrect, statementAnswers, checklist, submitted, storageKey]);
+  }, [phase, placements, attemptsByItem, firstTryCorrect, statementAnswers, checklist, sideId, reasonEvidenceIds, commentFlags, replyEvidenceIds, submitted, storageKey]);
 
   function goTo(next) {
     setPhase(next);
@@ -437,13 +492,20 @@ export default function SignalCheckClient({ assignmentId, studentId, caseStandar
   }
 
   const evidenceById = {};
-  publicCase.evidenceReadings.forEach((e) => { evidenceById[e.id] = e; });
+  evidenceSource.forEach((e) => { evidenceById[e.id] = e; });
 
   const statementById = {};
-  publicCase.statements.forEach((s) => { statementById[s.id] = s; });
+  (publicCase.statements || []).forEach((s) => { statementById[s.id] = s; });
 
+  const weighBins = caseShape === "weigh_in" ? [
+    { id: "A", label: "SIDE A", correctItemIds: evidenceSource.filter((e) => e.supports === "A" || e.supports === "both").map((e) => e.id) },
+    { id: "B", label: "SIDE B", correctItemIds: evidenceSource.filter((e) => e.supports === "B" || e.supports === "both").map((e) => e.id) },
+    { id: "neither", label: "NEITHER", correctItemIds: evidenceSource.filter((e) => e.supports === "neither").map((e) => e.id) },
+  ] : null;
+
+  const activeSortBins = caseShape === "weigh_in" ? weighBins : (publicCase.sortBins || []);
   const unplacedItems = shuffledEvidence.filter((e) => !placements[e.id]);
-  const allSorted = Object.keys(placements).length === publicCase.evidenceReadings.length;
+  const allSorted = Object.keys(placements).length === evidenceSource.length;
 
   function pickItem(itemId) {
     setSelectedItemId((prev) => (prev === itemId ? null : itemId));
@@ -486,9 +548,27 @@ export default function SignalCheckClient({ assignmentId, studentId, caseStandar
   }
 
   function validateAnswers() {
+    if (caseShape === "weigh_in") {
+      const next = {};
+      if (!sideId) next.side = true;
+      if (!reasonEvidenceIds || reasonEvidenceIds.filter(Boolean).length < 2) next.reason = true;
+      setShapeErrors(next);
+      setErrors({});
+      return Object.keys(next).length === 0;
+    }
+    if (caseShape === "thread") {
+      const next = {};
+      const comments = publicCase.comments || [];
+      const missing = comments.some((c) => !commentFlags[c.id]);
+      if (missing) next.flags = true;
+      if (!replyEvidenceIds || replyEvidenceIds.filter(Boolean).length < 2) next.reply = true;
+      setShapeErrors(next);
+      setErrors({});
+      return Object.keys(next).length === 0;
+    }
     const mode = publicCase.stemMode;
     const nextErrors = {};
-    publicCase.statements.forEach((s) => {
+    (publicCase.statements || []).forEach((s) => {
       const a = statementAnswers[s.id] || {};
       if (mode === "dropdown") {
         if (!a.verdict || !a.evidence1 || !a.evidence2) nextErrors[s.id] = true;
@@ -547,7 +627,7 @@ export default function SignalCheckClient({ assignmentId, studentId, caseStandar
   async function handleManualSave() {
     setManualSaveState("saving");
     const ok = await saveProgress({
-      signal_data: { phase, placements, attemptsByItem, firstTryCorrect, statementAnswers },
+      signal_data: { phase, placements, attemptsByItem, firstTryCorrect, statementAnswers, caseShape, sideId, reasonEvidenceIds, commentFlags, replyEvidenceIds },
       checklist,
       self_confidence: selfConfidence,
     });
@@ -565,11 +645,16 @@ export default function SignalCheckClient({ assignmentId, studentId, caseStandar
         body: JSON.stringify({
           assignmentId,
           caseStandard,
+          caseShape,
           stemMode: publicCase.stemMode,
-          statementAnswers,
+          statementAnswers: caseShape === "classic" ? statementAnswers : undefined,
+          sideId: caseShape === "weigh_in" ? sideId : undefined,
+          reasonEvidenceIds: caseShape === "weigh_in" ? reasonEvidenceIds : undefined,
+          commentFlags: caseShape === "thread" ? commentFlags : undefined,
+          replyEvidenceIds: caseShape === "thread" ? replyEvidenceIds : undefined,
           checklist,
           practiceContext: {
-            sortTotalItems: publicCase.evidenceReadings.length,
+            sortTotalItems: evidenceSource.length,
             sortFirstTryCorrect: firstTryCorrect,
             sortTotalAttempts: Object.values(attemptsByItem).reduce((a, b) => a + b, 0),
           },
@@ -650,7 +735,7 @@ export default function SignalCheckClient({ assignmentId, studentId, caseStandar
         saveState={manualSaveState}
         showSave={!submitted}
       />
-      <Dots phase={phase} />
+      <Dots phase={phase} phases={PHASES} />
 
       {revisionRequested && phase === "main" && (
         <div style={{ position: "relative", maxWidth: 760, margin: "16px auto 0", padding: "0 20px", zIndex: 2 }}>
@@ -662,7 +747,7 @@ export default function SignalCheckClient({ assignmentId, studentId, caseStandar
 
       <div style={{ position: "relative", maxWidth: phase === "answer" && !submitted ? 1080 : 760, margin: "0 auto", padding: "20px 20px 60px", zIndex: 2 }}>
 
-        {phase === "main" && (
+        {caseShape === "classic" && phase === "main" && (
           <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 22, textAlign: "center", padding: "30px 0" }}>
             <div style={{ fontFamily: "'Space Mono', monospace", fontSize: 11, letterSpacing: 2, color: COLORS.teal }}>⟶ INCOMING TRANSMISSION · SOURCE: {publicCase.transmission.source}</div>
             <GlassCard style={{ maxWidth: 560 }}>
@@ -677,7 +762,7 @@ export default function SignalCheckClient({ assignmentId, studentId, caseStandar
           </div>
         )}
 
-        {phase === "scan" && (
+        {caseShape === "classic" && phase === "scan" && (
           <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
 
             {publicCase.fieldReport ? (
@@ -737,7 +822,7 @@ export default function SignalCheckClient({ assignmentId, studentId, caseStandar
           </div>
         )}
 
-        {phase === "sort" && (
+        {caseShape === "classic" && phase === "sort" && (
           <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
             <div style={{ textAlign: "center" }}>
               <div style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 700, fontSize: 16 }}>🛰️ Sensor Sort</div>
@@ -785,7 +870,7 @@ export default function SignalCheckClient({ assignmentId, studentId, caseStandar
 
             <div style={{ display: "flex", justifyContent: "center", marginTop: 6 }}>
               <PrimaryButton disabled={!allSorted} onClick={() => goTo("answer")}>
-                Lock In Sort — {Object.keys(placements).length}/{publicCase.evidenceReadings.length}
+                Lock In Sort - {Object.keys(placements).length}/{publicCase.evidenceReadings.length}
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M5 12H19M19 12L13 6M19 12L13 18" stroke={COLORS.navy} strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" /></svg>
               </PrimaryButton>
             </div>
@@ -793,7 +878,7 @@ export default function SignalCheckClient({ assignmentId, studentId, caseStandar
           </div>
         )}
 
-        {phase === "answer" && !submitted && (
+        {caseShape === "classic" && phase === "answer" && !submitted && (
           <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
             <div style={{ textAlign: "center", fontFamily: "'Space Mono', monospace", fontSize: 11, letterSpacing: 2, color: COLORS.teal }}>
               ⟶ FILE A VERDICT ON EACH SIGNAL
@@ -915,7 +1000,223 @@ export default function SignalCheckClient({ assignmentId, studentId, caseStandar
           </div>
         )}
 
-        {phase === "answer" && submitted && (
+
+        {caseShape === "weigh_in" && phase === "main" && (
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 18, textAlign: "center", padding: "24px 0" }}>
+            <div style={{ fontFamily: "'Space Mono', monospace", fontSize: 11, letterSpacing: 2, color: COLORS.teal }}>⟶ WEIGH-IN · DISPUTE LOCKED</div>
+            <GlassCard style={{ maxWidth: 560, textAlign: "left" }}>
+              <div style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 700, fontSize: 22, lineHeight: 1.3, marginBottom: 10 }}>{publicCase.dispute?.prompt}</div>
+              <div style={{ fontSize: 13.5, lineHeight: 1.55, color: "rgba(255,255,255,.85)", marginBottom: 16 }}>{publicCase.dispute?.context}</div>
+              <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                {(publicCase.sides || []).map((s) => (
+                  <div key={s.id} style={{ background: "rgba(0,194,199,.10)", border: "1px solid rgba(0,194,199,.35)", borderRadius: 12, padding: "10px 14px" }}>
+                    <div style={{ fontFamily: "'Space Mono', monospace", fontSize: 10, letterSpacing: 1, color: COLORS.teal }}>{s.label}</div>
+                    <div style={{ fontSize: 13.5, marginTop: 4 }}>"{s.claim}"</div>
+                  </div>
+                ))}
+              </div>
+            </GlassCard>
+            <PrimaryButton onClick={() => goTo("sort")}>
+              Sort the Readings
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M5 12H19M19 12L13 6M19 12L13 18" stroke={COLORS.navy} strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" /></svg>
+            </PrimaryButton>
+            <EchoLine text={publicCase.echo?.main} />
+          </div>
+        )}
+
+        {caseShape === "weigh_in" && phase === "sort" && (
+          <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+            <div style={{ textAlign: "center" }}>
+              <div style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 700, fontSize: 16 }}>🛰️ Sensor Sort</div>
+              <div style={{ fontFamily: "'Space Mono', monospace", fontSize: 10.5, letterSpacing: 1.5, color: COLORS.teal, marginTop: 3 }}>TAP A READING, THEN TAP SIDE A / B / NEITHER</div>
+            </div>
+            <div style={{ background: "rgba(8,10,22,.5)", border: "1px solid rgba(255,255,255,.2)", borderRadius: 16, padding: 14, minHeight: 60 }}>
+              <div style={{ fontFamily: "'Space Mono', monospace", fontSize: 9, letterSpacing: 1, color: "rgba(255,255,255,.6)", marginBottom: 8, textAlign: "center" }}>SENSOR TRAY</div>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 10, justifyContent: "center" }}>
+                {unplacedItems.length === 0 && <div style={{ fontSize: 12, color: "rgba(255,255,255,.5)" }}>All readings sorted.</div>}
+                {unplacedItems.map((e) => (
+                  <div key={e.id} onClick={() => pickItem(e.id)} className={"sc-chip" + (selectedItemId === e.id ? " selected" : "")} style={{ background: "rgba(255,255,255,.08)", border: "1.5px dashed rgba(255,255,255,.4)", borderRadius: 12, padding: "10px 14px", maxWidth: 260, textAlign: "left" }}>
+                    <div style={{ fontFamily: "'Inter', sans-serif", fontWeight: 500, fontSize: 12.5, lineHeight: 1.35 }}>{e.reading}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 12 }}>
+              {activeSortBins.map((bin) => {
+                const side = (publicCase.sides || []).find((s) => s.id === bin.id);
+                return (
+                  <div key={bin.id} onClick={() => placeInBin(bin)} className={"sc-bin" + (wrongFlashBinId === bin.id ? " flash" : "")} style={{ flex: "1 1 200px", cursor: selectedItemId ? "pointer" : "default", background: "rgba(8,10,22,.5)", border: `1.5px solid ${bin.id === "neither" ? "rgba(255,255,255,.3)" : "rgba(0,194,199,.5)"}`, borderRadius: 16, padding: "12px 14px", minHeight: 90 }}>
+                    <div style={{ fontFamily: "'Space Mono', monospace", fontSize: 10, letterSpacing: 1, color: bin.id === "neither" ? "rgba(255,255,255,.6)" : COLORS.teal }}>{bin.label}</div>
+                    {side && <div style={{ fontSize: 12, lineHeight: 1.35, color: "rgba(255,255,255,.82)", marginTop: 5 }}>"{side.claim}"</div>}
+                    <div style={{ display: "flex", flexDirection: "column", gap: 6, marginTop: 8 }}>
+                      {evidenceSource.filter((e) => placements[e.id] === bin.id).map((e) => (
+                        <div key={e.id} style={{ background: "rgba(0,194,199,.14)", border: "1.5px solid rgba(0,194,199,.6)", borderRadius: 9, padding: "7px 10px", fontSize: 11, lineHeight: 1.35 }}>{e.reading}</div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+            <div style={{ display: "flex", justifyContent: "center", gap: 10, flexWrap: "wrap", marginTop: 6 }}>
+              <PrimaryButton disabled={!allSorted} onClick={() => goTo("answer")}>
+                Lock In Sort - {Object.keys(placements).length}/{evidenceSource.length}
+              </PrimaryButton>
+              <button type="button" className="sc-btn" onClick={() => goTo("answer")} style={{ background: "rgba(255,255,255,.08)", color: COLORS.white, border: "1px solid rgba(255,255,255,.25)", borderRadius: 999, padding: "12px 18px", fontWeight: 700, fontSize: 13 }}>Skip practice -></button>
+            </div>
+            <EchoLine text={publicCase.echo?.sort} />
+          </div>
+        )}
+
+        {caseShape === "weigh_in" && phase === "answer" && !submitted && (
+          <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+            <div style={{ textAlign: "center", fontFamily: "'Space Mono', monospace", fontSize: 11, letterSpacing: 2, color: COLORS.teal }}>⟶ PICK A SIDE · FILE YOUR RULING</div>
+            <div style={{ display: "grid", gridTemplateColumns: "1.3fr 1fr", gap: 16 }}>
+              <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                {(publicCase.sides || []).map((s) => (
+                  <button key={s.id} type="button" onClick={() => setSideId(s.id)} className="sc-btn" style={{ textAlign: "left", background: sideId === s.id ? "rgba(0,194,199,.18)" : "rgba(8,10,22,.6)", border: sideId === s.id ? `2px solid ${COLORS.teal}` : shapeErrors.side ? `1.5px solid ${COLORS.danger}` : "1px solid rgba(255,255,255,.2)", borderRadius: 16, padding: "14px 18px", color: COLORS.white }}>
+                    <div style={{ fontFamily: "'Space Mono', monospace", fontSize: 10, letterSpacing: 1, color: COLORS.teal }}>{s.label}</div>
+                    <div style={{ fontSize: 14, marginTop: 4 }}>"{s.claim}"</div>
+                  </button>
+                ))}
+                <GlassCard>
+                  <div style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 700, fontSize: 14, marginBottom: 8 }}>Because…</div>
+                  <div style={{ fontSize: 13, lineHeight: 1.7 }}>
+                    <select className="sc-select" value={reasonEvidenceIds[0] || ""} onChange={(e) => setReasonEvidenceIds([e.target.value, reasonEvidenceIds[1] || ""])}>
+                      <option value="">choose ▾</option>
+                      {shuffledEvidence.map((e) => <option key={e.id} value={e.id}>{e.reading.slice(0, 48)}{e.reading.length > 48 ? "…" : ""}</option>)}
+                    </select>
+                    {" "}and{" "}
+                    <select className="sc-select" value={reasonEvidenceIds[1] || ""} onChange={(e) => setReasonEvidenceIds([reasonEvidenceIds[0] || "", e.target.value])}>
+                      <option value="">choose ▾</option>
+                      {shuffledEvidence.map((ev) => <option key={ev.id} value={ev.id}>{ev.reading.slice(0, 48)}{ev.reading.length > 48 ? "…" : ""}</option>)}
+                    </select>.
+                  </div>
+                  {(shapeErrors.side || shapeErrors.reason) && <div style={{ color: COLORS.danger, fontSize: 11, fontWeight: 600, marginTop: 8 }}>Pick a side and two proof readings.</div>}
+                </GlassCard>
+              </div>
+              <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                <GlassCard>
+                  <div style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 700, fontSize: 14, marginBottom: 4 }}>Self-Check</div>
+                  <div style={{ fontSize: 11.5, color: "rgba(255,255,255,.65)", marginBottom: 10 }}>Check at least {REQUIRED_CHECKS} of {selfCheckQuestions.length}.</div>
+                  <div style={{ display: "grid", gap: 8 }}>
+                    {selfCheckQuestions.map((item, i) => (
+                      <label key={i} style={{ display: "flex", gap: 10, alignItems: "flex-start", cursor: "pointer", fontSize: 12.5, lineHeight: 1.4 }}>
+                        <input type="checkbox" checked={!!checklist[i]} onChange={() => toggleChecklistItem(i)} style={{ marginTop: 3 }} />
+                        <span>{item}</span>
+                      </label>
+                    ))}
+                  </div>
+                  {showChecklistError && <div style={{ color: COLORS.danger, fontSize: 11.5, fontWeight: 600, marginTop: 8 }}>Check at least {REQUIRED_CHECKS} boxes.</div>}
+                </GlassCard>
+                <PrimaryButton onClick={handleRequestSubmit} disabled={submitting} style={{ width: "100%", justifyContent: "center" }}>
+                  {submitting ? "Sending…" : "Submit Ruling"}
+                </PrimaryButton>
+                {submitError && <div style={{ color: COLORS.danger, fontSize: 12 }}>{submitError}</div>}
+                <EchoLine text={publicCase.echo?.pick || publicCase.echo?.reflect} />
+              </div>
+            </div>
+          </div>
+        )}
+
+        {caseShape === "thread" && phase === "main" && (
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 18, textAlign: "center", padding: "24px 0" }}>
+            <div style={{ fontFamily: "'Space Mono', monospace", fontSize: 11, letterSpacing: 2, color: COLORS.teal }}>⟶ THREAD LOCKED · SOURCE: {publicCase.transmission?.source}</div>
+            <GlassCard style={{ maxWidth: 560 }}>
+              <div style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 700, fontSize: 22, lineHeight: 1.3 }}>"{publicCase.transmission?.claimHeadline}"</div>
+              <div style={{ marginTop: 10, fontSize: 12.5, color: "rgba(255,255,255,.6)" }}>— {publicCase.transmission?.source}, {publicCase.transmission?.loggedAt}</div>
+            </GlassCard>
+            <div style={{ width: "100%", maxWidth: 560, display: "flex", flexDirection: "column", gap: 8, textAlign: "left" }}>
+              {(publicCase.comments || []).slice(0, 3).map((c) => (
+                <div key={c.id} style={{ background: "rgba(8,10,22,.55)", border: "1px solid rgba(255,255,255,.18)", borderRadius: 12, padding: "10px 12px" }}>
+                  <div style={{ fontFamily: "'Space Mono', monospace", fontSize: 10, color: COLORS.teal }}>{c.persona}</div>
+                  <div style={{ fontSize: 13, marginTop: 3 }}>{c.text}</div>
+                </div>
+              ))}
+              <div style={{ fontSize: 12, color: "rgba(255,255,255,.55)", textAlign: "center" }}>+ {(publicCase.comments || []).length - 3} more in the thread…</div>
+            </div>
+            <PrimaryButton onClick={() => goTo("flag")}>
+              Flag the Thread
+            </PrimaryButton>
+            <EchoLine text={publicCase.echo?.main} />
+          </div>
+        )}
+
+        {caseShape === "thread" && phase === "flag" && (
+          <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+            <div style={{ textAlign: "center", fontFamily: "'Space Mono', monospace", fontSize: 11, letterSpacing: 2, color: COLORS.teal }}>⟶ FLAG EACH COMMENT</div>
+            {(publicCase.comments || []).map((c) => (
+              <GlassCard key={c.id} style={{ padding: "14px 16px" }}>
+                <div style={{ fontFamily: "'Space Mono', monospace", fontSize: 10, color: COLORS.teal }}>{c.persona}</div>
+                <div style={{ fontSize: 13.5, margin: "6px 0 10px" }}>{c.text}</div>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                  {FLAG_OPTIONS.map((f) => (
+                    <button key={f.id} type="button" onClick={() => setCommentFlags((prev) => ({ ...prev, [c.id]: f.id }))} className="sc-btn" style={{ background: commentFlags[c.id] === f.id ? COLORS.teal : "rgba(255,255,255,.08)", color: commentFlags[c.id] === f.id ? COLORS.navy : COLORS.white, border: "1px solid rgba(255,255,255,.22)", borderRadius: 999, padding: "7px 12px", fontSize: 12, fontWeight: 700 }}>
+                      {f.label}
+                    </button>
+                  ))}
+                </div>
+              </GlassCard>
+            ))}
+            {shapeErrors.flags && <div style={{ color: COLORS.danger, fontSize: 12, fontWeight: 600, textAlign: "center" }}>Flag every comment before you continue.</div>}
+            <div style={{ display: "flex", justifyContent: "center" }}>
+              <PrimaryButton onClick={() => {
+                const missing = (publicCase.comments || []).some((c) => !commentFlags[c.id]);
+                if (missing) { setShapeErrors({ flags: true }); return; }
+                setShapeErrors({});
+                goTo("answer");
+              }}>
+                Reply with Evidence
+              </PrimaryButton>
+            </div>
+            <EchoLine text={publicCase.echo?.flag} />
+          </div>
+        )}
+
+        {caseShape === "thread" && phase === "answer" && !submitted && (
+          <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+            <div style={{ textAlign: "center", fontFamily: "'Space Mono', monospace", fontSize: 11, letterSpacing: 2, color: COLORS.teal }}>⟶ REPLY TO THE CLAIM</div>
+            <div style={{ display: "grid", gridTemplateColumns: "1.3fr 1fr", gap: 16 }}>
+              <GlassCard>
+                <div style={{ fontSize: 13, color: "rgba(255,255,255,.75)", marginBottom: 8 }}>Claim: "{publicCase.transmission?.claimHeadline}"</div>
+                <div style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 700, fontSize: 14, marginBottom: 8 }}>My reply uses…</div>
+                <div style={{ fontSize: 13, lineHeight: 1.7 }}>
+                  <select className="sc-select" value={replyEvidenceIds[0] || ""} onChange={(e) => setReplyEvidenceIds([e.target.value, replyEvidenceIds[1] || ""])}>
+                    <option value="">choose ▾</option>
+                    {shuffledEvidence.map((e) => <option key={e.id} value={e.id}>{e.reading.slice(0, 48)}{e.reading.length > 48 ? "…" : ""}</option>)}
+                  </select>
+                  {" "}and{" "}
+                  <select className="sc-select" value={replyEvidenceIds[1] || ""} onChange={(e) => setReplyEvidenceIds([replyEvidenceIds[0] || "", e.target.value])}>
+                    <option value="">choose ▾</option>
+                    {shuffledEvidence.map((e) => <option key={e.id} value={e.id}>{e.reading.slice(0, 48)}{e.reading.length > 48 ? "…" : ""}</option>)}
+                  </select>.
+                </div>
+                {shapeErrors.reply && <div style={{ color: COLORS.danger, fontSize: 11, fontWeight: 600, marginTop: 8 }}>Pick two evidence readings for your reply.</div>}
+              </GlassCard>
+              <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                <GlassCard>
+                  <div style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 700, fontSize: 14, marginBottom: 4 }}>Self-Check</div>
+                  <div style={{ fontSize: 11.5, color: "rgba(255,255,255,.65)", marginBottom: 10 }}>Check at least {REQUIRED_CHECKS} of {selfCheckQuestions.length}.</div>
+                  <div style={{ display: "grid", gap: 8 }}>
+                    {selfCheckQuestions.map((item, i) => (
+                      <label key={i} style={{ display: "flex", gap: 10, alignItems: "flex-start", cursor: "pointer", fontSize: 12.5, lineHeight: 1.4 }}>
+                        <input type="checkbox" checked={!!checklist[i]} onChange={() => toggleChecklistItem(i)} style={{ marginTop: 3 }} />
+                        <span>{item}</span>
+                      </label>
+                    ))}
+                  </div>
+                  {showChecklistError && <div style={{ color: COLORS.danger, fontSize: 11.5, fontWeight: 600, marginTop: 8 }}>Check at least {REQUIRED_CHECKS} boxes.</div>}
+                </GlassCard>
+                <PrimaryButton onClick={handleRequestSubmit} disabled={submitting} style={{ width: "100%", justifyContent: "center" }}>
+                  {submitting ? "Sending…" : "Submit Reply"}
+                </PrimaryButton>
+                {submitError && <div style={{ color: COLORS.danger, fontSize: 12 }}>{submitError}</div>}
+                <EchoLine text={publicCase.echo?.reply || publicCase.echo?.reflect} />
+              </div>
+            </div>
+          </div>
+        )}
+
+        {(caseShape === "classic" || caseShape === "weigh_in" || caseShape === "thread") && phase === "answer" && submitted && (
           <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
             <div style={{ textAlign: "center", fontFamily: "'Space Mono', monospace", fontSize: 11, letterSpacing: 2, color: COLORS.teal }}>⟶ REPORT FILED</div>
 

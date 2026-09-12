@@ -262,6 +262,7 @@ export default function TeacherGradeDetailPage() {
   const isSignalCheck = submission.caseEngine === "fact_check_desk";
   const caseEntry = isSignalCheck ? null : getPublicCase(submission.caseStandard);
   const signalCheckCase = isSignalCheck ? getSignalCheckPublicCase(submission.caseStandard) : null;
+  const signalCheckShape = (signalCheckCase && signalCheckCase.caseShape) || (submission.signal_data && submission.signal_data.caseShape) || "classic";
   const isNewsroom = (submission.caseEngine || "").startsWith("newsroom");
   const newsroomCase = isNewsroom ? getNewsroomBNPublicCase(submission.caseStandard) : null;
   const newsroomVoiceName = (id) => (newsroomCase?.voices.find((v) => v.id === id) || {}).name || id;
@@ -287,7 +288,7 @@ export default function TeacherGradeDetailPage() {
     return signalCheckCase?.stemMode === "open" ? a.verdictText : a.verdict;
   }
   const signalCheckWrongSignals =
-    isSignalCheck && signalCheckCase
+    isSignalCheck && signalCheckCase && signalCheckShape === "classic" && Array.isArray(signalCheckCase.statements)
       ? signalCheckCase.statements.filter((s) => signalCheckVerdict(s) !== s.correctVerdict)
       : [];
 
@@ -306,7 +307,7 @@ export default function TeacherGradeDetailPage() {
   // surfaced here so the teacher doesn't have to go look it up separately
   // before reteaching.
   const standardSpringboard = isSignalCheck
-    ? finalGrade !== 2 && signalCheckCase
+    ? finalGrade !== 2 && signalCheckCase && signalCheckShape === "classic" && signalCheckCase.transmission
       ? { kind: "signal-check", claimHeadline: signalCheckCase.transmission.claimHeadline, wrongSignals: signalCheckWrongSignals }
       : null
     : finalGrade !== 2 && caseEntry && caseEntry.publicCase
@@ -347,13 +348,13 @@ export default function TeacherGradeDetailPage() {
         <div style={{ width: "100%", maxWidth: 1000, display: "grid", gridTemplateColumns: "1.3fr 1fr", gap: 18 }}>
           <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
             {isSignalCheck ? (
-              // Signal Check only ever has one attempt — no revise step —
-              // so the Attempt 1 / Attempt 2 split doesn't apply here. Show
-              // each signal matched with what the student actually answered
-              // instead of the flattened one-paragraph summary.
+              // Signal Check only ever has one attempt — no revise step.
+              // Classic keeps the per-signal breakdown. Weigh-In / Thread
+              // show a short summary from attempt2 / signal_data so the
+              // page never crashes on missing statements[].
               <div style={{ background: COLORS.white, borderRadius: 16, padding: 16, boxShadow: "0 4px 16px rgba(0,0,0,.12)" }}>
-                <div style={{ fontWeight: 700, fontSize: 12.5, color: COLORS.textMuted, marginBottom: 12, textTransform: "uppercase", letterSpacing: 0.5 }}>Student's Responses</div>
-                {signalCheckCase ? (
+                <div style={{ fontWeight: 700, fontSize: 12.5, color: COLORS.textMuted, marginBottom: 12, textTransform: "uppercase", letterSpacing: 0.5 }}>Student's Responses{signalCheckShape !== "classic" ? ` · ${signalCheckShape}` : ""}</div>
+                {signalCheckCase && signalCheckShape === "classic" && Array.isArray(signalCheckCase.statements) ? (
                   <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
                     {signalCheckCase.statements.map((s, i) => {
                       const a = signalCheckAnswers[s.id] || {};
@@ -390,7 +391,18 @@ export default function TeacherGradeDetailPage() {
                     })}
                   </div>
                 ) : (
-                  <div style={{ background: COLORS.cream, borderRadius: 10, padding: 12, fontSize: 13, color: COLORS.textMuted, fontStyle: "italic" }}>{submission.attempt2 || "(no answer written)"}</div>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                    <div style={{ background: COLORS.cream, borderRadius: 10, padding: 12, fontSize: 13, color: COLORS.textDark, whiteSpace: "pre-wrap" }}>{submission.attempt2 || "(no answer written)"}</div>
+                    {submission.signal_data && (
+                      <pre style={{ background: COLORS.cream, borderRadius: 10, padding: 12, fontSize: 11, color: COLORS.textMuted, overflow: "auto", maxHeight: 220, margin: 0 }}>{JSON.stringify({
+                        caseShape: signalCheckShape,
+                        sideId: submission.signal_data.sideId,
+                        reasonEvidenceIds: submission.signal_data.reasonEvidenceIds,
+                        commentFlags: submission.signal_data.commentFlags,
+                        replyEvidenceIds: submission.signal_data.replyEvidenceIds,
+                      }, null, 2)}</pre>
+                    )}
+                  </div>
                 )}
               </div>
             ) : (
