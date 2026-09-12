@@ -1,17 +1,17 @@
 import { NextResponse } from "next/server";
-import { supabaseAdmin } from "../../../../../../lib/supabaseAdmin";
+import { supabaseAdmin } from "../../../../../lib/supabaseAdmin";
 import {
   getStudentFromCookie,
   assertStudentCanAccessAssignment,
   fetchOpenSessionForAssignment,
   fetchParticipants,
   serializeSession,
-} from "../../../../../../lib/signal-ops/sessionHelpers";
+} from "../../../../../lib/signal-ops/sessionHelpers";
 import {
   advanceLiveSession,
   recomputeVoteTallies,
   voteIsOpen,
-} from "../../../../../../lib/signal-ops/sessionSim";
+} from "../../../../../lib/signal-ops/sessionSim";
 
 // Student casts (or changes) their class upgrade vote during an open window.
 export async function POST(request) {
