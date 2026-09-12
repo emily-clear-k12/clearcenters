@@ -207,7 +207,8 @@ button:disabled{cursor:default}button,summary{touch-action:manipulation}
         <label><input type="checkbox" data-format-choice value="lock_signal" checked> Lock the Signal</label>
         <label><input type="checkbox" data-format-choice value="true_false"> True / False Signal</label>
         <label><input type="checkbox" data-format-choice value="frequency_fill"> Frequency Fill</label>
-        <label><input type="checkbox" data-format-choice value="odd_signal_out"> Odd Signal Out</label></div>
+        <label><input type="checkbox" data-format-choice value="odd_signal_out"> Odd Signal Out</label>
+<label><input type="checkbox" data-format-choice value="sort_bins"> Sort the Bins</label></div>
         <p class="format-note" id="format-note"></p></details>
         <label class="timed-option"><input type="checkbox" id="timed-option"> Add an 8-second question timer <span>(optional)</span></label>
       </div>
@@ -310,7 +311,8 @@ const FORMAT_INFO = Object.freeze({
  lock_signal:{name:'Lock the Signal',icon:'target',encounter:'COMMUNICATIONS BEACON',instruction:'Which definition matches?'},
  true_false:{name:'True Signal / False Signal',icon:'satellite',encounter:'TRANSMISSION CHECK',instruction:'Is this signal true or false?'},
  frequency_fill:{name:'Frequency Fill',icon:'relay',encounter:'MESSAGE RELAY',instruction:'Choose the missing word.'},
- odd_signal_out:{name:'Odd Signal Out',icon:'scanner',encounter:'DEEP-SPACE SCANNER',instruction:'Choose the word that does not belong.'}
+ odd_signal_out:{name:'Odd Signal Out',icon:'scanner',encounter:'DEEP-SPACE SCANNER',instruction:'Choose the word that does not belong.'},
+ sort_bins:{name:'Sort the Bins',icon:'scanner',encounter:'CARGO SORT BAY',instruction:'Which bin does this belong in?'}
 });
 const CONTENT_MODE_INFO = Object.freeze({
  vocabulary:{name:'Vocabulary'},
@@ -318,6 +320,7 @@ const CONTENT_MODE_INFO = Object.freeze({
 });
 const CLASSIFICATION_INFO = Object.freeze({name:'Sort & Classify',icon:'scanner',encounter:'CARGO ANALYSIS BAY',instruction:'Place every sample in the correct bay.'});
 let CLASSIFICATIONS=[];
+let SORT_BINS=[];
 let selectedFormats=['lock_signal'], selectedContentModes=['vocabulary'], oddGroups=[], usingSampleContent=false;
 const SAMPLE_SENTENCES={
  1:'During evaporation, puddles dry up as liquid water changes into water vapor.',
@@ -350,7 +353,9 @@ function editableContent(){if(!['intro','recap'].includes(state.mode))throw new 
 function usableId(value){return ['string','number'].includes(typeof value)&&String(value).trim()!==''&&(typeof value!=='number'||Number.isFinite(value));}
 function cleanMetadata(value,label){if(value===undefined)return undefined;if(!value||typeof value!=='object'||Array.isArray(value))throw new TypeError(label+' metadata must be an object.');return {...value};}
 function cleanWordBank(words){
- if(!Array.isArray(words)||words.length<4)throw new TypeError('Provide at least four unique words and definitions.');
+ if(!Array.isArray(words))throw new TypeError('Provide at least four unique words and definitions.');
+ if(!words.length)return [];
+ if(words.length<4)throw new TypeError('Provide at least four unique words and definitions.');
  const ids=new Set(),defs=new Set();
  return words.map(w=>{
   const term=typeof w?.word==='string'?w.word:typeof w?.term==='string'?w.term:'';
@@ -389,6 +394,27 @@ function cleanClassificationBank(questions){
   const metadata=cleanMetadata(q.metadata,'Sort & Classify question');if(metadata)clean.metadata=metadata;questionIds.add(String(q.id));return clean;
  });
 }
+function cleanSortBinsBank(items){
+ if(!Array.isArray(items)||!items.length)throw new TypeError('Provide at least one sort_bins item.');
+ const ids=new Set();
+ return items.map(item=>{
+  if(!item||!usableId(item.id)||ids.has(String(item.id))||typeof item.prompt!=='string'||!item.prompt.trim())throw new TypeError('Each sort_bins item needs a unique id and prompt.');
+  if(!Array.isArray(item.bins)||item.bins.length<2||item.bins.length>6)throw new TypeError('Each sort_bins item needs two to six bins.');
+  const binIds=new Set();
+  const bins=item.bins.map(b=>{
+   if(!b||!usableId(b.id)||binIds.has(String(b.id))||typeof b.label!=='string'||!b.label.trim())throw new TypeError('Each bin needs a unique id and label.');
+   binIds.add(String(b.id));return {id:b.id,label:b.label.trim()};
+  });
+  const correctBinId=item.correctBinId??item.correct_bin_id;
+  if(!usableId(correctBinId)||!binIds.has(String(correctBinId)))throw new TypeError('correctBinId must match a bin.');
+  ids.add(String(item.id));
+  const clean={id:item.id,type:'sort_bins',prompt:item.prompt.trim(),bins,correctBinId:bins.find(b=>String(b.id)===String(correctBinId)).id,shuffleBins:item.shuffleBins!==false};
+  if(typeof item.rule==='string'&&item.rule.trim())clean.rule=item.rule.trim();
+  if(typeof item.bankId==='string'&&item.bankId.trim())clean.bankId=item.bankId.trim();
+  if(typeof item.explanation==='string'&&item.explanation.trim())clean.explanation=item.explanation.trim();
+  const metadata=cleanMetadata(item.metadata,'sort_bins item');if(metadata)clean.metadata=metadata;return clean;
+ });
+}
 function cleanOddGroups(groups,words=WORDS){
  if(!Array.isArray(groups))throw new TypeError('Odd groups must be an array.');
  const bank=new Map(words.map(w=>[String(w.id),w.id])),groupIds=new Set();
@@ -402,10 +428,10 @@ function cleanOddGroups(groups,words=WORDS){
 }
 function cleanFormats(formats){if(!Array.isArray(formats)||!formats.length||formats.some(f=>!Object.hasOwn(FORMAT_INFO,f)))throw new TypeError('Choose one or more supported vocabulary formats.');return [...new Set(formats)];}
 function normalizeContentMode(mode){return mode==='sort_classify'||mode==='sort-classify'?'classification':mode;}
-function cleanContentModes(modes,words=WORDS,classifications=CLASSIFICATIONS){
+function cleanContentModes(modes,words=WORDS,classifications=CLASSIFICATIONS,sortBins=SORT_BINS){
  if(!Array.isArray(modes)||!modes.length)throw new TypeError('Choose one or more supported content modes.');
  const clean=[...new Set(modes.map(normalizeContentMode))];if(clean.some(m=>!Object.hasOwn(CONTENT_MODE_INFO,m)))throw new TypeError('Supported content modes are vocabulary and classification.');
- if(clean.includes('vocabulary')&&words.length<4)throw new Error('Vocabulary mode needs at least four vocabulary items.');
+ if(clean.includes('vocabulary')&&words.length<4&&!(Array.isArray(sortBins)&&sortBins.length))throw new Error('Vocabulary mode needs at least four vocabulary items or sort_bins content.');
  if(clean.includes('classification')&&!classifications.length)throw new Error('Sort & Classify mode needs at least one authored question.');return clean;
 }
 function blankSentence(word){
@@ -424,16 +450,16 @@ function blankSentence(word){
  return {parts,text:parts.map(p=>p.blank?'______':p.text).join('')};
 }
 function validOddGroups(){const ids=new Set(WORDS.map(w=>String(w.id)));return oddGroups.filter(g=>g.items.every(id=>ids.has(String(id))));}
-function availableFormats(){return selectedFormats.filter(f=>f!=='frequency_fill'&&f!=='odd_signal_out'||f==='frequency_fill'&&WORDS.some(w=>blankSentence(w))||f==='odd_signal_out'&&validOddGroups().length>0);}
-function effectiveFormats(){const usable=availableFormats();return usable.length?usable:['lock_signal'];}
-function formatEligibility(f){return WORDS.length>=4&&(f==='frequency_fill'?WORDS.some(w=>blankSentence(w)):f==='odd_signal_out'?validOddGroups().length>0:true);}
-function modeEligibility(mode){return mode==='vocabulary'?WORDS.length>=4:mode==='classification'?CLASSIFICATIONS.length>0:false;}
+function availableFormats(){return selectedFormats.filter(f=>{if(f==='sort_bins')return SORT_BINS.length>0;if(f==='frequency_fill')return WORDS.some(w=>blankSentence(w));if(f==='odd_signal_out')return validOddGroups().length>0;if(f==='lock_signal'||f==='true_false')return WORDS.length>=4;return true;});}
+function effectiveFormats(){const usable=availableFormats();if(usable.length)return usable;if(SORT_BINS.length)return ['sort_bins'];return ['lock_signal'];}
+function formatEligibility(f){if(f==='sort_bins')return SORT_BINS.length>0;return WORDS.length>=4&&(f==='frequency_fill'?WORDS.some(w=>blankSentence(w)):f==='odd_signal_out'?validOddGroups().length>0:true);}
+function modeEligibility(mode){return mode==='vocabulary'?(WORDS.length>=4||SORT_BINS.length>0):mode==='classification'?CLASSIFICATIONS.length>0:false;}
 function effectiveContentModes(){const usable=selectedContentModes.filter(modeEligibility);if(usable.length)return usable;if(modeEligibility('vocabulary'))return ['vocabulary'];if(modeEligibility('classification'))return ['classification'];throw new Error('No usable learning content is loaded.');}
 function setWordBank(words){
- editableContent();WORDS=cleanWordBank(words);CLASSIFICATIONS=[];oddGroups=[];selectedContentModes=['vocabulary'];usingSampleContent=false;refreshFormatSettings();
+ editableContent();WORDS=cleanWordBank(words);CLASSIFICATIONS=[];SORT_BINS=[];oddGroups=[];selectedContentModes=['vocabulary'];usingSampleContent=false;refreshFormatSettings();
 }
 function setClassificationBank(questions){
- editableContent();CLASSIFICATIONS=cleanClassificationBank(questions);WORDS=[];oddGroups=[];selectedContentModes=['classification'];usingSampleContent=false;refreshFormatSettings();
+ editableContent();CLASSIFICATIONS=cleanClassificationBank(questions);WORDS=[];SORT_BINS=[];oddGroups=[];selectedContentModes=['classification'];usingSampleContent=false;refreshFormatSettings();
 }
 function setOddGroups(groups){
  editableContent();oddGroups=cleanOddGroups(groups);refreshFormatSettings();
@@ -447,24 +473,30 @@ function setQuestionBank(bank){
  if(rawItems===undefined){
   const legacyWords=config.vocabulary?.words??config.words??[];
   const legacyClassifications=config.classifications??config.classification??[];
-  if(!Array.isArray(legacyWords)||!Array.isArray(legacyClassifications))throw new TypeError('Question bank content must be arrays.');
-  rawItems=[...legacyWords.map(item=>({...item,type:'vocabulary'})),...legacyClassifications.map(item=>({...item,type:'classification'}))];
+  const legacySortBins=config.sortBins??config.sort_bins??[];
+  if(!Array.isArray(legacyWords)||!Array.isArray(legacyClassifications)||!Array.isArray(legacySortBins))throw new TypeError('Question bank content must be arrays.');
+  rawItems=[...legacyWords.map(item=>({...item,type:'vocabulary'})),...legacyClassifications.map(item=>({...item,type:'classification'})),...legacySortBins.map(item=>({...item,type:item?.type||'sort_bins'}))];
  }
  if(!Array.isArray(rawItems)||!rawItems.length)throw new TypeError('Question bank items must be a nonempty array.');
- const vocabulary=[],classifications=[];
+ const vocabulary=[],classifications=[],sortBins=[];
  for(const item of rawItems){
-  const type=normalizeContentMode(item?.type);if(type==='vocabulary')vocabulary.push(item);else if(type==='classification')classifications.push(item);else throw new TypeError('Each question bank item needs type "vocabulary" or "classification".');
+  const type=normalizeContentMode(item?.type);
+  if(type==='vocabulary')vocabulary.push(item);
+  else if(type==='classification')classifications.push(item);
+  else if(type==='sort_bins'||type==='sort-bins')sortBins.push(item);
+  else throw new TypeError('Each question bank item needs type "vocabulary", "classification", or "sort_bins".');
  }
  const nextWords=vocabulary.length?cleanWordBank(vocabulary):[];
  const nextClassifications=classifications.length?cleanClassificationBank(classifications):[];
+ const nextSortBins=sortBins.length?cleanSortBinsBank(sortBins):[];
  const groupSource=config.oddGroups??config.vocabulary?.oddGroups??[];
  const nextGroups=cleanOddGroups(groupSource,nextWords);
  const formatSource=config.formats??config.vocabularyFormats??config.vocabulary?.formats??selectedFormats;
  const nextFormats=cleanFormats(formatSource);
- const inferredModes=[...(nextWords.length?['vocabulary']:[]),...(nextClassifications.length?['classification']:[])];
+ const inferredModes=[...((nextWords.length||nextSortBins.length)?['vocabulary']:[]),...(nextClassifications.length?['classification']:[])];
  const modeSource=config.modes??config.contentModes??inferredModes;
- const nextModes=cleanContentModes(modeSource,nextWords,nextClassifications);
- WORDS=nextWords;CLASSIFICATIONS=nextClassifications;oddGroups=nextGroups;selectedFormats=nextFormats;selectedContentModes=nextModes;usingSampleContent=false;refreshFormatSettings();
+ const nextModes=cleanContentModes(modeSource,nextWords,nextClassifications,nextSortBins);
+ WORDS=nextWords;CLASSIFICATIONS=nextClassifications;SORT_BINS=nextSortBins;oddGroups=nextGroups;selectedFormats=nextFormats;selectedContentModes=nextModes;usingSampleContent=false;refreshFormatSettings();
 }
 function refreshFormatSettings(){
  if(!$('format-settings'))return;
@@ -482,7 +514,7 @@ function loadSampleMission(){
 function balancedPlan(values,count){const plan=[];let previous=null;while(plan.length<count){const batch=shuffle(values);if(batch.length>1&&batch[0]===previous)[batch[0],batch[1]]=[batch[1],batch[0]];for(const value of batch){if(plan.length>=count)break;plan.push(value);}previous=plan[plan.length-1];}return plan;}
 function buildRounds(){
  const count=FLIGHT_SETTINGS.roundCount,modes=balancedPlan(effectiveContentModes(),count),activeFormats=effectiveFormats();
- const pools=new Map(),groups=validOddGroups();let groupPool=[],truthPool=[],formatPool=[],previousFormat=null,classificationPool=[];
+ const pools=new Map(),groups=validOddGroups();let groupPool=[],truthPool=[],formatPool=[],previousFormat=null,classificationPool=[],sortPool=[];
  function takeFormat(){if(!formatPool.length){formatPool=shuffle(activeFormats);if(formatPool.length>1&&formatPool[formatPool.length-1]===previousFormat)[formatPool[0],formatPool[formatPool.length-1]]=[formatPool[formatPool.length-1],formatPool[0]];}const type=formatPool.pop();previousFormat=type;return type;}
  function takeWord(type){let pool=pools.get(type);if(!pool||!pool.length){pool=shuffle(type==='frequency_fill'?WORDS.filter(w=>blankSentence(w)):WORDS);pools.set(type,pool);}return pool.pop();}
  const rounds=[];
@@ -494,6 +526,12 @@ function buildRounds(){
    rounds.push({type:'classification',contentMode:'classification',questionId:question.id,word:question.title,definition:question.explanation||question.prompt,title:question.title,prompt:question.prompt,categories,sortItems,explanation:question.explanation,metadata:question.metadata});continue;
   }
   const type=takeFormat();
+  if(type==='sort_bins'){
+   if(!sortPool.length)sortPool=shuffle(SORT_BINS);const item=sortPool.pop();
+   const bins=item.shuffleBins?shuffle(item.bins):item.bins.map(b=>({...b}));
+   const choices=bins.map(b=>({id:b.id,text:b.label}));
+   rounds.push({type:'sort_bins',contentMode:'vocabulary',questionId:item.id,itemId:item.id,promptWordId:null,word:item.prompt,definition:item.rule||item.explanation||'',prompt:item.prompt,bins,correctChoiceId:item.correctBinId,correctBinId:item.correctBinId,rule:item.rule||'',bankId:item.bankId,explanation:item.rule||item.explanation||'',choices,metadata:item.metadata});continue;
+  }
   let w,choices,round;
   if(type==='odd_signal_out'){
    if(!groupPool.length)groupPool=shuffle(groups);const group=groupPool.pop();w=WORDS.find(w=>w.id===group.oddId);
@@ -566,11 +604,11 @@ function assignSortItem(categoryId){
 function renderRoundChoices(){
  const round=state.rounds[state.roundIndex],classification=round.type==='classification',info=classification?CLASSIFICATION_INFO:FORMAT_INFO[round.type];
  $('question-layer').dataset.format=round.type;$('word').textContent=round.word;
- $('question-word').textContent=classification?round.title:round.type==='lock_signal'||round.type==='true_false'?round.word:round.type==='frequency_fill'?'Restore the message.':'Find the odd signal.';
+ $('question-word').textContent=classification?round.title:round.type==='lock_signal'||round.type==='true_false'||round.type==='sort_bins'?round.word:round.type==='frequency_fill'?'Restore the message.':'Find the odd signal.';
  $('question-index').textContent=`SIGNAL ${String(state.roundIndex+1).padStart(2,'0')} / ${state.rounds.length}`;
  $('format-label').textContent=info.name.toUpperCase();$('encounter-label').textContent=info.encounter;
  $('signal-icon').setAttribute('href','#i-'+info.icon);
- const prompt=$('question-prompt');prompt.hidden=!classification&&round.type==='lock_signal';prompt.className='question-prompt '+round.type;
+ const prompt=$('question-prompt');prompt.hidden=!classification&&(round.type==='lock_signal'||round.type==='sort_bins');prompt.className='question-prompt '+round.type;
  if(round.type==='frequency_fill')renderSentence(round);else prompt.textContent=round.type==='true_false'?'Transmission: "'+round.statementDefinition+'"':round.prompt||'';
  $('deck-instruction').textContent=info.instruction;$('deck').setAttribute('aria-label',info.name+' answer controls');
  $('answer-key-hint').textContent=classification?'Tap a sample, then tap its category.':round.choices.length===2?'Press 1 for True or 2 for False.':'Click an answer or press 1-4.';
@@ -612,6 +650,7 @@ function answer(choiceId){
  if(round.type==='true_false')Object.assign(result,{definitionWordId:round.definitionWordId,statement:round.prompt});
  if(round.type==='frequency_fill')result.sentence=round.sentence;
  if(round.type==='odd_signal_out')Object.assign(result,{groupId:round.groupId,prompt:round.prompt,explanation:round.explanation});
+ if(round.type==='sort_bins')Object.assign(result,{itemId:round.itemId||round.questionId,prompt:round.prompt,bankId:round.bankId,correctBinId:round.correctBinId,contentMode:'sort_bins'});
  [...$('choices').children].forEach((button,i)=>{
   button.disabled=true;const id=round.choices[i].id;
   if(id===round.correctChoiceId){button.classList.add('good');button.insertAdjacentHTML('beforeend',icon('check','icon choice-mark'));button.setAttribute('aria-label',button.getAttribute('aria-label')+' Correct answer.');}
@@ -1170,7 +1209,7 @@ function drawArrival(){
 window.AsteroidRun=Object.freeze({
  start:startRun,reset:resetDemo,pause:pauseFlight,resume:resumeFlight,
  getSnapshot(){const round=state.rounds[state.roundIndex];return {mode:state.mode,paused:state.paused,hull:state.hull,fuel:state.fuel,score:state.score,streak:state.streak,roundIndex:state.roundIndex,roundCount:state.rounds.length||FLIGHT_SETTINGS.roundCount,attempted:state.attempted||0,correctCount:state.correctCount||0,timeRemaining:FLIGHT_SETTINGS.questionSeconds?(state.remaining??FLIGHT_SETTINGS.questionSeconds):null,outpostTotal:fakeOutpostResourcesTotal,flightElapsed:state.legElapsed||0,flightSeconds:FLIGHT_SETTINGS.flightSeconds,totalFlightSeconds:state.totalFlightTime||0,asteroidsDodged:state.dodged||0,impacts:state.impacts||0,boostSeconds:state.boostRemaining||0,pilot:state.pilot?{x:state.pilot.x/W,y:state.pilot.y/H}:null,questionFormat:round?.type||null,questionId:round?.questionId??null,contentMode:round?.contentMode||null,activeContentModes:effectiveContentModes(),activeFormats:selectedContentModes.includes('vocabulary')?effectiveFormats():[],classification:round?.type==='classification'?{placed:state.classificationAssignments.size,total:round.sortItems.length,selectedItemId:state.selectedSortItemId}:null,recovery:{active:!!state.recoveryActive,needed:state.recoveryNeed||0,collected:state.recoveryCollected||0},adventure:{passenger:state.hitchhiker?.status||'waiting',closeCalls:state.closeCalls||0,crystalsCollected:state.crystalsCollected||0}};},
- getCapabilities(){return {contentModes:Object.keys(CONTENT_MODE_INFO),vocabularyFormats:Object.keys(FORMAT_INFO),questionBankItemTypes:['vocabulary','classification'],classificationLimits:{categories:[2,4],items:[2,8]},legacyVocabularyApi:true};},
+ getCapabilities(){return {contentModes:Object.keys(CONTENT_MODE_INFO),vocabularyFormats:Object.keys(FORMAT_INFO),questionBankItemTypes:['vocabulary','classification','sort_bins'],classificationLimits:{categories:[2,4],items:[2,8]},legacyVocabularyApi:true};},
  configure(options){
   if(!['intro','recap'].includes(state.mode))throw new Error('Configure before starting a run.');if(!options||typeof options!=='object'||Array.isArray(options))throw new TypeError('Supply a settings object.');
   const allowed=['flightSeconds','questionSeconds','collisionDamage','roundCount'];

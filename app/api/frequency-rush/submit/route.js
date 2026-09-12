@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { supabaseAdmin } from "../../../../lib/supabaseAdmin";
-import { ROUND_SECONDS, getFrequencyRushWordSet } from "../../../../lib/cases/frequency-rush";
+import { ROUND_SECONDS, getFrequencyRushWordSet, getClassifyBanksForCase } from "../../../../lib/cases/frequency-rush";
 import { pointsForCorrectAnswer } from "../../../../lib/frequencyRushScoring";
 import { getOutpostProgress } from "../../../../lib/outpostBuilder";
 
@@ -94,27 +94,89 @@ export async function POST(request) {
     // assigned) — the same trust trade-off already in place for every
     // format here, just now explicit about where it's real verification
     // vs. where it isn't.
+    //
+    // Sept 12, 2026 — sort_bins: choiceId is a bin id; correctness is
+    // recomputed server-side from file banks (choiceId === correctBinId).
+    // Attempts store word_id as null so vocab FK rows stay intact.
     const { data: assignment } = await supabaseAdmin
       .from("assignments")
       .select("case_standard")
       .eq("id", session.assignment_id)
       .single();
     const { data: caseRow } = assignment
-      ? await supabaseAdmin.from("cases").select("grade, subject, unit").eq("standard", assignment.case_standard).single()
+      ? await supabaseAdmin
+          .from("cases")
+          .select("grade, subject, unit, standard")
+          .eq("standard", assignment.case_standard)
+          .single()
       : { data: null };
     const validWords = caseRow ? await getFrequencyRushWordSet(caseRow) : [];
     const validWordIds = new Set(validWords.map((w) => w.id));
+    const caseKey = caseRow
+      ? {
+          grade: caseRow.grade,
+          subject: caseRow.subject,
+          unit: caseRow.unit,
+          standard: caseRow.standard || assignment.case_standard,
+        }
+      : null;
+    let sortBinById = new Map();
+    if (caseKey) {
+      try {
+        const { sortBins } = await getClassifyBanksForCase(caseKey);
+        sortBinById = new Map((sortBins || []).map((item) => [String(item.id), item]));
+      } catch (err) {
+        console.error("Frequency Rush: couldn't load sort_bins for submit:", err.message);
+      }
+    }
 
     // A sane cap against a runaway/forged answers array — the widget itself
     // only ever produces up to its own fixed round count per run.
-    (answers || []).slice(0, 25).forEach((a) => {
-      if (!validWordIds.has(a.wordId)) return; // not a real word from this unit — ignored, not trusted
+    for (const a of (answers || []).slice(0, 25)) {
+      if (a?.type === "sort_bins") {
+        const itemId = a.itemId ?? a.questionId;
+        if (itemId == null) continue;
+        const item = sortBinById.get(String(itemId));
+        if (!item) continue; // not a real item from this unit's file banks
+        const correct = a.choiceId != null && String(a.choiceId) === String(item.correctBinId);
+        let pointsEarned = 0;
+        if (correct) {
+          streak += 1;
+          bestStreak = Math.max(bestStreak, streak);
+          pointsEarned = pointsForCorrectAnswer({
+            responseTimeMs: a.responseTimeMs,
+            roundSeconds: ROUND_SECONDS,
+            streakAfterThisAnswer: streak,
+          });
+          score += pointsEarned;
+        } else {
+          streak = 0;
+        }
+        // Minimal safe persist: leave word_id null (sort items are not vocab
+        // UUIDs). Requires frequency_rush_attempts.word_id to be nullable.
+        attemptRows.push({
+          session_id: sessionId,
+          word_id: null,
+          correct,
+          response_time_ms: a.responseTimeMs || null,
+          points_earned: pointsEarned,
+          streak_at_answer: streak,
+        });
+        perWordResults.push({ itemId: item.id, type: "sort_bins", correct, choiceId: a.choiceId });
+        continue;
+      }
+
+      if (!validWordIds.has(a.wordId)) continue; // not a real word from this unit — ignored, not trusted
       const correct = a.type === "true_false" ? a.correct === true : a.choiceId != null && a.choiceId === a.wordId;
       let pointsEarned = 0;
       if (correct) {
         streak += 1;
         bestStreak = Math.max(bestStreak, streak);
-        pointsEarned = pointsForCorrectAnswer({ responseTimeMs: a.responseTimeMs, roundSeconds: ROUND_SECONDS, streakAfterThisAnswer: streak });
+        pointsEarned = pointsForCorrectAnswer({
+          responseTimeMs: a.responseTimeMs,
+          roundSeconds: ROUND_SECONDS,
+          streakAfterThisAnswer: streak,
+        });
         score += pointsEarned;
       } else {
         streak = 0;
@@ -128,7 +190,7 @@ export async function POST(request) {
         streak_at_answer: streak,
       });
       perWordResults.push({ wordId: a.wordId, correct });
-    });
+    }
   } else {
     const wordOrder = session.word_order || [];
     (answers || []).forEach((a) => {
@@ -139,7 +201,11 @@ export async function POST(request) {
       if (correct) {
         streak += 1;
         bestStreak = Math.max(bestStreak, streak);
-        pointsEarned = pointsForCorrectAnswer({ responseTimeMs: a.responseTimeMs, roundSeconds: ROUND_SECONDS, streakAfterThisAnswer: streak });
+        pointsEarned = pointsForCorrectAnswer({
+          responseTimeMs: a.responseTimeMs,
+          roundSeconds: ROUND_SECONDS,
+          streakAfterThisAnswer: streak,
+        });
         score += pointsEarned;
       } else {
         streak = 0;

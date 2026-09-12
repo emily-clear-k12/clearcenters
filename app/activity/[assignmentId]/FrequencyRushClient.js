@@ -40,6 +40,9 @@ export default function FrequencyRushClient({ assignmentId, caseTitle }) {
   // word bank does (frequency_rush_classifications), not a separate file
   // pipeline — see lib/cases/frequency-rush.js.
   const [classifications, setClassifications] = useState([]);
+  // Sept 12, 2026 — file-bank tap-the-bin sort (sort_bins) expanded per item
+  // by /api/frequency-rush/start from lib/cases/frequency-rush/classify.
+  const [sortBins, setSortBins] = useState([]);
   // Sept 12, 2026 — which static widget file to load into the iframe below,
   // teacher-chosen at assignment time (assignments.game_skin) and handed
   // back by /api/frequency-rush/start as `gameSkin` — see
@@ -73,12 +76,15 @@ export default function FrequencyRushClient({ assignmentId, caseTitle }) {
     setErrorMsg(null);
     try {
       const data = await mintSession();
-      if (!data.words || data.words.length < 4) {
+      const nextWords = Array.isArray(data.words) ? data.words : [];
+      const nextSortBins = Array.isArray(data.sortBins) ? data.sortBins : [];
+      if (nextWords.length < 4 && nextSortBins.length < 1) {
         throw new Error("This unit needs at least 4 vocabulary words loaded before Asteroid Run can fly it.");
       }
-      setWords(data.words);
+      setWords(nextWords);
       setOutpostResources(data.outpost ? data.outpost.resources : 0);
       setClassifications(Array.isArray(data.classifications) ? data.classifications : []);
+      setSortBins(nextSortBins);
       setGameSkinFile(getGameSkinFile(data.gameSkin));
       pendingSessionIdRef.current = data.sessionId;
       setPhase("ready");
@@ -121,8 +127,11 @@ export default function FrequencyRushClient({ assignmentId, caseTitle }) {
           // `chosenWordId`) now travel through so submit/route.js can grade
           // True/False correctly (its choiceId is a boolean, not a word
           // id) — see that route's comment for the full reasoning.
+          // Sept 12, 2026 — sort_bins also sends itemId / questionId.
           answers: (result.answers || []).map((a) => ({
             wordId: a.wordId,
+            itemId: a.itemId ?? a.questionId,
+            questionId: a.questionId,
             type: a.type,
             choiceId: a.choiceId,
             correct: a.correct,
@@ -161,8 +170,15 @@ export default function FrequencyRushClient({ assignmentId, caseTitle }) {
   // are all idempotent from the widget's own intro/recap screen.
   const wireWidget = useCallback(() => {
     const win = iframeRef.current?.contentWindow;
-    if (!win || !win.AsteroidRun || !words) return;
+    if (!win || !win.AsteroidRun || words === null) return;
     try {
+      const hasVocab = words.length >= 4;
+      const hasSort = sortBins.length > 0;
+      const formats = [];
+      if (hasVocab) formats.push("lock_signal", "true_false", "frequency_fill");
+      if (hasSort) formats.push("sort_bins");
+      if (!formats.length && hasSort) formats.push("sort_bins");
+
       // Sept 12, 2026 — switched from the old separate setWordBank() +
       // setFormats() calls to the "Adventure" build's unified
       // setQuestionBank(), which is what actually lets vocabulary AND Sort
@@ -175,9 +191,13 @@ export default function FrequencyRushClient({ assignmentId, caseTitle }) {
       // array (any unit Emily hasn't authored Sort & Classify for yet)
       // safely falls back to vocabulary-only — no separate branch needed
       // here for "has classify content or not."
+      //
+      // sort_bins is a tap-the-bin format (choice deck), not the multi-item
+      // classification board — pass via sortBins, never as classifications.
       win.AsteroidRun.setQuestionBank({
-        words,
+        words: hasVocab ? words : [],
         classifications,
+        sortBins: hasSort ? sortBins : [],
         // Sept 9, 2026 — "Adventure Edition": turn on the 3 vocabulary
         // formats we can support for real today. odd_signal_out is
         // deliberately left out — it needs human-curated word groupings
@@ -187,7 +207,9 @@ export default function FrequencyRushClient({ assignmentId, caseTitle }) {
         // real student from ever hitting a half-built round. Add
         // "odd_signal_out" back here once real groups exist and
         // oddGroups is passed alongside it.
-        formats: ["lock_signal", "true_false", "frequency_fill"],
+        // Sept 12, 2026 — include sort_bins when file banks exist; sort-only
+        // when words are missing/thin.
+        formats,
       });
       win.AsteroidRun.setOutpostTotal(outpostResources);
       // Sept 9, 2026 — Emily's first live playtest feedback: the widget's
@@ -203,7 +225,7 @@ export default function FrequencyRushClient({ assignmentId, caseTitle }) {
       // a genuine race on first load; the iframe's own load event retries
       // this right after.
     }
-  }, [words, classifications, outpostResources, submitRun]);
+  }, [words, classifications, sortBins, outpostResources, submitRun]);
 
   useEffect(() => {
     if (phase === "ready") wireWidget();

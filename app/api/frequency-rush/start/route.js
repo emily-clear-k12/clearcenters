@@ -1,7 +1,14 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { supabaseAdmin } from "../../../../lib/supabaseAdmin";
-import { getFrequencyRushWordSet, getFrequencyRushClassificationSet, buildLockTheSignalRounds, DEFAULT_ROUNDS, ROUND_SECONDS } from "../../../../lib/cases/frequency-rush";
+import {
+  getFrequencyRushWordSet,
+  getFrequencyRushClassificationSet,
+  getClassifyBanksForCase,
+  buildLockTheSignalRounds,
+  DEFAULT_ROUNDS,
+  ROUND_SECONDS,
+} from "../../../../lib/cases/frequency-rush";
 import { getOutpostProgress } from "../../../../lib/outpostBuilder";
 import { DEFAULT_GAME_SKIN } from "../../../../lib/frequencyRushSkins";
 
@@ -50,7 +57,7 @@ export async function POST(request) {
 
   const { data: caseRow } = await supabaseAdmin
     .from("cases")
-    .select("grade, subject, unit, engine")
+    .select("grade, subject, unit, engine, standard")
     .eq("standard", assignment.case_standard)
     .single();
   if (!caseRow || caseRow.engine !== "frequency_rush") {
@@ -63,9 +70,6 @@ export async function POST(request) {
   } catch (err) {
     return NextResponse.json({ error: err.message }, { status: 500 });
   }
-  if (words.length === 0) {
-    return NextResponse.json({ error: "This unit's word set isn't loaded yet." }, { status: 404 });
-  }
 
   // Sept 12, 2026 — Sort & Classify, plumbing-only pass (design doc note
   // pending). Always attempted, never blocking: a unit with no authored
@@ -73,10 +77,41 @@ export async function POST(request) {
   // behavior as Odd Signal Out's oddGroups.
   const classifications = await getFrequencyRushClassificationSet(caseRow);
 
+  // Sept 12, 2026 — file-bank tap-the-bin sort_bins (lib/cases/frequency-rush/classify).
+  // Dynamic import inside getClassifyBanksForCase keeps the bank index off the client.
+  let sortBins = [];
+  try {
+    const loaded = await getClassifyBanksForCase({
+      grade: caseRow.grade,
+      subject: caseRow.subject,
+      unit: caseRow.unit,
+      standard: caseRow.standard || assignment.case_standard,
+    });
+    sortBins = loaded.sortBins || [];
+  } catch (err) {
+    console.error("Frequency Rush: couldn't load sort_bins banks:", err.message);
+    sortBins = [];
+  }
+
+  if (words.length < 4 && sortBins.length < 1) {
+    return NextResponse.json(
+      {
+        error:
+          words.length === 0
+            ? "This unit's word set isn't loaded yet."
+            : "This unit needs at least 4 vocabulary words or a sort bank before Asteroid Run can fly it.",
+      },
+      { status: 404 }
+    );
+  }
+
   // Sane cap even against a tiny word bank (an early unit might only have a
   // handful of words) — still a real round, never an infinite loop.
-  const roundCount = Math.min(DEFAULT_ROUNDS, Math.max(6, words.length * 2));
-  const rounds = buildLockTheSignalRounds(words, roundCount);
+  // Sort-only units skip the lock_signal word_order (widget builds its own).
+  const roundCount = words.length
+    ? Math.min(DEFAULT_ROUNDS, Math.max(6, words.length * 2))
+    : 0;
+  const rounds = words.length ? buildLockTheSignalRounds(words, roundCount) : [];
   const wordOrder = rounds.map((r) => r.promptWordId);
 
   const { data: session, error: sessionError } = await supabaseAdmin
@@ -88,7 +123,7 @@ export async function POST(request) {
       format: "lock_signal",
       game_mode: resolvedGameMode,
       length_type: "rounds",
-      length_value: rounds.length,
+      length_value: rounds.length || Math.min(DEFAULT_ROUNDS, Math.max(6, sortBins.length)),
       word_order: wordOrder,
     })
     .select()
@@ -149,5 +184,9 @@ export async function POST(request) {
     // here. Empty array when this unit has no authored classify content —
     // the client only calls setClassificationBank when this is non-empty.
     classifications,
+    // Sept 12, 2026 — per-item tap-the-bin rounds from file banks
+    // (lib/cases/frequency-rush/classify). Client passes these to
+    // setQuestionBank({ sortBins }) as format sort_bins.
+    sortBins,
   });
 }
