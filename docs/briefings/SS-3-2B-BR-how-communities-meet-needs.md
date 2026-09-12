@@ -48,33 +48,48 @@ Communities meet needs for **government**, **education**, **communication**, **t
 
 ---
 
-## Phase B — Field Brief (direct teach)
+## Phase B — Field Brief (four pack-driven pages)
 
-### Vocab cards
-| Term | Kid-friendly meaning |
-|------|----------------------|
-| government | people and rules that help a town run fairly |
-| education | how kids learn (school, teachers, getting to class) |
-| communication | how people send news and messages |
-| transportation | how people and goods get from place to place |
-| recreation | how people play and rest (parks, games, fun together) |
+Same pages for projection and solo. Picture-book spreads, not a 3-beat quiz. S.A.M. chips on Story / Idea / Worked are local (not server-graded). Only the Check page hits `/api/briefing/grade`.
 
-### Teach beats (3 cards — all five needs named)
+### Page 1 — Story
+**Kicker:** Story · **Title:** Sister towns  
+**Plate:** `01-intel-two-towns.png` (`imageKey: intel`)  
+Maple Crossing sits by the creek. Cloudreach sits across the river. They are sister towns. Both take care of people. HQ is coming to visit to learn **how** each town takes care of people.  
+Do **not** name the five TEKS needs on this page.  
+**S.A.M.:** What is HQ coming to learn?  
+Chips: How each town takes care of people (`how`) · Which town is better (`winner`) · What the towns are named (`names`) → **how**  
+After correct: Right — HQ wants to learn how, not pick a winner. Ready for the idea?
 
-**Beat 1 — Government and education**  
-Every town needs a way to make fair rules, and a way for kids to learn. **Maple Crossing** holds a town meeting on the porch and kids **walk** to a small school. **Cloudreach** has a mayor’s office and kids ride a **school bus**. Same needs. Different ways.  
-*Picture prompt:* porch meeting + walking kids | mayor’s office + yellow bus  
-*QC:* Walking to school vs riding a bus is mostly which need? → Education
+### Page 2 — Idea
+**Kicker:** Idea · **Title:** Same needs, different ways  
+**Plate:** `05-sister-towns.png` (`imageKey: ops`)  
+Communities take care of people. They meet needs for **government**, **education**, **communication**, **transportation**, and **recreation**. Two towns can take care of the **same need** in **different ways**.  
+**Vocab as short sentences (on this page only, not chip glossary):**
+- Government is the people and rules that help a town run fairly.
+- Education is how kids learn — school, teachers, getting to class.
+- Communication is how people send news and messages.
+- Transportation is how people and goods get from place to place.
+- Recreation is how people play and rest.  
+**S.A.M.:** Can two towns take care of the same need in different ways? Yes | No → **Yes**  
+After: Yes. Same need — different way. HQ will show you one.
 
-**Beat 2 — Communication and transportation**  
-People need news, and they need to get around. Maple Crossing posts notes on a **bulletin board** and uses a **wagon road**. Cloudreach uses a **radio tower** and a **river ferry**.  
-*Picture prompt:* bulletin board + wagon | radio tower + ferry  
-*QC:* A ferry that carries people across the river is mostly which need? → Transportation
+### Page 3 — Worked example
+**Kicker:** Worked example · **Title:** HQ already compared school  
+**Plate:** `02-beat-gov-school.png` (`imageKey: beatCivic`)  
+Kids in Maple Crossing **walk** to a little school. Kids in Cloudreach **ride a bus**. That is still **education**. Same need. Different way.  
+Student does not invent the compare; HQ shows it finished (Maple Crossing / Cloudreach pair).  
+**S.A.M.:** Walking and the bus — same need or different needs? → **Same need**  
+After: Same need: education. Different way to get there.
 
-**Beat 3 — Recreation (and the compare move)**  
-People also need a place to play and rest. Maple Crossing has a **creek park**. Cloudreach has an **indoor rec center**. That’s **recreation** — same need, different way. HQ’s job is not “which town is better.” It’s “how do they each take care of people?”  
-*Picture prompt:* creek park vs indoor gym  
-*QC:* True/False: Every town has to meet needs the exact same way. → False
+### Page 4 — Check
+**Kicker:** Check · **Title:** Quick HQ check  
+**Plate:** `04-beat-play.png` (`imageKey: beatPlay`)  
+Show what you caught. Then we practice.  
+Two light QCs (server-graded: `qc1` = a, `qc2` = b):
+1. Kids walk to school in one town and ride a bus in the other. Which need? a Education | b Recreation | c Government → **a**
+2. Do towns have to take care of people the same way? a Yes, they have to match | b No, different ways still count → **b**  
+After both answered: Check answers, then Continue to Reason Sort.
 
 **Teacher note:** Keep “other community” as Cloudreach (sister town), not a real named Texas town, so teachers can later swap in their own city.
 
@@ -138,7 +153,7 @@ Carry forward the two funded compares; kid picks one to show.
 | Min | Move |
 |-----|------|
 | 0–5 | Intel Drop on board; chips; Reveal |
-| 5–16 | Field Brief beats + QCs (thumbs / devices) |
+| 5–16 | Field Brief pages (Story → Idea → Worked → Check) |
 | 16–24 | Need Sort, then Sister Town Signal vote |
 | 24–28 | Compare postcard |
 | 28–30 | Clearance |

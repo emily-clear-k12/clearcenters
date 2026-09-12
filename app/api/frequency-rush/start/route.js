@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { supabaseAdmin } from "../../../../lib/supabaseAdmin";
-import { getFrequencyRushWordSet, buildLockTheSignalRounds, DEFAULT_ROUNDS, ROUND_SECONDS } from "../../../../lib/cases/frequency-rush";
+import { getFrequencyRushWordSet, getFrequencyRushClassificationSet, buildLockTheSignalRounds, DEFAULT_ROUNDS, ROUND_SECONDS } from "../../../../lib/cases/frequency-rush";
 import { getOutpostProgress } from "../../../../lib/outpostBuilder";
 
 // Starts one Lock the Signal / Individual Practice session. Called fresh
@@ -58,6 +58,12 @@ export async function POST(request) {
   if (words.length === 0) {
     return NextResponse.json({ error: "This unit's word set isn't loaded yet." }, { status: 404 });
   }
+
+  // Sept 12, 2026 — Sort & Classify, plumbing-only pass (design doc note
+  // pending). Always attempted, never blocking: a unit with no authored
+  // classify content yet just gets an empty array, same graceful-absence
+  // behavior as Odd Signal Out's oddGroups.
+  const classifications = await getFrequencyRushClassificationSet(caseRow);
 
   // Sane cap even against a tiny word bank (an early unit might only have a
   // handful of words) — still a real round, never an infinite loop.
@@ -128,5 +134,11 @@ export async function POST(request) {
         ...(list.length > 1 ? { sentences: list } : {}),
       };
     }),
+    // Sept 12, 2026 — handed straight to the widget's
+    // window.AsteroidRun.setClassificationBank() as-is; that call already
+    // validates shape (id/prompt/categories/items), so no reshaping needed
+    // here. Empty array when this unit has no authored classify content —
+    // the client only calls setClassificationBank when this is non-empty.
+    classifications,
   });
 }

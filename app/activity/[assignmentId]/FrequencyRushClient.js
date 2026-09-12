@@ -31,6 +31,14 @@ export default function FrequencyRushClient({ assignmentId, caseTitle }) {
   const [errorMsg, setErrorMsg] = useState(null);
   const [words, setWords] = useState(null);
   const [outpostResources, setOutpostResources] = useState(0);
+  // Sept 12, 2026 — Sort & Classify, plumbing-only pass: holds whatever
+  // classify questions the start route found for this unit (possibly
+  // none, if Emily hasn't authored/generated any for it yet — same
+  // graceful-absence handling as the odd_signal_out format never getting
+  // real groupings). Content itself lives in the same DB the vocabulary
+  // word bank does (frequency_rush_classifications), not a separate file
+  // pipeline — see lib/cases/frequency-rush.js.
+  const [classifications, setClassifications] = useState([]);
 
   const iframeRef = useRef(null);
   const pendingSessionIdRef = useRef(null); // sessionId reserved for the NEXT completion to submit against
@@ -63,6 +71,7 @@ export default function FrequencyRushClient({ assignmentId, caseTitle }) {
       }
       setWords(data.words);
       setOutpostResources(data.outpost ? data.outpost.resources : 0);
+      setClassifications(Array.isArray(data.classifications) ? data.classifications : []);
       pendingSessionIdRef.current = data.sessionId;
       setPhase("ready");
     } catch (err) {
@@ -140,13 +149,38 @@ export default function FrequencyRushClient({ assignmentId, caseTitle }) {
   }, [mintSession]);
 
   // Wires the widget's window.AsteroidRun API to this student's real data.
-  // Safe to call more than once — setWordBank/setOutpostTotal/onComplete
+  // Safe to call more than once — setQuestionBank/setOutpostTotal/onComplete
   // are all idempotent from the widget's own intro/recap screen.
   const wireWidget = useCallback(() => {
     const win = iframeRef.current?.contentWindow;
     if (!win || !win.AsteroidRun || !words) return;
     try {
-      win.AsteroidRun.setWordBank(words);
+      // Sept 12, 2026 — switched from the old separate setWordBank() +
+      // setFormats() calls to the "Adventure" build's unified
+      // setQuestionBank(), which is what actually lets vocabulary AND Sort
+      // & Classify content run in the SAME setup call — calling
+      // setClassificationBank() on its own would wipe the word bank and
+      // force classification-only mode (see its own doc comment in the
+      // widget), which isn't what we want once real classify content
+      // exists. setQuestionBank infers which content mode(s) to turn on
+      // from what's actually non-empty, so an empty `classifications`
+      // array (any unit Emily hasn't authored Sort & Classify for yet)
+      // safely falls back to vocabulary-only — no separate branch needed
+      // here for "has classify content or not."
+      win.AsteroidRun.setQuestionBank({
+        words,
+        classifications,
+        // Sept 9, 2026 — "Adventure Edition": turn on the 3 vocabulary
+        // formats we can support for real today. odd_signal_out is
+        // deliberately left out — it needs human-curated word groupings
+        // (setOddGroups) we haven't authored yet; per the handoff doc,
+        // skipping setOddGroups entirely just makes the widget skip that
+        // format gracefully, so leaving it out of `formats` too keeps a
+        // real student from ever hitting a half-built round. Add
+        // "odd_signal_out" back here once real groups exist and
+        // oddGroups is passed alongside it.
+        formats: ["lock_signal", "true_false", "frequency_fill"],
+      });
       win.AsteroidRun.setOutpostTotal(outpostResources);
       // Sept 9, 2026 — Emily's first live playtest feedback: the widget's
       // own default (8s of flight between each question) felt too long.
@@ -154,15 +188,6 @@ export default function FrequencyRushClient({ assignmentId, caseTitle }) {
       // so this is the shortest gap it supports short of the widget file
       // itself being changed. Tune this one number if it still feels off.
       win.AsteroidRun.configure({ flightSeconds: 4 });
-      // Sept 9, 2026 — "Adventure Edition": turn on the 3 formats we can
-      // support for real today. odd_signal_out is deliberately left out —
-      // it needs human-curated word groupings (setOddGroups) we haven't
-      // authored yet; per the handoff doc, skipping setOddGroups entirely
-      // just makes the widget skip that format gracefully, so leaving it
-      // out of setFormats too keeps a real student from ever hitting a
-      // half-built round. Add "odd_signal_out" back here once real groups
-      // exist and setOddGroups() is wired up alongside it.
-      win.AsteroidRun.setFormats(["lock_signal", "true_false", "frequency_fill"]);
       win.AsteroidRun.onComplete((result) => { submitRun(result); });
       hideAuthorOnlyControls(win);
     } catch (err) {
@@ -170,7 +195,7 @@ export default function FrequencyRushClient({ assignmentId, caseTitle }) {
       // a genuine race on first load; the iframe's own load event retries
       // this right after.
     }
-  }, [words, outpostResources, submitRun]);
+  }, [words, classifications, outpostResources, submitRun]);
 
   useEffect(() => {
     if (phase === "ready") wireWidget();

@@ -116,6 +116,15 @@ button:disabled{cursor:default}button,summary{touch-action:manipulation}
 /* Keep the small launch badge compact; never stretch between top and bottom. */
 @media(min-width:761px){.intro-signal{top:24%;bottom:auto;height:auto;right:5%}}
 
+/* CONTENT ENGINE: vocabulary and authored Sort & Classify questions share the flight loop. */
+.settings-label{margin-top:12px;font-size:8px;font-weight:850;letter-spacing:1.7px;color:#91a7c9}.content-options{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:8px}.content-options label{display:flex;align-items:center;gap:8px;min-height:36px;font-size:10px;cursor:pointer}.content-options input{accent-color:#84dff3;width:16px;height:16px}.content-options .unavailable{opacity:.5}.content-note{font-size:10px;line-height:1.55;color:#9eb6d8;margin:9px 0 0}.format-options+.format-note{margin-top:9px}
+[data-format="classification"] .question-card{width:min(940px,100%)}[data-format="classification"] .question-prompt{font-size:18px;margin-bottom:13px}[data-format="classification"] .deck-head{align-items:flex-start}
+.classification-board{display:grid;gap:13px}.sort-tray{border:1px solid #8fb8ed2d;background:#09152d80;border-radius:13px;padding:12px}.sort-tray-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:9px}.sort-tray-title{font-size:9px;font-weight:850;letter-spacing:1.5px;color:#c9d9ef}.sort-status{font-size:9px;color:#8fdedb}.sort-items,.sort-bin-items{display:flex;flex-wrap:wrap;gap:7px;min-height:38px;align-content:flex-start}.sort-empty{font-size:10px;color:#8196b7;padding:9px 2px}
+.sort-item{display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:3px;min-height:38px;max-width:100%;padding:8px 11px;border:1px solid #adc8ff38;border-radius:9px;background:linear-gradient(115deg,#233452,#1b2944);font-size:11px;line-height:1.35;text-align:left;color:#edf5ff;box-shadow:inset 0 1px 0 #ffffff08;transition:border-color .14s,background .14s,transform .14s}.sort-item:not(:disabled):hover{border-color:#8de8f7;transform:translateY(-1px)}.sort-item[aria-pressed="true"]{border-color:#ffe09a;background:linear-gradient(115deg,#4b3b4f,#293a56);box-shadow:0 0 0 2px #ffcf7733}.sort-item.good{border-color:#79e9b799;background:#173d3b}.sort-item.bad{border-color:#ff93aa99;background:#40253a}.sort-item-note{display:block;font-size:8px;font-weight:650;color:#ffc2ce}.sort-item.good .sort-item-note{color:#a8f3d0}
+.sort-bins{display:grid;grid-template-columns:repeat(var(--category-count,2),minmax(0,1fr));gap:10px}.sort-bin{min-width:0;border:1px solid #96b5e333;border-radius:13px;background:linear-gradient(145deg,#172642,#101d36);padding:9px}.sort-bin.ready{border-color:#ffcf7777;box-shadow:0 0 18px #ffcf7712}.sort-bin-target{width:100%;min-height:42px;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:9px 10px;margin-bottom:8px;border:1px dashed #a8cfff4f;border-radius:9px;background:#8acbe609;text-align:left}.sort-bin-target:not(:disabled):hover{background:#85dff31b;border-color:#89e9f5}.sort-bin-title{font-size:11px;font-weight:850;line-height:1.25;color:#e5f2ff}.sort-bin-count{font-size:8px;white-space:nowrap;color:#8fb9d9}.sort-bin-items{min-height:47px}.classify-button{width:100%;min-height:44px;border:1px solid #d0b7ff66;border-radius:11px;background:linear-gradient(120deg,#9979e8,#776bd7);font-size:11px;font-weight:900;letter-spacing:1.1px;box-shadow:0 4px 0 #4f438e}.classify-button:not(:disabled):hover{filter:brightness(1.12);transform:translateY(-1px)}.classify-button:disabled{opacity:.45;box-shadow:none}.classification-board.feedback .sort-bin-target{border-style:solid;opacity:.75}.classification-board.feedback .classify-button{display:none}
+@media(max-width:760px){.sort-bins{grid-template-columns:repeat(2,minmax(0,1fr))}.sort-item{font-size:10px}.sort-bin-title{font-size:10px}[data-format="classification"] .question-prompt{font-size:16px}.content-options label{font-size:9px}}
+@media(max-width:480px){.content-options{grid-template-columns:1fr}.sort-bins{grid-template-columns:1fr}.sort-tray-head{align-items:flex-start}.sort-status{text-align:right}.sort-item{width:100%}.sort-bin-items{min-height:38px}.sort-bin-target{min-height:38px}.classification-board{gap:10px}}
+
 </style>
 </head>
 <body>
@@ -156,7 +165,7 @@ button:disabled{cursor:default}button,summary{touch-action:manipulation}
     <button class="icon-button" id="fullscreen-button" aria-label="Enter full screen" title="Full screen"><svg class="icon"><use href="#i-full"/></svg></button>
   </div>
 </header>
-<main class="game-frame" id="game" data-mode="intro" aria-label="Asteroid Run vocabulary game">
+<main class="game-frame" id="game" data-mode="intro" aria-label="Asteroid Run learning game">
   <div class="flight-topbar">
     <div class="game-name"><svg class="icon"><use href="#i-ship"/></svg>ASTEROID RUN</div>
     <div class="sector-label" id="intro-sector"><strong>SECTOR 01</strong><span>/</span>THE CRYSTAL BELT</div>
@@ -185,11 +194,16 @@ button:disabled{cursor:default}button,summary{touch-action:manipulation}
         <h1 id="intro-title">ASTEROID<span>RUN</span></h1>
         <div class="intro-tagline">A little pilot. A big adventure.</div>
         <p class="intro-description">Fly with Orbit, dodge asteroids, and follow purple crystals to recover lost fuel. Decode incoming signals and keep an eye out for a little passenger who needs a ride home.</p>
-        <div class="intro-stats"><div class="intro-stat"><strong>10</strong><span>Signals</span></div><div class="intro-stat"><strong>8<span style="display:inline;font-size:13px;letter-spacing:0;color:inherit"> sec</span></strong><span>Flight legs</span></div><div class="intro-stat"><strong>2 &middot; 4 &middot; 7</strong><span>Streak boosts</span></div></div>
+        <div class="intro-stats"><div class="intro-stat"><strong id="signal-count-stat">10</strong><span>Signals</span></div><div class="intro-stat"><strong id="flight-seconds-stat">8<span style="display:inline;font-size:13px;letter-spacing:0;color:inherit"> sec</span></strong><span>Flight legs</span></div><div class="intro-stat"><strong>2 &middot; 4 &middot; 7</strong><span>Streak boosts</span></div></div>
         <button class="launch-button" id="launch-button">LET'S FLY<svg class="icon"><use href="#i-arrow"/></svg></button>
         <p class="intro-controls">STEER: arrow keys / WASD, or hold and drag.<br>ANSWER: click, tap, or press 1-4. Flight pauses to think.</p>
-        <button class="sample-button" id="sample-mission-button">TRY ALL 4 FORMATS <span aria-hidden="true">&#8594;</span></button>
-        <details class="format-settings" id="format-settings"><summary id="format-summary">Question formats</summary><div class="format-options">
+        <button class="sample-button" id="sample-mission-button">TRY VOCAB + SORTING <span aria-hidden="true">&#8594;</span></button>
+        <details class="format-settings" id="format-settings"><summary id="format-summary">Learning content</summary>
+        <div class="settings-label">CONTENT MODES</div><div class="content-options">
+        <label><input type="checkbox" data-mode-choice value="vocabulary" checked> Vocabulary</label>
+        <label><input type="checkbox" data-mode-choice value="classification"> Sort &amp; Classify</label></div>
+        <p class="content-note" id="content-note"></p>
+        <div class="settings-label">VOCABULARY FORMATS</div><div class="format-options">
         <label><input type="checkbox" data-format-choice value="lock_signal" checked> Lock the Signal</label>
         <label><input type="checkbox" data-format-choice value="true_false"> True / False Signal</label>
         <label><input type="checkbox" data-format-choice value="frequency_fill"> Frequency Fill</label>
@@ -220,6 +234,11 @@ button:disabled{cursor:default}button,summary{touch-action:manipulation}
       <p class="freeze-note">Your ship, asteroids, and fuel are paused. Take a moment to think, then jump right back into flight.</p>
   <section class="deck" id="deck" aria-label="Definition controls" hidden>
     <div class="deck-head"><div class="deck-title"><b id="deck-instruction">Which definition matches?</b><span id="answer-key-hint">Click an answer or press 1-4.</span></div><div class="round-clock" id="round-clock"><div class="clock-track" role="meter" aria-label="Time remaining" aria-valuemin="0" aria-valuemax="8" aria-valuenow="8" id="clock-aria"><div class="clock-fill" id="clock-fill"></div></div><div class="clock-text" id="clock-text">NO TIMER</div></div></div>
+    <div class="classification-board" id="classification-board" hidden>
+      <div class="sort-tray" aria-label="Samples waiting to be sorted"><div class="sort-tray-head"><span class="sort-tray-title">SAMPLES TO SORT</span><span class="sort-status" id="sort-status">0 placed</span></div><div class="sort-items" id="sort-tray-items"></div></div>
+      <div class="sort-bins" id="sort-bins"></div>
+      <button class="classify-button" id="classification-submit" disabled>LOCK CLASSIFICATION</button>
+    </div>
     <div class="choices" id="choices" aria-labelledby="question-word"></div>
     <div class="deck-footer"><div class="feedback" id="feedback" role="status" aria-live="polite"><svg class="icon"><use href="#i-target"/></svg><span id="feedback-text">Lock onto the right signal.</span></div><div class="keyboard-hint"><span class="key">1</span><span class="key">2</span><span class="key">3</span><span class="key">4</span><span>to answer &nbsp; / &nbsp; P to pause</span></div></div>
   </section>
@@ -239,7 +258,7 @@ button:disabled{cursor:default}button,summary{touch-action:manipulation}
     <div class="recap-buttons"><button class="launch-button" id="again-button"><svg class="icon"><use href="#i-replay"/></svg>FLY AGAIN</button><button class="plain-button" id="recap-home">Back to launch</button></div><div class="recap-note">Demo resources only. Not connected to student accounts.</div>
   </div></section>
 </main>
-<footer class="bottom-bar"><span><svg class="icon"><use href="#i-shield"/></svg><strong>Fly. Dodge. Decode.</strong>&nbsp; A ClearCenters vocabulary adventure.</span><span class="version">ADVENTURE EDITION &nbsp; / &nbsp; LOCAL DEMO</span></footer>
+<footer class="bottom-bar"><span><svg class="icon"><use href="#i-shield"/></svg><strong>Fly. Dodge. Decode.</strong>&nbsp; A ClearCenters learning adventure.</span><span class="version">CONTENT ENGINE &nbsp; / &nbsp; LOCAL DEMO</span></footer>
 </div>
 <div id="adventure-live" class="sr-only" role="status" aria-live="polite"></div>
 <div id="toast" class="toast" role="status" hidden></div>
@@ -250,12 +269,13 @@ button:disabled{cursor:default}button,summary{touch-action:manipulation}
 /* ASTEROID RUN - visual rebuild of the supplied local demo.
  * All artwork, audio, styles, and code are embedded. No network calls.
  * Original vocabulary and artwork are preserved. Flight-mode rules are below.
- * See the integration API at the bottom to supply a real word bank.
+ * See the integration API at the bottom to supply vocabulary, classification,
+ * or mixed question banks selected by the host application.
  */
 const $ = (id) => document.getElementById(id);
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 const mix = (a, b, t) => a + (b - a) * t;
-const ROUND_SECONDS = 8, ROUND_COUNT = 10;
+const ROUND_SECONDS = 8, DEFAULT_ROUND_COUNT = 10;
 const BASE_POINTS = 100, MAX_SPEED_BONUS = 50;
 const STREAK_MULTIPLIERS = [1, 1, 1.2, 1.2, 1.5, 1.5, 1.5, 2];
 const BOOST_STREAKS = [2, 4, 7];
@@ -285,14 +305,20 @@ let priorFocus = null, lastFrame = performance.now(), lastHUD = 0, toastUntil = 
 let completionCallback = null;
 function rng(seed) { return () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
 function shuffle(items) { const a = [...items]; for (let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];} return a; }
-// Backward-compatible question content. Legacy callers still get Lock the Signal.
+// Backward-compatible vocabulary content. Legacy callers still get Lock the Signal.
 const FORMAT_INFO = Object.freeze({
  lock_signal:{name:'Lock the Signal',icon:'target',encounter:'COMMUNICATIONS BEACON',instruction:'Which definition matches?'},
  true_false:{name:'True Signal / False Signal',icon:'satellite',encounter:'TRANSMISSION CHECK',instruction:'Is this signal true or false?'},
  frequency_fill:{name:'Frequency Fill',icon:'relay',encounter:'MESSAGE RELAY',instruction:'Choose the missing word.'},
  odd_signal_out:{name:'Odd Signal Out',icon:'scanner',encounter:'DEEP-SPACE SCANNER',instruction:'Choose the word that does not belong.'}
 });
-let selectedFormats=['lock_signal'], oddGroups=[], usingSampleContent=false;
+const CONTENT_MODE_INFO = Object.freeze({
+ vocabulary:{name:'Vocabulary'},
+ classification:{name:'Sort & Classify'}
+});
+const CLASSIFICATION_INFO = Object.freeze({name:'Sort & Classify',icon:'scanner',encounter:'CARGO ANALYSIS BAY',instruction:'Place every sample in the correct bay.'});
+let CLASSIFICATIONS=[];
+let selectedFormats=['lock_signal'], selectedContentModes=['vocabulary'], oddGroups=[], usingSampleContent=false;
 const SAMPLE_SENTENCES={
  1:'During evaporation, puddles dry up as liquid water changes into water vapor.',
  2:'Condensation forms tiny water droplets on the outside of a cold glass.',
@@ -313,18 +339,78 @@ const SAMPLE_GROUPS=[
  {id:'demo-states',items:[9,10,11,1],oddId:1,prompt:'Which word is NOT a state of matter?',explanation:'Evaporation is a process. Solid, liquid, and gas are states of matter.'},
  {id:'demo-processes',items:[1,2,8,11],oddId:11,prompt:'Which word names a state of matter instead of a process?',explanation:'Gas is a state of matter. Evaporation, condensation, and erosion are processes.'}
 ];
+const SAMPLE_CLASSIFICATIONS=[
+ {type:'classification',id:'demo-energy-sources',title:'Sort the energy sources.',prompt:'Sort each energy source as renewable or nonrenewable.',categories:[{id:'renewable',label:'Renewable'},{id:'nonrenewable',label:'Nonrenewable'}],items:[{id:'sunlight',text:'Sunlight',categoryId:'renewable'},{id:'wind',text:'Wind',categoryId:'renewable'},{id:'coal',text:'Coal',categoryId:'nonrenewable'},{id:'natural-gas',text:'Natural gas',categoryId:'nonrenewable'}],explanation:'Sunlight and wind are replaced naturally in a short time. Coal and natural gas take millions of years to form.'},
+ {type:'classification',id:'demo-conductors',title:'Route the materials.',prompt:'Sort each material by whether it conducts or insulates electrical energy.',categories:[{id:'conductor',label:'Conductor'},{id:'insulator',label:'Insulator'}],items:[{id:'copper',text:'Copper wire',categoryId:'conductor'},{id:'foil',text:'Aluminum foil',categoryId:'conductor'},{id:'rubber',text:'Rubber eraser',categoryId:'insulator'},{id:'plastic',text:'Plastic spoon',categoryId:'insulator'}],explanation:'Metals such as copper and aluminum conduct electrical energy. Rubber and plastic are insulators.'},
+ {type:'classification',id:'demo-ecosystem-roles',title:'Organize the ecosystem.',prompt:'Sort each organism by its role in a food web.',categories:[{id:'producer',label:'Producer'},{id:'consumer',label:'Consumer'},{id:'decomposer',label:'Decomposer'}],items:[{id:'grass',text:'Grass',categoryId:'producer'},{id:'algae',text:'Algae',categoryId:'producer'},{id:'rabbit',text:'Rabbit',categoryId:'consumer'},{id:'hawk',text:'Hawk',categoryId:'consumer'},{id:'fungus',text:'Mushroom fungus',categoryId:'decomposer'},{id:'bacteria',text:'Soil bacteria',categoryId:'decomposer'}],explanation:'Plants and algae make food, animals consume organisms, and fungi and bacteria break down dead matter.'},
+ {type:'classification',id:'demo-water-changes',title:'Track the water changes.',prompt:'Sort each example by the change of state it shows.',categories:[{id:'evaporation',label:'Evaporation'},{id:'condensation',label:'Condensation'}],items:[{id:'puddle',text:'A puddle gets smaller in sunlight',categoryId:'evaporation'},{id:'wet-clothes',text:'Wet clothes dry on a line',categoryId:'evaporation'},{id:'cold-glass',text:'Drops form on a cold glass',categoryId:'condensation'},{id:'mirror',text:'A bathroom mirror fogs',categoryId:'condensation'}],explanation:'Evaporation changes liquid water to gas. Condensation changes water vapor to liquid droplets.'},
+ {type:'classification',id:'demo-properties',title:'Analyze the properties.',prompt:'Sort each observation by the property being tested.',categories:[{id:'magnetism',label:'Magnetism'},{id:'solubility',label:'Solubility'}],items:[{id:'paperclip',text:'A magnet attracts a paper clip',categoryId:'magnetism'},{id:'iron',text:'Iron filings move toward a magnet',categoryId:'magnetism'},{id:'salt',text:'Salt disappears evenly in water',categoryId:'solubility'},{id:'sugar',text:'Sugar forms a clear mixture with water',categoryId:'solubility'}],explanation:'Magnetism describes attraction to a magnet. Solubility describes how a substance dissolves in a liquid.'}
+];
 function editableContent(){if(!['intro','recap'].includes(state.mode))throw new Error('Return to the launch screen before changing question settings.');}
-function sentenceList(word){
- const fromArr=Array.isArray(word.sentences)?word.sentences.filter(s=>typeof s==='string'&&s.trim()).map(s=>s.trim()):[];
- if(fromArr.length)return fromArr;
- if(typeof word.sentence==='string'&&word.sentence.trim())return [word.sentence.trim()];
- return [];
+function usableId(value){return ['string','number'].includes(typeof value)&&String(value).trim()!==''&&(typeof value!=='number'||Number.isFinite(value));}
+function cleanMetadata(value,label){if(value===undefined)return undefined;if(!value||typeof value!=='object'||Array.isArray(value))throw new TypeError(label+' metadata must be an object.');return {...value};}
+function cleanWordBank(words){
+ if(!Array.isArray(words)||words.length<4)throw new TypeError('Provide at least four unique words and definitions.');
+ const ids=new Set(),defs=new Set();
+ return words.map(w=>{
+  const term=typeof w?.word==='string'?w.word:typeof w?.term==='string'?w.term:'';
+  if(!w||!usableId(w.id)||!term.trim()||typeof w.definition!=='string'||!w.definition.trim())throw new TypeError('Each vocabulary item needs an id, term, and definition.');
+  if(ids.has(String(w.id))||defs.has(w.definition.trim()))throw new Error('Vocabulary ids and definitions must be unique.');
+  if(w.sentence!==undefined&&w.sentence!==null&&typeof w.sentence!=='string')throw new TypeError('A sentence must be text when provided.');
+  ids.add(String(w.id));defs.add(w.definition.trim());
+  const out={id:w.id,word:term.trim(),definition:w.definition.trim()};
+  if(typeof w.sentence==='string')out.sentence=w.sentence.trim();
+  const metadata=cleanMetadata(w.metadata,'Vocabulary item');if(metadata)out.metadata=metadata;return out;
+ });
 }
-function pickSentence(word){const list=sentenceList(word);return list.length?list[Math.floor(Math.random()*list.length)]:null;}
-function blankSentence(word,chosen){
- const sentence=typeof chosen==='string'&&chosen.trim()?chosen.trim():pickSentence(word);
- if(!sentence)return null;
- const lower=sentence.toLowerCase(), term=word.word.toLowerCase();
+function cleanClassificationBank(questions){
+ if(!Array.isArray(questions)||!questions.length)throw new TypeError('Provide at least one Sort & Classify question.');
+ const questionIds=new Set();
+ return questions.map(q=>{
+  if(!q||!usableId(q.id)||questionIds.has(String(q.id))||typeof q.prompt!=='string'||!q.prompt.trim())throw new TypeError('Each Sort & Classify question needs a unique id and prompt.');
+  if(!Array.isArray(q.categories)||q.categories.length<2||q.categories.length>4)throw new TypeError('Each Sort & Classify question needs two to four categories.');
+  const categoryIds=new Set(),categoryLabels=new Set();
+  const categories=q.categories.map(c=>{
+   if(!c||!usableId(c.id)||categoryIds.has(String(c.id))||typeof c.label!=='string'||!c.label.trim()||categoryLabels.has(c.label.trim().toLowerCase()))throw new TypeError('Each category needs a unique id and label.');
+   categoryIds.add(String(c.id));categoryLabels.add(c.label.trim().toLowerCase());return {id:c.id,label:c.label.trim()};
+  });
+  if(!Array.isArray(q.items)||q.items.length<2||q.items.length>8)throw new TypeError('Each Sort & Classify question needs two to eight items.');
+  const itemIds=new Set(),usedCategories=new Set();
+  const items=q.items.map(item=>{
+   const categoryId=item?.categoryId??item?.correctCategoryId;
+   if(!item||!usableId(item.id)||itemIds.has(String(item.id))||typeof item.text!=='string'||!item.text.trim()||!usableId(categoryId)||!categoryIds.has(String(categoryId)))throw new TypeError('Each sortable item needs a unique id, text, and valid categoryId.');
+   itemIds.add(String(item.id));usedCategories.add(String(categoryId));const clean={id:item.id,text:item.text.trim(),categoryId:categories.find(c=>String(c.id)===String(categoryId)).id};
+   const metadata=cleanMetadata(item.metadata,'Sortable item');if(metadata)clean.metadata=metadata;return clean;
+  });
+  if(categories.some(c=>!usedCategories.has(String(c.id))))throw new Error('Every category must have at least one sortable item.');
+  if(q.title!==undefined&&typeof q.title!=='string')throw new TypeError('A Sort & Classify title must be text.');
+  if(q.explanation!==undefined&&typeof q.explanation!=='string')throw new TypeError('A Sort & Classify explanation must be text.');
+  const clean={id:q.id,title:(q.title||'Sort the samples.').trim()||'Sort the samples.',prompt:q.prompt.trim(),categories,items,explanation:(q.explanation||'').trim(),shuffleItems:q.shuffleItems!==false,shuffleCategories:!!q.shuffleCategories};
+  const metadata=cleanMetadata(q.metadata,'Sort & Classify question');if(metadata)clean.metadata=metadata;questionIds.add(String(q.id));return clean;
+ });
+}
+function cleanOddGroups(groups,words=WORDS){
+ if(!Array.isArray(groups))throw new TypeError('Odd groups must be an array.');
+ const bank=new Map(words.map(w=>[String(w.id),w.id])),groupIds=new Set();
+ return groups.map(g=>{
+  if(!g||!usableId(g.id)||groupIds.has(String(g.id)))throw new TypeError('Each group needs a unique id.');
+  if(!Array.isArray(g.items)||g.items.length!==4||new Set(g.items.map(String)).size!==4||g.items.some(id=>!usableId(id)||!bank.has(String(id))))throw new TypeError('Each group needs four distinct vocabulary ids from the current bank.');
+  if(!g.items.some(id=>String(id)===String(g.oddId)))throw new TypeError('oddId must be one of the four items.');
+  for(const k of ['prompt','explanation'])if(g[k]!==undefined&&typeof g[k]!=='string')throw new TypeError(k+' must be text.');
+  groupIds.add(String(g.id));return {id:g.id,items:g.items.map(id=>bank.get(String(id))),oddId:bank.get(String(g.oddId)),prompt:(g.prompt||'').trim(),explanation:(g.explanation||'').trim()};
+ });
+}
+function cleanFormats(formats){if(!Array.isArray(formats)||!formats.length||formats.some(f=>!Object.hasOwn(FORMAT_INFO,f)))throw new TypeError('Choose one or more supported vocabulary formats.');return [...new Set(formats)];}
+function normalizeContentMode(mode){return mode==='sort_classify'||mode==='sort-classify'?'classification':mode;}
+function cleanContentModes(modes,words=WORDS,classifications=CLASSIFICATIONS){
+ if(!Array.isArray(modes)||!modes.length)throw new TypeError('Choose one or more supported content modes.');
+ const clean=[...new Set(modes.map(normalizeContentMode))];if(clean.some(m=>!Object.hasOwn(CONTENT_MODE_INFO,m)))throw new TypeError('Supported content modes are vocabulary and classification.');
+ if(clean.includes('vocabulary')&&words.length<4)throw new Error('Vocabulary mode needs at least four vocabulary items.');
+ if(clean.includes('classification')&&!classifications.length)throw new Error('Sort & Classify mode needs at least one authored question.');return clean;
+}
+function blankSentence(word){
+ if(typeof word.sentence!=='string'||!word.sentence.trim())return null;
+ const sentence=word.sentence, lower=sentence.toLowerCase(), term=word.word.toLowerCase();
  const isWord=c=>!!c&&/[\p{L}\p{N}_]/u.test(c);
  const spans=[];let from=0,at;
  while((at=lower.indexOf(term,from))!==-1){const end=at+term.length;
@@ -340,54 +426,74 @@ function blankSentence(word,chosen){
 function validOddGroups(){const ids=new Set(WORDS.map(w=>String(w.id)));return oddGroups.filter(g=>g.items.every(id=>ids.has(String(id))));}
 function availableFormats(){return selectedFormats.filter(f=>f!=='frequency_fill'&&f!=='odd_signal_out'||f==='frequency_fill'&&WORDS.some(w=>blankSentence(w))||f==='odd_signal_out'&&validOddGroups().length>0);}
 function effectiveFormats(){const usable=availableFormats();return usable.length?usable:['lock_signal'];}
-function formatEligibility(f){return f==='frequency_fill'?WORDS.some(w=>blankSentence(w)):f==='odd_signal_out'?validOddGroups().length>0:true;}
+function formatEligibility(f){return WORDS.length>=4&&(f==='frequency_fill'?WORDS.some(w=>blankSentence(w)):f==='odd_signal_out'?validOddGroups().length>0:true);}
+function modeEligibility(mode){return mode==='vocabulary'?WORDS.length>=4:mode==='classification'?CLASSIFICATIONS.length>0:false;}
+function effectiveContentModes(){const usable=selectedContentModes.filter(modeEligibility);if(usable.length)return usable;if(modeEligibility('vocabulary'))return ['vocabulary'];if(modeEligibility('classification'))return ['classification'];throw new Error('No usable learning content is loaded.');}
 function setWordBank(words){
- editableContent();if(!Array.isArray(words)||words.length<4)throw new TypeError('Provide at least four unique words and definitions.');
- const ids=new Set(),defs=new Set();
- const clean=words.map(w=>{
-  if(!w||!['string','number'].includes(typeof w.id)||(typeof w.id==='number'&&!Number.isFinite(w.id))||typeof w.word!=='string'||!w.word.trim()||typeof w.definition!=='string'||!w.definition.trim())throw new TypeError('Each word needs an id, word, and definition.');
-  if(ids.has(String(w.id))||defs.has(w.definition.trim()))throw new Error('Word ids and definitions must be unique.');
-  if(w.sentence!==undefined&&w.sentence!==null&&typeof w.sentence!=='string')throw new TypeError('A sentence must be text when provided.');
-  if(w.sentences!==undefined&&w.sentences!==null&&(!Array.isArray(w.sentences)||w.sentences.some(s=>typeof s!=='string')))throw new TypeError('sentences must be an array of text when provided.');
-  ids.add(String(w.id));defs.add(w.definition.trim());
-  const out={id:w.id,word:w.word.trim(),definition:w.definition.trim()};
-  if(Array.isArray(w.sentences)&&w.sentences.length)out.sentences=w.sentences.map(s=>s.trim()).filter(Boolean);
-  if(typeof w.sentence==='string'&&w.sentence.trim())out.sentence=w.sentence.trim();
-  else if(out.sentences&&out.sentences.length)out.sentence=out.sentences[0];
-  return out;
- });
- WORDS=clean;oddGroups=[];usingSampleContent=false;refreshFormatSettings();
+ editableContent();WORDS=cleanWordBank(words);CLASSIFICATIONS=[];oddGroups=[];selectedContentModes=['vocabulary'];usingSampleContent=false;refreshFormatSettings();
+}
+function setClassificationBank(questions){
+ editableContent();CLASSIFICATIONS=cleanClassificationBank(questions);WORDS=[];oddGroups=[];selectedContentModes=['classification'];usingSampleContent=false;refreshFormatSettings();
 }
 function setOddGroups(groups){
- editableContent();if(!Array.isArray(groups))throw new TypeError('Odd groups must be an array.');
- const bank=new Map(WORDS.map(w=>[String(w.id),w.id])),groupIds=new Set();
- const clean=groups.map(g=>{
-  if(!g||!['string','number'].includes(typeof g.id)||(typeof g.id==='number'&&!Number.isFinite(g.id))||!String(g.id).trim()||groupIds.has(String(g.id)))throw new TypeError('Each group needs a unique id.');
-  if(!Array.isArray(g.items)||g.items.length!==4||new Set(g.items.map(String)).size!==4||g.items.some(id=>!['string','number'].includes(typeof id)||!bank.has(String(id))))throw new TypeError('Each group needs four distinct word ids from the current bank.');
-  if(!g.items.some(id=>String(id)===String(g.oddId)))throw new TypeError('oddId must be one of the four items.');
-  for(const k of ['prompt','explanation'])if(g[k]!==undefined&&typeof g[k]!=='string')throw new TypeError(k+' must be text.');
-  groupIds.add(String(g.id));return {id:g.id,items:g.items.map(id=>bank.get(String(id))),oddId:bank.get(String(g.oddId)),prompt:(g.prompt||'').trim(),explanation:(g.explanation||'').trim()};
- });oddGroups=clean;refreshFormatSettings();
+ editableContent();oddGroups=cleanOddGroups(groups);refreshFormatSettings();
 }
-function setFormats(formats){editableContent();if(!Array.isArray(formats)||!formats.length||formats.some(f=>!Object.hasOwn(FORMAT_INFO,f)))throw new TypeError('Choose one or more supported formats.');selectedFormats=[...new Set(formats)];refreshFormatSettings();}
+function setFormats(formats){editableContent();selectedFormats=cleanFormats(formats);refreshFormatSettings();}
+function setContentModes(modes){editableContent();selectedContentModes=cleanContentModes(modes);refreshFormatSettings();}
+function setQuestionBank(bank){
+ editableContent();const config=Array.isArray(bank)?{items:bank}:bank;
+ if(!config||typeof config!=='object'||Array.isArray(config))throw new TypeError('Supply a question bank array or configuration object.');
+ let rawItems=config.items;
+ if(rawItems===undefined){
+  const legacyWords=config.vocabulary?.words??config.words??[];
+  const legacyClassifications=config.classifications??config.classification??[];
+  if(!Array.isArray(legacyWords)||!Array.isArray(legacyClassifications))throw new TypeError('Question bank content must be arrays.');
+  rawItems=[...legacyWords.map(item=>({...item,type:'vocabulary'})),...legacyClassifications.map(item=>({...item,type:'classification'}))];
+ }
+ if(!Array.isArray(rawItems)||!rawItems.length)throw new TypeError('Question bank items must be a nonempty array.');
+ const vocabulary=[],classifications=[];
+ for(const item of rawItems){
+  const type=normalizeContentMode(item?.type);if(type==='vocabulary')vocabulary.push(item);else if(type==='classification')classifications.push(item);else throw new TypeError('Each question bank item needs type "vocabulary" or "classification".');
+ }
+ const nextWords=vocabulary.length?cleanWordBank(vocabulary):[];
+ const nextClassifications=classifications.length?cleanClassificationBank(classifications):[];
+ const groupSource=config.oddGroups??config.vocabulary?.oddGroups??[];
+ const nextGroups=cleanOddGroups(groupSource,nextWords);
+ const formatSource=config.formats??config.vocabularyFormats??config.vocabulary?.formats??selectedFormats;
+ const nextFormats=cleanFormats(formatSource);
+ const inferredModes=[...(nextWords.length?['vocabulary']:[]),...(nextClassifications.length?['classification']:[])];
+ const modeSource=config.modes??config.contentModes??inferredModes;
+ const nextModes=cleanContentModes(modeSource,nextWords,nextClassifications);
+ WORDS=nextWords;CLASSIFICATIONS=nextClassifications;oddGroups=nextGroups;selectedFormats=nextFormats;selectedContentModes=nextModes;usingSampleContent=false;refreshFormatSettings();
+}
 function refreshFormatSettings(){
  if(!$('format-settings'))return;
  for(const input of document.querySelectorAll('[data-format-choice]')){input.checked=selectedFormats.includes(input.value);input.disabled=!formatEligibility(input.value);input.closest('label').classList.toggle('unavailable',input.disabled);}
- $('format-summary').textContent='Question formats \u00b7 '+selectedFormats.length+' selected';
+ for(const input of document.querySelectorAll('[data-mode-choice]')){input.checked=selectedContentModes.includes(input.value);input.disabled=!modeEligibility(input.value);input.closest('label').classList.toggle('unavailable',input.disabled);}
+ $('format-summary').textContent='Learning content \u00b7 '+selectedContentModes.map(m=>CONTENT_MODE_INFO[m].name).join(' + ');
+ $('content-note').textContent=usingSampleContent?'Sample mission mixes approved interaction patterns for testing.':selectedContentModes.length>1?'Vocabulary and classification signals will be balanced through the run.':selectedContentModes[0]==='classification'?'Every signal will use an authored Sort & Classify question.':'Every signal will use the selected vocabulary formats.';
  const missing=selectedFormats.filter(f=>!formatEligibility(f));
- $('format-note').textContent=missing.length?'Missing content: '+missing.map(f=>FORMAT_INFO[f].name).join(', ')+'. Usable formats will be used; Lock the Signal is the final fallback.':usingSampleContent?'Sample science content and two authored demo groups. Replace with your approved curriculum before publishing.':'Legacy word banks work unchanged. Try the sample mission to preview sentences and authored odd groups.';
+ $('format-note').textContent=!selectedContentModes.includes('vocabulary')?'Vocabulary formats are saved but inactive for this mission.':missing.length?'Missing content: '+missing.map(f=>FORMAT_INFO[f].name).join(', ')+'. Usable formats will be used; Lock the Signal is the final fallback.':usingSampleContent?'All four vocabulary formats are active, including authored Odd Signal Out groups.':'Legacy word banks work unchanged. The host can also inject typed mixed-content banks.';
 }
 function loadSampleMission(){
  if(!['intro','recap'].includes(state.mode))return;
- setWordBank(SAMPLE_WORDS);setOddGroups(SAMPLE_GROUPS);setFormats(Object.keys(FORMAT_INFO));usingSampleContent=true;refreshFormatSettings();startRun();
+ setQuestionBank({items:[...SAMPLE_WORDS.map(item=>({...item,type:'vocabulary'})),...SAMPLE_CLASSIFICATIONS],oddGroups:SAMPLE_GROUPS,formats:Object.keys(FORMAT_INFO),modes:['vocabulary','classification']});usingSampleContent=true;refreshFormatSettings();startRun();
 }
+function balancedPlan(values,count){const plan=[];let previous=null;while(plan.length<count){const batch=shuffle(values);if(batch.length>1&&batch[0]===previous)[batch[0],batch[1]]=[batch[1],batch[0]];for(const value of batch){if(plan.length>=count)break;plan.push(value);}previous=plan[plan.length-1];}return plan;}
 function buildRounds(){
- const active=effectiveFormats(),plan=[];let previous=null;
- while(plan.length<ROUND_COUNT){const batch=shuffle(active);if(batch.length>1&&batch[0]===previous)[batch[0],batch[1]]=[batch[1],batch[0]];plan.push(...batch);previous=batch[batch.length-1];}
- const pools=new Map(),groups=validOddGroups();let groupPool=[],truthPool=[];
+ const count=FLIGHT_SETTINGS.roundCount,modes=balancedPlan(effectiveContentModes(),count),activeFormats=effectiveFormats();
+ const pools=new Map(),groups=validOddGroups();let groupPool=[],truthPool=[],formatPool=[],previousFormat=null,classificationPool=[];
+ function takeFormat(){if(!formatPool.length){formatPool=shuffle(activeFormats);if(formatPool.length>1&&formatPool[formatPool.length-1]===previousFormat)[formatPool[0],formatPool[formatPool.length-1]]=[formatPool[formatPool.length-1],formatPool[0]];}const type=formatPool.pop();previousFormat=type;return type;}
  function takeWord(type){let pool=pools.get(type);if(!pool||!pool.length){pool=shuffle(type==='frequency_fill'?WORDS.filter(w=>blankSentence(w)):WORDS);pools.set(type,pool);}return pool.pop();}
  const rounds=[];
- for(const type of plan.slice(0,ROUND_COUNT)){
+ for(const mode of modes){
+  if(mode==='classification'){
+   if(!classificationPool.length)classificationPool=shuffle(CLASSIFICATIONS);const question=classificationPool.pop();
+   const categories=question.shuffleCategories?shuffle(question.categories):question.categories.map(c=>({...c}));
+   const sortItems=question.shuffleItems?shuffle(question.items):question.items.map(item=>({...item}));
+   rounds.push({type:'classification',contentMode:'classification',questionId:question.id,word:question.title,definition:question.explanation||question.prompt,title:question.title,prompt:question.prompt,categories,sortItems,explanation:question.explanation,metadata:question.metadata});continue;
+  }
+  const type=takeFormat();
   let w,choices,round;
   if(type==='odd_signal_out'){
    if(!groupPool.length)groupPool=shuffle(groups);const group=groupPool.pop();w=WORDS.find(w=>w.id===group.oddId);
@@ -402,10 +508,10 @@ function buildRounds(){
    }else{
     choices=shuffle([w,...shuffle(WORDS.filter(o=>o.id!==w.id)).slice(0,3)]).map(o=>({id:o.id,text:type==='lock_signal'?o.definition:o.word,definition:o.definition}));
     round={correctChoiceId:w.id};
-    if(type==='frequency_fill'){const chosen=pickSentence(w);const blanked=blankSentence(w,chosen);Object.assign(round,{sentence:chosen,sentenceParts:blanked.parts,prompt:blanked.text,explanation:chosen});}
+    if(type==='frequency_fill'){const blanked=blankSentence(w);Object.assign(round,{sentence:w.sentence,sentenceParts:blanked.parts,prompt:blanked.text,explanation:w.sentence});}
    }
   }
-  rounds.push({type,promptWordId:w.id,word:w.word,definition:w.definition,choices,...round});
+  rounds.push({type,contentMode:'vocabulary',questionId:w.id,promptWordId:w.id,word:w.word,definition:w.definition,metadata:w.metadata,choices,...round});
  }
  return rounds;
 }
@@ -413,18 +519,64 @@ function renderSentence(round,revealed=false){
  const root=$('question-prompt');root.replaceChildren();
  for(const part of round.sentenceParts){if(!part.blank){root.appendChild(document.createTextNode(part.text));continue;}const span=document.createElement('span');span.className=revealed?'restored-word':'missing-word';span.textContent=revealed?part.text:'______';if(!revealed)span.setAttribute('aria-label','missing word');root.appendChild(span);}
 }
+function categoryFor(round,id){return round.categories.find(category=>String(category.id)===String(id));}
+function makeSortItemButton(round,item,revealed=false){
+ const key=String(item.id),selectedId=state.classificationAssignments.get(key),correctCategory=categoryFor(round,item.categoryId),selectedCategory=categoryFor(round,selectedId);
+ const button=document.createElement('button');button.className='sort-item';button.dataset.sortItemId=key;button.type='button';
+ const label=document.createElement('span');label.textContent=item.text;button.append(label);
+ if(revealed){
+  const correct=selectedCategory&&String(selectedCategory.id)===String(correctCategory.id);button.classList.add(correct?'good':'bad');button.disabled=true;
+  const note=document.createElement('span');note.className='sort-item-note';note.textContent=correct?'Correct':selectedCategory?'You chose '+selectedCategory.label:'Not placed';button.append(note);
+  button.setAttribute('aria-label',`${item.text}. Correct category: ${correctCategory.label}. ${note.textContent}.`);
+ }else{
+  const selected=state.selectedSortItemId===key;button.setAttribute('aria-pressed',String(selected));button.setAttribute('aria-label',`${item.text}${selected?', selected. Choose a category.':', choose this sample.'}`);button.addEventListener('click',()=>selectSortItem(item.id));
+ }
+ return button;
+}
+function renderClassificationBoard(round,revealed=false){
+ const board=$('classification-board'),tray=$('sort-tray-items'),bins=$('sort-bins');board.hidden=false;board.classList.toggle('feedback',revealed);tray.replaceChildren();bins.replaceChildren();bins.style.setProperty('--category-count',round.categories.length);
+ const assignments=state.classificationAssignments,placed=assignments.size;
+ $('sort-status').textContent=revealed?(state.feedbackCorrect?'All samples correct.':'Correct bays shown.'):`${placed} / ${round.sortItems.length} placed`;
+ for(const item of round.sortItems){if(!revealed&&!assignments.has(String(item.id)))tray.appendChild(makeSortItemButton(round,item,false));}
+ if(!tray.children.length){const empty=document.createElement('span');empty.className='sort-empty';empty.textContent=revealed?'Review the correct bays below.':'All samples placed. You can move any sample before locking.';tray.appendChild(empty);}
+ for(const category of round.categories){
+  const bin=document.createElement('section');bin.className='sort-bin'+(!revealed&&state.selectedSortItemId?' ready':'');bin.setAttribute('aria-label',category.label+' category');
+  const target=document.createElement('button');target.type='button';target.className='sort-bin-target';target.disabled=revealed||!state.selectedSortItemId;
+  const title=document.createElement('span');title.className='sort-bin-title';title.textContent=category.label;
+  const count=document.createElement('span');count.className='sort-bin-count';
+  const visibleItems=round.sortItems.filter(item=>String(revealed?item.categoryId:assignments.get(String(item.id)))===String(category.id));count.textContent=visibleItems.length+' placed';target.append(title,count);
+  target.setAttribute('aria-label',state.selectedSortItemId?`Place selected sample in ${category.label}`:`${category.label} category. Select a sample first.`);if(!revealed)target.addEventListener('click',()=>assignSortItem(category.id));
+  const items=document.createElement('div');items.className='sort-bin-items';for(const item of visibleItems)items.appendChild(makeSortItemButton(round,item,revealed));
+  if(!visibleItems.length){const empty=document.createElement('span');empty.className='sort-empty';empty.textContent=revealed?'No correct samples':'Select a sample, then choose this bay';items.appendChild(empty);}
+  bin.append(target,items);bins.appendChild(bin);
+ }
+ const submit=$('classification-submit');submit.hidden=revealed;submit.disabled=placed<round.sortItems.length;
+}
+function findSortItemButton(itemId){return [...document.querySelectorAll('[data-sort-item-id]')].find(button=>button.dataset.sortItemId===String(itemId));}
+function selectSortItem(itemId){
+ if(state.mode!=='question'||state.paused)return;const round=state.rounds[state.roundIndex];if(round.type!=='classification')return;
+ const key=String(itemId);state.selectedSortItemId=state.selectedSortItemId===key?null:key;renderClassificationBoard(round);
+ if(state.selectedSortItemId){setFeedback('Sample selected. Now choose its category.');findSortItemButton(key)?.focus({preventScroll:true});}else setFeedback('Choose a sample, then choose its category.');
+}
+function assignSortItem(categoryId){
+ if(state.mode!=='question'||state.paused||!state.selectedSortItemId)return;const round=state.rounds[state.roundIndex],itemKey=state.selectedSortItemId,category=categoryFor(round,categoryId);if(round.type!=='classification'||!category)return;
+ state.classificationAssignments.set(itemKey,category.id);state.selectedSortItemId=null;renderClassificationBoard(round);const next=round.sortItems.find(item=>!state.classificationAssignments.has(String(item.id)));
+ setFeedback(next?'Placed. Choose the next sample.':'All samples placed. Check your work, then lock the classification.');(next?findSortItemButton(next.id):$('classification-submit'))?.focus({preventScroll:true});
+}
 function renderRoundChoices(){
- const round=state.rounds[state.roundIndex],info=FORMAT_INFO[round.type];
+ const round=state.rounds[state.roundIndex],classification=round.type==='classification',info=classification?CLASSIFICATION_INFO:FORMAT_INFO[round.type];
  $('question-layer').dataset.format=round.type;$('word').textContent=round.word;
- $('question-word').textContent=round.type==='lock_signal'||round.type==='true_false'?round.word:round.type==='frequency_fill'?'Restore the message.':'Find the odd signal.';
- $('question-index').textContent=`SIGNAL ${String(state.roundIndex+1).padStart(2,'0')} / ${ROUND_COUNT}`;
+ $('question-word').textContent=classification?round.title:round.type==='lock_signal'||round.type==='true_false'?round.word:round.type==='frequency_fill'?'Restore the message.':'Find the odd signal.';
+ $('question-index').textContent=`SIGNAL ${String(state.roundIndex+1).padStart(2,'0')} / ${state.rounds.length}`;
  $('format-label').textContent=info.name.toUpperCase();$('encounter-label').textContent=info.encounter;
  $('signal-icon').setAttribute('href','#i-'+info.icon);
- const prompt=$('question-prompt');prompt.hidden=round.type==='lock_signal';prompt.className='question-prompt '+round.type;
+ const prompt=$('question-prompt');prompt.hidden=!classification&&round.type==='lock_signal';prompt.className='question-prompt '+round.type;
  if(round.type==='frequency_fill')renderSentence(round);else prompt.textContent=round.type==='true_false'?'Transmission: "'+round.statementDefinition+'"':round.prompt||'';
  $('deck-instruction').textContent=info.instruction;$('deck').setAttribute('aria-label',info.name+' answer controls');
- $('answer-key-hint').textContent=round.choices.length===2?'Press 1 for True or 2 for False.':'Click an answer or press 1-4.';
- const root=$('choices');root.replaceChildren();
+ $('answer-key-hint').textContent=classification?'Tap a sample, then tap its category.':round.choices.length===2?'Press 1 for True or 2 for False.':'Click an answer or press 1-4.';
+ const root=$('choices');root.replaceChildren();root.hidden=classification;$('classification-board').hidden=!classification;
+ state.classificationAssignments=new Map();state.selectedSortItemId=null;
+ if(classification){renderClassificationBoard(round);return;}
  round.choices.forEach((choice,i)=>{
   const button=document.createElement('button');button.className='choice';button.dataset.choiceId=String(choice.id);button.setAttribute('aria-keyshortcuts',String(i+1));
   const key=document.createElement('span');key.className='choice-key';key.textContent=i+1;key.setAttribute('aria-hidden','true');
@@ -432,13 +584,31 @@ function renderRoundChoices(){
   button.setAttribute('aria-label',`${i+1}. ${choice.text}`);button.append(key,text);button.addEventListener('click',()=>answer(choice.id));root.appendChild(button);
  });
 }
+function completeQuestion(round,correct,result,explanation=''){
+ const ms=result.responseTimeMs;state.attempted++;state.feedbackCorrect=correct;state.feedbackElapsed=0;setMode('feedback');
+ if(correct){
+  state.streak++;state.correctCount++;state.bestStreak=Math.max(state.bestStreak,state.streak);
+  // The legacy scoring formula is intentionally unchanged, including its 8 s speed-bonus window.
+  const earned=FLIGHT_SETTINGS.questionSeconds?pointsForCorrectAnswer(ms,state.streak):Math.round(BASE_POINTS*STREAK_MULTIPLIERS[Math.min(state.streak,STREAK_MULTIPLIERS.length-1)]);
+  state.score+=earned;result.points=earned;state.fuel=Math.min(FUEL_MAX,state.fuel+FUEL_REFILL_PER_CORRECT);
+  const boost=BOOST_STREAKS.includes(state.streak);
+  if(boost){state.hull=Math.min(HULL_MAX,state.hull+HULL_REPAIR_ON_BOOST);state.boostRemaining=3;sfx('boost');}else sfx('laser');
+  setFeedback('Correct! '+(explanation?explanation.trim()+' ':'')+`+${earned} resources and +10 fuel (up to 100%). `+(boost?'Hull repaired +20. Orbit will check the repairs when we fly.':'Ready to keep flying?'),'good');
+  $('score').classList.remove('score-pop');void $('score').offsetWidth;$('score').classList.add('score-pop');
+ }else{
+  state.streak=0;state.hull=Math.max(0,state.hull-HULL_DAMAGE_PER_WRONG);
+  setFeedback((result.timedOut?'Time is up. ':'Not quite. ')+`-25 hull. `+(explanation||`${round.word}: ${round.definition}`),'bad');sfx('hit');
+ }
+ state.results.push(result);const last=state.roundIndex+1>=state.rounds.length||state.hull<=0,cont=$('continue-button');
+ cont.innerHTML=(last?'VIEW FLIGHT REPORT':'KEEP FLYING')+icon(last?'trophy':'arrow');cont.hidden=false;cont.disabled=true;updateHUD();
+}
 function answer(choiceId){
  if(state.mode!=='question'||state.paused)return;
  const round=state.rounds[state.roundIndex],ms=state.questionElapsed*1000;
+ if(round.type==='classification'){submitClassification(choiceId===null);return;}
  if(choiceId!==null&&!round.choices.some(c=>c.id===choiceId))return;
  const correct=choiceId!==null&&choiceId===round.correctChoiceId;
- state.attempted++;state.feedbackCorrect=correct;state.feedbackElapsed=0;setMode('feedback');
- const result={word:round.word,wordId:round.promptWordId,definition:round.definition,choiceId,correct,timedOut:choiceId===null,responseTimeMs:Math.round(ms),points:0,type:round.type,...(round.explanation?{explanation:round.explanation}:{}),shownChoiceIds:round.choices.map(c=>c.id)};
+ const result={roundNumber:state.roundIndex+1,questionId:round.questionId,contentMode:'vocabulary',word:round.word,wordId:round.promptWordId,definition:round.definition,choiceId,correct,timedOut:choiceId===null,responseTimeMs:Math.round(ms),points:0,type:round.type,...(round.metadata?{metadata:{...round.metadata}}:{}),...(round.explanation?{explanation:round.explanation}:{}),shownChoiceIds:round.choices.map(c=>c.id)};
  if(round.type==='true_false')Object.assign(result,{definitionWordId:round.definitionWordId,statement:round.prompt});
  if(round.type==='frequency_fill')result.sentence=round.sentence;
  if(round.type==='odd_signal_out')Object.assign(result,{groupId:round.groupId,prompt:round.prompt,explanation:round.explanation});
@@ -450,22 +620,15 @@ function answer(choiceId){
  });
  if(round.type==='frequency_fill')renderSentence(round,true);
  const explanation=round.type==='lock_signal'?'':round.explanation+' ';
- if(correct){
-  state.streak++;state.correctCount++;state.bestStreak=Math.max(state.bestStreak,state.streak);
-  // The legacy scoring formula is intentionally unchanged, including its 8 s speed-bonus window.
-  const earned=FLIGHT_SETTINGS.questionSeconds?pointsForCorrectAnswer(ms,state.streak):Math.round(BASE_POINTS*STREAK_MULTIPLIERS[Math.min(state.streak,STREAK_MULTIPLIERS.length-1)]);
-  state.score+=earned;result.points=earned;state.fuel=Math.min(FUEL_MAX,state.fuel+FUEL_REFILL_PER_CORRECT);
-  const boost=BOOST_STREAKS.includes(state.streak);
-  if(boost){state.hull=Math.min(HULL_MAX,state.hull+HULL_REPAIR_ON_BOOST);state.boostRemaining=3;sfx('boost');}else sfx('laser');
-  setFeedback('Correct! '+explanation+`+${earned} resources and +10 fuel (up to 100%). `+(boost?'Hull repaired +20. Orbit will check the repairs when we fly.':'Ready to keep flying?'),'good');
-  $('score').classList.remove('score-pop');void $('score').offsetWidth;$('score').classList.add('score-pop');
- }else{
-  state.streak=0;state.hull=Math.max(0,state.hull-HULL_DAMAGE_PER_WRONG);
-  setFeedback((choiceId===null?'Time is up. ':'Not quite. ')+`-25 hull. `+(explanation||`${round.word}: ${round.definition}`),'bad');sfx('hit');
- }
- state.results.push(result);
- const last=state.roundIndex+1>=state.rounds.length||state.hull<=0,cont=$('continue-button');
- cont.innerHTML=(last?'VIEW FLIGHT REPORT':'KEEP FLYING')+icon(last?'trophy':'arrow');cont.hidden=false;cont.disabled=true;updateHUD();
+ completeQuestion(round,correct,result,explanation);
+}
+function submitClassification(timedOut=false){
+ if(state.mode!=='question'||state.paused)return;const round=state.rounds[state.roundIndex];if(round.type!=='classification')return;
+ const assignments=state.classificationAssignments;if(!timedOut&&assignments.size<round.sortItems.length)return;
+ const rows=round.sortItems.map(item=>{const selectedCategoryId=assignments.get(String(item.id))??null;return {itemId:item.id,text:item.text,selectedCategoryId,correctCategoryId:item.categoryId,correct:selectedCategoryId!==null&&String(selectedCategoryId)===String(item.categoryId),...(item.metadata?{metadata:{...item.metadata}}:{})};});
+ const correct=!timedOut&&rows.every(row=>row.correct),ms=state.questionElapsed*1000;
+ const result={roundNumber:state.roundIndex+1,questionId:round.questionId,contentMode:'classification',type:'classification',prompt:round.prompt,title:round.title,correct,timedOut,responseTimeMs:Math.round(ms),points:0,assignments:rows,categories:round.categories.map(category=>({...category})),shownItemIds:round.sortItems.map(item=>item.id),...(round.explanation?{explanation:round.explanation}:{}),...(round.metadata?{metadata:{...round.metadata}}:{})};
+ completeQuestion(round,correct,result,round.explanation||'The correct bays are shown below.');renderClassificationBoard(round,true);
 }
 
 function pointsForCorrectAnswer(ms,streak){const left=Math.max(0,ROUND_SECONDS*1000-ms);const bonus=Math.round(MAX_SPEED_BONUS*left/(ROUND_SECONDS*1000));return Math.round((BASE_POINTS+bonus)*STREAK_MULTIPLIERS[Math.min(streak,STREAK_MULTIPLIERS.length-1)]);}
@@ -592,7 +755,7 @@ function originalRender(t,dt,now){if(!backdrop)return;const paused=state.paused;
 
 
 /* PILOT EDITION
- * - 8 seconds of active flight precede each of the original 10 questions.
+ * - 8 seconds of active flight precede each configured question (10 by default).
  * - Question and feedback phases NEVER update world physics or fuel.
  * - Untimed questions are the default. The optional timer uses the original 8 s.
  * - Collision damage: 10 hull, followed by 1.6 s of protection; answer misses: 25.
@@ -600,12 +763,12 @@ function originalRender(t,dt,now){if(!backdrop)return;const paused=state.paused;
  * - Untimed answers use base x streak scoring; timed answers retain speed bonus.
  * No network requests, storage, third-party libraries, or real student rewards.
  */
-const FLIGHT_SETTINGS = {flightSeconds:8, questionSeconds:0, collisionDamage:10};
+const FLIGHT_SETTINGS = {flightSeconds:8, questionSeconds:0, collisionDamage:10, roundCount:DEFAULT_ROUND_COUNT};
 const heldKeys = new Set(), heldButtons = new Set();
 const POINTER = {active:false, id:null, x:0, y:0};
 const DIR_KEYS = new Set(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','w','a','s','d']);
 let obstacles=[], obstacleSerial=0, previewClock=0, fuelCrystals=[];
-const INIT_STATE = () => ({mode:'intro',paused:false,score:0,hull:100,fuel:100,streak:0,roundIndex:0,rounds:[],results:[],dodged:0,impacts:0,totalFlightTime:0,simTime:0,legElapsed:0,boostRemaining:0,recoveryActive:false,recoveryNeed:0,recoveryCollected:0,fuelRecovered:0});
+const INIT_STATE = () => ({mode:'intro',paused:false,score:0,hull:100,fuel:100,streak:0,roundIndex:0,rounds:[],results:[],dodged:0,impacts:0,totalFlightTime:0,simTime:0,legElapsed:0,boostRemaining:0,recoveryActive:false,recoveryNeed:0,recoveryCollected:0,fuelRecovered:0,classificationAssignments:new Map(),selectedSortItemId:null});
 state=INIT_STATE();
 function shipWidth(){return clamp(Math.min(W,H)*.215,72,124);}
 function pilotBounds(){const w=shipWidth();return {left:w*.60,right:Math.max(w*.7,W-w*.62),top:(H<300?50:Math.min(H*.30,112))+w*.23,bottom:H-(H<300?28:66)-w*.23};}
@@ -616,12 +779,12 @@ function setMode(mode){state.mode=mode;$('game').dataset.mode=mode;}
 function clearInput(){heldKeys.clear();heldButtons.clear();POINTER.active=false;if(POINTER.id!==null){try{$('scene').releasePointerCapture(POINTER.id);}catch(_){}}POINTER.id=null;if(state.pilot){state.pilot.vx=0;state.pilot.vy=0;}document.querySelectorAll('.steer').forEach(b=>b.classList.remove('pressed'));}
 function setBackgroundInert(inert){const reading=['question','feedback'].includes(state.mode);$('intro').inert=inert;$('question-layer').inert=inert;$('flight-controls').inert=inert||reading;$('scene').inert=inert||reading;document.querySelector('.site-header').inert=inert;}
 function showFlight(on){['route','score-box','scene-hud','ship-label','flight-caption','leg-progress','flight-controls','companion-status'].forEach(id=>$(id).hidden=!on);$('target-label').hidden=true;$('deck').hidden=!on;$('intro').hidden=on;$('intro-sector').hidden=on;}
-function makeRoute(){const root=$('route-nodes');root.replaceChildren();for(let i=0;i<ROUND_COUNT;i++){const d=document.createElement('span');d.className='route-node';root.appendChild(d);}}
+function makeRoute(){const root=$('route-nodes');root.replaceChildren();for(let i=0;i<state.rounds.length;i++){const d=document.createElement('span');d.className='route-node';root.appendChild(d);}}
 function setFeedback(text,type=''){const root=$('feedback');root.className='feedback'+(type?' '+type:'');root.querySelector('use').setAttribute('href',type==='good'?'#i-check':type==='bad'?'#i-shield':'#i-target');$('feedback-text').textContent=text;}
 function alertFlight(text,seconds=2.5,type=''){state.flightAlert=text;state.alertUntil=state.simTime+seconds;$('flight-alert').textContent=text;$('flight-alert').className='flight-alert'+(type?' '+type:'');$('flight-alert').hidden=false;}
 function updateHUD(){if(!state.rounds.length)return;
  $('hull-value').textContent=Math.round(state.hull)+'%';$('fuel-value').textContent=Math.round(state.fuel)+'%';$('hull-fill').style.width=state.hull+'%';$('fuel-fill').style.width=state.fuel+'%';$('hull-aria').setAttribute('aria-valuenow',Math.round(state.hull));$('fuel-aria').setAttribute('aria-valuenow',Math.round(state.fuel));$('hull-meter').classList.toggle('low',state.hull<=25);$('fuel-meter').classList.toggle('low',state.fuel<=25);$('streak').textContent=state.streak;$('score').textContent=state.score.toLocaleString();
- $('round-label').textContent=`SIGNAL ${String(state.roundIndex+1).padStart(2,'0')} / ${ROUND_COUNT}`;
+ $('round-label').textContent=`SIGNAL ${String(state.roundIndex+1).padStart(2,'0')} / ${state.rounds.length}`;
  [...$('route-nodes').children].forEach((el,i)=>{el.className='route-node';const result=state.results[i];if(result)el.classList.add(result.correct?'good':'bad');else if(i===state.roundIndex)el.classList.add('current');});BOOST_STREAKS.forEach(goal=>$('goal-'+goal).classList.toggle('on',state.streak>=goal));
  $('dodged-value').textContent=state.dodged||0;$('impacts-value').textContent=state.impacts||0;
  const left=Math.max(0,FLIGHT_SETTINGS.flightSeconds-(state.legElapsed||0));
@@ -670,7 +833,7 @@ function collision(o){const p=state.pilot,w=shipWidth();return Math.hypot((o.x-(
 function crystalCollision(c){const p=state.pilot,w=shipWidth();return Math.hypot(c.x-(p.x+w*.02),c.y-p.y)<c.r+w*.20;}
 function endRecovery(success=true){state.recoveryActive=false;state.recoveryNeed=0;state.recoveryCollected=0;$('pilot-instruction').textContent='YOU ARE THE PILOT';$('pilot-hint').textContent=matchMedia('(pointer: coarse)').matches?'Drag in the flight window, or hold the arrow buttons.':'Arrow keys / WASD, or hold and drag in the flight window.';if(success)alertFlight('Fuel stabilized. Signal route back online.',1.8,'good');}
 function damageFromAsteroid(o){if(o.hit||state.protectRemaining>0||state.boostRemaining>0)return;o.hit=true;state.impacts++;const fuelLoss=18;state.hull=Math.max(0,state.hull-FLIGHT_SETTINGS.collisionDamage);state.fuel=Math.max(0,state.fuel-fuelLoss);state.protectRemaining=1.6;state.lastHitTime=state.simTime;burst(o.x,o.y,false,false);spawnFuelCrystals(Math.max(o.x,state.pilot.x+shipWidth()*.95),o.y,7);state.recoveryActive=true;state.recoveryNeed=4;state.recoveryCollected=0;$('pilot-instruction').textContent='FUEL RECOVERY';$('pilot-hint').textContent='Collect 4 purple crystals to stabilize your fuel.';alertFlight(`Impact! -${FLIGHT_SETTINGS.collisionDamage} hull, -${fuelLoss} fuel. Collect 4 crystals!`,2.6,'hit');sfx('hit');if(state.hull<=0)finishRun('hull_breach');else if(state.fuel<=0)finishRun('out_of_fuel');}
-function openQuestion(){if(state.mode!=='flight')return;clearInput();setMode('question');dockCompanion();setBackgroundInert(false);state.questionElapsed=0;state.remaining=FLIGHT_SETTINGS.questionSeconds;state.feedbackCorrect=null;state.feedbackElapsed=0;$('flight-alert').hidden=true;$('countdown').hidden=true;$('question-layer').hidden=false;$('continue-button').hidden=true;$('deck').hidden=false;renderRoundChoices();document.querySelector('.freeze-note').textContent=FLIGHT_SETTINGS.questionSeconds?'Flight and fuel are frozen. Decode this signal before the timer ends.':'Your ship, asteroids, and fuel are paused. Take a moment to think.';setFeedback('Flight resumes only after you answer and choose KEEP FLYING.');$('pilot-instruction').textContent='FLIGHT ON HOLD';$('pilot-hint').textContent='Ship parked. Decode the signal to continue.';$('question-layer').querySelector('.question-card').scrollTop=0;updateHUD();$('question-word').tabIndex=-1;$('question-word').focus({preventScroll:true});sfx('click');}
+function openQuestion(){if(state.mode!=='flight')return;clearInput();setMode('question');dockCompanion();setBackgroundInert(false);state.questionElapsed=0;state.remaining=FLIGHT_SETTINGS.questionSeconds;state.feedbackCorrect=null;state.feedbackElapsed=0;$('flight-alert').hidden=true;$('countdown').hidden=true;$('question-layer').hidden=false;$('continue-button').hidden=true;$('deck').hidden=false;renderRoundChoices();document.querySelector('.freeze-note').textContent=FLIGHT_SETTINGS.questionSeconds?'Flight and fuel are frozen. Decode this signal before the timer ends.':'Your ship, asteroids, and fuel are paused. Take a moment to think.';setFeedback(state.rounds[state.roundIndex].type==='classification'?'Choose a sample, then choose its category.':'Flight resumes only after you answer and choose KEEP FLYING.');$('pilot-instruction').textContent='FLIGHT ON HOLD';$('pilot-hint').textContent='Ship parked. Decode the signal to continue.';$('question-layer').querySelector('.question-card').scrollTop=0;updateHUD();$('question-word').tabIndex=-1;$('question-word').focus({preventScroll:true});sfx('click');}
 function continueAfterAnswer(){if(state.mode!=='feedback'||state.paused||state.feedbackElapsed<.35)return;if(state.hull<=0){finishRun('hull_breach');return;}if(state.roundIndex+1>=state.rounds.length){finishRun('completed');return;}state.departure={type:state.rounds[state.roundIndex].type,x:W*.75,y:H*.46,life:1.8};state.roundIndex++;state.feedbackCorrect=null;state.legElapsed=0;state.spawnIn=.55;startCountdown(false);updateHUD();sfx('launch');}
 function outpostArtwork(index){return `<svg viewBox="0 0 150 100" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="dome" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#9df5ff"/><stop offset="1" stop-color="#4569a6"/></linearGradient><linearGradient id="base" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#aab8e4"/><stop offset="1" stop-color="#526489"/></linearGradient></defs><ellipse cx="76" cy="84" rx="69" ry="12" fill="#101e38"/><path d="m13 76 43-17 81 11-31 21-64-2Z" fill="#415779"/><path d="m13 76 29 13 64 2 31-21v8l-31 20-64-3-29-12Z" fill="#273d60"/><path d="m22 77 32-11 67 7-24 11-49-1Z" fill="#5c7394"/><path d="M49 76h15m-8-4v8" stroke="#adbdde" stroke-width="2"/>
 ${index>=1?'<path d="M30 63v15m-13-28 27 1-5 16-25-2Z" fill="#5e7cc0" stroke="#83bcdf"/><path d="m26 51-3 15m13-14-4 14m-17-7h25" stroke="#9dc3ed" stroke-width=".8"/>':''}
@@ -680,11 +843,32 @@ ${index>=4?'<path d="m44 74 8-8h21v14H44Z" fill="#84ddcc" fill-opacity=".9"/><pa
 ${index>=5?'<path d="M79 70V48l17-6 14 7v24Z" fill="url(#base)"/><path d="m79 48 17 7 14-6-14-7Z" fill="#d0def4"/><path d="M84 53v9l18 4v-9Z" fill="#23496e"/><path d="m85 55 15 4" stroke="#9af5ff" stroke-width="2"/><path d="m96 43 1-16" stroke="#acbddd" stroke-width="2"/><circle cx="97" cy="26" r="2" fill="#c4b1ff"/>':''}
 <circle cx="28" cy="82" r="1.5" fill="#92ffff"/><circle cx="108" cy="83" r="1.5" fill="#92ffff"/><path d="m129 14 3 5-3 5-3-5Z" fill="#d6b3ff"/></svg>`;}
 
-function finishRun(reason){if(state.resultPosted)return;state.resultPosted=true;state.finishReason=reason;state.arrivalElapsed=0;$('flight-alert').hidden=true;$('arrival-caption').textContent=reason==='completed'?'DOCKING AT YOUR OUTPOST':'SAFE TOW BACK TO YOUR OUTPOST';$('recap-adventure').textContent=state.hitchhiker?.status==='aboard'?'Your little passenger made it home with you.':'Orbit is docked and ready for another adventure.';setMode('recap');clearInput();$('question-layer').hidden=true;state.paused=false;$('countdown').hidden=true;$('pause-layer').hidden=true;$('target-label').hidden=true;$('points-float').hidden=true;$('boost-banner').hidden=true;const bonus=reason==='completed'?Math.round((state.fuel/FUEL_MAX)*FUEL_COMPLETION_BONUS_MAX):0;const banked=state.score+bonus;const prior=getOutpostProgress(fakeOutpostResourcesTotal);fakeOutpostResourcesTotal+=banked;const progress=getOutpostProgress(fakeOutpostResourcesTotal);const won=reason==='completed';$('recap-title').textContent=won?'Run complete!':'Crew recovered.';$('recap-eyebrow').textContent=won?'CLEAR SKIES, CAPTAIN':'EVERY FLIGHT BUILDS EXPERIENCE';$('recap-icon').setAttribute('href',won?'#i-trophy':'#i-shield');$('recap-copy').textContent=won?`All 10 signals reached. Your flight earned ${state.score.toLocaleString()} resources + ${bonus} for fuel remaining.`:reason==='hull_breach'?'A recovery shuttle brought your crew home safely. Review the signals and give it another go.':'Your crew is safe. Fuel ran out before the final signal. Collect purple crystals and refuel with correct answers next time.';$('recap-resources').textContent=banked.toLocaleString();$('recap-correct').textContent=`${state.correctCount} / ${state.attempted}`;$('recap-streak').textContent=state.bestStreak;$('outpost-kicker').textContent=progress.index>prior.index?'OUTPOST UPGRADED':'YOUR OUTPOST';$('outpost-name').textContent=progress.current.name;$('outpost-desc').textContent=progress.next?'Every signal helps your outpost grow.':'Your demo outpost is fully built!';$('outpost-art').innerHTML=outpostArtwork(progress.index);$('outpost-fill').style.width=progress.pct+'%';$('outpost-caption').textContent=progress.next?`${progress.pct}% toward ${progress.next.name}`:'All six outpost stages unlocked';$('outpost-total').textContent=fakeOutpostResourcesTotal.toLocaleString()+' total';const misses=state.results.filter(r=>!r.correct);$('review').hidden=misses.length===0;$('review').open=false;$('review-summary').textContent=`Review ${misses.length} missed signal${misses.length===1?'':'s'}`;$('review-items').replaceChildren();misses.forEach(r=>{const item=document.createElement('div');item.className='review-item';const term=document.createElement('strong'),def=document.createElement('span');term.textContent=r.word;def.textContent=r.type==='frequency_fill'?r.sentence:r.type==='odd_signal_out'?r.explanation:r.type==='true_false'?(r.explanation||r.definition):r.definition;item.append(term,def);$('review-items').appendChild(item);});$('recap-layer').hidden=false;setBackgroundInert(true);$('again-button').focus({preventScroll:true});if(won)sfx('complete');$('recap-flight').textContent=`${state.dodged||0} asteroids dodged / ${state.impacts||0} hull impacts`;const result={flightSeconds:state.totalFlightTime||0,asteroidsDodged:state.dodged||0,impacts:state.impacts||0,questionSeconds:FLIGHT_SETTINGS.questionSeconds,reason,score:state.score,fuelBonus:bonus,resourcesEarned:banked,correctCount:state.correctCount,attempted:state.attempted,bestStreak:state.bestStreak,hull:state.hull,fuel:state.fuel,outpostTotal:fakeOutpostResourcesTotal,answers:state.results.map(r=>({...r})),adventure:{passengerAboard:state.hitchhiker?.status==='aboard',closeCalls:state.closeCalls||0,crystalsCollected:state.crystalsCollected||0},demo:true};window.dispatchEvent(new CustomEvent('asteroid-run:complete',{detail:result}));if(completionCallback){try{completionCallback(result);}catch(err){console.warn('Host completion callback failed:',err);}}}
+function finishRun(reason){
+ if(state.resultPosted)return;state.resultPosted=true;state.finishReason=reason;state.arrivalElapsed=0;$('flight-alert').hidden=true;
+ $('arrival-caption').textContent=reason==='completed'?'DOCKING AT YOUR OUTPOST':'SAFE TOW BACK TO YOUR OUTPOST';
+ $('recap-adventure').textContent=state.hitchhiker?.status==='aboard'?'Your little passenger made it home with you.':'Orbit is docked and ready for another adventure.';
+ setMode('recap');clearInput();$('question-layer').hidden=true;state.paused=false;$('countdown').hidden=true;$('pause-layer').hidden=true;$('target-label').hidden=true;$('points-float').hidden=true;$('boost-banner').hidden=true;
+ const bonus=reason==='completed'?Math.round((state.fuel/FUEL_MAX)*FUEL_COMPLETION_BONUS_MAX):0,banked=state.score+bonus,prior=getOutpostProgress(fakeOutpostResourcesTotal);fakeOutpostResourcesTotal+=banked;const progress=getOutpostProgress(fakeOutpostResourcesTotal),won=reason==='completed';
+ $('recap-title').textContent=won?'Run complete!':'Crew recovered.';$('recap-eyebrow').textContent=won?'CLEAR SKIES, CAPTAIN':'EVERY FLIGHT BUILDS EXPERIENCE';$('recap-icon').setAttribute('href',won?'#i-trophy':'#i-shield');
+ $('recap-copy').textContent=won?`All ${state.rounds.length} signals reached. Your flight earned ${state.score.toLocaleString()} resources + ${bonus} for fuel remaining.`:reason==='hull_breach'?'A recovery shuttle brought your crew home safely. Review the signals and give it another go.':'Your crew is safe. Fuel ran out before the final signal. Collect purple crystals and refuel with correct answers next time.';
+ $('recap-resources').textContent=banked.toLocaleString();$('recap-correct').textContent=`${state.correctCount} / ${state.attempted}`;$('recap-streak').textContent=state.bestStreak;$('outpost-kicker').textContent=progress.index>prior.index?'OUTPOST UPGRADED':'YOUR OUTPOST';$('outpost-name').textContent=progress.current.name;$('outpost-desc').textContent=progress.next?'Every signal helps your outpost grow.':'Your demo outpost is fully built!';$('outpost-art').innerHTML=outpostArtwork(progress.index);$('outpost-fill').style.width=progress.pct+'%';$('outpost-caption').textContent=progress.next?`${progress.pct}% toward ${progress.next.name}`:'All six outpost stages unlocked';$('outpost-total').textContent=fakeOutpostResourcesTotal.toLocaleString()+' total';
+ const misses=state.results.filter(result=>!result.correct);$('review').hidden=misses.length===0;$('review').open=false;$('review-summary').textContent=`Review ${misses.length} missed signal${misses.length===1?'':'s'}`;$('review-items').replaceChildren();
+ for(const result of misses){
+  const item=document.createElement('div');item.className='review-item';const title=document.createElement('strong'),detail=document.createElement('span');
+  if(result.type==='classification'){
+   title.textContent=result.title;const correctSort=result.categories.map(category=>`${category.label}: ${result.assignments.filter(row=>String(row.correctCategoryId)===String(category.id)).map(row=>row.text).join(', ')}`).join(' \u2022 ');detail.textContent=(result.explanation?result.explanation+' ':'')+correctSort;
+  }else{title.textContent=result.word;detail.textContent=result.type==='frequency_fill'?result.sentence:result.type==='odd_signal_out'?result.explanation:result.type==='true_false'?(result.explanation||result.definition):result.definition;}
+  item.append(title,detail);$('review-items').appendChild(item);
+ }
+ $('recap-layer').hidden=false;setBackgroundInert(true);$('again-button').focus({preventScroll:true});if(won)sfx('complete');$('recap-flight').textContent=`${state.dodged||0} asteroids dodged / ${state.impacts||0} hull impacts`;
+ const result={flightSeconds:state.totalFlightTime||0,asteroidsDodged:state.dodged||0,impacts:state.impacts||0,questionSeconds:FLIGHT_SETTINGS.questionSeconds,roundCount:state.rounds.length,contentModes:effectiveContentModes(),vocabularyFormats:selectedContentModes.includes('vocabulary')?effectiveFormats():[],questionBank:{vocabularyItems:WORDS.length,classificationQuestions:CLASSIFICATIONS.length},reason,score:state.score,fuelBonus:bonus,resourcesEarned:banked,correctCount:state.correctCount,attempted:state.attempted,bestStreak:state.bestStreak,hull:state.hull,fuel:state.fuel,outpostTotal:fakeOutpostResourcesTotal,answers:state.results.map(answerResult=>({...answerResult})),adventure:{passengerAboard:state.hitchhiker?.status==='aboard',closeCalls:state.closeCalls||0,crystalsCollected:state.crystalsCollected||0},demo:true,sampleContent:usingSampleContent};
+ window.dispatchEvent(new CustomEvent('asteroid-run:complete',{detail:result}));if(completionCallback){try{completionCallback(result);}catch(err){console.warn('Host completion callback failed:',err);}}
+}
 
 function resetDemo(){clearInput();pickupPulses=[];$('passenger-chip').hidden=true;state=INIT_STATE();obstacles=[];particles=[];shards=[];fuelCrystals=[];setMode('intro');setBackgroundInert(false);['pause-layer','recap-layer','countdown','question-layer','points-float','boost-banner','flight-alert'].forEach(id=>$(id).hidden=true);showFlight(false);refreshFormatSettings();resize();$('launch-button').focus({preventScroll:true});}
 function pauseFlight(){if(state.paused||state.mode==='recap')return;priorFocus=document.activeElement;clearInput();state.paused=true;state.pausedAt=performance.now();const settings=state.mode==='intro';$('pause-title').textContent=settings?'Flight settings.':'Flight paused.';$('pause-copy').textContent=settings?'Steer with arrow keys, WASD, or hold and drag. Flight pauses for each question. Rock impacts cost hull and spill fuel into space, so collect purple crystals to recover. Missed questions cost 25 hull. Correct answers refuel, and streaks repair your ship.':'Your ship, asteroids, fuel, and any question timer are frozen. Take your time.';$('resume-button').innerHTML=(settings?'BACK TO LAUNCH':'BACK TO THE FLIGHT')+icon('play');$('restart-button').hidden=settings;$('pause-layer').hidden=false;setBackgroundInert(true);$('resume-button').focus({preventScroll:true});}
-function resumeFlight(){if(!state.paused)return;state.paused=false;lastFrame=performance.now();$('pause-layer').hidden=true;setBackgroundInert(false);if(state.mode==='flight')$('scene').focus({preventScroll:true});else if(priorFocus&&priorFocus.isConnected&&!priorFocus.disabled)priorFocus.focus({preventScroll:true});else if(state.mode==='question')$('choices').querySelector('button').focus({preventScroll:true});else if(state.mode==='feedback')$('continue-button').focus({preventScroll:true});else if(state.mode==='launch')$('scene').focus({preventScroll:true});else $('launch-button').focus({preventScroll:true});}
+function focusQuestionControl(){const round=state.rounds[state.roundIndex],control=round?.type==='classification'?$('classification-board').querySelector('.sort-item:not(:disabled),.sort-bin-target:not(:disabled),#classification-submit:not(:disabled)'):$('choices').querySelector('button:not(:disabled)');(control||$('question-word')).focus({preventScroll:true});}
+function resumeFlight(){if(!state.paused)return;state.paused=false;lastFrame=performance.now();$('pause-layer').hidden=true;setBackgroundInert(false);if(state.mode==='flight')$('scene').focus({preventScroll:true});else if(priorFocus&&priorFocus.isConnected&&!priorFocus.disabled)priorFocus.focus({preventScroll:true});else if(state.mode==='question')focusQuestionControl();else if(state.mode==='feedback')$('continue-button').focus({preventScroll:true});else if(state.mode==='launch')$('scene').focus({preventScroll:true});else $('launch-button').focus({preventScroll:true});}
 function togglePause(){state.paused?resumeFlight():pauseFlight();}
 function drawFlightBackground(t,dt,moving){ctx.drawImage(backdrop,0,0,W,H);const move=moving?dt:0;
  stars.forEach(s=>{if(!reducedMotion){s.x-=s.speed*move*3.5;if(s.x<0)s.x+=W;}ctx.globalAlpha=s.alpha;ctx.fillStyle='#ddecff';if(!reducedMotion&&moving&&s.size>.8){ctx.strokeStyle='#bad7ff';ctx.lineWidth=s.size*.7;ctx.beginPath();ctx.moveTo(s.x,s.y);ctx.lineTo(s.x+Math.min(15,s.speed),s.y);ctx.stroke();}else{ctx.beginPath();ctx.arc(s.x,s.y,s.size,0,Math.PI*2);ctx.fill();}});ctx.globalAlpha=1;
@@ -736,7 +920,7 @@ document.addEventListener('keydown',e=>{if(e.ctrlKey||e.altKey||e.metaKey)return
  const modal=!$('pause-layer').hidden?$('pause-layer'):!$('recap-layer').hidden?$('recap-layer'):null;
  if(modal&&e.key==='Tab'){const list=[...modal.querySelectorAll('button:not(:disabled),summary,[tabindex="0"]')].filter(el=>el.offsetParent!==null);const first=list[0],last=list[list.length-1];if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus();}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus();}return;}
  if(key==='p'||key==='Escape'){if(state.mode==='recap')return;e.preventDefault();togglePause();return;}if(key==='m'){e.preventDefault();toggleSound();return;}
- if(/^[1-4]$/.test(e.key)&&state.mode==='question'&&!state.paused){e.preventDefault();const choice=state.rounds[state.roundIndex].choices[Number(e.key)-1];if(choice)answer(choice.id);return;}
+ if(/^[1-4]$/.test(e.key)&&state.mode==='question'&&!state.paused&&state.rounds[state.roundIndex]?.type!=='classification'){e.preventDefault();const choice=state.rounds[state.roundIndex].choices[Number(e.key)-1];if(choice)answer(choice.id);return;}
 });
 // Six approved additions. All are cosmetic except the existing crystal pickups.
 // No new points, currencies, collision damage, or answer rules are introduced.
@@ -875,7 +1059,8 @@ function drawBeacon(g,type,x,y,size,t,resolved=false){
  }
  g.strokeStyle='#c8e2fa';g.beginPath();g.moveTo(0,-14);g.lineTo(0,-24);g.stroke();g.fillStyle='#b9abff';g.beginPath();g.arc(0,-26,3,0,Math.PI*2);g.fill();
  g.fillStyle='#13263f';g.beginPath();g.roundRect(-9,-9,18,18,4);g.fill();
- if(type==='odd_signal_out'){for(let i=0;i<4;i++){g.fillStyle=i===3?'#e1b9ff':'#8fe9f3';g.beginPath();g.arc(i%2*7-3.5,Math.floor(i/2)*7-3.5,2.2,0,Math.PI*2);g.fill();}}
+ if(type==='classification'){for(let i=0;i<4;i++){g.fillStyle=i<2?'#8fe9f3':'#e1b9ff';g.beginPath();g.roundRect(i%2*8-8,Math.floor(i/2)*8-8,6,6,1.5);g.fill();}}
+ else if(type==='odd_signal_out'){for(let i=0;i<4;i++){g.fillStyle=i===3?'#e1b9ff':'#8fe9f3';g.beginPath();g.arc(i%2*7-3.5,Math.floor(i/2)*7-3.5,2.2,0,Math.PI*2);g.fill();}}
  else if(type==='frequency_fill'){for(let i=0;i<3;i++){g.fillStyle=i===1&&!resolved?'#354c68':'#bbacff';g.fillRect(-6+i*5,-4,3,8);}}
  else{g.strokeStyle=resolved?'#9bf4ca':'#9fedff';g.lineWidth=1.6;g.beginPath();g.arc(0,0,5,0,Math.PI*2);g.stroke();g.beginPath();g.moveTo(-8,0);g.lineTo(8,0);g.moveTo(0,-8);g.lineTo(0,8);g.stroke();}
  if(type==='lock_signal'){g.strokeStyle='#bcd2e8';g.beginPath();g.moveTo(-14,0);g.lineTo(-24,0);g.moveTo(14,0);g.lineTo(24,0);g.stroke();g.strokeStyle='#a4c9f8';for(const sign of [-1,1]){g.beginPath();g.ellipse(sign*26,0,5,13,0,0,Math.PI*2);g.stroke();}}
@@ -899,7 +1084,7 @@ function drawStation(g,x,y,width,t=0){
  g.restore();
 }
 function drawAdventureUnderlay(t){
- if(state.roundIndex>=ROUND_COUNT-1){const progress=clamp(state.legElapsed/FLIGHT_SETTINGS.flightSeconds,0,1);ctx.save();ctx.globalAlpha=.4+progress*.4;drawStation(ctx,W*(.93-progress*.06),H*.67,clamp(W*.14,78,175)*(1+progress*.12),t);ctx.restore();}
+ if(state.rounds.length&&state.roundIndex>=state.rounds.length-1){const progress=clamp(state.legElapsed/FLIGHT_SETTINGS.flightSeconds,0,1);ctx.save();ctx.globalAlpha=.4+progress*.4;drawStation(ctx,W*(.93-progress*.06),H*.67,clamp(W*.14,78,175)*(1+progress*.12),t);ctx.restore();}
  const round=state.rounds[state.roundIndex];
  if(round&&!state.recoveryActive&&state.legElapsed>=FLIGHT_SETTINGS.flightSeconds-1.4){
   const alpha=clamp((state.legElapsed-FLIGHT_SETTINGS.flightSeconds+1.4)/.65,0,1);
@@ -968,19 +1153,48 @@ function drawArrival(){
  }
 }
 
-// Integration hooks intentionally do not send data to a parent or award rewards.
+/* Host integration (canonical typed bank):
+ * AsteroidRun.setQuestionBank({
+ *   items: [
+ *     {type:'vocabulary', id:'conductor', term:'Conductor', definition:'...', sentence:'...'},
+ *     {type:'classification', id:'energy-sort', prompt:'Sort each example.',
+ *      categories:[{id:'mechanical',label:'Mechanical'},{id:'electrical',label:'Electrical'}],
+ *      items:[{id:'bike',text:'Moving bicycle',categoryId:'mechanical'}, ...], explanation:'...'}
+ *   ],
+ *   formats:['lock_signal','true_false','frequency_fill','odd_signal_out'],
+ *   oddGroups:[...], modes:['vocabulary','classification']
+ * });
+ * Legacy setWordBank(), setOddGroups(), and setFormats() calls remain supported.
+ * Integration hooks intentionally do not send data to a parent or award rewards.
+ */
 window.AsteroidRun=Object.freeze({
  start:startRun,reset:resetDemo,pause:pauseFlight,resume:resumeFlight,
- getSnapshot(){return {mode:state.mode,paused:state.paused,hull:state.hull,fuel:state.fuel,score:state.score,streak:state.streak,roundIndex:state.roundIndex,attempted:state.attempted||0,correctCount:state.correctCount||0,timeRemaining:FLIGHT_SETTINGS.questionSeconds?(state.remaining??FLIGHT_SETTINGS.questionSeconds):null,outpostTotal:fakeOutpostResourcesTotal,flightElapsed:state.legElapsed||0,flightSeconds:FLIGHT_SETTINGS.flightSeconds,totalFlightSeconds:state.totalFlightTime||0,asteroidsDodged:state.dodged||0,impacts:state.impacts||0,boostSeconds:state.boostRemaining||0,pilot:state.pilot?{x:state.pilot.x/W,y:state.pilot.y/H}:null,questionFormat:state.rounds[state.roundIndex]?.type||null,activeFormats:effectiveFormats(),recovery:{active:!!state.recoveryActive,needed:state.recoveryNeed||0,collected:state.recoveryCollected||0},adventure:{passenger:state.hitchhiker?.status||'waiting',closeCalls:state.closeCalls||0,crystalsCollected:state.crystalsCollected||0}};},
- configure(options){if(!['intro','recap'].includes(state.mode))throw new Error('Configure before starting a run.');if(!options||typeof options!=='object'||Array.isArray(options))throw new TypeError('Supply a settings object.');const allowed=['flightSeconds','questionSeconds','collisionDamage'];for(const [key,value]of Object.entries(options)){if(!allowed.includes(key))throw new Error('Unknown setting: '+key);const [min,max]=key==='flightSeconds'?[4,20]:key==='questionSeconds'?[0,60]:[0,25];if(!Number.isFinite(value)||value<min||value>max)throw new RangeError(`${key} must be between ${min} and ${max}.`);}Object.assign(FLIGHT_SETTINGS,options);$('timed-option').checked=FLIGHT_SETTINGS.questionSeconds>0;const stat=document.querySelectorAll('.intro-stat strong')[1];stat.innerHTML=FLIGHT_SETTINGS.flightSeconds+'<span style="display:inline;font-size:13px;letter-spacing:0;color:inherit"> sec</span>';},
- setWordBank,setOddGroups,setFormats,
+ getSnapshot(){const round=state.rounds[state.roundIndex];return {mode:state.mode,paused:state.paused,hull:state.hull,fuel:state.fuel,score:state.score,streak:state.streak,roundIndex:state.roundIndex,roundCount:state.rounds.length||FLIGHT_SETTINGS.roundCount,attempted:state.attempted||0,correctCount:state.correctCount||0,timeRemaining:FLIGHT_SETTINGS.questionSeconds?(state.remaining??FLIGHT_SETTINGS.questionSeconds):null,outpostTotal:fakeOutpostResourcesTotal,flightElapsed:state.legElapsed||0,flightSeconds:FLIGHT_SETTINGS.flightSeconds,totalFlightSeconds:state.totalFlightTime||0,asteroidsDodged:state.dodged||0,impacts:state.impacts||0,boostSeconds:state.boostRemaining||0,pilot:state.pilot?{x:state.pilot.x/W,y:state.pilot.y/H}:null,questionFormat:round?.type||null,questionId:round?.questionId??null,contentMode:round?.contentMode||null,activeContentModes:effectiveContentModes(),activeFormats:selectedContentModes.includes('vocabulary')?effectiveFormats():[],classification:round?.type==='classification'?{placed:state.classificationAssignments.size,total:round.sortItems.length,selectedItemId:state.selectedSortItemId}:null,recovery:{active:!!state.recoveryActive,needed:state.recoveryNeed||0,collected:state.recoveryCollected||0},adventure:{passenger:state.hitchhiker?.status||'waiting',closeCalls:state.closeCalls||0,crystalsCollected:state.crystalsCollected||0}};},
+ getCapabilities(){return {contentModes:Object.keys(CONTENT_MODE_INFO),vocabularyFormats:Object.keys(FORMAT_INFO),questionBankItemTypes:['vocabulary','classification'],classificationLimits:{categories:[2,4],items:[2,8]},legacyVocabularyApi:true};},
+ configure(options){
+  if(!['intro','recap'].includes(state.mode))throw new Error('Configure before starting a run.');if(!options||typeof options!=='object'||Array.isArray(options))throw new TypeError('Supply a settings object.');
+  const allowed=['flightSeconds','questionSeconds','collisionDamage','roundCount'];
+  for(const [key,value]of Object.entries(options)){
+   if(!allowed.includes(key))throw new Error('Unknown setting: '+key);
+   const [min,max]=key==='flightSeconds'?[4,20]:key==='questionSeconds'?[0,60]:key==='roundCount'?[1,20]:[0,25];
+   if(!Number.isFinite(value)||value<min||value>max||(key==='roundCount'&&!Number.isInteger(value)))throw new RangeError(`${key} must be ${key==='roundCount'?'a whole number ':''}between ${min} and ${max}.`);
+  }
+  Object.assign(FLIGHT_SETTINGS,options);$('timed-option').checked=FLIGHT_SETTINGS.questionSeconds>0;$('signal-count-stat').textContent=FLIGHT_SETTINGS.roundCount;$('flight-seconds-stat').innerHTML=FLIGHT_SETTINGS.flightSeconds+'<span style="display:inline;font-size:13px;letter-spacing:0;color:inherit"> sec</span>';
+ },
+ setQuestionBank,setWordBank,setClassificationBank,setOddGroups,setFormats,setContentModes,
  setOutpostTotal(value){if(!Number.isFinite(value)||value<0)throw new TypeError('Outpost total must be nonnegative.');if(!['intro','recap'].includes(state.mode))throw new Error('Set outpost total before starting a run.');fakeOutpostResourcesTotal=Math.floor(value);},
  onComplete(callback){if(callback!==null&&typeof callback!=='function')throw new TypeError('Completion handler must be a function or null.');completionCallback=callback;}
 });
 $('sample-mission-button').addEventListener('click',loadSampleMission);
+$('classification-submit').addEventListener('click',()=>submitClassification(false));
 for(const input of document.querySelectorAll('[data-format-choice]'))input.addEventListener('change',()=>{
  const selected=[...document.querySelectorAll('[data-format-choice]:checked')].map(el=>el.value);
  if(!selected.length){refreshFormatSettings();toast('Keep at least one question format selected.');return;}setFormats(selected);
+});
+for(const input of document.querySelectorAll('[data-mode-choice]'))input.addEventListener('change',()=>{
+ const selected=[...document.querySelectorAll('[data-mode-choice]:checked')].map(el=>el.value);
+ if(!selected.length){refreshFormatSettings();toast('Keep at least one content mode selected.');return;}
+ try{setContentModes(selected);}catch(error){refreshFormatSettings();toast(error.message);}
 });
 refreshFormatSettings();resize();requestAnimationFrame(frame);
 

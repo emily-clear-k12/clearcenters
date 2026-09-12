@@ -52,6 +52,26 @@ function renderBold(text) {
   );
 }
 
+
+function fieldBriefPages(briefing) {
+  const pages = briefing?.fieldBrief?.pages;
+  return Array.isArray(pages) && pages.length > 0 ? pages : null;
+}
+
+function fieldBriefPageIndex(field, pages) {
+  const n = pages?.length || 0;
+  if (!n) return 0;
+  const raw = field?.pageIndex != null ? field.pageIndex : field?.beatIndex;
+  const i = Number(raw);
+  const idx = Number.isFinite(i) ? i : 0;
+  return Math.max(0, Math.min(n - 1, idx));
+}
+
+function assignmentLaunchIsProject(assignment) {
+  const raw = String(assignment?.launchMode || assignment?.launch_mode || assignment?.mode || "").toLowerCase();
+  return raw === "project" || raw === "projection";
+}
+
 /** Graceful migrate of older phase_state shapes. */
 function migratePhaseState(saved) {
   const s = saved || {};
@@ -76,9 +96,11 @@ function migratePhaseState(saved) {
     },
     field: {
       beatIndex: s.field?.beatIndex || 0,
+      pageIndex: s.field?.pageIndex != null ? s.field.pageIndex : s.field?.beatIndex || 0,
       answers: s.field?.answers || {},
       graded: Boolean(s.field?.graded),
       results: s.field?.results || null,
+      pageChips: s.field?.pageChips || {},
     },
     reasonSort: {
       assignments: rs.assignments || {},
@@ -247,14 +269,37 @@ export default function BriefingClient({ student, assignment, briefing, initialS
   const phaseId = PHASES[phaseIndex].id;
   const samLines = briefing.samLines || {};
   const samTips = briefing.samTips || {};
+  const packPages = fieldBriefPages(briefing);
+  const isProjectMode = assignmentLaunchIsProject(assignment);
 
   // Clear stale SAM lines on phase change; park at home between beats.
+  // Pages-shape Field Brief: Solo pops the page question; Project stays quiet / react-only.
   useEffect(() => {
     const opsDebrief = phaseId === "opsChoice" && Boolean(phaseState.ops?.debrief);
     if (opsDebrief) {
       setSamLine(briefing.opsChoice?.debriefSamLine || "Two funded. One waits until next year.");
       setSamState("celebrating");
       setSamAnchor("home");
+      return;
+    }
+    if (phaseId === "fieldBrief" && packPages) {
+      const page = packPages[fieldBriefPageIndex(phaseState.field, packPages)] || packPages[0];
+      const chipId = phaseState.field?.pageChips?.[page.id];
+      const sam = page.sam || {};
+      const alreadyRight = Boolean(sam.correct && chipId === sam.correct);
+      setSamAnchor("qc");
+      if (isProjectMode) {
+        setSamLine(alreadyRight ? sam.afterCorrect || "" : "");
+        setSamState(alreadyRight ? "celebrating" : "idle");
+        return;
+      }
+      if (alreadyRight) {
+        setSamLine(sam.afterCorrect || samLines.fieldBrief || "");
+        setSamState("celebrating");
+      } else {
+        setSamLine(sam.question || samLines.fieldBrief || "");
+        setSamState("helping");
+      }
       return;
     }
     setSamLine(samLines[phaseId] || "");
@@ -266,7 +311,7 @@ export default function BriefingClient({ student, assignment, briefing, initialS
     else if (phaseId === "evidenceDrop") setSamAnchor("postcard");
     else if (phaseId === "clearance") setSamAnchor(status === "cleared" ? "stamp" : "home");
     else setSamAnchor("home");
-  }, [phaseId, status, samLines, phaseState.ops?.debrief, briefing.opsChoice?.debriefSamLine]);
+  }, [phaseId, status, samLines, phaseState.ops?.debrief, briefing.opsChoice?.debriefSamLine, packPages, isProjectMode, phaseState.field?.beatIndex]);
 
   const persist = useCallback(
     async (nextState, nextScores, nextStatus) => {
@@ -453,6 +498,321 @@ export default function BriefingClient({ student, assignment, briefing, initialS
   }
 
   function FieldBrief() {
+    if (packPages) return FieldBriefPages();
+    return FieldBriefBeats();
+  }
+
+  function FieldBriefPages() {
+    const field = phaseState.field;
+    const pages = packPages;
+    const pageIndex = fieldBriefPageIndex(field, pages);
+    const page = pages[pageIndex] || pages[0];
+    const img = page.imageKey ? art[page.imageKey] : null;
+    const sam = page.sam || {};
+    const chips = sam.chips || [];
+    const picked = field.pageChips?.[page.id] || "";
+    const chipCorrect = Boolean(sam.correct && picked === sam.correct);
+    const isCheck = page.kicker === "Check" || page.id === "check";
+    const qcs = page.quickChecks || [];
+    const requireChip = briefing.fieldBrief.requireQcBeforeNext !== false;
+    const checkAnswered = qcs.length === 0 || qcs.every((q) => Boolean(field.answers[q.id]));
+    const canNextTeach = !requireChip || chipCorrect || !chips.length;
+    const lastPage = pageIndex >= pages.length - 1;
+
+    function setPageIndex(nextIdx) {
+      const clamped = Math.max(0, Math.min(pages.length - 1, nextIdx));
+      updateState({ field: { ...field, beatIndex: clamped, pageIndex: clamped } });
+    }
+
+    function pickChip(chipId) {
+      const nextChips = { ...(field.pageChips || {}), [page.id]: chipId };
+      const ok = chipId === sam.correct;
+      setSamAnchor("qc");
+      setSamState(ok ? "celebrating" : "thinking");
+      setSamLine(ok ? sam.afterCorrect || "Nice." : sam.afterWrong || "Try again.");
+      updateState({ field: { ...field, pageChips: nextChips } }, { skipSave: true });
+    }
+
+    function pickQc(qcId, choiceId) {
+      setSamAnchor("qc");
+      setSamState("thinking");
+      updateState(
+        { field: { ...field, answers: { ...field.answers, [qcId]: choiceId } } },
+        { skipSave: true }
+      );
+    }
+
+    const kickerTrail = pages.map((pg, i) => (
+      <span
+        key={pg.id}
+        style={{
+          fontSize: 11,
+          fontWeight: 700,
+          letterSpacing: 0.6,
+          textTransform: "uppercase",
+          color: i === pageIndex ? COLORS.violet : COLORS.textMuted,
+        }}
+      >
+        {i > 0 ? <span style={{ color: "#D5D2E2", margin: "0 6px" }}>·</span> : null}
+        {pg.kicker}
+      </span>
+    ));
+
+    return (
+      <div style={card}>
+        <div style={{ marginBottom: 10 }}>{kickerTrail}</div>
+        <div
+          style={{
+            fontSize: 11,
+            fontWeight: 800,
+            color: COLORS.violet,
+            letterSpacing: 1.6,
+            textTransform: "uppercase",
+            marginBottom: 4,
+          }}
+        >
+          {page.kicker}
+        </div>
+        <h2 style={{ fontFamily: "'Poppins', sans-serif", margin: "0 0 14px 0", color: COLORS.textDark }}>
+          {page.title}
+        </h2>
+        <div style={{ display: "grid", gridTemplateColumns: isCheck ? "0.9fr 1.2fr" : "1.15fr 1fr", gap: 18, alignItems: "start" }}>
+          {img && (
+            <div
+              style={{
+                borderRadius: 16,
+                overflow: "hidden",
+                background: COLORS.violetSoft,
+                minHeight: isCheck ? 200 : 260,
+                boxShadow: "inset 0 0 0 2px rgba(123,93,255,.12)",
+              }}
+            >
+              <img
+                src={img}
+                alt=""
+                style={{ width: "100%", height: "100%", minHeight: isCheck ? 200 : 260, objectFit: "cover", display: "block" }}
+              />
+            </div>
+          )}
+          <div>
+            {page.body && (
+              <p style={{ fontSize: 16, color: COLORS.textDark, lineHeight: 1.6, marginTop: 0 }}>
+                {renderBold(page.body)}
+              </p>
+            )}
+            {page.vocabSentences?.length > 0 && (
+              <div style={{ margin: "8px 0 14px", display: "flex", flexDirection: "column", gap: 8 }}>
+                {page.vocabSentences.map((line) => (
+                  <p
+                    key={line}
+                    style={{
+                      margin: 0,
+                      fontSize: 13.5,
+                      lineHeight: 1.45,
+                      color: COLORS.textDark,
+                      padding: "8px 12px",
+                      background: COLORS.cream,
+                      borderRadius: 12,
+                      borderLeft: `4px solid ${COLORS.violet}`,
+                    }}
+                  >
+                    {line}
+                  </p>
+                ))}
+              </div>
+            )}
+            {page.compare && (
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "1fr 1fr",
+                  gap: 10,
+                  margin: "8px 0 12px",
+                }}
+              >
+                {[page.compare.left, page.compare.right].filter(Boolean).map((col) => (
+                  <div
+                    key={col.town}
+                    style={{
+                      background: COLORS.cream,
+                      borderRadius: 14,
+                      padding: "12px 14px",
+                      borderTop: `4px solid ${COLORS.gold}`,
+                    }}
+                  >
+                    <div
+                      style={{
+                        fontSize: 11,
+                        fontWeight: 800,
+                        color: COLORS.violet,
+                        letterSpacing: 0.8,
+                        textTransform: "uppercase",
+                        marginBottom: 6,
+                      }}
+                    >
+                      {col.town}
+                    </div>
+                    <div style={{ fontSize: 14.5, color: COLORS.textDark, lineHeight: 1.45 }}>{col.way}</div>
+                  </div>
+                ))}
+              </div>
+            )}
+            {page.compare?.need && (
+              <p style={{ fontSize: 13.5, color: COLORS.textMuted, margin: "0 0 12px", fontStyle: "italic" }}>
+                Same need: {page.compare.need}.
+              </p>
+            )}
+
+            {!isCheck && chips.length > 0 && (
+              <div style={{ marginTop: 8 }}>
+                {sam.question && (
+                  <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 8, color: COLORS.textDark }}>
+                    {sam.question}
+                  </div>
+                )}
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                  {chips.map((c) => {
+                    const on = picked === c.id;
+                    const showMark = on && sam.correct;
+                    const right = showMark && c.id === sam.correct;
+                    const wrong = showMark && c.id !== sam.correct;
+                    return (
+                      <button
+                        key={c.id}
+                        type="button"
+                        className="gc-btn"
+                        onClick={() => pickChip(c.id)}
+                        style={{
+                          ...chipStyle(on),
+                          padding: "10px 14px",
+                          fontSize: 13.5,
+                          borderColor: right ? COLORS.success : wrong ? "#EF4444" : on ? COLORS.violet : "#E1E2EE",
+                          background: right ? "#ECFDF3" : wrong ? "#FEF2F2" : on ? COLORS.violetSoft : COLORS.white,
+                        }}
+                      >
+                        {c.label}
+                      </button>
+                    );
+                  })}
+                </div>
+                {requireChip && !chipCorrect && (
+                  <p style={{ margin: "8px 0 0", fontSize: 12, color: COLORS.textMuted }}>
+                    Tap a chip before Next.
+                  </p>
+                )}
+              </div>
+            )}
+
+            {isCheck && (
+              <div style={{ marginTop: 4 }}>
+                {qcs.map((qc) => (
+                  <div key={qc.id} style={{ marginTop: 12, background: COLORS.cream, borderRadius: 12, padding: 12 }}>
+                    <div style={{ fontWeight: 700, fontSize: 13.5, marginBottom: 8 }}>{qc.prompt}</div>
+                    {(qc.choices || []).map((c) => {
+                      const on = field.answers[qc.id] === c.id;
+                      const marked = field.results?.results?.[qc.id];
+                      return (
+                        <button
+                          key={c.id}
+                          type="button"
+                          className="gc-btn"
+                          disabled={field.graded}
+                          onClick={() => pickQc(qc.id, c.id)}
+                          style={{
+                            ...choiceBtn,
+                            borderColor: on ? COLORS.violet : "transparent",
+                            background: on ? COLORS.violetSoft : COLORS.white,
+                          }}
+                        >
+                          {c.text}
+                          {marked && (
+                            <span
+                              style={{
+                                marginLeft: 8,
+                                fontWeight: 700,
+                                color: marked.correct ? COLORS.success : "#EF4444",
+                              }}
+                            >
+                              {marked.correct ? "✓" : "✗"}
+                            </span>
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+                ))}
+                {requireChip && !checkAnswered && (
+                  <p style={{ margin: "8px 0 0", fontSize: 12, color: COLORS.textMuted }}>
+                    Answer both checks, then tap Check answers.
+                  </p>
+                )}
+              </div>
+            )}
+
+            <div style={{ display: "flex", gap: 8, marginTop: 14, flexWrap: "wrap" }}>
+              {!lastPage ? (
+                <button
+                  type="button"
+                  className="gc-btn"
+                  disabled={!canNextTeach}
+                  onClick={() => {
+                    if (!canNextTeach) return;
+                    setSamAnchor("home");
+                    setPageIndex(pageIndex + 1);
+                  }}
+                  style={{ ...primaryBtn, opacity: canNextTeach ? 1 : 0.45 }}
+                >
+                  Next →
+                </button>
+              ) : !field.graded ? (
+                <button
+                  type="button"
+                  className="gc-btn"
+                  disabled={busy || (requireChip && !checkAnswered)}
+                  onClick={async () => {
+                    const answers = {};
+                    qcs.forEach((q) => {
+                      if (field.answers[q.id]) answers[q.id] = field.answers[q.id];
+                    });
+                    const result = await grade("fieldBrief", { answers });
+                    setToast(result.pass ? "Quick checks locked." : "Check missed items and keep going.");
+                    setSamLine(result.pass ? "Nice work on the checks. Ready to sort?" : "Look again — then keep going.");
+                    setSamState(result.pass ? "celebrating" : "thinking");
+                    updateState(
+                      { field: { ...field, graded: true, results: result } },
+                      { scores: { ...scores, field: result } }
+                    );
+                  }}
+                  style={{ ...primaryBtn, opacity: requireChip && !checkAnswered ? 0.45 : 1 }}
+                >
+                  Check answers
+                </button>
+              ) : (
+                <button type="button" className="gc-btn" onClick={() => goToPhase("reasonSort")} style={primaryBtn}>
+                  Continue to Reason Sort →
+                </button>
+              )}
+              {pageIndex > 0 && (
+                <button
+                  type="button"
+                  className="gc-btn"
+                  onClick={() => {
+                    const next = pageIndex - 1;
+                    updateState({ field: { ...field, beatIndex: next, pageIndex: next } }, { skipSave: true });
+                  }}
+                  style={ghostBtn}
+                >
+                  ← Back
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  function FieldBriefBeats() {
     const field = phaseState.field;
     const beat = briefing.fieldBrief.beats[field.beatIndex] || briefing.fieldBrief.beats[0];
     const qc = briefing.fieldBrief.quickChecks.find((q) => q.id === beat.qcId);
@@ -1525,9 +1885,12 @@ export default function BriefingClient({ student, assignment, briefing, initialS
     const fundedLabels = opsPicks.map((id) => projectLabel(briefing, id));
 
     // Progress gates auto-tick from saved work (read-only) — not honesty taps.
+    const fieldGateLabel = packPages
+      ? "Field Brief pages + checks done"
+      : "All 3 Field Brief beats + QCs done";
     const gateDefs = briefing.clearance.progressGates || [
       { id: "claim", label: "Claim locked" },
-      { id: "field", label: "All 3 Field Brief beats + QCs done" },
+      { id: "field", label: fieldGateLabel },
       { id: "sort", label: "Reason Sort complete" },
       { id: "postcard", label: "Postcard transmitted to HQ" },
     ];
