@@ -31,7 +31,7 @@ import { getSamSkin, getSamStateAsset, FALLBACK_ICON } from "../lib/samSkins";
 // "idle" yet; wiring real state changes to real trigger moments (a hint
 // requested, a correct answer, a page transition, etc.) is a separate,
 // not-yet-scoped follow-up — see SAM_Companion_Concept_v1.md.
-export default function SamStage({ skinKey, alt = "S.A.M.", size = 150, state = "idle", onClick, style = {} }) {
+export default function SamStage({ skinKey, alt = "S.A.M.", size = 150, state = "idle", onClick, style = {}, showPlatform = true }) {
   const skin = getSamSkin(skinKey);
   const charSrc = getSamStateAsset(skin, state);
   const platformSrc = skin && skin.platform;
@@ -51,7 +51,14 @@ export default function SamStage({ skinKey, alt = "S.A.M.", size = 150, state = 
         ...style,
       }}
     >
-      {platformSrc ? (
+      {/* Sept 12, 2026 — showPlatform lets a caller drop the platform layer
+          entirely (both the real art and the CSS fallback shadow below).
+          Used by HomeClient's wandering companion, per Emily's ask to take
+          the platform away so S.A.M. reads as actually floating between
+          spots rather than standing on an invisible-but-implied surface
+          each time it lands. Every other caller (Missions, activities)
+          still defaults to true and is unaffected. */}
+      {showPlatform && (platformSrc ? (
         <img
           src={platformSrc}
           alt=""
@@ -73,7 +80,7 @@ export default function SamStage({ skinKey, alt = "S.A.M.", size = 150, state = 
             background: "radial-gradient(closest-side, rgba(13,20,35,.32), rgba(13,20,35,0) 75%)",
           }}
         />
-      )}
+      ))}
       <img
         src={charSrc}
         alt={alt}
