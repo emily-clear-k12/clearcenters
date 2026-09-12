@@ -40,40 +40,25 @@ const COLORS = {
 const CHALLENGE_TYPES = [
   { key: "group_chat", label: "Group Chat", image: "/teacher/challenges/group_chat.jpg", real: true,
     description: "Students role-play as characters, concepts, or parts of a system in a live group chat, using evidence to prove what's really going on." },
-  { key: "repair_desk", label: "Repair Desk", image: "/teacher/challenges/repair_desk.jpg", real: false,
-    description: "A broken ticket arrives — a flawed diagram, model, or work sample. Students diagnose what's wrong, fix it, and explain the fix to whoever sent it in." },
   { key: "fact_check_desk", label: "Signal Check", image: "/teacher/challenges/fact_check_desk.jpg", real: true,
     description: "Students play a station Cadet, scanning Incoming Transmissions — headlines, data readouts, even recovered footage — for the truth before stamping a verdict: True, Misleading, or False." },
-  { key: "museum_exhibit", label: "Museum Exhibit Builder", image: "/teacher/challenges/museum_exhibit.jpg", real: false,
-    description: "Students curate a small exhibit from a pile of evidence — choosing the strongest items, rejecting at least one on purpose, and writing placards that explain why." },
-  { key: "newsroom", label: "Newsroom", image: "/teacher/challenges/newsroom.jpg", real: false,
-    description: "Students gather their own evidence from the scene, then build and produce a report — headline, script, and all — before it airs." },
   { key: "mission_map", label: "Mission Map", image: "/teacher/challenges/mission_map.jpg", real: true,
     description: "Students move through locked checkpoints, collecting clues, rejecting a tempting wrong answer, and building a reasoning chain to unlock the final response." },
   { key: "simulation_lab", label: "Simulation Lab", image: "/teacher/challenges/simulation_lab.jpg", real: true,
     description: "Students adjust real variables with sliders and dials, watch the results happen live, and explain the pattern using data they generated themselves." },
-  // Added Sept 8 2026 alongside its first (smoke-test) case, per the Sept 7
-  // design doc's week-1 scope: Individual Practice, Lock the Signal format
-  // only, Grade 3 Science only. `real: true` per the exact rule above — one
-  // real case exists (frequency_rush_words has data), even though it's a
-  // placeholder unit until the real Grade 3 vocabulary content is loaded.
   { key: "frequency_rush", label: "Frequency Rush", image: "/teacher/challenges/frequency_rush.jpg", real: true,
     description: "Students race the clock to lock onto the right definition before the signal scrambles — fast vocabulary review with streaks and speed bonuses, replayable anytime as practice." },
-  { key: "territory_builder", label: "Territory Builder", image: "/teacher/challenges/territory_builder.jpg", real: false,
-    description: "Students place things on an actual map — habitats, settlements, resources — and get feedback on whether the placement actually holds up." },
-  // Added Sept 11 2026 — "Signal Ops" is the new umbrella name for the group
-  // review-game engines (Signal Defense now, Terraform Sprint later — Emily's
-  // still prototyping that one separately). This tile covers Signal Defense:
-  // the whole class defends one shared base together, answering review
-  // questions from the standard's growing question bank to keep it standing.
-  // `real: true` flipped Sept 11 2026 with pilot case 3.6B-SD — playable
-  // end-to-end via SignalDefenseClient.js.
-  // Sept 12 2026 V1 live crew: teacher starts a session on Signal Ops Board;
-  // kids auto-join from the assignment (no code); shared Salvage / Power /
-  // Base Health sync live. Solo + fake crew remain the fallback when no
-  // session is open. Majority-vote upgrades and wave damage deferred to V1.5.
   { key: "signal_defense", label: "Signal Ops", image: "/teacher/challenges/signal_defense.jpg", real: true,
     description: "The whole class defends one shared base together — answering review questions to keep power, health, and salvage up before the next wave hits." },
+  // Coming soon — kept below live tiles (Assign library sorts real:true first as well).
+  { key: "repair_desk", label: "Repair Desk", image: "/teacher/challenges/repair_desk.jpg", real: false,
+    description: "A broken ticket arrives — a flawed diagram, model, or work sample. Students diagnose what's wrong, fix it, and explain the fix to whoever sent it in." },
+  { key: "museum_exhibit", label: "Museum Exhibit Builder", image: "/teacher/challenges/museum_exhibit.jpg", real: false,
+    description: "Students curate a small exhibit from a pile of evidence — choosing the strongest items, rejecting at least one on purpose, and writing placards that explain why." },
+  { key: "newsroom", label: "Newsroom", image: "/teacher/challenges/newsroom.jpg", real: false,
+    description: "Students gather their own evidence from the scene, then build and produce a report — headline, script, and all — before it airs." },
+  { key: "territory_builder", label: "Territory Builder", image: "/teacher/challenges/territory_builder.jpg", real: false,
+    description: "Students place things on an actual map — habitats, settlements, resources — and get feedback on whether the placement actually holds up." },
 ];
 
 function caseImagePath(standard) {
@@ -328,7 +313,7 @@ function NewAssignmentContent() {
                   <>
                     <div style={{ fontWeight: 700, fontSize: 13, marginBottom: 12 }}>1. Choose a Challenge Type</div>
                     <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(290px, 1fr))", gap: 14 }}>
-                      {CHALLENGE_TYPES.map((ch) => (
+                      {[...CHALLENGE_TYPES].sort((a, b) => Number(b.real) - Number(a.real)).map((ch) => (
                         <button key={ch.key} className="gc-btn" disabled={!ch.real} onClick={() => { setSelectedChallenge(ch); setChallengeStep("gradeSubject"); }} style={{ position: "relative", borderRadius: 12, overflow: "hidden", border: `1px solid ${COLORS.border}`, padding: 0, textAlign: "left", opacity: ch.real ? 1 : 0.7, cursor: ch.real ? "pointer" : "default" }}>
                           <div style={{ position: "relative", height: 110 }}>
                             <img src={ch.image} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block", filter: ch.real ? "none" : "grayscale(0.3)" }} />
