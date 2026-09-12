@@ -75,6 +75,53 @@ function matchesChallenge(caseEngine, challengeKey) {
   return (caseEngine || "group_chat") === challengeKey;
 }
 
+
+function teksFromStandard(standard) {
+  return String(standard || "").replace(/^SS\./i, "").replace(/-SC(-WI|-TH)?$/i, "");
+}
+
+function formatFromStandard(standard) {
+  const s = String(standard || "");
+  if (/-SC-WI$/i.test(s)) return { id: "weigh_in", label: "Weigh-In" };
+  if (/-SC-TH$/i.test(s)) return { id: "thread", label: "Thread" };
+  return { id: "verdict", label: "Verdict" };
+}
+
+function isClassicStandard(standard) {
+  return /-SC$/i.test(standard) && !/-SC-(WI|TH)$/i.test(standard);
+}
+
+function compareTeks(a, b) {
+  const parse = (t) => {
+    const m = String(t).match(/^(\d+)\.(\d+)([A-Za-z]?)/);
+    if (!m) return [99, 99, t];
+    return [parseInt(m[1], 10), parseInt(m[2], 10), m[3] || ""];
+  };
+  const [ga, na, la] = parse(a);
+  const [gb, nb, lb] = parse(b);
+  if (ga !== gb) return ga - gb;
+  if (na !== nb) return na - nb;
+  return String(la).localeCompare(String(lb));
+}
+
+function groupSignalCheckCases(list) {
+  const map = new Map();
+  for (const c of list) {
+    const teks = teksFromStandard(c.standard);
+    if (!map.has(teks)) map.set(teks, []);
+    map.get(teks).push(c);
+  }
+  const order = ["verdict", "weigh_in", "thread"];
+  return [...map.entries()].map(([teks, items]) => {
+    const classic = items.find((c) => isClassicStandard(c.standard));
+    const familyTitle = classic?.title || items[0].title;
+    const thumbStandard = classic?.standard || items[0].standard;
+    const ordered = order.flatMap((id) => items.filter((c) => formatFromStandard(c.standard).id === id));
+    return { teks, familyTitle, thumbStandard, items: ordered };
+  }).sort((a, b) => compareTeks(a.teks, b.teks));
+}
+
+
 function NewAssignmentContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -150,11 +197,24 @@ function NewAssignmentContent() {
     supabase.from("cases").select("standard, title, grade, subject, engine, learning_target, lesson_summary, misconception_note").then(({ data }) => setCases(data || []));
   }, []);
 
-  const filteredCases = cases.filter(
-    (c) => c.grade === parseInt(browseGrade) && c.subject === browseSubject &&
-      matchesChallenge(c.engine, selectedChallenge?.key) &&
-      (c.title.toLowerCase().includes(caseSearch.toLowerCase()) || c.standard.toLowerCase().includes(caseSearch.toLowerCase()))
-  );
+  const searchQ = caseSearch.trim().toLowerCase();
+  const filteredCases = cases.filter((c) => {
+    if (c.grade !== parseInt(browseGrade) || c.subject !== browseSubject) return false;
+    if (!matchesChallenge(c.engine, selectedChallenge?.key)) return false;
+    if (!searchQ) return true;
+    const fmt = formatFromStandard(c.standard).label.toLowerCase();
+    const teks = teksFromStandard(c.standard).toLowerCase();
+    return (
+      (c.title || "").toLowerCase().includes(searchQ) ||
+      (c.standard || "").toLowerCase().includes(searchQ) ||
+      fmt.includes(searchQ) ||
+      teks.includes(searchQ)
+    );
+  });
+
+  const signalGroups = selectedChallenge?.key === "fact_check_desk"
+    ? groupSignalCheckCases(filteredCases)
+    : [];
 
   const targetClass = classes.find((c) => c.id === assignClassId);
 
@@ -378,12 +438,74 @@ function NewAssignmentContent() {
                     <button onClick={() => setChallengeStep("gradeSubject")} className="gc-btn" style={{ background: "none", color: COLORS.violet, fontSize: 12.5, fontWeight: 700, marginBottom: 10 }}>← Change Grade/Subject</button>
                     <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", marginBottom: 10 }}>
                       <div style={{ fontWeight: 700, fontSize: 13 }}>3. Choose a case — {browseGrade === "3" ? "3rd" : `${browseGrade}th`} Grade {browseSubject}</div>
-                      <div style={{ fontSize: 11.5, color: COLORS.textMuted }}>{filteredCases.length} case{filteredCases.length === 1 ? "" : "s"}</div>
+                      <div style={{ fontSize: 11.5, color: COLORS.textMuted }}>
+                        {selectedChallenge?.key === "fact_check_desk"
+                          ? `${signalGroups.length} standard${signalGroups.length === 1 ? "" : "s"} · ${filteredCases.length} case${filteredCases.length === 1 ? "" : "s"}`
+                          : `${filteredCases.length} case${filteredCases.length === 1 ? "" : "s"}`}
+                      </div>
                     </div>
                     <div style={{ position: "relative", marginBottom: 12 }}>
                       <Search size={15} style={{ position: "absolute", left: 10, top: 10, color: COLORS.textMuted }} />
-                      <input value={caseSearch} onChange={(e) => setCaseSearch(e.target.value)} placeholder="Search by title or standard..." style={{ width: "100%", border: "2px solid #ECEAF5", borderRadius: 10, padding: "8px 10px 8px 32px", fontSize: 13, boxSizing: "border-box" }} />
+                      <input value={caseSearch} onChange={(e) => setCaseSearch(e.target.value)} placeholder={selectedChallenge?.key === "fact_check_desk" ? "Search by standard, title, or format..." : "Search by title or standard..."} style={{ width: "100%", border: "2px solid #ECEAF5", borderRadius: 10, padding: "8px 10px 8px 32px", fontSize: 13, boxSizing: "border-box" }} />
                     </div>
+                    {selectedChallenge?.key === "fact_check_desk" ? (
+                      <div style={{ display: "flex", flexDirection: "column", gap: 10, maxHeight: 420, overflowY: "auto" }}>
+                        {signalGroups.map((g) => {
+                          const groupSelected = selectedCase && g.items.some((c) => c.standard === selectedCase.standard);
+                          return (
+                            <div
+                              key={g.teks}
+                              style={{
+                                background: COLORS.white,
+                                border: groupSelected ? `2px solid ${COLORS.violet}` : `1.5px solid ${COLORS.border}`,
+                                borderRadius: 14,
+                                overflow: "hidden",
+                                boxShadow: groupSelected ? "0 6px 16px rgba(140,82,242,.16)" : "0 2px 8px rgba(13,27,42,.05)",
+                              }}
+                            >
+                              <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 12px 8px" }}>
+                                <div style={{ width: 44, height: 44, borderRadius: 8, overflow: "hidden", flexShrink: 0, background: COLORS.cream }}>
+                                  <img src={caseImagePath(g.thumbStandard)} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+                                </div>
+                                <div style={{ minWidth: 0 }}>
+                                  <span style={{ display: "inline-block", fontSize: 10.5, fontWeight: 700, color: COLORS.violet, background: COLORS.violetSoft, padding: "2px 8px", borderRadius: 999, marginBottom: 4 }}>{g.teks}</span>
+                                  <div style={{ fontSize: 13.5, fontWeight: 700, lineHeight: 1.3, color: COLORS.textDark }}>{g.familyTitle}</div>
+                                </div>
+                              </div>
+                              <div style={{ display: "flex", flexWrap: "wrap", gap: 6, padding: "0 12px 12px" }}>
+                                {g.items.map((c) => {
+                                  const fmt = formatFromStandard(c.standard);
+                                  const isSelected = selectedCase && selectedCase.standard === c.standard;
+                                  return (
+                                    <button
+                                      key={c.standard}
+                                      className="gc-btn"
+                                      onClick={() => { setSelectedCase(c); }}
+                                      style={{
+                                        border: isSelected ? `1.5px solid ${COLORS.violet}` : `1.5px solid ${COLORS.border}`,
+                                        background: isSelected ? COLORS.violet : COLORS.cream,
+                                        color: isSelected ? COLORS.white : COLORS.textDark,
+                                        borderRadius: 999,
+                                        padding: "6px 12px",
+                                        fontSize: 12,
+                                        fontWeight: 700,
+                                      }}
+                                    >
+                                      {fmt.label}
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          );
+                        })}
+                        {signalGroups.length === 0 && (
+                          <div style={{ fontSize: 13, color: COLORS.textMuted, textAlign: "center", padding: 16 }}>
+                            No {browseGrade === "3" ? "3rd" : `${browseGrade}th`} Grade {browseSubject} cases yet — check back once they're added!
+                          </div>
+                        )}
+                      </div>
+                    ) : (
                     <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(150px, 1fr))", gap: 12, maxHeight: 420, overflowY: "auto" }}>
                       {filteredCases.map((c) => {
                         const isSelected = selectedCase && selectedCase.standard === c.standard;
@@ -405,6 +527,7 @@ function NewAssignmentContent() {
                         </div>
                       )}
                     </div>
+                    )}
                   </>
                 )}
               </div>
@@ -417,7 +540,11 @@ function NewAssignmentContent() {
                     </div>
                     <div>
                       <div style={{ fontSize: 14, fontWeight: 700, color: COLORS.textDark }}>{selectedCase.title}</div>
-                      <div style={{ fontSize: 11, color: COLORS.textMuted }}>{selectedCase.standard}</div>
+                      <div style={{ fontSize: 11, color: COLORS.textMuted }}>
+                        {selectedCase.engine === "fact_check_desk"
+                          ? `${teksFromStandard(selectedCase.standard)} · ${formatFromStandard(selectedCase.standard).label}`
+                          : selectedCase.standard}
+                      </div>
                     </div>
                   </div>
 
