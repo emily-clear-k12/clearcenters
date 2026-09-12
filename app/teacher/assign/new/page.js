@@ -25,54 +25,54 @@ const COLORS = {
 // now part of Repair Desk (visual/diagram fix mode) and Short-Form Video
 // Detective is now part of Fact-Check Desk (video/caption claim format).
 // Comment Court / The Tribunal (and the retired You Be the Judge + Comment
-// Section + Bracket Battle types it absorbed) was removed Sept 12 2026 —
+// Section + Bracket Battle types it absorbed) was removed Sept 12 2026 â€”
 // those shapes now live as Signal Check caseShape variants, not a separate
 // engine. Coming-soon tiles stay `real: false` ("Coming Soon") until they
 // have authored content. Group Chat, Fact-Check Desk
 // (branded "Signal Check" in the UI, engine "fact_check_desk"), Mission Map
-// (as of Aug 30 2026), and — as of Sept 3 2026, one case ("3.8B-SL", "Ramp
-// Test") — Simulation Lab all have real content now, so all four are
+// (as of Aug 30 2026), and â€” as of Sept 3 2026, one case ("3.8B-SL", "Ramp
+// Test") â€” Simulation Lab all have real content now, so all four are
 // `real: true`. NOTE (Sept 3 2026): this exact flag was the reason Mission
 // Map's tile sat un-clickable as "Coming Soon" the day its first case shipped
-// (see ClearCenters_STATE.md's fourth Aug 30 session-log entry) — flip this
+// (see ClearCenters_STATE.md's fourth Aug 30 session-log entry) â€” flip this
 // flag to `real: true` the same day a new engine's first case is authored,
 // not as an afterthought once someone notices the tile is disabled.
 const CHALLENGE_TYPES = [
   { key: "group_chat", label: "Group Chat", image: "/teacher/challenges/group_chat.jpg", real: true,
     description: "Students role-play as characters, concepts, or parts of a system in a live group chat, using evidence to prove what's really going on." },
   { key: "repair_desk", label: "Repair Desk", image: "/teacher/challenges/repair_desk.jpg", real: false,
-    description: "A broken ticket arrives — a flawed diagram, model, or work sample. Students diagnose what's wrong, fix it, and explain the fix to whoever sent it in." },
+    description: "A broken ticket arrives â€” a flawed diagram, model, or work sample. Students diagnose what's wrong, fix it, and explain the fix to whoever sent it in." },
   { key: "fact_check_desk", label: "Signal Check", image: "/teacher/challenges/fact_check_desk.jpg", real: true,
-    description: "Students play a station Cadet, scanning Incoming Transmissions — headlines, data readouts, even recovered footage — for the truth before stamping a verdict: True, Misleading, or False." },
+    description: "Students play a station Cadet, scanning Incoming Transmissions â€” headlines, data readouts, even recovered footage â€” for the truth before stamping a verdict: True, Misleading, or False." },
   { key: "museum_exhibit", label: "Museum Exhibit Builder", image: "/teacher/challenges/museum_exhibit.jpg", real: false,
-    description: "Students curate a small exhibit from a pile of evidence — choosing the strongest items, rejecting at least one on purpose, and writing placards that explain why." },
+    description: "Students curate a small exhibit from a pile of evidence â€” choosing the strongest items, rejecting at least one on purpose, and writing placards that explain why." },
   { key: "newsroom", label: "Newsroom", image: "/teacher/challenges/newsroom.jpg", real: false,
-    description: "Students gather their own evidence from the scene, then build and produce a report — headline, script, and all — before it airs." },
+    description: "Students gather their own evidence from the scene, then build and produce a report â€” headline, script, and all â€” before it airs." },
   { key: "mission_map", label: "Mission Map", image: "/teacher/challenges/mission_map.jpg", real: true,
     description: "Students move through locked checkpoints, collecting clues, rejecting a tempting wrong answer, and building a reasoning chain to unlock the final response." },
   { key: "simulation_lab", label: "Simulation Lab", image: "/teacher/challenges/simulation_lab.jpg", real: true,
     description: "Students adjust real variables with sliders and dials, watch the results happen live, and explain the pattern using data they generated themselves." },
   // Added Sept 8 2026 alongside its first (smoke-test) case, per the Sept 7
   // design doc's week-1 scope: Individual Practice, Lock the Signal format
-  // only, Grade 3 Science only. `real: true` per the exact rule above — one
+  // only, Grade 3 Science only. `real: true` per the exact rule above â€” one
   // real case exists (frequency_rush_words has data), even though it's a
   // placeholder unit until the real Grade 3 vocabulary content is loaded.
   { key: "frequency_rush", label: "Frequency Rush", image: "/teacher/challenges/frequency_rush.jpg", real: true,
-    description: "Students race the clock to lock onto the right definition before the signal scrambles — fast vocabulary review with streaks and speed bonuses, replayable anytime as practice." },
+    description: "Students race the clock to lock onto the right definition before the signal scrambles â€” fast vocabulary review with streaks and speed bonuses, replayable anytime as practice." },
   { key: "territory_builder", label: "Territory Builder", image: "/teacher/challenges/territory_builder.jpg", real: false,
-    description: "Students place things on an actual map — habitats, settlements, resources — and get feedback on whether the placement actually holds up." },
-  // Added Sept 11 2026 — "Signal Ops" is the new umbrella name for the group
-  // review-game engines (Signal Defense now, Terraform Sprint later — Emily's
+    description: "Students place things on an actual map â€” habitats, settlements, resources â€” and get feedback on whether the placement actually holds up." },
+  // Added Sept 11 2026 â€” "Signal Ops" is the new umbrella name for the group
+  // review-game engines (Signal Defense now, Terraform Sprint later â€” Emily's
   // still prototyping that one separately). This tile covers Signal Defense:
   // the whole class defends one shared base together, answering review
   // questions from the standard's growing question bank to keep it standing.
-  // `real: true` flipped Sept 11 2026 with pilot case 3.6B-SD — playable
+  // `real: true` flipped Sept 11 2026 with pilot case 3.6B-SD â€” playable
   // end-to-end via SignalDefenseClient.js, though still running the V4
-  // prototype's own hardcoded question bank and simulated crew rather than a
-  // real synced class (live sync, dynamic content loading by standard, and
-  // persistence are the next real integration pass, not yet built).
+  // question bank wired per standard, plus V1 live crew sync (see Signal Ops Board).
+  // Solo + fake crew remain the fallback when no live session is open.
+  // Majority-vote upgrades and wave damage deferred to V1.5.
   { key: "signal_defense", label: "Signal Ops", image: "/teacher/challenges/signal_defense.jpg", real: true,
-    description: "The whole class defends one shared base together — answering review questions to keep power, health, and salvage up before the next wave hits." },
+    description: "The whole class defends one shared base together â€” answering review questions to keep power, health, and salvage up before the next wave hits." },
 ];
 
 function caseImagePath(standard) {
@@ -82,7 +82,7 @@ function caseImagePath(standard) {
 // A case's `engine` column tells us which challenge type it belongs to.
 // Newsroom currently only ships Breaking News mode ("newsroom_bn"), but
 // Field Report/Data Desk/Special Report will land as "newsroom_fr" etc.
-// later — all of those should still show up under the one Newsroom tile.
+// later â€” all of those should still show up under the one Newsroom tile.
 function matchesChallenge(caseEngine, challengeKey) {
   if (!challengeKey) return false;
   if (challengeKey === "newsroom") return (caseEngine || "").startsWith("newsroom");
@@ -109,23 +109,23 @@ function NewAssignmentContent() {
   const [assignedSuccess, setAssignedSuccess] = useState(false);
   const [newAssignmentId, setNewAssignmentId] = useState(null);
 
-  // Distress Call (Sept 7 design doc §4) — a flag on this assignment, not a
+  // Distress Call (Sept 7 design doc Â§4) â€” a flag on this assignment, not a
   // new engine. Only offered when the picked case's engine has an
   // instant-graded portion to actually count (see lib/distressCallEngines.js
   // for which ones, and lib/distressCall.js for why Group Chat isn't one).
   const [distressCallEnabled, setDistressCallEnabled] = useState(false);
   const [distressCallTarget, setDistressCallTarget] = useState("");
   const [distressCallDeadline, setDistressCallDeadline] = useState("");
-  // The prize for hitting the target — set now, up front, rather than
+  // The prize for hitting the target â€” set now, up front, rather than
   // decided after the fact (Emily's Sept 8 call: promising the reward before
   // the class starts is what makes it motivating, and it means the points go
   // out the instant the goal is cleared even if no teacher is watching).
   // 0/blank means no reward, just the shared meter.
   const [distressCallRewardPoints, setDistressCallRewardPoints] = useState("");
 
-  // Sept 12, 2026 — Frequency Rush "world skin" (design note in
+  // Sept 12, 2026 â€” Frequency Rush "world skin" (design note in
   // lib/frequencyRushSkins.js): which static widget file the assignment's
-  // students play, chosen here by the teacher rather than per-student —
+  // students play, chosen here by the teacher rather than per-student â€”
   // same "one more conditional field on the assign form" pattern as
   // Distress Call above, just for a different engine.
   const [gameSkin, setGameSkin] = useState(DEFAULT_GAME_SKIN);
@@ -251,7 +251,7 @@ function NewAssignmentContent() {
         .gc-btn:hover { transform: translateY(-1px); }
       `}</style>
 
-      {/* Emily's Challenge Library background (Aug 27) — a 1672x941 image with
+      {/* Emily's Challenge Library background (Aug 27) â€” a 1672x941 image with
           the desk/window/crystal art on its right side, close enough to the
           right and bottom edges that a plain "cover" would risk cropping it
           on a browser window shaped differently from the source image. Using
@@ -260,7 +260,7 @@ function NewAssignmentContent() {
           the image is never cropped, and the sampled near-white lavender
           fallback color blends into any letterboxed edge instead of showing
           as a bar. Fixed to the viewport so it stays put while this page's
-          content (which can get tall — case grids, forms) scrolls over it;
+          content (which can get tall â€” case grids, forms) scrolls over it;
           the sidebar and content are lifted onto their own stacking layer
           above it with position/zIndex so the opaque sidebar still fully
           covers its own strip either way. */}
@@ -298,20 +298,23 @@ function NewAssignmentContent() {
 
           {assignedSuccess ? (
             <div style={{ background: COLORS.white, border: `1px solid ${COLORS.border}`, borderRadius: 16, padding: 32, textAlign: "center", boxShadow: "0 4px 16px rgba(13,27,42,.06)" }}>
-              <div style={{ fontSize: 36, marginBottom: 10 }}>✅</div>
+              <div style={{ fontSize: 36, marginBottom: 10 }}>âœ…</div>
               <div style={{ fontWeight: 700, fontSize: 17, marginBottom: 6 }}>Assigned!</div>
               <p style={{ color: COLORS.textMuted, fontSize: 13.5, marginBottom: distressCallEnabled ? 10 : 20 }}>
                 "{selectedCase.title}" is now assigned to {targetMode === "specific" ? `${selectedStudentIds.length} student${selectedStudentIds.length === 1 ? "" : "s"} in` : "everyone in"} {targetClass?.name}.
               </p>
               {distressCallEnabled && (
                 <p style={{ color: COLORS.violet, fontSize: 12.5, fontWeight: 700, marginBottom: 20, background: COLORS.violetSoft, borderRadius: 10, padding: "8px 12px", display: "inline-block" }}>
-                  🚨 Distress Call is live{distressCallTarget ? ` — target: ${distressCallTarget} checkpoints` : ""}. Students will see the meter update as they work.
+                  ðŸš¨ Distress Call is live{distressCallTarget ? ` â€” target: ${distressCallTarget} checkpoints` : ""}. Students will see the meter update as they work.
                   {!!distressCallRewardPoints && parseInt(distressCallRewardPoints, 10) > 0 && ` Everyone gets +${distressCallRewardPoints} crystal points when they hit it.`}
                 </p>
               )}
               <div style={{ display: "flex", gap: 10, justifyContent: "center", flexWrap: "wrap" }}>
                 {distressCallEnabled && newAssignmentId && (
-                  <button onClick={() => router.push(`/teacher/live-ops-board?assignmentId=${newAssignmentId}`)} className="gc-btn" style={{ background: "#0D1B2A", color: COLORS.white, borderRadius: 999, padding: "11px 20px", fontWeight: 700, fontSize: 13.5 }}>📡 Project on Live Ops Board</button>
+                  <button onClick={() => router.push(`/teacher/live-ops-board?assignmentId=${newAssignmentId}`)} className="gc-btn" style={{ background: "#0D1B2A", color: COLORS.white, borderRadius: 999, padding: "11px 20px", fontWeight: 700, fontSize: 13.5 }}>ðŸ“¡ Project on Live Ops Board</button>
+                )}
+                {selectedCase?.engine === "signal_defense" && newAssignmentId && (
+                  <button onClick={() => router.push(`/teacher/signal-ops-board?assignmentId=${newAssignmentId}`)} className="gc-btn" style={{ background: "#0D1B2A", color: COLORS.white, borderRadius: 999, padding: "11px 20px", fontWeight: 700, fontSize: 13.5 }}>Open Signal Ops Board</button>
                 )}
                 <button onClick={assignAnother} className="gc-btn" style={{ background: COLORS.violetSoft, color: COLORS.violet, borderRadius: 999, padding: "11px 20px", fontWeight: 700, fontSize: 13.5 }}>Assign Another</button>
                 <button onClick={() => router.push("/teacher/assign")} className="gc-btn" style={{ background: COLORS.violet, color: COLORS.white, borderRadius: 999, padding: "11px 20px", fontWeight: 700, fontSize: 13.5 }}>Back to My Classes</button>
@@ -340,9 +343,9 @@ function NewAssignmentContent() {
 
                 {challengeStep === "gradeSubject" && (
                   <>
-                    <button onClick={() => setChallengeStep("library")} className="gc-btn" style={{ background: "none", color: COLORS.violet, fontSize: 12.5, fontWeight: 700, marginBottom: 10 }}>← Back to Challenge Types</button>
-                    <div style={{ fontWeight: 700, fontSize: 13, marginBottom: 4 }}>2. {selectedChallenge?.label} — choose grade & subject</div>
-                    <div style={{ fontSize: 11.5, color: COLORS.textMuted, marginBottom: 14 }}>You can assign any grade level to any class — pick whichever fits this student or group.</div>
+                    <button onClick={() => setChallengeStep("library")} className="gc-btn" style={{ background: "none", color: COLORS.violet, fontSize: 12.5, fontWeight: 700, marginBottom: 10 }}>â† Back to Challenge Types</button>
+                    <div style={{ fontWeight: 700, fontSize: 13, marginBottom: 4 }}>2. {selectedChallenge?.label} â€” choose grade & subject</div>
+                    <div style={{ fontSize: 11.5, color: COLORS.textMuted, marginBottom: 14 }}>You can assign any grade level to any class â€” pick whichever fits this student or group.</div>
 
                     <div style={{ fontSize: 11, fontWeight: 700, color: COLORS.textMuted, textTransform: "uppercase", letterSpacing: .4, marginBottom: 8 }}>Grade Level</div>
                     <div style={{ display: "flex", gap: 8, marginBottom: 20 }}>
@@ -379,16 +382,16 @@ function NewAssignmentContent() {
                     </div>
 
                     <button onClick={() => setChallengeStep("caseList")} className="gc-btn" style={{ width: "100%", background: COLORS.violet, color: COLORS.white, borderRadius: 999, padding: "11px 20px", fontWeight: 700, fontSize: 14 }}>
-                      Browse {browseGrade === "3" ? "3rd" : `${browseGrade}th`} Grade {browseSubject} Cases →
+                      Browse {browseGrade === "3" ? "3rd" : `${browseGrade}th`} Grade {browseSubject} Cases â†’
                     </button>
                   </>
                 )}
 
                 {challengeStep === "caseList" && (
                   <>
-                    <button onClick={() => setChallengeStep("gradeSubject")} className="gc-btn" style={{ background: "none", color: COLORS.violet, fontSize: 12.5, fontWeight: 700, marginBottom: 10 }}>← Change Grade/Subject</button>
+                    <button onClick={() => setChallengeStep("gradeSubject")} className="gc-btn" style={{ background: "none", color: COLORS.violet, fontSize: 12.5, fontWeight: 700, marginBottom: 10 }}>â† Change Grade/Subject</button>
                     <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", marginBottom: 10 }}>
-                      <div style={{ fontWeight: 700, fontSize: 13 }}>3. Choose a case — {browseGrade === "3" ? "3rd" : `${browseGrade}th`} Grade {browseSubject}</div>
+                      <div style={{ fontWeight: 700, fontSize: 13 }}>3. Choose a case â€” {browseGrade === "3" ? "3rd" : `${browseGrade}th`} Grade {browseSubject}</div>
                       <div style={{ fontSize: 11.5, color: COLORS.textMuted }}>{filteredCases.length} case{filteredCases.length === 1 ? "" : "s"}</div>
                     </div>
                     <div style={{ position: "relative", marginBottom: 12 }}>
@@ -412,7 +415,7 @@ function NewAssignmentContent() {
                       })}
                       {filteredCases.length === 0 && (
                         <div style={{ gridColumn: "1 / -1", fontSize: 13, color: COLORS.textMuted, textAlign: "center", padding: 16 }}>
-                          No {browseGrade === "3" ? "3rd" : `${browseGrade}th`} Grade {browseSubject} cases yet — check back once they're added!
+                          No {browseGrade === "3" ? "3rd" : `${browseGrade}th`} Grade {browseSubject} cases yet â€” check back once they're added!
                         </div>
                       )}
                     </div>
@@ -436,7 +439,7 @@ function NewAssignmentContent() {
                     <div style={{ marginBottom: 12 }}>
                       <div style={{ fontSize: 10.5, fontWeight: 700, color: COLORS.textMuted, letterSpacing: .4, marginBottom: 5, textTransform: "uppercase" }}>Learning Target</div>
                       <div style={{ background: COLORS.tealSoft, borderRadius: 10, padding: "9px 11px", fontSize: 13, color: COLORS.textDark, lineHeight: 1.5 }}>
-                        🎯 {selectedCase.learning_target}
+                        ðŸŽ¯ {selectedCase.learning_target}
                       </div>
                     </div>
                   )}
@@ -454,7 +457,7 @@ function NewAssignmentContent() {
                     <div>
                       <div style={{ fontSize: 10.5, fontWeight: 700, color: COLORS.textMuted, letterSpacing: .4, marginBottom: 5, textTransform: "uppercase" }}>Watch For</div>
                       <div style={{ background: "#FFF4E5", border: `1px solid ${COLORS.warning || "#FF9F43"}`, borderRadius: 10, padding: "9px 11px", fontSize: 12.5, color: "#7A4A0A", lineHeight: 1.5 }}>
-                        ⚠️ {selectedCase.misconception_note}
+                        âš ï¸ {selectedCase.misconception_note}
                       </div>
                     </div>
                   )}
@@ -486,7 +489,7 @@ function NewAssignmentContent() {
                       ))}
                     </div>
                   ) : (
-                    <p style={{ fontSize: 12.5, color: COLORS.textMuted, marginBottom: 10 }}>You don't have any classes yet — create one on My Classes first.</p>
+                    <p style={{ fontSize: 12.5, color: COLORS.textMuted, marginBottom: 10 }}>You don't have any classes yet â€” create one on My Classes first.</p>
                   )}
 
                   {assignClassId && (
@@ -513,7 +516,7 @@ function NewAssignmentContent() {
                                 style={{ display: "flex", alignItems: "center", gap: 8, background: checked ? COLORS.violetSoft : COLORS.white, border: checked ? `1.5px solid ${COLORS.violet}` : `1.5px solid ${COLORS.border}`, borderRadius: 8, padding: "7px 10px", textAlign: "left" }}
                               >
                                 <div style={{ width: 16, height: 16, borderRadius: 4, background: checked ? COLORS.violet : COLORS.white, border: `1.5px solid ${checked ? COLORS.violet : COLORS.border}`, display: "flex", alignItems: "center", justifyContent: "center", color: COLORS.white, fontSize: 11, fontWeight: 700, flexShrink: 0 }}>
-                                  {checked ? "✓" : ""}
+                                  {checked ? "âœ“" : ""}
                                 </div>
                                 <span style={{ fontSize: 12.5, fontWeight: 600, color: COLORS.textDark }}>{s.first_name}</span>
                               </button>
@@ -534,7 +537,7 @@ function NewAssignmentContent() {
 
                   {selectedCase?.engine === "frequency_rush" && (
                     <div style={{ marginBottom: 14 }}>
-                      <div style={{ fontWeight: 700, fontSize: 13, marginBottom: 8 }}>🛰️ Game world</div>
+                      <div style={{ fontWeight: 700, fontSize: 13, marginBottom: 8 }}>ðŸ›°ï¸ Game world</div>
                       <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
                         {GAME_SKINS.map((skin) => (
                           <button
@@ -557,7 +560,7 @@ function NewAssignmentContent() {
                         ))}
                       </div>
                       <p style={{ fontSize: 11.5, color: COLORS.textMuted, margin: "6px 0 0 0" }}>
-                        Same words, same scoring — just a different look for the run.
+                        Same words, same scoring â€” just a different look for the run.
                       </p>
                     </div>
                   )}
@@ -571,12 +574,12 @@ function NewAssignmentContent() {
                         style={{ display: "flex", alignItems: "center", gap: 8, background: "transparent", border: "none", padding: 0, width: "100%", textAlign: "left" }}
                       >
                         <div style={{ width: 16, height: 16, borderRadius: 4, background: distressCallEnabled ? COLORS.violet : COLORS.white, border: `1.5px solid ${distressCallEnabled ? COLORS.violet : COLORS.border}`, display: "flex", alignItems: "center", justifyContent: "center", color: COLORS.white, fontSize: 11, fontWeight: 700, flexShrink: 0 }}>
-                          {distressCallEnabled ? "✓" : ""}
+                          {distressCallEnabled ? "âœ“" : ""}
                         </div>
-                        <span style={{ fontWeight: 700, fontSize: 13 }}>🚨 Make this a Distress Call</span>
+                        <span style={{ fontWeight: 700, fontSize: 13 }}>ðŸš¨ Make this a Distress Call</span>
                       </button>
                       <p style={{ fontSize: 11.5, color: COLORS.textMuted, margin: "6px 0 0 24px" }}>
-                        Turns this into a shared goal — students see a live meter as checkpoints get cleared across the group.
+                        Turns this into a shared goal â€” students see a live meter as checkpoints get cleared across the group.
                       </p>
                       {distressCallEnabled && (
                         <div style={{ marginTop: 10, marginLeft: 24 }}>
@@ -604,13 +607,13 @@ function NewAssignmentContent() {
                           </div>
 
                           {/* The prize, promised up front (see the state comment above
-                              for why) — every student targeted by this assignment gets
+                              for why) â€” every student targeted by this assignment gets
                               +N crystal points the moment the class clears the target,
                               automatically, with no teacher action needed. Presets match
                               the same 5/10/25/50 quick-picks the Rewards & S.A.M. modal
                               on the teacher home page already uses. */}
                           <div style={{ marginTop: 10 }}>
-                            <label style={{ fontSize: 11, fontWeight: 700, color: COLORS.textMuted }}>💎 Crystal reward when the target is hit (optional)</label>
+                            <label style={{ fontSize: 11, fontWeight: 700, color: COLORS.textMuted }}>ðŸ’Ž Crystal reward when the target is hit (optional)</label>
                             <div style={{ display: "flex", gap: 6, marginTop: 4, flexWrap: "wrap", alignItems: "center" }}>
                               {[0, 5, 10, 25, 50].map((amt) => (
                                 <button
@@ -642,7 +645,7 @@ function NewAssignmentContent() {
                             </div>
                             {!!distressCallRewardPoints && parseInt(distressCallRewardPoints, 10) > 0 && (
                               <p style={{ fontSize: 11, color: COLORS.violet, fontWeight: 600, margin: "6px 0 0 0" }}>
-                                🎉 Every targeted student gets +{distressCallRewardPoints} crystal points the instant the class hits the target.
+                                ðŸŽ‰ Every targeted student gets +{distressCallRewardPoints} crystal points the instant the class hits the target.
                               </p>
                             )}
                           </div>
@@ -657,8 +660,8 @@ function NewAssignmentContent() {
                       : !assignClassId
                       ? "Choose a class first"
                       : targetMode === "specific"
-                      ? `Assign to ${selectedStudentIds.length} student${selectedStudentIds.length === 1 ? "" : "s"} →`
-                      : `Assign to ${targetClass?.name} →`}
+                      ? `Assign to ${selectedStudentIds.length} student${selectedStudentIds.length === 1 ? "" : "s"} â†’`
+                      : `Assign to ${targetClass?.name} â†’`}
                   </button>
                 </div>
               )}
@@ -678,3 +681,4 @@ export default function NewAssignmentPage() {
     </Suspense>
   );
 }
+
