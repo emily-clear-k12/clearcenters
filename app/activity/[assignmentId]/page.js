@@ -105,8 +105,9 @@ export default async function ActivityPage({ params }) {
   //
   // Layered pass #3 (Sept 12 2026 V1 live crew): when a teacher has an open
   // Signal Ops session for this assignment, the client auto-joins (no code)
-  // and syncs shared Salvage / Power / Base Health. Solo + fake crew remain
-  // the fallback when no live session exists.
+  // and syncs shared Salvage / Power / Base Health.
+  // Layered pass #4 (Sept 12 2026): solo / fake-crew fallback removed. No open
+  // live session shows a waiting UI; live / lobby uses a full-viewport student shell.
   const isSignalDefense = engine === "signal_defense";
   if (isSignalDefense) {
     const signalDefenseCase = getSignalDefensePublicCase(assignment.case_standard);

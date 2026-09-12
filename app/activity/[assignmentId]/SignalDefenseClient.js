@@ -17,10 +17,22 @@ const SHELL = {
   border: "#E1E2EE",
 };
 
+function sessionIsPlayable(data) {
+  if (!data?.session) return false;
+  if (data.active) return true;
+  const outcome = data.session.outcome;
+  // Keep the student on the live board for the class end state.
+  if (outcome === "regroup" || outcome === "victory") return true;
+  if (data.session.status === "ended") return true;
+  return false;
+}
+
 // Sept 12, 2026 — V1.5 live crew: shared votes, power drain, wave damage.
-// Solo + fake crew remain the fallback when no live session exists.
-// Sept 12, 2026 (playtest fix): hold the iframe until the first session
-// sync so live class play never flashes the prototype setup / demo tools.
+// Sept 12, 2026 (playtest): hide prototype demo UI during live class play.
+// Sept 12, 2026 (product): remove solo / fake-crew fallback entirely for
+// assigned Signal Ops. No open live session → waiting UI only. Live /
+// lobby / just-ended → immersive full-viewport student game (no prototype
+// chrome wrapper). Teacher board Start/Begin/End unchanged.
 export default function SignalDefenseClient({
   assignmentId,
   caseTitle,
@@ -35,6 +47,7 @@ export default function SignalDefenseClient({
   const lastPayloadRef = useRef(null);
   const [liveBanner, setLiveBanner] = useState(null);
   const [sessionReady, setSessionReady] = useState(false);
+  const [inLivePlay, setInLivePlay] = useState(false);
 
   const submitRun = useCallback(async (result) => {
     if (!assignmentId || !result) return;
@@ -82,7 +95,9 @@ export default function SignalDefenseClient({
     try {
       if (typeof win.SignalDefense.configureLive === "function") {
         win.SignalDefense.configureLive({
-          enabled: payload.active && payload.session.status !== "ended",
+          // Stay in live presentation for lobby, live, and just-ended recap
+          // so prototype setup / demo tools never reappear on the student view.
+          enabled: sessionIsPlayable(payload),
           status: payload.session.status,
           playerName: studentFirstName || "YOU",
           outcome: payload.session.outcome || "ongoing",
@@ -199,7 +214,7 @@ export default function SignalDefenseClient({
         fetch(`/api/signal-defense/session?assignmentId=${encodeURIComponent(assignmentId)}&includeEnded=1`)
           .then((r) => r.json())
           .then((data) => {
-            if (data?.session && (data.active || data.session.status === "ended")) {
+            if (data?.session && sessionIsPlayable(data)) {
               liveRef.current = {
                 active: !!data.active || data.session.status === "ended",
                 status: data.session.status,
@@ -235,7 +250,7 @@ export default function SignalDefenseClient({
 
     async function applyPayload(data) {
       if (cancelled) return;
-      if (data?.session && (data.active || data.session.outcome === "regroup" || data.session.outcome === "victory")) {
+      if (sessionIsPlayable(data)) {
         const active = !!data.active;
         liveRef.current = {
           active: active || data.session.status === "ended",
@@ -244,6 +259,7 @@ export default function SignalDefenseClient({
           outcome: data.session.outcome || "ongoing",
         };
         lastPayloadRef.current = data;
+        setInLivePlay(true);
         if (data.session.outcome === "regroup") {
           setLiveBanner("The base held on as long as it could — regroup for the next wave. Ask your teacher to relaunch.");
         } else if (data.session.outcome === "victory") {
@@ -258,23 +274,11 @@ export default function SignalDefenseClient({
           setLiveBanner("Live Signal Ops — shared meters with your class.");
         }
         if (widgetReadyRef.current) pushLiveToWidget(data);
-      } else if (data?.session && data.active) {
-        liveRef.current = {
-          active: true,
-          status: data.session.status,
-          sessionId: data.session.id,
-          outcome: data.session.outcome || "ongoing",
-        };
-        lastPayloadRef.current = data;
-        setLiveBanner(
-          data.session.status === "lobby"
-            ? "Live crew lobby — waiting for your teacher to begin."
-            : "Live Signal Ops — shared meters with your class."
-        );
-        if (widgetReadyRef.current) pushLiveToWidget(data);
       } else {
         liveRef.current = { active: false, status: null, sessionId: null, outcome: null };
         lastPayloadRef.current = null;
+        widgetReadyRef.current = false;
+        setInLivePlay(false);
         setLiveBanner(null);
       }
     }
@@ -292,7 +296,7 @@ export default function SignalDefenseClient({
         }
         await applyPayload(data);
       } catch (err) {
-        // Solo fallback if the session tables aren't migrated yet.
+        // No solo fallback — stay on the waiting screen until a live session opens.
       } finally {
         if (!cancelled) setSessionReady(true);
       }
@@ -306,75 +310,166 @@ export default function SignalDefenseClient({
     };
   }, [assignmentId, pushLiveToWidget]);
 
-  return (
+  // Immersive student shell: full viewport, no padded card chrome around the game.
+  const shellStyle = {
+    position: "fixed",
+    inset: 0,
+    width: "100vw",
+    height: "100vh",
+    background: SHELL.bg,
+    fontFamily: "'Inter', sans-serif",
+    overflow: "hidden",
+    zIndex: 1,
+  };
+
+  const waitingCard = (
     <div
       style={{
-        minHeight: "100vh",
-        background: SHELL.bg,
-        fontFamily: "'Inter', sans-serif",
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        justifyContent: "flex-start",
-        padding: 24,
-        position: "relative",
+        width: "min(520px, 92vw)",
+        background: SHELL.card,
+        border: `1.5px solid ${SHELL.border}`,
+        borderRadius: 20,
+        padding: "36px 32px",
+        textAlign: "center",
+        boxShadow: "0 12px 40px rgba(140,82,242,.12)",
       }}
     >
+      <div
+        style={{
+          fontSize: 11,
+          fontWeight: 800,
+          letterSpacing: 1.6,
+          color: SHELL.violet,
+          marginBottom: 12,
+        }}
+      >
+        SIGNAL OPS
+      </div>
+      <h1
+        style={{
+          margin: "0 0 12px",
+          fontSize: 26,
+          lineHeight: 1.25,
+          color: SHELL.text,
+          fontWeight: 800,
+        }}
+      >
+        Waiting for teacher to start Signal Ops
+      </h1>
+      <p style={{ margin: 0, color: SHELL.muted, fontSize: 15, lineHeight: 1.5, fontWeight: 500 }}>
+        This mission runs as a live class session. Stay on this page — when your teacher starts Signal Ops, you will join automatically.
+      </p>
+      <div
+        style={{
+          marginTop: 22,
+          display: "inline-flex",
+          alignItems: "center",
+          gap: 8,
+          padding: "8px 14px",
+          borderRadius: 999,
+          background: "rgba(140,82,242,.08)",
+          color: SHELL.violet,
+          fontSize: 13,
+          fontWeight: 700,
+        }}
+      >
+        <span
+          style={{
+            width: 8,
+            height: 8,
+            borderRadius: "50%",
+            background: SHELL.teal,
+            boxShadow: `0 0 0 4px rgba(46,184,200,.2)`,
+            display: "inline-block",
+          }}
+        />
+        Listening for live session…
+      </div>
+    </div>
+  );
+
+  return (
+    <div style={shellStyle}>
       <BackToHubButton />
-      <div style={{ position: "relative", zIndex: 1, width: "100%", display: "flex", flexDirection: "column", alignItems: "center", marginTop: 48, gap: 12 }}>
-        {liveBanner && (
-          <div
-            style={{
-              width: "100%",
-              maxWidth: 1320,
-              background: SHELL.card,
-              border: `1.5px solid ${SHELL.border}`,
-              borderRadius: 14,
-              padding: "10px 16px",
-              color: SHELL.text,
-              fontSize: 13.5,
-              fontWeight: 600,
-              boxShadow: "0 4px 16px rgba(140,82,242,.08)",
-              display: "flex",
-              alignItems: "center",
-              gap: 10,
-            }}
-          >
-            <span style={{ color: SHELL.violet, fontWeight: 800, letterSpacing: 0.4 }}>LIVE CREW</span>
-            <span style={{ color: SHELL.muted }}>{liveBanner}</span>
-          </div>
-        )}
-        {!sessionReady ? (
-          <div
-            style={{
-              width: "100%",
-              maxWidth: 1320,
-              minHeight: 320,
-              background: SHELL.card,
-              border: `1px solid ${SHELL.border}`,
-              borderRadius: 16,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              color: SHELL.muted,
-              fontSize: 15,
-              fontWeight: 600,
-              boxShadow: "0 8px 28px rgba(31,42,68,.08)",
-            }}
-          >
-            Connecting to Signal Ops...
-          </div>
-        ) : (
+      {!sessionReady ? (
+        <div
+          style={{
+            width: "100%",
+            height: "100%",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            color: SHELL.muted,
+            fontSize: 15,
+            fontWeight: 600,
+          }}
+        >
+          Connecting to Signal Ops...
+        </div>
+      ) : !inLivePlay ? (
+        <div
+          style={{
+            width: "100%",
+            height: "100%",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: 24,
+          }}
+        >
+          {waitingCard}
+        </div>
+      ) : (
+        <div style={{ position: "relative", width: "100%", height: "100%" }}>
+          {liveBanner && (
+            <div
+              style={{
+                position: "absolute",
+                top: 14,
+                left: "50%",
+                transform: "translateX(-50%)",
+                zIndex: 20,
+                maxWidth: "min(720px, 70vw)",
+                background: "rgba(255,255,255,.92)",
+                border: `1px solid ${SHELL.border}`,
+                borderRadius: 999,
+                padding: "8px 16px",
+                color: SHELL.text,
+                fontSize: 12.5,
+                fontWeight: 600,
+                boxShadow: "0 6px 20px rgba(31,42,68,.12)",
+                display: "flex",
+                alignItems: "center",
+                gap: 10,
+                backdropFilter: "blur(8px)",
+                WebkitBackdropFilter: "blur(8px)",
+                pointerEvents: "none",
+              }}
+            >
+              <span style={{ color: SHELL.violet, fontWeight: 800, letterSpacing: 0.4 }}>LIVE</span>
+              <span style={{ color: SHELL.muted, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                {liveBanner}
+              </span>
+            </div>
+          )}
           <iframe
             ref={iframeRef}
-            src="/games/signal-defense-3-6b-gameplay-v4.html"
+            src="/games/signal-defense-3-6b-gameplay-v4.html?live=1"
             title={caseTitle || "Signal Defense"}
             onLoad={wireWidget}
-            style={{ width: "100%", maxWidth: 1320, height: "88vh", minHeight: 640, border: `1px solid ${SHELL.border}`, borderRadius: 16, display: "block", background: "#fff", boxShadow: "0 8px 28px rgba(31,42,68,.08)" }}
+            style={{
+              position: "absolute",
+              inset: 0,
+              width: "100%",
+              height: "100%",
+              border: "none",
+              display: "block",
+              background: "#06182e",
+            }}
             allow="fullscreen"
           />
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 }
