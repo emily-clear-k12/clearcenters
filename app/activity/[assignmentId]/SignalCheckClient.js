@@ -1061,7 +1061,7 @@ export default function SignalCheckClient({ assignmentId, studentId, caseStandar
               <PrimaryButton disabled={!allSorted} onClick={() => goTo("answer")}>
                 Lock In Sort - {Object.keys(placements).length}/{evidenceSource.length}
               </PrimaryButton>
-              <button type="button" className="sc-btn" onClick={() => goTo("answer")} style={{ background: "rgba(255,255,255,.08)", color: COLORS.white, border: "1px solid rgba(255,255,255,.25)", borderRadius: 999, padding: "12px 18px", fontWeight: 700, fontSize: 13 }}>Skip practice -></button>
+              <button type="button" className="sc-btn" onClick={() => goTo("answer")} style={{ background: "rgba(255,255,255,.08)", color: COLORS.white, border: "1px solid rgba(255,255,255,.25)", borderRadius: 999, padding: "12px 18px", fontWeight: 700, fontSize: 13 }}>Skip practice</button>
             </div>
             <EchoLine text={publicCase.echo?.sort} />
           </div>
