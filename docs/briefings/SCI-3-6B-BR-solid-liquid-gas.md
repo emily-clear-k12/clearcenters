@@ -110,7 +110,7 @@ After: Same shape. That’s how HQ knew it was a solid.
 
 ### Page 4 — Check
 **Title:** Quick HQ check  
-No extra checklist chrome. Two light questions, then practice.
+No extra checklist chrome. Three light questions (one per kind), then practice.
 
 **qc1:** HQ moved a wooden block into a new box. The block still looked like a block. Which kind?  
 a Solid · b Liquid · c Gas → **a**
