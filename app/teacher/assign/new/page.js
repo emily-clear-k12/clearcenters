@@ -21,12 +21,13 @@ const COLORS = {
 };
 
 // Roster as of the Aug 2026 challenge-type consolidation: Model Makeover is
-// now part of Repair Desk (visual/diagram fix mode), Short-Form Video
-// Detective is now part of Fact-Check Desk (video/caption claim format), and
-// You Be the Judge + Comment Section Challenge + Bracket Battle combined into
-// Comment Court (a placeholder name, pending Emily's final pick). All of
-// these still need real content authored before any go live, so they stay
-// `real: false` ("Coming Soon") until then. Group Chat, Fact-Check Desk
+// now part of Repair Desk (visual/diagram fix mode) and Short-Form Video
+// Detective is now part of Fact-Check Desk (video/caption claim format).
+// Comment Court / The Tribunal (and the retired You Be the Judge + Comment
+// Section + Bracket Battle types it absorbed) was removed Sept 12 2026 —
+// those shapes now live as Signal Check caseShape variants, not a separate
+// engine. Coming-soon tiles stay `real: false` ("Coming Soon") until they
+// have authored content. Group Chat, Fact-Check Desk
 // (branded "Signal Check" in the UI, engine "fact_check_desk"), Mission Map
 // (as of Aug 30 2026), and — as of Sept 3 2026, one case ("3.8B-SL", "Ramp
 // Test") — Simulation Lab all have real content now, so all four are
@@ -48,8 +49,6 @@ const CHALLENGE_TYPES = [
     description: "Students gather their own evidence from the scene, then build and produce a report — headline, script, and all — before it airs." },
   { key: "mission_map", label: "Mission Map", image: "/teacher/challenges/mission_map.jpg", real: true,
     description: "Students move through locked checkpoints, collecting clues, rejecting a tempting wrong answer, and building a reasoning chain to unlock the final response." },
-  { key: "comment_court", label: "Comment Court", image: "/teacher/challenges/comment_court.jpg", real: false,
-    description: "A disputed claim shows up as a messy comment thread. Students sort the noise, weigh the evidence, and either rule on the dispute or run it as a bracket when there's more than two sides." },
   { key: "simulation_lab", label: "Simulation Lab", image: "/teacher/challenges/simulation_lab.jpg", real: true,
     description: "Students adjust real variables with sliders and dials, watch the results happen live, and explain the pattern using data they generated themselves." },
   // Added Sept 8 2026 alongside its first (smoke-test) case, per the Sept 7
