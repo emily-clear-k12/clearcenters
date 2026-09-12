@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import BackToHubButton from "../../components/BackToHubButton";
+import { DEV_FORCE_UNLOCK_ALL } from "../../lib/devFlags";
 
 const COLORS = {
   navy: "#0D1B2A",
@@ -139,10 +140,14 @@ export default function GearLockerClient({ student, planets, visitedPlanetKeys, 
   // clicked through and previewed. The 💎 threshold pill still shows the
   // real cost everywhere (it reads planet.threshold directly, untouched)
   // — only the lock GATE is bypassed, not the displayed price. No student
-  // data changed; nothing in Supabase touched. Flip DEV_FORCE_UNLOCK_ALL
-  // back to false (or delete it and restore the real comparison below)
-  // once the design pass is done — don't ship this true.
-  const DEV_FORCE_UNLOCK_ALL = true;
+  // data changed; nothing in Supabase touched.
+  //
+  // Sept 12, 2026: this flag moved to lib/devFlags.js so the per-world
+  // reward-station page (app/gear-locker/world/[planetKey]) can share it —
+  // that page had its own separate crystal-threshold redirect that this
+  // flag never reached, so a locked world was still clickable here but
+  // bounced you straight back on arrival. See lib/devFlags.js for the full
+  // note on what this bypasses and the reminder not to ship it true.
   function isUnlocked(planet) {
     if (DEV_FORCE_UNLOCK_ALL) return true;
     return student.crystal_points >= planet.threshold;

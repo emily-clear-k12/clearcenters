@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { DEV_FORCE_UNLOCK_ALL } from "../../../../lib/devFlags";
 
 const COLORS = {
   navy: "#0D1B2A",
@@ -37,7 +38,12 @@ export default function WorldRewardStationClient({ planet, story, storyRead: ini
   const [trailSaving, setTrailSaving] = useState(false);
   const [bgSaving, setBgSaving] = useState(false);
   const [bgApplied, setBgApplied] = useState(false);
-  const [gameUnlocked, setGameUnlocked] = useState(Boolean(gameState?.unlocked));
+  // Sept 12, 2026: DEV_FORCE_UNLOCK_ALL (lib/devFlags.js) starts the game
+  // card already unlocked so it's playable the moment a world's page loads
+  // — no crystal spend, and student_planet_games is never touched by this,
+  // same "display bypass only" rule the flag uses everywhere else. Real
+  // unlock state still wins once the flag is off again.
+  const [gameUnlocked, setGameUnlocked] = useState(DEV_FORCE_UNLOCK_ALL || Boolean(gameState?.unlocked));
   const [unlocking, setUnlocking] = useState(false);
   const [unlockError, setUnlockError] = useState("");
   const [bestScore, setBestScore] = useState(gameState?.bestScore || 0);

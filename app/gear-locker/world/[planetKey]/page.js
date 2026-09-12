@@ -2,6 +2,7 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { supabaseAdmin } from "../../../../lib/supabaseAdmin";
 import { getWorldStory } from "../../../../lib/worldStories";
+import { DEV_FORCE_UNLOCK_ALL } from "../../../../lib/devFlags";
 import WorldRewardStationClient from "./WorldRewardStationClient";
 
 // Sept 5, 2026 — the unified "world reward station" page every Galaxy Hub
@@ -59,7 +60,13 @@ export default async function WorldPage({ params }) {
   // planet (or an unrecognized planetKey) gets bounced back to the map —
   // same "you can't be here yet" guard the rest of the app uses redirect()
   // for.
-  if (!planet || student.crystal_points < planet.threshold) {
+  //
+  // Sept 12, 2026: gated behind DEV_FORCE_UNLOCK_ALL (see lib/devFlags.js)
+  // per Emily's ask to preview every world's content regardless of real
+  // crystal_points. The map (GearLockerClient.js) already let a locked
+  // planet be clicked through, but this redirect still bounced the visit
+  // right back — this is the fix that actually lets the click land.
+  if (!planet || (!DEV_FORCE_UNLOCK_ALL && student.crystal_points < planet.threshold)) {
     redirect("/gear-locker");
   }
 
