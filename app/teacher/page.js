@@ -786,18 +786,25 @@ export default function TeacherOverview() {
           pixel left of the HUD down to the bottom edge of the window. The
           art's own proportions (BG_ASPECT) are preserved on an inner
           "canvas" that's always sized at least 100% x 100% of this
-          wrapper and center-cropped by overflow:hidden — the same
-          scale-and-crop math as CSS `background-size: cover`, just done
-          on a real element so the planet/console percent-coordinates
-          below still land exactly on the right spot on the art, cropped
-          or not. minHeight is a safety floor: below it (only on a window
-          wider than ~2.6x its own height) this wrapper stops shrinking
-          and the page scrolls instead of letting the crop eat into the
-          console buttons. */}
+          wrapper and cropped by overflow:hidden — the same scale-and-crop
+          math as CSS `background-size: cover`, just done on a real element
+          so the planet/console percent-coordinates below still land
+          exactly on the right spot on the art, cropped or not.
+          Anchored to the BOTTOM (not centered) on purpose: the console and
+          its landmarks sit right at the bottom edge of the source art, so
+          any vertical overflow needs to crop from the top (empty starfield
+          — harmless to lose) rather than splitting evenly top/bottom, which
+          was cropping the console's own floor off the bottom of the screen
+          on any window shorter than the art's ~16:9 ratio (common, since
+          the HUD bar above eats into the available height without shrinking
+          the width to match). minHeight is a safety floor: below it (only
+          on a window wider than ~2.6x its own height) this wrapper stops
+          shrinking and the page scrolls instead of letting the crop eat
+          into the console buttons. */}
       <div style={{ flex: 1, position: "relative", overflow: "hidden", minHeight: "38vw" }}>
         <div
           style={{
-            position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)",
+            position: "absolute", bottom: 0, left: "50%", transform: "translateX(-50%)",
             aspectRatio: BG_ASPECT,
             minWidth: "100%", minHeight: "100%", width: "auto", height: "auto",
             backgroundImage: `url(${ART.background})`, backgroundSize: "100% 100%", backgroundPosition: "center",
