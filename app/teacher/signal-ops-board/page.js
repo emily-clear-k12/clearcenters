@@ -4,8 +4,20 @@ import React, { useState, useEffect, useCallback, useRef, Suspense } from "react
 import { useRouter, useSearchParams } from "next/navigation";
 import { Maximize2, Minimize2, Radio, Users, Shield, Zap } from "lucide-react";
 import { supabase } from "../../../lib/supabaseClient";
-import TeacherSidebar from "../../../components/TeacherSidebar";
-import TeacherPageBanner from "../../../components/TeacherPageBanner";
+import TeacherHUD from "../../../components/TeacherHUD";
+import { PAGE_ACCENTS } from "../../../lib/teacherTheme";
+
+// Sept 13 — moved the teacher-facing chrome (everything except the actual
+// projected board) to the console-interior look: TeacherSidebar +
+// TeacherPageBanner swapped for TeacherHUD, using Mission Control's pink
+// accent since Signal Ops assignments are authored from the Assign flow.
+// Deliberately NOT touched: every color below, including the meters, vote
+// UI, and the projected board itself. This page's own "Soft Crystal
+// Sci-Fi" palette (see the comment it already carried) is Signal Ops' own
+// established feature identity, not leftover generic styling, so it stays
+// exactly as designed rather than being remapped to this page's accent —
+// same reasoning that keeps Distress Call violet on Challenge Library.
+const ACCENT = PAGE_ACCENTS["/teacher/assign"];
 
 // Soft Crystal Sci-Fi — lavender / white / violet / teal / gold (not dark cyberpunk).
 const COLORS = {
@@ -217,21 +229,18 @@ function SignalOpsBoardContent() {
   }
 
   return (
-    <div style={{ display: "flex", minHeight: "100vh", background: COLORS.canvas, fontFamily: "'Inter', sans-serif", color: COLORS.textDark }}>
+    <div style={{ minHeight: "100vh", background: COLORS.canvas, fontFamily: "'Inter', sans-serif", color: COLORS.textDark }}>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@600;700&family=Inter:wght@400;500;600;700&display=swap');
       `}</style>
-      {!isFullscreen && <TeacherSidebar teacherEmail={teacherEmail} />}
+      {!isFullscreen && <TeacherHUD title="Signal Ops Board" subtitle="Mission Control — start and project a live crew session" accent={ACCENT} teacherEmail={teacherEmail} />}
 
-      <main style={{ flex: 1, padding: isFullscreen ? 0 : "32px 36px", maxWidth: isFullscreen ? "none" : 1100, margin: isFullscreen ? 0 : "0 auto", display: "flex", flexDirection: "column" }}>
+      <main style={{ padding: isFullscreen ? 0 : "28px 36px 40px", maxWidth: isFullscreen ? "none" : 1100, margin: isFullscreen ? 0 : "0 auto", display: "flex", flexDirection: "column" }}>
         {!isFullscreen && (
           <>
-            <TeacherPageBanner>
-              <h1 style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 700, fontSize: 28, margin: 0, color: COLORS.white }}>Signal Ops Board</h1>
-              <p style={{ color: "rgba(255,255,255,.85)", fontSize: 13, margin: "4px 0 0 0" }}>
-                Start a live crew session, then project meters, votes, and waves. Kids join from the assignment — no code.
-              </p>
-            </TeacherPageBanner>
+            <p style={{ color: COLORS.textMuted, fontSize: 13.5, margin: "0 0 14px 0" }}>
+              Start a live crew session, then project meters, votes, and waves. Kids join from the assignment — no code.
+            </p>
 
             {error && (
               <div style={{ background: "#FBEAEA", color: "#B23A3A", borderRadius: 10, padding: "10px 14px", fontSize: 13, marginBottom: 12 }}>{error}</div>
