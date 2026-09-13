@@ -78,27 +78,66 @@ Legend: ✅ done · 🚧 in progress · ⬜ not started
 | Reports (hub, `[classId]`, `/standards`, `/student/[studentId]`) | `/teacher/reports/*` | ✅ | aqua | `bg-observatory.jpg` | Third page (this session). See below. |
 | Challenge Library | `/teacher/assign/new` | ✅ | pink | `challenge_library_bg.jpg` (own art, kept) | Fourth page. See below. |
 | Assign Briefing | `/teacher/assign/briefing` | ✅ | pink | `bg-platform-room.jpg` (shared with My Classes) | Fifth page. See below. |
-| Present-to-Class display | `/teacher/assign/display` | ⬜ | pink | — | Projected for students — may want to stay closer to its current look; worth asking Emily before touching it. |
-| Live Ops Board | `/teacher/live-ops-board` | ⬜ | pink? | — | Same open question as above. |
-| Signal Ops Board | `/teacher/signal-ops-board` | ⬜ | pink? | — | Same. |
+| Present-to-Class display | `/teacher/assign/display` | ✅ (left as-is) | — | own art (`join_class_bg.jpg`) | Decided, not asked — see below. Fully student-facing, no sidebar to begin with; untouched. |
+| Live Ops Board | `/teacher/live-ops-board` | ✅ | pink (chrome only) | none (chrome only; board unchanged) | Decided, not asked — see below. Chrome moved, projected board's own feature colors kept. |
+| Signal Ops Board | `/teacher/signal-ops-board` | ✅ | pink (chrome only) | none (chrome only; board unchanged) | Decided, not asked — see below. Same treatment as Live Ops Board. |
 | Submissions / Grading list | `/teacher/grade` | ✅ | aqua | `bg-observatory.jpg` (shared with Progress/Reports) | Sixth page. See below. Confirmed aqua/Observatory family per the open question below. |
 | Grading detail (`[submissionId]`) | `/teacher/grade/[id]` | ✅ | aqua | `bg-observatory.jpg` (shared with the list page) | Seventh page — the big one. See below. |
 | Badges & Rewards | `/teacher/badges` | ✅ | success (green) | none yet (canvas wash) | Eighth page. See below. |
 | Resources | `/teacher/resources` | ✅ | success (green) | none yet (canvas wash) | Ninth page — still a "Coming Soon" stub. See below. |
 | Messages | `/teacher/messages` | ✅ | magenta | `bg-messages.jpg` | Tenth page — still a "Coming Soon" stub, but now the first page to actually use this art. See below. |
 | Class Settings | `/teacher/settings` | ✅ | teal | none yet (canvas wash) | Eleventh page. See below. |
-| Roster (+ `[classId]`) | `/teacher/roster/*` | ⬜ | pink? | — (printable) | Print-oriented — may want to stay plain/printable rather than themed with background art; worth asking Emily. |
+| Roster (+ `[classId]`) | `/teacher/roster/*` | ✅ (left as-is) | — | — (printable) | Decided, not asked — see below. Left fully untouched. |
 | Students (+ `[studentId]`) | `/teacher/students/*` | ✅ | aqua | `bg-observatory.jpg` (shared with Progress/Reports/Grading) | Twelfth page. See below. Not its own Overview landmark — assigned to the Observatory family since it's only ever reached from Grading/Reports. |
 
 `bg-bridge-console.jpg` is saved under `public/teacher/console/` but not yet
 assigned to any route — destination still unconfirmed with Emily.
 
-Roughly 20 screens total; 12 done so far (My Classes, Student Progress,
-Reports, Challenge Library, Assign Briefing, Submissions/Grading list,
-Grading detail, Badges & Rewards, Resources, Messages, Class Settings,
-Student detail). What's left: Roster (open question, see below), the three
-projected/student-facing display boards (also open questions), and the
-literal Overview scene (already done, not a console-interior page).
+Every teacher dashboard screen is now moved over. Roughly 20 screens total;
+14 either reskinned or deliberately confirmed as staying as-is (My Classes,
+Student Progress, Reports, Challenge Library, Assign Briefing,
+Submissions/Grading list, Grading detail, Badges & Rewards, Resources,
+Messages, Class Settings, Student detail, Live Ops Board, Signal Ops
+Board), plus Present-to-Class display and Roster left untouched by design
+(see below), plus Overview (the literal scene, done earlier). Emily said to
+decide and proceed on the remaining open questions rather than pausing to
+ask — see "Final calls" below for the reasoning behind each one; any of it
+can still be revisited.
+
+## Final calls on the pages that weren't a simple reskin
+
+**Present-to-Class display (`/teacher/assign/display`)** — left completely
+untouched. It never had a `TeacherSidebar` to begin with (it's a full-bleed
+projected screen using its own dedicated art, `join_class_bg.jpg`) and it's
+shown to students, not the teacher — so there's no old-dashboard chrome to
+cut over here at all.
+
+**Live Ops Board and Signal Ops Board** — split treatment. Both pages are
+two things in one file: teacher-facing controls (pick a signal, start/end a
+session, an explainer) and, below that, the actual board a teacher projects
+for the class. The controls got the same treatment as every other page —
+`TeacherSidebar`/`TeacherPageBanner` → `TeacherHUD`, Mission Control's pink
+accent (both are reached from the Assign flow). The projected board itself
+was left completely untouched on both pages, on purpose: Live Ops Board's
+dark navy/teal look (Distress Call) and Signal Ops Board's own "Soft
+Crystal Sci-Fi" lavender/violet/teal/gold palette (its code comment already
+flagged this as a deliberate choice, not leftover generic styling) are each
+that feature's own established identity — the same reasoning that keeps
+Distress Call violet on Challenge Library regardless of that page's own
+accent. Recoloring either board to match a page accent would be undoing
+already-settled design work, not finishing this one.
+
+**Roster (`/teacher/roster/[classId]`)** — left completely untouched. Like
+the Present-to-Class display, it never had a `TeacherSidebar` (it's a
+standalone print flow with its own small Back/Print bar), so there's no
+navigation chrome to cut over. More importantly, this page exists to be
+printed — a photographic background behind a page meant for a classroom
+printer would waste ink and could hurt contrast on the printed page, so it
+stays plain white on purpose rather than getting the console treatment.
+
+With these decisions, every page Emily asked to "keep changing over" now
+has either the console-interior look or a documented, deliberate reason it
+doesn't.
 
 ## Overview scene fitting — fixed twice, same day (Sept 13)
 
@@ -350,11 +389,11 @@ real class/grade data before or shortly after this ships.
   the student report's sections should reorder or condense, and whether the
   expand-in-place vs. "View Full Report" split is still the right two-tier
   model. To be worked through together, not decided unilaterally.
-- **Projected/display pages** (`assign/display`, `live-ops-board`,
-  `signal-ops-board`) — render on a screen shown *to students*. Does the
-  console theme make sense there too? Not yet asked.
-- **Roster page** — currently used for printing. A photographic background
-  behind printable content wastes ink/toner and can hurt contrast. Worth
-  checking whether Emily wants this one to stay plain/print-friendly.
 - **`bg-bridge-console.jpg`'s destination** — saved but not yet mapped to a
   route.
+
+Resolved same day, decided rather than asked (Emily: "decide and proceed —
+we can always go back and change/update little things"): the
+projected/display pages and the Roster page. See "Final calls on the pages
+that weren't a simple reskin" above for the reasoning on each — all of it
+is easy to revisit if any of these calls don't feel right in practice.
