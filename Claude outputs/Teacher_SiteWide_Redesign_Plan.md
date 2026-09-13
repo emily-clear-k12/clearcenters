@@ -83,19 +83,22 @@ Legend: ✅ done · 🚧 in progress · ⬜ not started
 | Signal Ops Board | `/teacher/signal-ops-board` | ⬜ | pink? | — | Same. |
 | Submissions / Grading list | `/teacher/grade` | ✅ | aqua | `bg-observatory.jpg` (shared with Progress/Reports) | Sixth page. See below. Confirmed aqua/Observatory family per the open question below. |
 | Grading detail (`[submissionId]`) | `/teacher/grade/[id]` | ✅ | aqua | `bg-observatory.jpg` (shared with the list page) | Seventh page — the big one. See below. |
-| Badges & Rewards | `/teacher/badges` | ⬜ | success (green) | needed | Resources' family. |
-| Resources | `/teacher/resources` | ⬜ | success (green) | needed | Currently a "Coming Soon" stub — lowest-risk place to establish patterns fresh. |
-| Messages | `/teacher/messages` | ⬜ | magenta | `bg-messages.jpg` (mapped, page not built) | Currently a "Coming Soon" stub. |
-| Class Settings | `/teacher/settings` | ⬜ | teal | needed | Partially touched already (S.A.M./planet pickers) but still on the old light-cream theme otherwise. |
+| Badges & Rewards | `/teacher/badges` | ✅ | success (green) | none yet (canvas wash) | Eighth page. See below. |
+| Resources | `/teacher/resources` | ✅ | success (green) | none yet (canvas wash) | Ninth page — still a "Coming Soon" stub. See below. |
+| Messages | `/teacher/messages` | ✅ | magenta | `bg-messages.jpg` | Tenth page — still a "Coming Soon" stub, but now the first page to actually use this art. See below. |
+| Class Settings | `/teacher/settings` | ✅ | teal | none yet (canvas wash) | Eleventh page. See below. |
 | Roster (+ `[classId]`) | `/teacher/roster/*` | ⬜ | pink? | — (printable) | Print-oriented — may want to stay plain/printable rather than themed with background art; worth asking Emily. |
-| Students (+ `[studentId]`) | `/teacher/students/*` | ⬜ | — | needed | Individual student detail page — not tied to one landmark. |
+| Students (+ `[studentId]`) | `/teacher/students/*` | ✅ | aqua | `bg-observatory.jpg` (shared with Progress/Reports/Grading) | Twelfth page. See below. Not its own Overview landmark — assigned to the Observatory family since it's only ever reached from Grading/Reports. |
 
 `bg-bridge-console.jpg` is saved under `public/teacher/console/` but not yet
 assigned to any route — destination still unconfirmed with Emily.
 
-Roughly 20 screens total; 7 done so far (My Classes, Student Progress,
+Roughly 20 screens total; 12 done so far (My Classes, Student Progress,
 Reports, Challenge Library, Assign Briefing, Submissions/Grading list,
-Grading detail).
+Grading detail, Badges & Rewards, Resources, Messages, Class Settings,
+Student detail). What's left: Roster (open question, see below), the three
+projected/student-facing display boards (also open questions), and the
+literal Overview scene (already done, not a console-interior page).
 
 ## Overview scene fitting — fixed twice, same day (Sept 13)
 
@@ -223,6 +226,75 @@ doubles as a genuinely meaningful signal:
 The student avatar circle in the top info bar also stays violet, matching
 the precedent set on every other page that avatars are neutral, not
 page-branded.
+
+Verified with a clean `next build`.
+
+## Badges & Rewards, Resources, Messages — done Sept 13, this session
+
+Eighth, ninth, and tenth pages, shipped together. Resources and Messages
+are still "Coming Soon" stubs — nothing to port there beyond the shell:
+`TeacherSidebar`+`TeacherPageBanner` → `TeacherHUD`, decorative violet →
+each page's own accent (green for Resources, magenta for Messages), the
+flat white "Coming Soon" card → `panelStyle`. Messages is the first page
+to actually use `bg-messages.jpg` (it existed and was mapped in
+`lib/teacherTheme.js` since earlier in the day, just unused until now).
+Resources and Badges have no dedicated art yet, so both fall back to the
+plain canvas wash — same as any not-yet-illustrated page.
+
+Badges & Rewards is real functionality (rename badge tiers, change their
+Crystal Points thresholds, award bonus Crystal Points to a class or
+student) so it got the full treatment: the tier-list card became a
+`panelStyle` glass card, and decorative violet on the page's own chrome
+(the tier row's default "Save" button state) became green `ACCENT`
+(Resources' family, since badges live under that landmark).
+
+**Left deliberately violet, on purpose:** everything in the Award Crystal
+Points flow — the header button and the entire modal (title, mode toggle,
+preset amounts, Award button). Crystal Points are the app's currency and
+violet is their brand color everywhere they show up elsewhere in the app
+(a student's Home screen counter, etc.), so this page's own green branding
+shouldn't bleed into that — the same principle that keeps Distress Call
+violet on Challenge Library regardless of that page's pink accent.
+
+Verified with a clean `next build`.
+
+## Class Settings (`/teacher/settings`) — done Sept 13, this session
+
+Eleventh page. This one was already partially touched (the S.A.M. skin
+picker and per-class planet picker both existed before this redesign
+started) but still sat on the old `TeacherSidebar` + light-cream frame.
+Inherits S.A.M.'s teal accent, since the S.A.M. skin picker already tied
+this page to that landmark. No dedicated background art yet, so it falls
+back to the plain canvas wash. `TeacherSidebar` + `TeacherPageBanner` →
+`TeacherHUD`; the flat white S.A.M.-picker card, empty-state card, and each
+per-class card became `panelStyle` glass cards; decorative violet (S.A.M.
+skin selection, class-rename Save button, planet-picker selection ring) →
+teal `ACCENT`. No save/query logic changed.
+
+**Left alone, on purpose:** each planet button's own radial-gradient
+fill — that's the individual planet's real color (the same hue used for it
+on the Overview scene), not page decoration, so every planet keeps its own
+look regardless of this page's teal accent.
+
+Verified with a clean `next build`.
+
+## Student detail (`/teacher/students/[studentId]`) — done Sept 13, this session
+
+Twelfth page. Not one of the 5 Overview landmarks on its own — it's a
+click-through from Grading and from Reports' Student Summary rows — so it
+shares those pages' aqua Observatory family rather than getting its own
+color (newly added to `PAGE_ACCENTS`/`PAGE_BACKGROUNDS` in
+`lib/teacherTheme.js` under `/teacher/students`). `TeacherSidebar` swapped
+for `TeacherHUD`; the flat white stat tiles and Assignments card became
+`panelStyle` glass cards; decorative violet on chrome (nothing major here —
+this page was already fairly neutral) became aqua `ACCENT`. No query or
+status logic changed.
+
+**Left alone, on purpose, same principle as Grading list/detail:** the
+amber "Needs Review" and teal "graded"/"released" status pills on each
+assignment row are real submission-status signals, not page branding. The
+student avatar circle also stays violet, matching the precedent that
+avatars are neutral, not page-branded, everywhere else in this redesign.
 
 Verified with a clean `next build`.
 
