@@ -462,6 +462,27 @@ function NewAssignmentContent() {
                                 border: groupSelected ? `2px solid ${COLORS.violet}` : `1.5px solid ${COLORS.border}`,
                                 borderRadius: 14,
                                 overflow: "hidden",
+                                // Sept 13, 2026 — the bug: this card's parent is a
+                                // flex column with maxHeight:420 + overflowY:auto,
+                                // meant to let 19 stacked cards scroll past that
+                                // cap. But a flex item's browser-computed minimum
+                                // height defaults to its CONTENT height only when
+                                // overflow is "visible" — the instant a flex item
+                                // has overflow:hidden (needed here to clip the
+                                // image's corners to the border-radius), its
+                                // automatic minimum drops to 0. With 19 cards each
+                                // wanting ~130-150px but only 420px of room, flexbox
+                                // shrank every one of them down toward that 0 floor
+                                // (~12px each, confirmed live via getBoundingClientRect)
+                                // instead of ever reaching the scrollbar — so every
+                                // row rendered as a sliver clipping almost all of its
+                                // own content (and the Verdict/Weigh-In/Thread chips
+                                // below it entirely). flexShrink:0 is the fix: it
+                                // stops this card from shrinking below its natural
+                                // content size at all, so the column overflows its
+                                // 420px cap the way it was always supposed to and
+                                // overflowY:auto scrolls it instead of crushing it.
+                                flexShrink: 0,
                                 boxShadow: groupSelected ? "0 6px 16px rgba(140,82,242,.16)" : "0 2px 8px rgba(13,27,42,.05)",
                               }}
                             >
