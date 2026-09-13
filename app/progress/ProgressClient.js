@@ -243,16 +243,23 @@ export default function ProgressClient({ student, missions, badgeTiers, pointsHi
   // Badge tier logic ported from Home/Crystal Vault (Aug 27) — same
   // earned/locked math, reused here for the "Badges Earned" row and the
   // "Level"/"Next Level" cards.
+  //
+  // Sept 13 — tiers now gate on missions.length (missions turned in)
+  // instead of student.crystal_points, per Emily's own longstanding plan
+  // to base badges on missions completed rather than crystals. Crystal
+  // Points remain their own separate currency elsewhere in the app
+  // (S.A.M. skins, planets, Gear Locker) — untouched here.
   const tiers = badgeTiers && badgeTiers.length > 0 ? badgeTiers : [];
-  const currentTierIndex = [...tiers].reverse().findIndex((t) => student.crystal_points >= t.threshold);
+  const missionsCompleted = missions.length;
+  const currentTierIndex = [...tiers].reverse().findIndex((t) => missionsCompleted >= t.threshold);
   const currentTier = tiers.length > 0 ? (currentTierIndex >= 0 ? tiers[tiers.length - 1 - currentTierIndex] : tiers[0]) : null;
   const currentTierPos = currentTier ? tiers.findIndex((t) => t.id === currentTier.id) : -1;
   const level = currentTierPos >= 0 ? currentTierPos + 1 : 1;
   const nextTier = currentTierPos >= 0 && currentTierPos + 1 < tiers.length ? tiers[currentTierPos + 1] : null;
   const overallPercent = nextTier
-    ? Math.min(100, Math.max(0, Math.round(((student.crystal_points - currentTier.threshold) / (nextTier.threshold - currentTier.threshold)) * 100)))
+    ? Math.min(100, Math.max(0, Math.round(((missionsCompleted - currentTier.threshold) / (nextTier.threshold - currentTier.threshold)) * 100)))
     : 100;
-  const pointsToNext = nextTier ? Math.max(0, nextTier.threshold - student.crystal_points) : 0;
+  const missionsToNext = nextTier ? Math.max(0, nextTier.threshold - missionsCompleted) : 0;
 
   // Recent Activity — a combined, real timeline built from the same
   // mission data as the three columns (submitted + graded events), not a
@@ -340,7 +347,7 @@ export default function ProgressClient({ student, missions, badgeTiers, pointsHi
               <>
                 <p style={{ margin: "0 0 4px 0", fontFamily: "'Poppins', sans-serif", fontWeight: 700, fontSize: 14, color: COLORS.violet }}>Next Level</p>
                 <p style={{ margin: "0 0 10px 0", fontSize: 12, color: COLORS.textMuted, lineHeight: 1.4 }}>
-                  Keep going! Earn {pointsToNext} more crystal{pointsToNext === 1 ? "" : "s"} to reach {nextTier.label}!
+                  Keep going! Complete {missionsToNext} more mission{missionsToNext === 1 ? "" : "s"} to reach {nextTier.label}!
                 </p>
               </>
             ) : (
@@ -461,7 +468,7 @@ export default function ProgressClient({ student, missions, badgeTiers, pointsHi
                 <p style={{ fontSize: 11.5, color: COLORS.textMuted, margin: 0 }}>Badges aren't set up yet.</p>
               ) : (
                 tiers.map((tier) => {
-                  const earned = student.crystal_points >= tier.threshold;
+                  const earned = missionsCompleted >= tier.threshold;
                   return (
                     <img
                       key={tier.id}

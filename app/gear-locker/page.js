@@ -44,6 +44,16 @@ export default async function GearLockerPage() {
     .select("*")
     .order("sort_order");
 
+  // Sept 13 — badges gate on missions completed rather than crystal_points
+  // now (same change as Home/My Progress/Crystal Vault/the teacher's
+  // student report) — needed here too since this page computes its own
+  // "Badges Earned" count rather than reading it from anywhere shared.
+  const { count: missionsCompleted } = await supabaseAdmin
+    .from("submissions")
+    .select("id", { count: "exact", head: true })
+    .eq("student_id", studentId)
+    .not("submitted_at", "is", null);
+
   // Powers the "Crystal Log" popup — same table and shape My Progress's
   // growth chart uses.
   const { data: pointsHistory } = await supabaseAdmin
@@ -60,6 +70,7 @@ export default async function GearLockerPage() {
       visitedPlanetKeys={(visits || []).map((v) => v.planet_key)}
       badgeTiers={badgeTiers || []}
       pointsHistory={pointsHistory || []}
+      missionsCompleted={missionsCompleted || 0}
     />
   );
 }

@@ -164,7 +164,7 @@ function CrystalLogModal({ open, onClose, pointsHistory }) {
   );
 }
 
-export default function GearLockerClient({ student, planets, visitedPlanetKeys, badgeTiers, pointsHistory }) {
+export default function GearLockerClient({ student, planets, visitedPlanetKeys, badgeTiers, pointsHistory, missionsCompleted }) {
   const router = useRouter();
   const [selectedPlanet, setSelectedPlanet] = useState(null);
   const [logOpen, setLogOpen] = useState(false);
@@ -174,7 +174,11 @@ export default function GearLockerClient({ student, planets, visitedPlanetKeys, 
 
   const visitedSet = new Set(visitedPlanetKeys);
   const tiers = badgeTiers || [];
-  const earnedTiers = tiers.filter((t) => student.crystal_points >= t.threshold);
+  // Sept 13 — badges gate on missionsCompleted now, not crystal_points
+  // (same change as Home/My Progress/Crystal Vault). Planet unlocks below
+  // (lockedPlanetsByCost/pointsToNext) are a separate system and stay on
+  // crystal_points — only badge tiers changed.
+  const earnedTiers = tiers.filter((t) => missionsCompleted >= t.threshold);
   const badgesEarnedCount = earnedTiers.length;
   const planetsVisitedCount = planets.filter((p) => visitedSet.has(p.planet_key)).length;
 

@@ -500,8 +500,8 @@ turned up a few more things, all fixed same pass:
   from `"Teach"` → `"Mission Control"` and `"Track"` → `"Observatory"` (both
   shown in full on the button, no shortening needed). "Grow & Manage" spans
   three different rooms (Resources/Messages/S.A.M.) with no single room to
-  borrow from, so it keeps its functional name and its existing "Grow"
-  shortened button label.
+  borrow from, so it kept its functional name at the time — see the next
+  round below for its follow-up rename to "Support Deck."
 
 - **Student Progress's filter controls were hard to read.** The view toggle,
   class/search/band filters, and summary line sat directly on the busy
@@ -529,3 +529,79 @@ Files touched this round: `components/TeacherHUD.js` (grid centering),
 (filter panel). Verified the centering and renamed-nav dropdowns the same
 way as the round above (isolated test harness + screenshots, deleted before
 shipping), plus a full `next build` after each change.
+
+## "Grow" renamed to "Support Deck" + Badges & Rewards missions-completed redesign — done Sept 13, later same session
+
+Emily asked to rename the "Grow" nav button to something more on-theme, then
+asked to start building out the Badges & Rewards page (the first item in
+that dropdown) — when asked for my own opinion on direction, she approved
+switching badge tiers from Crystal Points to missions completed, plus adding
+a roster standing view for teachers.
+
+- **"Grow & Manage" → "Support Deck."** `NAV_GROUPS`' `section` field in
+  `TeacherSidebar.js` changed from `"Grow & Manage"` to `"Support Deck"` —
+  still the one category spanning three rooms (Resources/Messages/S.A.M.)
+  with no single room name to borrow, so it's a themed functional name like
+  the old one rather than a room name like Mission Control/Observatory.
+  "Support Deck" is short enough to show in full on the top-bar button (same
+  as Mission Control and Observatory already do), so `TeacherHUD.js`'s
+  `BUTTON_LABEL` shortening map — which used to turn "Grow & Manage" into
+  "Grow" for space — is now empty; left in place rather than deleted in case
+  a future section name needs it.
+
+- **Badge tiers now gate on missions completed, not Crystal Points.** Emily's
+  original plan (found in the project's own docs) was to make badges reflect
+  actual mission-completion progress rather than the spendable Crystal
+  Points currency, which students can spend down on S.A.M. skins and gear —
+  meaning a hard-working student who spent their points could look, on
+  paper, like they'd done less than they actually had. "Missions completed"
+  uses the same definition already established elsewhere in the app: a count
+  of `submissions` rows with `submitted_at` not null for that student (drafts
+  don't count; grading/release status doesn't matter). Crystal Points itself
+  is completely unchanged — still the currency for S.A.M. skins and gear, and
+  the separate `planets.threshold` unlock system on the Gear Locker's planet
+  map is also untouched and still Crystal-Points-based; only the
+  `badge_tiers.threshold` comparison changed what it's compared against.
+  Updated everywhere a tier is computed against a student: `app/home/HomeClient.js`,
+  `app/progress/ProgressClient.js`, `app/badges/BadgesClient.js` (+
+  `app/badges/page.js`, `app/home/page.js`'s already-existing missions count
+  reused), `app/gear-locker/GearLockerClient.js` (+ `app/gear-locker/page.js`,
+  new missions-completed query added), and the teacher's
+  `app/teacher/reports/student/[studentId]/page.js`. Verified the
+  tier-standing comparison logic itself with a standalone Node script against
+  11 hand-built boundary cases (below lowest tier, exact threshold matches,
+  top tier, above top tier) plus an empty-tiers edge case — all passed —
+  following this project's own established pattern of testing pure
+  computation logic outside the app when a subtle comparison bug wouldn't be
+  visible in a screenshot.
+
+  **Important — Emily needs to do this part:** the tier `threshold` numbers
+  already saved in the database were calibrated for Crystal Points (which
+  run much higher than mission counts), so they're now stale relative to
+  what they gate. The teacher-facing field on `app/teacher/badges/page.js`
+  is relabeled "Missions Needed" (from "Points Needed") for exactly this —
+  Emily should open Badges & Rewards and set each tier to a sensible mission
+  count. A rough starting shape, just a suggestion since I have no way to see
+  the real current tier count/labels/order from this sandbox: something like
+  5 → 10 → 20 → 30 → 50 missions for a 5-tier ladder, adjusted to however many
+  tiers actually exist and how many missions a class realistically completes
+  in a term.
+
+- **New "Roster Standing" section on Badges & Rewards.** Below the existing
+  tier-editing panel, a new section groups a teacher's students by class and
+  shows each one's current tier, missions completed, and how many more
+  missions to the next tier — same `standingFor()` boundary logic as above,
+  driven by a new `missionsByStudent` state populated from a
+  classes → assignments → submissions query added to `loadData` in
+  `app/teacher/badges/page.js`.
+
+Files touched this round: `components/TeacherSidebar.js` (Support Deck
+rename), `components/TeacherHUD.js` (label map simplification),
+`app/home/HomeClient.js`, `app/progress/ProgressClient.js`,
+`app/badges/page.js`, `app/badges/BadgesClient.js`,
+`app/teacher/reports/student/[studentId]/page.js`, `app/gear-locker/page.js`,
+`app/gear-locker/GearLockerClient.js`, `app/teacher/badges/page.js` (tier
+metric switch + Roster Standing section). Verified the Support Deck rename
+visually via the same isolated test-harness pattern (screenshot, deleted
+before shipping) and the tier math via the standalone Node script above,
+plus a full `next build` after all changes.

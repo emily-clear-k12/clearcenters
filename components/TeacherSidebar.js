@@ -45,9 +45,16 @@ const COLORS = {
 // had to learn both "Track has Reports in it" AND "Reports is in the
 // Observatory." Turned out "Teach" is exactly Mission Control's 5 pages and
 // "Track" is exactly Observatory's 3, so those two categories could just
-// take the room's own name outright. "Grow & Manage" is the one category
-// that spans three different rooms (Resources/Messages/S.A.M.) with no
-// single room to borrow from, so it keeps its functional name.
+// take the room's own name outright. "Grow & Manage" was the one category
+// that spanned three different rooms (Resources/Messages/S.A.M.) with no
+// single room to borrow from, so it kept its functional name at the time.
+//
+// Renamed "Grow & Manage" -> "Support Deck" (Sept 13, later still) — Emily's
+// pick when asked for something more on-theme than "Grow," which didn't fit
+// the space/mission vocabulary everywhere else. Still the one category
+// spanning three rooms (Resources/Messages/S.A.M.) rather than a single
+// room's name, so it's a themed functional name rather than a room name
+// like Mission Control/Observatory are.
 export const NAV_GROUPS = [
   {
     section: null,
@@ -74,7 +81,7 @@ export const NAV_GROUPS = [
     ],
   },
   {
-    section: "Grow & Manage",
+    section: "Support Deck",
     items: [
       { label: "Badges & Rewards", icon: "/teacher/nav_badges_rewards.png", href: "/teacher/badges" },
       { label: "Resources", icon: "/teacher/nav_resources.png", href: "/teacher/resources" },

@@ -217,9 +217,13 @@ export default function StudentReportPage() {
       return { standard, title, avgPct: Math.round((avg / 2) * 100), band: proficiencyBand(avg) };
     });
 
+    // Sept 13 — badges now gate on missionsCompleted (already computed
+    // above for this same report) instead of crystal_points, matching the
+    // same change made to Home/My Progress/Crystal Vault. Crystal Points
+    // stay in the report as their own separate stat below.
     const allTiers = tiers || [];
-    const earnedTiers = allTiers.filter((t) => (student.crystal_points || 0) >= t.threshold);
-    const nextTier = allTiers.find((t) => (student.crystal_points || 0) < t.threshold) || null;
+    const earnedTiers = allTiers.filter((t) => missionsCompleted >= t.threshold);
+    const nextTier = allTiers.find((t) => missionsCompleted < t.threshold) || null;
 
     setReport({
       studentName: student.first_name,
@@ -405,7 +409,7 @@ export default function StudentReportPage() {
                 <div style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 700, fontSize: 20, color: COLORS.violet }}>✦ {report.crystalPoints}</div>
                 <div style={{ fontSize: 11, color: COLORS.textMuted }}>Crystal Points earned</div>
                 {report.nextTier && (
-                  <div style={{ fontSize: 10.5, color: COLORS.textMuted, marginTop: 2 }}>{report.nextTier.threshold - report.crystalPoints} pts to {report.nextTier.label}</div>
+                  <div style={{ fontSize: 10.5, color: COLORS.textMuted, marginTop: 2 }}>{report.nextTier.threshold - report.missionsCompleted} more mission{report.nextTier.threshold - report.missionsCompleted === 1 ? "" : "s"} to {report.nextTier.label}</div>
                 )}
               </div>
             </div>

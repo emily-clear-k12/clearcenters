@@ -22,6 +22,27 @@ import { COLORS, PAGE_ACCENTS, PAGE_BACKGROUNDS, panelStyle } from "../../../lib
 // up (the counter on a student's Home screen, etc.) — so this page's own
 // green branding shouldn't bleed into that, the same way Distress Call
 // stays violet on Challenge Library regardless of that page's pink accent.
+//
+// Sept 13, later same day — badges now gate on missions completed instead
+// of Crystal Points, Emily's own longstanding plan (see app/badges/page.js's
+// history) finally landing: bonus point awards were diluting points as a
+// "real effort" signal, whereas "finished 12 missions" is a cleaner one.
+// Same exact "missions completed" definition used everywhere else this
+// already changed (Home, My Progress, Crystal Vault, Gear Locker, the
+// teacher's own student report) — a real, final submission
+// (`submitted_at IS NOT NULL`), nothing about grading or release status.
+// The `threshold` column itself is untouched (still just "the number a
+// tier needs to reach") — only what it's compared against changed, so
+// renamed the field here from "Points Needed" to "Missions Needed."
+// IMPORTANT: the actual numbers already saved in each tier's threshold are
+// whatever Emily set them to as POINT values before this change — those
+// will read as absurd mission counts (e.g. "500 missions") until she
+// updates each one through the now-relabeled fields below to something
+// that makes sense as a mission count.
+//
+// Also added, same pass: a roster standing section so a teacher can
+// actually see where their students sit relative to the tiers, instead of
+// this page only being able to edit the tiers themselves.
 const ACCENT = PAGE_ACCENTS["/teacher/badges"];
 const BG = PAGE_BACKGROUNDS["/teacher/badges"];
 
@@ -122,6 +143,7 @@ export default function BadgesRewardsPage() {
 
   const [classes, setClasses] = useState([]);
   const [rawStudents, setRawStudents] = useState([]);
+  const [missionsByStudent, setMissionsByStudent] = useState({});
   const [awardModalOpen, setAwardModalOpen] = useState(false);
   const [awarding, setAwarding] = useState(false);
   const [awardSuccess, setAwardSuccess] = useState(null);
@@ -161,8 +183,35 @@ export default function BadgesRewardsPage() {
     if (classIds.length > 0) {
       const { data } = await supabase.from("students").select("id, first_name, class_id").in("class_id", classIds);
       setRawStudents(data || []);
+
+      // Roster standing section below — same "missions completed" count
+      // used everywhere else this changed (a real, final submission,
+      // regardless of grading/release status), computed the same way
+      // Student Progress computes it: assignments for these classes, then
+      // submissions against those assignments, counted per student.
+      const studentIds = (data || []).map((s) => s.id);
+      if (studentIds.length > 0) {
+        const { data: assignmentRows } = await supabase.from("assignments").select("id").in("class_id", classIds);
+        const assignmentIds = (assignmentRows || []).map((a) => a.id);
+        if (assignmentIds.length > 0) {
+          const { data: subRows } = await supabase
+            .from("submissions")
+            .select("student_id")
+            .in("assignment_id", assignmentIds)
+            .in("student_id", studentIds)
+            .not("submitted_at", "is", null);
+          const counts = {};
+          (subRows || []).forEach((s) => { counts[s.student_id] = (counts[s.student_id] || 0) + 1; });
+          setMissionsByStudent(counts);
+        } else {
+          setMissionsByStudent({});
+        }
+      } else {
+        setMissionsByStudent({});
+      }
     } else {
       setRawStudents([]);
+      setMissionsByStudent({});
     }
 
     setLoading(false);
@@ -232,6 +281,21 @@ export default function BadgesRewardsPage() {
     }
   }
 
+  // Roster standing — same current-tier/next-tier math as Home, My
+  // Progress, Crystal Vault, and the student report, using each tier's
+  // SAVED threshold (not the live draft above — a student's actual
+  // standing shouldn't shift while a teacher is mid-edit and hasn't hit
+  // Save yet).
+  function standingFor(missionsCompleted) {
+    if (tiers.length === 0) return { currentTier: null, nextTier: null, missionsToNext: 0 };
+    const currentTierIndex = [...tiers].reverse().findIndex((t) => missionsCompleted >= t.threshold);
+    const currentTier = currentTierIndex >= 0 ? tiers[tiers.length - 1 - currentTierIndex] : null;
+    const currentPos = currentTier ? tiers.findIndex((t) => t.id === currentTier.id) : -1;
+    const nextTier = currentPos >= 0 && currentPos + 1 < tiers.length ? tiers[currentPos + 1] : tiers[0].threshold > missionsCompleted ? tiers[0] : null;
+    const missionsToNext = nextTier ? Math.max(0, nextTier.threshold - missionsCompleted) : 0;
+    return { currentTier, nextTier, missionsToNext };
+  }
+
   if (loadingAuth || loading) {
     return <div style={{ minHeight: "100vh", background: COLORS.canvas, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Inter', sans-serif", color: COLORS.textMuted }}>Loading...</div>;
   }
@@ -257,12 +321,12 @@ export default function BadgesRewardsPage() {
         @keyframes gcFadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
       `}</style>
 
-      <TeacherHUD title="Badges & Rewards" subtitle="Resources — Crystal Points and badge tiers" accent={ACCENT} teacherEmail={teacherEmail} />
+      <TeacherHUD title="Badges & Rewards" subtitle="Resources — missions, badge tiers, and Crystal Points" accent={ACCENT} teacherEmail={teacherEmail} />
 
-      <main style={{ padding: "28px 36px 40px", maxWidth: 900, margin: "0 auto" }}>
+      <main style={{ padding: "28px 36px 40px", maxWidth: 1000, margin: "0 auto" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 20 }}>
           <div style={{ maxWidth: "58%" }}>
-            <p style={{ margin: 0, color: COLORS.textMuted, fontSize: 14 }}>Rename a tier or change how many Crystal Points it takes to reach it — students see these on their Home screen.</p>
+            <p style={{ margin: 0, color: COLORS.textMuted, fontSize: 14 }}>Rename a tier or change how many missions it takes to reach it — students see these on their Home screen.</p>
           </div>
           <button onClick={() => setAwardModalOpen(true)} disabled={classes.length === 0} className="gc-btn" style={{ background: COLORS.violet, color: COLORS.white, borderRadius: 999, padding: "11px 20px", fontWeight: 700, fontSize: 13.5, opacity: classes.length === 0 ? 0.5 : 1, whiteSpace: "nowrap" }}>
             🔮 Award Crystal Points
@@ -297,7 +361,7 @@ export default function BadgesRewardsPage() {
                   />
                 </div>
                 <div style={{ width: 160 }}>
-                  <label style={{ display: "block", fontSize: 10.5, fontWeight: 700, color: COLORS.textMuted, textTransform: "uppercase", letterSpacing: 0.4, marginBottom: 4 }}>Points Needed</label>
+                  <label style={{ display: "block", fontSize: 10.5, fontWeight: 700, color: COLORS.textMuted, textTransform: "uppercase", letterSpacing: 0.4, marginBottom: 4 }}>Missions Needed</label>
                   <input
                     type="number"
                     min={0}
@@ -331,6 +395,49 @@ export default function BadgesRewardsPage() {
             </div>
           )}
         </div>
+
+        {classes.length > 0 && tiers.length > 0 && (
+          <div style={{ marginTop: 28 }}>
+            <h2 style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 700, fontSize: 16, margin: "0 0 4px 4px", color: COLORS.textDark }}>Roster Standing</h2>
+            <p style={{ margin: "0 0 14px 4px", color: COLORS.textMuted, fontSize: 12.5 }}>Where each student sits right now, based on missions completed.</p>
+            {classes.map((cls) => {
+              const studentsInClass = rawStudents.filter((s) => s.class_id === cls.id).sort((a, b) => a.first_name.localeCompare(b.first_name));
+              if (studentsInClass.length === 0) return null;
+              return (
+                <div key={cls.id} style={{ marginBottom: 20 }}>
+                  <div style={{ fontSize: 12, fontWeight: 700, color: COLORS.textMuted, margin: "0 0 8px 4px" }}>{cls.name}</div>
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(190px, 1fr))", gap: 10 }}>
+                    {studentsInClass.map((s) => {
+                      const missionsCompleted = missionsByStudent[s.id] || 0;
+                      const { currentTier, nextTier, missionsToNext } = standingFor(missionsCompleted);
+                      return (
+                        <div key={s.id} style={{ ...panelStyle(ACCENT, { padding: 12, display: "flex", gap: 10, alignItems: "center" }) }}>
+                          {currentTier ? (
+                            <img
+                              src={`/badges/transparent/${currentTier.tier_key}.png`}
+                              onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = currentTier.image_path; }}
+                              alt={currentTier.label}
+                              style={{ width: 36, height: 36, objectFit: "contain", flexShrink: 0 }}
+                            />
+                          ) : (
+                            <div style={{ width: 36, height: 36, borderRadius: "50%", background: `${ACCENT}18`, flexShrink: 0 }} />
+                          )}
+                          <div style={{ minWidth: 0, flex: 1 }}>
+                            <div style={{ fontWeight: 700, fontSize: 13, color: COLORS.textDark, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{s.first_name}</div>
+                            <div style={{ fontSize: 11, color: COLORS.textMuted }}>{missionsCompleted} mission{missionsCompleted === 1 ? "" : "s"}{currentTier ? ` · ${currentTier.label}` : ""}</div>
+                            {nextTier && (
+                              <div style={{ fontSize: 10.5, color: ACCENT, marginTop: 1 }}>{missionsToNext} more to {nextTier.label}</div>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
       </main>
 
       {awardSuccess && (

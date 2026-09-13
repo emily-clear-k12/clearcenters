@@ -327,8 +327,15 @@ export default function HomeClient({ student, studentClass, assignments, mission
   // Just enough badge logic to show the student's CURRENT tier icon next to
   // their name in the header tile (Aug 27) — the full badge collection with
   // earned/locked state for every tier lives on its own /badges page.
+  //
+  // Sept 13 — tiers now gate on missionsCompleted instead of crystal_points,
+  // per Emily's own longstanding plan (see app/badges/page.js's comment) to
+  // base badges on missions completed rather than crystals, since bonus
+  // point awards were diluting points as a "real effort" signal. Crystal
+  // Points remain their own separate currency (S.A.M. skins, planets, Gear
+  // Locker) — untouched here, this only changes what badge tiers measure.
   const tiers = badgeTiers && badgeTiers.length > 0 ? badgeTiers : [];
-  const currentTierIndex = [...tiers].reverse().findIndex((t) => student.crystal_points >= t.threshold);
+  const currentTierIndex = [...tiers].reverse().findIndex((t) => missionsCompleted >= t.threshold);
   const currentTier = tiers.length > 0 ? (currentTierIndex >= 0 ? tiers[tiers.length - 1 - currentTierIndex] : tiers[0]) : null;
 
   return (

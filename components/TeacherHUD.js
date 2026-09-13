@@ -38,7 +38,10 @@
 // "The Hub" (was "Overview," renamed to match the student side's own
 // terminology) gets its own bigger, dedicated button rather than living
 // inside a dropdown, since it's the one destination every teacher jumps
-// back to constantly.
+// back to constantly. (Teach and Track were later renamed to Mission
+// Control and Observatory, and Grow to Support Deck — see TeacherSidebar.js
+// for that rationale; this paragraph is left describing the original three
+// as historical context for the dropdown-consolidation decision itself.)
 //
 // Revised again, later same day (round 3): the title in the middle used to
 // sit in a `flex: 1` div between the nav cluster and the account cluster —
@@ -76,17 +79,19 @@ const ICONS = {
   ),
 };
 
-// Short button labels for the top bar itself — the fuller name ("Grow &
-// Manage") still shows as the section header inside that button's own
-// dropdown, so nothing is lost, the top bar just stays compact. "Mission
-// Control" and "Observatory" are shown in full since the whole point of
-// naming them that way is to match the Hub's own room names exactly.
-const BUTTON_LABEL = { "Grow & Manage": "Grow" };
+// Button labels for the top bar itself. Used to shorten "Grow & Manage" to
+// "Grow" here (the fuller name still showed as that dropdown's own section
+// header) so the bar stayed compact — but its Sept 13 rename to "Support
+// Deck" is short enough to show in full, same as "Mission Control" and
+// "Observatory" already do, so no shortening is needed anymore. Left as an
+// empty override map (rather than deleted outright) in case a future
+// section name turns out too long for the bar.
+const BUTTON_LABEL = {};
 
 export default function TeacherHUD({ title, subtitle, accent = COLORS.aqua, teacherName, teacherEmail, actions }) {
   const router = useRouter();
   const pathname = usePathname();
-  const [openSection, setOpenSection] = useState(null); // null | "Mission Control" | "Observatory" | "Grow & Manage"
+  const [openSection, setOpenSection] = useState(null); // null | "Mission Control" | "Observatory" | "Support Deck"
   const navRef = useRef(null);
 
   useEffect(() => {

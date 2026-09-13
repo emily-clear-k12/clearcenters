@@ -16,11 +16,15 @@ const COLORS = {
 // Same tier medallion grid, same earned/locked treatment, same current-tier
 // gold ring — lifted verbatim from the old Crystal Vault "Your Badges"
 // section (Aug 27 Galaxy Hub rebuild) and given its own page/header since
-// it no longer has a home inside the vault-turned-planet-map. Nothing about
-// how a tier counts as "earned" changed here.
-export default function BadgesClient({ student, badgeTiers }) {
+// it no longer has a home inside the vault-turned-planet-map.
+//
+// Sept 13 — "earned" now gates on missionsCompleted instead of
+// student.crystal_points (see app/badges/page.js). Crystal Points are still
+// shown below as their own separate currency stat (planets, S.A.M. skins,
+// Gear Locker) — this only changes what unlocks a badge.
+export default function BadgesClient({ student, badgeTiers, missionsCompleted }) {
   const tiers = badgeTiers && badgeTiers.length > 0 ? badgeTiers : [];
-  const currentTierIndex = [...tiers].reverse().findIndex((t) => student.crystal_points >= t.threshold);
+  const currentTierIndex = [...tiers].reverse().findIndex((t) => missionsCompleted >= t.threshold);
   const currentTier = tiers.length > 0 ? (currentTierIndex >= 0 ? tiers[tiers.length - 1 - currentTierIndex] : tiers[0]) : null;
 
   return (
@@ -37,8 +41,13 @@ export default function BadgesClient({ student, badgeTiers }) {
             <h1 style={{ fontFamily: "'Poppins', sans-serif", fontSize: 28, fontWeight: 700, margin: "0 0 4px 0" }}>Your Badges</h1>
             <p style={{ margin: 0, color: COLORS.textMuted, fontSize: 14 }}>See every badge you've earned along the way.</p>
           </div>
-          <div style={{ display: "flex", alignItems: "center", gap: 6, background: COLORS.white, borderRadius: 999, padding: "8px 16px", boxShadow: "0 4px 16px rgba(0,0,0,.08)", fontWeight: 700, fontSize: 15 }}>
-            💎 {student.crystal_points}
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 6, background: COLORS.white, borderRadius: 999, padding: "8px 16px", boxShadow: "0 4px 16px rgba(0,0,0,.08)", fontWeight: 700, fontSize: 15 }}>
+              🎯 {missionsCompleted}
+            </div>
+            <div style={{ display: "flex", alignItems: "center", gap: 6, background: COLORS.white, borderRadius: 999, padding: "8px 16px", boxShadow: "0 4px 16px rgba(0,0,0,.08)", fontWeight: 700, fontSize: 15 }}>
+              💎 {student.crystal_points}
+            </div>
           </div>
         </div>
 
@@ -46,7 +55,7 @@ export default function BadgesClient({ student, badgeTiers }) {
           <p style={{ fontSize: 13, fontWeight: 700, color: COLORS.textMuted, textTransform: "uppercase", letterSpacing: .3, margin: "0 0 14px 0" }}>Your Badges</p>
           <div style={{ display: "flex", gap: 14, flexWrap: "wrap" }}>
             {tiers.map((tier) => {
-              const earned = student.crystal_points >= tier.threshold;
+              const earned = missionsCompleted >= tier.threshold;
               const isCurrent = currentTier && tier.id === currentTier.id;
               return (
                 <div key={tier.id} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 5, width: 68, position: "relative" }}>
