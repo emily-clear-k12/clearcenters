@@ -6,20 +6,24 @@ import { Search, Calendar, ChevronLeft } from "lucide-react";
 import { supabase } from "../../../../lib/supabaseClient";
 import { engineSupportsDistressCall } from "../../../../lib/distressCallEngines";
 import { GAME_SKINS, DEFAULT_GAME_SKIN } from "../../../../lib/frequencyRushSkins";
-import TeacherSidebar from "../../../../components/TeacherSidebar";
-import TeacherPageBanner from "../../../../components/TeacherPageBanner";
+import TeacherHUD from "../../../../components/TeacherHUD";
+import { COLORS, PAGE_ACCENTS, PAGE_BACKGROUNDS, panelStyle } from "../../../../lib/teacherTheme";
 
-const COLORS = {
-  violet: "#8C52F2",
-  violetSoft: "#EEE6FD",
-  teal: "#6FD8F5",
-  tealSoft: "#E6F8F9",
-  cream: "#F2F0FA",
-  white: "#FFFFFF",
-  border: "#E1E2EE",
-  textDark: "#1F2A44",
-  textMuted: "#697386",
-};
+// Sept 13 — moved to the console-interior look, same pattern as My Classes,
+// Reports, and Student Progress: TeacherSidebar+TeacherPageBanner swapped
+// for TeacherHUD, decorative violet became this page's own Mission Control
+// pink (ACCENT — same family as My Classes since this is reached from
+// there), and small pastel "soft" tints (violetSoft/tealSoft/cream) are now
+// computed from the shared palette instead of separate hardcoded hex. Two
+// things deliberately did NOT change color: the Distress Call section
+// keeps its own violet identity throughout (same reasoning as the "Live"
+// badge staying violet on My Classes — it's a distinct feature signature,
+// not page branding), and the Learning Target callout now matches the aqua
+// used for the identical callout on My Classes' case-detail modal rather
+// than inventing its own teal, since it's the same UI concept in both
+// places. No query, calculation, or assignment-flow logic changed.
+const ACCENT = PAGE_ACCENTS["/teacher/assign"];
+const BG = PAGE_BACKGROUNDS["/teacher/assign/new"];
 
 // Roster as of the Aug 2026 challenge-type consolidation: Model Makeover is
 // now part of Repair Desk (visual/diagram fix mode) and Short-Form Video
@@ -287,11 +291,11 @@ function NewAssignmentContent() {
   }
 
   if (loadingAuth) {
-    return <div style={{ minHeight: "100vh", background: COLORS.cream, display: "flex", alignItems: "center", justifyContent: "center", color: COLORS.textMuted, fontFamily: "'Inter', sans-serif" }}>Loading...</div>;
+    return <div style={{ minHeight: "100vh", background: COLORS.canvas, display: "flex", alignItems: "center", justifyContent: "center", color: COLORS.textMuted, fontFamily: "'Inter', sans-serif" }}>Loading...</div>;
   }
 
   return (
-    <div style={{ position: "relative", display: "flex", minHeight: "100vh", fontFamily: "'Inter', sans-serif", color: COLORS.textDark }}>
+    <div style={{ position: "relative", minHeight: "100vh", fontFamily: "'Inter', sans-serif", color: COLORS.textDark, display: "flex", flexDirection: "column" }}>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@600;700&family=Inter:wght@400;500;600;700&display=swap');
         .gc-btn { transition: transform 150ms ease; cursor: pointer; border: none; font-family: 'Inter', sans-serif; }
@@ -301,57 +305,55 @@ function NewAssignmentContent() {
       {/* Emily's Challenge Library background (Aug 27) — a 1672x941 image with
           the desk/window/crystal art on its right side, close enough to the
           right and bottom edges that a plain "cover" would risk cropping it
-          on a browser window shaped differently from the source image. Using
-          the same "contain + matching backgroundColor" fix as every other
-          edge-anchored background in the app (see the handoff doc's Part 1):
-          the image is never cropped, and the sampled near-white lavender
-          fallback color blends into any letterboxed edge instead of showing
-          as a bar. Fixed to the viewport so it stays put while this page's
-          content (which can get tall — case grids, forms) scrolls over it;
-          the sidebar and content are lifted onto their own stacking layer
-          above it with position/zIndex so the opaque sidebar still fully
-          covers its own strip either way. */}
+          on a browser window shaped differently from the source image. Kept
+          the "contain" + matching-canvas-color fix this page already had
+          (the same idea the Overview scene later adopted site-wide on
+          Sept 13, second pass — nothing here is ever cropped): the image is
+          never cropped, and the sampled near-white lavender fallback color
+          blends into any letterboxed edge instead of showing as a bar.
+          Fixed to the viewport so it stays put while this page's content
+          (which can get tall — case grids, forms) scrolls over it. */}
       <div
         style={{
           position: "fixed",
           inset: 0,
           zIndex: 0,
-          backgroundColor: "#F3EEFA",
-          backgroundImage: "url(/teacher/challenge_library_bg.jpg)",
+          backgroundColor: COLORS.canvas,
+          backgroundImage: `url(${BG})`,
           backgroundSize: "contain",
           backgroundPosition: "center",
           backgroundRepeat: "no-repeat",
         }}
       />
 
-      <div style={{ position: "relative", zIndex: 1, display: "flex", width: "100%" }}>
-        <TeacherSidebar teacherEmail={teacherEmail} />
+      <div style={{ position: "relative", zIndex: 1 }}>
+        <TeacherHUD title="Challenge Library" subtitle="Mission Control — build a new assignment" accent={ACCENT} teacherEmail={teacherEmail} />
+      </div>
 
-        <div style={{ flex: 1, padding: "32px 36px", display: "flex", justifyContent: "center" }}>
+      <div style={{ position: "relative", zIndex: 1, flex: 1, padding: "28px 36px 40px", display: "flex", justifyContent: "center" }}>
         <div style={{ width: "100%", maxWidth: challengeStep === "library" ? 1240 : challengeStep === "caseList" && selectedChallenge?.key === "fact_check_desk" ? 1180 : challengeStep === "caseList" ? 920 : 640 }}>
-          <button onClick={() => router.push("/teacher/assign")} className="gc-btn" style={{ display: "flex", alignItems: "center", gap: 6, background: "none", color: COLORS.textMuted, fontSize: 13, fontWeight: 600, marginBottom: 10 }}>
+          <button onClick={() => router.push("/teacher/assign")} className="gc-btn" style={{ display: "flex", alignItems: "center", gap: 6, background: "none", color: COLORS.textMuted, fontSize: 13, fontWeight: 600, marginBottom: 14 }}>
             <ChevronLeft size={16} /> Back to My Classes
           </button>
-          <TeacherPageBanner style={{ marginBottom: 20 }}>
-            <div style={{ maxWidth: "62%" }}>
-              <h1 style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 700, fontSize: 24, margin: "0 0 4px 0" }}>Challenge Library</h1>
-              <p style={{ color: COLORS.textMuted, fontSize: 14, margin: 0 }}>
-                Browse challenge types and cases, then choose which class to assign to.
-              </p>
-            </div>
-          </TeacherPageBanner>
 
-          {error && <div style={{ background: "#FBEAEA", color: "#B23A3A", borderRadius: 10, padding: "10px 14px", fontSize: 13, marginBottom: 16 }}>{error}</div>}
+          <div style={{ marginBottom: 20 }}>
+            <h1 style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 700, fontSize: 24, margin: "0 0 4px 0", color: COLORS.textDark }}>Challenge Library</h1>
+            <p style={{ color: COLORS.textMuted, fontSize: 14, margin: 0 }}>
+              Browse challenge types and cases, then choose which class to assign to.
+            </p>
+          </div>
+
+          {error && <div style={{ background: `${COLORS.danger}18`, border: `1px solid ${COLORS.danger}55`, color: "#8A2A22", borderRadius: 10, padding: "10px 14px", fontSize: 13, marginBottom: 16 }}>{error}</div>}
 
           {assignedSuccess ? (
-            <div style={{ background: COLORS.white, border: `1px solid ${COLORS.border}`, borderRadius: 16, padding: 32, textAlign: "center", boxShadow: "0 4px 16px rgba(13,27,42,.06)" }}>
+            <div style={panelStyle(ACCENT, { padding: 32, textAlign: "center" })}>
               <div style={{ fontSize: 36, marginBottom: 10 }}>✅</div>
-              <div style={{ fontWeight: 700, fontSize: 17, marginBottom: 6 }}>Assigned!</div>
+              <div style={{ fontWeight: 700, fontSize: 17, marginBottom: 6, color: COLORS.textDark }}>Assigned!</div>
               <p style={{ color: COLORS.textMuted, fontSize: 13.5, marginBottom: distressCallEnabled ? 10 : 20 }}>
                 "{selectedCase.title}" is now assigned to {targetMode === "specific" ? `${selectedStudentIds.length} student${selectedStudentIds.length === 1 ? "" : "s"} in` : "everyone in"} {targetClass?.name}.
               </p>
               {distressCallEnabled && (
-                <p style={{ color: COLORS.violet, fontSize: 12.5, fontWeight: 700, marginBottom: 20, background: COLORS.violetSoft, borderRadius: 10, padding: "8px 12px", display: "inline-block" }}>
+                <p style={{ color: COLORS.violet, fontSize: 12.5, fontWeight: 700, marginBottom: 20, background: `${COLORS.violet}1A`, borderRadius: 10, padding: "8px 12px", display: "inline-block" }}>
                   🚨 Distress Call is live{distressCallTarget ? ` — target: ${distressCallTarget} checkpoints` : ""}. Students will see the meter update as they work.
                   {!!distressCallRewardPoints && parseInt(distressCallRewardPoints, 10) > 0 && ` Everyone gets +${distressCallRewardPoints} crystal points when they hit it.`}
                 </p>
@@ -363,20 +365,20 @@ function NewAssignmentContent() {
                 {selectedCase?.engine === "signal_defense" && newAssignmentId && (
                   <button onClick={() => router.push(`/teacher/signal-ops-board?assignmentId=${newAssignmentId}`)} className="gc-btn" style={{ background: "#0D1B2A", color: COLORS.white, borderRadius: 999, padding: "11px 20px", fontWeight: 700, fontSize: 13.5 }}>Open Signal Ops Board</button>
                 )}
-                <button onClick={assignAnother} className="gc-btn" style={{ background: COLORS.violetSoft, color: COLORS.violet, borderRadius: 999, padding: "11px 20px", fontWeight: 700, fontSize: 13.5 }}>Assign Another</button>
-                <button onClick={() => router.push("/teacher/assign")} className="gc-btn" style={{ background: COLORS.violet, color: COLORS.white, borderRadius: 999, padding: "11px 20px", fontWeight: 700, fontSize: 13.5 }}>Back to My Classes</button>
+                <button onClick={assignAnother} className="gc-btn" style={{ background: `${ACCENT}22`, color: ACCENT, borderRadius: 999, padding: "11px 20px", fontWeight: 700, fontSize: 13.5 }}>Assign Another</button>
+                <button onClick={() => router.push("/teacher/assign")} className="gc-btn" style={{ background: ACCENT, color: COLORS.white, borderRadius: 999, padding: "11px 20px", fontWeight: 700, fontSize: 13.5 }}>Back to My Classes</button>
               </div>
             </div>
           ) : (
             <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
               <div style={{ display: "flex", gap: 14, alignItems: "flex-start" }}>
-              <div style={{ flex: 1, minWidth: 0, background: COLORS.white, border: `1px solid ${COLORS.border}`, borderRadius: 16, padding: 16, boxShadow: "0 4px 16px rgba(13,27,42,.06)" }}>
+              <div style={{ flex: 1, minWidth: 0, ...panelStyle(ACCENT, { padding: 16 }) }}>
                 {challengeStep === "library" && (
                   <>
-                    <div style={{ fontWeight: 700, fontSize: 13, marginBottom: 12 }}>1. Choose a Challenge Type</div>
+                    <div style={{ fontWeight: 700, fontSize: 13, marginBottom: 12, color: COLORS.textDark }}>1. Choose a Challenge Type</div>
                     <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(290px, 1fr))", gap: 14 }}>
                       {[...CHALLENGE_TYPES].sort((a, b) => Number(b.real) - Number(a.real)).map((ch) => (
-                        <button key={ch.key} className="gc-btn" disabled={!ch.real} onClick={() => { setSelectedChallenge(ch); setChallengeStep("gradeSubject"); }} style={{ position: "relative", borderRadius: 12, overflow: "hidden", border: `1px solid ${COLORS.border}`, padding: 0, textAlign: "left", opacity: ch.real ? 1 : 0.7, cursor: ch.real ? "pointer" : "default" }}>
+                        <button key={ch.key} className="gc-btn" disabled={!ch.real} onClick={() => { setSelectedChallenge(ch); setChallengeStep("gradeSubject"); }} style={{ position: "relative", borderRadius: 12, overflow: "hidden", border: `1px solid ${COLORS.border}`, padding: 0, textAlign: "left", opacity: ch.real ? 1 : 0.7, cursor: ch.real ? "pointer" : "default", background: COLORS.white }}>
                           <div style={{ position: "relative", height: 110 }}>
                             <img src={ch.image} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block", filter: ch.real ? "none" : "grayscale(0.3)" }} />
                             {!ch.real && <span style={{ position: "absolute", top: 6, right: 6, fontSize: 9.5, fontWeight: 700, background: "rgba(255,255,255,.92)", color: COLORS.textMuted, padding: "2px 8px", borderRadius: 999 }}>Coming Soon</span>}
@@ -391,14 +393,14 @@ function NewAssignmentContent() {
 
                 {challengeStep === "gradeSubject" && (
                   <>
-                    <button onClick={() => setChallengeStep("library")} className="gc-btn" style={{ background: "none", color: COLORS.violet, fontSize: 12.5, fontWeight: 700, marginBottom: 10 }}>← Back to Challenge Types</button>
-                    <div style={{ fontWeight: 700, fontSize: 13, marginBottom: 4 }}>2. {selectedChallenge?.label} — choose grade & subject</div>
+                    <button onClick={() => setChallengeStep("library")} className="gc-btn" style={{ background: "none", color: ACCENT, fontSize: 12.5, fontWeight: 700, marginBottom: 10 }}>← Back to Challenge Types</button>
+                    <div style={{ fontWeight: 700, fontSize: 13, marginBottom: 4, color: COLORS.textDark }}>2. {selectedChallenge?.label} — choose grade & subject</div>
                     <div style={{ fontSize: 11.5, color: COLORS.textMuted, marginBottom: 14 }}>You can assign any grade level to any class — pick whichever fits this student or group.</div>
 
                     <div style={{ fontSize: 11, fontWeight: 700, color: COLORS.textMuted, textTransform: "uppercase", letterSpacing: .4, marginBottom: 8 }}>Grade Level</div>
                     <div style={{ display: "flex", gap: 8, marginBottom: 20 }}>
                       {[{ v: "3", label: "3rd Grade" }, { v: "4", label: "4th Grade" }, { v: "5", label: "5th Grade" }].map((g) => (
-                        <button key={g.v} className="gc-btn" onClick={() => setBrowseGrade(g.v)} style={{ flex: 1, padding: 12, borderRadius: 12, fontWeight: 700, fontSize: 14, background: browseGrade === g.v ? COLORS.violet : COLORS.cream, color: browseGrade === g.v ? COLORS.white : COLORS.textDark, border: "2px solid transparent" }}>
+                        <button key={g.v} className="gc-btn" onClick={() => setBrowseGrade(g.v)} style={{ flex: 1, padding: 12, borderRadius: 12, fontWeight: 700, fontSize: 14, background: browseGrade === g.v ? ACCENT : "rgba(255,255,255,.55)", color: browseGrade === g.v ? COLORS.white : COLORS.textDark, border: "2px solid transparent" }}>
                           {g.label}
                         </button>
                       ))}
@@ -418,10 +420,10 @@ function NewAssignmentContent() {
                             flex: 1,
                             height: 130,
                             borderRadius: 16,
-                            border: browseSubject === s.v ? `3px solid ${COLORS.violet}` : "3px solid transparent",
+                            border: browseSubject === s.v ? `3px solid ${ACCENT}` : "3px solid transparent",
                             padding: 0,
                             overflow: "hidden",
-                            boxShadow: browseSubject === s.v ? "0 6px 18px rgba(140,82,242,.28)" : "0 2px 8px rgba(13,27,42,.06)",
+                            boxShadow: browseSubject === s.v ? `0 6px 18px ${ACCENT}47` : "0 2px 8px rgba(13,27,42,.06)",
                           }}
                         >
                           <img src={s.img} alt={s.v} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
@@ -429,7 +431,7 @@ function NewAssignmentContent() {
                       ))}
                     </div>
 
-                    <button onClick={() => setChallengeStep("caseList")} className="gc-btn" style={{ width: "100%", background: COLORS.violet, color: COLORS.white, borderRadius: 999, padding: "11px 20px", fontWeight: 700, fontSize: 14 }}>
+                    <button onClick={() => setChallengeStep("caseList")} className="gc-btn" style={{ width: "100%", background: ACCENT, color: COLORS.white, borderRadius: 999, padding: "11px 20px", fontWeight: 700, fontSize: 14 }}>
                       Browse {browseGrade === "3" ? "3rd" : `${browseGrade}th`} Grade {browseSubject} Cases →
                     </button>
                   </>
@@ -437,9 +439,9 @@ function NewAssignmentContent() {
 
                 {challengeStep === "caseList" && (
                   <>
-                    <button onClick={() => setChallengeStep("gradeSubject")} className="gc-btn" style={{ background: "none", color: COLORS.violet, fontSize: 12.5, fontWeight: 700, marginBottom: 10 }}>← Change Grade/Subject</button>
+                    <button onClick={() => setChallengeStep("gradeSubject")} className="gc-btn" style={{ background: "none", color: ACCENT, fontSize: 12.5, fontWeight: 700, marginBottom: 10 }}>← Change Grade/Subject</button>
                     <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", marginBottom: 10 }}>
-                      <div style={{ fontWeight: 700, fontSize: 13 }}>3. Choose a case — {browseGrade === "3" ? "3rd" : `${browseGrade}th`} Grade {browseSubject}</div>
+                      <div style={{ fontWeight: 700, fontSize: 13, color: COLORS.textDark }}>3. Choose a case — {browseGrade === "3" ? "3rd" : `${browseGrade}th`} Grade {browseSubject}</div>
                       <div style={{ fontSize: 11.5, color: COLORS.textMuted }}>
                         {selectedChallenge?.key === "fact_check_desk"
                           ? `${signalGroups.length} standard${signalGroups.length === 1 ? "" : "s"} · ${filteredCases.length} case${filteredCases.length === 1 ? "" : "s"}`
@@ -459,7 +461,7 @@ function NewAssignmentContent() {
                               key={g.teks}
                               style={{
                                 background: COLORS.white,
-                                border: groupSelected ? `2px solid ${COLORS.violet}` : `1.5px solid ${COLORS.border}`,
+                                border: groupSelected ? `2px solid ${ACCENT}` : `1.5px solid ${COLORS.border}`,
                                 borderRadius: 14,
                                 overflow: "hidden",
                                 // Sept 13, 2026 — the bug: this card's parent is a
@@ -483,15 +485,15 @@ function NewAssignmentContent() {
                                 // 420px cap the way it was always supposed to and
                                 // overflowY:auto scrolls it instead of crushing it.
                                 flexShrink: 0,
-                                boxShadow: groupSelected ? "0 6px 16px rgba(140,82,242,.16)" : "0 2px 8px rgba(13,27,42,.05)",
+                                boxShadow: groupSelected ? `0 6px 16px ${ACCENT}29` : "0 2px 8px rgba(13,27,42,.05)",
                               }}
                             >
                               <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 12px 8px" }}>
-                                <div style={{ width: 44, height: 44, borderRadius: 8, overflow: "hidden", flexShrink: 0, background: COLORS.cream }}>
+                                <div style={{ width: 44, height: 44, borderRadius: 8, overflow: "hidden", flexShrink: 0, background: COLORS.canvas }}>
                                   <img src={caseImagePath(g.thumbStandard)} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
                                 </div>
                                 <div style={{ minWidth: 0 }}>
-                                  <span style={{ display: "inline-block", fontSize: 10.5, fontWeight: 700, color: COLORS.violet, background: COLORS.violetSoft, padding: "2px 8px", borderRadius: 999, marginBottom: 4 }}>{g.teks}</span>
+                                  <span style={{ display: "inline-block", fontSize: 10.5, fontWeight: 700, color: ACCENT, background: `${ACCENT}22`, padding: "2px 8px", borderRadius: 999, marginBottom: 4 }}>{g.teks}</span>
                                   <div style={{ fontSize: 13.5, fontWeight: 700, lineHeight: 1.3, color: COLORS.textDark }}>{g.familyTitle}</div>
                                 </div>
                               </div>
@@ -505,8 +507,8 @@ function NewAssignmentContent() {
                                       className="gc-btn"
                                       onClick={() => { setSelectedCase(c); }}
                                       style={{
-                                        border: isSelected ? `1.5px solid ${COLORS.violet}` : `1.5px solid ${COLORS.border}`,
-                                        background: isSelected ? COLORS.violet : COLORS.cream,
+                                        border: isSelected ? `1.5px solid ${ACCENT}` : `1.5px solid ${COLORS.border}`,
+                                        background: isSelected ? ACCENT : "rgba(255,255,255,.55)",
                                         color: isSelected ? COLORS.white : COLORS.textDark,
                                         borderRadius: 999,
                                         padding: "6px 12px",
@@ -533,13 +535,13 @@ function NewAssignmentContent() {
                       {filteredCases.map((c) => {
                         const isSelected = selectedCase && selectedCase.standard === c.standard;
                         return (
-                          <button key={c.standard} className="gc-btn" onClick={() => { setSelectedCase(c); }} style={{ textAlign: "left", background: isSelected ? COLORS.violetSoft : COLORS.white, border: isSelected ? `2px solid ${COLORS.violet}` : "2px solid transparent", borderRadius: 14, overflow: "hidden", padding: 0, boxShadow: "0 2px 8px rgba(13,27,42,.05)" }}>
+                          <button key={c.standard} className="gc-btn" onClick={() => { setSelectedCase(c); }} style={{ textAlign: "left", background: isSelected ? `${ACCENT}15` : COLORS.white, border: isSelected ? `2px solid ${ACCENT}` : "2px solid transparent", borderRadius: 14, overflow: "hidden", padding: 0, boxShadow: "0 2px 8px rgba(13,27,42,.05)" }}>
                             <div style={{ height: 88, overflow: "hidden" }}>
                               <img src={caseImagePath(c.standard)} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
                             </div>
                             <div style={{ padding: "10px 12px 12px 12px" }}>
-                              <div style={{ fontSize: 13, fontWeight: 700, lineHeight: 1.3, marginBottom: 4 }}>{c.title}</div>
-                              <span style={{ display: "inline-block", fontSize: 10.5, fontWeight: 700, color: COLORS.violet, background: COLORS.violetSoft, padding: "2px 8px", borderRadius: 999 }}>{c.standard}</span>
+                              <div style={{ fontSize: 13, fontWeight: 700, lineHeight: 1.3, marginBottom: 4, color: COLORS.textDark }}>{c.title}</div>
+                              <span style={{ display: "inline-block", fontSize: 10.5, fontWeight: 700, color: ACCENT, background: `${ACCENT}22`, padding: "2px 8px", borderRadius: 999 }}>{c.standard}</span>
                             </div>
                           </button>
                         );
@@ -555,8 +557,8 @@ function NewAssignmentContent() {
                 )}
               </div>
               {challengeStep === "caseList" && selectedChallenge?.key === "fact_check_desk" && (
-                <div style={{ width: 280, flexShrink: 0, background: COLORS.white, border: `1px solid ${COLORS.border}`, borderRadius: 16, padding: 16, boxShadow: "0 4px 16px rgba(13,27,42,.06)" }}>
-                  <div style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 700, fontSize: 14, marginBottom: 4 }}>What kids do</div>
+                <div style={{ width: 280, flexShrink: 0, ...panelStyle(ACCENT, { padding: 16 }) }}>
+                  <div style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 700, fontSize: 14, marginBottom: 4, color: COLORS.textDark }}>What kids do</div>
                   <div style={{ fontSize: 11.5, color: COLORS.textMuted, marginBottom: 12 }}>Same TEKS. Three formats. Here’s the difference:</div>
                   <div style={{ fontSize: 12.5, color: COLORS.textDark, lineHeight: 1.45, marginBottom: 10 }}>
                     <span style={{ fontWeight: 700 }}>Verdict</span>
@@ -575,7 +577,7 @@ function NewAssignmentContent() {
               </div>
 
               {selectedCase && (selectedCase.learning_target || selectedCase.lesson_summary || selectedCase.misconception_note) && (
-                <div style={{ background: COLORS.white, border: `1px solid ${COLORS.border}`, borderRadius: 16, padding: 16, boxShadow: "0 4px 16px rgba(13,27,42,.06)" }}>
+                <div style={panelStyle(ACCENT, { padding: 16 })}>
                   <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
                     <div style={{ width: 40, height: 40, borderRadius: 8, overflow: "hidden", flexShrink: 0 }}>
                       <img src={caseImagePath(selectedCase.standard)} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
@@ -593,7 +595,7 @@ function NewAssignmentContent() {
                   {selectedCase.learning_target && (
                     <div style={{ marginBottom: 12 }}>
                       <div style={{ fontSize: 10.5, fontWeight: 700, color: COLORS.textMuted, letterSpacing: .4, marginBottom: 5, textTransform: "uppercase" }}>Learning Target</div>
-                      <div style={{ background: COLORS.tealSoft, borderRadius: 10, padding: "9px 11px", fontSize: 13, color: COLORS.textDark, lineHeight: 1.5 }}>
+                      <div style={{ background: `${COLORS.aqua}18`, borderRadius: 10, padding: "9px 11px", fontSize: 13, color: COLORS.textDark, lineHeight: 1.5 }}>
                         🎯 {selectedCase.learning_target}
                       </div>
                     </div>
@@ -611,7 +613,7 @@ function NewAssignmentContent() {
                   {selectedCase.misconception_note && (
                     <div>
                       <div style={{ fontSize: 10.5, fontWeight: 700, color: COLORS.textMuted, letterSpacing: .4, marginBottom: 5, textTransform: "uppercase" }}>Watch For</div>
-                      <div style={{ background: "#FFF4E5", border: `1px solid ${COLORS.warning || "#FF9F43"}`, borderRadius: 10, padding: "9px 11px", fontSize: 12.5, color: "#7A4A0A", lineHeight: 1.5 }}>
+                      <div style={{ background: `${COLORS.warning}18`, border: `1px solid ${COLORS.warning}55`, borderRadius: 10, padding: "9px 11px", fontSize: 12.5, color: "#7A4A00", lineHeight: 1.5 }}>
                         ⚠️ {selectedCase.misconception_note}
                       </div>
                     </div>
@@ -620,8 +622,8 @@ function NewAssignmentContent() {
               )}
 
               {selectedCase && (
-                <div style={{ background: COLORS.white, border: `1px solid ${COLORS.border}`, borderRadius: 16, padding: 16, boxShadow: "0 4px 16px rgba(13,27,42,.06)" }}>
-                  <div style={{ fontWeight: 700, fontSize: 13, marginBottom: 10 }}>4. Which class is this for?</div>
+                <div style={panelStyle(ACCENT, { padding: 16 })}>
+                  <div style={{ fontWeight: 700, fontSize: 13, marginBottom: 10, color: COLORS.textDark }}>4. Which class is this for?</div>
                   {classes.length > 0 ? (
                     <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 14 }}>
                       {classes.map((c) => (
@@ -630,8 +632,8 @@ function NewAssignmentContent() {
                           className="gc-btn"
                           onClick={() => setAssignClassId(c.id)}
                           style={{
-                            background: assignClassId === c.id ? COLORS.violetSoft : COLORS.cream,
-                            border: assignClassId === c.id ? `2px solid ${COLORS.violet}` : "2px solid transparent",
+                            background: assignClassId === c.id ? `${ACCENT}22` : "rgba(255,255,255,.55)",
+                            border: assignClassId === c.id ? `2px solid ${ACCENT}` : "2px solid transparent",
                             borderRadius: 10,
                             padding: "9px 14px",
                             fontSize: 12.5,
@@ -649,18 +651,18 @@ function NewAssignmentContent() {
 
                   {assignClassId && (
                     <>
-                      <div style={{ fontWeight: 700, fontSize: 13, marginBottom: 10 }}>5. Who gets it?</div>
-                      <div style={{ display: "inline-flex", background: COLORS.cream, borderRadius: 999, padding: 3, marginBottom: 14, gap: 3 }}>
-                        <button className="gc-btn" onClick={() => setTargetMode("whole")} style={{ border: "none", padding: "7px 16px", borderRadius: 999, fontWeight: 700, fontSize: 12.5, background: targetMode === "whole" ? COLORS.violet : "transparent", color: targetMode === "whole" ? COLORS.white : COLORS.textMuted }}>
+                      <div style={{ fontWeight: 700, fontSize: 13, marginBottom: 10, color: COLORS.textDark }}>5. Who gets it?</div>
+                      <div style={{ display: "inline-flex", background: "rgba(255,255,255,.55)", borderRadius: 999, padding: 3, marginBottom: 14, gap: 3 }}>
+                        <button className="gc-btn" onClick={() => setTargetMode("whole")} style={{ border: "none", padding: "7px 16px", borderRadius: 999, fontWeight: 700, fontSize: 12.5, background: targetMode === "whole" ? ACCENT : "transparent", color: targetMode === "whole" ? COLORS.white : COLORS.textMuted }}>
                           Whole Class
                         </button>
-                        <button className="gc-btn" onClick={() => setTargetMode("specific")} style={{ border: "none", padding: "7px 16px", borderRadius: 999, fontWeight: 700, fontSize: 12.5, background: targetMode === "specific" ? COLORS.violet : "transparent", color: targetMode === "specific" ? COLORS.white : COLORS.textMuted }}>
+                        <button className="gc-btn" onClick={() => setTargetMode("specific")} style={{ border: "none", padding: "7px 16px", borderRadius: 999, fontWeight: 700, fontSize: 12.5, background: targetMode === "specific" ? ACCENT : "transparent", color: targetMode === "specific" ? COLORS.white : COLORS.textMuted }}>
                           Just Some Students
                         </button>
                       </div>
 
                       {targetMode === "specific" && (
-                        <div style={{ display: "grid", gap: 6, maxHeight: 200, overflowY: "auto", marginBottom: 14, background: COLORS.cream, borderRadius: 10, padding: 10 }}>
+                        <div style={{ display: "grid", gap: 6, maxHeight: 200, overflowY: "auto", marginBottom: 14, background: "rgba(255,255,255,.4)", borderRadius: 10, padding: 10 }}>
                           {roster.length > 0 ? roster.map((s) => {
                             const checked = selectedStudentIds.includes(s.id);
                             return (
@@ -668,9 +670,9 @@ function NewAssignmentContent() {
                                 key={s.id}
                                 className="gc-btn"
                                 onClick={() => toggleStudentTarget(s.id)}
-                                style={{ display: "flex", alignItems: "center", gap: 8, background: checked ? COLORS.violetSoft : COLORS.white, border: checked ? `1.5px solid ${COLORS.violet}` : `1.5px solid ${COLORS.border}`, borderRadius: 8, padding: "7px 10px", textAlign: "left" }}
+                                style={{ display: "flex", alignItems: "center", gap: 8, background: checked ? `${ACCENT}22` : COLORS.white, border: checked ? `1.5px solid ${ACCENT}` : `1.5px solid ${COLORS.border}`, borderRadius: 8, padding: "7px 10px", textAlign: "left" }}
                               >
-                                <div style={{ width: 16, height: 16, borderRadius: 4, background: checked ? COLORS.violet : COLORS.white, border: `1.5px solid ${checked ? COLORS.violet : COLORS.border}`, display: "flex", alignItems: "center", justifyContent: "center", color: COLORS.white, fontSize: 11, fontWeight: 700, flexShrink: 0 }}>
+                                <div style={{ width: 16, height: 16, borderRadius: 4, background: checked ? ACCENT : COLORS.white, border: `1.5px solid ${checked ? ACCENT : COLORS.border}`, display: "flex", alignItems: "center", justifyContent: "center", color: COLORS.white, fontSize: 11, fontWeight: 700, flexShrink: 0 }}>
                                   {checked ? "✓" : ""}
                                 </div>
                                 <span style={{ fontSize: 12.5, fontWeight: 600, color: COLORS.textDark }}>{s.first_name}</span>
@@ -684,7 +686,7 @@ function NewAssignmentContent() {
                     </>
                   )}
 
-                  <div style={{ fontWeight: 700, fontSize: 13, marginBottom: 10 }}>6. Due date (optional)</div>
+                  <div style={{ fontWeight: 700, fontSize: 13, marginBottom: 10, color: COLORS.textDark }}>6. Due date (optional)</div>
                   <div style={{ position: "relative", marginBottom: 14 }}>
                     <Calendar size={14} style={{ position: "absolute", left: 10, top: 11, color: COLORS.textMuted }} />
                     <input type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} style={{ width: "100%", border: "2px solid #ECEAF5", borderRadius: 10, padding: "8px 10px 8px 32px", fontSize: 13, boxSizing: "border-box" }} />
@@ -692,7 +694,7 @@ function NewAssignmentContent() {
 
                   {selectedCase?.engine === "frequency_rush" && (
                     <div style={{ marginBottom: 14 }}>
-                      <div style={{ fontWeight: 700, fontSize: 13, marginBottom: 8 }}>🛰️ Game world</div>
+                      <div style={{ fontWeight: 700, fontSize: 13, marginBottom: 8, color: COLORS.textDark }}>🛰️ Game world</div>
                       <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
                         {GAME_SKINS.map((skin) => (
                           <button
@@ -701,9 +703,9 @@ function NewAssignmentContent() {
                             className="gc-btn"
                             onClick={() => setGameSkin(skin.id)}
                             style={{
-                              background: gameSkin === skin.id ? COLORS.violet : COLORS.white,
+                              background: gameSkin === skin.id ? ACCENT : COLORS.white,
                               color: gameSkin === skin.id ? COLORS.white : COLORS.textDark,
-                              border: `1.5px solid ${gameSkin === skin.id ? COLORS.violet : COLORS.border}`,
+                              border: `1.5px solid ${gameSkin === skin.id ? ACCENT : COLORS.border}`,
                               borderRadius: 999,
                               padding: "7px 14px",
                               fontWeight: 700,
@@ -721,7 +723,7 @@ function NewAssignmentContent() {
                   )}
 
                   {engineSupportsDistressCall(selectedCase?.engine) && (
-                    <div style={{ marginBottom: 14, border: `1.5px solid ${distressCallEnabled ? COLORS.violet : COLORS.border}`, borderRadius: 12, padding: 12, background: distressCallEnabled ? COLORS.violetSoft : COLORS.white }}>
+                    <div style={{ marginBottom: 14, border: `1.5px solid ${distressCallEnabled ? COLORS.violet : COLORS.border}`, borderRadius: 12, padding: 12, background: distressCallEnabled ? `${COLORS.violet}1A` : COLORS.white }}>
                       <button
                         type="button"
                         className="gc-btn"
@@ -731,7 +733,7 @@ function NewAssignmentContent() {
                         <div style={{ width: 16, height: 16, borderRadius: 4, background: distressCallEnabled ? COLORS.violet : COLORS.white, border: `1.5px solid ${distressCallEnabled ? COLORS.violet : COLORS.border}`, display: "flex", alignItems: "center", justifyContent: "center", color: COLORS.white, fontSize: 11, fontWeight: 700, flexShrink: 0 }}>
                           {distressCallEnabled ? "✓" : ""}
                         </div>
-                        <span style={{ fontWeight: 700, fontSize: 13 }}>🚨 Make this a Distress Call</span>
+                        <span style={{ fontWeight: 700, fontSize: 13, color: COLORS.textDark }}>🚨 Make this a Distress Call</span>
                       </button>
                       <p style={{ fontSize: 11.5, color: COLORS.textMuted, margin: "6px 0 0 24px" }}>
                         Turns this into a shared goal — students see a live meter as checkpoints get cleared across the group.
@@ -809,7 +811,7 @@ function NewAssignmentContent() {
                     </div>
                   )}
 
-                  <button className="gc-btn" onClick={handleAssign} disabled={assigning || !assignClassId} style={{ width: "100%", background: assignClassId ? COLORS.violet : "#D8D4E8", color: COLORS.white, borderRadius: 999, padding: "12px 20px", fontWeight: 700, fontSize: 14.5 }}>
+                  <button className="gc-btn" onClick={handleAssign} disabled={assigning || !assignClassId} style={{ width: "100%", background: assignClassId ? ACCENT : "#D8D4E8", color: COLORS.white, borderRadius: 999, padding: "12px 20px", fontWeight: 700, fontSize: 14.5 }}>
                     {assigning
                       ? "Assigning..."
                       : !assignClassId
@@ -824,14 +826,13 @@ function NewAssignmentContent() {
           )}
         </div>
       </div>
-      </div>
     </div>
   );
 }
 
 export default function NewAssignmentPage() {
   return (
-    <Suspense fallback={<div style={{ minHeight: "100vh", background: "#F2F0FA", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Inter', sans-serif", color: "#697386" }}>Loading...</div>}>
+    <Suspense fallback={<div style={{ minHeight: "100vh", background: COLORS.canvas, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Inter', sans-serif", color: COLORS.textMuted }}>Loading...</div>}>
       <NewAssignmentContent />
     </Suspense>
   );
