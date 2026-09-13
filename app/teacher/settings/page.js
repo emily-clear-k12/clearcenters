@@ -3,24 +3,27 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "../../../lib/supabaseClient";
-import TeacherSidebar from "../../../components/TeacherSidebar";
-import TeacherPageBanner from "../../../components/TeacherPageBanner";
+import TeacherHUD from "../../../components/TeacherHUD";
+import { COLORS, PAGE_ACCENTS, PAGE_BACKGROUNDS, panelStyle } from "../../../lib/teacherTheme";
 import { SAM_SKINS, FALLBACK_ICON, DEFAULT_SAM_SKIN } from "../../../lib/samSkins";
 import { CLASS_PLANETS, planetForClass } from "../../../lib/classPlanets";
 
-const COLORS = {
-  canvas: "#F2F0FA",
-  white: "#FFFFFF",
-  violet: "#8C52F2",
-  violetSoft: "#EEE6FD",
-  border: "#E1E2EE",
-  textDark: "#1F2A44",
-  textMuted: "#697386",
-  confirm: "#0A7C6C",
-  confirmBg: "#E6F6F3",
-  errorText: "#B23A3A",
-  errorBg: "#FBEAEA",
-};
+// Sept 13 — moved to the console-interior look, S.A.M.'s own teal family
+// (this page already had a partial S.A.M. tie-in via the skin picker below,
+// so it inherits S.A.M.'s Overview landmark color rather than getting its
+// own). No dedicated background art exists yet, so it falls back to the
+// plain canvas wash. TeacherSidebar + TeacherPageBanner swapped for
+// TeacherHUD; flat opaque-white cards became panelStyle glass cards;
+// decorative violet (S.A.M. skin picker selection, class rename Save
+// button, planet-picker selection ring) became teal ACCENT. No query or
+// save logic changed.
+//
+// Left alone, on purpose: each planet button's own radial-gradient fill —
+// that's the individual planet's real color (same hue used on the Overview
+// scene), not page decoration, so it stays whatever that planet's hue is
+// regardless of this page's teal accent.
+const ACCENT = PAGE_ACCENTS["/teacher/settings"];
+const BG = PAGE_BACKGROUNDS["/teacher/settings"];
 
 const GRADE_LABEL = { 3: "3rd Grade", 4: "4th Grade", 5: "5th Grade" };
 
@@ -151,24 +154,32 @@ export default function ClassSettingsPage() {
   }
 
   return (
-    <div style={{ display: "flex", minHeight: "100vh", background: COLORS.canvas, fontFamily: "'Inter', sans-serif", color: COLORS.textDark }}>
+    <div
+      style={{
+        minHeight: "100vh",
+        background: COLORS.canvas,
+        backgroundImage: BG ? `linear-gradient(180deg, rgba(243,239,252,.55) 0%, rgba(243,239,252,.82) 100%), url(${BG})` : undefined,
+        backgroundSize: "cover",
+        backgroundPosition: "center top",
+        backgroundAttachment: "fixed",
+        fontFamily: "'Inter', sans-serif",
+        color: COLORS.textDark,
+      }}
+    >
       <style>{`@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@600;700&family=Inter:wght@400;500;600;700&display=swap');`}</style>
-      <TeacherSidebar teacherEmail={teacherEmail} />
-      <main style={{ flex: 1, padding: "32px 36px", maxWidth: 780, margin: "0 auto" }}>
-        <TeacherPageBanner>
-          <div style={{ maxWidth: "62%" }}>
-            <h1 style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 700, fontSize: 26, margin: "0 0 6px 0" }}>Class Settings</h1>
-            <p style={{ color: COLORS.textMuted, fontSize: 14.5, lineHeight: 1.6, margin: 0 }}>
-              Rename any of your classes below, or change its planet on the Overview dashboard. Roster management and other class-level preferences are coming soon.
-            </p>
-          </div>
-        </TeacherPageBanner>
+
+      <TeacherHUD title="Class Settings" subtitle="S.A.M. — your console's own companion" accent={ACCENT} teacherEmail={teacherEmail} />
+
+      <main style={{ padding: "28px 36px 40px", maxWidth: 780, margin: "0 auto" }}>
+        <p style={{ color: COLORS.textMuted, fontSize: 14.5, lineHeight: 1.6, margin: "0 0 20px 0" }}>
+          Rename any of your classes below, or change its planet on the Overview dashboard. Roster management and other class-level preferences are coming soon.
+        </p>
 
         {/* Your S.A.M. — which skin shows on the Overview dashboard's
             console (app/teacher/page.js). Unlike the student-facing skin
             system, nothing here is locked behind crystal points — any of
             the 4 is free to pick. */}
-        <div style={{ background: COLORS.white, border: `1px solid ${COLORS.border}`, borderRadius: 16, padding: "18px 20px", boxShadow: "0 2px 8px rgba(13,27,42,.04)", marginBottom: 20 }}>
+        <div style={{ ...panelStyle(ACCENT, { padding: "18px 20px", marginBottom: 20 }) }}>
           <div style={{ fontSize: 11.5, fontWeight: 700, color: COLORS.textMuted, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 4 }}>Your S.A.M.</div>
           <p style={{ color: COLORS.textMuted, fontSize: 13, margin: "0 0 12px 0", lineHeight: 1.5 }}>
             Which S.A.M. shows on your Overview dashboard. (Cosmic has a custom pose made for that screen — the others show their regular icon art for now.)
@@ -181,8 +192,8 @@ export default function ClassSettingsPage() {
                 onClick={() => saveSamSkin(skin.key)}
                 style={{
                   padding: "10px 4px", borderRadius: 10, cursor: "pointer", textAlign: "center",
-                  border: samSkin === skin.key ? `2px solid ${COLORS.violet}` : `1.5px solid ${COLORS.border}`,
-                  background: samSkin === skin.key ? COLORS.violetSoft : COLORS.white,
+                  border: samSkin === skin.key ? `2px solid ${ACCENT}` : `1.5px solid ${COLORS.border}`,
+                  background: samSkin === skin.key ? `${ACCENT}1E` : "rgba(255,255,255,.6)",
                 }}
               >
                 <img src={skin.image} alt="" style={{ width: 36, height: 36, objectFit: "contain", marginBottom: 4 }} onError={(e) => { e.currentTarget.src = FALLBACK_ICON; }} />
@@ -191,17 +202,17 @@ export default function ClassSettingsPage() {
             ))}
           </div>
           {samSkinStatus === "saved" && (
-            <div style={{ marginTop: 10, fontSize: 12.5, color: COLORS.confirm, background: COLORS.confirmBg, display: "inline-block", padding: "4px 10px", borderRadius: 999 }}>Saved</div>
+            <div style={{ marginTop: 10, fontSize: 12.5, color: COLORS.success, background: `${COLORS.success}1E`, display: "inline-block", padding: "4px 10px", borderRadius: 999 }}>Saved</div>
           )}
           {samSkinStatus === "error" && (
-            <div style={{ marginTop: 10, fontSize: 12.5, color: COLORS.errorText, background: COLORS.errorBg, display: "inline-block", padding: "4px 10px", borderRadius: 999 }}>Couldn't save — try again.</div>
+            <div style={{ marginTop: 10, fontSize: 12.5, color: COLORS.danger, background: `${COLORS.danger}1A`, display: "inline-block", padding: "4px 10px", borderRadius: 999 }}>Couldn't save — try again.</div>
           )}
         </div>
 
         {loadingClasses ? (
           <div style={{ color: COLORS.textMuted, fontSize: 14 }}>Loading your classes...</div>
         ) : classes.length === 0 ? (
-          <div style={{ background: COLORS.white, border: `1px solid ${COLORS.border}`, borderRadius: 16, padding: 32, textAlign: "center", color: COLORS.textMuted, fontSize: 14 }}>
+          <div style={{ ...panelStyle(ACCENT, { padding: 32, textAlign: "center", color: COLORS.textMuted, fontSize: 14 }) }}>
             You don't have any classes yet — create one from My Classes.
           </div>
         ) : (
@@ -212,7 +223,7 @@ export default function ClassSettingsPage() {
               const activePlanet = planetForClass(cls, index);
               const pStatus = planetStatus[cls.id];
               return (
-                <div key={cls.id} style={{ background: COLORS.white, border: `1px solid ${COLORS.border}`, borderRadius: 16, padding: "18px 20px", boxShadow: "0 2px 8px rgba(13,27,42,.04)" }}>
+                <div key={cls.id} style={{ ...panelStyle(ACCENT, { padding: "18px 20px" }) }}>
                   <div style={{ fontSize: 11.5, fontWeight: 700, color: COLORS.textMuted, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 10 }}>
                     {cls.grade && GRADE_LABEL[cls.grade] ? `${GRADE_LABEL[cls.grade]} · ` : ""}{cls.subject || ""}{cls.class_code ? ` · Code ${cls.class_code}` : ""}
                   </div>
@@ -222,13 +233,13 @@ export default function ClassSettingsPage() {
                       value={nameFor(cls)}
                       onChange={(e) => setDrafts((d) => ({ ...d, [cls.id]: e.target.value }))}
                       onKeyDown={(e) => { if (e.key === "Enter") saveName(cls); }}
-                      style={{ flex: "1 1 220px", border: `1.5px solid ${COLORS.border}`, borderRadius: 10, padding: "10px 13px", fontSize: 15, fontFamily: "inherit", color: COLORS.textDark }}
+                      style={{ flex: "1 1 220px", border: `1.5px solid ${COLORS.border}`, borderRadius: 10, padding: "10px 13px", fontSize: 15, fontFamily: "inherit", color: COLORS.textDark, background: "rgba(255,255,255,.7)" }}
                     />
                     <button
                       onClick={() => saveName(cls)}
                       disabled={!changed || status === "saving"}
                       style={{
-                        background: changed ? COLORS.violet : COLORS.violetSoft,
+                        background: changed ? ACCENT : `${ACCENT}22`,
                         color: changed ? COLORS.white : COLORS.textMuted,
                         border: "none",
                         borderRadius: 10,
@@ -242,12 +253,12 @@ export default function ClassSettingsPage() {
                     </button>
                   </div>
                   {status === "saved" && (
-                    <div style={{ marginTop: 8, fontSize: 12.5, color: COLORS.confirm, background: COLORS.confirmBg, display: "inline-block", padding: "4px 10px", borderRadius: 999 }}>
+                    <div style={{ marginTop: 8, fontSize: 12.5, color: COLORS.success, background: `${COLORS.success}1E`, display: "inline-block", padding: "4px 10px", borderRadius: 999 }}>
                       Saved
                     </div>
                   )}
                   {status === "error" && (
-                    <div style={{ marginTop: 8, fontSize: 12.5, color: COLORS.errorText, background: COLORS.errorBg, display: "inline-block", padding: "4px 10px", borderRadius: 999 }}>
+                    <div style={{ marginTop: 8, fontSize: 12.5, color: COLORS.danger, background: `${COLORS.danger}1A`, display: "inline-block", padding: "4px 10px", borderRadius: 999 }}>
                       Couldn't save — try again.
                     </div>
                   )}
@@ -264,17 +275,17 @@ export default function ClassSettingsPage() {
                           aria-label={planet.name}
                           style={{
                             width: 34, height: 34, borderRadius: "50%", cursor: "pointer", padding: 0,
-                            border: activePlanet.key === planet.key ? `2px solid ${COLORS.violet}` : "2px solid transparent",
+                            border: activePlanet.key === planet.key ? `2px solid ${ACCENT}` : "2px solid transparent",
                             background: `radial-gradient(circle at 35% 30%, ${planet.hue.glow}, ${planet.hue.core} 70%)`,
-                            boxShadow: activePlanet.key === planet.key ? `0 0 0 2px ${COLORS.white}, 0 0 0 4px ${COLORS.violet}` : "none",
+                            boxShadow: activePlanet.key === planet.key ? `0 0 0 2px ${COLORS.white}, 0 0 0 4px ${ACCENT}` : "none",
                           }}
                         />
                       ))}
                       {pStatus === "saved" && (
-                        <span style={{ fontSize: 12.5, color: COLORS.confirm, background: COLORS.confirmBg, padding: "4px 10px", borderRadius: 999 }}>Saved</span>
+                        <span style={{ fontSize: 12.5, color: COLORS.success, background: `${COLORS.success}1E`, padding: "4px 10px", borderRadius: 999 }}>Saved</span>
                       )}
                       {pStatus === "error" && (
-                        <span style={{ fontSize: 12.5, color: COLORS.errorText, background: COLORS.errorBg, padding: "4px 10px", borderRadius: 999 }}>Couldn't save — try again.</span>
+                        <span style={{ fontSize: 12.5, color: COLORS.danger, background: `${COLORS.danger}1A`, padding: "4px 10px", borderRadius: 999 }}>Couldn't save — try again.</span>
                       )}
                     </div>
                   </div>
