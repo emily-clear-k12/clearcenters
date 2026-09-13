@@ -38,11 +38,7 @@ const COLORS = {
   info: "#3D84F5",
   white: "#FFFFFF",
   textMuted: "#A9B4CE",
-  magenta: "#D65DE0", // Messages hologram's hue
-  // Mission Control's own accent (Sept 13, later same-day fix) — replaces
-  // `warning` here too, so the planet's color on this scene stays in sync
-  // with its console-interior page (lib/teacherTheme.js has the full note).
-  pink: "#FF6FA0",
+  magenta: "#D65DE0", // Messages hologram's hue — nothing else in the app uses this pink/magenta family
 };
 
 // Real art will live here once generated (see the art spec doc) — nothing
@@ -549,7 +545,25 @@ export default function TeacherOverview() {
     setLoading(true);
     setError(null);
 
-    const { data: classesData } = await supabase.from("classes").select("id, name, planet_key").eq("teacher_id", teacherId).order("name");
+    // Sept 13 hardening: this used to be a bare select that silently
+    // rendered "No classes yet" for every real class a teacher has the
+    // moment `planet_key` (new column, added for the planet-picker
+    // feature) doesn't exist on the live `classes` table yet — exactly
+    // the "SQL delivered in chat != SQL run in production" failure mode
+    // that broke student login once already (see ClearCenters_STATE.md).
+    // Now: log the real Postgres error instead of swallowing it, and fall
+    // back to the pre-planet_key select so classes still show (just
+    // without a saved pick) rather than vanishing outright.
+    let { data: classesData, error: classesError } = await supabase.from("classes").select("id, name, planet_key").eq("teacher_id", teacherId).order("name");
+    if (classesError) {
+      console.error("Failed to load classes with planet_key — falling back without it. Run the migration in Teacher_Dashboard_OrbitMap_Art_Spec.md if this persists:", classesError);
+      const fallback = await supabase.from("classes").select("id, name").eq("teacher_id", teacherId).order("name");
+      classesData = fallback.data;
+      if (fallback.error) {
+        console.error("Fallback class load also failed:", fallback.error);
+        setError("Couldn't load your classes — try refreshing. If this keeps happening, let Claude know.");
+      }
+    }
     const classIds = (classesData || []).map((c) => c.id);
     setClasses(classesData || []);
 
@@ -782,36 +796,24 @@ export default function TeacherOverview() {
 
       {error && <div style={{ margin: "0 32px 12px", background: "#FBEAEA", color: "#B23A3A", borderRadius: 10, padding: "10px 14px", fontSize: 13 }}>{error}</div>}
 
-      {/* Scene — the art's own proportions (BG_ASPECT) are preserved on an
-          inner "canvas" box, so the planet/console percent-coordinates
-          below always land exactly on the right spot on the art.
-          Sept 13 (second pass): this used to crop the canvas to fill the
-          wrapper edge-to-edge like CSS `background-size: cover` (first
-          bottom-anchored, before that centered) — but ANY crop-to-fill
-          approach is a trade-off between two things that both need to
-          stay fully visible: the planets near the top of the art and the
-          console along the bottom. Center-crop cut the console off the
-          bottom on short windows; bottom-anchoring that fix then cut the
-          planets off the top instead on windows wide enough relative to
-          their height (which turned out to be the common case, not an
-          edge case). Switched to "contain" sizing instead: the canvas is
-          the LARGEST size that fits entirely inside the wrapper at the
-          art's real aspect ratio (inset:0 + margin:auto + max-width/
-          max-height:100%, no explicit width/height so the browser solves
-          for the biggest non-cropped fit), centered. Nothing in the art is
-          ever cropped — on window shapes that don't match the art's ratio,
-          you get a sliver of letterboxing (top/bottom or left/right) that
-          shows the plain starfield/navy background behind it, which reads
-          fine since it's the same dark-space look either way. minHeight is
-          just a floor so the scene can't shrink to an unreadably thin
-          sliver on an extremely short window — below it the page scrolls
-          instead, same fallback as before. */}
-      <div style={{ flex: 1, position: "relative", overflow: "hidden", minHeight: "26vw" }}>
+      {/* Scene — full-bleed, no card/frame: the background fills every
+          pixel left of the HUD down to the bottom edge of the window. The
+          art's own proportions (BG_ASPECT) are preserved on an inner
+          "canvas" that's always sized at least 100% x 100% of this
+          wrapper and center-cropped by overflow:hidden — the same
+          scale-and-crop math as CSS `background-size: cover`, just done
+          on a real element so the planet/console percent-coordinates
+          below still land exactly on the right spot on the art, cropped
+          or not. minHeight is a safety floor: below it (only on a window
+          wider than ~2.6x its own height) this wrapper stops shrinking
+          and the page scrolls instead of letting the crop eat into the
+          console buttons. */}
+      <div style={{ flex: 1, position: "relative", overflow: "hidden", minHeight: "38vw" }}>
         <div
           style={{
-            position: "absolute", inset: 0, margin: "auto",
+            position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)",
             aspectRatio: BG_ASPECT,
-            maxWidth: "100%", maxHeight: "100%",
+            minWidth: "100%", minHeight: "100%", width: "auto", height: "auto",
             backgroundImage: `url(${ART.background})`, backgroundSize: "100% 100%", backgroundPosition: "center",
             backgroundColor: COLORS.deepNavy,
           }}
@@ -840,7 +842,7 @@ export default function TeacherOverview() {
           {/* Landmarks — hologram panels floating on the console, standing in
               for the old sidebar's nav groups. Positions match the 5 lit
               panel slots baked into the background art. */}
-          <Landmark art={ART.missionControl} icon={ICONS.launch} label="Mission Control" sub="Assign & Launch" accent={COLORS.copper} onClick={() => router.push("/teacher/assign")} {...CONSOLE_SLOTS[0]} />
+          <Landmark art={ART.missionControl} icon={ICONS.launch} label="Mission Control" sub="Assign & Launch" accent={COLORS.warning} onClick={() => router.push("/teacher/assign")} {...CONSOLE_SLOTS[0]} />
           <Landmark art={ART.observatory} icon={ICONS.telescope} label="Observatory" sub="Progress & Reports" accent={COLORS.aqua} onClick={() => router.push("/teacher/reports")} {...CONSOLE_SLOTS[1]} />
           <Landmark art={samArtFor(teacherSamSkin)} icon={ICONS.gem} label="S.A.M." sub="Results & Shortcuts" accent={COLORS.teal} onClick={() => setAwardModalOpen(true)} {...CONSOLE_SLOTS[2]} />
           <Landmark art={ART.beacon} icon={ICONS.mail} label="Messages" sub="Inbox & Updates" accent={COLORS.magenta} onClick={() => router.push("/teacher/messages")} {...CONSOLE_SLOTS[3]} />
