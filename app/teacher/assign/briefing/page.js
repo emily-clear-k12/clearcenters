@@ -4,19 +4,18 @@ import React, { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ChevronLeft } from "lucide-react";
 import { supabase } from "../../../../lib/supabaseClient";
-import TeacherSidebar from "../../../../components/TeacherSidebar";
-import TeacherPageBanner from "../../../../components/TeacherPageBanner";
+import TeacherHUD from "../../../../components/TeacherHUD";
+import { COLORS, PAGE_ACCENTS, PAGE_BACKGROUNDS, panelStyle } from "../../../../lib/teacherTheme";
 
-const COLORS = {
-  violet: "#8C52F2",
-  violetSoft: "#EEE6FD",
-  teal: "#6FD8F5",
-  cream: "#F2F0FA",
-  white: "#FFFFFF",
-  border: "#E1E2EE",
-  textDark: "#1F2A44",
-  textMuted: "#697386",
-};
+// Sept 13 — moved to the console-interior look, same pattern as My Classes
+// and Challenge Library (both part of the same Mission Control flow this
+// page is reached from). No dedicated art exists for this page yet, so it
+// reuses My Classes' bg-platform-room.jpg — same room, same family — rather
+// than leaving it on the old light-cream look while everything around it
+// moves over. Decorative violet became this page's pink ACCENT; no query
+// or assignment logic changed.
+const ACCENT = PAGE_ACCENTS["/teacher/assign"];
+const BG = PAGE_BACKGROUNDS["/teacher/assign"];
 
 function AssignBriefingInner() {
   const router = useRouter();
@@ -143,124 +142,138 @@ function AssignBriefingInner() {
   }
 
   if (loadingAuth) {
-    return <div style={{ padding: 40, color: COLORS.textMuted }}>Loading…</div>;
+    return <div style={{ minHeight: "100vh", background: COLORS.canvas, display: "flex", alignItems: "center", justifyContent: "center", color: COLORS.textMuted, fontFamily: "'Inter', sans-serif" }}>Loading…</div>;
   }
 
   return (
-    <div style={{ display: "flex", minHeight: "100vh", background: COLORS.cream }}>
-      <TeacherSidebar />
-      <div style={{ flex: 1, padding: "24px 28px", maxWidth: 980 }}>
-        <TeacherPageBanner style={{ marginBottom: 20 }}>
-          <div style={{ maxWidth: "62%" }}>
-            <h1 style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 700, fontSize: 24, margin: "0 0 4px 0" }}>Assign Briefing</h1>
-            <p style={{ color: COLORS.textMuted, fontSize: 14, margin: 0 }}>
-              Social Studies teach-first shelf — separate from Challenge Library
-            </p>
-          </div>
-        </TeacherPageBanner>
-        <button
-          type="button"
-          className="gc-btn"
-          onClick={() => router.push("/teacher/assign")}
-          style={{ background: "none", color: COLORS.textMuted, display: "flex", alignItems: "center", gap: 4, padding: 0, marginBottom: 16, fontWeight: 600, fontSize: 13 }}
-        >
-          <ChevronLeft size={16} /> Back to My Classes
-        </button>
+    <div
+      style={{
+        minHeight: "100vh",
+        background: COLORS.canvas,
+        backgroundImage: `linear-gradient(180deg, rgba(243,239,252,.55) 0%, rgba(243,239,252,.82) 100%), url(${BG})`,
+        backgroundSize: "cover",
+        backgroundPosition: "center top",
+        backgroundAttachment: "fixed",
+        fontFamily: "'Inter', sans-serif",
+        color: COLORS.textDark,
+        display: "flex",
+        flexDirection: "column",
+      }}
+    >
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@600;700&family=Inter:wght@400;500;600;700&display=swap');
+        .gc-btn { transition: transform 150ms ease; cursor: pointer; border: none; font-family: 'Inter', sans-serif; }
+        .gc-btn:hover { transform: translateY(-1px); }
+      `}</style>
 
-        <div style={{ background: COLORS.white, borderRadius: 18, padding: 22, boxShadow: "0 4px 16px rgba(13,27,42,.06)" }}>
-          <p style={{ margin: "0 0 16px 0", fontSize: 13.5, color: COLORS.textMuted, lineHeight: 1.45 }}>
-            Briefings use parallel <code>briefing_*</code> tables. Cleared students do <strong>not</strong> auto-unlock Challenges
-            (<code>related_challenge_ids</code> is empty for the pilot).
-          </p>
+      <TeacherHUD title="Assign Briefing" subtitle="Mission Control — Social Studies teach-first shelf" accent={ACCENT} />
 
-          <label style={labelStyle}>Class</label>
-          <select value={assignClassId} onChange={(e) => setAssignClassId(e.target.value)} style={inputStyle}>
-            <option value="">Select class…</option>
-            {classes.map((c) => (
-              <option key={c.id} value={c.id}>{c.name} · Grade {c.grade} · {c.subject}</option>
-            ))}
-          </select>
-
-          <label style={labelStyle}>Briefing</label>
-          <div style={{ display: "grid", gap: 10, gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", marginBottom: 12 }}>
-            {briefings.map((b) => {
-              const on = selectedBriefing?.id === b.id;
-              return (
-                <button
-                  key={b.id}
-                  type="button"
-                  className="gc-btn"
-                  onClick={() => setSelectedBriefing(b)}
-                  style={{
-                    textAlign: "left",
-                    background: on ? COLORS.violetSoft : COLORS.white,
-                    border: on ? `2px solid ${COLORS.violet}` : `2px solid ${COLORS.border}`,
-                    borderRadius: 14,
-                    padding: 12,
-                  }}
-                >
-                  <div style={{ fontSize: 11, fontWeight: 700, color: COLORS.violet }}>{b.id}</div>
-                  <div style={{ fontWeight: 700, fontSize: 14, color: COLORS.textDark, marginTop: 2 }}>{b.title}</div>
-                  <div style={{ fontSize: 12, color: COLORS.textMuted, marginTop: 4 }}>TEKS {b.teks} · ~{b.minutes} min</div>
-                </button>
-              );
-            })}
-            {briefings.length === 0 && (
-              <div style={{ fontSize: 13, color: COLORS.textMuted }}>No published Briefings found.</div>
-            )}
-          </div>
-
-          <label style={labelStyle}>Due date (optional)</label>
-          <input type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} style={inputStyle} />
-
-          <label style={labelStyle}>Who gets it?</label>
-          <div style={{ display: "flex", gap: 8, marginBottom: 10 }}>
-            <button type="button" className="gc-btn" onClick={() => setTargetMode("whole")} style={chip(targetMode === "whole")}>Whole class</button>
-            <button type="button" className="gc-btn" onClick={() => setTargetMode("selected")} style={chip(targetMode === "selected")}>Selected students</button>
-          </div>
-          {targetMode === "selected" && (
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 12 }}>
-              {roster.map((s) => {
-                const on = selectedStudentIds.includes(s.id);
-                return (
-                  <button
-                    key={s.id}
-                    type="button"
-                    className="gc-btn"
-                    onClick={() =>
-                      setSelectedStudentIds((prev) =>
-                        on ? prev.filter((id) => id !== s.id) : [...prev, s.id]
-                      )
-                    }
-                    style={chip(on)}
-                  >
-                    {s.first_name}
-                  </button>
-                );
-              })}
-            </div>
-          )}
-
-          {error && <p style={{ color: "#EF4444", fontSize: 13 }}>{error}</p>}
-          {message && <p style={{ color: "#16A34A", fontSize: 13 }}>{message}</p>}
-
+      <div style={{ flex: 1, padding: "28px 36px 40px", display: "flex", justifyContent: "center" }}>
+        <div style={{ width: "100%", maxWidth: 980 }}>
           <button
             type="button"
             className="gc-btn"
-            disabled={saving}
-            onClick={handleAssign}
-            style={{
-              marginTop: 8,
-              background: COLORS.violet,
-              color: COLORS.white,
-              borderRadius: 999,
-              padding: "12px 22px",
-              fontWeight: 700,
-              fontSize: 14,
-            }}
+            onClick={() => router.push("/teacher/assign")}
+            style={{ background: "none", color: COLORS.textMuted, display: "flex", alignItems: "center", gap: 4, padding: 0, marginBottom: 16, fontWeight: 600, fontSize: 13 }}
           >
-            {saving ? "Assigning…" : "Assign Briefing"}
+            <ChevronLeft size={16} /> Back to My Classes
           </button>
+
+          <div style={panelStyle(ACCENT, { padding: 22 })}>
+            <p style={{ margin: "0 0 16px 0", fontSize: 13.5, color: COLORS.textMuted, lineHeight: 1.45 }}>
+              Briefings use parallel <code>briefing_*</code> tables. Cleared students do <strong>not</strong> auto-unlock Challenges
+              (<code>related_challenge_ids</code> is empty for the pilot).
+            </p>
+
+            <label style={labelStyle}>Class</label>
+            <select value={assignClassId} onChange={(e) => setAssignClassId(e.target.value)} style={inputStyle}>
+              <option value="">Select class…</option>
+              {classes.map((c) => (
+                <option key={c.id} value={c.id}>{c.name} · Grade {c.grade} · {c.subject}</option>
+              ))}
+            </select>
+
+            <label style={labelStyle}>Briefing</label>
+            <div style={{ display: "grid", gap: 10, gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", marginBottom: 12 }}>
+              {briefings.map((b) => {
+                const on = selectedBriefing?.id === b.id;
+                return (
+                  <button
+                    key={b.id}
+                    type="button"
+                    className="gc-btn"
+                    onClick={() => setSelectedBriefing(b)}
+                    style={{
+                      textAlign: "left",
+                      background: on ? `${ACCENT}1E` : COLORS.white,
+                      border: on ? `2px solid ${ACCENT}` : `2px solid ${COLORS.border}`,
+                      borderRadius: 14,
+                      padding: 12,
+                    }}
+                  >
+                    <div style={{ fontSize: 11, fontWeight: 700, color: ACCENT }}>{b.id}</div>
+                    <div style={{ fontWeight: 700, fontSize: 14, color: COLORS.textDark, marginTop: 2 }}>{b.title}</div>
+                    <div style={{ fontSize: 12, color: COLORS.textMuted, marginTop: 4 }}>TEKS {b.teks} · ~{b.minutes} min</div>
+                  </button>
+                );
+              })}
+              {briefings.length === 0 && (
+                <div style={{ fontSize: 13, color: COLORS.textMuted }}>No published Briefings found.</div>
+              )}
+            </div>
+
+            <label style={labelStyle}>Due date (optional)</label>
+            <input type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} style={inputStyle} />
+
+            <label style={labelStyle}>Who gets it?</label>
+            <div style={{ display: "flex", gap: 8, marginBottom: 10 }}>
+              <button type="button" className="gc-btn" onClick={() => setTargetMode("whole")} style={chip(targetMode === "whole")}>Whole class</button>
+              <button type="button" className="gc-btn" onClick={() => setTargetMode("selected")} style={chip(targetMode === "selected")}>Selected students</button>
+            </div>
+            {targetMode === "selected" && (
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 12 }}>
+                {roster.map((s) => {
+                  const on = selectedStudentIds.includes(s.id);
+                  return (
+                    <button
+                      key={s.id}
+                      type="button"
+                      className="gc-btn"
+                      onClick={() =>
+                        setSelectedStudentIds((prev) =>
+                          on ? prev.filter((id) => id !== s.id) : [...prev, s.id]
+                        )
+                      }
+                      style={chip(on)}
+                    >
+                      {s.first_name}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+
+            {error && <p style={{ color: COLORS.danger, fontSize: 13 }}>{error}</p>}
+            {message && <p style={{ color: COLORS.success, fontSize: 13 }}>{message}</p>}
+
+            <button
+              type="button"
+              className="gc-btn"
+              disabled={saving}
+              onClick={handleAssign}
+              style={{
+                marginTop: 8,
+                background: ACCENT,
+                color: COLORS.white,
+                borderRadius: 999,
+                padding: "12px 22px",
+                fontWeight: 700,
+                fontSize: 14,
+              }}
+            >
+              {saving ? "Assigning…" : "Assign Briefing"}
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -277,6 +290,8 @@ const inputStyle = {
   padding: "9px 10px",
   fontSize: 13.5,
   marginBottom: 4,
+  background: "rgba(255,255,255,.65)",
+  color: COLORS.textDark,
 };
 function chip(on) {
   return {
@@ -284,15 +299,15 @@ function chip(on) {
     padding: "7px 12px",
     fontSize: 12.5,
     fontWeight: 700,
-    background: on ? COLORS.violetSoft : COLORS.white,
-    color: on ? COLORS.violet : COLORS.textDark,
-    border: `1.5px solid ${on ? COLORS.violet : COLORS.border}`,
+    background: on ? `${ACCENT}1E` : "rgba(255,255,255,.55)",
+    color: on ? ACCENT : COLORS.textDark,
+    border: `1.5px solid ${on ? ACCENT : COLORS.border}`,
   };
 }
 
 export default function AssignBriefingPage() {
   return (
-    <Suspense fallback={<div style={{ padding: 40 }}>Loading…</div>}>
+    <Suspense fallback={<div style={{ minHeight: "100vh", background: COLORS.canvas, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Inter', sans-serif", color: COLORS.textMuted }}>Loading…</div>}>
       <AssignBriefingInner />
     </Suspense>
   );

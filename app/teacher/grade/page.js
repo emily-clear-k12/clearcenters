@@ -3,19 +3,22 @@
 import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "../../../lib/supabaseClient";
-import TeacherSidebar from "../../../components/TeacherSidebar";
-import TeacherPageBanner from "../../../components/TeacherPageBanner";
+import TeacherHUD from "../../../components/TeacherHUD";
+import { COLORS, PAGE_ACCENTS, PAGE_BACKGROUNDS } from "../../../lib/teacherTheme";
 
-const COLORS = {
-  cream: "#F2F0FA",
-  violet: "#8C52F2",
-  violetSoft: "#EEE6FD",
-  teal: "#6FD8F5",
-  white: "#FFFFFF",
-  border: "#E1E2EE",
-  textDark: "#1F2A44",
-  textMuted: "#697386",
-};
+// Sept 13 — moved to the console-interior look, same pattern as the rest of
+// the app. Grading isn't one of the 5 Overview landmarks by itself, so it
+// shares Progress/Reports' aqua Observatory accent and background (see the
+// note in lib/teacherTheme.js) rather than getting a 6th color invented for
+// it. Only the decorative violet (banner, tabs, class badges) moved to
+// ACCENT — the amber "needs review" / teal "handled" submission-status
+// colors are genuine status signals, not page branding, so they're
+// untouched, same principle as every other page in this redesign. No
+// query or grading logic changed. The individual grading screen
+// (grade/[submissionId]) is a much larger page and is its own separate
+// pass, not part of this one.
+const ACCENT = PAGE_ACCENTS["/teacher/grade"];
+const BG = PAGE_BACKGROUNDS["/teacher/grade"];
 
 export default function TeacherGradeListPage() {
   const router = useRouter();
@@ -172,34 +175,44 @@ export default function TeacherGradeListPage() {
 
   if (loadingAuth || loadingSubs) {
     return (
-      <div style={{ minHeight: "100vh", background: COLORS.cream, display: "flex", alignItems: "center", justifyContent: "center", color: COLORS.textMuted, fontFamily: "'Inter', sans-serif" }}>
+      <div style={{ minHeight: "100vh", background: COLORS.canvas, display: "flex", alignItems: "center", justifyContent: "center", color: COLORS.textMuted, fontFamily: "'Inter', sans-serif" }}>
         Loading...
       </div>
     );
   }
 
   return (
-    <div style={{ display: "flex", minHeight: "100vh", background: COLORS.cream, fontFamily: "'Inter', sans-serif", color: COLORS.textDark }}>
+    <div
+      style={{
+        minHeight: "100vh",
+        background: COLORS.canvas,
+        backgroundImage: `linear-gradient(180deg, rgba(243,239,252,.55) 0%, rgba(243,239,252,.82) 100%), url(${BG})`,
+        backgroundSize: "cover",
+        backgroundPosition: "center top",
+        backgroundAttachment: "fixed",
+        fontFamily: "'Inter', sans-serif",
+        color: COLORS.textDark,
+        display: "flex",
+        flexDirection: "column",
+      }}
+    >
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@600;700&family=Inter:wght@400;500;600;700&display=swap');
         .gc-btn { transition: transform 150ms ease; cursor: pointer; border: none; font-family: 'Inter', sans-serif; }
         .gc-btn:hover { transform: translateY(-1px); }
       `}</style>
 
-      <TeacherSidebar teacherEmail={teacherEmail} />
+      <TeacherHUD title="Review Submissions" subtitle="Observatory — grade and release feedback" accent={ACCENT} teacherEmail={teacherEmail} />
 
-      <div style={{ flex: 1, padding: "32px 36px", display: "flex", justifyContent: "center" }}>
+      <div style={{ flex: 1, padding: "28px 36px 40px", display: "flex", justifyContent: "center" }}>
         <div style={{ width: "100%", maxWidth: 1100 }}>
-          <TeacherPageBanner>
-            <h1 style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 700, fontSize: 28, margin: 0 }}>Review Submissions</h1>
-          </TeacherPageBanner>
           {error && (
-            <div style={{ background: "#FBEAEA", color: "#B23A3A", borderRadius: 10, padding: "10px 14px", fontSize: 13, marginBottom: 16 }}>
+            <div style={{ background: `${COLORS.danger}18`, border: `1px solid ${COLORS.danger}55`, color: "#8A2A22", borderRadius: 10, padding: "10px 14px", fontSize: 13, marginBottom: 16 }}>
               {error}
             </div>
           )}
 
-          <div style={{ background: `linear-gradient(135deg, ${COLORS.violet}, ${COLORS.teal})`, borderRadius: 16, padding: "16px 20px", display: "flex", alignItems: "center", gap: 14, marginBottom: 18, boxShadow: "0 6px 18px rgba(140,82,242,.25)" }}>
+          <div style={{ background: `linear-gradient(135deg, ${ACCENT}, ${COLORS.info})`, borderRadius: 16, padding: "16px 20px", display: "flex", alignItems: "center", gap: 14, marginBottom: 18, boxShadow: `0 6px 18px ${ACCENT}40` }}>
             <div style={{ fontSize: 24 }}>⚡</div>
             <div style={{ flex: 1 }}>
               <div style={{ color: COLORS.white, fontWeight: 700, fontSize: 15, fontFamily: "'Poppins', sans-serif" }}>Grade Next</div>
@@ -209,7 +222,7 @@ export default function TeacherGradeListPage() {
                   : "Nothing waiting — you're all caught up!"}
               </div>
             </div>
-            <button className="gc-btn" onClick={handleGradeNext} disabled={totalNeedsReview === 0} style={{ background: COLORS.white, color: COLORS.violet, borderRadius: 999, padding: "10px 20px", fontWeight: 700, fontSize: 13, opacity: totalNeedsReview === 0 ? 0.6 : 1, cursor: totalNeedsReview === 0 ? "default" : "pointer" }}>
+            <button className="gc-btn" onClick={handleGradeNext} disabled={totalNeedsReview === 0} style={{ background: COLORS.white, color: ACCENT, borderRadius: 999, padding: "10px 20px", fontWeight: 700, fontSize: 13, opacity: totalNeedsReview === 0 ? 0.6 : 1, cursor: totalNeedsReview === 0 ? "default" : "pointer" }}>
               Start Grading →
             </button>
           </div>
@@ -219,7 +232,7 @@ export default function TeacherGradeListPage() {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search students..."
-              style={{ width: "100%", border: "2px solid #ECEAF5", borderRadius: 10, padding: "9px 10px 9px 34px", fontSize: 13, boxSizing: "border-box", fontFamily: "inherit" }}
+              style={{ width: "100%", border: "2px solid #ECEAF5", borderRadius: 10, padding: "9px 10px 9px 34px", fontSize: 13, boxSizing: "border-box", fontFamily: "inherit", background: "rgba(255,255,255,.7)" }}
             />
             <span style={{ position: "absolute", left: 10, top: 9, color: COLORS.textMuted }}>🔍</span>
           </div>
@@ -230,7 +243,7 @@ export default function TeacherGradeListPage() {
               <button
                 className="gc-btn"
                 onClick={() => setSelectedClassId("all")}
-                style={{ background: selectedClassId === "all" ? COLORS.violet : COLORS.white, color: selectedClassId === "all" ? COLORS.white : COLORS.textDark, border: selectedClassId === "all" ? "none" : `1px solid ${COLORS.border}`, borderRadius: 999, padding: "9px 18px", fontWeight: 700, fontSize: 13 }}
+                style={{ background: selectedClassId === "all" ? ACCENT : COLORS.white, color: selectedClassId === "all" ? COLORS.white : COLORS.textDark, border: selectedClassId === "all" ? "none" : `1px solid ${COLORS.border}`, borderRadius: 999, padding: "9px 18px", fontWeight: 700, fontSize: 13 }}
               >
                 All Classes
               </button>
@@ -239,7 +252,7 @@ export default function TeacherGradeListPage() {
                   key={c.id}
                   className="gc-btn"
                   onClick={() => setSelectedClassId(c.id)}
-                  style={{ background: selectedClassId === c.id ? COLORS.violet : COLORS.white, color: selectedClassId === c.id ? COLORS.white : COLORS.textDark, border: selectedClassId === c.id ? "none" : `1px solid ${COLORS.border}`, borderRadius: 999, padding: "9px 18px", fontWeight: 700, fontSize: 13 }}
+                  style={{ background: selectedClassId === c.id ? ACCENT : COLORS.white, color: selectedClassId === c.id ? COLORS.white : COLORS.textDark, border: selectedClassId === c.id ? "none" : `1px solid ${COLORS.border}`, borderRadius: 999, padding: "9px 18px", fontWeight: 700, fontSize: 13 }}
                 >
                   {c.name}
                 </button>
@@ -255,14 +268,14 @@ export default function TeacherGradeListPage() {
             assignmentGroups.map((g) => (
               <div key={g.assignmentId} style={{ marginBottom: 28, opacity: g.needsCount === 0 ? 0.6 : 1 }}>
                 <div style={{ display: "flex", alignItems: "baseline", gap: 8, marginBottom: 10, padding: "0 2px" }}>
-                  <h2 style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 700, fontSize: 15.5, margin: 0 }}>{g.caseTitle}</h2>
+                  <h2 style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 700, fontSize: 15.5, margin: 0, color: COLORS.textDark }}>{g.caseTitle}</h2>
                   {selectedClassId === "all" && (
-                    <span style={{ fontSize: 11, fontWeight: 700, color: COLORS.violet, background: COLORS.violetSoft, padding: "2px 9px", borderRadius: 999 }}>{g.className}</span>
+                    <span style={{ fontSize: 11, fontWeight: 700, color: ACCENT, background: `${ACCENT}22`, padding: "2px 9px", borderRadius: 999 }}>{g.className}</span>
                   )}
                   {g.needsCount > 0 ? (
                     <span style={{ fontSize: 11, fontWeight: 700, color: "#B8860B", background: "#FFF4E5", padding: "2px 9px", borderRadius: 999 }}>🔴 {g.needsCount} need review</span>
                   ) : (
-                    <span style={{ fontSize: 11, fontWeight: 700, color: COLORS.success || "#22C55E", background: "#E9F9EE", padding: "2px 9px", borderRadius: 999 }}>✓ all graded</span>
+                    <span style={{ fontSize: 11, fontWeight: 700, color: COLORS.success, background: "#E9F9EE", padding: "2px 9px", borderRadius: 999 }}>✓ all graded</span>
                   )}
                   <span style={{ fontSize: 12, color: COLORS.textMuted, marginLeft: "auto" }}>
                     {g.submissions.length} submission{g.submissions.length === 1 ? "" : "s"}
@@ -273,7 +286,9 @@ export default function TeacherGradeListPage() {
                     const isNeedsReview = needsReview(s);
                     // Same "amber = needs your attention, teal = handled" split the
                     // old row layout used — graded-but-not-yet-released counts as
-                    // handled here too, same as it always has.
+                    // handled here too, same as it always has. These are genuine
+                    // submission-status colors, not page branding, so they stay
+                    // put regardless of this page's own aqua accent.
                     const isHandled = s.released || (!isNeedsReview && !s.revision_requested);
                     const statusBg = isHandled ? "#E6F8F9" : "#FFF4E5";
                     const statusColor = isHandled ? COLORS.teal : "#B8860B";
