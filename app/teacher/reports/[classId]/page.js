@@ -4,21 +4,22 @@ import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { ChevronLeft, ChevronRight, Printer } from "lucide-react";
 import { supabase } from "../../../../lib/supabaseClient";
-import TeacherSidebar from "../../../../components/TeacherSidebar";
+import TeacherHUD from "../../../../components/TeacherHUD";
+import { COLORS, PAGE_ACCENTS, PAGE_BACKGROUNDS } from "../../../../lib/teacherTheme";
 
-const COLORS = {
-  canvas: "#F2F0FA",
-  white: "#FFFFFF",
-  violet: "#8C52F2",
-  violetSoft: "#EEE6FD",
-  teal: "#6FD8F5",
-  success: "#22C55E",
-  info: "#3D84F5",
-  danger: "#E4574C",
-  border: "#E1E2EE",
-  textDark: "#1F2A44",
-  textMuted: "#697386",
-};
+// Sept 13 — moved to the console-interior look, same pattern as My Classes
+// and Student Progress (see Teacher_SiteWide_Redesign_Plan.md). Observatory's
+// aqua accent + background art surround the page, same as Student Progress
+// and the Reports hub. The report itself stays a plain, opaque white card —
+// deliberately NOT the translucent glass panel look used elsewhere — since
+// this is a printable document handed to a parent or admin and needs to
+// stay flatly legible/high-contrast both on screen and on paper. Every
+// query/memo/calculation below is untouched; only chrome and decorative
+// colors changed. Proficiency-band colors (including violet for
+// "Developing") are left exactly as they were — a real 4-way status
+// signal, not brand decoration, same principle as every other console page.
+const ACCENT = PAGE_ACCENTS["/teacher/reports"];
+const BG = PAGE_BACKGROUNDS["/teacher/reports"];
 
 const BAND_ORDER = [
   { label: "Excellent", color: COLORS.success },
@@ -370,7 +371,7 @@ export default function ClassReportPage() {
       <div style={{ minHeight: "100vh", background: COLORS.canvas, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Inter', sans-serif", color: COLORS.textDark, textAlign: "center", padding: 20 }}>
         <div>
           <p>Couldn't find that class.</p>
-          <button onClick={() => router.push("/teacher/reports")} style={{ background: COLORS.violet, color: COLORS.white, border: "none", borderRadius: 999, padding: "10px 20px", fontWeight: 700, cursor: "pointer" }}>Back to Reports</button>
+          <button onClick={() => router.push("/teacher/reports")} style={{ background: ACCENT, color: COLORS.white, border: "none", borderRadius: 999, padding: "10px 20px", fontWeight: 700, cursor: "pointer" }}>Back to Reports</button>
         </div>
       </div>
     );
@@ -379,7 +380,21 @@ export default function ClassReportPage() {
   const generatedDate = new Date().toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" });
 
   return (
-    <div style={{ display: "flex", minHeight: "100vh", background: COLORS.canvas, fontFamily: "'Inter', sans-serif", color: COLORS.textDark }}>
+    <div
+      className="reports-shell"
+      style={{
+        minHeight: "100vh",
+        background: COLORS.canvas,
+        backgroundImage: `linear-gradient(180deg, rgba(243,239,252,.55) 0%, rgba(243,239,252,.82) 100%), url(${BG})`,
+        backgroundSize: "cover",
+        backgroundPosition: "center top",
+        backgroundAttachment: "fixed",
+        fontFamily: "'Inter', sans-serif",
+        color: COLORS.textDark,
+        display: "flex",
+        flexDirection: "column",
+      }}
+    >
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@600;700&family=Inter:wght@400;500;600;700&display=swap');
         .gc-btn { cursor: pointer; border: none; font-family: 'Inter', sans-serif; }
@@ -389,14 +404,15 @@ export default function ClassReportPage() {
         @media print {
           .no-print { display: none !important; }
           .print-only { display: block !important; }
+          .reports-shell { background: white !important; background-image: none !important; }
           body, main { background: white !important; }
           .report-card { box-shadow: none !important; border: 1px solid #ddd !important; }
         }
       `}</style>
 
-      <div className="no-print"><TeacherSidebar teacherEmail={teacherEmail} /></div>
+      <div className="no-print"><TeacherHUD title="Reports" subtitle={`Observatory — ${className}`} accent={ACCENT} teacherEmail={teacherEmail} /></div>
 
-      <main style={{ flex: 1, padding: "32px 36px 60px" }}>
+      <main style={{ flex: 1, padding: "28px 36px 60px" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", maxWidth: 800, margin: "0 auto 20px", flexWrap: "wrap", gap: 12 }} className="no-print">
           <button onClick={() => router.push("/teacher/reports")} className="gc-btn" style={{ display: "flex", alignItems: "center", gap: 6, background: "none", color: COLORS.textMuted, fontWeight: 700, fontSize: 13.5 }}>
             <ChevronLeft size={18} /> Back to Reports
@@ -405,14 +421,14 @@ export default function ClassReportPage() {
             <div style={{ display: "flex", gap: 6 }}>
               {RANGE_OPTIONS.map((opt) => (
                 <button key={opt.key} onClick={() => setRange(opt.key)} className="gc-btn" style={{
-                  background: range === opt.key ? COLORS.violet : COLORS.white,
+                  background: range === opt.key ? ACCENT : COLORS.white,
                   color: range === opt.key ? COLORS.white : COLORS.textDark,
                   border: range === opt.key ? "none" : `1px solid ${COLORS.border}`,
                   borderRadius: 999, padding: "7px 14px", fontWeight: 700, fontSize: 12,
                 }}>{opt.label}</button>
               ))}
             </div>
-            <button onClick={() => window.print()} className="gc-btn" style={{ display: "flex", alignItems: "center", gap: 8, background: COLORS.violet, color: COLORS.white, borderRadius: 999, padding: "10px 20px", fontWeight: 700, fontSize: 13.5 }}>
+            <button onClick={() => window.print()} className="gc-btn" style={{ display: "flex", alignItems: "center", gap: 8, background: ACCENT, color: COLORS.white, borderRadius: 999, padding: "10px 20px", fontWeight: 700, fontSize: 13.5 }}>
               <Printer size={16} /> Print / Save as PDF
             </button>
           </div>
@@ -425,9 +441,9 @@ export default function ClassReportPage() {
           </div>
         )}
 
-        <div className="report-card" style={{ maxWidth: 800, margin: "0 auto", background: COLORS.white, borderRadius: 20, padding: 36, boxShadow: "0 4px 16px rgba(13,27,42,.08)" }}>
+        <div className="report-card" style={{ maxWidth: 800, margin: "0 auto", background: COLORS.white, borderRadius: 20, padding: 36, boxShadow: "0 8px 28px rgba(80,60,150,.16)" }}>
           <div style={{ marginBottom: 24 }}>
-            <div style={{ fontSize: 12, fontWeight: 700, color: COLORS.violet, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 6 }}>ClearCenters Class Report</div>
+            <div style={{ fontSize: 12, fontWeight: 700, color: ACCENT, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 6 }}>ClearCenters Class Report</div>
             <h1 style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 700, fontSize: 26, margin: "0 0 4px 0" }}>{className}</h1>
             <div style={{ fontSize: 12.5, color: COLORS.textMuted }}>Generated {generatedDate}{teacherEmail ? ` · ${teacherEmail}` : ""}{range !== "all" ? ` · ${RANGE_OPTIONS.find((o) => o.key === range)?.label}` : ""}</div>
           </div>
@@ -442,7 +458,7 @@ export default function ClassReportPage() {
           <div style={{ marginBottom: 28 }}>
             <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 2 }}>Class Average Over Time</div>
             <div style={{ fontSize: 12, color: COLORS.textMuted, marginBottom: 10 }}>One point per assignment — shows growth instead of just a single snapshot number.</div>
-            <TrendChart series={[{ label: "Class Average", color: COLORS.violet, values: report.classWeeklyAvg, pointTitles: report.titles }]} labels={report.labels} />
+            <TrendChart series={[{ label: "Class Average", color: ACCENT, values: report.classWeeklyAvg, pointTitles: report.titles }]} labels={report.labels} />
           </div>
 
           <div style={{ marginBottom: 28 }}>
@@ -534,7 +550,7 @@ export default function ClassReportPage() {
                     <div className="no-print" style={{ padding: "6px 4px 16px 24px", display: "flex", gap: 24, flexWrap: "wrap" }}>
                       <div style={{ width: 300 }}>
                         <div style={{ fontSize: 10.5, fontWeight: 700, color: COLORS.textMuted, textTransform: "uppercase", marginBottom: 4 }}>Trend</div>
-                        <TrendChart series={[{ label: r.name, color: COLORS.violet, values: r.scores, pointTitles: report.titles }]} labels={report.labels} height={100} />
+                        <TrendChart series={[{ label: r.name, color: ACCENT, values: r.scores, pointTitles: report.titles }]} labels={report.labels} height={100} />
                       </div>
                       <div style={{ flex: 1, minWidth: 200 }}>
                         {r.missingTitles.length > 0 ? (
@@ -542,7 +558,7 @@ export default function ClassReportPage() {
                         ) : (
                           <div style={{ fontSize: 12, color: COLORS.success }}>✓ Nothing missing</div>
                         )}
-                        <button onClick={() => router.push(`/teacher/reports/student/${r.id}`)} className="gc-btn" style={{ marginTop: 10, background: COLORS.violet, color: COLORS.white, borderRadius: 999, padding: "8px 16px", fontWeight: 700, fontSize: 12.5 }}>
+                        <button onClick={() => router.push(`/teacher/reports/student/${r.id}`)} className="gc-btn" style={{ marginTop: 10, background: ACCENT, color: COLORS.white, borderRadius: 999, padding: "8px 16px", fontWeight: 700, fontSize: 12.5 }}>
                           View Full Report →
                         </button>
                       </div>

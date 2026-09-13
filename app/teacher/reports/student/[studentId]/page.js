@@ -1,24 +1,24 @@
 "use client";
 
-import React, { useState, useEffect, useCallback, useMemo } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { ChevronLeft, Printer } from "lucide-react";
 import { supabase } from "../../../../../lib/supabaseClient";
-import TeacherSidebar from "../../../../../components/TeacherSidebar";
+import TeacherHUD from "../../../../../components/TeacherHUD";
+import { COLORS, PAGE_ACCENTS, PAGE_BACKGROUNDS } from "../../../../../lib/teacherTheme";
 
-const COLORS = {
-  canvas: "#F2F0FA",
-  white: "#FFFFFF",
-  violet: "#8C52F2",
-  violetSoft: "#EEE6FD",
-  teal: "#6FD8F5",
-  success: "#22C55E",
-  info: "#3D84F5",
-  danger: "#E4574C",
-  border: "#E1E2EE",
-  textDark: "#1F2A44",
-  textMuted: "#697386",
-};
+// Sept 13 — moved to the console-interior look, same pattern as the rest of
+// Reports (see Teacher_SiteWide_Redesign_Plan.md). Same reasoning as the
+// class report: the report itself stays a plain, opaque white card (not the
+// glass panel look) since it's a printable document, and its aqua Observatory
+// accent replaces decorative violet uses only — the trend chart's two-line
+// coloring (this student vs. class average) and the proficiency-band colors
+// (including violet for "Developing") are untouched, since changing either
+// would hurt at-a-glance readability rather than help it. Crystal Points
+// stays violet too — that's this app's consistent brand color for the
+// points/rewards currency everywhere, not a page-specific accent.
+const ACCENT = PAGE_ACCENTS["/teacher/reports"];
+const BG = PAGE_BACKGROUNDS["/teacher/reports"];
 
 function proficiencyBand(avg) {
   if (avg >= 1.8) return { label: "Excellent", color: COLORS.success };
@@ -42,8 +42,8 @@ function BandBadge({ band }) {
 }
 
 // Same inline SVG line chart as the class report — duplicated rather than
-// shared since neither file imports from the other (matches how COLORS/
-// proficiencyBand are already duplicated across the reports pages).
+// shared since neither file imports from the other (matches how
+// proficiencyBand is already duplicated across the reports pages).
 function TrendChart({ series, labels, height = 170 }) {
   const width = 680;
   const padL = 32, padR = 10, padTop = 12, padBottom = 22;
@@ -261,7 +261,7 @@ export default function StudentReportPage() {
       <div style={{ minHeight: "100vh", background: COLORS.canvas, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Inter', sans-serif", color: COLORS.textDark, textAlign: "center", padding: 20 }}>
         <div>
           <p>Couldn't find that student.</p>
-          <button onClick={() => router.push("/teacher/reports")} style={{ background: COLORS.violet, color: COLORS.white, border: "none", borderRadius: 999, padding: "10px 20px", fontWeight: 700, cursor: "pointer" }}>Back to Reports</button>
+          <button onClick={() => router.push("/teacher/reports")} style={{ background: ACCENT, color: COLORS.white, border: "none", borderRadius: 999, padding: "10px 20px", fontWeight: 700, cursor: "pointer" }}>Back to Reports</button>
         </div>
       </div>
     );
@@ -271,32 +271,47 @@ export default function StudentReportPage() {
   const delta = report.avgPct !== null && report.classAveragePct !== null ? report.avgPct - report.classAveragePct : null;
 
   return (
-    <div style={{ display: "flex", minHeight: "100vh", background: COLORS.canvas, fontFamily: "'Inter', sans-serif", color: COLORS.textDark }}>
+    <div
+      className="reports-shell"
+      style={{
+        minHeight: "100vh",
+        background: COLORS.canvas,
+        backgroundImage: `linear-gradient(180deg, rgba(243,239,252,.55) 0%, rgba(243,239,252,.82) 100%), url(${BG})`,
+        backgroundSize: "cover",
+        backgroundPosition: "center top",
+        backgroundAttachment: "fixed",
+        fontFamily: "'Inter', sans-serif",
+        color: COLORS.textDark,
+        display: "flex",
+        flexDirection: "column",
+      }}
+    >
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@600;700&family=Inter:wght@400;500;600;700&display=swap');
         .gc-btn { cursor: pointer; border: none; font-family: 'Inter', sans-serif; }
         @media print {
           .no-print { display: none !important; }
+          .reports-shell { background: white !important; background-image: none !important; }
           body, main { background: white !important; }
           .report-card { box-shadow: none !important; border: 1px solid #ddd !important; }
         }
       `}</style>
 
-      <div className="no-print"><TeacherSidebar teacherEmail={teacherEmail} /></div>
+      <div className="no-print"><TeacherHUD title="Reports" subtitle={`Observatory — ${report.studentName}`} accent={ACCENT} teacherEmail={teacherEmail} /></div>
 
-      <main style={{ flex: 1, padding: "32px 36px 60px" }}>
+      <main style={{ flex: 1, padding: "28px 36px 60px" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", maxWidth: 800, margin: "0 auto 20px" }} className="no-print">
           <button onClick={() => router.push(`/teacher/reports/${report.classId}`)} className="gc-btn" style={{ display: "flex", alignItems: "center", gap: 6, background: "none", color: COLORS.textMuted, fontWeight: 700, fontSize: 13.5 }}>
             <ChevronLeft size={18} /> Back to {report.className}
           </button>
-          <button onClick={() => window.print()} className="gc-btn" style={{ display: "flex", alignItems: "center", gap: 8, background: COLORS.violet, color: COLORS.white, borderRadius: 999, padding: "10px 20px", fontWeight: 700, fontSize: 13.5 }}>
+          <button onClick={() => window.print()} className="gc-btn" style={{ display: "flex", alignItems: "center", gap: 8, background: ACCENT, color: COLORS.white, borderRadius: 999, padding: "10px 20px", fontWeight: 700, fontSize: 13.5 }}>
             <Printer size={16} /> Print / Save as PDF
           </button>
         </div>
 
-        <div className="report-card" style={{ maxWidth: 800, margin: "0 auto", background: COLORS.white, borderRadius: 20, padding: 36, boxShadow: "0 4px 16px rgba(13,27,42,.08)" }}>
+        <div className="report-card" style={{ maxWidth: 800, margin: "0 auto", background: COLORS.white, borderRadius: 20, padding: 36, boxShadow: "0 8px 28px rgba(80,60,150,.16)" }}>
           <div style={{ marginBottom: 24 }}>
-            <div style={{ fontSize: 12, fontWeight: 700, color: COLORS.violet, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 6 }}>ClearCenters Student Report</div>
+            <div style={{ fontSize: 12, fontWeight: 700, color: ACCENT, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 6 }}>ClearCenters Student Report</div>
             <h1 style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 700, fontSize: 26, margin: "0 0 4px 0" }}>{report.studentName}</h1>
             <div style={{ fontSize: 12.5, color: COLORS.textMuted }}>{report.className} · Generated {generatedDate}{teacherEmail ? ` · ${teacherEmail}` : ""}</div>
           </div>

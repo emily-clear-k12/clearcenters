@@ -38,7 +38,11 @@ const COLORS = {
   info: "#3D84F5",
   white: "#FFFFFF",
   textMuted: "#A9B4CE",
-  magenta: "#D65DE0", // Messages hologram's hue — nothing else in the app uses this pink/magenta family
+  magenta: "#D65DE0", // Messages hologram's hue
+  // Mission Control's own accent (Sept 13, later same-day fix) — replaces
+  // `warning` here too, so the planet's color on this scene stays in sync
+  // with its console-interior page (lib/teacherTheme.js has the full note).
+  pink: "#FF6FA0",
 };
 
 // Real art will live here once generated (see the art spec doc) — nothing
@@ -824,7 +828,7 @@ export default function TeacherOverview() {
           {/* Landmarks — hologram panels floating on the console, standing in
               for the old sidebar's nav groups. Positions match the 5 lit
               panel slots baked into the background art. */}
-          <Landmark art={ART.missionControl} icon={ICONS.launch} label="Mission Control" sub="Assign & Launch" accent={COLORS.warning} onClick={() => router.push("/teacher/assign")} {...CONSOLE_SLOTS[0]} />
+          <Landmark art={ART.missionControl} icon={ICONS.launch} label="Mission Control" sub="Assign & Launch" accent={COLORS.pink} onClick={() => router.push("/teacher/assign")} {...CONSOLE_SLOTS[0]} />
           <Landmark art={ART.observatory} icon={ICONS.telescope} label="Observatory" sub="Progress & Reports" accent={COLORS.aqua} onClick={() => router.push("/teacher/reports")} {...CONSOLE_SLOTS[1]} />
           <Landmark art={samArtFor(teacherSamSkin)} icon={ICONS.gem} label="S.A.M." sub="Results & Shortcuts" accent={COLORS.teal} onClick={() => setAwardModalOpen(true)} {...CONSOLE_SLOTS[2]} />
           <Landmark art={ART.beacon} icon={ICONS.mail} label="Messages" sub="Inbox & Updates" accent={COLORS.magenta} onClick={() => router.push("/teacher/messages")} {...CONSOLE_SLOTS[3]} />
