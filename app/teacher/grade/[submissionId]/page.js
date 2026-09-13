@@ -7,23 +7,39 @@ import { supabase } from "../../../../lib/supabaseClient";
 import { getPublicCase } from "../../../../lib/cases/index.public";
 import { getNewsroomBNPublicCase } from "../../../../lib/cases/newsroom-bn/index.public";
 import { getSignalCheckPublicCase } from "../../../../lib/cases/signal-check/index.public";
-import TeacherSidebar from "../../../../components/TeacherSidebar";
+import TeacherHUD from "../../../../components/TeacherHUD";
+import { COLORS, PAGE_ACCENTS, PAGE_BACKGROUNDS, panelStyle } from "../../../../lib/teacherTheme";
 
-const COLORS = {
-  navy: "#0D1B2A",
-  cream: "#F2F0FA",
-  violet: "#8C52F2",
-  violetSoft: "#EEE6FD",
-  teal: "#6FD8F5",
-  tealSoft: "#E6F8F9",
-  gold: "#FFC44D",
-  border: "#E1E2EE",
-  white: "#FFFFFF",
-  textDark: "#1F2A44",
-  textMuted: "#697386",
-  success: "#22C55E",
-  warning: "#FF9F43",
-};
+// Sept 13 — moved to the console-interior look, same Observatory family
+// (aqua, bg-observatory.jpg) as the Submissions list this page is reached
+// from. This was deliberately left out of that earlier pass — it's a much
+// bigger, denser page, so it got its own careful look rather than being
+// rushed through alongside five other pages.
+//
+// The flat opaque white cards (with a plain box-shadow, no border) became
+// the shared translucent `panelStyle(ACCENT)` glass-card look used
+// everywhere else in the redesign, and the top student-info bar and
+// "Release Grade" action moved from decorative violet to this page's aqua
+// ACCENT. Three groups of color were deliberately left untouched because
+// they're genuine in-context meaning, not page branding, same principle as
+// every other page in this redesign:
+//   - Gold / the amber "#FFF7E6" family in the Final Grade picker and the
+//     "Your Grade" score pill — this is this page's own established
+//     grading-workflow language (gold = "the human final grade"), not tied
+//     to navigation branding, so it stays gold regardless of which page
+//     accent surrounds it.
+//   - Teal for "mastered" (Level 2 / all-correct states) and amber/warning
+//     for "needs work" or incorrect-verdict text — real signals about the
+//     actual submission, exactly like the needs-review/handled colors on
+//     the Submissions list.
+//   - The Newsroom investigation log's Observation (green) vs Inference
+//     (violet) tags — a genuine content-type distinction, not decoration.
+// The "AI First Reader" panel's own violet moved to ACCENT since it's an
+// informational callout like Learning Target elsewhere, not a fixed
+// cross-page signature the way Distress Call or Crystal Points are. No
+// query, grading, or release/send-back logic changed.
+const ACCENT = PAGE_ACCENTS["/teacher/grade"];
+const BG = PAGE_BACKGROUNDS["/teacher/grade"];
 
 const GRADE_LABELS = { 0: "Level 0", 1: "Level 1", 2: "Level 2" };
 // Crystal Points awarded when a grade is released, scaled to score so effort
@@ -52,7 +68,7 @@ const SIGNAL_CHECK_PUSH_FURTHER = "This student read every signal correctly. Cha
 
 function ScorePill({ label, value, color, sublabel }) {
   return (
-    <div style={{ background: COLORS.white, borderRadius: 14, padding: 14, textAlign: "center", boxShadow: "0 2px 10px rgba(0,0,0,.08)", flex: 1 }}>
+    <div style={{ ...panelStyle(ACCENT, { padding: 14, textAlign: "center", flex: 1 }) }}>
       <div style={{ fontSize: 11, fontWeight: 700, color: COLORS.textMuted, letterSpacing: 0.4, marginBottom: 6, textTransform: "uppercase" }}>{label}</div>
       <div style={{ fontSize: 22, fontWeight: 700, color: color || COLORS.textDark, fontFamily: "'Poppins', sans-serif" }}>{value}</div>
       {sublabel && <div style={{ fontSize: 11, color: COLORS.textMuted, marginTop: 2 }}>{sublabel}</div>}
@@ -71,8 +87,8 @@ function ReleaseConfirmModal({ open, studentName, grade, onCancel, onConfirm }) 
           They'll see <strong>{GRADE_LABELS[grade]}</strong> and your feedback. They will not see the AI's score or rationale.
         </div>
         <div style={{ display: "flex", gap: 10, justifyContent: "center", marginTop: 18 }}>
-          <button onClick={onCancel} style={{ background: COLORS.cream, color: COLORS.textDark, border: "none", borderRadius: 999, padding: "11px 22px", fontWeight: 700, fontSize: 14, cursor: "pointer" }}>Not yet</button>
-          <button onClick={onConfirm} style={{ background: COLORS.violet, color: COLORS.white, border: "none", borderRadius: 999, padding: "11px 22px", fontWeight: 700, fontSize: 14, cursor: "pointer" }}>Release grade</button>
+          <button onClick={onCancel} style={{ background: COLORS.canvas, color: COLORS.textDark, border: "none", borderRadius: 999, padding: "11px 22px", fontWeight: 700, fontSize: 14, cursor: "pointer" }}>Not yet</button>
+          <button onClick={onConfirm} style={{ background: ACCENT, color: COLORS.white, border: "none", borderRadius: 999, padding: "11px 22px", fontWeight: 700, fontSize: 14, cursor: "pointer" }}>Release grade</button>
         </div>
       </div>
     </div>
@@ -89,9 +105,9 @@ function SendBackConfirmModal({ open, studentName, feedback, onCancel, onConfirm
         <div style={{ fontSize: 13.5, color: COLORS.textMuted, lineHeight: 1.5, marginBottom: 10 }}>
           No grade will be released yet. They'll see this note from you and get a chance to revise their answer:
         </div>
-        <div style={{ background: COLORS.cream, borderRadius: 10, padding: 12, fontSize: 13, color: COLORS.textDark, textAlign: "left", lineHeight: 1.5, marginBottom: 6 }}>{feedback}</div>
+        <div style={{ background: COLORS.canvas, borderRadius: 10, padding: 12, fontSize: 13, color: COLORS.textDark, textAlign: "left", lineHeight: 1.5, marginBottom: 6 }}>{feedback}</div>
         <div style={{ display: "flex", gap: 10, justifyContent: "center", marginTop: 18 }}>
-          <button onClick={onCancel} style={{ background: COLORS.cream, color: COLORS.textDark, border: "none", borderRadius: 999, padding: "11px 22px", fontWeight: 700, fontSize: 14, cursor: "pointer" }}>Not yet</button>
+          <button onClick={onCancel} style={{ background: COLORS.canvas, color: COLORS.textDark, border: "none", borderRadius: 999, padding: "11px 22px", fontWeight: 700, fontSize: 14, cursor: "pointer" }}>Not yet</button>
           <button onClick={onConfirm} style={{ background: COLORS.warning, color: COLORS.white, border: "none", borderRadius: 999, padding: "11px 22px", fontWeight: 700, fontSize: 14, cursor: "pointer" }}>Send back</button>
         </div>
       </div>
@@ -242,7 +258,7 @@ export default function TeacherGradeDetailPage() {
 
   if (loadingAuth || loading) {
     return (
-      <div style={{ minHeight: "100vh", background: COLORS.cream, display: "flex", alignItems: "center", justifyContent: "center", color: COLORS.textMuted, fontFamily: "'Inter', sans-serif" }}>
+      <div style={{ minHeight: "100vh", background: COLORS.canvas, display: "flex", alignItems: "center", justifyContent: "center", color: COLORS.textMuted, fontFamily: "'Inter', sans-serif" }}>
         Loading...
       </div>
     );
@@ -250,10 +266,10 @@ export default function TeacherGradeDetailPage() {
 
   if (error && !submission) {
     return (
-      <div style={{ minHeight: "100vh", background: COLORS.cream, display: "flex", alignItems: "center", justifyContent: "center", color: COLORS.textDark, fontFamily: "'Inter', sans-serif", padding: 20, textAlign: "center" }}>
+      <div style={{ minHeight: "100vh", background: COLORS.canvas, display: "flex", alignItems: "center", justifyContent: "center", color: COLORS.textDark, fontFamily: "'Inter', sans-serif", padding: 20, textAlign: "center" }}>
         <div>
           <p>{error}</p>
-          <button onClick={() => router.push("/teacher/grade")} style={{ background: COLORS.violet, color: COLORS.white, border: "none", borderRadius: 999, padding: "10px 20px", fontWeight: 700, cursor: "pointer" }}>Back to Submissions</button>
+          <button onClick={() => router.push("/teacher/grade")} style={{ background: ACCENT, color: COLORS.white, border: "none", borderRadius: 999, padding: "10px 20px", fontWeight: 700, cursor: "pointer" }}>Back to Submissions</button>
         </div>
       </div>
     );
@@ -315,7 +331,20 @@ export default function TeacherGradeDetailPage() {
     : null;
 
   return (
-    <div style={{ display: "flex", minHeight: "100vh", background: COLORS.cream, fontFamily: "'Inter', sans-serif", color: COLORS.textDark }}>
+    <div
+      style={{
+        minHeight: "100vh",
+        background: COLORS.canvas,
+        backgroundImage: `linear-gradient(180deg, rgba(243,239,252,.55) 0%, rgba(243,239,252,.82) 100%), url(${BG})`,
+        backgroundSize: "cover",
+        backgroundPosition: "center top",
+        backgroundAttachment: "fixed",
+        fontFamily: "'Inter', sans-serif",
+        color: COLORS.textDark,
+        display: "flex",
+        flexDirection: "column",
+      }}
+    >
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@600;700&family=Inter:wght@400;500;600;700&display=swap');
         .gc-btn { transition: transform 150ms ease; cursor: pointer; border: none; font-family: 'Inter', sans-serif; }
@@ -324,14 +353,14 @@ export default function TeacherGradeDetailPage() {
         @keyframes gcFadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
       `}</style>
 
-      <TeacherSidebar teacherEmail={teacherEmail} />
+      <TeacherHUD title="Review Submission" subtitle="Observatory — grade and release feedback" accent={ACCENT} teacherEmail={teacherEmail} />
 
       <div style={{ flex: 1, padding: "24px 32px 40px" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 14, background: COLORS.white, border: `1px solid ${COLORS.border}`, borderRadius: 16, padding: "14px 20px", marginBottom: 20, boxShadow: "0 4px 16px rgba(13,27,42,.06)" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 20, ...panelStyle(ACCENT, { padding: "14px 20px" }) }}>
           <button onClick={() => router.push("/teacher/grade")} style={{ background: "none", border: "none", color: COLORS.textMuted, display: "flex", alignItems: "center", padding: 6, borderRadius: 8, cursor: "pointer" }}>
             <ChevronLeft size={20} />
           </button>
-          <div style={{ width: 40, height: 40, borderRadius: "50%", background: COLORS.violetSoft, display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, color: COLORS.violet, fontSize: 15, flexShrink: 0 }}>
+          <div style={{ width: 40, height: 40, borderRadius: "50%", background: `${COLORS.violet}22`, display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, color: COLORS.violet, fontSize: 15, flexShrink: 0 }}>
             {studentName[0]}
           </div>
           <div style={{ marginRight: "auto" }}>
@@ -352,7 +381,7 @@ export default function TeacherGradeDetailPage() {
               // Classic keeps the per-signal breakdown. Weigh-In / Thread
               // show a short summary from attempt2 / signal_data so the
               // page never crashes on missing statements[].
-              <div style={{ background: COLORS.white, borderRadius: 16, padding: 16, boxShadow: "0 4px 16px rgba(0,0,0,.12)" }}>
+              <div style={panelStyle(ACCENT, { padding: 16 })}>
                 <div style={{ fontWeight: 700, fontSize: 12.5, color: COLORS.textMuted, marginBottom: 12, textTransform: "uppercase", letterSpacing: 0.5 }}>Student's Responses{signalCheckShape !== "classic" ? ` · ${signalCheckShape}` : ""}</div>
                 {signalCheckCase && signalCheckShape === "classic" && Array.isArray(signalCheckCase.statements) ? (
                   <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
@@ -378,11 +407,11 @@ export default function TeacherGradeDetailPage() {
                             {verdict && !isCorrect ? <span style={{ fontSize: 12, color: COLORS.textMuted }}>correct answer: {s.correctVerdict.toUpperCase()}</span> : ""}
                           </div>
                           {signalCheckCase.stemMode === "dropdown" ? (
-                            <div style={{ background: COLORS.cream, borderRadius: 10, padding: 10, fontSize: 13, color: COLORS.textDark }}>
+                            <div style={{ background: COLORS.canvas, borderRadius: 10, padding: 10, fontSize: 13, color: COLORS.textDark }}>
                               Evidence cited: {[a.evidence1, a.evidence2].filter(Boolean).map((id) => evidenceById[id]?.label || id).join(", ") || <span style={{ color: COLORS.textMuted, fontStyle: "italic" }}>(none picked)</span>}
                             </div>
                           ) : (
-                            <div style={{ background: COLORS.cream, borderRadius: 10, padding: 10, fontSize: 13, lineHeight: 1.5, color: COLORS.textDark }}>
+                            <div style={{ background: COLORS.canvas, borderRadius: 10, padding: 10, fontSize: 13, lineHeight: 1.5, color: COLORS.textDark }}>
                               {a.reasoning || <span style={{ color: COLORS.textMuted, fontStyle: "italic" }}>(no reasoning written)</span>}
                             </div>
                           )}
@@ -392,9 +421,9 @@ export default function TeacherGradeDetailPage() {
                   </div>
                 ) : (
                   <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                    <div style={{ background: COLORS.cream, borderRadius: 10, padding: 12, fontSize: 13, color: COLORS.textDark, whiteSpace: "pre-wrap" }}>{submission.attempt2 || "(no answer written)"}</div>
+                    <div style={{ background: COLORS.canvas, borderRadius: 10, padding: 12, fontSize: 13, color: COLORS.textDark, whiteSpace: "pre-wrap" }}>{submission.attempt2 || "(no answer written)"}</div>
                     {submission.signal_data && (
-                      <pre style={{ background: COLORS.cream, borderRadius: 10, padding: 12, fontSize: 11, color: COLORS.textMuted, overflow: "auto", maxHeight: 220, margin: 0 }}>{JSON.stringify({
+                      <pre style={{ background: COLORS.canvas, borderRadius: 10, padding: 12, fontSize: 11, color: COLORS.textMuted, overflow: "auto", maxHeight: 220, margin: 0 }}>{JSON.stringify({
                         caseShape: signalCheckShape,
                         sideId: submission.signal_data.sideId,
                         reasonEvidenceIds: submission.signal_data.reasonEvidenceIds,
@@ -407,25 +436,25 @@ export default function TeacherGradeDetailPage() {
               </div>
             ) : (
               <>
-                <div style={{ background: COLORS.white, borderRadius: 16, padding: 16, boxShadow: "0 4px 16px rgba(0,0,0,.12)" }}>
+                <div style={panelStyle(ACCENT, { padding: 16 })}>
                   <div style={{ fontWeight: 700, fontSize: 12.5, color: COLORS.textMuted, marginBottom: 8, textTransform: "uppercase", letterSpacing: 0.5 }}>Attempt 1</div>
-                  <div style={{ background: COLORS.cream, borderRadius: 10, padding: 12, fontSize: 14, lineHeight: 1.5, color: COLORS.textDark }}>{submission.attempt1 || <span style={{ color: COLORS.textMuted, fontStyle: "italic" }}>(no answer written)</span>}</div>
+                  <div style={{ background: COLORS.canvas, borderRadius: 10, padding: 12, fontSize: 14, lineHeight: 1.5, color: COLORS.textDark }}>{submission.attempt1 || <span style={{ color: COLORS.textMuted, fontStyle: "italic" }}>(no answer written)</span>}</div>
                 </div>
 
                 {submission.attempt2 && (
-                  <div style={{ background: COLORS.white, borderRadius: 16, padding: 16, boxShadow: "0 4px 16px rgba(0,0,0,.12)" }}>
+                  <div style={panelStyle(ACCENT, { padding: 16 })}>
                     <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
                       <div style={{ fontWeight: 700, fontSize: 12.5, color: COLORS.textMuted, textTransform: "uppercase", letterSpacing: 0.5 }}>Attempt 2 · Revised</div>
-                      <span style={{ background: COLORS.tealSoft, color: COLORS.teal, fontSize: 10.5, fontWeight: 700, padding: "2px 8px", borderRadius: 999 }}>2nd attempt</span>
+                      <span style={{ background: `${COLORS.teal}22`, color: COLORS.teal, fontSize: 10.5, fontWeight: 700, padding: "2px 8px", borderRadius: 999 }}>2nd attempt</span>
                     </div>
-                    <div style={{ background: COLORS.cream, borderRadius: 10, padding: 12, fontSize: 14, lineHeight: 1.5, color: COLORS.textDark }}>{submission.attempt2}</div>
+                    <div style={{ background: COLORS.canvas, borderRadius: 10, padding: 12, fontSize: 14, lineHeight: 1.5, color: COLORS.textDark }}>{submission.attempt2}</div>
                   </div>
                 )}
               </>
             )}
 
             {isNewsroom && nd && (
-              <div style={{ background: COLORS.white, borderRadius: 16, padding: 16, boxShadow: "0 4px 16px rgba(0,0,0,.12)" }}>
+              <div style={panelStyle(ACCENT, { padding: 16 })}>
                 <div style={{ fontWeight: 700, fontSize: 12.5, color: COLORS.textMuted, marginBottom: 10, textTransform: "uppercase", letterSpacing: 0.5 }}>Newsroom Investigation</div>
 
                 <div style={{ fontSize: 11, fontWeight: 700, color: COLORS.textMuted, marginBottom: 3 }}>First Guess</div>
@@ -434,7 +463,7 @@ export default function TeacherGradeDetailPage() {
                 <div style={{ fontSize: 11, fontWeight: 700, color: COLORS.textMuted, marginBottom: 5 }}>Investigation Log ({(nd.investigationLog || []).length} claims logged)</div>
                 <div style={{ display: "grid", gap: 6, marginBottom: 12 }}>
                   {(nd.investigationLog || []).map((log, i) => (
-                    <div key={i} style={{ background: COLORS.cream, borderRadius: 8, padding: "8px 10px", fontSize: 12 }}>
+                    <div key={i} style={{ background: COLORS.canvas, borderRadius: 8, padding: "8px 10px", fontSize: 12 }}>
                       <span style={{ fontWeight: 700 }}>{newsroomVoiceName(log.voiceId)}</span>
                       <span style={{ marginLeft: 6, fontSize: 10, fontWeight: 700, padding: "1px 7px", borderRadius: 999, background: log.stamp === "observation" ? "#E9F9EE" : "#EEE6FD", color: log.stamp === "observation" ? COLORS.success : COLORS.violet }}>
                         {log.stamp === "observation" ? "Observation" : "Inference"}
@@ -465,15 +494,15 @@ export default function TeacherGradeDetailPage() {
               </div>
             )}
 
-            <div style={{ background: COLORS.white, borderRadius: 16, padding: 16, boxShadow: "0 4px 16px rgba(0,0,0,.12)" }}>
+            <div style={panelStyle(ACCENT, { padding: 16 })}>
               <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
-                <Sparkles size={15} color={COLORS.violet} />
-                <div style={{ fontWeight: 700, fontSize: 13, color: COLORS.violet }}>AI First Reader</div>
+                <Sparkles size={15} color={ACCENT} />
+                <div style={{ fontWeight: 700, fontSize: 13, color: ACCENT }}>AI First Reader</div>
                 <span style={{ marginLeft: "auto", fontSize: 10.5, color: COLORS.textMuted, fontStyle: "italic" }}>not the final grade — teacher preview only</span>
               </div>
               {submission.ai_score !== null && submission.ai_score !== undefined ? (
                 <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
-                  <div style={{ width: 48, height: 48, borderRadius: 12, background: COLORS.violetSoft, display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, fontSize: 20, color: COLORS.violet, flexShrink: 0 }}>
+                  <div style={{ width: 48, height: 48, borderRadius: 12, background: `${ACCENT}22`, display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, fontSize: 20, color: ACCENT, flexShrink: 0 }}>
                     {submission.ai_score}
                   </div>
                   <div style={{ fontSize: 13, color: COLORS.textDark, lineHeight: 1.45 }}>{submission.ai_rationale}</div>
@@ -492,8 +521,8 @@ export default function TeacherGradeDetailPage() {
               )}
             </div>
 
-            <div className="gc-fade-in" style={{ background: finalGrade === 2 ? COLORS.tealSoft : "#FFF7E6", borderRadius: 16, padding: 16, border: `1.5px solid ${finalGrade === 2 ? COLORS.teal : COLORS.gold}` }}>
-              <div style={{ fontWeight: 700, fontSize: 13, color: finalGrade === 2 ? COLORS.teal : "#B8860B", marginBottom: 6 }}>
+            <div className="gc-fade-in" style={{ background: finalGrade === 2 ? `${COLORS.teal}22` : "#FFF7E6", borderRadius: 16, padding: 16, border: `1.5px solid ${finalGrade === 2 ? COLORS.teal : COLORS.gold}` }}>
+              <div style={{ fontWeight: 700, fontSize: 13, color: finalGrade === 2 ? "#0F7C8C" : "#B8860B", marginBottom: 6 }}>
                 Suggested Next Step · {nextStep.heading}
               </div>
               <div style={{ fontSize: 12.5, color: COLORS.textDark, lineHeight: 1.5 }}>{nextStep.body}</div>
@@ -530,7 +559,7 @@ export default function TeacherGradeDetailPage() {
 
           <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
             {checklist.length > 0 && selfCheckQuestions.length > 0 && (
-              <div style={{ background: COLORS.white, borderRadius: 16, padding: 16, boxShadow: "0 4px 16px rgba(0,0,0,.12)" }}>
+              <div style={panelStyle(ACCENT, { padding: 16 })}>
                 <div style={{ fontWeight: 700, fontSize: 13, color: COLORS.textDark, marginBottom: 2 }}>Student's Self-Check</div>
                 <div style={{ fontSize: 11.5, color: COLORS.textMuted, marginBottom: 10 }}>Checked {checkedCount} of {checklist.length} before submitting</div>
                 <div style={{ display: "grid", gap: 6 }}>
@@ -545,7 +574,7 @@ export default function TeacherGradeDetailPage() {
             )}
 
             <div style={{ display: "flex", gap: 10 }}>
-              <ScorePill label="AI First Read" value={submission.ai_score !== null && submission.ai_score !== undefined ? submission.ai_score : "—"} color={COLORS.violet} />
+              <ScorePill label="AI First Read" value={submission.ai_score !== null && submission.ai_score !== undefined ? submission.ai_score : "—"} color={ACCENT} />
               <ScorePill label="Student Felt" value={confMeta ? confMeta.emoji : "—"} sublabel={confMeta ? confMeta.label : "Not shared"} color={COLORS.teal} />
               <ScorePill label="Your Grade" value={finalGrade} color={COLORS.gold} />
             </div>
@@ -556,7 +585,7 @@ export default function TeacherGradeDetailPage() {
               </div>
             )}
 
-            <div style={{ background: COLORS.white, borderRadius: 16, padding: 16, boxShadow: "0 4px 16px rgba(0,0,0,.12)" }}>
+            <div style={panelStyle(ACCENT, { padding: 16 })}>
               <div style={{ fontWeight: 700, fontSize: 14, color: COLORS.textDark, marginBottom: 10 }}>Final Grade</div>
               <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8, marginBottom: 12 }}>
                 {[0, 1, 2].map((g) => (
@@ -565,7 +594,7 @@ export default function TeacherGradeDetailPage() {
                     className="gc-btn"
                     onClick={() => setFinalGrade(g)}
                     disabled={submission.released || submission.revision_requested}
-                    style={{ padding: "12px 8px", borderRadius: 10, fontWeight: 700, fontSize: 14, border: finalGrade === g ? `2px solid ${COLORS.gold}` : "2px solid transparent", background: finalGrade === g ? "#FFF7E6" : COLORS.cream, color: COLORS.textDark }}
+                    style={{ padding: "12px 8px", borderRadius: 10, fontWeight: 700, fontSize: 14, border: finalGrade === g ? `2px solid ${COLORS.gold}` : "2px solid transparent", background: finalGrade === g ? "#FFF7E6" : "rgba(255,255,255,.55)", color: COLORS.textDark }}
                   >
                     {GRADE_LABELS[g]}
                   </button>
@@ -576,10 +605,10 @@ export default function TeacherGradeDetailPage() {
                 onChange={(e) => setFeedback(e.target.value)}
                 disabled={submission.released || submission.revision_requested}
                 placeholder="Feedback for the student — required if you're sending this back for a revision, optional if you're releasing a grade..."
-                style={{ width: "100%", minHeight: 70, resize: "vertical", border: "2px solid #ECEAF5", borderRadius: 10, padding: 10, fontFamily: "inherit", fontSize: 13, boxSizing: "border-box", marginBottom: 12 }}
+                style={{ width: "100%", minHeight: 70, resize: "vertical", border: "2px solid #ECEAF5", borderRadius: 10, padding: 10, fontFamily: "inherit", fontSize: 13, boxSizing: "border-box", marginBottom: 12, background: "rgba(255,255,255,.7)", color: COLORS.textDark }}
               />
               {submission.released ? (
-                <div className="gc-fade-in" style={{ textAlign: "center", background: COLORS.tealSoft, color: COLORS.teal, borderRadius: 10, padding: "10px 12px", fontWeight: 700, fontSize: 13 }}>
+                <div className="gc-fade-in" style={{ textAlign: "center", background: `${COLORS.teal}22`, color: "#0F7C8C", borderRadius: 10, padding: "10px 12px", fontWeight: 700, fontSize: 13 }}>
                   ✓ Released to {studentName}
                   {pointsAwarded !== null && <span> · +{pointsAwarded} Crystal Points 🔮</span>}
                 </div>
@@ -594,7 +623,7 @@ export default function TeacherGradeDetailPage() {
                 </div>
               ) : (
                 <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                  <button className="gc-btn" onClick={() => setShowConfirm(true)} disabled={saving || sendingBack} style={{ width: "100%", background: COLORS.violet, color: COLORS.white, border: "none", borderRadius: 999, padding: "12px 20px", fontWeight: 700, fontSize: 14.5 }}>
+                  <button className="gc-btn" onClick={() => setShowConfirm(true)} disabled={saving || sendingBack} style={{ width: "100%", background: ACCENT, color: COLORS.white, border: "none", borderRadius: 999, padding: "12px 20px", fontWeight: 700, fontSize: 14.5 }}>
                     {saving ? "Saving..." : "Release Grade →"}
                   </button>
                   <button
