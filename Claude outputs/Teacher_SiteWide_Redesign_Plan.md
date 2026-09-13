@@ -77,11 +77,12 @@ Legend: ✅ done · 🚧 in progress · ⬜ not started
 | Student Progress | `/teacher/progress` | ✅ | aqua | `bg-observatory.jpg` | Second page. |
 | Reports (hub, `[classId]`, `/standards`, `/student/[studentId]`) | `/teacher/reports/*` | ✅ | aqua | `bg-observatory.jpg` | Third page (this session). See below. |
 | Challenge Library | `/teacher/assign/new` | ✅ | pink | `challenge_library_bg.jpg` (own art, kept) | Fourth page. See below. |
-| Assign Briefing | `/teacher/assign/briefing` | ⬜ | pink | needed | |
+| Assign Briefing | `/teacher/assign/briefing` | ✅ | pink | `bg-platform-room.jpg` (shared with My Classes) | Fifth page. See below. |
 | Present-to-Class display | `/teacher/assign/display` | ⬜ | pink | — | Projected for students — may want to stay closer to its current look; worth asking Emily before touching it. |
 | Live Ops Board | `/teacher/live-ops-board` | ⬜ | pink? | — | Same open question as above. |
 | Signal Ops Board | `/teacher/signal-ops-board` | ⬜ | pink? | — | Same. |
-| Submissions / Grading (+ `[submissionId]`) | `/teacher/grade`, `/teacher/grade/[id]` | ⬜ | aqua? | needed | Not yet mapped to a landmark explicitly — Track section in nav, same family as Progress/Reports. |
+| Submissions / Grading list | `/teacher/grade` | ✅ | aqua | `bg-observatory.jpg` (shared with Progress/Reports) | Sixth page. See below. Confirmed aqua/Observatory family per the open question below. |
+| Grading detail (`[submissionId]`) | `/teacher/grade/[id]` | ⬜ | aqua | needed | NOT done yet — a much bigger, more complex page (132 kB), deliberately kept as its own separate pass rather than risked in this batch. |
 | Badges & Rewards | `/teacher/badges` | ⬜ | success (green) | needed | Resources' family. |
 | Resources | `/teacher/resources` | ⬜ | success (green) | needed | Currently a "Coming Soon" stub — lowest-risk place to establish patterns fresh. |
 | Messages | `/teacher/messages` | ⬜ | magenta | `bg-messages.jpg` (mapped, page not built) | Currently a "Coming Soon" stub. |
@@ -92,8 +93,8 @@ Legend: ✅ done · 🚧 in progress · ⬜ not started
 `bg-bridge-console.jpg` is saved under `public/teacher/console/` but not yet
 assigned to any route — destination still unconfirmed with Emily.
 
-Roughly 20 screens total; 4 done so far (My Classes, Student Progress,
-Reports, Challenge Library).
+Roughly 20 screens total; 6 done so far (My Classes, Student Progress,
+Reports, Challenge Library, Assign Briefing, Submissions/Grading list).
 
 ## Overview scene fitting — fixed twice, same day (Sept 13)
 
@@ -157,6 +158,40 @@ meaningful signal):
 
 Verified with a clean `next build`.
 
+## Assign Briefing (`/teacher/assign/briefing`) — done Sept 13, this session
+
+Fifth page — the Social Studies "teach-first" shelf, a separate simpler
+flow from Challenge Library reached the same way (from My Classes). Same
+visual-layer-only port; no query or assignment logic changed. No dedicated
+art existed for this page, so it now reuses My Classes' `bg-platform-room.jpg`
+(same Mission Control family/room) rather than staying on the old
+light-cream look while its sibling pages moved on. Decorative violet
+(selected-briefing card, chips, Assign button) became pink `ACCENT`.
+Verified with a clean `next build`.
+
+## Submissions / Grading list (`/teacher/grade`) — done Sept 13, this session
+
+Sixth page — resolves one of the open questions below: Grading now
+officially shares Progress/Reports' aqua Observatory family (added to
+`PAGE_ACCENTS`/`PAGE_BACKGROUNDS` in `lib/teacherTheme.js` under
+`/teacher/grade`) rather than staying unmapped. Decorative violet (the
+"Grade Next" banner, class tabs, per-class badge on each assignment group)
+became aqua `ACCENT`. The amber "needs review" / teal "handled" submission
+status colors on each student tile are genuine status signals, not page
+branding, so — same principle as every other page in this redesign —
+those were deliberately left alone.
+
+**Not done yet, on purpose:** the actual grading screen you land on when
+you click a student (`/teacher/grade/[submissionId]`) is a much bigger,
+more complex page (132 kB compiled — likely well over a thousand lines,
+probably with rubric/scoring UI, AI-suggested grades, etc.) and was
+deliberately left for its own separate pass rather than risked inside this
+batch alongside five other pages. It's next in line specifically because
+it's the natural next step after the list page, not because it was
+forgotten.
+
+Verified with a clean `next build`.
+
 ## Reports (`/teacher/reports/*`) — done Sept 13, this session
 
 Third page moved over. Reports was already functionally rich before this
@@ -215,8 +250,5 @@ real class/grade data before or shortly after this ships.
 - **Roster page** — currently used for printing. A photographic background
   behind printable content wastes ink/toner and can hurt contrast. Worth
   checking whether Emily wants this one to stay plain/print-friendly.
-- **Grading/Submissions' landmark family** — Progress and Reports are both
-  clearly "Observatory" (aqua); Grading isn't explicitly one of the 5
-  landmarks. Defaulted to aqua in the table above, worth confirming.
 - **`bg-bridge-console.jpg`'s destination** — saved but not yet mapped to a
   route.
