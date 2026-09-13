@@ -229,17 +229,104 @@ export default function StudentProgressPage() {
 
       <div style={{ flex: 1, padding: "28px 36px 40px", display: "flex", justifyContent: "center" }}>
         <div style={{ width: "100%", maxWidth: 1200 }}>
-          <div style={{ display: "flex", gap: 8, marginBottom: 24 }}>
-            {[{ key: "student", label: "By Student" }, { key: "standard", label: "By Standard" }].map((t) => (
-              <button
-                key={t.key}
-                onClick={() => setView(t.key)}
-                className="sp-btn"
-                style={{ background: view === t.key ? ACCENT : "rgba(255,255,255,.6)", color: view === t.key ? COLORS.white : COLORS.textDark, border: view === t.key ? "none" : `1px solid ${COLORS.border}`, borderRadius: 999, padding: "9px 18px", fontWeight: 700, fontSize: 13 }}
-              >
-                {t.label}
-              </button>
-            ))}
+          {/* Sept 13 (later pass) — this whole controls cluster (view
+              toggle, class/search/band filters, the summary line) used to
+              sit directly on the observatory art with only individual pills
+              carrying their own background — the plain text bits (the
+              summary line, the "sorted so..." note) had nothing behind them
+              at all and were genuinely hard to read against a busy
+              starfield. Wrapped the whole thing in one panelStyle glass
+              card, same treatment every other content block on this page
+              already uses, so it reads as one legible control strip instead
+              of loose text floating over the art. */}
+          <div style={panelStyle(ACCENT, { padding: "16px 18px 18px", marginBottom: 24 })}>
+            <div style={{ display: "flex", gap: 8, marginBottom: view === "student" && groups.length > 0 ? 14 : 0 }}>
+              {[{ key: "student", label: "By Student" }, { key: "standard", label: "By Standard" }].map((t) => (
+                <button
+                  key={t.key}
+                  onClick={() => setView(t.key)}
+                  className="sp-btn"
+                  style={{ background: view === t.key ? ACCENT : "rgba(255,255,255,.7)", color: view === t.key ? COLORS.white : COLORS.textDark, border: view === t.key ? "none" : `1px solid ${COLORS.border}`, borderRadius: 999, padding: "9px 18px", fontWeight: 700, fontSize: 13 }}
+                >
+                  {t.label}
+                </button>
+              ))}
+            </div>
+
+            {view === "student" && groups.length > 0 && (
+              <>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 14 }}>
+                  <button
+                    onClick={() => setSelectedClassId("all")}
+                    className="sp-btn"
+                    style={{ background: selectedClassId === "all" ? ACCENT : "rgba(255,255,255,.7)", color: selectedClassId === "all" ? COLORS.white : COLORS.textDark, border: selectedClassId === "all" ? "none" : `1px solid ${COLORS.border}`, borderRadius: 999, padding: "8px 16px", fontWeight: 700, fontSize: 12.5 }}
+                  >
+                    All Classes
+                  </button>
+                  {groups.map((g) => (
+                    <button
+                      key={g.classId}
+                      onClick={() => setSelectedClassId(g.classId)}
+                      className="sp-btn"
+                      style={{ background: selectedClassId === g.classId ? ACCENT : "rgba(255,255,255,.7)", color: selectedClassId === g.classId ? COLORS.white : COLORS.textDark, border: selectedClassId === g.classId ? "none" : `1px solid ${COLORS.border}`, borderRadius: 999, padding: "8px 16px", fontWeight: 700, fontSize: 12.5 }}
+                    >
+                      {g.className}
+                    </button>
+                  ))}
+                </div>
+
+                <div style={{ position: "relative", maxWidth: 320, marginBottom: 12 }}>
+                  <input
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    placeholder="Search students..."
+                    className="sp-input"
+                    style={{ width: "100%", background: "rgba(255,255,255,.8)", color: COLORS.textDark, border: `2px solid ${COLORS.border}`, borderRadius: 10, padding: "9px 10px 9px 34px", fontSize: 13, boxSizing: "border-box", fontFamily: "inherit" }}
+                  />
+                  <span style={{ position: "absolute", left: 10, top: 9, color: COLORS.textMuted }}>🔍</span>
+                </div>
+
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 12 }}>
+                  <button
+                    onClick={() => setBandFilter(null)}
+                    className="sp-btn"
+                    style={{ background: bandFilter === null ? COLORS.textMuted : `${COLORS.textMuted}18`, color: bandFilter === null ? COLORS.white : COLORS.textMuted, border: `1.5px solid ${COLORS.textMuted}55`, borderRadius: 999, padding: "6px 14px", fontWeight: 700, fontSize: 11.5 }}
+                  >
+                    All {scopedStudents.length}
+                  </button>
+                  {BAND_ORDER.map((label) => {
+                    const color = label === "Needs Support" ? COLORS.danger : label === "Developing" ? COLORS.violet : label === "Proficient" ? COLORS.info : COLORS.success;
+                    const active = bandFilter === label;
+                    return (
+                      <button
+                        key={label}
+                        onClick={() => setBandFilter(active ? null : label)}
+                        className="sp-btn"
+                        style={{ background: active ? color : `${color}18`, color: active ? COLORS.white : color, border: `1.5px solid ${color}55`, borderRadius: 999, padding: "6px 14px", fontWeight: 700, fontSize: 11.5 }}
+                      >
+                        {scopedBandCounts[label]} {label}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                <div style={{ fontSize: 12.5, color: COLORS.textMuted, marginBottom: 8 }}>
+                  <b style={{ color: COLORS.textDark }}>{scopedStudents.length} student{scopedStudents.length === 1 ? "" : "s"}</b>
+                  {scopedAvg !== null && <> · avg <b style={{ color: COLORS.textDark }}>{scopedAvg}%</b></>}
+                  {" · "}
+                  <span style={{ color: COLORS.danger, fontWeight: 700 }}>{scopedBandCounts["Needs Support"]} Needs Support</span>
+                  {" · "}
+                  <span style={{ color: COLORS.violet, fontWeight: 700 }}>{scopedBandCounts["Developing"]} Developing</span>
+                  {" · "}
+                  <span style={{ color: COLORS.info, fontWeight: 700 }}>{scopedBandCounts["Proficient"]} Proficient</span>
+                  {" · "}
+                  <span style={{ color: COLORS.success, fontWeight: 700 }}>{scopedBandCounts["Excellent"]} Excellent</span>
+                </div>
+                <div style={{ fontSize: 11, color: COLORS.textMuted }}>
+                  Sorted so students who need support show up first — a colored border flags anyone below Proficient.
+                </div>
+              </>
+            )}
           </div>
 
           {view === "student" && groups.length === 0 && (
@@ -248,77 +335,6 @@ export default function StudentProgressPage() {
 
           {view === "student" && groups.length > 0 && (
             <>
-              <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 14 }}>
-                <button
-                  onClick={() => setSelectedClassId("all")}
-                  className="sp-btn"
-                  style={{ background: selectedClassId === "all" ? ACCENT : "rgba(255,255,255,.6)", color: selectedClassId === "all" ? COLORS.white : COLORS.textDark, border: selectedClassId === "all" ? "none" : `1px solid ${COLORS.border}`, borderRadius: 999, padding: "8px 16px", fontWeight: 700, fontSize: 12.5 }}
-                >
-                  All Classes
-                </button>
-                {groups.map((g) => (
-                  <button
-                    key={g.classId}
-                    onClick={() => setSelectedClassId(g.classId)}
-                    className="sp-btn"
-                    style={{ background: selectedClassId === g.classId ? ACCENT : "rgba(255,255,255,.6)", color: selectedClassId === g.classId ? COLORS.white : COLORS.textDark, border: selectedClassId === g.classId ? "none" : `1px solid ${COLORS.border}`, borderRadius: 999, padding: "8px 16px", fontWeight: 700, fontSize: 12.5 }}
-                  >
-                    {g.className}
-                  </button>
-                ))}
-              </div>
-
-              <div style={{ position: "relative", maxWidth: 320, marginBottom: 12 }}>
-                <input
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  placeholder="Search students..."
-                  className="sp-input"
-                  style={{ width: "100%", background: "rgba(255,255,255,.65)", color: COLORS.textDark, border: `2px solid ${COLORS.border}`, borderRadius: 10, padding: "9px 10px 9px 34px", fontSize: 13, boxSizing: "border-box", fontFamily: "inherit" }}
-                />
-                <span style={{ position: "absolute", left: 10, top: 9, color: COLORS.textMuted }}>🔍</span>
-              </div>
-
-              <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 12 }}>
-                <button
-                  onClick={() => setBandFilter(null)}
-                  className="sp-btn"
-                  style={{ background: bandFilter === null ? COLORS.textMuted : `${COLORS.textMuted}18`, color: bandFilter === null ? COLORS.white : COLORS.textMuted, border: `1.5px solid ${COLORS.textMuted}55`, borderRadius: 999, padding: "6px 14px", fontWeight: 700, fontSize: 11.5 }}
-                >
-                  All {scopedStudents.length}
-                </button>
-                {BAND_ORDER.map((label) => {
-                  const color = label === "Needs Support" ? COLORS.danger : label === "Developing" ? COLORS.violet : label === "Proficient" ? COLORS.info : COLORS.success;
-                  const active = bandFilter === label;
-                  return (
-                    <button
-                      key={label}
-                      onClick={() => setBandFilter(active ? null : label)}
-                      className="sp-btn"
-                      style={{ background: active ? color : `${color}18`, color: active ? COLORS.white : color, border: `1.5px solid ${color}55`, borderRadius: 999, padding: "6px 14px", fontWeight: 700, fontSize: 11.5 }}
-                    >
-                      {scopedBandCounts[label]} {label}
-                    </button>
-                  );
-                })}
-              </div>
-
-              <div style={{ fontSize: 12.5, color: COLORS.textMuted, marginBottom: 8 }}>
-                <b style={{ color: COLORS.textDark }}>{scopedStudents.length} student{scopedStudents.length === 1 ? "" : "s"}</b>
-                {scopedAvg !== null && <> · avg <b style={{ color: COLORS.textDark }}>{scopedAvg}%</b></>}
-                {" · "}
-                <span style={{ color: COLORS.danger, fontWeight: 700 }}>{scopedBandCounts["Needs Support"]} Needs Support</span>
-                {" · "}
-                <span style={{ color: COLORS.violet, fontWeight: 700 }}>{scopedBandCounts["Developing"]} Developing</span>
-                {" · "}
-                <span style={{ color: COLORS.info, fontWeight: 700 }}>{scopedBandCounts["Proficient"]} Proficient</span>
-                {" · "}
-                <span style={{ color: COLORS.success, fontWeight: 700 }}>{scopedBandCounts["Excellent"]} Excellent</span>
-              </div>
-              <div style={{ fontSize: 11, color: COLORS.textMuted, marginBottom: 14 }}>
-                Sorted so students who need support show up first — a colored border flags anyone below Proficient.
-              </div>
-
               {visibleStudents.length === 0 ? (
                 <div style={panelStyle(ACCENT, { padding: 24, textAlign: "center", color: COLORS.textMuted, fontSize: 14 })}>
                   No students match your search or filter.

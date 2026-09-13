@@ -39,6 +39,19 @@
 // terminology) gets its own bigger, dedicated button rather than living
 // inside a dropdown, since it's the one destination every teacher jumps
 // back to constantly.
+//
+// Revised again, later same day (round 3): the title in the middle used to
+// sit in a `flex: 1` div between the nav cluster and the account cluster —
+// `justify-content: space-between` on the row meant that middle div's own
+// width was "whatever's left over," and centering text inside THAT only
+// centers it relative to the leftover space, not the bar as a whole. Since
+// the nav cluster (Hub button + 3 category buttons) is quite a bit wider
+// than the account cluster (avatar + gear + log out), the title always sat
+// visibly left of true-center. Switched the outer row from flex to a
+// `1fr auto auto-sized-middle auto 1fr`-style CSS grid instead — two equal
+// side tracks with the title in a middle column sized to its own content —
+// which centers the title on the bar's actual full width no matter how
+// unevenly sized the two side clusters are.
 import React, { useState, useRef, useEffect } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { supabase } from "../lib/supabaseClient";
@@ -102,9 +115,9 @@ export default function TeacherHUD({ title, subtitle, accent = COLORS.aqua, teac
   return (
     <div
       style={{
-        display: "flex",
+        display: "grid",
+        gridTemplateColumns: "1fr auto 1fr",
         alignItems: "center",
-        justifyContent: "space-between",
         gap: 16,
         padding: "12px 28px",
         position: "relative",
@@ -117,7 +130,7 @@ export default function TeacherHUD({ title, subtitle, accent = COLORS.aqua, teac
         backdropFilter: "blur(6px)",
       }}
     >
-      <div ref={navRef} style={{ display: "flex", alignItems: "center", gap: 8, flex: "0 0 auto" }}>
+      <div ref={navRef} style={{ display: "flex", alignItems: "center", gap: 8, justifySelf: "start", minWidth: 0 }}>
         {/* The Hub — bigger, and its own dedicated button with no dropdown,
             since it's the one place every teacher jumps back to constantly. */}
         <button
@@ -211,15 +224,15 @@ export default function TeacherHUD({ title, subtitle, accent = COLORS.aqua, teac
         })}
       </div>
 
-      <div style={{ flex: 1, minWidth: 0, textAlign: "center" }}>
+      <div style={{ textAlign: "center", minWidth: 0 }}>
         <div style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 700, fontSize: 19, color: COLORS.textDark, display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
-          <span style={{ width: 8, height: 8, borderRadius: "50%", background: accent, boxShadow: `0 0 10px ${accent}` }} />
+          <span style={{ width: 8, height: 8, borderRadius: "50%", background: accent, boxShadow: `0 0 10px ${accent}`, flexShrink: 0 }} />
           {title}
         </div>
         {subtitle && <div style={{ fontSize: 12, color: COLORS.textMuted, marginTop: 2 }}>{subtitle}</div>}
       </div>
 
-      <div style={{ display: "flex", alignItems: "center", gap: 10, flex: "0 0 auto" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 10, justifySelf: "end", minWidth: 0 }}>
         {actions}
         <div style={{ width: 30, height: 30, borderRadius: "50%", background: "rgba(140,82,242,.18)", color: COLORS.violet, fontWeight: 700, fontSize: 12.5, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
           {displayName[0].toUpperCase()}
