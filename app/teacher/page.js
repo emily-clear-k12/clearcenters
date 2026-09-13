@@ -721,19 +721,22 @@ export default function TeacherOverview() {
   return (
     <div
       style={{
-        // Fixed to the viewport (not minHeight) — combined with the stage
-        // sizing below, this is what guarantees the whole dashboard always
-        // fits on one screen with no page scroll, on any monitor/laptop
-        // height, instead of just capping width and letting height grow
-        // past the fold.
-        height: "100vh",
+        // minHeight (not fixed height): on any screen shape a real device
+        // actually has, the scene below exactly fills the viewport with no
+        // scroll (verified down to very short laptop windows). This is a
+        // floor, not a cap, purely as a safety net for the one scenario
+        // that can't stay both full-bleed AND fully on-screen — someone
+        // resizing their browser to something oddly short-and-wide, wider
+        // than about 2.6x its own height — where the scene's own min-height
+        // below takes priority over fitting one screen, and the page
+        // scrolls a little rather than cropping the console buttons.
+        minHeight: "100vh",
         backgroundColor: COLORS.navy,
         backgroundImage: `radial-gradient(ellipse at 50% -10%, #1B2A52 0%, ${COLORS.deepNavy} 45%, ${COLORS.navy} 100%)`,
         fontFamily: "'Inter', sans-serif",
         display: "flex",
         flexDirection: "column",
         position: "relative",
-        overflow: "hidden",
       }}
     >
       <style>{`
@@ -775,24 +778,26 @@ export default function TeacherOverview() {
 
       {error && <div style={{ margin: "0 32px 12px", background: "#FBEAEA", color: "#B23A3A", borderRadius: 10, padding: "10px 14px", fontSize: 13 }}>{error}</div>}
 
-      {/* Scene — a fixed-aspect "stage" locked to the background art's own
-          proportions, so the planet/console coordinates above always land
-          exactly right instead of drifting with a cropped cover-fit. */}
-      <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", padding: "8px 28px 32px", minHeight: 0 }}>
+      {/* Scene — full-bleed, no card/frame: the background fills every
+          pixel left of the HUD down to the bottom edge of the window. The
+          art's own proportions (BG_ASPECT) are preserved on an inner
+          "canvas" that's always sized at least 100% x 100% of this
+          wrapper and center-cropped by overflow:hidden — the same
+          scale-and-crop math as CSS `background-size: cover`, just done
+          on a real element so the planet/console percent-coordinates
+          below still land exactly on the right spot on the art, cropped
+          or not. minHeight is a safety floor: below it (only on a window
+          wider than ~2.6x its own height) this wrapper stops shrinking
+          and the page scrolls instead of letting the crop eat into the
+          console buttons. */}
+      <div style={{ flex: 1, position: "relative", overflow: "hidden", minHeight: "38vw" }}>
         <div
           style={{
-            position: "relative",
-            // Letterbox to whichever of the two axes is tighter — a short
-            // laptop screen binds on height, a narrow window binds on
-            // width — so the stage always fits inside the HUD's leftover
-            // space without ever forcing the page to scroll, while still
-            // never growing past its designed size on a huge monitor.
-            height: "100%", width: "auto",
-            maxWidth: "min(1500px, 100%)", maxHeight: "min(844px, 100%)",
+            position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)",
             aspectRatio: BG_ASPECT,
+            minWidth: "100%", minHeight: "100%", width: "auto", height: "auto",
             backgroundImage: `url(${ART.background})`, backgroundSize: "100% 100%", backgroundPosition: "center",
-            backgroundColor: COLORS.deepNavy, borderRadius: 22, overflow: "hidden",
-            boxShadow: "0 24px 70px rgba(0,0,0,.55), inset 0 0 0 1px rgba(255,255,255,.06)",
+            backgroundColor: COLORS.deepNavy,
           }}
         >
           {classes.length === 0 ? (

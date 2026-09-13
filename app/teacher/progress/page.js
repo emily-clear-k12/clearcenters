@@ -3,22 +3,18 @@
 import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "../../../lib/supabaseClient";
-import TeacherSidebar from "../../../components/TeacherSidebar";
-import TeacherPageBanner from "../../../components/TeacherPageBanner";
+import TeacherHUD from "../../../components/TeacherHUD";
+import { COLORS, PAGE_ACCENTS, PAGE_BACKGROUNDS, panelStyle } from "../../../lib/teacherTheme";
 
-const COLORS = {
-  canvas: "#F2F0FA",
-  white: "#FFFFFF",
-  violet: "#8C52F2",
-  violetSoft: "#EEE6FD",
-  teal: "#6FD8F5",
-  success: "#22C55E",
-  info: "#3D84F5",
-  danger: "#E4574C",
-  border: "#E1E2EE",
-  textDark: "#1F2A44",
-  textMuted: "#697386",
-};
+// Sept 13 — second page moved to the console-interior look (see
+// Teacher_SiteWide_Redesign_Plan.md). Observatory's destination, so it
+// picks up aqua as its accent and Emily's observatory background art.
+// Every proficiency-band color below (Needs Support/Developing/Proficient/
+// Excellent) is left untouched by that — those are a real 4-way signal, not
+// decorative brand accent, same reasoning as leaving COLORS.warning alone
+// on My Classes' "Need Review" tile.
+const ACCENT = PAGE_ACCENTS["/teacher/progress"];
+const BG = PAGE_BACKGROUNDS["/teacher/progress"];
 
 function proficiencyBand(avg) {
   if (avg >= 1.8) return { label: "Excellent", color: COLORS.success };
@@ -200,191 +196,218 @@ export default function StudentProgressPage() {
   }
 
   return (
-    <div style={{ display: "flex", minHeight: "100vh", background: COLORS.canvas, fontFamily: "'Inter', sans-serif", color: COLORS.textDark }}>
-      <style>{`@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@600;700&family=Inter:wght@400;500;600;700&display=swap');`}</style>
-      <TeacherSidebar teacherEmail={teacherEmail} />
-      <main style={{ flex: 1, padding: "32px 36px", maxWidth: 1200, margin: "0 auto", width: "100%", boxSizing: "border-box" }}>
-        <TeacherPageBanner>
-          <div style={{ maxWidth: "62%" }}>
-            <h1 style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 700, fontSize: 28, margin: "0 0 6px 0" }}>Student Progress</h1>
-            <p style={{ color: COLORS.textMuted, fontSize: 14, margin: 0 }}>Based on released grades, grouped by class.</p>
+    <div
+      style={{
+        minHeight: "100vh",
+        // Same full-bleed-art-behind-scrolling-content pattern as My
+        // Classes: the observatory room sits fixed behind everything with a
+        // soft lavender wash over it so the panels on top stay legible.
+        background: COLORS.canvas,
+        backgroundImage: `linear-gradient(180deg, rgba(243,239,252,.55) 0%, rgba(243,239,252,.82) 100%), url(${BG})`,
+        backgroundSize: "cover",
+        backgroundPosition: "center top",
+        backgroundAttachment: "fixed",
+        fontFamily: "'Inter', sans-serif",
+        color: COLORS.textDark,
+        display: "flex",
+        flexDirection: "column",
+      }}
+    >
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@600;700&family=Inter:wght@400;500;600;700&display=swap');
+        .sp-btn { transition: transform 150ms ease; cursor: pointer; border: none; font-family: 'Inter', sans-serif; }
+        .sp-btn:hover { transform: translateY(-1px); }
+        .sp-input::placeholder { color: #8A84AC; }
+      `}</style>
+
+      <TeacherHUD
+        title="Student Progress"
+        subtitle="Observatory — proficiency across every class, by student or by standard"
+        accent={ACCENT}
+        teacherEmail={teacherEmail}
+      />
+
+      <div style={{ flex: 1, padding: "28px 36px 40px", display: "flex", justifyContent: "center" }}>
+        <div style={{ width: "100%", maxWidth: 1200 }}>
+          <div style={{ display: "flex", gap: 8, marginBottom: 24 }}>
+            {[{ key: "student", label: "By Student" }, { key: "standard", label: "By Standard" }].map((t) => (
+              <button
+                key={t.key}
+                onClick={() => setView(t.key)}
+                className="sp-btn"
+                style={{ background: view === t.key ? ACCENT : "rgba(255,255,255,.6)", color: view === t.key ? COLORS.white : COLORS.textDark, border: view === t.key ? "none" : `1px solid ${COLORS.border}`, borderRadius: 999, padding: "9px 18px", fontWeight: 700, fontSize: 13 }}
+              >
+                {t.label}
+              </button>
+            ))}
           </div>
-        </TeacherPageBanner>
 
-        <div style={{ display: "flex", gap: 8, marginBottom: 24 }}>
-          {[{ key: "student", label: "By Student" }, { key: "standard", label: "By Standard" }].map((t) => (
-            <button
-              key={t.key}
-              onClick={() => setView(t.key)}
-              style={{ background: view === t.key ? COLORS.violet : COLORS.white, color: view === t.key ? COLORS.white : COLORS.textDark, border: view === t.key ? "none" : `1px solid ${COLORS.border}`, borderRadius: 999, padding: "9px 18px", fontWeight: 700, fontSize: 13, cursor: "pointer", fontFamily: "inherit" }}
-            >
-              {t.label}
-            </button>
-          ))}
-        </div>
+          {view === "student" && groups.length === 0 && (
+            <div style={panelStyle(ACCENT, { padding: 24, textAlign: "center", color: COLORS.textMuted, fontSize: 14 })}>No classes yet.</div>
+          )}
 
-        {view === "student" && groups.length === 0 && (
-          <div style={{ background: COLORS.white, border: `1px solid ${COLORS.border}`, borderRadius: 16, padding: 24, textAlign: "center", color: COLORS.textMuted, fontSize: 14 }}>No classes yet.</div>
-        )}
-
-        {view === "student" && groups.length > 0 && (
-          <>
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 14 }}>
-              <button
-                onClick={() => setSelectedClassId("all")}
-                style={{ background: selectedClassId === "all" ? COLORS.violet : COLORS.white, color: selectedClassId === "all" ? COLORS.white : COLORS.textDark, border: selectedClassId === "all" ? "none" : `1px solid ${COLORS.border}`, borderRadius: 999, padding: "8px 16px", fontWeight: 700, fontSize: 12.5, cursor: "pointer", fontFamily: "inherit" }}
-              >
-                All Classes
-              </button>
-              {groups.map((g) => (
+          {view === "student" && groups.length > 0 && (
+            <>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 14 }}>
                 <button
-                  key={g.classId}
-                  onClick={() => setSelectedClassId(g.classId)}
-                  style={{ background: selectedClassId === g.classId ? COLORS.violet : COLORS.white, color: selectedClassId === g.classId ? COLORS.white : COLORS.textDark, border: selectedClassId === g.classId ? "none" : `1px solid ${COLORS.border}`, borderRadius: 999, padding: "8px 16px", fontWeight: 700, fontSize: 12.5, cursor: "pointer", fontFamily: "inherit" }}
+                  onClick={() => setSelectedClassId("all")}
+                  className="sp-btn"
+                  style={{ background: selectedClassId === "all" ? ACCENT : "rgba(255,255,255,.6)", color: selectedClassId === "all" ? COLORS.white : COLORS.textDark, border: selectedClassId === "all" ? "none" : `1px solid ${COLORS.border}`, borderRadius: 999, padding: "8px 16px", fontWeight: 700, fontSize: 12.5 }}
                 >
-                  {g.className}
+                  All Classes
                 </button>
-              ))}
-            </div>
-
-            <div style={{ position: "relative", maxWidth: 320, marginBottom: 12 }}>
-              <input
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder="Search students..."
-                style={{ width: "100%", border: "2px solid #ECEAF5", borderRadius: 10, padding: "9px 10px 9px 34px", fontSize: 13, boxSizing: "border-box", fontFamily: "inherit" }}
-              />
-              <span style={{ position: "absolute", left: 10, top: 9, color: COLORS.textMuted }}>🔍</span>
-            </div>
-
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 12 }}>
-              <button
-                onClick={() => setBandFilter(null)}
-                style={{ background: bandFilter === null ? COLORS.textMuted : `${COLORS.textMuted}18`, color: bandFilter === null ? COLORS.white : COLORS.textMuted, border: `1.5px solid ${COLORS.textMuted}55`, borderRadius: 999, padding: "6px 14px", fontWeight: 700, fontSize: 11.5, cursor: "pointer", fontFamily: "inherit" }}
-              >
-                All {scopedStudents.length}
-              </button>
-              {BAND_ORDER.map((label) => {
-                const color = label === "Needs Support" ? COLORS.danger : label === "Developing" ? COLORS.violet : label === "Proficient" ? COLORS.info : COLORS.success;
-                const active = bandFilter === label;
-                return (
+                {groups.map((g) => (
                   <button
-                    key={label}
-                    onClick={() => setBandFilter(active ? null : label)}
-                    style={{ background: active ? color : `${color}18`, color: active ? COLORS.white : color, border: `1.5px solid ${color}55`, borderRadius: 999, padding: "6px 14px", fontWeight: 700, fontSize: 11.5, cursor: "pointer", fontFamily: "inherit" }}
+                    key={g.classId}
+                    onClick={() => setSelectedClassId(g.classId)}
+                    className="sp-btn"
+                    style={{ background: selectedClassId === g.classId ? ACCENT : "rgba(255,255,255,.6)", color: selectedClassId === g.classId ? COLORS.white : COLORS.textDark, border: selectedClassId === g.classId ? "none" : `1px solid ${COLORS.border}`, borderRadius: 999, padding: "8px 16px", fontWeight: 700, fontSize: 12.5 }}
                   >
-                    {scopedBandCounts[label]} {label}
+                    {g.className}
                   </button>
-                );
-              })}
-            </div>
-
-            <div style={{ fontSize: 12.5, color: COLORS.textMuted, marginBottom: 8 }}>
-              <b style={{ color: COLORS.textDark }}>{scopedStudents.length} student{scopedStudents.length === 1 ? "" : "s"}</b>
-              {scopedAvg !== null && <> · avg <b style={{ color: COLORS.textDark }}>{scopedAvg}%</b></>}
-              {" · "}
-              <span style={{ color: COLORS.danger, fontWeight: 700 }}>{scopedBandCounts["Needs Support"]} Needs Support</span>
-              {" · "}
-              <span style={{ color: COLORS.violet, fontWeight: 700 }}>{scopedBandCounts["Developing"]} Developing</span>
-              {" · "}
-              <span style={{ color: COLORS.info, fontWeight: 700 }}>{scopedBandCounts["Proficient"]} Proficient</span>
-              {" · "}
-              <span style={{ color: COLORS.success, fontWeight: 700 }}>{scopedBandCounts["Excellent"]} Excellent</span>
-            </div>
-            <div style={{ fontSize: 11, color: COLORS.textMuted, marginBottom: 14 }}>
-              Sorted so students who need support show up first — a colored border flags anyone below Proficient.
-            </div>
-
-            {visibleStudents.length === 0 ? (
-              <div style={{ background: COLORS.white, border: `1px solid ${COLORS.border}`, borderRadius: 16, padding: 24, textAlign: "center", color: COLORS.textMuted, fontSize: 14 }}>
-                No students match your search or filter.
+                ))}
               </div>
-            ) : (
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(150px, 1fr))", gap: 10 }}>
-                {visibleStudents.map((r) => {
-                  const flagged = r.band && (r.band.label === "Needs Support" || r.band.label === "Developing");
+
+              <div style={{ position: "relative", maxWidth: 320, marginBottom: 12 }}>
+                <input
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder="Search students..."
+                  className="sp-input"
+                  style={{ width: "100%", background: "rgba(255,255,255,.65)", color: COLORS.textDark, border: `2px solid ${COLORS.border}`, borderRadius: 10, padding: "9px 10px 9px 34px", fontSize: 13, boxSizing: "border-box", fontFamily: "inherit" }}
+                />
+                <span style={{ position: "absolute", left: 10, top: 9, color: COLORS.textMuted }}>🔍</span>
+              </div>
+
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 12 }}>
+                <button
+                  onClick={() => setBandFilter(null)}
+                  className="sp-btn"
+                  style={{ background: bandFilter === null ? COLORS.textMuted : `${COLORS.textMuted}18`, color: bandFilter === null ? COLORS.white : COLORS.textMuted, border: `1.5px solid ${COLORS.textMuted}55`, borderRadius: 999, padding: "6px 14px", fontWeight: 700, fontSize: 11.5 }}
+                >
+                  All {scopedStudents.length}
+                </button>
+                {BAND_ORDER.map((label) => {
+                  const color = label === "Needs Support" ? COLORS.danger : label === "Developing" ? COLORS.violet : label === "Proficient" ? COLORS.info : COLORS.success;
+                  const active = bandFilter === label;
                   return (
-                    <div
-                      key={r.id}
-                      style={{
-                        background: COLORS.white,
-                        border: flagged ? `2px solid ${r.band.color}` : `1px solid ${COLORS.border}`,
-                        borderRadius: 12,
-                        padding: 12,
-                        textAlign: "center",
-                        boxShadow: "0 2px 6px rgba(13,27,42,.04)",
-                      }}
+                    <button
+                      key={label}
+                      onClick={() => setBandFilter(active ? null : label)}
+                      className="sp-btn"
+                      style={{ background: active ? color : `${color}18`, color: active ? COLORS.white : color, border: `1.5px solid ${color}55`, borderRadius: 999, padding: "6px 14px", fontWeight: 700, fontSize: 11.5 }}
                     >
-                      <div style={{ width: 36, height: 36, borderRadius: "50%", background: COLORS.violetSoft, display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, color: COLORS.violet, fontSize: 13, margin: "0 auto 8px auto" }}>{r.name[0]}</div>
-                      <div style={{ fontWeight: 700, fontSize: 12.5, marginBottom: 2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{r.name}</div>
-                      <div style={{ fontSize: 11, color: COLORS.textMuted, marginBottom: 8 }}>{r.missionsCompleted} submitted</div>
-                      <div style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 700, fontSize: 18, color: r.band ? r.band.color : COLORS.textMuted, marginBottom: 4 }}>{r.avgPct !== null ? `${r.avgPct}%` : "—"}</div>
-                      {r.band ? (
-                        <span style={{ fontSize: 9.5, fontWeight: 700, padding: "2px 8px", borderRadius: 999, background: r.band.color + "22", color: r.band.color }}>{r.band.label}</span>
-                      ) : (
-                        <span style={{ fontSize: 9.5, fontWeight: 700, padding: "2px 8px", borderRadius: 999, background: COLORS.border, color: COLORS.textMuted }}>No grades yet</span>
+                      {scopedBandCounts[label]} {label}
+                    </button>
+                  );
+                })}
+              </div>
+
+              <div style={{ fontSize: 12.5, color: COLORS.textMuted, marginBottom: 8 }}>
+                <b style={{ color: COLORS.textDark }}>{scopedStudents.length} student{scopedStudents.length === 1 ? "" : "s"}</b>
+                {scopedAvg !== null && <> · avg <b style={{ color: COLORS.textDark }}>{scopedAvg}%</b></>}
+                {" · "}
+                <span style={{ color: COLORS.danger, fontWeight: 700 }}>{scopedBandCounts["Needs Support"]} Needs Support</span>
+                {" · "}
+                <span style={{ color: COLORS.violet, fontWeight: 700 }}>{scopedBandCounts["Developing"]} Developing</span>
+                {" · "}
+                <span style={{ color: COLORS.info, fontWeight: 700 }}>{scopedBandCounts["Proficient"]} Proficient</span>
+                {" · "}
+                <span style={{ color: COLORS.success, fontWeight: 700 }}>{scopedBandCounts["Excellent"]} Excellent</span>
+              </div>
+              <div style={{ fontSize: 11, color: COLORS.textMuted, marginBottom: 14 }}>
+                Sorted so students who need support show up first — a colored border flags anyone below Proficient.
+              </div>
+
+              {visibleStudents.length === 0 ? (
+                <div style={panelStyle(ACCENT, { padding: 24, textAlign: "center", color: COLORS.textMuted, fontSize: 14 })}>
+                  No students match your search or filter.
+                </div>
+              ) : (
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(150px, 1fr))", gap: 10 }}>
+                  {visibleStudents.map((r) => {
+                    const flagged = r.band && (r.band.label === "Needs Support" || r.band.label === "Developing");
+                    return (
+                      <div
+                        key={r.id}
+                        style={panelStyle(flagged ? r.band.color : ACCENT, {
+                          border: flagged ? `2px solid ${r.band.color}` : `1px solid ${COLORS.border}`,
+                          padding: 12,
+                          textAlign: "center",
+                        })}
+                      >
+                        <div style={{ width: 36, height: 36, borderRadius: "50%", background: `${COLORS.violet}22`, display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, color: COLORS.violet, fontSize: 13, margin: "0 auto 8px auto" }}>{r.name[0]}</div>
+                        <div style={{ fontWeight: 700, fontSize: 12.5, marginBottom: 2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{r.name}</div>
+                        <div style={{ fontSize: 11, color: COLORS.textMuted, marginBottom: 8 }}>{r.missionsCompleted} submitted</div>
+                        <div style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 700, fontSize: 18, color: r.band ? r.band.color : COLORS.textMuted, marginBottom: 4 }}>{r.avgPct !== null ? `${r.avgPct}%` : "—"}</div>
+                        {r.band ? (
+                          <span style={{ fontSize: 9.5, fontWeight: 700, padding: "2px 8px", borderRadius: 999, background: r.band.color + "22", color: r.band.color }}>{r.band.label}</span>
+                        ) : (
+                          <span style={{ fontSize: 9.5, fontWeight: 700, padding: "2px 8px", borderRadius: 999, background: COLORS.border, color: COLORS.textMuted }}>No grades yet</span>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </>
+          )}
+
+          {view === "standard" && standardGroups.length === 0 && (
+            <div style={panelStyle(ACCENT, { padding: 24, textAlign: "center", color: COLORS.textMuted, fontSize: 14 })}>No classes yet.</div>
+          )}
+
+          {view === "standard" && standardGroups.map((g) => (
+            <div key={g.classId} style={{ marginBottom: 24 }}>
+              <h2 style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 700, fontSize: 16, margin: "0 0 10px 4px", color: COLORS.textDark }}>{g.className}</h2>
+              <div style={panelStyle(ACCENT, { padding: 8 })}>
+                {g.standards.length === 0 && <div style={{ padding: 24, textAlign: "center", color: COLORS.textMuted, fontSize: 14 }}>No released grades for this class yet.</div>}
+                {g.standards.map((row) => {
+                  const key = `${g.classId}:${row.standard}`;
+                  const expanded = expandedKey === key;
+                  const strugglingCount = row.students.filter((s) => s.band.label === "Needs Support").length;
+                  return (
+                    <div key={key} style={{ borderBottom: `1px solid ${COLORS.border}` }}>
+                      <button
+                        onClick={() => setExpandedKey(expanded ? null : key)}
+                        className="sp-btn"
+                        style={{ width: "100%", display: "flex", alignItems: "center", gap: 14, padding: "14px 12px", background: "none", border: "none", textAlign: "left", fontFamily: "inherit" }}
+                      >
+                        <div style={{ width: 190, flexShrink: 0 }}>
+                          <div style={{ fontWeight: 700, fontSize: 13.5, color: COLORS.textDark }}>{row.title}</div>
+                          <div style={{ fontSize: 11, color: COLORS.textMuted }}>{row.standard}</div>
+                        </div>
+                        <div style={{ width: 100, fontSize: 12.5, color: COLORS.textMuted }}>{row.gradedCount} graded</div>
+                        <div style={{ flex: 1, height: 8, background: COLORS.border, borderRadius: 999, overflow: "hidden" }}>
+                          <div style={{ height: "100%", width: `${row.avgPct}%`, background: row.band.color, borderRadius: 999 }} />
+                        </div>
+                        <div style={{ width: 50, textAlign: "right", fontWeight: 700, fontSize: 13, color: COLORS.textDark }}>{row.avgPct}%</div>
+                        <div style={{ width: 130, textAlign: "right" }}>
+                          <span style={{ fontSize: 11, fontWeight: 700, padding: "3px 10px", borderRadius: 999, background: row.band.color + "22", color: row.band.color }}>{row.band.label}</span>
+                        </div>
+                        {strugglingCount > 0 && (
+                          <div style={{ width: 90, textAlign: "right", fontSize: 11, fontWeight: 700, color: COLORS.danger }}>{strugglingCount} need reteach</div>
+                        )}
+                        <span style={{ color: COLORS.textMuted, marginLeft: 8, transform: expanded ? "rotate(90deg)" : "none", transition: "transform 120ms ease" }}>›</span>
+                      </button>
+                      {expanded && (
+                        <div style={{ padding: "0 12px 14px 12px", display: "grid", gap: 6 }}>
+                          {row.students.map((s) => (
+                            <div key={s.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "6px 10px", background: "rgba(255,255,255,.5)", borderRadius: 8, fontSize: 12.5 }}>
+                              <div style={{ flex: 1, fontWeight: 600, color: COLORS.textDark }}>{s.name}</div>
+                              <span style={{ fontWeight: 700, padding: "2px 8px", borderRadius: 999, background: s.band.color + "22", color: s.band.color }}>{s.avgPct}% · {s.band.label}</span>
+                            </div>
+                          ))}
+                        </div>
                       )}
                     </div>
                   );
                 })}
               </div>
-            )}
-          </>
-        )}
-
-        {view === "standard" && standardGroups.length === 0 && (
-          <div style={{ background: COLORS.white, border: `1px solid ${COLORS.border}`, borderRadius: 16, padding: 24, textAlign: "center", color: COLORS.textMuted, fontSize: 14 }}>No classes yet.</div>
-        )}
-
-        {view === "standard" && standardGroups.map((g) => (
-          <div key={g.classId} style={{ marginBottom: 24 }}>
-            <h2 style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 700, fontSize: 16, margin: "0 0 10px 4px", color: COLORS.textDark }}>{g.className}</h2>
-            <div style={{ background: COLORS.white, border: `1px solid ${COLORS.border}`, borderRadius: 16, padding: 8, boxShadow: "0 4px 16px rgba(13,27,42,.06)" }}>
-              {g.standards.length === 0 && <div style={{ padding: 24, textAlign: "center", color: COLORS.textMuted, fontSize: 14 }}>No released grades for this class yet.</div>}
-              {g.standards.map((row) => {
-                const key = `${g.classId}:${row.standard}`;
-                const expanded = expandedKey === key;
-                const strugglingCount = row.students.filter((s) => s.band.label === "Needs Support").length;
-                return (
-                  <div key={key} style={{ borderBottom: `1px solid ${COLORS.border}` }}>
-                    <button
-                      onClick={() => setExpandedKey(expanded ? null : key)}
-                      style={{ width: "100%", display: "flex", alignItems: "center", gap: 14, padding: "14px 12px", background: "none", border: "none", cursor: "pointer", textAlign: "left", fontFamily: "inherit" }}
-                    >
-                      <div style={{ width: 190, flexShrink: 0 }}>
-                        <div style={{ fontWeight: 700, fontSize: 13.5 }}>{row.title}</div>
-                        <div style={{ fontSize: 11, color: COLORS.textMuted }}>{row.standard}</div>
-                      </div>
-                      <div style={{ width: 100, fontSize: 12.5, color: COLORS.textMuted }}>{row.gradedCount} graded</div>
-                      <div style={{ flex: 1, height: 8, background: COLORS.border, borderRadius: 999, overflow: "hidden" }}>
-                        <div style={{ height: "100%", width: `${row.avgPct}%`, background: row.band.color, borderRadius: 999 }} />
-                      </div>
-                      <div style={{ width: 50, textAlign: "right", fontWeight: 700, fontSize: 13 }}>{row.avgPct}%</div>
-                      <div style={{ width: 130, textAlign: "right" }}>
-                        <span style={{ fontSize: 11, fontWeight: 700, padding: "3px 10px", borderRadius: 999, background: row.band.color + "22", color: row.band.color }}>{row.band.label}</span>
-                      </div>
-                      {strugglingCount > 0 && (
-                        <div style={{ width: 90, textAlign: "right", fontSize: 11, fontWeight: 700, color: "#E4574C" }}>{strugglingCount} need reteach</div>
-                      )}
-                      <span style={{ color: COLORS.textMuted, marginLeft: 8, transform: expanded ? "rotate(90deg)" : "none", transition: "transform 120ms ease" }}>›</span>
-                    </button>
-                    {expanded && (
-                      <div style={{ padding: "0 12px 14px 12px", display: "grid", gap: 6 }}>
-                        {row.students.map((s) => (
-                          <div key={s.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "6px 10px", background: COLORS.canvas, borderRadius: 8, fontSize: 12.5 }}>
-                            <div style={{ flex: 1, fontWeight: 600 }}>{s.name}</div>
-                            <span style={{ fontWeight: 700, padding: "2px 8px", borderRadius: 999, background: s.band.color + "22", color: s.band.color }}>{s.avgPct}% · {s.band.label}</span>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
             </div>
-          </div>
-        ))}
-      </main>
+          ))}
+        </div>
+      </div>
     </div>
   );
 }
