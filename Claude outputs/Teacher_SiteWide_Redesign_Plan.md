@@ -462,3 +462,70 @@ component compiles correctly everywhere it's actually used. Real
 on-screen confirmation on Emily's own reskinned pages is still worth a
 quick look once this is live, but nothing here should differ from the
 isolated test.
+
+## Follow-up round on the new nav + first live feedback — done Sept 13, this session
+
+Once the nav rebuild above actually shipped, Emily's first look at it live
+turned up a few more things, all fixed same pass:
+
+- **HUD title wasn't actually centered.** It sat in a `flex: 1` div between
+  the nav cluster and the account cluster — `justify-content: space-between`
+  meant that middle div's width was just "whatever's left over," and
+  centering text inside *that* only centers it relative to the leftover
+  space, not the bar as a whole. Since the nav cluster (Hub button + 3
+  category buttons) is noticeably wider than the account cluster (avatar +
+  gear + log out), the title always sat visibly left of true-center.
+  Switched `TeacherHUD`'s outer bar from flex to a `1fr auto 1fr` CSS grid —
+  two equal side tracks with the title in its own middle column — which
+  centers it on the bar's real width regardless of how uneven the two side
+  clusters are.
+
+- **Mission Control's pink/coral accent, replaced.** Emily didn't like it;
+  offered four options (cobalt blue, copper amber, deep raspberry, energy
+  lime) and she picked **copper amber (`#E8935A`)**. Renamed the `COLORS`
+  entry itself from `pink` to `copper` in `lib/teacherTheme.js` and updated
+  its two call sites (`PAGE_ACCENTS["/teacher/assign"]` and the Mission
+  Control `<Landmark>` on the Hub) — since every Mission Control page reads
+  its accent through one shared `ACCENT` variable, this one swap re-themes
+  the HUD dot, buttons, and panel borders on My Classes, Challenge Library,
+  Assign Briefing, Live Ops Board, and Signal Ops Board all at once.
+
+- **Nav categories renamed to match the Hub's own room names.** Emily asked
+  whether having the top-bar categories (Teach/Track/Grow) and the Hub's
+  room names (Mission Control/Observatory/S.A.M./etc.) be two different
+  vocabularies for the same destinations was too confusing. Turned out
+  "Teach"'s 5 pages are exactly Mission Control's, and "Track"'s 3 pages are
+  exactly Observatory's — so those two categories just took the room's own
+  name outright: `NAV_GROUPS`' `section` field in `TeacherSidebar.js` changed
+  from `"Teach"` → `"Mission Control"` and `"Track"` → `"Observatory"` (both
+  shown in full on the button, no shortening needed). "Grow & Manage" spans
+  three different rooms (Resources/Messages/S.A.M.) with no single room to
+  borrow from, so it keeps its functional name and its existing "Grow"
+  shortened button label.
+
+- **Student Progress's filter controls were hard to read.** The view toggle,
+  class/search/band filters, and summary line sat directly on the busy
+  observatory starfield art with nothing behind them — the plain text lines
+  in particular (the student-count summary, the "sorted so..." note) had no
+  backing at all. Wrapped the whole controls cluster in one `panelStyle`
+  glass card, the same treatment every other content block on this page
+  already uses, in `app/teacher/progress/page.js`.
+
+- **The Class Settings S.A.M. picker won't save ("Couldn't save — try
+  again").** Not something this session's edits touched — the save handler
+  itself (`saveSamSkin` in `app/teacher/settings/page.js`) already has
+  explicit handling for exactly this: a Supabase update that returns either
+  an error or zero matched rows, which its own comment flags as "likely
+  blocked by Row Level Security on 'teachers'." That's a database
+  permissions question in Emily's real Supabase project, not something
+  reachable or fixable from this sandbox (only placeholder Supabase
+  credentials here). Needs a look at the `teachers` table's RLS policies
+  (specifically whether UPDATE is allowed for a row where `id` = the
+  authenticated user's own id) in the Supabase dashboard.
+
+Files touched this round: `components/TeacherHUD.js` (grid centering),
+`lib/teacherTheme.js` + `app/teacher/page.js` (pink → copper), Component
+`TeacherSidebar.js` (section renames), `app/teacher/progress/page.js`
+(filter panel). Verified the centering and renamed-nav dropdowns the same
+way as the round above (isolated test harness + screenshots, deleted before
+shipping), plus a full `next build` after each change.
