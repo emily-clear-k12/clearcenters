@@ -37,13 +37,24 @@ const COLORS = {
 // Renamed "Overview" -> "The Hub" (Sept 13, later same day) to match the
 // student side's own "Hub" terminology — same destination (`/teacher`),
 // same icon, just the label a teacher actually sees.
+//
+// Renamed "Teach" -> "Mission Control" and "Track" -> "Observatory" (Sept
+// 13, later still) after Emily noticed the top-bar categories (this file)
+// and the Hub's own room names (app/teacher/page.js's <Landmark> labels)
+// were two different vocabularies for the same destinations — a teacher
+// had to learn both "Track has Reports in it" AND "Reports is in the
+// Observatory." Turned out "Teach" is exactly Mission Control's 5 pages and
+// "Track" is exactly Observatory's 3, so those two categories could just
+// take the room's own name outright. "Grow & Manage" is the one category
+// that spans three different rooms (Resources/Messages/S.A.M.) with no
+// single room to borrow from, so it keeps its functional name.
 export const NAV_GROUPS = [
   {
     section: null,
     items: [{ label: "The Hub", icon: "/teacher/nav_overview.png", href: "/teacher" }],
   },
   {
-    section: "Teach",
+    section: "Mission Control",
     items: [
       { label: "My Classes", icon: "/teacher/nav_my_classes.png", href: "/teacher/assign" },
       { label: "Challenge Library", icon: "/teacher/nav_assignments.png", href: "/teacher/assign/new" },
@@ -55,7 +66,7 @@ export const NAV_GROUPS = [
     ],
   },
   {
-    section: "Track",
+    section: "Observatory",
     items: [
       { label: "Student Progress", icon: "/teacher/nav_student_progress.png", href: "/teacher/progress" },
       { label: "Submissions", icon: "/teacher/nav_submissions.png", href: "/teacher/grade" },

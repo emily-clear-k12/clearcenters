@@ -78,13 +78,15 @@ const ICONS = {
 
 // Short button labels for the top bar itself — the fuller name ("Grow &
 // Manage") still shows as the section header inside that button's own
-// dropdown, so nothing is lost, the top bar just stays compact.
-const BUTTON_LABEL = { Teach: "Teach", Track: "Track", "Grow & Manage": "Grow" };
+// dropdown, so nothing is lost, the top bar just stays compact. "Mission
+// Control" and "Observatory" are shown in full since the whole point of
+// naming them that way is to match the Hub's own room names exactly.
+const BUTTON_LABEL = { "Grow & Manage": "Grow" };
 
 export default function TeacherHUD({ title, subtitle, accent = COLORS.aqua, teacherName, teacherEmail, actions }) {
   const router = useRouter();
   const pathname = usePathname();
-  const [openSection, setOpenSection] = useState(null); // null | "Teach" | "Track" | "Grow & Manage"
+  const [openSection, setOpenSection] = useState(null); // null | "Mission Control" | "Observatory" | "Grow & Manage"
   const navRef = useRef(null);
 
   useEffect(() => {

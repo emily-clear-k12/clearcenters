@@ -840,7 +840,7 @@ export default function TeacherOverview() {
           {/* Landmarks — hologram panels floating on the console, standing in
               for the old sidebar's nav groups. Positions match the 5 lit
               panel slots baked into the background art. */}
-          <Landmark art={ART.missionControl} icon={ICONS.launch} label="Mission Control" sub="Assign & Launch" accent={COLORS.pink} onClick={() => router.push("/teacher/assign")} {...CONSOLE_SLOTS[0]} />
+          <Landmark art={ART.missionControl} icon={ICONS.launch} label="Mission Control" sub="Assign & Launch" accent={COLORS.copper} onClick={() => router.push("/teacher/assign")} {...CONSOLE_SLOTS[0]} />
           <Landmark art={ART.observatory} icon={ICONS.telescope} label="Observatory" sub="Progress & Reports" accent={COLORS.aqua} onClick={() => router.push("/teacher/reports")} {...CONSOLE_SLOTS[1]} />
           <Landmark art={samArtFor(teacherSamSkin)} icon={ICONS.gem} label="S.A.M." sub="Results & Shortcuts" accent={COLORS.teal} onClick={() => setAwardModalOpen(true)} {...CONSOLE_SLOTS[2]} />
           <Landmark art={ART.beacon} icon={ICONS.mail} label="Messages" sub="Inbox & Updates" accent={COLORS.magenta} onClick={() => router.push("/teacher/messages")} {...CONSOLE_SLOTS[3]} />
