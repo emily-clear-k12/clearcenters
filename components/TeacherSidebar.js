@@ -33,10 +33,14 @@ const COLORS = {
 // Exported (Sept 13) so components/TeacherHUD.js — the slim top bar
 // replacing this sidebar on reskinned pages — can drive its own nav
 // dropdown off the exact same list instead of a second hand-copied one.
+//
+// Renamed "Overview" -> "The Hub" (Sept 13, later same day) to match the
+// student side's own "Hub" terminology — same destination (`/teacher`),
+// same icon, just the label a teacher actually sees.
 export const NAV_GROUPS = [
   {
     section: null,
-    items: [{ label: "Overview", icon: "/teacher/nav_overview.png", href: "/teacher" }],
+    items: [{ label: "The Hub", icon: "/teacher/nav_overview.png", href: "/teacher" }],
   },
   {
     section: "Teach",

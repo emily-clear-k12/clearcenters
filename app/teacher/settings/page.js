@@ -60,9 +60,9 @@ export default function ClassSettingsPage() {
       setTeacherId(data.user.id);
       loadClasses(data.user.id);
 
-      // Best-effort — the Overview dashboard's S.A.M. landmark reads this
-      // same column (app/teacher/page.js). If it's missing, the picker
-      // below just sits on Cosmic rather than blocking the page.
+      // Best-effort — the Hub's S.A.M. landmark reads this same column
+      // (app/teacher/page.js). If it's missing, the picker below just sits
+      // on Cosmic rather than blocking the page.
       const { data: teacherRow } = await supabase
         .from("teachers")
         .select("equipped_sam_skin")
@@ -172,17 +172,17 @@ export default function ClassSettingsPage() {
 
       <main style={{ padding: "28px 36px 40px", maxWidth: 780, margin: "0 auto" }}>
         <p style={{ color: COLORS.textMuted, fontSize: 14.5, lineHeight: 1.6, margin: "0 0 20px 0" }}>
-          Rename any of your classes below, or change its planet on the Overview dashboard. Roster management and other class-level preferences are coming soon.
+          Rename any of your classes below, or change its planet on the Hub. Roster management and other class-level preferences are coming soon.
         </p>
 
-        {/* Your S.A.M. — which skin shows on the Overview dashboard's
-            console (app/teacher/page.js). Unlike the student-facing skin
-            system, nothing here is locked behind crystal points — any of
-            the 4 is free to pick. */}
+        {/* Your S.A.M. — which skin shows on the Hub's console
+            (app/teacher/page.js). Unlike the student-facing skin system,
+            nothing here is locked behind crystal points — any of the 4 is
+            free to pick. */}
         <div style={{ ...panelStyle(ACCENT, { padding: "18px 20px", marginBottom: 20 }) }}>
           <div style={{ fontSize: 11.5, fontWeight: 700, color: COLORS.textMuted, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 4 }}>Your S.A.M.</div>
           <p style={{ color: COLORS.textMuted, fontSize: 13, margin: "0 0 12px 0", lineHeight: 1.5 }}>
-            Which S.A.M. shows on your Overview dashboard. (Cosmic has a custom pose made for that screen — the others show their regular icon art for now.)
+            Which S.A.M. shows on the Hub. (Cosmic has a custom pose made for that screen — the others show their regular icon art for now.)
           </p>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 8, maxWidth: 420 }}>
             {SAM_SKINS.map((skin) => (
@@ -264,7 +264,7 @@ export default function ClassSettingsPage() {
                   )}
 
                   <div style={{ marginTop: 14, paddingTop: 14, borderTop: `1px solid ${COLORS.border}` }}>
-                    <div style={{ fontSize: 11.5, fontWeight: 700, color: COLORS.textMuted, marginBottom: 8 }}>Planet on Overview</div>
+                    <div style={{ fontSize: 11.5, fontWeight: 700, color: COLORS.textMuted, marginBottom: 8 }}>Planet on the Hub</div>
                     <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
                       {CLASS_PLANETS.map((planet) => (
                         <button

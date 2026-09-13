@@ -397,3 +397,68 @@ we can always go back and change/update little things"): the
 projected/display pages and the Roster page. See "Final calls on the pages
 that weren't a simple reskin" above for the reasoning on each — all of it
 is easy to revisit if any of these calls don't feel right in practice.
+
+## `TeacherHUD` nav bug fix + Teach/Track/Grow redesign — done Sept 13, this session
+
+Emily flagged a real rendering bug from a screenshot of Challenge Library:
+the nav dropdown was ghosting — the page's own heading and buttons
+faintly bled through the open menu panel. Confirmed and root-caused: the
+dropdown's background was `rgba(250,248,255,.98)` — 98% opaque, not fully
+opaque. That 2% gap is invisible against plain backgrounds but visually
+obvious against something bold and high-contrast like a big black H1.
+Fixed by switching every floating panel here to a fully opaque solid-hex
+background (`#FAF8FF`) instead of a near-1 alpha. Audited the rest of the
+app for the same "nearly-but-not-100%-opaque panel over live content"
+pattern with a targeted grep and found exactly one more instance — the
+case-detail modal on My Classes (`app/teacher/assign/page.js`) — fixed
+there too. Because `TeacherHUD` is shared by all 17 reskinned pages, this
+one fix clears the bug everywhere at once; confirmed every page passes it
+only `title`/`subtitle`/`accent`/`teacherEmail`/`actions` with no
+page-specific nav overrides, so there's nothing left for any individual
+page to still be doing wrong.
+
+Same pass, Emily's actual nav redesign ask: replace the single hamburger
+button that opened one long dropdown of all 10 destinations with three
+always-visible category buttons — **Teach / Track / Grow** — mirroring the
+grouping `NAV_GROUPS` already used inside that old dropdown ("Grow &
+Manage" shortens to just "Grow" on the button itself; the full name still
+shows as that dropdown's own section header). Clicking a category opens
+only that section's items in a small scoped dropdown; clicking another
+category closes the first and opens the new one (one shared `openSection`
+state var). "Overview" also gets its own bigger, dedicated button with no
+dropdown — renamed to **"The Hub"** to match the student side's own
+terminology for the same destination — since it's the one screen every
+teacher jumps back to constantly and didn't deserve to be buried a click
+deep in a menu.
+
+**Overview → "The Hub" rename**, done everywhere a teacher actually sees
+it: the `NAV_GROUPS` label (`components/TeacherSidebar.js`, which both the
+dead `TeacherSidebar` component and the live `TeacherHUD` read from), the
+new Hub button's own label/aria-label, and three separate visible text
+spots on Class Settings (the S.A.M.-skin intro copy, the per-class planet
+picker's intro copy, and the "Planet on Overview" field label). Confirmed
+via grep that no user-facing "Overview" text remains anywhere in the app —
+only internal code comments and the `TeacherOverview` function name still
+use the old word, which don't need to change since nobody sees them.
+
+Files touched: `components/TeacherHUD.js` (full rewrite — bug fix +
+Teach/Track/Grow buttons + Hub button), `components/TeacherSidebar.js`
+(`NAV_GROUPS` label only), `app/teacher/assign/page.js` (the one other
+ghosting instance), `app/teacher/settings/page.js` (three visible
+Overview→Hub text spots).
+
+**How this was verified:** the sandbox's Supabase credentials are
+placeholders, so no real teacher page (all of them redirect to login
+without a real session) could be clicked through live this session. Built
+a temporary, throwaway test page rendering `TeacherHUD` standalone with no
+auth dependency, then used a headless browser to click through all three
+category buttons and screenshot each state — confirmed each dropdown opens
+fully opaque with no ghosting, lists the right items, highlights the
+active one, and that opening one closes any other that was open. That
+temporary test page was deleted before anything shipped; it never
+touched the real app. Followed that with a full `next build` across every
+real route (72 routes, all clean) as the check that the rewritten
+component compiles correctly everywhere it's actually used. Real
+on-screen confirmation on Emily's own reskinned pages is still worth a
+quick look once this is live, but nothing here should differ from the
+isolated test.

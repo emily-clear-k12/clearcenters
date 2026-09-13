@@ -493,7 +493,7 @@ export default function MyClassesPage() {
         >
           <div
             onClick={(e) => e.stopPropagation()}
-            style={{ background: "rgba(250,248,255,.98)", border: `1px solid ${ACCENT}44`, borderRadius: 20, maxWidth: 520, width: "100%", maxHeight: "85vh", overflowY: "auto", boxShadow: `0 20px 60px rgba(80,60,150,.35), 0 0 0 1px ${ACCENT}22` }}
+            style={{ background: "#FAF8FF", border: `1px solid ${ACCENT}44`, borderRadius: 20, maxWidth: 520, width: "100%", maxHeight: "85vh", overflowY: "auto", boxShadow: `0 20px 60px rgba(80,60,150,.35), 0 0 0 1px ${ACCENT}22` }}
           >
             <div style={{ height: 140, overflow: "hidden", borderRadius: "20px 20px 0 0", position: "relative" }}>
               <img src={caseImagePath(caseDetailAssignment.case_standard)} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
