@@ -721,7 +721,12 @@ export default function TeacherOverview() {
   return (
     <div
       style={{
-        minHeight: "100vh",
+        // Fixed to the viewport (not minHeight) — combined with the stage
+        // sizing below, this is what guarantees the whole dashboard always
+        // fits on one screen with no page scroll, on any monitor/laptop
+        // height, instead of just capping width and letting height grow
+        // past the fold.
+        height: "100vh",
         backgroundColor: COLORS.navy,
         backgroundImage: `radial-gradient(ellipse at 50% -10%, #1B2A52 0%, ${COLORS.deepNavy} 45%, ${COLORS.navy} 100%)`,
         fontFamily: "'Inter', sans-serif",
@@ -776,7 +781,15 @@ export default function TeacherOverview() {
       <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", padding: "8px 28px 32px", minHeight: 0 }}>
         <div
           style={{
-            position: "relative", width: "100%", maxWidth: 1500, aspectRatio: BG_ASPECT,
+            position: "relative",
+            // Letterbox to whichever of the two axes is tighter — a short
+            // laptop screen binds on height, a narrow window binds on
+            // width — so the stage always fits inside the HUD's leftover
+            // space without ever forcing the page to scroll, while still
+            // never growing past its designed size on a huge monitor.
+            height: "100%", width: "auto",
+            maxWidth: "min(1500px, 100%)", maxHeight: "min(844px, 100%)",
+            aspectRatio: BG_ASPECT,
             backgroundImage: `url(${ART.background})`, backgroundSize: "100% 100%", backgroundPosition: "center",
             backgroundColor: COLORS.deepNavy, borderRadius: 22, overflow: "hidden",
             boxShadow: "0 24px 70px rgba(0,0,0,.55), inset 0 0 0 1px rgba(255,255,255,.06)",
