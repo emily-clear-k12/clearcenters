@@ -76,7 +76,7 @@ Legend: ✅ done · 🚧 in progress · ⬜ not started
 | My Classes | `/teacher/assign` | ✅ | pink | `bg-platform-room.jpg` | First console-interior page. Accent corrected from warning-orange to a dedicated pink (see above). |
 | Student Progress | `/teacher/progress` | ✅ | aqua | `bg-observatory.jpg` | Second page. |
 | Reports (hub, `[classId]`, `/standards`, `/student/[studentId]`) | `/teacher/reports/*` | ✅ | aqua | `bg-observatory.jpg` | Third page (this session). See below. |
-| Challenge Library | `/teacher/assign/new` | ⬜ | pink | needed | Large page (817 lines) — assignment builder form. |
+| Challenge Library | `/teacher/assign/new` | ✅ | pink | `challenge_library_bg.jpg` (own art, kept) | Fourth page. See below. |
 | Assign Briefing | `/teacher/assign/briefing` | ⬜ | pink | needed | |
 | Present-to-Class display | `/teacher/assign/display` | ⬜ | pink | — | Projected for students — may want to stay closer to its current look; worth asking Emily before touching it. |
 | Live Ops Board | `/teacher/live-ops-board` | ⬜ | pink? | — | Same open question as above. |
@@ -92,8 +92,70 @@ Legend: ✅ done · 🚧 in progress · ⬜ not started
 `bg-bridge-console.jpg` is saved under `public/teacher/console/` but not yet
 assigned to any route — destination still unconfirmed with Emily.
 
-Roughly 20 screens total; 3 done so far (My Classes, Student Progress,
-Reports).
+Roughly 20 screens total; 4 done so far (My Classes, Student Progress,
+Reports, Challenge Library).
+
+## Overview scene fitting — fixed twice, same day (Sept 13)
+
+The Overview "scene" (the literal console + planets view, not a console-
+interior page) went through two rounds of fixing on the same day. First
+pass: the console's own base was getting cropped off the bottom of the
+screen on short/wide windows, fixed by anchoring the crop to the bottom
+instead of the center. That traded one problem for another — anchoring to
+the bottom meant ALL the crop came off the top instead, which is exactly
+where the class planets live, so they started getting clipped instead on
+the same kind of window. Second pass fixed it properly: switched from
+"crop to fill the screen" (cover) to "always show the whole scene, sized to
+fit" (contain) — nothing in the art is ever cropped now, planets or
+console, on any window shape. The trade-off is a thin strip of plain
+starfield background on the left/right edges on unusually wide-and-short
+windows instead of the art touching every edge — a much smaller cost than
+losing content. Verified with a clean `next build` both times.
+
+## Challenge Library (`/teacher/assign/new`) — done Sept 13, this session
+
+Fourth page moved over — the assignment-builder flow reached from Mission
+Control's "New Assignment" button (challenge type → grade/subject → case →
+class/students/due date/Distress Call → assign). Same visual-layer-only
+port as the previous three pages — no query, calculation, or
+assignment-flow logic changed.
+
+`TeacherSidebar` + `TeacherPageBanner` swapped for `TeacherHUD`. This page
+already had its own dedicated background art (`challenge_library_bg.jpg`,
+made back on Aug 27, before the console-theme initiative existed) — kept
+it rather than switching to My Classes' `bg-platform-room.jpg`, since it's
+good custom art made specifically for this page; it's now registered in
+`PAGE_BACKGROUNDS` under its own route (`/teacher/assign/new`) while still
+sharing Mission Control's pink `ACCENT` (same family as My Classes, since
+this page is one level into that flow). This page had already solved its
+own version of the crop problem described above (a "contain" background
+technique with a matching fallback color) before Overview did — that
+existing fix was kept as-is, just modernized to sit under the new HUD
+layout instead of the old sidebar.
+
+The page's local `COLORS` object (with three extra pastel tokens —
+`violetSoft`, `tealSoft`, `cream` — that don't exist in the shared
+`lib/teacherTheme.js` palette) was replaced by the shared import; those
+three pastels are now computed as tints of shared colors instead
+(`${ACCENT}22`, `${COLORS.aqua}18`, etc.) rather than kept as separate
+hardcoded hex.
+
+Two things were deliberately left violet instead of becoming pink
+`ACCENT`, matching the same principle used everywhere else in this
+redesign (a page's decorative accent never doubles as a different,
+meaningful signal):
+- **Distress Call** — the whole feature section (checkbox, target/deadline
+  fields, crystal-reward presets) keeps its own violet identity throughout,
+  the same way My Classes keeps the "📡 Live" Distress Call badge violet
+  rather than pink. Distress Call is a distinct feature signature across
+  the app, not this page's branding.
+- **Learning Target callout** — was a one-off `tealSoft` box on this page;
+  changed to match the aqua used for the *identical* Learning Target
+  callout on My Classes' case-detail modal, since it's the same UI concept
+  in both places and they should look the same, not accidentally different
+  colors that mean nothing.
+
+Verified with a clean `next build`.
 
 ## Reports (`/teacher/reports/*`) — done Sept 13, this session
 
