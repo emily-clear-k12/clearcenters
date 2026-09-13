@@ -1,22 +1,32 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "../../lib/supabaseClient";
-import TeacherSidebar from "../../components/TeacherSidebar";
-import TeacherPageBanner from "../../components/TeacherPageBanner";
-import { SAM_SKINS, FALLBACK_ICON } from "../../lib/samSkins";
+import { SAM_SKINS, FALLBACK_ICON, getSamSkin, DEFAULT_SAM_SKIN } from "../../lib/samSkins";
+import { planetForClass } from "../../lib/classPlanets";
 
-// Palette updated Aug 27 (evening pass) — violet and teal sampled from the
-// new sci-fi banner art (the crystal's glow and the desk's edge lighting)
-// instead of the app's older, bluer violet (#7B5DFF) and darker teal
-// (#00C2C7). Same pair now lives in TeacherSidebar.js and every other
-// app/teacher/*/page.js COLORS object — keep them in sync if tuned again.
+// ---------------------------------------------------------------------------
+// Sept 12, 2026 — Overview rebuilt around the "Orbit Map" concept (see
+// claude/Teacher_Dashboard_OrbitMap_Art_Spec.md in the project). Instead of
+// a stack of stat-tile cards behind a sidebar list, this page is a small
+// space scene: one planet per class (click it to open that class in My
+// Classes), plus a handful of fixed "landmarks" standing in for the old
+// nav list — Mission Control (build/assign), the Observatory (progress &
+// reports), S.A.M. (rewards & shoutouts — literally opens the same
+// RewardsModal Overview already had), and a message beacon. TeacherSidebar
+// is intentionally NOT rendered on this page; every other /teacher/* page
+// keeps it untouched, so nothing about navigating *into* a task changes,
+// only what the very first screen looks like.
+//
+// Real art (see the spec doc) doesn't exist yet — every visual slot below
+// renders a CSS placeholder and silently swaps to the real image the
+// moment a file shows up at the paths in ART, with zero code changes.
+// ---------------------------------------------------------------------------
+
 const COLORS = {
-  navy: "#0D1B2A",
-  deepNavy: "#162845",
-  canvas: "#F2F0FA",
-  white: "#FFFFFF",
+  navy: "#0B1220",
+  deepNavy: "#0F1B33",
   violet: "#8C52F2",
   violetSoft: "#EEE6FD",
   teal: "#6FD8F5",
@@ -24,22 +34,96 @@ const COLORS = {
   gold: "#FFC44D",
   success: "#22C55E",
   warning: "#FF9F43",
+  danger: "#E4574C",
   info: "#3D84F5",
-  border: "#E1E2EE",
-  textDark: "#1F2A44",
-  textMuted: "#697386",
+  white: "#FFFFFF",
+  textMuted: "#A9B4CE",
+  magenta: "#D65DE0", // Messages hologram's hue — nothing else in the app uses this pink/magenta family
 };
+
+// Real art will live here once generated (see the art spec doc) — nothing
+// else in this file needs to change when the files show up.
+const ART = {
+  background: "/teacher/orbit/background.jpg",
+  // S.A.M.'s custom "floating at the console" pose — a one-off asset made
+  // for this page, not part of the regular skin set below, so it only
+  // exists for the Cosmic skin. See samArtFor() further down.
+  sam: "/teacher/orbit/sam-dashboard-pose.png",
+  missionControl: "/teacher/orbit/mission-control.png",
+  observatory: "/teacher/orbit/observatory.png",
+  beacon: "/teacher/orbit/message-beacon.png",
+  resources: "/teacher/orbit/resources.png",
+};
+
+// S.A.M.'s equipped skin only has bespoke console art for Cosmic (the
+// default). Any other skin falls back to that skin's regular icon art
+// (lib/samSkins.js's flat idle-poster style) rather than the floating
+// pose — a deliberate, known mismatch until matching dashboard poses exist
+// for Verdant/Crystal/Comet too.
+function samArtFor(skinKey) {
+  if (!skinKey || skinKey === "cosmic") return ART.sam;
+  const skin = getSamSkin(skinKey);
+  return (skin && skin.image) || ART.sam;
+}
+
+// Native pixel size of background.jpg — the scene "stage" is locked to this
+// aspect ratio (instead of a full-viewport `background-size: cover`) so the
+// planet/landmark percentage coordinates below always land exactly where
+// they look right in the source art, on any screen size, with nothing
+// cropped off the sides or top.
+const BG_ASPECT = "1672 / 941";
+
+// Percent coordinates (of the stage box) for the 5 lit console panels in
+// background.jpg, read directly off the art: one big center panel flanked
+// by two smaller panels on each side. Landmarks sit on these; S.A.M. takes
+// the center (biggest, most prominent) panel since he's a character, not a
+// flat hologram icon like the other four.
+const CONSOLE_SLOTS = [
+  { left: 17, top: 79.5, size: 12.5 }, // Mission Control — outer left
+  { left: 32.5, top: 79, size: 12.5 }, // Observatory — inner left
+  { left: 50, top: 76.5, size: 16 }, // S.A.M. — center
+  { left: 67.5, top: 79, size: 12.5 }, // Messages — inner right
+  { left: 83, top: 79.5, size: 12.5 }, // Resources — outer right
+];
+
+// Lays out N planets across the open "window" portion of the background
+// (well above the console) in a shallow arc, staggered so they don't read
+// as a flat row. Sizes shrink gradually as more classes are added so an
+// 8-class roster still fits without crowding the console.
+function planetLayout(n) {
+  if (n <= 0) return [];
+  const marginX = n <= 3 ? 26 : n === 4 ? 17 : 10;
+  const sizePct = n <= 3 ? 20 : n === 4 ? 17 : n === 5 ? 15 : n === 6 ? 13 : n === 7 ? 11.5 : 10.5;
+  return Array.from({ length: n }).map((_, i) => {
+    const t = n > 1 ? i / (n - 1) : 0.5;
+    const x = marginX + t * (100 - marginX * 2);
+    const arch = Math.sin(t * Math.PI); // 0 at the edges, 1 in the middle
+    // Base/amplitude keep even the outermost planets (and their name +
+    // stats label underneath) well clear of the landmark labels floating
+    // above the console, which start around y=68%.
+    const y = 34 - arch * 13 + (i % 2 === 0 ? 3 : -3);
+    return { left: x, top: y, size: sizePct };
+  });
+}
+
+// Best-effort display name when a teacher hasn't got a `teachers.name` row
+// (or it's blank) — turns "emily.smith" / "emily_smith" into "Emily Smith"
+// instead of showing the raw lowercase email handle.
+function capitalizeNameGuess(raw) {
+  return raw
+    .split(/[._-]+/)
+    .filter(Boolean)
+    .map((part) => part[0].toUpperCase() + part.slice(1))
+    .join(" ");
+}
 
 function proficiencyBand(avg) {
   if (avg >= 1.8) return { label: "Excellent", color: COLORS.success };
   if (avg >= 1.4) return { label: "Proficient", color: COLORS.info };
   if (avg >= 1.0) return { label: "Developing", color: COLORS.violet };
-  return { label: "Needs Support", color: "#E4574C" };
+  return { label: "Needs Support", color: COLORS.danger };
 }
 
-// A due date's relative-day phrasing for the "Due Soon" hero card —
-// overdue assignments sort first and read as overdue rather than a
-// confusing negative day count.
 function dueLabel(days) {
   if (days < 0) return `${Math.abs(days)} day${Math.abs(days) === 1 ? "" : "s"} overdue`;
   if (days === 0) return "due today";
@@ -47,42 +131,91 @@ function dueLabel(days) {
   return `due in ${days} days`;
 }
 
-function Card({ children, style }) {
+// Renders the real art if it exists at ART.*, otherwise falls back to the
+// CSS placeholder passed as children — silently, with no broken-image icon.
+function ArtSlot({ src, alt, size, children }) {
+  const [failed, setFailed] = useState(false);
   return (
-    <div style={{ background: COLORS.white, border: `1px solid ${COLORS.border}`, borderRadius: 16, padding: 20, boxShadow: "0 4px 16px rgba(13,27,42,.06)", ...style }}>
-      {children}
+    <div style={{ position: "relative", width: size, height: size, flexShrink: 0 }}>
+      {(!src || failed) && children}
+      {src && !failed && (
+        <img
+          src={src}
+          alt={alt}
+          onError={() => setFailed(true)}
+          style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "contain" }}
+        />
+      )}
     </div>
   );
 }
 
-function Donut({ segments, size = 150, centerLabel, centerSub }) {
-  const total = segments.reduce((s, seg) => s + seg.value, 0) || 1;
-  let acc = 0;
-  const stops = segments.map((seg) => {
-    const start = (acc / total) * 360;
-    acc += seg.value;
-    const end = (acc / total) * 360;
-    return `${seg.color} ${start}deg ${end}deg`;
-  });
-  const gradient = stops.length > 0 ? `conic-gradient(${stops.join(", ")})` : `conic-gradient(${COLORS.border} 0deg 360deg)`;
+// A small ring showing class average (or an empty ring with a "—" while no
+// grades are released yet), sitting in the corner of a planet.
+function AvgRing({ pct }) {
+  const known = pct !== null && pct !== undefined;
+  const band = known ? proficiencyBand((pct / 100) * 2) : null;
+  const gradient = known
+    ? `conic-gradient(${band.color} ${pct * 3.6}deg, rgba(255,255,255,.15) ${pct * 3.6}deg)`
+    : `conic-gradient(rgba(255,255,255,.18) 0deg, rgba(255,255,255,.18) 360deg)`;
   return (
-    <div style={{ position: "relative", width: size, height: size, borderRadius: "50%", background: gradient, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-      <div style={{ width: size * 0.66, height: size * 0.66, borderRadius: "50%", background: COLORS.white, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
-        <div style={{ fontSize: size * 0.19, fontWeight: 700, fontFamily: "'Poppins', sans-serif", color: COLORS.textDark }}>{centerLabel}</div>
-        {centerSub && <div style={{ fontSize: 11, color: COLORS.textMuted, textAlign: "center" }}>{centerSub}</div>}
+    <div style={{ width: 40, height: 40, borderRadius: "50%", background: gradient, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+      <div style={{ width: 30, height: 30, borderRadius: "50%", background: COLORS.deepNavy, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10.5, fontWeight: 700, color: COLORS.white }}>
+        {known ? `${pct}%` : "—"}
       </div>
     </div>
   );
 }
 
-const POINT_PRESETS = [5, 10, 25, 50];
+const ICONS = {
+  doc: (
+    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M8 3h8a2 2 0 0 1 2 2v14l-3-2-3 2-3-2-3 2V5a2 2 0 0 1 2-2Z" /><path d="M9 8h6M9 12h6M9 16h3" />
+    </svg>
+  ),
+  flag: (
+    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="9" cy="8" r="3.25" /><path d="M3.5 19c.7-3 3-4.75 5.5-4.75s4.8 1.75 5.5 4.75" /><path d="m16 11 2 2 3.5-3.5" />
+    </svg>
+  ),
+  calendar: (
+    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="3.5" y="5" width="17" height="16" rx="2.5" /><path d="M8 3v4M16 3v4M3.5 10h17" />
+    </svg>
+  ),
+  launch: (
+    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d="m12 3 9 4.5-9 4.5-9-4.5Z" /><path d="m3 12 9 4.5 9-4.5M3 16.5 12 21l9-4.5" />
+    </svg>
+  ),
+  telescope: (
+    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M3 17.5 14 8l2 2-11 9.5Z" /><path d="m13 9 6.5-5.5L21 5l-5.5 6.5" /><circle cx="7.5" cy="16.5" r="2.5" />
+    </svg>
+  ),
+  mail: (
+    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="3" y="5.5" width="18" height="13" rx="2" /><path d="m4 6.5 8 6.5 8-6.5" />
+    </svg>
+  ),
+  gem: (
+    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round">
+      <path d="M12 3.5 14.7 9l6 .87-4.35 4.24 1.03 6-5.38-2.83-5.38 2.83 1.03-6L3.3 9.87l6-.87Z" />
+    </svg>
+  ),
+  gear: (
+    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="3" /><path d="M19 12a7 7 0 0 0-.1-1.2l2-1.5-2-3.4-2.3.9a7 7 0 0 0-2.1-1.2L14 3h-4l-.5 2.6a7 7 0 0 0-2.1 1.2l-2.3-.9-2 3.4 2 1.5A7 7 0 0 0 5 12c0 .4 0 .8.1 1.2l-2 1.5 2 3.4 2.3-.9c.6.5 1.3.9 2.1 1.2L10 21h4l.5-2.6a7 7 0 0 0 2.1-1.2l2.3.9 2-3.4-2-1.5c.1-.4.1-.8.1-1.2Z" />
+    </svg>
+  ),
+  folder: (
+    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round">
+      <path d="M3.5 6.5a1 1 0 0 1 1-1H9l2 2h8.5a1 1 0 0 1 1 1V18a1 1 0 0 1-1 1h-15a1 1 0 0 1-1-1Z" />
+    </svg>
+  ),
+};
 
-// Sept 4, 2026 — Teacher-facing S.A.M. expansion, Feature B (see
-// SAM_Companion_Concept_v1.md §9/§10). What was AwardPointsModal is now a
-// 3-tab Rewards modal (Points / S.A.M. Skin / Shoutout) sharing one Class +
-// student picker, instead of three separate modals or screens — folded into
-// the flow teachers already use, per Emily's ask to keep this low-friction.
-// Points behaves exactly as it always has; Skin and Shoutout are new.
+const POINT_PRESETS = [5, 10, 25, 50];
 const SHOUTOUT_PRESETS = [
   "Great job today — keep up the awesome thinking!",
   "So proud of the effort you put in!",
@@ -90,9 +223,9 @@ const SHOUTOUT_PRESETS = [
 ];
 
 function RewardsModal({ open, classes, rawStudents, defaultClassId, awarding, onCancel, onAwardPoints, onGrantSkin, onSendShoutout }) {
-  const [tab, setTab] = useState("points"); // "points" | "skin" | "shoutout"
+  const [tab, setTab] = useState("points");
   const [classId, setClassId] = useState(defaultClassId || (classes[0] && classes[0].id) || "");
-  const [mode, setMode] = useState("class"); // "class" | "student"
+  const [mode, setMode] = useState("class");
   const [studentId, setStudentId] = useState("");
   const [amount, setAmount] = useState(10);
   const [skinKey, setSkinKey] = useState(SAM_SKINS[0] ? SAM_SKINS[0].key : "");
@@ -111,9 +244,6 @@ function RewardsModal({ open, classes, rawStudents, defaultClassId, awarding, on
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
-  // A Shoutout is always personal — force single-student mode the moment
-  // that tab is opened, rather than letting a teacher accidentally send the
-  // same private-feeling note to an entire class at once.
   useEffect(() => {
     if (tab === "shoutout" && mode !== "student") setMode("student");
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -139,52 +269,40 @@ function RewardsModal({ open, classes, rawStudents, defaultClassId, awarding, on
     }
   }
 
-  const confirmLabel = awarding
-    ? "Sending..."
-    : tab === "points"
-    ? `Award +${amount}`
-    : tab === "skin"
-    ? "Grant Skin"
-    : "Send Shoutout";
+  const confirmLabel = awarding ? "Sending..." : tab === "points" ? `Award +${amount}` : tab === "skin" ? "Grant Skin" : "Send Shoutout";
 
   return (
     <div style={{ position: "fixed", inset: 0, background: "rgba(13,20,35,.65)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 100, padding: 20 }}>
       <div style={{ background: COLORS.white, borderRadius: 18, width: "min(460px, 100%)", padding: 24, boxShadow: "0 24px 60px rgba(0,0,0,.4)" }}>
-        <div style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 700, fontSize: 18, color: COLORS.textDark, marginBottom: 4 }}>🔮 Rewards & S.A.M.</div>
-        <div style={{ fontSize: 13, color: COLORS.textMuted, marginBottom: 16 }}>Award points, unlock a S.A.M. skin early, or send an encouraging note as S.A.M.</div>
+        <div style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 700, fontSize: 18, color: "#1F2A44", marginBottom: 4 }}>S.A.M.'s Rewards</div>
+        <div style={{ fontSize: 13, color: "#697386", marginBottom: 16 }}>Award points, unlock a S.A.M. skin early, or send an encouraging note as S.A.M.</div>
 
-        <div style={{ display: "flex", gap: 6, marginBottom: 16, background: COLORS.canvas, borderRadius: 12, padding: 4 }}>
-          {[["points", "🔮 Points"], ["skin", "🎨 Skin"], ["shoutout", "💬 Shoutout"]].map(([key, label]) => (
-            <button
-              key={key}
-              type="button"
-              className="gc-btn"
-              onClick={() => setTab(key)}
-              style={{ flex: 1, padding: "8px 4px", borderRadius: 9, fontWeight: 700, fontSize: 12.5, background: tab === key ? COLORS.white : "transparent", color: tab === key ? COLORS.violet : COLORS.textMuted, boxShadow: tab === key ? "0 2px 6px rgba(13,27,42,.1)" : "none" }}
-            >
+        <div style={{ display: "flex", gap: 6, marginBottom: 16, background: "#F2F0FA", borderRadius: 12, padding: 4 }}>
+          {[["points", "Points"], ["skin", "Skin"], ["shoutout", "Shoutout"]].map(([key, label]) => (
+            <button key={key} type="button" onClick={() => setTab(key)} style={{ flex: 1, padding: "8px 4px", borderRadius: 9, fontWeight: 700, fontSize: 12.5, border: "none", cursor: "pointer", background: tab === key ? COLORS.white : "transparent", color: tab === key ? COLORS.violet : "#697386", boxShadow: tab === key ? "0 2px 6px rgba(13,27,42,.1)" : "none" }}>
               {label}
             </button>
           ))}
         </div>
 
-        <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: COLORS.textMuted, marginBottom: 6 }}>Class</label>
-        <select value={classId} onChange={(e) => { setClassId(e.target.value); setStudentId(""); }} style={{ width: "100%", padding: "10px 12px", borderRadius: 10, border: `1.5px solid ${COLORS.border}`, fontSize: 13.5, marginBottom: 14, fontFamily: "inherit" }}>
+        <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: "#697386", marginBottom: 6 }}>Class</label>
+        <select value={classId} onChange={(e) => { setClassId(e.target.value); setStudentId(""); }} style={{ width: "100%", padding: "10px 12px", borderRadius: 10, border: "1.5px solid #E1E2EE", fontSize: 13.5, marginBottom: 14, fontFamily: "inherit" }}>
           {classes.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
         </select>
 
         {tab !== "shoutout" && (
           <div style={{ display: "flex", gap: 8, marginBottom: 14 }}>
-            <button type="button" className="gc-btn" onClick={() => setMode("class")} style={{ flex: 1, padding: "9px 8px", borderRadius: 10, fontWeight: 700, fontSize: 13, background: mode === "class" ? COLORS.violet : COLORS.canvas, color: mode === "class" ? COLORS.white : COLORS.textDark }}>
+            <button type="button" onClick={() => setMode("class")} style={{ flex: 1, padding: "9px 8px", borderRadius: 10, fontWeight: 700, fontSize: 13, border: "none", cursor: "pointer", background: mode === "class" ? COLORS.violet : "#F2F0FA", color: mode === "class" ? COLORS.white : "#1F2A44" }}>
               Whole Class{selectedClass ? ` (${classStudents.length})` : ""}
             </button>
-            <button type="button" className="gc-btn" onClick={() => setMode("student")} style={{ flex: 1, padding: "9px 8px", borderRadius: 10, fontWeight: 700, fontSize: 13, background: mode === "student" ? COLORS.violet : COLORS.canvas, color: mode === "student" ? COLORS.white : COLORS.textDark }}>
+            <button type="button" onClick={() => setMode("student")} style={{ flex: 1, padding: "9px 8px", borderRadius: 10, fontWeight: 700, fontSize: 13, border: "none", cursor: "pointer", background: mode === "student" ? COLORS.violet : "#F2F0FA", color: mode === "student" ? COLORS.white : "#1F2A44" }}>
               One Student
             </button>
           </div>
         )}
 
         {(mode === "student" || tab === "shoutout") && (
-          <select value={studentId} onChange={(e) => setStudentId(e.target.value)} style={{ width: "100%", padding: "10px 12px", borderRadius: 10, border: `1.5px solid ${COLORS.border}`, fontSize: 13.5, marginBottom: 14, fontFamily: "inherit" }}>
+          <select value={studentId} onChange={(e) => setStudentId(e.target.value)} style={{ width: "100%", padding: "10px 12px", borderRadius: 10, border: "1.5px solid #E1E2EE", fontSize: 13.5, marginBottom: 14, fontFamily: "inherit" }}>
             <option value="">Choose a student...</option>
             {classStudents.map((s) => <option key={s.id} value={s.id}>{s.first_name}</option>)}
           </select>
@@ -192,39 +310,27 @@ function RewardsModal({ open, classes, rawStudents, defaultClassId, awarding, on
 
         {tab === "points" && (
           <>
-            <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: COLORS.textMuted, marginBottom: 6 }}>Points</label>
+            <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: "#697386", marginBottom: 6 }}>Points</label>
             <div style={{ display: "flex", gap: 8, marginBottom: 10 }}>
               {POINT_PRESETS.map((p) => (
-                <button key={p} type="button" className="gc-btn" onClick={() => setAmount(p)} style={{ flex: 1, padding: "9px 4px", borderRadius: 10, fontWeight: 700, fontSize: 13, background: amount === p ? COLORS.gold : COLORS.canvas, color: COLORS.textDark }}>
+                <button key={p} type="button" onClick={() => setAmount(p)} style={{ flex: 1, padding: "9px 4px", borderRadius: 10, fontWeight: 700, fontSize: 13, border: "none", cursor: "pointer", background: amount === p ? COLORS.gold : "#F2F0FA", color: "#1F2A44" }}>
                   +{p}
                 </button>
               ))}
             </div>
-            <input
-              type="number"
-              min={1}
-              value={amount}
-              onChange={(e) => setAmount(parseInt(e.target.value, 10) || 0)}
-              style={{ width: "100%", padding: "10px 12px", borderRadius: 10, border: `1.5px solid ${COLORS.border}`, fontSize: 13.5, marginBottom: 6, fontFamily: "inherit", boxSizing: "border-box" }}
-            />
+            <input type="number" min={1} value={amount} onChange={(e) => setAmount(parseInt(e.target.value, 10) || 0)} style={{ width: "100%", padding: "10px 12px", borderRadius: 10, border: "1.5px solid #E1E2EE", fontSize: 13.5, marginBottom: 6, fontFamily: "inherit", boxSizing: "border-box" }} />
           </>
         )}
 
         {tab === "skin" && (
           <>
-            <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: COLORS.textMuted, marginBottom: 6 }}>S.A.M. Skin to Grant</label>
-            <div style={{ fontSize: 11.5, color: COLORS.textMuted, marginBottom: 10, lineHeight: 1.4 }}>Unlocks it early for {mode === "class" ? "the whole class" : "this student"} — doesn't touch crystal points.</div>
+            <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: "#697386", marginBottom: 6 }}>S.A.M. Skin to Grant</label>
+            <div style={{ fontSize: 11.5, color: "#697386", marginBottom: 10, lineHeight: 1.4 }}>Unlocks it early for {mode === "class" ? "the whole class" : "this student"} — doesn't touch crystal points.</div>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 8, marginBottom: 6 }}>
               {SAM_SKINS.map((skin) => (
-                <button
-                  key={skin.key}
-                  type="button"
-                  className="gc-btn"
-                  onClick={() => setSkinKey(skin.key)}
-                  style={{ padding: "10px 4px", borderRadius: 10, border: skinKey === skin.key ? `2px solid ${COLORS.violet}` : `1.5px solid ${COLORS.border}`, background: skinKey === skin.key ? COLORS.violetSoft : COLORS.white, textAlign: "center" }}
-                >
+                <button key={skin.key} type="button" onClick={() => setSkinKey(skin.key)} style={{ padding: "10px 4px", borderRadius: 10, cursor: "pointer", border: skinKey === skin.key ? `2px solid ${COLORS.violet}` : "1.5px solid #E1E2EE", background: skinKey === skin.key ? COLORS.violetSoft : COLORS.white, textAlign: "center" }}>
                   <img src={skin.image} alt="" style={{ width: 36, height: 36, objectFit: "contain", marginBottom: 4 }} onError={(e) => { e.currentTarget.src = FALLBACK_ICON; }} />
-                  <div style={{ fontSize: 10.5, fontWeight: 700, color: COLORS.textDark }}>{skin.name}</div>
+                  <div style={{ fontSize: 10.5, fontWeight: 700, color: "#1F2A44" }}>{skin.name}</div>
                 </button>
               ))}
             </div>
@@ -233,38 +339,160 @@ function RewardsModal({ open, classes, rawStudents, defaultClassId, awarding, on
 
         {tab === "shoutout" && (
           <>
-            <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: COLORS.textMuted, marginBottom: 6 }}>Message from S.A.M.</label>
+            <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: "#697386", marginBottom: 6 }}>Message from S.A.M.</label>
             <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 8 }}>
               {SHOUTOUT_PRESETS.map((preset) => (
-                <button key={preset} type="button" className="gc-btn" onClick={() => setMessage(preset)} style={{ padding: "6px 10px", borderRadius: 999, background: COLORS.canvas, color: COLORS.textDark, fontSize: 11.5, fontWeight: 600 }}>
+                <button key={preset} type="button" onClick={() => setMessage(preset)} style={{ padding: "6px 10px", borderRadius: 999, border: "none", cursor: "pointer", background: "#F2F0FA", color: "#1F2A44", fontSize: 11.5, fontWeight: 600 }}>
                   {preset}
                 </button>
               ))}
             </div>
-            <textarea
-              value={message}
-              onChange={(e) => setMessage(e.target.value.slice(0, 240))}
-              placeholder="Write a quick encouraging note..."
-              rows={3}
-              style={{ width: "100%", padding: "10px 12px", borderRadius: 10, border: `1.5px solid ${COLORS.border}`, fontSize: 13.5, marginBottom: 6, fontFamily: "inherit", resize: "vertical", boxSizing: "border-box" }}
-            />
-            <div style={{ textAlign: "right", fontSize: 11, color: COLORS.textMuted, marginBottom: 8 }}>{message.length}/240</div>
+            <textarea value={message} onChange={(e) => setMessage(e.target.value.slice(0, 240))} placeholder="Write a quick encouraging note..." rows={3} style={{ width: "100%", padding: "10px 12px", borderRadius: 10, border: "1.5px solid #E1E2EE", fontSize: 13.5, marginBottom: 6, fontFamily: "inherit", resize: "vertical", boxSizing: "border-box" }} />
+            <div style={{ textAlign: "right", fontSize: 11, color: "#697386", marginBottom: 8 }}>{message.length}/240</div>
           </>
         )}
 
         <div style={{ display: "flex", gap: 10, justifyContent: "flex-end", marginTop: 12 }}>
-          <button onClick={onCancel} className="gc-btn" style={{ background: COLORS.canvas, color: COLORS.textDark, borderRadius: 999, padding: "11px 20px", fontWeight: 700, fontSize: 13.5 }}>Cancel</button>
-          <button
-            onClick={handleConfirm}
-            disabled={!canConfirm || awarding}
-            className="gc-btn"
-            style={{ background: COLORS.violet, color: COLORS.white, borderRadius: 999, padding: "11px 20px", fontWeight: 700, fontSize: 13.5, opacity: canConfirm ? 1 : 0.5 }}
-          >
+          <button onClick={onCancel} style={{ background: "#F2F0FA", color: "#1F2A44", border: "none", cursor: "pointer", borderRadius: 999, padding: "11px 20px", fontWeight: 700, fontSize: 13.5 }}>Cancel</button>
+          <button onClick={handleConfirm} disabled={!canConfirm || awarding} style={{ background: COLORS.violet, color: COLORS.white, border: "none", cursor: canConfirm ? "pointer" : "default", borderRadius: 999, padding: "11px 20px", fontWeight: 700, fontSize: 13.5, opacity: canConfirm ? 1 : 0.5 }}>
             {confirmLabel}
           </button>
         </div>
       </div>
     </div>
+  );
+}
+
+// One class's planet: art (or placeholder), name, average ring, and an
+// urgency badge summarizing everything that used to live in the three
+// "Needs Your Attention" cards, now scoped to this one class.
+function PlanetNode({ cls, index, left, top, size, onOpen, onReview, onProgress }) {
+  const [hover, setHover] = useState(false);
+  const planet = planetForClass(cls, index);
+  const hue = planet.hue;
+  const s = cls.stats;
+  const urgent = s.pendingCount + s.needsCheckInCount + s.dueSoonCount;
+  const badgeColor = s.pendingCount > 3 || s.needsCheckInCount > 2 ? COLORS.danger : urgent > 0 ? COLORS.gold : null;
+
+  return (
+    <div
+      style={{
+        position: "absolute", left: `${left}%`, top: `${top}%`, width: `${size}%`,
+        transform: "translate(-50%, -50%)", display: "flex", flexDirection: "column", alignItems: "center",
+        zIndex: hover ? 30 : 10,
+      }}
+      onMouseEnter={() => setHover(true)}
+      onMouseLeave={() => setHover(false)}
+    >
+      <button
+        onClick={onOpen}
+        aria-label={`Open ${cls.name}`}
+        style={{ position: "relative", background: "none", border: "none", cursor: "pointer", padding: 0, width: "100%", aspectRatio: "1", transition: "transform 160ms ease", transform: hover ? "translateY(-4%)" : "none" }}
+      >
+        <ArtSlot src={planet.image} alt={cls.name} size="100%">
+          <div
+            style={{
+              width: "100%", height: "100%", borderRadius: "50%",
+              background: `radial-gradient(circle at 35% 30%, ${hue.glow}, ${hue.core} 60%, ${hue.core} 100%)`,
+              boxShadow: `0 0 34px ${hue.core}66, inset -14px -14px 26px rgba(0,0,0,.25)`,
+            }}
+          />
+          <div style={{ position: "absolute", left: "-14%", right: "-14%", top: "62%", height: "6%", borderRadius: "50%", border: `2px solid ${hue.glow}`, opacity: 0.6, transform: "rotate(-8deg)" }} />
+        </ArtSlot>
+        {badgeColor && (
+          <div style={{ position: "absolute", top: "-6%", right: "-6%", minWidth: 24, height: 24, borderRadius: 999, background: badgeColor, color: COLORS.navy, fontWeight: 800, fontSize: 12, display: "flex", alignItems: "center", justifyContent: "center", padding: "0 6px", boxShadow: "0 2px 8px rgba(0,0,0,.35)" }}>
+            {urgent}
+          </div>
+        )}
+      </button>
+
+      <div style={{ marginTop: "8%", fontFamily: "'Poppins', sans-serif", fontWeight: 700, fontSize: "clamp(11px, 1.1vw, 15px)", color: COLORS.white, textAlign: "center", whiteSpace: "nowrap", textShadow: "0 2px 8px rgba(0,0,0,.6)" }}>{cls.name}</div>
+
+      <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 6 }}>
+        <AvgRing pct={s.classAverage} />
+        <div style={{ display: "grid", gap: 2, fontSize: "clamp(9px, 0.85vw, 11px)", color: COLORS.textMuted, whiteSpace: "nowrap" }}>
+          <div>{s.studentCount} students</div>
+          <div>{s.assignmentCount} active</div>
+        </div>
+      </div>
+
+      {hover && urgent > 0 && (
+        <div style={{ position: "absolute", top: "100%", marginTop: 8, width: 230, background: COLORS.deepNavy, border: "1px solid rgba(255,255,255,.12)", borderRadius: 12, padding: 14, boxShadow: "0 12px 30px rgba(0,0,0,.45)", zIndex: 20 }}>
+          {s.pendingCount > 0 && (
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
+              <span style={{ color: COLORS.gold }}>{ICONS.doc}</span>
+              <span style={{ flex: 1, fontSize: 12, color: COLORS.white }}>{s.pendingCount} to review</span>
+              <button onClick={onReview} style={{ background: "none", border: "none", color: COLORS.aqua, fontSize: 11, fontWeight: 700, cursor: "pointer" }}>Go →</button>
+            </div>
+          )}
+          {s.needsCheckInCount > 0 && (
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
+              <span style={{ color: COLORS.violet }}>{ICONS.flag}</span>
+              <span style={{ flex: 1, fontSize: 12, color: COLORS.white }}>{s.needsCheckInCount} to check in with</span>
+              <button onClick={onProgress} style={{ background: "none", border: "none", color: COLORS.aqua, fontSize: 11, fontWeight: 700, cursor: "pointer" }}>Go →</button>
+            </div>
+          )}
+          {s.dueSoonCount > 0 && (
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <span style={{ color: COLORS.teal }}>{ICONS.calendar}</span>
+              <span style={{ flex: 1, fontSize: 12, color: COLORS.white }}>{s.dueSoonCount} due within a week</span>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// Label sits below the hologram, on the console itself, matching Emily's
+// reference mockup. There's ~14-15% of stage height between the lowest
+// panel icons and the stage's bottom edge (where content gets clipped),
+// comfortably more than a compact two-line tag needs.
+function Landmark({ art, icon, label, sub, onClick, left, top, size, accent = COLORS.aqua }) {
+  const [hover, setHover] = useState(false);
+  return (
+    <button
+      onClick={onClick}
+      onMouseEnter={() => setHover(true)}
+      onMouseLeave={() => setHover(false)}
+      style={{
+        position: "absolute", left: `${left}%`, top: `${top}%`, width: `${size}%`,
+        transform: hover ? "translate(-50%, calc(-50% - 4px))" : "translate(-50%, -50%)",
+        background: "none", border: "none", cursor: "pointer", padding: 0,
+        transition: "transform 160ms ease", zIndex: hover ? 30 : 8,
+      }}
+      aria-label={label}
+    >
+      <div
+        style={{
+          width: "100%", aspectRatio: "1", position: "relative",
+          // A code-side visibility boost for the hologram art (brighter,
+          // plus a soft glow in that landmark's own accent color rather
+          // than one flat cyan for all 5, matching the new icons' own
+          // distinct hues) since the icons still read a little faint
+          // against the console's own lit panel.
+          filter: art ? `drop-shadow(0 0 10px ${accent}88) brightness(1.1) contrast(1.05)` : "none",
+        }}
+      >
+        <ArtSlot src={art} alt={label} size="100%">
+          <div style={{ position: "absolute", inset: 0, borderRadius: 20, background: "linear-gradient(145deg, rgba(255,255,255,.14), rgba(255,255,255,.03))", border: "1px solid rgba(255,255,255,.22)", display: "flex", alignItems: "center", justifyContent: "center", color: accent, boxShadow: `0 0 24px ${accent}40` }}>
+            {icon}
+          </div>
+        </ArtSlot>
+        <div style={{ position: "absolute", top: "100%", left: "50%", transform: "translateX(-50%)", marginTop: 6, textAlign: "center" }}>
+          <div
+            style={{
+              padding: "4px 10px", borderRadius: 8, whiteSpace: "nowrap",
+              background: "rgba(10,16,30,.68)", border: `1.5px solid ${accent}`,
+              boxShadow: `0 0 14px ${accent}55`,
+            }}
+          >
+            <div style={{ fontSize: "clamp(10px, 0.95vw, 12.5px)", fontWeight: 700, color: COLORS.white }}>{label}</div>
+            {sub && <div style={{ fontSize: "clamp(8.5px, 0.8vw, 10.5px)", color: COLORS.textMuted, marginTop: 1 }}>{sub}</div>}
+          </div>
+        </div>
+      </div>
+    </button>
   );
 }
 
@@ -274,37 +502,41 @@ export default function TeacherOverview() {
   const [loading, setLoading] = useState(true);
   const [teacherEmail, setTeacherEmail] = useState("");
   const [teacherId, setTeacherId] = useState(null);
+  const [teacherName, setTeacherName] = useState("");
+  const [teacherSamSkin, setTeacherSamSkin] = useState(DEFAULT_SAM_SKIN);
   const [error, setError] = useState(null);
 
-  // Raw data straight from Supabase, unfiltered by class. Everything the
-  // dashboard displays is derived from this via the `dashboard` memo below,
-  // filtered down to whichever class tab is selected — that's what keeps
-  // the Class Performance donut (and everything else) from blending every
-  // class's numbers together.
   const [classes, setClasses] = useState([]);
   const [rawStudents, setRawStudents] = useState([]);
   const [rawAssignments, setRawAssignments] = useState([]);
   const [rawSubmissions, setRawSubmissions] = useState([]);
-  // Sept 4, 2026 — Teacher-facing S.A.M. expansion, Feature A: one row per
-  // "Get a hint" tap, logged by app/api/student/log-hint-request. Only
-  // student_id/assignment_id are needed here — just enough to count usage
-  // per student, scoped to whichever class tab is selected below.
   const [rawHintRequests, setRawHintRequests] = useState([]);
-  const [targetsByAssignment, setTargetsByAssignment] = useState({});
   const [caseMap, setCaseMap] = useState({});
-  const [selectedClassId, setSelectedClassId] = useState("all");
   const [awardModalOpen, setAwardModalOpen] = useState(false);
   const [awarding, setAwarding] = useState(false);
   const [awardSuccess, setAwardSuccess] = useState(null);
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data, error: authError }) => {
+    supabase.auth.getUser().then(async ({ data, error: authError }) => {
       if (authError || !data?.user) {
         router.push("/login");
         return;
       }
       setTeacherEmail(data.user.email || "");
       setTeacherId(data.user.id);
+
+      // Real display name + equipped S.A.M. skin, both stored on the
+      // teacher's own `teachers` row. Best-effort: if this fails or the
+      // row/columns don't exist yet, the page still works off the email
+      // fallback below rather than blocking on it.
+      const { data: teacherRow } = await supabase
+        .from("teachers")
+        .select("name, equipped_sam_skin")
+        .eq("id", data.user.id)
+        .maybeSingle();
+      if (teacherRow?.name) setTeacherName(teacherRow.name);
+      if (teacherRow?.equipped_sam_skin) setTeacherSamSkin(teacherRow.equipped_sam_skin);
+
       setLoadingAuth(false);
     });
   }, [router]);
@@ -313,9 +545,7 @@ export default function TeacherOverview() {
     setLoading(true);
     setError(null);
 
-    // Only THIS teacher's own classes — otherwise every teacher using the
-    // app would see every other teacher's students and classes mixed in.
-    const { data: classesData } = await supabase.from("classes").select("id, name").eq("teacher_id", teacherId).order("name");
+    const { data: classesData } = await supabase.from("classes").select("id, name, planet_key").eq("teacher_id", teacherId).order("name");
     const classIds = (classesData || []).map((c) => c.id);
     setClasses(classesData || []);
 
@@ -343,30 +573,18 @@ export default function TeacherOverview() {
 
     const assignmentIds = assignments.map((a) => a.id);
     let allSubmissions = [];
-    let targetRows = [];
     if (assignmentIds.length > 0) {
       const { data } = await supabase.from("submissions").select("id, student_id, assignment_id, submitted_at, teacher_grade, released, revision_requested").in("assignment_id", assignmentIds);
       allSubmissions = data || [];
-      const { data: targets } = await supabase.from("assignment_students").select("assignment_id, student_id").in("assignment_id", assignmentIds);
-      targetRows = targets || [];
     }
     setRawSubmissions(allSubmissions);
 
-    // Sept 4, 2026 — Feature A: hint usage, scoped the same way submissions
-    // are (only this teacher's own assignments).
     let hintRequests = [];
     if (assignmentIds.length > 0) {
       const { data } = await supabase.from("hint_requests").select("student_id, assignment_id").in("assignment_id", assignmentIds);
       hintRequests = data || [];
     }
     setRawHintRequests(hintRequests);
-
-    const targetsMap = {};
-    targetRows.forEach((t) => {
-      if (!targetsMap[t.assignment_id]) targetsMap[t.assignment_id] = new Set();
-      targetsMap[t.assignment_id].add(t.student_id);
-    });
-    setTargetsByAssignment(targetsMap);
 
     setLoading(false);
   }, []);
@@ -375,14 +593,10 @@ export default function TeacherOverview() {
     if (!loadingAuth && teacherId) loadDashboard(teacherId);
   }, [loadingAuth, teacherId, loadDashboard]);
 
-  async function handleAwardPoints({ classId, mode, studentId, amount, studentCount }) {
+  async function handleAwardPoints({ classId, mode, studentId, amount }) {
     setAwarding(true);
     const targetIds = mode === "student" ? [studentId] : rawStudents.filter((s) => s.class_id === classId).map((s) => s.id);
-
-    // Same increment_crystal_points() function the grade-release flow uses —
-    // one RPC call per student so a class award can't race with itself.
     await Promise.all(targetIds.map((id) => supabase.rpc("increment_crystal_points", { p_student_id: id, p_amount: amount })));
-
     setAwarding(false);
     setAwardModalOpen(false);
     const className = classMap[classId] || "the class";
@@ -391,18 +605,11 @@ export default function TeacherOverview() {
     setTimeout(() => setAwardSuccess(null), 4000);
   }
 
-  // Sept 4, 2026 — Teacher-facing S.A.M. expansion, Feature B: grants a
-  // S.A.M. skin outside its normal crystal_points threshold, via the
-  // SECURITY DEFINER grant_sam_skin() RPC (same shape as
-  // increment_crystal_points above — one call per target student, so a
-  // class-wide grant can't race with itself).
-  async function handleGrantSkin({ classId, mode, studentId, skinKey, studentCount }) {
+  async function handleGrantSkin({ classId, mode, studentId, skinKey }) {
     setAwarding(true);
     const targetIds = mode === "student" ? [studentId] : rawStudents.filter((s) => s.class_id === classId).map((s) => s.id);
     const skin = SAM_SKINS.find((s) => s.key === skinKey);
-
     await Promise.all(targetIds.map((id) => supabase.rpc("grant_sam_skin", { p_student_id: id, p_skin_key: skinKey })));
-
     setAwarding(false);
     setAwardModalOpen(false);
     const className = classMap[classId] || "the class";
@@ -412,401 +619,204 @@ export default function TeacherOverview() {
     setTimeout(() => setAwardSuccess(null), 4000);
   }
 
-  // Sept 4, 2026 — Feature B: sends a personal encouraging note that shows up
-  // "from S.A.M." the next time that one student opens Home — always a
-  // single student, via the SECURITY DEFINER send_sam_shoutout() RPC.
   async function handleSendShoutout({ studentId, message }) {
     setAwarding(true);
     const student = rawStudents.find((s) => s.id === studentId);
-    await supabase.rpc("send_sam_shoutout", {
-      p_teacher_id: teacherId,
-      p_class_id: student ? student.class_id : null,
-      p_student_id: studentId,
-      p_message: message,
-    });
-
+    await supabase.rpc("send_sam_shoutout", { p_teacher_id: teacherId, p_class_id: student ? student.class_id : null, p_student_id: studentId, p_message: message });
     setAwarding(false);
     setAwardModalOpen(false);
     setAwardSuccess(`Shoutout sent${student ? ` to ${student.first_name}` : ""}! S.A.M. will share it next time they're on Home.`);
     setTimeout(() => setAwardSuccess(null), 4000);
   }
 
-  const classMap = React.useMemo(() => Object.fromEntries(classes.map((c) => [c.id, c.name])), [classes]);
-  const studentMap = React.useMemo(() => Object.fromEntries(rawStudents.map((s) => [s.id, s.first_name])), [rawStudents]);
+  const classMap = useMemo(() => Object.fromEntries(classes.map((c) => [c.id, c.name])), [classes]);
 
-  // Everything the page renders is computed here, scoped to the selected
-  // class tab ("all" combines every class, same as the old behavior).
-  //
-  // Rebuilt Aug 27 (evening pass) around a "Needs Your Attention" hero row
-  // instead of one long stack of every metric at once — this memo now also
-  // produces the three hero lists (pendingWithTitles, needsCheckIn,
-  // dueSoon) alongside the original analytics fields. The Assignment
-  // Completion donut, the full Active Assignments list, and the full
-  // Submission Review Queue list were dropped from Overview entirely —
-  // their information now lives in the hero row (for what's urgent) or one
-  // click away on My Classes / Submissions (for the full list), rather than
-  // duplicated in three places on one screen.
-  const dashboard = React.useMemo(() => {
-    function applicableStudentIdsFor(assignment) {
-      const targetSet = targetsByAssignment[assignment.id];
-      const classStudents = rawStudents.filter((st) => st.class_id === assignment.class_id).map((st) => st.id);
-      if (!targetSet || targetSet.size === 0) return classStudents;
-      return classStudents.filter((id) => targetSet.has(id));
-    }
+  // Per-class stats — every class shown on screen at once as its own
+  // planet, so (unlike the old page) there's no "All Classes / Homeroom A"
+  // tab switcher to maintain here anymore.
+  const perClassStats = useMemo(() => {
+    function statsForClass(classId) {
+      const students = rawStudents.filter((s) => s.class_id === classId);
+      const assignments = rawAssignments.filter((a) => a.class_id === classId);
+      const assignmentIds = new Set(assignments.map((a) => a.id));
+      const submissions = rawSubmissions.filter((s) => assignmentIds.has(s.assignment_id));
 
-    const students = selectedClassId === "all" ? rawStudents : rawStudents.filter((s) => s.class_id === selectedClassId);
-    const assignments = selectedClassId === "all" ? rawAssignments : rawAssignments.filter((a) => a.class_id === selectedClassId);
-    const assignmentIds = new Set(assignments.map((a) => a.id));
-    const submissions = rawSubmissions.filter((s) => assignmentIds.has(s.assignment_id));
+      const pending = submissions.filter((s) => s.submitted_at && !s.revision_requested && (s.teacher_grade === null || s.teacher_grade === undefined));
+      const released = submissions.filter((s) => s.released && s.teacher_grade !== null && s.teacher_grade !== undefined);
+      const classAverage = released.length > 0 ? Math.round((released.reduce((sum, s) => sum + s.teacher_grade, 0) / released.length / 2) * 100) : null;
 
-    const assignmentTitleById = {};
-    assignments.forEach((a) => { assignmentTitleById[a.id] = caseMap[a.case_standard] || a.case_standard; });
+      const byStudent = {};
+      released.forEach((s) => {
+        if (!byStudent[s.student_id]) byStudent[s.student_id] = [];
+        byStudent[s.student_id].push(s.teacher_grade);
+      });
+      const checkInIds = new Set();
+      Object.entries(byStudent).forEach(([sid, grades]) => {
+        const avg = grades.reduce((a, b) => a + b, 0) / grades.length;
+        const band = proficiencyBand(avg);
+        if (band.label === "Needs Support" || band.label === "Developing") checkInIds.add(sid);
+      });
 
-    // A submission that's been sent back for revision has already been
-    // reviewed once — it's now waiting on the student, not on the
-    // teacher, so it's excluded here rather than cluttering this queue.
-    const pending = submissions
-      .filter((s) => s.submitted_at && !s.revision_requested && (s.teacher_grade === null || s.teacher_grade === undefined))
-      .sort((a, b) => new Date(b.submitted_at) - new Date(a.submitted_at))
-      .map((s) => ({ ...s, studentName: studentMap[s.student_id] || "Unknown", title: assignmentTitleById[s.assignment_id] || "an assignment" }));
+      const hintCounts = {};
+      rawHintRequests.forEach((h) => {
+        if (assignmentIds.has(h.assignment_id)) hintCounts[h.student_id] = (hintCounts[h.student_id] || 0) + 1;
+      });
+      const studentIdsInScope = new Set(students.map((s) => s.id));
+      Object.entries(hintCounts).forEach(([sid, count]) => {
+        if (count >= 5 && studentIdsInScope.has(sid)) checkInIds.add(sid);
+      });
 
-    const released = submissions.filter((s) => s.released && s.teacher_grade !== null && s.teacher_grade !== undefined);
-    const classAverage = released.length > 0 ? Math.round((released.reduce((sum, s) => sum + s.teacher_grade, 0) / released.length / 2) * 100) : null;
-
-    const byStudent = {};
-    released.forEach((s) => {
-      if (!byStudent[s.student_id]) byStudent[s.student_id] = [];
-      byStudent[s.student_id].push(s.teacher_grade);
-    });
-    const bandCounts = { Excellent: 0, Proficient: 0, Developing: 0, "Needs Support": 0 };
-    const insights = [];
-    Object.entries(byStudent).forEach(([studentId, grades]) => {
-      const avg = grades.reduce((a, b) => a + b, 0) / grades.length;
-      const band = proficiencyBand(avg);
-      bandCounts[band.label] += 1;
-      insights.push({ studentId, name: studentMap[studentId] || "Unknown", avgPct: Math.round((avg / 2) * 100), band });
-    });
-    insights.sort((a, b) => a.avgPct - b.avgPct);
-
-    // Only students actually below "Proficient" count as needing a
-    // check-in — unlike the old design, a class that's doing great no
-    // longer shows its top 5 students dressed up as a worry list.
-    const needsCheckInBase = insights.filter((i) => i.band.label === "Needs Support" || i.band.label === "Developing");
-
-    // Sept 4, 2026 — Teacher-facing S.A.M. expansion, Feature A: fold hint
-    // usage into this same card rather than a new screen. Two things
-    // happen here: (1) every student already on the check-in list gets
-    // their hint count tacked on, so a teacher can see at a glance whether
-    // a struggling student is also leaning hard on S.A.M.; (2) a student
-    // who ISN'T on the list — grades look fine — but has requested a lot of
-    // hints gets added anyway, since heavy hint use can be worth a look
-    // before it ever shows up in a grade. Built off `insights`/`byStudent`,
-    // not `needsCheckInBase`, so this never mutates the array `studentInsights`
-    // below is built from.
-    const hintCountsByStudent = {};
-    rawHintRequests.forEach((h) => {
-      if (!assignmentIds.has(h.assignment_id)) return;
-      hintCountsByStudent[h.student_id] = (hintCountsByStudent[h.student_id] || 0) + 1;
-    });
-    const HINT_FLAG_THRESHOLD = 5;
-    const checkInIds = new Set(needsCheckInBase.map((i) => i.studentId));
-    const studentIdsInScope = new Set(students.map((s) => s.id));
-    const hintOnlyFlags = [];
-    Object.entries(hintCountsByStudent).forEach(([studentId, count]) => {
-      if (count < HINT_FLAG_THRESHOLD || checkInIds.has(studentId) || !studentIdsInScope.has(studentId)) return;
-      hintOnlyFlags.push({ studentId, name: studentMap[studentId] || "Unknown", avgPct: null, band: { label: "Leaning on Hints", color: COLORS.gold }, hintCount: count });
-    });
-    const needsCheckIn = [
-      ...needsCheckInBase.map((i) => ({ ...i, hintCount: hintCountsByStudent[i.studentId] || 0 })),
-      ...hintOnlyFlags,
-    ];
-
-    // Due-date-driven, not creation-date-driven, and sorted so anything
-    // already overdue floats to the very top — that's the version of
-    // "what's coming up" that actually matters day to day.
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const dueSoonAll = assignments
-      .filter((a) => a.due_date)
-      .map((a) => {
-        const applicable = applicableStudentIdsFor(a);
-        const subsForA = rawSubmissions.filter((s) => s.assignment_id === a.id && applicable.includes(s.student_id));
-        const submittedCount = subsForA.filter((s) => s.submitted_at).length;
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const dueSoonCount = assignments.filter((a) => {
+        if (!a.due_date) return false;
         const due = new Date(`${a.due_date}T00:00:00`);
         const days = Math.round((due - today) / 86400000);
-        return { id: a.id, title: assignmentTitleById[a.id] || a.case_standard, className: classMap[a.class_id], days, submittedCount, rosterSize: applicable.length };
-      })
-      .sort((a, b) => a.days - b.days);
-    const dueSoon = dueSoonAll.filter((d) => d.days <= 7);
+        return days <= 7;
+      }).length;
 
-    const recentAssignments = assignments.slice(0, 5).map((a) => {
-      const subsForA = rawSubmissions.filter((s) => s.assignment_id === a.id);
-      const submittedCount = subsForA.filter((s) => s.submitted_at).length;
-      const releasedForA = subsForA.filter((s) => s.released && s.teacher_grade !== null && s.teacher_grade !== undefined);
-      const avgForA = releasedForA.length > 0 ? Math.round((releasedForA.reduce((sum, s) => sum + s.teacher_grade, 0) / releasedForA.length / 2) * 100) : null;
-      const rosterSize = applicableStudentIdsFor(a).length;
-      return { id: a.id, title: caseMap[a.case_standard] || a.case_standard, standard: a.case_standard, className: classMap[a.class_id], dueDate: a.due_date, submittedCount, rosterSize, avgForA };
-    });
+      // "Active" = currently open, not "ever assigned": due today or later,
+      // or with no due date at all (open-ended). An assignment whose due
+      // date has passed no longer counts, even though it still exists.
+      const activeAssignmentCount = assignments.filter((a) => {
+        if (!a.due_date) return true;
+        const due = new Date(`${a.due_date}T00:00:00`);
+        return due >= today;
+      }).length;
 
-    // Same released-grade rollup as the Reports/Progress "By Standard"
-    // views, just scoped to whichever class tab is selected here ("all"
-    // pools every class together, same as the rest of this dashboard) —
-    // gives a quick "which standards need reteaching" read without a click.
-    const assignmentStandardMap = Object.fromEntries(assignments.map((a) => [a.id, a.case_standard]));
-    const byStandard = {};
-    released.forEach((s) => {
-      const standard = assignmentStandardMap[s.assignment_id];
-      if (!standard) return;
-      if (!byStandard[standard]) byStandard[standard] = [];
-      byStandard[standard].push(s.teacher_grade);
-    });
-    const standardRows = Object.entries(byStandard).map(([standard, grades]) => {
-      const avg = grades.reduce((a, b) => a + b, 0) / grades.length;
-      return { standard, title: caseMap[standard] || standard, avgPct: Math.round((avg / 2) * 100), band: proficiencyBand(avg), gradedCount: grades.length };
-    }).sort((a, b) => a.avgPct - b.avgPct);
+      return {
+        studentCount: students.length,
+        assignmentCount: activeAssignmentCount,
+        pendingCount: pending.length,
+        needsCheckInCount: checkInIds.size,
+        dueSoonCount,
+        classAverage,
+      };
+    }
+    return classes.map((c) => ({ ...c, stats: statsForClass(c.id) }));
+  }, [classes, rawStudents, rawAssignments, rawSubmissions, rawHintRequests]);
 
-    return {
-      studentCount: students.length,
-      totalCrystalPoints: students.reduce((sum, s) => sum + (s.crystal_points || 0), 0),
-      assignmentCount: assignments.length,
-      pendingSubmissions: pending,
-      needsCheckIn,
-      dueSoon,
-      classAverage,
-      bandCounts,
-      studentInsights: insights.slice(0, 5),
-      recentAssignments,
-      standardRows,
-    };
-  }, [selectedClassId, rawStudents, rawAssignments, rawSubmissions, rawHintRequests, targetsByAssignment, caseMap, classMap, studentMap]);
+  const totalUrgent = perClassStats.reduce((sum, c) => sum + c.stats.pendingCount + c.stats.needsCheckInCount + c.stats.dueSoonCount, 0);
 
-  const {
-    studentCount,
-    totalCrystalPoints,
-    assignmentCount,
-    pendingSubmissions,
-    needsCheckIn,
-    dueSoon,
-    classAverage,
-    bandCounts,
-  } = dashboard;
-  const standardRows = dashboard.standardRows;
+  async function handleLogout() {
+    await supabase.auth.signOut();
+    router.push("/login");
+  }
 
   if (loadingAuth || loading) {
     return (
-      <div style={{ minHeight: "100vh", background: COLORS.canvas, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Inter', sans-serif", color: COLORS.textMuted }}>
+      <div style={{ minHeight: "100vh", background: COLORS.navy, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Inter', sans-serif", color: COLORS.textMuted }}>
         Loading...
       </div>
     );
   }
 
-  const pendingCount = pendingSubmissions.length;
-  const teacherFirstName = teacherEmail.split("@")[0];
-  const bandTotal = Object.values(bandCounts).reduce((a, b) => a + b, 0);
+  // Prefer the real name from `teachers.name`; fall back to a capitalized
+  // guess from the email handle if that row/column isn't there yet, rather
+  // than showing the raw lowercase email like the rest of the app still does.
+  const displayName = teacherName || capitalizeNameGuess(teacherEmail.split("@")[0] || "");
+  const teacherFirstName = displayName.split(" ")[0] || "";
+  const planetSlots = planetLayout(perClassStats.length);
 
   return (
-    <div style={{ display: "flex", minHeight: "100vh", background: COLORS.canvas, fontFamily: "'Inter', sans-serif", color: COLORS.textDark }}>
-      <style>{`@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@600;700&family=Inter:wght@400;500;600;700&display=swap');
-        .gc-btn { transition: transform 150ms ease, box-shadow 150ms ease; cursor: pointer; border: none; font-family: 'Inter', sans-serif; }
-        .gc-btn:hover { transform: translateY(-1px); }
-        .gc-fade-in { animation: gcFadeIn 220ms ease-out; }
-        @keyframes gcFadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+    <div
+      style={{
+        minHeight: "100vh",
+        backgroundColor: COLORS.navy,
+        backgroundImage: `radial-gradient(ellipse at 50% -10%, #1B2A52 0%, ${COLORS.deepNavy} 45%, ${COLORS.navy} 100%)`,
+        fontFamily: "'Inter', sans-serif",
+        display: "flex",
+        flexDirection: "column",
+        position: "relative",
+        overflow: "hidden",
+      }}
+    >
+      <style>{`
+        @keyframes twinkle { 0%,100% { opacity:.25 } 50% { opacity:.9 } }
+        .orbit-star { position:absolute; width:2px; height:2px; border-radius:50%; background:#fff; animation:twinkle 3.5s ease-in-out infinite; }
       `}</style>
 
-      <TeacherSidebar teacherEmail={teacherEmail} />
+      {/* decorative starfield, purely CSS so it works with zero art */}
+      {Array.from({ length: 40 }).map((_, i) => (
+        <div key={i} className="orbit-star" style={{ top: `${(i * 37) % 90}%`, left: `${(i * 53) % 100}%`, animationDelay: `${(i % 7) * 0.4}s` }} />
+      ))}
 
-      <main style={{ flex: 1, padding: "32px 36px", maxWidth: 1360, margin: "0 auto" }}>
-        {error && <div style={{ background: "#FBEAEA", color: "#B23A3A", borderRadius: 10, padding: "10px 14px", fontSize: 13, marginBottom: 16 }}>{error}</div>}
+      {/* HUD */}
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "20px 32px", position: "relative", zIndex: 5 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <svg viewBox="0 0 24 24" width="24" height="24" fill="none"><path d="M12 2 4 7v10l8 5 8-5V7l-8-5Z" fill={COLORS.violet} /><path d="M12 2 4 7l8 5 8-5-8-5Z" fill={COLORS.aqua} /></svg>
+          <span style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 700, fontSize: 15, color: COLORS.white }}>ClearCenters</span>
+        </div>
 
-        <TeacherPageBanner>
-          <div style={{ maxWidth: "62%" }}>
-            <h1 style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 700, fontSize: 34, color: COLORS.textDark, margin: "0 0 6px 0" }}>
-              Welcome back{teacherFirstName ? `, ${teacherFirstName}` : ""}!
-            </h1>
-            <p style={{ fontSize: 15, color: COLORS.textMuted, margin: 0 }}>Here's what needs your attention today.</p>
+        <div style={{ textAlign: "center" }}>
+          <div style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 700, fontSize: 20, color: COLORS.white }}>
+            Welcome Back{teacherFirstName ? `, ${teacherFirstName}` : ""}
           </div>
-        </TeacherPageBanner>
+          <div style={{ fontSize: 12.5, color: COLORS.textMuted, marginTop: 2 }}>
+            {totalUrgent > 0
+              ? `${totalUrgent} thing${totalUrgent === 1 ? "" : "s"} need${totalUrgent === 1 ? "s" : ""} your attention across ${classes.length} class${classes.length === 1 ? "" : "es"}.`
+              : "Everything's on track — nothing urgent right now."}
+          </div>
+        </div>
 
-        {classes.length > 1 && (
-          <div style={{ display: "flex", gap: 8, marginBottom: 24, flexWrap: "wrap" }}>
-            <button
-              className="gc-btn"
-              onClick={() => setSelectedClassId("all")}
-              style={{ background: selectedClassId === "all" ? `linear-gradient(135deg, ${COLORS.violet}, ${COLORS.teal})` : COLORS.white, color: selectedClassId === "all" ? COLORS.white : COLORS.textDark, border: selectedClassId === "all" ? "none" : `1px solid ${COLORS.border}`, borderRadius: 999, padding: "9px 18px", fontWeight: 700, fontSize: 13 }}
-            >
-              All Classes
-            </button>
-            {classes.map((c) => (
-              <button
+        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          <div style={{ width: 32, height: 32, borderRadius: "50%", background: "rgba(255,255,255,.12)", color: COLORS.white, fontWeight: 700, fontSize: 13, display: "flex", alignItems: "center", justifyContent: "center" }}>
+            {(teacherFirstName || "T")[0].toUpperCase()}
+          </div>
+          <button onClick={() => router.push("/teacher/settings")} style={{ background: "none", border: "none", color: COLORS.textMuted, cursor: "pointer" }} aria-label="Settings">{ICONS.gear}</button>
+          <button onClick={handleLogout} style={{ background: "none", border: "none", color: COLORS.textMuted, fontSize: 12, fontWeight: 700, cursor: "pointer" }}>Log Out</button>
+        </div>
+      </div>
+
+      {error && <div style={{ margin: "0 32px 12px", background: "#FBEAEA", color: "#B23A3A", borderRadius: 10, padding: "10px 14px", fontSize: 13 }}>{error}</div>}
+
+      {/* Scene — a fixed-aspect "stage" locked to the background art's own
+          proportions, so the planet/console coordinates above always land
+          exactly right instead of drifting with a cropped cover-fit. */}
+      <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", padding: "8px 28px 32px", minHeight: 0 }}>
+        <div
+          style={{
+            position: "relative", width: "100%", maxWidth: 1500, aspectRatio: BG_ASPECT,
+            backgroundImage: `url(${ART.background})`, backgroundSize: "100% 100%", backgroundPosition: "center",
+            backgroundColor: COLORS.deepNavy, borderRadius: 22, overflow: "hidden",
+            boxShadow: "0 24px 70px rgba(0,0,0,.55), inset 0 0 0 1px rgba(255,255,255,.06)",
+          }}
+        >
+          {classes.length === 0 ? (
+            <div style={{ position: "absolute", top: "34%", left: "50%", transform: "translateX(-50%)", textAlign: "center", color: COLORS.textMuted, fontSize: 14, whiteSpace: "nowrap" }}>
+              No classes yet —{" "}
+              <button onClick={() => router.push("/teacher/assign")} style={{ background: "none", border: "none", color: COLORS.aqua, fontWeight: 700, cursor: "pointer", fontSize: 14 }}>create one to get started</button>.
+            </div>
+          ) : (
+            perClassStats.map((c, i) => (
+              <PlanetNode
                 key={c.id}
-                className="gc-btn"
-                onClick={() => setSelectedClassId(c.id)}
-                style={{ background: selectedClassId === c.id ? `linear-gradient(135deg, ${COLORS.violet}, ${COLORS.teal})` : COLORS.white, color: selectedClassId === c.id ? COLORS.white : COLORS.textDark, border: selectedClassId === c.id ? "none" : `1px solid ${COLORS.border}`, borderRadius: 999, padding: "9px 18px", fontWeight: 700, fontSize: 13 }}
-              >
-                {c.name}
-              </button>
-            ))}
-          </div>
-        )}
+                cls={c}
+                index={i}
+                left={planetSlots[i].left}
+                top={planetSlots[i].top}
+                size={planetSlots[i].size}
+                onOpen={() => router.push(`/teacher/assign?classId=${c.id}`)}
+                onReview={() => router.push("/teacher/grade")}
+                onProgress={() => router.push("/teacher/progress")}
+              />
+            ))
+          )}
 
-        <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: 0.6, textTransform: "uppercase", color: "#A9ADC4", margin: "0 0 12px" }}>Needs Your Attention</div>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 16, marginBottom: 22 }}>
-          <Card style={{ borderTop: `3px solid ${COLORS.gold}` }}>
-            <div style={{ fontSize: 22, marginBottom: 8 }}>📝</div>
-            <div style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 700, fontSize: 30, color: COLORS.textDark, lineHeight: 1 }}>{pendingCount}</div>
-            <div style={{ fontSize: 13, fontWeight: 700, color: COLORS.textDark, margin: "4px 0 12px" }}>Submission{pendingCount === 1 ? "" : "s"} to Review</div>
-            <div style={{ display: "grid", gap: 6, marginBottom: 14, minHeight: 34 }}>
-              {pendingCount > 0 ? pendingSubmissions.slice(0, 2).map((s) => (
-                <div key={s.id} style={{ fontSize: 12.5, color: COLORS.textMuted, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                  <b style={{ color: COLORS.textDark, fontWeight: 600 }}>{s.studentName}</b> — {s.title}
-                </div>
-              )) : <div style={{ fontSize: 12.5, color: COLORS.textMuted }}>Nothing waiting — you're all caught up!</div>}
-            </div>
-            <button onClick={() => router.push("/teacher/grade")} className="gc-btn" style={{ background: `linear-gradient(135deg, ${COLORS.violet}, ${COLORS.teal})`, color: COLORS.white, borderRadius: 999, padding: "9px 16px", fontWeight: 700, fontSize: 12.5 }}>
-              Review Now →
-            </button>
-          </Card>
-
-          <Card style={{ borderTop: `3px solid ${COLORS.violet}` }}>
-            <div style={{ fontSize: 22, marginBottom: 8 }}>🎯</div>
-            <div style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 700, fontSize: 30, color: COLORS.textDark, lineHeight: 1 }}>{needsCheckIn.length}</div>
-            <div style={{ fontSize: 13, fontWeight: 700, color: COLORS.textDark, margin: "4px 0 12px" }}>Student{needsCheckIn.length === 1 ? "" : "s"} to Check In With</div>
-            <div style={{ display: "grid", gap: 6, marginBottom: 14, minHeight: 34 }}>
-              {needsCheckIn.length > 0 ? needsCheckIn.slice(0, 2).map((s) => (
-                <div key={s.studentId} style={{ fontSize: 12.5, color: COLORS.textMuted, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                  <b style={{ color: COLORS.textDark, fontWeight: 600 }}>{s.name}</b> — {s.avgPct !== null ? `${s.avgPct}% avg, ${s.band.label}` : s.band.label}
-                  {s.hintCount > 0 ? ` · 💡${s.hintCount}` : ""}
-                </div>
-              )) : <div style={{ fontSize: 12.5, color: COLORS.textMuted }}>Everyone's on track right now!</div>}
-            </div>
-            <button onClick={() => router.push("/teacher/progress")} className="gc-btn" style={{ background: `linear-gradient(135deg, ${COLORS.violet}, ${COLORS.teal})`, color: COLORS.white, borderRadius: 999, padding: "9px 16px", fontWeight: 700, fontSize: 12.5 }}>
-              View Progress →
-            </button>
-          </Card>
-
-          <Card style={{ borderTop: `3px solid ${COLORS.teal}` }}>
-            <div style={{ fontSize: 22, marginBottom: 8 }}>📅</div>
-            <div style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 700, fontSize: 30, color: COLORS.textDark, lineHeight: 1 }}>{dueSoon.length}</div>
-            <div style={{ fontSize: 13, fontWeight: 700, color: COLORS.textDark, margin: "4px 0 12px" }}>Due Soon</div>
-            <div style={{ display: "grid", gap: 6, marginBottom: 14, minHeight: 34 }}>
-              {dueSoon.length > 0 ? dueSoon.slice(0, 2).map((a) => (
-                <div key={a.id} style={{ fontSize: 12.5, color: COLORS.textMuted, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                  <b style={{ color: COLORS.textDark, fontWeight: 600 }}>{a.title}</b> — {dueLabel(a.days)} · {a.submittedCount}/{a.rosterSize} submitted
-                </div>
-              )) : <div style={{ fontSize: 12.5, color: COLORS.textMuted }}>Nothing due in the next week.</div>}
-            </div>
-            <button onClick={() => router.push("/teacher/assign")} className="gc-btn" style={{ background: `linear-gradient(135deg, ${COLORS.violet}, ${COLORS.teal})`, color: COLORS.white, borderRadius: 999, padding: "9px 16px", fontWeight: 700, fontSize: 12.5 }}>
-              View Assignments →
-            </button>
-          </Card>
+          {/* Landmarks — hologram panels floating on the console, standing in
+              for the old sidebar's nav groups. Positions match the 5 lit
+              panel slots baked into the background art. */}
+          <Landmark art={ART.missionControl} icon={ICONS.launch} label="Mission Control" sub="Assign & Launch" accent={COLORS.warning} onClick={() => router.push("/teacher/assign")} {...CONSOLE_SLOTS[0]} />
+          <Landmark art={ART.observatory} icon={ICONS.telescope} label="Observatory" sub="Progress & Reports" accent={COLORS.aqua} onClick={() => router.push("/teacher/reports")} {...CONSOLE_SLOTS[1]} />
+          <Landmark art={samArtFor(teacherSamSkin)} icon={ICONS.gem} label="S.A.M." sub="Results & Shortcuts" accent={COLORS.teal} onClick={() => setAwardModalOpen(true)} {...CONSOLE_SLOTS[2]} />
+          <Landmark art={ART.beacon} icon={ICONS.mail} label="Messages" sub="Inbox & Updates" accent={COLORS.magenta} onClick={() => router.push("/teacher/messages")} {...CONSOLE_SLOTS[3]} />
+          <Landmark art={ART.resources} icon={ICONS.folder} label="Resources" sub="Tools & Badges" accent={COLORS.success} onClick={() => router.push("/teacher/resources")} {...CONSOLE_SLOTS[4]} />
         </div>
-
-        <Card style={{ display: "flex", padding: "18px 8px", marginBottom: 22, gap: 8 }}>
-          {[
-            { icon: "/teacher/metric_students.png", value: studentCount, label: "Students" },
-            { icon: "/teacher/metric_class_average.png", value: classAverage !== null ? `${classAverage}%` : "—", label: "Class Average", sub: classAverage === null ? "No released grades yet" : null },
-            { icon: "/teacher/metric_active_assignments.png", value: assignmentCount, label: "Active Assignments" },
-            { icon: "/teacher/metric_crystal_points.png", value: totalCrystalPoints, label: "Crystal Points" },
-          ].map((m, i) => (
-            <div key={i} style={{ flex: 1, display: "flex", alignItems: "center", gap: 12, padding: "8px 14px", borderRight: i < 3 ? `1px solid ${COLORS.border}` : "none" }}>
-              <img src={m.icon} alt="" style={{ width: 44, height: 44, objectFit: "contain" }} />
-              <div>
-                <div style={{ fontSize: 26, fontWeight: 700, fontFamily: "'Poppins', sans-serif", color: COLORS.textDark, lineHeight: 1.1 }}>{m.value}</div>
-                <div style={{ fontSize: 12.5, color: COLORS.textMuted, fontWeight: 600 }}>{m.label}</div>
-                {m.sub && <div style={{ fontSize: 10, color: COLORS.textMuted, fontStyle: "italic" }}>{m.sub}</div>}
-              </div>
-            </div>
-          ))}
-        </Card>
-
-        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 30 }}>
-          <button onClick={() => router.push("/teacher/assign")} className="gc-btn" style={{ display: "flex", alignItems: "center", gap: 8, background: COLORS.white, border: `1px solid ${COLORS.border}`, borderRadius: 999, padding: "10px 18px", fontSize: 13, fontWeight: 700, color: COLORS.textDark }}>
-            <img src="/teacher/action_create_assignment.png" alt="" style={{ width: 18, height: 18 }} /> Create New Assignment
-          </button>
-          <button onClick={() => setAwardModalOpen(true)} disabled={classes.length === 0} className="gc-btn" style={{ display: "flex", alignItems: "center", gap: 8, background: COLORS.white, border: `1px solid ${COLORS.border}`, borderRadius: 999, padding: "10px 18px", fontSize: 13, fontWeight: 700, color: COLORS.textDark, opacity: classes.length === 0 ? 0.5 : 1 }}>
-            <img src="/teacher/action_award_crystal_points.png" alt="" style={{ width: 18, height: 18 }} /> Rewards & S.A.M.
-          </button>
-          <button onClick={() => router.push("/teacher/reports")} disabled={classes.length === 0} className="gc-btn" style={{ display: "flex", alignItems: "center", gap: 8, background: COLORS.white, border: `1px solid ${COLORS.border}`, borderRadius: 999, padding: "10px 18px", fontSize: 13, fontWeight: 700, color: COLORS.textDark, opacity: classes.length === 0 ? 0.5 : 1 }}>
-            <img src="/teacher/action_generate_report.png" alt="" style={{ width: 18, height: 18 }} /> Generate Class Report
-          </button>
-          <div style={{ display: "flex", alignItems: "center", gap: 8, background: COLORS.canvas, borderRadius: 999, padding: "10px 18px", fontSize: 13, fontWeight: 700, color: COLORS.textMuted, opacity: 0.7 }}>
-            <img src="/teacher/action_send_announcement.png" alt="" style={{ width: 18, height: 18, filter: "grayscale(1)" }} /> Send Class Announcement
-            <span style={{ fontSize: 10, fontWeight: 700, background: COLORS.border, padding: "2px 8px", borderRadius: 999 }}>Soon</span>
-          </div>
-        </div>
-
-        <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: 0.6, textTransform: "uppercase", color: "#A9ADC4", margin: "0 0 12px" }}>Deeper Insights</div>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
-          <Card>
-            <div style={{ fontWeight: 700, fontSize: 16, marginBottom: 14 }}>Class Performance</div>
-            {bandTotal > 0 ? (
-              <div style={{ display: "flex", gap: 16, alignItems: "center" }}>
-                <Donut
-                  segments={[
-                    { value: bandCounts.Excellent, color: COLORS.success },
-                    { value: bandCounts.Proficient, color: COLORS.info },
-                    { value: bandCounts.Developing, color: COLORS.violet },
-                    { value: bandCounts["Needs Support"], color: "#E4574C" },
-                  ]}
-                  centerLabel={`${classAverage}%`}
-                  centerSub="Average"
-                />
-                <div style={{ flex: 1, display: "grid", gap: 6 }}>
-                  {[
-                    ["Excellent (90–100%)", bandCounts.Excellent, COLORS.success],
-                    ["Proficient (70–89%)", bandCounts.Proficient, COLORS.info],
-                    ["Developing (50–69%)", bandCounts.Developing, COLORS.violet],
-                    ["Needs Support (<50%)", bandCounts["Needs Support"], "#E4574C"],
-                  ].map(([label, count, color]) => (
-                    <div key={label} style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 12 }}>
-                      <div style={{ width: 9, height: 9, borderRadius: "50%", background: color, flexShrink: 0 }} />
-                      <div style={{ flex: 1, color: COLORS.textDark }}>{label}</div>
-                      <div style={{ fontWeight: 700 }}>{count}</div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ) : (
-              <div style={{ fontSize: 13, color: COLORS.textMuted, padding: "20px 0", textAlign: "center" }}>No released grades yet — this fills in once you release some.</div>
-            )}
-          </Card>
-
-          <Card>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
-              <div>
-                <div style={{ fontWeight: 700, fontSize: 16 }}>Standards at a Glance</div>
-                <div style={{ fontSize: 11.5, color: COLORS.textMuted, marginTop: 2 }}>Released grades, rolled up by standard.</div>
-              </div>
-              <button onClick={() => router.push("/teacher/reports/standards")} className="gc-btn" style={{ background: "none", color: COLORS.violet, fontSize: 12, fontWeight: 700, whiteSpace: "nowrap" }}>Full Report →</button>
-            </div>
-            {standardRows.length > 0 ? (
-              <div style={{ display: "grid", gap: 4 }}>
-                {standardRows.slice(0, 4).map((row) => (
-                  <div key={row.standard} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 4px", borderBottom: `1px solid ${COLORS.border}` }}>
-                    <div style={{ width: 130, flexShrink: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                      <div style={{ fontSize: 12.5, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{row.title}</div>
-                      <div style={{ fontSize: 10.5, color: COLORS.textMuted }}>{row.standard}</div>
-                    </div>
-                    <div style={{ flex: 1, height: 8, background: COLORS.border, borderRadius: 999, overflow: "hidden" }}>
-                      <div style={{ height: "100%", width: `${row.avgPct}%`, background: row.band.color, borderRadius: 999 }} />
-                    </div>
-                    <div style={{ width: 40, textAlign: "right", fontWeight: 700, fontSize: 13 }}>{row.avgPct}%</div>
-                  </div>
-                ))}
-                {standardRows.length > 4 && (
-                  <div style={{ fontSize: 11.5, color: COLORS.textMuted, padding: "8px 4px 0", textAlign: "center" }}>+{standardRows.length - 4} more — see the full report</div>
-                )}
-              </div>
-            ) : (
-              <div style={{ fontSize: 13, color: COLORS.textMuted, padding: "20px 0", textAlign: "center" }}>No released grades yet — this fills in once you release some.</div>
-            )}
-          </Card>
-        </div>
-      </main>
+      </div>
 
       {awardSuccess && (
-        <div className="gc-fade-in" style={{ position: "fixed", bottom: 28, right: 28, background: COLORS.textDark, color: COLORS.white, borderRadius: 12, padding: "14px 20px", fontWeight: 700, fontSize: 13.5, boxShadow: "0 8px 24px rgba(0,0,0,.25)", zIndex: 200 }}>
-          🔮 {awardSuccess}
+        <div style={{ position: "fixed", bottom: 28, right: 28, background: COLORS.white, color: "#1F2A44", borderRadius: 12, padding: "14px 20px", fontWeight: 700, fontSize: 13.5, boxShadow: "0 8px 24px rgba(0,0,0,.35)", zIndex: 200 }}>
+          {awardSuccess}
         </div>
       )}
 
@@ -814,7 +824,6 @@ export default function TeacherOverview() {
         open={awardModalOpen}
         classes={classes}
         rawStudents={rawStudents}
-        defaultClassId={selectedClassId !== "all" ? selectedClassId : undefined}
         awarding={awarding}
         onCancel={() => setAwardModalOpen(false)}
         onAwardPoints={handleAwardPoints}

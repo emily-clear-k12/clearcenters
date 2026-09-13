@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import { supabase } from "../../../lib/supabaseClient";
 import TeacherSidebar from "../../../components/TeacherSidebar";
 import TeacherPageBanner from "../../../components/TeacherPageBanner";
+import { SAM_SKINS, FALLBACK_ICON, DEFAULT_SAM_SKIN } from "../../../lib/samSkins";
+import { CLASS_PLANETS, planetForClass } from "../../../lib/classPlanets";
 
 const COLORS = {
   canvas: "#F2F0FA",
@@ -32,6 +34,10 @@ export default function ClassSettingsPage() {
   const [loadingClasses, setLoadingClasses] = useState(true);
   const [drafts, setDrafts] = useState({}); // classId -> in-progress name
   const [rowStatus, setRowStatus] = useState({}); // classId -> "saving" | "saved" | "error"
+  const [planetStatus, setPlanetStatus] = useState({}); // classId -> "saving" | "saved" | "error"
+
+  const [samSkin, setSamSkin] = useState(DEFAULT_SAM_SKIN);
+  const [samSkinStatus, setSamSkinStatus] = useState(null); // "saving" | "saved" | "error"
 
   const loadClasses = useCallback(async (id) => {
     setLoadingClasses(true);
@@ -45,14 +51,68 @@ export default function ClassSettingsPage() {
   }, []);
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data, error }) => {
+    supabase.auth.getUser().then(async ({ data, error }) => {
       if (error || !data?.user) { router.push("/login"); return; }
       setTeacherEmail(data.user.email || "");
       setTeacherId(data.user.id);
-      setLoadingAuth(false);
       loadClasses(data.user.id);
+
+      // Best-effort — the Overview dashboard's S.A.M. landmark reads this
+      // same column (app/teacher/page.js). If it's missing, the picker
+      // below just sits on Cosmic rather than blocking the page.
+      const { data: teacherRow } = await supabase
+        .from("teachers")
+        .select("equipped_sam_skin")
+        .eq("id", data.user.id)
+        .maybeSingle();
+      if (teacherRow?.equipped_sam_skin) setSamSkin(teacherRow.equipped_sam_skin);
+
+      setLoadingAuth(false);
     });
   }, [router, loadClasses]);
+
+  async function saveSamSkin(skinKey) {
+    if (skinKey === samSkin) return;
+    const previous = samSkin;
+    setSamSkin(skinKey); // optimistic — feels instant, matches the class-rename pattern below on failure
+    setSamSkinStatus("saving");
+
+    const { data, error } = await supabase
+      .from("teachers")
+      .update({ equipped_sam_skin: skinKey })
+      .eq("id", teacherId)
+      .select();
+
+    if (error || !data || data.length === 0) {
+      if (error) console.error("S.A.M. skin save failed:", error);
+      else console.error("S.A.M. skin save matched 0 rows — likely blocked by Row Level Security on 'teachers'.");
+      setSamSkin(previous);
+      setSamSkinStatus("error");
+      return;
+    }
+    setSamSkinStatus("saved");
+    setTimeout(() => setSamSkinStatus(null), 2000);
+  }
+
+  async function savePlanet(cls, planetKey) {
+    setPlanetStatus((s) => ({ ...s, [cls.id]: "saving" }));
+    const { data, error } = await supabase
+      .from("classes")
+      .update({ planet_key: planetKey })
+      .eq("id", cls.id)
+      .eq("teacher_id", teacherId)
+      .select();
+
+    if (error || !data || data.length === 0) {
+      if (error) console.error("Planet save failed:", error);
+      else console.error("Planet save matched 0 rows — likely blocked by Row Level Security on 'classes'.");
+      setPlanetStatus((s) => ({ ...s, [cls.id]: "error" }));
+      return;
+    }
+    setClasses((list) => list.map((c) => (c.id === cls.id ? { ...c, planet_key: planetKey } : c)));
+    setPlanetStatus((s) => ({ ...s, [cls.id]: "saved" }));
+    setTimeout(() => setPlanetStatus((s) => ({ ...s, [cls.id]: undefined })), 2000);
+  }
 
   function nameFor(cls) {
     return drafts[cls.id] !== undefined ? drafts[cls.id] : cls.name;
@@ -99,10 +159,44 @@ export default function ClassSettingsPage() {
           <div style={{ maxWidth: "62%" }}>
             <h1 style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 700, fontSize: 26, margin: "0 0 6px 0" }}>Class Settings</h1>
             <p style={{ color: COLORS.textMuted, fontSize: 14.5, lineHeight: 1.6, margin: 0 }}>
-              Rename any of your classes below. Roster management and other class-level preferences are coming soon.
+              Rename any of your classes below, or change its planet on the Overview dashboard. Roster management and other class-level preferences are coming soon.
             </p>
           </div>
         </TeacherPageBanner>
+
+        {/* Your S.A.M. — which skin shows on the Overview dashboard's
+            console (app/teacher/page.js). Unlike the student-facing skin
+            system, nothing here is locked behind crystal points — any of
+            the 4 is free to pick. */}
+        <div style={{ background: COLORS.white, border: `1px solid ${COLORS.border}`, borderRadius: 16, padding: "18px 20px", boxShadow: "0 2px 8px rgba(13,27,42,.04)", marginBottom: 20 }}>
+          <div style={{ fontSize: 11.5, fontWeight: 700, color: COLORS.textMuted, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 4 }}>Your S.A.M.</div>
+          <p style={{ color: COLORS.textMuted, fontSize: 13, margin: "0 0 12px 0", lineHeight: 1.5 }}>
+            Which S.A.M. shows on your Overview dashboard. (Cosmic has a custom pose made for that screen — the others show their regular icon art for now.)
+          </p>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 8, maxWidth: 420 }}>
+            {SAM_SKINS.map((skin) => (
+              <button
+                key={skin.key}
+                type="button"
+                onClick={() => saveSamSkin(skin.key)}
+                style={{
+                  padding: "10px 4px", borderRadius: 10, cursor: "pointer", textAlign: "center",
+                  border: samSkin === skin.key ? `2px solid ${COLORS.violet}` : `1.5px solid ${COLORS.border}`,
+                  background: samSkin === skin.key ? COLORS.violetSoft : COLORS.white,
+                }}
+              >
+                <img src={skin.image} alt="" style={{ width: 36, height: 36, objectFit: "contain", marginBottom: 4 }} onError={(e) => { e.currentTarget.src = FALLBACK_ICON; }} />
+                <div style={{ fontSize: 10.5, fontWeight: 700, color: COLORS.textDark }}>{skin.name}</div>
+              </button>
+            ))}
+          </div>
+          {samSkinStatus === "saved" && (
+            <div style={{ marginTop: 10, fontSize: 12.5, color: COLORS.confirm, background: COLORS.confirmBg, display: "inline-block", padding: "4px 10px", borderRadius: 999 }}>Saved</div>
+          )}
+          {samSkinStatus === "error" && (
+            <div style={{ marginTop: 10, fontSize: 12.5, color: COLORS.errorText, background: COLORS.errorBg, display: "inline-block", padding: "4px 10px", borderRadius: 999 }}>Couldn't save — try again.</div>
+          )}
+        </div>
 
         {loadingClasses ? (
           <div style={{ color: COLORS.textMuted, fontSize: 14 }}>Loading your classes...</div>
@@ -112,9 +206,11 @@ export default function ClassSettingsPage() {
           </div>
         ) : (
           <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-            {classes.map((cls) => {
+            {classes.map((cls, index) => {
               const status = rowStatus[cls.id];
               const changed = drafts[cls.id] !== undefined && drafts[cls.id].trim() !== "" && drafts[cls.id].trim() !== cls.name;
+              const activePlanet = planetForClass(cls, index);
+              const pStatus = planetStatus[cls.id];
               return (
                 <div key={cls.id} style={{ background: COLORS.white, border: `1px solid ${COLORS.border}`, borderRadius: 16, padding: "18px 20px", boxShadow: "0 2px 8px rgba(13,27,42,.04)" }}>
                   <div style={{ fontSize: 11.5, fontWeight: 700, color: COLORS.textMuted, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 10 }}>
@@ -155,6 +251,33 @@ export default function ClassSettingsPage() {
                       Couldn't save — try again.
                     </div>
                   )}
+
+                  <div style={{ marginTop: 14, paddingTop: 14, borderTop: `1px solid ${COLORS.border}` }}>
+                    <div style={{ fontSize: 11.5, fontWeight: 700, color: COLORS.textMuted, marginBottom: 8 }}>Planet on Overview</div>
+                    <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
+                      {CLASS_PLANETS.map((planet) => (
+                        <button
+                          key={planet.key}
+                          type="button"
+                          onClick={() => savePlanet(cls, planet.key)}
+                          title={planet.name}
+                          aria-label={planet.name}
+                          style={{
+                            width: 34, height: 34, borderRadius: "50%", cursor: "pointer", padding: 0,
+                            border: activePlanet.key === planet.key ? `2px solid ${COLORS.violet}` : "2px solid transparent",
+                            background: `radial-gradient(circle at 35% 30%, ${planet.hue.glow}, ${planet.hue.core} 70%)`,
+                            boxShadow: activePlanet.key === planet.key ? `0 0 0 2px ${COLORS.white}, 0 0 0 4px ${COLORS.violet}` : "none",
+                          }}
+                        />
+                      ))}
+                      {pStatus === "saved" && (
+                        <span style={{ fontSize: 12.5, color: COLORS.confirm, background: COLORS.confirmBg, padding: "4px 10px", borderRadius: 999 }}>Saved</span>
+                      )}
+                      {pStatus === "error" && (
+                        <span style={{ fontSize: 12.5, color: COLORS.errorText, background: COLORS.errorBg, padding: "4px 10px", borderRadius: 999 }}>Couldn't save — try again.</span>
+                      )}
+                    </div>
+                  </div>
                 </div>
               );
             })}
