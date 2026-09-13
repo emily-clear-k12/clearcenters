@@ -3,22 +3,27 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "../../../lib/supabaseClient";
-import TeacherSidebar from "../../../components/TeacherSidebar";
-import TeacherPageBanner from "../../../components/TeacherPageBanner";
+import TeacherHUD from "../../../components/TeacherHUD";
+import { COLORS, PAGE_ACCENTS, PAGE_BACKGROUNDS, panelStyle } from "../../../lib/teacherTheme";
 
-const COLORS = {
-  canvas: "#F2F0FA",
-  white: "#FFFFFF",
-  violet: "#8C52F2",
-  violetSoft: "#EEE6FD",
-  teal: "#6FD8F5",
-  gold: "#FFC44D",
-  border: "#E1E2EE",
-  textDark: "#1F2A44",
-  textMuted: "#697386",
-  success: "#22C55E",
-  warning: "#FF9F43",
-};
+// Sept 13 — moved to the console-interior look. TeacherSidebar +
+// TeacherPageBanner swapped for TeacherHUD; the flat opaque-white tier list
+// card became the shared panelStyle glass card; this page's own green
+// ACCENT (Resources' family — badges live under that same Overview
+// landmark) replaced decorative violet on the tier list's default "Save"
+// state. No dedicated background art exists yet, so it falls back to the
+// plain canvas wash like Resources/Messages before their art arrived.
+//
+// Left deliberately violet, same principle as every other page in this
+// redesign (a page's own accent never doubles as a different meaningful
+// signal): everything in the Award Crystal Points flow (the header button,
+// the modal's title/mode toggle/Award button). Crystal Points are the
+// app's currency — violet is their brand color everywhere else they show
+// up (the counter on a student's Home screen, etc.) — so this page's own
+// green branding shouldn't bleed into that, the same way Distress Call
+// stays violet on Challenge Library regardless of that page's pink accent.
+const ACCENT = PAGE_ACCENTS["/teacher/badges"];
+const BG = PAGE_BACKGROUNDS["/teacher/badges"];
 
 const POINT_PRESETS = [5, 10, 25, 50];
 
@@ -232,7 +237,18 @@ export default function BadgesRewardsPage() {
   }
 
   return (
-    <div style={{ display: "flex", minHeight: "100vh", background: COLORS.canvas, fontFamily: "'Inter', sans-serif", color: COLORS.textDark }}>
+    <div
+      style={{
+        minHeight: "100vh",
+        background: COLORS.canvas,
+        backgroundImage: BG ? `linear-gradient(180deg, rgba(243,239,252,.55) 0%, rgba(243,239,252,.82) 100%), url(${BG})` : undefined,
+        backgroundSize: "cover",
+        backgroundPosition: "center top",
+        backgroundAttachment: "fixed",
+        fontFamily: "'Inter', sans-serif",
+        color: COLORS.textDark,
+      }}
+    >
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@600;700&family=Inter:wght@400;500;600;700&display=swap');
         .gc-btn { transition: transform 150ms ease; cursor: pointer; border: none; font-family: 'Inter', sans-serif; }
@@ -241,20 +257,17 @@ export default function BadgesRewardsPage() {
         @keyframes gcFadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
       `}</style>
 
-      <TeacherSidebar teacherEmail={teacherEmail} />
+      <TeacherHUD title="Badges & Rewards" subtitle="Resources — Crystal Points and badge tiers" accent={ACCENT} teacherEmail={teacherEmail} />
 
-      <main style={{ flex: 1, padding: "32px 36px", maxWidth: 900, margin: "0 auto" }}>
-        <TeacherPageBanner style={{ marginBottom: 24 }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-            <div style={{ maxWidth: "58%" }}>
-              <h1 style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 700, fontSize: 28, margin: "0 0 4px 0" }}>Badges & Rewards</h1>
-              <p style={{ margin: 0, color: COLORS.textMuted, fontSize: 14 }}>Rename a tier or change how many Crystal Points it takes to reach it — students see these on their Home screen.</p>
-            </div>
-            <button onClick={() => setAwardModalOpen(true)} disabled={classes.length === 0} className="gc-btn" style={{ background: COLORS.violet, color: COLORS.white, borderRadius: 999, padding: "11px 20px", fontWeight: 700, fontSize: 13.5, opacity: classes.length === 0 ? 0.5 : 1, whiteSpace: "nowrap" }}>
-              🔮 Award Crystal Points
-            </button>
+      <main style={{ padding: "28px 36px 40px", maxWidth: 900, margin: "0 auto" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 20 }}>
+          <div style={{ maxWidth: "58%" }}>
+            <p style={{ margin: 0, color: COLORS.textMuted, fontSize: 14 }}>Rename a tier or change how many Crystal Points it takes to reach it — students see these on their Home screen.</p>
           </div>
-        </TeacherPageBanner>
+          <button onClick={() => setAwardModalOpen(true)} disabled={classes.length === 0} className="gc-btn" style={{ background: COLORS.violet, color: COLORS.white, borderRadius: 999, padding: "11px 20px", fontWeight: 700, fontSize: 13.5, opacity: classes.length === 0 ? 0.5 : 1, whiteSpace: "nowrap" }}>
+            🔮 Award Crystal Points
+          </button>
+        </div>
 
         {error && (
           <div style={{ background: "#FBEAEA", color: "#B23A3A", borderRadius: 10, padding: "10px 14px", fontSize: 13, marginBottom: 16 }}>
@@ -268,7 +281,7 @@ export default function BadgesRewardsPage() {
           </div>
         )}
 
-        <div style={{ background: COLORS.white, borderRadius: 16, boxShadow: "0 4px 16px rgba(13,27,42,.06)", overflow: "hidden" }}>
+        <div style={{ ...panelStyle(ACCENT, { overflow: "hidden" }) }}>
           {tiers.map((tier, i) => {
             const draft = drafts[tier.id] || { label: tier.label, threshold: String(tier.threshold) };
             const status = rowStatus[tier.id];
@@ -280,7 +293,7 @@ export default function BadgesRewardsPage() {
                   <input
                     value={draft.label}
                     onChange={(e) => updateDraft(tier.id, "label", e.target.value)}
-                    style={{ width: "100%", padding: "8px 10px", borderRadius: 8, border: `1.5px solid ${COLORS.border}`, fontSize: 13.5, fontFamily: "inherit", boxSizing: "border-box" }}
+                    style={{ width: "100%", padding: "8px 10px", borderRadius: 8, border: `1.5px solid ${COLORS.border}`, fontSize: 13.5, fontFamily: "inherit", boxSizing: "border-box", background: "rgba(255,255,255,.7)", color: COLORS.textDark }}
                   />
                 </div>
                 <div style={{ width: 160 }}>
@@ -290,7 +303,7 @@ export default function BadgesRewardsPage() {
                     min={0}
                     value={draft.threshold}
                     onChange={(e) => updateDraft(tier.id, "threshold", e.target.value)}
-                    style={{ width: "100%", padding: "8px 10px", borderRadius: 8, border: `1.5px solid ${COLORS.border}`, fontSize: 13.5, fontFamily: "inherit", boxSizing: "border-box" }}
+                    style={{ width: "100%", padding: "8px 10px", borderRadius: 8, border: `1.5px solid ${COLORS.border}`, fontSize: 13.5, fontFamily: "inherit", boxSizing: "border-box", background: "rgba(255,255,255,.7)", color: COLORS.textDark }}
                   />
                 </div>
                 <button
@@ -303,8 +316,8 @@ export default function BadgesRewardsPage() {
                     borderRadius: 999,
                     fontWeight: 700,
                     fontSize: 12.5,
-                    background: status === "saved" ? "#E9F9EE" : status === "error" ? "#FBEAEA" : COLORS.violetSoft,
-                    color: status === "saved" ? COLORS.success : status === "error" ? "#B23A3A" : COLORS.violet,
+                    background: status === "saved" ? "#E9F9EE" : status === "error" ? "#FBEAEA" : `${ACCENT}1E`,
+                    color: status === "saved" ? COLORS.success : status === "error" ? "#B23A3A" : ACCENT,
                   }}
                 >
                   {status === "saving" ? "Saving..." : status === "saved" ? "✓ Saved" : status === "error" ? "Try again" : "Save"}
