@@ -82,7 +82,7 @@ Legend: ✅ done · 🚧 in progress · ⬜ not started
 | Live Ops Board | `/teacher/live-ops-board` | ⬜ | pink? | — | Same open question as above. |
 | Signal Ops Board | `/teacher/signal-ops-board` | ⬜ | pink? | — | Same. |
 | Submissions / Grading list | `/teacher/grade` | ✅ | aqua | `bg-observatory.jpg` (shared with Progress/Reports) | Sixth page. See below. Confirmed aqua/Observatory family per the open question below. |
-| Grading detail (`[submissionId]`) | `/teacher/grade/[id]` | ⬜ | aqua | needed | NOT done yet — a much bigger, more complex page (132 kB), deliberately kept as its own separate pass rather than risked in this batch. |
+| Grading detail (`[submissionId]`) | `/teacher/grade/[id]` | ✅ | aqua | `bg-observatory.jpg` (shared with the list page) | Seventh page — the big one. See below. |
 | Badges & Rewards | `/teacher/badges` | ⬜ | success (green) | needed | Resources' family. |
 | Resources | `/teacher/resources` | ⬜ | success (green) | needed | Currently a "Coming Soon" stub — lowest-risk place to establish patterns fresh. |
 | Messages | `/teacher/messages` | ⬜ | magenta | `bg-messages.jpg` (mapped, page not built) | Currently a "Coming Soon" stub. |
@@ -93,8 +93,9 @@ Legend: ✅ done · 🚧 in progress · ⬜ not started
 `bg-bridge-console.jpg` is saved under `public/teacher/console/` but not yet
 assigned to any route — destination still unconfirmed with Emily.
 
-Roughly 20 screens total; 6 done so far (My Classes, Student Progress,
-Reports, Challenge Library, Assign Briefing, Submissions/Grading list).
+Roughly 20 screens total; 7 done so far (My Classes, Student Progress,
+Reports, Challenge Library, Assign Briefing, Submissions/Grading list,
+Grading detail).
 
 ## Overview scene fitting — fixed twice, same day (Sept 13)
 
@@ -181,14 +182,47 @@ status colors on each student tile are genuine status signals, not page
 branding, so — same principle as every other page in this redesign —
 those were deliberately left alone.
 
-**Not done yet, on purpose:** the actual grading screen you land on when
-you click a student (`/teacher/grade/[submissionId]`) is a much bigger,
-more complex page (132 kB compiled — likely well over a thousand lines,
-probably with rubric/scoring UI, AI-suggested grades, etc.) and was
-deliberately left for its own separate pass rather than risked inside this
-batch alongside five other pages. It's next in line specifically because
-it's the natural next step after the list page, not because it was
-forgotten.
+Verified with a clean `next build`.
+
+## Grading detail (`/teacher/grade/[submissionId]`) — done Sept 13, this session
+
+Seventh page — the actual grading screen a teacher lands on after clicking
+a student from the Grading list (attempt review, AI First Reader, rubric/
+Signal Check/Newsroom content depending on challenge type, Final Grade
+picker, release/send-back). This is the biggest, densest page reskinned so
+far (625 lines, 131 kB compiled) — it was deliberately deferred out of the
+Grading-list batch for its own separate pass rather than risked alongside
+five other pages at once. Visual-layer-only port, same as every other page
+in this redesign; every Supabase query, state variable, and handler
+(`loadSubmission`, `handleRelease`, `handleSendBack`, `handleCancelSendBack`)
+is untouched.
+
+`TeacherSidebar` swapped for `TeacherHUD`. Reuses the aqua Observatory
+`ACCENT`/`bg-observatory.jpg` already registered for the Grading list page
+— same family, same destination. Every flat opaque-white, `boxShadow`-only
+card (the top student-info bar, attempt cards, Signal Check and Newsroom
+response cards, the AI First Reader panel, the Final Grade card, and the
+reusable `ScorePill` component) became the shared translucent `panelStyle`
+glass card. Decorative violet became aqua `ACCENT` on chrome elements: the
+AI First Reader panel's icon/label/score badge, the Release-grade button in
+`ReleaseConfirmModal`, and the error-state "Back to Submissions" button.
+
+Three groups of color were deliberately left alone, same principle as
+every other page in this redesign — a page's decorative accent never
+doubles as a genuinely meaningful signal:
+- **The gold Final Grade language** — the grade-picker buttons' selected
+  gold border/fill and the "Your Grade" `ScorePill` are this page's own
+  established grading-workflow color, unrelated to navigation branding.
+- **Teal-mastered / amber-needs-work colors** — the "Suggested Next Step"
+  box and the needs-work/incorrect-verdict text carry real submission
+  signals, same as the amber/teal status colors kept on the Grading list
+  page.
+- **The Newsroom investigation log's Observation (green) vs. Inference
+  (violet) tags** — a genuine content-type distinction, not decoration.
+
+The student avatar circle in the top info bar also stays violet, matching
+the precedent set on every other page that avatars are neutral, not
+page-branded.
 
 Verified with a clean `next build`.
 
