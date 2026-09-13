@@ -30,7 +30,10 @@ const COLORS = {
 // set of categories to scan instead of one long list. The hrefs, icons, and
 // destinations themselves are unchanged — this is a presentation-only
 // reorganization, nothing was renamed or moved.
-const NAV_GROUPS = [
+// Exported (Sept 13) so components/TeacherHUD.js — the slim top bar
+// replacing this sidebar on reskinned pages — can drive its own nav
+// dropdown off the exact same list instead of a second hand-copied one.
+export const NAV_GROUPS = [
   {
     section: null,
     items: [{ label: "Overview", icon: "/teacher/nav_overview.png", href: "/teacher" }],

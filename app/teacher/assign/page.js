@@ -4,24 +4,15 @@ import React, { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { Plus, Copy, Check, Printer } from "lucide-react";
 import { supabase } from "../../../lib/supabaseClient";
-import TeacherSidebar from "../../../components/TeacherSidebar";
-import TeacherPageBanner from "../../../components/TeacherPageBanner";
+import TeacherHUD from "../../../components/TeacherHUD";
+import { COLORS, PAGE_ACCENTS, PAGE_BACKGROUNDS, panelStyle } from "../../../lib/teacherTheme";
 
-const COLORS = {
-  navy: "#0D1B2A",
-  violet: "#8C52F2",
-  violetSoft: "#EEE6FD",
-  teal: "#6FD8F5",
-  tealSoft: "#E6F8F9",
-  gold: "#FFC44D",
-  warning: "#FF9F43",
-  success: "#22C55E",
-  cream: "#F2F0FA",
-  white: "#FFFFFF",
-  border: "#E1E2EE",
-  textDark: "#1F2A44",
-  textMuted: "#697386",
-};
+// This page's own accent — Mission Control's color on the Overview console
+// (see PAGE_ACCENTS in lib/teacherTheme.js) — so arriving here from that
+// landmark feels like walking into the same amber-lit room, and every
+// primary action on this page picks it up instead of a flat generic violet.
+const ACCENT = PAGE_ACCENTS["/teacher/assign"];
+const BG = PAGE_BACKGROUNDS["/teacher/assign"];
 
 function generateClassCode() {
   const letters = "ABCDEFGHJKLMNPQRSTUVWXYZ";
@@ -267,36 +258,56 @@ export default function MyClassesPage() {
   const classNotStarted = Object.values(studentStatus).reduce((sum, s) => sum + s.notStarted, 0);
 
   if (loadingAuth || loadingClasses) {
-    return <div style={{ minHeight: "100vh", background: COLORS.cream, display: "flex", alignItems: "center", justifyContent: "center", color: COLORS.textMuted, fontFamily: "'Inter', sans-serif" }}>Loading...</div>;
+    return <div style={{ minHeight: "100vh", background: COLORS.canvas, display: "flex", alignItems: "center", justifyContent: "center", color: COLORS.textMuted, fontFamily: "'Inter', sans-serif" }}>Loading...</div>;
   }
 
   return (
-    <div style={{ display: "flex", minHeight: "100vh", background: COLORS.cream, fontFamily: "'Inter', sans-serif", color: COLORS.textDark }}>
+    <div
+      style={{
+        minHeight: "100vh",
+        // The room art (bg-platform-room.jpg, same one Emily picked for
+        // this page) sits full-bleed behind everything as a fixed backdrop
+        // — a soft lavender wash over it (matching COLORS.canvas) keeps the
+        // scrolling content on top legible no matter how bright a given
+        // patch of the art is, same idea as the glass panelStyle() cards.
+        background: COLORS.canvas,
+        backgroundImage: `linear-gradient(180deg, rgba(243,239,252,.55) 0%, rgba(243,239,252,.82) 100%), url(${BG})`,
+        backgroundSize: "cover",
+        backgroundPosition: "center top",
+        backgroundAttachment: "fixed",
+        fontFamily: "'Inter', sans-serif",
+        color: COLORS.textDark,
+        display: "flex",
+        flexDirection: "column",
+      }}
+    >
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@600;700&family=Inter:wght@400;500;600;700&display=swap');
         .gc-btn { transition: transform 150ms ease; cursor: pointer; border: none; font-family: 'Inter', sans-serif; }
         .gc-btn:hover { transform: translateY(-1px); }
+        .gc-input::placeholder { color: #8A84AC; }
       `}</style>
 
-      <TeacherSidebar teacherEmail={teacherEmail} />
+      <TeacherHUD
+        title="My Classes"
+        subtitle="Mission Control — assign work, add students, keep tabs on your roster"
+        accent={ACCENT}
+        teacherEmail={teacherEmail}
+      />
 
-      <div style={{ flex: 1, padding: "32px 36px", display: "flex", justifyContent: "center" }}>
+      <div style={{ flex: 1, padding: "28px 36px 40px", display: "flex", justifyContent: "center" }}>
         <div style={{ width: "100%", maxWidth: 1080 }}>
-          <TeacherPageBanner style={{ marginBottom: 20 }}>
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-              <h1 style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 700, fontSize: 28, margin: 0, color: COLORS.textDark }}>My Classes</h1>
+          {error && <div style={{ background: `${COLORS.danger}18`, border: `1px solid ${COLORS.danger}55`, color: "#8A2A22", borderRadius: 10, padding: "10px 14px", fontSize: 13, marginBottom: 16 }}>{error}</div>}
+
+          <div style={{ marginBottom: 20 }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
+              <p style={{ fontSize: 12, fontWeight: 700, color: COLORS.textMuted, letterSpacing: 0.5, margin: 0 }}>MY CLASSES</p>
               {selectedClassId && (
-                <button onClick={() => router.push(`/teacher/assign/new?classId=${selectedClassId}`)} className="gc-btn" style={{ background: COLORS.violet, color: COLORS.white, borderRadius: 999, padding: "11px 22px", fontWeight: 700, fontSize: 14, display: "flex", alignItems: "center", gap: 8 }}>
+                <button onClick={() => router.push(`/teacher/assign/new?classId=${selectedClassId}`)} className="gc-btn" style={{ background: ACCENT, color: COLORS.white, borderRadius: 999, padding: "10px 20px", fontWeight: 700, fontSize: 13.5, display: "flex", alignItems: "center", gap: 7, boxShadow: `0 4px 16px ${ACCENT}44` }}>
                   <Plus size={16} /> New Assignment
                 </button>
               )}
             </div>
-          </TeacherPageBanner>
-
-          {error && <div style={{ background: "#FBEAEA", color: "#B23A3A", borderRadius: 10, padding: "10px 14px", fontSize: 13, marginBottom: 16 }}>{error}</div>}
-
-          <div style={{ marginBottom: 20 }}>
-            <p style={{ fontSize: 12, fontWeight: 700, color: COLORS.textMuted, letterSpacing: 0.5, marginBottom: 10 }}>MY CLASSES</p>
             <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
               {classes.map((c) => {
                 const isSelected = c.id === selectedClassId;
@@ -305,7 +316,11 @@ export default function MyClassesPage() {
                     key={c.id}
                     className="gc-btn"
                     onClick={() => setSelectedClassId(c.id)}
-                    style={{ background: COLORS.white, border: isSelected ? `2px solid ${COLORS.violet}` : `1px solid ${COLORS.border}`, boxShadow: isSelected ? "0 4px 16px rgba(123,93,255,.15)" : "0 2px 8px rgba(13,27,42,.05)", borderRadius: 14, padding: "12px 18px", textAlign: "left", minWidth: 180 }}
+                    style={panelStyle(isSelected ? ACCENT : COLORS.aqua, {
+                      border: isSelected ? `1.5px solid ${ACCENT}` : `1px solid rgba(140,82,242,.18)`,
+                      boxShadow: isSelected ? `0 0 0 1px ${ACCENT}55, 0 4px 20px ${ACCENT}33` : "0 2px 10px rgba(80,60,150,.1)",
+                      padding: "12px 18px", textAlign: "left", minWidth: 180, cursor: "pointer",
+                    })}
                   >
                     <div style={{ fontWeight: 700, fontSize: 14, color: COLORS.textDark, marginBottom: 3 }}>{c.name}</div>
                     <div style={{ fontSize: 11.5, color: COLORS.textMuted }}>
@@ -314,98 +329,98 @@ export default function MyClassesPage() {
                   </button>
                 );
               })}
-              <button className="gc-btn" onClick={() => setShowNewClassForm(!showNewClassForm)} style={{ background: COLORS.white, border: `2px dashed ${COLORS.border}`, borderRadius: 14, padding: "12px 18px", color: COLORS.violet, fontWeight: 700, fontSize: 13, minWidth: 140, display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}>
+              <button className="gc-btn" onClick={() => setShowNewClassForm(!showNewClassForm)} style={{ background: "rgba(255,255,255,.4)", border: `2px dashed rgba(140,82,242,.35)`, borderRadius: 16, padding: "12px 18px", color: ACCENT, fontWeight: 700, fontSize: 13, minWidth: 140, display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}>
                 <Plus size={15} /> New Class
               </button>
             </div>
 
             {showNewClassForm && (
               <form onSubmit={handleCreateClass} style={{ display: "flex", gap: 8, marginTop: 12, maxWidth: 560, flexWrap: "wrap" }}>
-                <input autoFocus value={newClassName} onChange={(e) => setNewClassName(e.target.value)} placeholder="e.g. 5th Grade Science, Period 3" style={{ flex: 1, minWidth: 180, border: `2px solid ${COLORS.border}`, borderRadius: 10, padding: "10px 12px", fontSize: 14, boxSizing: "border-box" }} />
-                <select value={newClassGrade} onChange={(e) => setNewClassGrade(e.target.value)} style={{ border: `2px solid ${COLORS.border}`, borderRadius: 10, padding: "10px 12px", fontSize: 14 }}>
+                <input autoFocus value={newClassName} onChange={(e) => setNewClassName(e.target.value)} placeholder="e.g. 5th Grade Science, Period 3" className="gc-input" style={{ flex: 1, minWidth: 180, background: "rgba(255,255,255,.65)", color: COLORS.textDark, border: `1.5px solid ${COLORS.border}`, borderRadius: 10, padding: "10px 12px", fontSize: 14, boxSizing: "border-box" }} />
+                <select value={newClassGrade} onChange={(e) => setNewClassGrade(e.target.value)} style={{ background: "rgba(255,255,255,.65)", color: COLORS.textDark, border: `1.5px solid ${COLORS.border}`, borderRadius: 10, padding: "10px 12px", fontSize: 14 }}>
                   <option value="3">3rd Grade</option><option value="4">4th Grade</option><option value="5">5th Grade</option>
                 </select>
-                <select value={newClassSubject} onChange={(e) => setNewClassSubject(e.target.value)} style={{ border: `2px solid ${COLORS.border}`, borderRadius: 10, padding: "10px 12px", fontSize: 14 }}>
+                <select value={newClassSubject} onChange={(e) => setNewClassSubject(e.target.value)} style={{ background: "rgba(255,255,255,.65)", color: COLORS.textDark, border: `1.5px solid ${COLORS.border}`, borderRadius: 10, padding: "10px 12px", fontSize: 14 }}>
                   <option value="Science">Science</option><option value="Social Studies">Social Studies</option><option value="Math">Math</option><option value="ELAR">ELAR</option>
                 </select>
-                <button type="submit" disabled={creatingClass} className="gc-btn" style={{ background: COLORS.violet, color: COLORS.white, borderRadius: 10, padding: "0 18px", fontWeight: 700, fontSize: 13.5 }}>{creatingClass ? "Creating..." : "Create"}</button>
+                <button type="submit" disabled={creatingClass} className="gc-btn" style={{ background: ACCENT, color: COLORS.white, borderRadius: 10, padding: "0 18px", fontWeight: 700, fontSize: 13.5 }}>{creatingClass ? "Creating..." : "Create"}</button>
               </form>
             )}
           </div>
 
           {selectedClass && (
-            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16, color: COLORS.textMuted, fontSize: 13 }}>
-              Class Code for <strong style={{ color: COLORS.textDark }}>{selectedClass.name}</strong>: <strong style={{ color: COLORS.violet }}>{selectedClass.class_code}</strong>
-              <button onClick={() => copyClassCode(selectedClass.class_code)} className="gc-btn" style={{ background: COLORS.violetSoft, border: "none", borderRadius: 8, padding: "4px 8px", color: COLORS.violet, display: "flex", alignItems: "center", gap: 4 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginBottom: 16, color: COLORS.textMuted, fontSize: 13 }}>
+              Class Code for <strong style={{ color: COLORS.textDark }}>{selectedClass.name}</strong>: <strong style={{ color: ACCENT }}>{selectedClass.class_code}</strong>
+              <button onClick={() => copyClassCode(selectedClass.class_code)} className="gc-btn" style={{ background: `${ACCENT}22`, border: "none", borderRadius: 8, padding: "4px 8px", color: ACCENT, display: "flex", alignItems: "center", gap: 4 }}>
                 {copiedCode ? <Check size={13} /> : <Copy size={13} />} {copiedCode ? "Copied" : "Copy"}
               </button>
-              <button onClick={() => router.push(`/teacher/assign/display?classId=${selectedClass.id}`)} className="gc-btn" style={{ background: COLORS.violet, border: "none", borderRadius: 8, padding: "4px 10px", color: COLORS.white, fontWeight: 700 }}>
+              <button onClick={() => router.push(`/teacher/assign/display?classId=${selectedClass.id}`)} className="gc-btn" style={{ background: ACCENT, border: "none", borderRadius: 8, padding: "4px 10px", color: COLORS.white, fontWeight: 700 }}>
                 Present to Class
               </button>
-              <button onClick={() => window.open(`/teacher/roster/${selectedClass.id}`, "_blank")} className="gc-btn" style={{ background: COLORS.white, border: `1px solid ${COLORS.border}`, borderRadius: 8, padding: "4px 10px", color: COLORS.textDark, fontWeight: 700, display: "flex", alignItems: "center", gap: 5 }}>
+              <button onClick={() => window.open(`/teacher/roster/${selectedClass.id}`, "_blank")} className="gc-btn" style={{ background: "rgba(255,255,255,.55)", border: `1px solid ${COLORS.border}`, borderRadius: 8, padding: "4px 10px", color: COLORS.textDark, fontWeight: 700, display: "flex", alignItems: "center", gap: 5 }}>
                 <Printer size={13} /> Print Roster
               </button>
             </div>
           )}
 
           {classes.length === 0 ? (
-            <div style={{ background: COLORS.white, borderRadius: 16, padding: 24, maxWidth: 460, margin: "20px auto", textAlign: "center" }}>
-              <div style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 700, fontSize: 18, marginBottom: 8 }}>Create your first class</div>
+            <div style={panelStyle(ACCENT, { padding: 24, maxWidth: 460, margin: "20px auto", textAlign: "center" })}>
+              <div style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 700, fontSize: 18, marginBottom: 8, color: COLORS.textDark }}>Create your first class</div>
               <p style={{ color: COLORS.textMuted, fontSize: 13.5, marginBottom: 16 }}>This generates a real class code your students will use to log in.</p>
               <form onSubmit={handleCreateClass}>
-                <input value={newClassName} onChange={(e) => setNewClassName(e.target.value)} placeholder="e.g. 5th Grade Science" style={{ width: "100%", border: "2px solid #ECEAF5", borderRadius: 10, padding: "10px 12px", fontSize: 14, boxSizing: "border-box", marginBottom: 10 }} />
+                <input value={newClassName} onChange={(e) => setNewClassName(e.target.value)} placeholder="e.g. 5th Grade Science" className="gc-input" style={{ width: "100%", background: "rgba(255,255,255,.65)", color: COLORS.textDark, border: `1.5px solid ${COLORS.border}`, borderRadius: 10, padding: "10px 12px", fontSize: 14, boxSizing: "border-box", marginBottom: 10 }} />
                 <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
-                  <select value={newClassGrade} onChange={(e) => setNewClassGrade(e.target.value)} style={{ flex: 1, border: "2px solid #ECEAF5", borderRadius: 10, padding: "10px 12px", fontSize: 14 }}>
+                  <select value={newClassGrade} onChange={(e) => setNewClassGrade(e.target.value)} style={{ flex: 1, background: "rgba(255,255,255,.65)", color: COLORS.textDark, border: `1.5px solid ${COLORS.border}`, borderRadius: 10, padding: "10px 12px", fontSize: 14 }}>
                     <option value="3">3rd Grade</option><option value="4">4th Grade</option><option value="5">5th Grade</option>
                   </select>
-                  <select value={newClassSubject} onChange={(e) => setNewClassSubject(e.target.value)} style={{ flex: 1, border: "2px solid #ECEAF5", borderRadius: 10, padding: "10px 12px", fontSize: 14 }}>
+                  <select value={newClassSubject} onChange={(e) => setNewClassSubject(e.target.value)} style={{ flex: 1, background: "rgba(255,255,255,.65)", color: COLORS.textDark, border: `1.5px solid ${COLORS.border}`, borderRadius: 10, padding: "10px 12px", fontSize: 14 }}>
                     <option value="Science">Science</option><option value="Social Studies">Social Studies</option><option value="Math">Math</option><option value="ELAR">ELAR</option>
                   </select>
                 </div>
-                <button type="submit" disabled={creatingClass} className="gc-btn" style={{ width: "100%", background: COLORS.violet, color: COLORS.white, borderRadius: 999, padding: "12px 20px", fontWeight: 700, fontSize: 14.5 }}>{creatingClass ? "Creating..." : "Create Class"}</button>
+                <button type="submit" disabled={creatingClass} className="gc-btn" style={{ width: "100%", background: ACCENT, color: COLORS.white, borderRadius: 999, padding: "12px 20px", fontWeight: 700, fontSize: 14.5 }}>{creatingClass ? "Creating..." : "Create Class"}</button>
               </form>
             </div>
           ) : (
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
               <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-                  <div style={{ background: classNeedsReview > 0 ? "#FFF4E5" : COLORS.white, border: `1px solid ${classNeedsReview > 0 ? COLORS.warning : COLORS.border}`, borderRadius: 14, padding: 16, textAlign: "center" }}>
-                    <div style={{ fontSize: 24, fontWeight: 700, fontFamily: "'Poppins', sans-serif", color: classNeedsReview > 0 ? "#B8860B" : COLORS.textDark }}>{classNeedsReview}</div>
+                  <div style={panelStyle(classNeedsReview > 0 ? COLORS.warning : COLORS.aqua, { padding: 16, textAlign: "center", ...(classNeedsReview > 0 ? { background: `${COLORS.warning}18`, border: `1px solid ${COLORS.warning}55` } : {}) })}>
+                    <div style={{ fontSize: 24, fontWeight: 700, fontFamily: "'Poppins', sans-serif", color: classNeedsReview > 0 ? COLORS.warning : COLORS.textDark }}>{classNeedsReview}</div>
                     <div style={{ fontSize: 11.5, color: COLORS.textMuted, fontWeight: 600 }}>Need Review</div>
                   </div>
-                  <div style={{ background: COLORS.white, border: `1px solid ${COLORS.border}`, borderRadius: 14, padding: 16, textAlign: "center" }}>
+                  <div style={panelStyle(COLORS.aqua, { padding: 16, textAlign: "center" })}>
                     <div style={{ fontSize: 24, fontWeight: 700, fontFamily: "'Poppins', sans-serif", color: COLORS.textDark }}>{classNotStarted}</div>
                     <div style={{ fontSize: 11.5, color: COLORS.textMuted, fontWeight: 600 }}>Not Yet Started</div>
                   </div>
                 </div>
 
-                <div style={{ background: COLORS.white, border: `1px solid ${COLORS.border}`, borderRadius: 16, padding: 16, boxShadow: "0 4px 16px rgba(13,27,42,.06)" }}>
-                  <div style={{ fontWeight: 700, fontSize: 13, marginBottom: 10 }}>Assigned Cases</div>
+                <div style={panelStyle(ACCENT, { padding: 16 })}>
+                  <div style={{ fontWeight: 700, fontSize: 13, marginBottom: 10, color: COLORS.textDark }}>Assigned Cases</div>
                   {assignments.length > 0 ? (
-                    <div style={{ display: "grid", gap: 6 }}>
+                    <div style={{ display: "grid", gap: 2 }}>
                       {assignments.map((a) => (
                         <button
                           key={a.id}
                           type="button"
                           onClick={() => setCaseDetailAssignment(a)}
                           className="gc-btn"
-                          style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 4px", borderBottom: `1px solid ${COLORS.border}`, background: "none", border: "none", borderBottomWidth: 1, borderBottomStyle: "solid", borderBottomColor: COLORS.border, width: "100%", textAlign: "left", cursor: "pointer", font: "inherit", color: "inherit" }}
+                          style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 4px", background: "none", border: "none", borderBottom: `1px solid ${COLORS.border}`, width: "100%", textAlign: "left", cursor: "pointer", font: "inherit", color: "inherit" }}
                         >
                           <div style={{ width: 34, height: 34, borderRadius: 8, overflow: "hidden", flexShrink: 0 }}>
                             <img src={caseImagePath(a.case_standard)} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                           </div>
                           <div style={{ flex: 1, minWidth: 0 }}>
-                            <div style={{ fontSize: 12.5, fontWeight: 600, display: "flex", alignItems: "center", gap: 6 }}>
+                            <div style={{ fontSize: 12.5, fontWeight: 600, color: COLORS.textDark, display: "flex", alignItems: "center", gap: 6 }}>
                               {a.cases?.title || a.case_standard}
                               {a.distress_call && (
-                                <span title="Distress Call is live — project it from here or from the Live Ops Board" style={{ fontSize: 9.5, fontWeight: 700, color: COLORS.violet, background: COLORS.violetSoft, borderRadius: 999, padding: "1px 7px" }}>
+                                <span title="Distress Call is live — project it from here or from the Live Ops Board" style={{ fontSize: 9.5, fontWeight: 700, color: COLORS.violet, background: `${COLORS.violet}22`, borderRadius: 999, padding: "1px 7px" }}>
                                   📡 Live
                                 </span>
                               )}
                             </div>
                             <div style={{ fontSize: 10.5, color: COLORS.textMuted, display: "flex", alignItems: "center", gap: 6 }}>
                               {a.due_date ? `Due ${a.due_date}` : "No due date"}
-                              <span style={{ fontWeight: 700, color: a.isTargeted ? COLORS.violet : COLORS.teal }}>
+                              <span style={{ fontWeight: 700, color: a.isTargeted ? COLORS.violet : COLORS.aqua }}>
                                 · {a.isTargeted ? `${a.rosterSize} student${a.rosterSize === 1 ? "" : "s"}` : "Whole Class"}
                               </span>
                             </div>
@@ -419,11 +434,11 @@ export default function MyClassesPage() {
                   )}
                 </div>
 
-                <div style={{ background: COLORS.white, border: `1px solid ${COLORS.border}`, borderRadius: 16, padding: 16, boxShadow: "0 4px 16px rgba(13,27,42,.06)" }}>
-                  <div style={{ fontWeight: 700, fontSize: 13, marginBottom: 10 }}>Add a Student</div>
+                <div style={panelStyle(ACCENT, { padding: 16 })}>
+                  <div style={{ fontWeight: 700, fontSize: 13, marginBottom: 10, color: COLORS.textDark }}>Add a Student</div>
                   <form onSubmit={handleAddStudent} style={{ display: "flex", gap: 8 }}>
-                    <input value={newStudentName} onChange={(e) => setNewStudentName(e.target.value)} placeholder="First name" style={{ flex: 1, border: "2px solid #ECEAF5", borderRadius: 10, padding: "8px 10px", fontSize: 13, boxSizing: "border-box" }} />
-                    <button type="submit" disabled={addingStudent} className="gc-btn" style={{ background: COLORS.violetSoft, color: COLORS.violet, borderRadius: 10, padding: "0 14px", fontWeight: 700, fontSize: 12.5, display: "flex", alignItems: "center", gap: 4 }}>
+                    <input value={newStudentName} onChange={(e) => setNewStudentName(e.target.value)} placeholder="First name" className="gc-input" style={{ flex: 1, background: "rgba(255,255,255,.65)", color: COLORS.textDark, border: `1.5px solid ${COLORS.border}`, borderRadius: 10, padding: "8px 10px", fontSize: 13, boxSizing: "border-box" }} />
+                    <button type="submit" disabled={addingStudent} className="gc-btn" style={{ background: `${ACCENT}26`, color: ACCENT, borderRadius: 10, padding: "0 14px", fontWeight: 700, fontSize: 12.5, display: "flex", alignItems: "center", gap: 4 }}>
                       <Plus size={14} /> Add
                     </button>
                   </form>
@@ -431,9 +446,9 @@ export default function MyClassesPage() {
                 </div>
               </div>
 
-              <div style={{ background: COLORS.white, border: `1px solid ${COLORS.border}`, borderRadius: 16, padding: 16, boxShadow: "0 4px 16px rgba(13,27,42,.06)" }}>
-                <div style={{ fontWeight: 700, fontSize: 13, marginBottom: 10 }}>Class Roster ({roster.length}) — Status</div>
-                <div style={{ display: "grid", gap: 4, maxHeight: 520, overflowY: "auto" }}>
+              <div style={panelStyle(ACCENT, { padding: 16 })}>
+                <div style={{ fontWeight: 700, fontSize: 13, marginBottom: 10, color: COLORS.textDark }}>Class Roster ({roster.length}) — Status</div>
+                <div style={{ display: "grid", gap: 2, maxHeight: 520, overflowY: "auto" }}>
                   {roster.map((s) => {
                     const status = studentStatus[s.id] || { needsReview: 0, submitted: 0, notStarted: 0, total: 0 };
                     return (
@@ -444,19 +459,19 @@ export default function MyClassesPage() {
                         className="gc-btn"
                         style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 8px", background: "none", border: "none", borderBottom: `1px solid ${COLORS.border}`, width: "100%", textAlign: "left", cursor: "pointer", font: "inherit", color: "inherit" }}
                       >
-                        <div style={{ width: 32, height: 32, borderRadius: "50%", background: COLORS.violetSoft, display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, color: COLORS.violet, fontSize: 13, flexShrink: 0 }}>{s.first_name[0]}</div>
+                        <div style={{ width: 32, height: 32, borderRadius: "50%", background: `${COLORS.violet}22`, display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, color: COLORS.violet, fontSize: 13, flexShrink: 0 }}>{s.first_name[0]}</div>
                         <div style={{ flex: 1 }}>
-                          <div style={{ fontSize: 13, fontWeight: 600 }}>{s.first_name}</div>
+                          <div style={{ fontSize: 13, fontWeight: 600, color: COLORS.textDark }}>{s.first_name}</div>
                           <div style={{ fontSize: 10.5, color: COLORS.textMuted, fontFamily: "monospace" }}>PIN: {s.pin}</div>
                         </div>
                         {loadingStatus ? (
                           <span style={{ fontSize: 11, color: COLORS.textMuted }}>...</span>
                         ) : status.needsReview > 0 ? (
-                          <span style={{ fontSize: 10.5, fontWeight: 700, padding: "3px 9px", borderRadius: 999, background: "#FFF4E5", color: "#B8860B" }}>{status.needsReview} to review</span>
+                          <span style={{ fontSize: 10.5, fontWeight: 700, padding: "3px 9px", borderRadius: 999, background: `${COLORS.warning}22`, color: COLORS.warning }}>{status.needsReview} to review</span>
                         ) : status.notStarted > 0 ? (
-                          <span style={{ fontSize: 10.5, fontWeight: 700, padding: "3px 9px", borderRadius: 999, background: COLORS.cream, color: COLORS.textMuted }}>{status.notStarted} not started</span>
+                          <span style={{ fontSize: 10.5, fontWeight: 700, padding: "3px 9px", borderRadius: 999, background: "rgba(140,82,242,.12)", color: COLORS.textMuted }}>{status.notStarted} not started</span>
                         ) : status.total > 0 ? (
-                          <span style={{ fontSize: 10.5, fontWeight: 700, padding: "3px 9px", borderRadius: 999, background: COLORS.tealSoft, color: COLORS.teal }}>All caught up</span>
+                          <span style={{ fontSize: 10.5, fontWeight: 700, padding: "3px 9px", borderRadius: 999, background: `${COLORS.success}22`, color: COLORS.success }}>All caught up</span>
                         ) : (
                           <span style={{ fontSize: 10.5, color: COLORS.textMuted }}>No assignments yet</span>
                         )}
@@ -474,24 +489,24 @@ export default function MyClassesPage() {
       {caseDetailAssignment && (
         <div
           onClick={closeCaseDetail}
-          style={{ position: "fixed", inset: 0, background: "rgba(13,27,42,.45)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 100, padding: 20 }}
+          style={{ position: "fixed", inset: 0, background: "rgba(30,20,55,.55)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 100, padding: 20 }}
         >
           <div
             onClick={(e) => e.stopPropagation()}
-            style={{ background: COLORS.white, borderRadius: 20, maxWidth: 520, width: "100%", maxHeight: "85vh", overflowY: "auto", boxShadow: "0 20px 60px rgba(13,27,42,.3)" }}
+            style={{ background: "rgba(250,248,255,.98)", border: `1px solid ${ACCENT}44`, borderRadius: 20, maxWidth: 520, width: "100%", maxHeight: "85vh", overflowY: "auto", boxShadow: `0 20px 60px rgba(80,60,150,.35), 0 0 0 1px ${ACCENT}22` }}
           >
             <div style={{ height: 140, overflow: "hidden", borderRadius: "20px 20px 0 0", position: "relative" }}>
               <img src={caseImagePath(caseDetailAssignment.case_standard)} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
               <button
                 onClick={closeCaseDetail}
                 className="gc-btn"
-                style={{ position: "absolute", top: 12, right: 12, background: "rgba(13,27,42,.55)", color: COLORS.white, border: "none", borderRadius: "50%", width: 30, height: 30, fontSize: 16, lineHeight: 1 }}
+                style={{ position: "absolute", top: 12, right: 12, background: "rgba(20,14,40,.6)", color: COLORS.white, border: "none", borderRadius: "50%", width: 30, height: 30, fontSize: 16, lineHeight: 1 }}
               >
                 ✕
               </button>
             </div>
             <div style={{ padding: 22 }}>
-              <span style={{ display: "inline-flex", background: COLORS.violetSoft, color: COLORS.violet, fontSize: 11, fontWeight: 700, letterSpacing: .3, padding: "4px 10px", borderRadius: 999, marginBottom: 10 }}>
+              <span style={{ display: "inline-flex", background: `${ACCENT}22`, color: ACCENT, fontSize: 11, fontWeight: 700, letterSpacing: .3, padding: "4px 10px", borderRadius: 999, marginBottom: 10 }}>
                 {caseDetailAssignment.case_standard}
               </span>
               <div style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 700, fontSize: 19, color: COLORS.textDark, marginBottom: 14 }}>
@@ -503,14 +518,14 @@ export default function MyClassesPage() {
                   type="button"
                   onClick={() => router.push(`/teacher/live-ops-board?assignmentId=${caseDetailAssignment.id}`)}
                   className="gc-btn"
-                  style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, width: "100%", background: "#0D1B2A", color: COLORS.white, borderRadius: 12, padding: "12px 14px", fontWeight: 700, fontSize: 13.5, marginBottom: 16 }}
+                  style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, width: "100%", background: COLORS.textDark, border: `1px solid rgba(255,255,255,.14)`, color: COLORS.white, borderRadius: 12, padding: "12px 14px", fontWeight: 700, fontSize: 13.5, marginBottom: 16 }}
                 >
                   📡 Project on Live Ops Board
                 </button>
               )}
 
               {caseDetailAssignment.distress_call && caseDetailAssignment.distress_call_reward_points > 0 && (
-                <div style={{ fontSize: 12, fontWeight: 700, color: caseDetailAssignment.distress_call_reward_given ? "#B8860B" : COLORS.violet, background: caseDetailAssignment.distress_call_reward_given ? "#FFF4E5" : COLORS.violetSoft, borderRadius: 10, padding: "8px 12px", marginBottom: 16, textAlign: "center" }}>
+                <div style={{ fontSize: 12, fontWeight: 700, color: caseDetailAssignment.distress_call_reward_given ? "#8A5A00" : COLORS.violet, background: caseDetailAssignment.distress_call_reward_given ? `${COLORS.warning}1E` : `${COLORS.violet}1A`, borderRadius: 10, padding: "8px 12px", marginBottom: 16, textAlign: "center" }}>
                   {caseDetailAssignment.distress_call_reward_given
                     ? `🎉 +${caseDetailAssignment.distress_call_reward_points} crystal points already awarded to the class`
                     : `💎 +${caseDetailAssignment.distress_call_reward_points} crystal points will go out to everyone when the target is hit`}
@@ -520,7 +535,7 @@ export default function MyClassesPage() {
               {caseDetailAssignment.cases?.learning_target && (
                 <div style={{ marginBottom: 16 }}>
                   <div style={{ fontSize: 11, fontWeight: 700, color: COLORS.textMuted, letterSpacing: .4, marginBottom: 5, textTransform: "uppercase" }}>Learning Target</div>
-                  <div style={{ background: COLORS.tealSoft, borderRadius: 12, padding: "10px 12px", fontSize: 13.5, color: COLORS.textDark, lineHeight: 1.5 }}>
+                  <div style={{ background: `${COLORS.aqua}18`, borderRadius: 12, padding: "10px 12px", fontSize: 13.5, color: COLORS.textDark, lineHeight: 1.5 }}>
                     🎯 {caseDetailAssignment.cases.learning_target}
                   </div>
                 </div>
@@ -529,7 +544,7 @@ export default function MyClassesPage() {
               {caseDetailAssignment.cases?.lesson_summary && (
                 <div style={{ marginBottom: 16 }}>
                   <div style={{ fontSize: 11, fontWeight: 700, color: COLORS.textMuted, letterSpacing: .4, marginBottom: 5, textTransform: "uppercase" }}>Lesson Summary</div>
-                  <div style={{ fontSize: 13.5, color: COLORS.textDark, lineHeight: 1.55 }}>
+                  <div style={{ fontSize: 13.5, color: COLORS.textMuted, lineHeight: 1.55 }}>
                     {caseDetailAssignment.cases.lesson_summary}
                   </div>
                 </div>
@@ -538,7 +553,7 @@ export default function MyClassesPage() {
               {caseDetailAssignment.cases?.misconception_note && (
                 <div>
                   <div style={{ fontSize: 11, fontWeight: 700, color: COLORS.textMuted, letterSpacing: .4, marginBottom: 5, textTransform: "uppercase" }}>Watch For</div>
-                  <div style={{ background: "#FFF4E5", border: `1px solid ${COLORS.warning}`, borderRadius: 12, padding: "10px 12px", fontSize: 13, color: "#7A4A0A", lineHeight: 1.5 }}>
+                  <div style={{ background: `${COLORS.warning}18`, border: `1px solid ${COLORS.warning}55`, borderRadius: 12, padding: "10px 12px", fontSize: 13, color: "#7A4A00", lineHeight: 1.5 }}>
                     ⚠️ {caseDetailAssignment.cases.misconception_note}
                   </div>
                 </div>
@@ -551,20 +566,20 @@ export default function MyClassesPage() {
               )}
 
               <div style={{ marginTop: 20, paddingTop: 16, borderTop: `1px solid ${COLORS.border}` }}>
-                {deleteError && <div style={{ background: "#FBEAEA", color: "#B23A3A", borderRadius: 10, padding: "9px 12px", fontSize: 12.5, marginBottom: 10 }}>{deleteError}</div>}
+                {deleteError && <div style={{ background: `${COLORS.danger}18`, border: `1px solid ${COLORS.danger}55`, color: "#8A2A22", borderRadius: 10, padding: "9px 12px", fontSize: 12.5, marginBottom: 10 }}>{deleteError}</div>}
 
                 {!confirmingDelete ? (
                   <button
                     type="button"
                     onClick={() => setConfirmingDelete(true)}
                     className="gc-btn"
-                    style={{ background: "none", color: "#B23A3A", fontSize: 12.5, fontWeight: 700, padding: "6px 2px" }}
+                    style={{ background: "none", color: COLORS.danger, fontSize: 12.5, fontWeight: 700, padding: "6px 2px" }}
                   >
                     Delete Assignment
                   </button>
                 ) : (
-                  <div style={{ background: "#FBEAEA", border: "1px solid #F0B8B8", borderRadius: 12, padding: "12px 14px" }}>
-                    <div style={{ fontSize: 12.5, color: "#7A2020", lineHeight: 1.5, marginBottom: 10 }}>
+                  <div style={{ background: `${COLORS.danger}14`, border: `1px solid ${COLORS.danger}55`, borderRadius: 12, padding: "12px 14px" }}>
+                    <div style={{ fontSize: 12.5, color: "#8A2A22", lineHeight: 1.5, marginBottom: 10 }}>
                       Delete this assignment{caseDetailAssignment.submittedCount > 0 ? ` and its ${caseDetailAssignment.submittedCount} submission${caseDetailAssignment.submittedCount === 1 ? "" : "s"}` : ""}? This can't be undone.
                     </div>
                     <div style={{ display: "flex", gap: 8 }}>
@@ -573,7 +588,7 @@ export default function MyClassesPage() {
                         onClick={() => setConfirmingDelete(false)}
                         disabled={deleting}
                         className="gc-btn"
-                        style={{ background: COLORS.white, border: `1px solid ${COLORS.border}`, color: COLORS.textDark, borderRadius: 999, padding: "8px 16px", fontWeight: 700, fontSize: 12.5 }}
+                        style={{ background: "rgba(255,255,255,.6)", border: `1px solid ${COLORS.border}`, color: COLORS.textDark, borderRadius: 999, padding: "8px 16px", fontWeight: 700, fontSize: 12.5 }}
                       >
                         Cancel
                       </button>
@@ -582,7 +597,7 @@ export default function MyClassesPage() {
                         onClick={handleDeleteAssignment}
                         disabled={deleting}
                         className="gc-btn"
-                        style={{ background: "#B23A3A", color: COLORS.white, borderRadius: 999, padding: "8px 16px", fontWeight: 700, fontSize: 12.5 }}
+                        style={{ background: COLORS.danger, color: COLORS.white, borderRadius: 999, padding: "8px 16px", fontWeight: 700, fontSize: 12.5 }}
                       >
                         {deleting ? "Deleting..." : "Yes, Delete"}
                       </button>
