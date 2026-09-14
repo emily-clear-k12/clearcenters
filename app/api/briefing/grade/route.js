@@ -234,8 +234,42 @@ export async function POST(request) {
     const results = {};
     let autoCorrect = 0;
     let total = 0;
+    const coherence = server.clearance.keepCoherence || null;
     for (const [id, expected] of Object.entries(keys)) {
       total += 1;
+      // v3 keep-claim item: "<keep>|<because>". The OPINION is never
+      // marked — which reason a student would keep is theirs and goes to
+      // the teacher. Only the LOGIC of the sentence is checked, so an
+      // ending that doesn't follow from the reason kept (or one that
+      // argues with itself) comes back, and nothing else does. It's
+      // excluded from the auto-score entirely rather than counted right.
+      if (expected == null && coherence && String(answers[id] || "").includes("|")) {
+        const [keep, because] = String(answers[id]).split("|");
+        total -= 1; // not an auto-scored item
+        if (because === server.clearance.keepSelfContradicting) {
+          results[id] = {
+            correct: null,
+            teacherRead: true,
+            coherent: false,
+            message: server.clearance.keepContradictionMessage || "That sentence argues with itself — try the ending again.",
+          };
+        } else if (coherence[keep] !== because) {
+          results[id] = {
+            correct: null,
+            teacherRead: true,
+            coherent: false,
+            message: server.clearance.keepMismatchMessage || "Does that ending come from the reason you kept?",
+          };
+        } else {
+          results[id] = {
+            correct: null,
+            teacherRead: true,
+            coherent: true,
+            message: server.clearance.keepAcceptedMessage || "Filed — your teacher reads this one.",
+          };
+        }
+        continue;
+      }
       if (expected == null) {
         // Dynamic / soft item (e.g. c4 reuse): accept any of the three TEKS reasons
         // when client sends expectedId, else accept any non-empty answer.
@@ -257,8 +291,12 @@ export async function POST(request) {
     if (answers.c5 != null && keys.c5 == null) {
       results.c5 = { correct: null, skipped: true };
     }
+    // A keep-claim whose logic doesn't hold blocks clearance the same way a
+    // wrong answer would — not because the opinion is wrong, but because
+    // the sentence doesn't say what the student means yet.
+    const incoherentKeep = Object.values(results).some((r) => r && r.teacherRead && r.coherent === false);
     return NextResponse.json({
-      pass: autoCorrect >= Math.ceil(total * 0.6),
+      pass: !incoherentKeep && autoCorrect >= Math.ceil(total * 0.6),
       correct: autoCorrect,
       total,
       results,
@@ -370,6 +408,134 @@ export async function POST(request) {
       total,
       results,
       message: correct === total ? "Nice reasoning — every answer checks out." : "Read the reasons above, then try the misses again.",
+    });
+  }
+
+  /* ---------------------------------------------------------------
+   * v3 phases. Two rules run through all of these:
+   *  - a miss never returns a bare "wrong" — it returns the sentence a
+   *    teacher would say next, because these are teaching phases;
+   *  - anything with no defensible single answer is not scored here at
+   *    all. The teacher is the scorer of record; this route is a first
+   *    reader.
+   * --------------------------------------------------------------- */
+
+  if (phase === "openingFrame") {
+    // The prediction is deliberately NOT marked. It gets settled at the end
+    // of storyTeach — that delay is the entire pedagogical point of it.
+    const of = server.openingFrame || {};
+    return NextResponse.json({
+      pass: true,
+      recorded: payload?.prediction || null,
+      message: of.lockMessage || "Locked in. You'll find out by watching the town get built.",
+    });
+  }
+
+  if (phase === "storyTeach") {
+    const beatId = String(payload?.beatId || "");
+    const named = String(payload?.named || "");
+    const keys = server.storyTeach?.beats || {};
+    const beat = keys[beatId];
+    if (!beat) {
+      return NextResponse.json({ pass: false, softFail: true, message: "That beat isn't part of this briefing." });
+    }
+    const ok = named === beat.reason;
+    return NextResponse.json({
+      pass: ok,
+      softFail: !ok,
+      beatId,
+      message: ok
+        ? beat.rightMessage || "That's it — written into your ledger."
+        : beat.nameWrong || "Look again at what was missing that winter. Which reason is that?",
+    });
+  }
+
+  if (phase === "synthesis") {
+    const sy = server.synthesis || {};
+    const step = String(payload?.step || "");
+
+    if (step === "order") {
+      const correctOrder = sy.correctOrder || [];
+      const soFar = Array.isArray(payload?.soFar) ? payload.soFar : [];
+      const expected = correctOrder[soFar.length];
+      const ok = String(payload?.pick || "") === expected;
+      const last = ok && soFar.length + 1 === correctOrder.length;
+      return NextResponse.json({
+        pass: ok,
+        softFail: !ok,
+        complete: last,
+        message: ok
+          ? last
+            ? sy.orderDoneMessage || "That's the order. Now the harder half — why each one followed the last."
+            : sy.orderNextMessage || "Yes. What came next?"
+          : soFar.length === 0
+            ? sy.orderFirstHint || "Start at the beginning. Which of these could the very first families have had?"
+            : sy.orderHint || "Not next. Each problem arrives because of what the last one fixed.",
+      });
+    }
+
+    if (step === "break") {
+      const removals = sy.removals || {};
+      const spec = removals[String(payload?.removed || "")];
+      if (!spec) {
+        return NextResponse.json({ pass: false, softFail: true, message: "Pick which one to take away first." });
+      }
+      const idx = Number(payload?.pick);
+      const ok = idx === spec.correctIndex;
+      return NextResponse.json({
+        pass: ok,
+        softFail: !ok,
+        message: ok ? spec.rightMessage : (spec.wrongMessages || [])[idx] || "Follow the people first — who leaves, and what goes with them?",
+      });
+    }
+
+    return NextResponse.json({ pass: false, softFail: true, message: "Unknown step." });
+  }
+
+  if (phase === "transfer") {
+    const tr = server.transfer || {};
+    const tapped = Array.isArray(payload?.tapped) ? payload.tapped : [];
+    const claim = String(payload?.claim || "");
+    const spotReasons = tr.spotReasons || {};
+    const best = tr.bestClaim || "";
+    const reasons = tapped.map((id) => spotReasons[id] || "none");
+
+    // A "fun, not a reason" spot is the misconception this phase is built
+    // to catch — checked before anything else so its feedback wins.
+    if (reasons.includes("none")) {
+      return NextResponse.json({
+        pass: false,
+        softFail: true,
+        message: tr.decoyMessage || "That one's fun, but having fun isn't one of the reasons people form a community. What else did you spot?",
+      });
+    }
+    const allMatchClaim = reasons.length > 0 && reasons.every((r) => r === claim);
+    if (allMatchClaim && claim === best) {
+      return NextResponse.json({
+        pass: true,
+        correct: reasons.length,
+        total: reasons.length,
+        message: tr.rightMessage || "Strong case — and you found the reason this town can prove twice.",
+      });
+    }
+    if (allMatchClaim) {
+      return NextResponse.json({
+        pass: false,
+        softFail: true,
+        message: tr.onlyOneProofMessage || "Both your proofs point that way — but this town only has one of them. Is there a reason you can prove twice?",
+      });
+    }
+    if (reasons.length > 1 && reasons[0] === reasons[1]) {
+      return NextResponse.json({
+        pass: false,
+        softFail: true,
+        message: tr.mismatchMessage || "Your two proofs agree with each other, but they don't show the reason you picked. Change one to match the other.",
+      });
+    }
+    return NextResponse.json({
+      pass: false,
+      softFail: true,
+      message: tr.splitMessage || "Your two proofs are pointing at two different reasons. Pick the reason you can prove twice.",
     });
   }
 

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useCallback, useEffect } from "react";
+import React, { useState, useCallback, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import BackToHubButton from "../../../components/BackToHubButton";
 import SamGuide from "../../../components/SamGuide";
@@ -43,6 +43,14 @@ const PHASE_LABELS = {
   sequenceIt: "Sequence It",
   labelPicture: "Label the Picture",
   trueFalseReason: "True or False",
+  // v3 additions (Sept 2026) — the "make them think" pass. These are NEW
+  // phase ids, deliberately not modifications of intelDrop/fieldBrief/
+  // evidenceDrop, so the three lessons already in the catalog keep running
+  // on the old shapes untouched while new lessons opt in to these.
+  openingFrame: "Opening",
+  storyTeach: "Field Brief",
+  synthesis: "Put It Together",
+  transfer: "New Town",
 };
 
 /** Phases that imply Reason Sort was already past (pre-P2 saves). */
@@ -143,6 +151,8 @@ function migratePhaseState(saved) {
       deferredReasonId: ops.deferredReasonId || "",
       debrief: Boolean(ops.debrief),
       consequence: ops.consequence || null,
+      // v3: which townsperson's warning the student said came true.
+      whoseAnswer: ops.whoseAnswer || "",
     },
     evidence: {
       sceneId: evidence.sceneId || "",
@@ -194,7 +204,142 @@ function migratePhaseState(saved) {
       results: s.trueFalseReason?.results || null,
       passed: Boolean(s.trueFalseReason?.passed),
     },
+    // --- v3 slices ---
+    openingFrame: {
+      isIt: s.openingFrame?.isIt || "",
+      traits: s.openingFrame?.traits || [],
+      traitsDone: Boolean(s.openingFrame?.traitsDone),
+      // The prediction is deliberately NOT graded here — it's settled at the
+      // end of storyTeach, which is the whole point of making it a prediction.
+      prediction: s.openingFrame?.prediction || "",
+      locked: Boolean(s.openingFrame?.locked),
+    },
+    storyTeach: {
+      beatIndex: s.storyTeach?.beatIndex || 0,
+      // per beat: { choiceIndex, named, stretchIndex }
+      beats: s.storyTeach?.beats || {},
+      done: Boolean(s.storyTeach?.done),
+    },
+    synthesis: {
+      order: s.synthesis?.order || [],
+      orderDone: Boolean(s.synthesis?.orderDone),
+      causeIndex: s.synthesis?.causeIndex || 0,
+      causeAnswers: s.synthesis?.causeAnswers || {},
+      causesDone: Boolean(s.synthesis?.causesDone),
+      removed: s.synthesis?.removed || "",
+      breakAnswer: s.synthesis?.breakAnswer || "",
+      passed: Boolean(s.synthesis?.passed),
+    },
+    transfer: {
+      tapped: s.transfer?.tapped || [],
+      claim: s.transfer?.claim || "",
+      checked: Boolean(s.transfer?.checked),
+      results: s.transfer?.results || null,
+      passed: Boolean(s.transfer?.passed),
+    },
   };
+}
+
+/* --------------------------------------------------------------------
+ * Read aloud (Web Speech API).
+ *
+ * Every task in a briefing is gated on reading 20-40 words, so a student
+ * who can't decode can't reach the thinking at all. This reads the
+ * rendered phase card — prompts AND answer choices, because for a
+ * struggling reader the options matter as much as the question.
+ *
+ * Deliberately the browser's own synthesis rather than recorded audio:
+ * recorded sounds better but has to be re-cut every time a line changes,
+ * which the AI batch-generation pipeline can't carry. Voice quality is
+ * therefore whatever the device has. Browsers also block audio that
+ * starts without a gesture, so a phase can't read itself on open — it
+ * always takes a tap.
+ * ------------------------------------------------------------------ */
+const TTS_SKIP = new Set(["AGENT TIP", "←", "→"]);
+
+function collectSpeakable(root) {
+  if (!root) return [];
+  const out = [];
+  const walk = (node) => {
+    if (!node) return;
+    // Don't read the read-aloud control itself.
+    if (node.dataset && node.dataset.ttsSkip === "1") return;
+    if (node.nodeType === 3) {
+      const t = node.textContent.replace(/\s+/g, " ").trim();
+      if (t && !TTS_SKIP.has(t)) out.push(t);
+      return;
+    }
+    if (node.nodeType !== 1) return;
+    const style = typeof window !== "undefined" ? window.getComputedStyle(node) : null;
+    if (style && (style.display === "none" || style.visibility === "hidden")) return;
+    node.childNodes.forEach(walk);
+  };
+  walk(root);
+  // Merge adjacent fragments (bold spans split sentences into pieces) and
+  // keep utterances short enough that Stop feels responsive.
+  const merged = [];
+  let buf = "";
+  out.forEach((t) => {
+    buf = buf ? `${buf} ${t}` : t;
+    if (buf.length > 160 || /[.!?:]$/.test(t)) {
+      merged.push(buf);
+      buf = "";
+    }
+  });
+  if (buf) merged.push(buf);
+  return merged;
+}
+
+function useReadAloud() {
+  const [speaking, setSpeaking] = useState(false);
+  const [supported, setSupported] = useState(false);
+  const voiceRef = useRef(null);
+
+  useEffect(() => {
+    if (typeof window === "undefined" || !window.speechSynthesis) return;
+    setSupported(true);
+    const pick = () => {
+      const en = window.speechSynthesis.getVoices().filter((v) => /^en/i.test(v.lang));
+      if (!en.length) return;
+      const nicer = en.filter((v) => /natural|google|samantha|aria|zira|enhanced|premium/i.test(v.name));
+      voiceRef.current = nicer[0] || en[0];
+    };
+    pick();
+    window.speechSynthesis.onvoiceschanged = pick;
+    return () => {
+      window.speechSynthesis.onvoiceschanged = null;
+      window.speechSynthesis.cancel();
+    };
+  }, []);
+
+  const stop = useCallback(() => {
+    if (typeof window !== "undefined" && window.speechSynthesis) window.speechSynthesis.cancel();
+    setSpeaking(false);
+  }, []);
+
+  const speak = useCallback(
+    (chunks) => {
+      if (typeof window === "undefined" || !window.speechSynthesis) return;
+      window.speechSynthesis.cancel();
+      const list = [].concat(chunks).filter((s) => s && s.trim());
+      if (!list.length) return;
+      setSpeaking(true);
+      list.forEach((text, i) => {
+        const u = new SpeechSynthesisUtterance(text.trim());
+        if (voiceRef.current) u.voice = voiceRef.current;
+        u.rate = 0.95;
+        u.pitch = 1.02;
+        if (i === list.length - 1) {
+          u.onend = () => setSpeaking(false);
+          u.onerror = () => setSpeaking(false);
+        }
+        window.speechSynthesis.speak(u);
+      });
+    },
+    []
+  );
+
+  return { speak, stop, speaking, supported };
 }
 
 /** Deterministic-enough shuffle seeded off a stable id string, so a
@@ -351,6 +496,9 @@ export default function BriefingClient({ student, assignment, briefing, initialS
   // Local-only (not persisted): it's "just fun," never gates anything, and
   // re-showing the reveal button on a later visit is fine.
   const [bonusRevealed, setBonusRevealed] = useState(false);
+  const bodyRef = useRef(null);
+  const readAloud = useReadAloud();
+  const stopReading = readAloud.stop;
 
   const phaseId = PHASES[phaseIndex].id;
   const samLines = briefing.samLines || {};
@@ -390,8 +538,10 @@ export default function BriefingClient({ student, assignment, briefing, initialS
     }
     setSamLine(samLines[phaseId] || "");
     setSamState(phaseId === "clearance" && status === "cleared" ? "celebrating" : "helping");
-    if (phaseId === "intelDrop") setSamAnchor("image");
-    else if (phaseId === "fieldBrief" || phaseId === "quickReview") setSamAnchor("qc");
+    if (phaseId === "intelDrop" || phaseId === "openingFrame") setSamAnchor("image");
+    else if (phaseId === "fieldBrief" || phaseId === "quickReview" || phaseId === "storyTeach" || phaseId === "synthesis")
+      setSamAnchor("qc");
+    else if (phaseId === "transfer") setSamAnchor("image");
     else if (phaseId === "reasonSort" || phaseId === "matchPairs" || phaseId === "sequenceIt" || phaseId === "labelPicture" || phaseId === "trueFalseReason")
       setSamAnchor("sort");
     else if (phaseId === "opsChoice") setSamAnchor("chips");
@@ -399,6 +549,11 @@ export default function BriefingClient({ student, assignment, briefing, initialS
     else if (phaseId === "clearance") setSamAnchor(status === "cleared" ? "stamp" : "home");
     else setSamAnchor("home");
   }, [phaseId, status, samLines, phaseState.ops?.debrief, briefing.opsChoice?.debriefSamLine, packPages, isProjectMode, phaseState.field?.beatIndex]);
+
+  // Changing phase should never leave the previous card still being read.
+  useEffect(() => {
+    stopReading();
+  }, [phaseId, stopReading]);
 
   const persist = useCallback(
     async (nextState, nextScores, nextStatus) => {
@@ -1438,6 +1593,15 @@ export default function BriefingClient({ student, assignment, briefing, initialS
                       >
                         {p ? shortReason(p) : "—"}
                       </div>
+                      {/* `improves` has been authored in every pack since P3
+                          and was never rendered anywhere — the board showed
+                          two-word labels and nothing else, which is most of
+                          why this screen felt empty. */}
+                      {p?.improves && (
+                        <div style={{ fontSize: 11.5, color: COLORS.textMuted, lineHeight: 1.3, marginTop: 2 }}>
+                          {p.improves}
+                        </div>
+                      )}
                     </div>
                   );
                 })}
@@ -1510,10 +1674,74 @@ export default function BriefingClient({ student, assignment, briefing, initialS
             </div>
           </div>
 
+          {/* "Whose warning came true?" — only when the pack supplies
+              voices. Ties the consequence back to a named person who said
+              this would happen, which is the perspective-taking the old
+              version had nowhere at all. */}
+          {(pack.voices || []).length > 0 && (() => {
+            const waiting = waitingProjects[0];
+            const answered = ops.whoseAnswer;
+            const right = waiting?.reasonId;
+            return (
+              <div style={{ marginTop: 16 }}>
+                <p style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 800, fontSize: 15, margin: "0 0 8px" }}>
+                  {pack.whosePrompt || "Whose warning came true?"}
+                </p>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                  {pack.voices.map((v) => (
+                    <button
+                      key={`whose-${v.id}`}
+                      type="button"
+                      className="gc-btn"
+                      disabled={answered === right}
+                      onClick={() => {
+                        if (v.id === right) {
+                          setSamLine(
+                            pack.whoseRight ||
+                              "All three of them were telling the truth about what they needed. You could only build two, so somebody was always going to be right and still have to wait."
+                          );
+                          setSamState("celebrating");
+                          updateState({ ops: { ...ops, whoseAnswer: v.id } });
+                        } else {
+                          setSamLine(pack.whoseWrong || "Read the problem again, and read what each of them said. Somebody described exactly this.");
+                          setSamState("helping");
+                          setToast(pack.whoseWrong || "Somebody described exactly this last year.");
+                        }
+                      }}
+                      style={chipStyle(answered === v.id)}
+                    >
+                      {v.emoji || "🗣️"} {v.who}
+                    </button>
+                  ))}
+                </div>
+                {answered === right && (
+                  <div
+                    style={{
+                      marginTop: 10,
+                      background: COLORS.tealSoft,
+                      border: `1.5px solid ${COLORS.teal}`,
+                      borderRadius: 12,
+                      padding: 12,
+                      fontSize: 13.5,
+                    }}
+                  >
+                    {pack.whoseRight ||
+                      "All three were telling the truth about what they needed. You could only build two, so somebody was always going to be right and still have to wait."}
+                  </div>
+                )}
+              </div>
+            );
+          })()}
+
           <button
             type="button"
             className="gc-btn"
-            onClick={() => goToPhase("evidenceDrop")}
+            disabled={(pack.voices || []).length > 0 && ops.whoseAnswer !== waitingProjects[0]?.reasonId}
+            /* Was hardcoded to goToPhase("evidenceDrop") — which silently
+               dead-ends any lesson whose phase after Ops isn't Evidence
+               Drop (the v3 shape goes to Transfer). goNext() follows this
+               lesson's own phases array, like everything else does. */
+            onClick={goNext}
             style={{
               ...primaryBtn,
               marginTop: 16,
@@ -1523,7 +1751,7 @@ export default function BriefingClient({ student, assignment, briefing, initialS
               boxSizing: "border-box",
             }}
           >
-            Continue to Evidence Drop →
+            {pack.continueLabel || "Continue →"}
           </button>
         </div>
       );
@@ -1547,6 +1775,52 @@ export default function BriefingClient({ student, assignment, briefing, initialS
         {pack.scenario && (
           <div style={{ margin: "10px 0 4px", background: COLORS.cream, borderRadius: 12, padding: 12, fontSize: 13.5, color: COLORS.textDark, lineHeight: 1.5 }}>
             {renderBold(pack.scenario)}
+          </div>
+        )}
+
+        {/* Three townspeople who each want a different project, and all of
+            whom are right. This is what turns a resource puzzle into a
+            civic decision — and it's what makes the cost a person rather
+            than a category when one of them has to wait. Optional: a pack
+            without `voices` renders exactly as it did before. */}
+        {(pack.voices || []).length > 0 && (
+          <div style={{ display: "flex", flexDirection: "column", gap: 8, margin: "12px 0" }}>
+            {pack.voices.map((v) => (
+              <div
+                key={v.id}
+                style={{
+                  display: "flex",
+                  gap: 10,
+                  alignItems: "flex-start",
+                  background: COLORS.white,
+                  border: "1.5px solid #E1E2EE",
+                  borderRadius: 12,
+                  padding: "10px 12px",
+                }}
+              >
+                <span
+                  style={{
+                    flexShrink: 0,
+                    width: 34,
+                    height: 34,
+                    borderRadius: 999,
+                    background: COLORS.violetSoft,
+                    display: "grid",
+                    placeItems: "center",
+                    fontSize: 17,
+                  }}
+                  aria-hidden="true"
+                >
+                  {v.emoji || "🗣️"}
+                </span>
+                <div>
+                  <div style={{ fontSize: 10.5, fontWeight: 800, letterSpacing: 0.5, color: COLORS.textMuted, textTransform: "uppercase" }}>
+                    {v.who}
+                  </div>
+                  <div style={{ fontSize: 13, color: COLORS.textDark, marginTop: 2 }}>{v.said}</div>
+                </div>
+              </div>
+            ))}
           </div>
         )}
 
@@ -1996,10 +2270,24 @@ export default function BriefingClient({ student, assignment, briefing, initialS
       review: Boolean(phaseState.quickReview?.graded),
       practice1: mechanicPhaseIds[0] ? Boolean(phaseState[mechanicPhaseIds[0]]?.passed) : false,
       practice2: mechanicPhaseIds[1] ? Boolean(phaseState[mechanicPhaseIds[1]]?.passed) : false,
+      // v3 gate ids.
+      opening: Boolean(phaseState.openingFrame?.locked),
+      teach: Boolean(phaseState.storyTeach?.done),
+      together: Boolean(phaseState.synthesis?.passed),
+      newtown: Boolean(phaseState.transfer?.passed),
     };
     const progressGates = gateDefs.map((g) => ({ ...g, done: Boolean(gateDone[g.id]) }));
     const gatesOk = progressGates.every((g) => g.done);
-    const answersOk = (briefing.clearance.items || []).every((item) => Boolean(cl.answers[item.id]));
+    const answersOk = (briefing.clearance.items || []).every((item) => {
+      const got = cl.answers[item.id];
+      // A keep-claim stores "<keep>|<because>" — half a sentence isn't an
+      // answer, so require both sides before Clearance can be submitted.
+      if (item.type === "keepClaim") {
+        const [k, b] = String(got || "").split("|");
+        return Boolean(k && b);
+      }
+      return Boolean(got);
+    });
 
     // Dynamic c4: infer from deferred Ops project or postcard EVIDENCE text — never name the answer in the stem.
     const deferredProj = deferredTeksProject(briefing, opsPicks);
@@ -2121,6 +2409,69 @@ export default function BriefingClient({ student, assignment, briefing, initialS
                 "Think about the Founders’ Council vote. Which TEKS reason still matters for Maple Crossing even if it waits?";
             }
           }
+          // v3 keep-claim: two chip rows that assemble one sentence. No
+          // right answer to WHICH reason — that's the student's and the
+          // teacher reads it — but the sentence still has to hold together,
+          // which the server checks. See the clearance branch in
+          // app/api/briefing/grade/route.js.
+          if (item.type === "keepClaim") {
+            const [keep = "", because = ""] = String(cl.answers[item.id] || "").split("|");
+            const setKeep = (k) =>
+              updateState(
+                { clearance: { ...cl, answers: { ...cl.answers, [item.id]: `${k}|${because}` } } },
+                { skipSave: true }
+              );
+            const setBecause = (b) =>
+              updateState(
+                { clearance: { ...cl, answers: { ...cl.answers, [item.id]: `${keep}|${b}` } } },
+                { skipSave: true }
+              );
+            const note = cl.results?.results?.[item.id];
+            return (
+              <div key={item.id} style={{ marginBottom: 14, background: COLORS.cream, borderRadius: 12, padding: 12 }}>
+                <div style={{ fontWeight: 700, fontSize: 13.5, marginBottom: 2 }}>{prompt}</div>
+                <div style={{ fontSize: 11.5, color: COLORS.textMuted, marginBottom: 8 }}>
+                  {item.teacherReadNote || "Your teacher reads this one — there's no right answer to which you'd keep."}
+                </div>
+                <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 6 }}>
+                  I&rsquo;d keep <strong style={{ color: COLORS.violet }}>{(item.keepOptions || []).find((o) => o.id === keep)?.label || "______"}</strong>
+                  , because without it{" "}
+                  <strong style={{ color: COLORS.violet }}>
+                    {(item.becauseOptions || []).find((o) => o.id === because)?.label || "______"}
+                  </strong>
+                  .
+                </div>
+                <div style={{ fontSize: 11, fontWeight: 800, color: COLORS.textMuted, margin: "8px 0 4px" }}>WHAT I&rsquo;D KEEP</div>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                  {(item.keepOptions || []).map((o) => (
+                    <button key={o.id} type="button" className="gc-btn" onClick={() => setKeep(o.id)} style={chipStyle(keep === o.id)}>
+                      {o.label}
+                    </button>
+                  ))}
+                </div>
+                <div style={{ fontSize: 11, fontWeight: 800, color: COLORS.textMuted, margin: "10px 0 4px" }}>BECAUSE WITHOUT IT…</div>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                  {(item.becauseOptions || []).map((o) => (
+                    <button key={o.id} type="button" className="gc-btn" onClick={() => setBecause(o.id)} style={chipStyle(because === o.id)}>
+                      {o.label}
+                    </button>
+                  ))}
+                </div>
+                {note?.message && (
+                  <div
+                    style={{
+                      marginTop: 10,
+                      fontSize: 12.5,
+                      fontWeight: 600,
+                      color: note.coherent ? COLORS.success : "#B45309",
+                    }}
+                  >
+                    {note.message}
+                  </div>
+                )}
+              </div>
+            );
+          }
           return (
             <div key={item.id} style={{ marginBottom: 14, background: COLORS.cream, borderRadius: 12, padding: 12 }}>
               <div style={{ fontWeight: 700, fontSize: 13.5, marginBottom: 8 }}>{prompt}</div>
@@ -2233,6 +2584,49 @@ export default function BriefingClient({ student, assignment, briefing, initialS
             <p style={{ margin: 0, fontSize: 14, fontWeight: 700, color: COLORS.violet }}>
               {briefing.clearance.challengeCta || "Ask your teacher when you're ready for a Challenge"}
             </p>
+            {/* Exit card — the thing that leaves the station. Scrapping the
+                postcard removed the only artifact this lesson produced and
+                replaced it with a score, which is worth nothing on a wall.
+                This carries the one ungraded sentence, so twenty of them go
+                up and the class disagrees. */}
+            {(() => {
+              const exit = briefing.clearance?.exitCard;
+              const keepItem = (briefing.clearance?.items || []).find((it) => it.type === "keepClaim");
+              if (!exit?.enabled || !keepItem) return null;
+              const [keep = "", because = ""] = String(cl.answers[keepItem.id] || "").split("|");
+              const keepLabel = (keepItem.keepOptions || []).find((o) => o.id === keep)?.label;
+              const becauseLabel = (keepItem.becauseOptions || []).find((o) => o.id === because)?.label;
+              if (!keepLabel || !becauseLabel) return null;
+              return (
+                <div
+                  style={{
+                    margin: "16px 0",
+                    border: `2.5px dashed ${COLORS.violet}`,
+                    borderRadius: 16,
+                    background: COLORS.violetSoft,
+                    padding: 18,
+                  }}
+                >
+                  <div style={{ fontSize: 10.5, fontWeight: 800, letterSpacing: 0.9, color: COLORS.violet, textTransform: "uppercase" }}>
+                    ✂︎ {exit.tag || "Take this with you"}
+                  </div>
+                  <p style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 700, fontSize: 16, lineHeight: 1.5, margin: "10px 0" }}>
+                    “I&rsquo;d keep {keepLabel}, because without it {becauseLabel}.”
+                  </p>
+                  <div style={{ display: "flex", alignItems: "baseline", gap: 10, fontSize: 12.5, fontWeight: 700, color: COLORS.textMuted }}>
+                    <span>{student.first_name || "Agent"}</span>
+                    <span style={{ flex: 1, borderBottom: `2px dotted ${COLORS.violet}` }} />
+                    <span>
+                      {briefing.title} · {briefing.teks}
+                    </span>
+                  </div>
+                  {exit.forTeacher && (
+                    <p style={{ fontSize: 12, fontWeight: 700, color: COLORS.violet, margin: "10px 0 0" }}>{exit.forTeacher}</p>
+                  )}
+                </div>
+              );
+            })()}
+
             <HiddenBonus />
             <PostcardMissionTrail briefing={briefing} art={art} evidence={phaseState.evidence} />
             <button type="button" className="gc-btn" onClick={() => router.push("/briefings")} style={{ ...primaryBtn, marginTop: 14 }}>
@@ -2757,8 +3151,766 @@ export default function BriefingClient({ student, assignment, briefing, initialS
     );
   }
 
+  /* ------------------------------------------------------------------
+   * v3 phases — the "make them think" pass.
+   *
+   * Design rules these four share, and the reason they exist at all:
+   *  - a wrong option is never a joke; every distractor is a mistake a
+   *    third grader actually makes, and its feedback teaches rather than
+   *    just marking;
+   *  - nothing is typed (grade 3 types ~5 wpm, which eats a 20-minute
+   *    station), but the tapping has to carry a thought — options combine
+   *    into claims that can be false, rather than matching 1:1;
+   *  - some steps have NO right answer and are scored by the teacher, per
+   *    the project's own rule that the AI is a first reader, never judge.
+   * ------------------------------------------------------------------ */
+
+  function OpeningFrame() {
+    const pack = briefing.openingFrame || {};
+    const of = phaseState.openingFrame;
+    const traitOpts = pack.traits || [];
+    const needed = pack.traitsNeeded || 2;
+
+    const pickTrait = (i) => {
+      const has = of.traits.includes(i);
+      let next = has ? of.traits.filter((x) => x !== i) : [...of.traits, i];
+      if (next.length > needed) next = next.slice(-needed);
+      const wrong = next.filter((x) => !traitOpts[x].isTrait);
+      if (next.length === needed && wrong.length) {
+        setSamLine(traitOpts[wrong[0]].why || "Not that one.");
+        setSamState("helping");
+        next = next.filter((x) => traitOpts[x].isTrait);
+      }
+      const done = next.length === needed && next.every((x) => traitOpts[x].isTrait);
+      updateState({ openingFrame: { ...of, traits: next, traitsDone: done } }, { skipSave: true });
+      if (done) {
+        setSamLine(pack.traitsReveal || "");
+        setSamState("celebrating");
+      }
+    };
+
+    return (
+      <div style={card}>
+        <h2 style={{ fontFamily: "'Poppins', sans-serif", margin: "0 0 4px 0" }}>{pack.title}</h2>
+        <p style={{ fontSize: 14.5, color: COLORS.textDark, marginTop: 0 }}>{pack.setup}</p>
+
+        <p style={{ fontWeight: 800, fontFamily: "'Poppins', sans-serif", fontSize: 15, margin: "14px 0 8px" }}>
+          {pack.isItPrompt}
+        </p>
+        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+          {(pack.isItOptions || []).map((o) => (
+            <button
+              key={o.id}
+              type="button"
+              className="gc-btn"
+              onClick={() => {
+                updateState({ openingFrame: { ...of, isIt: o.id } }, { skipSave: true });
+                setSamLine(o.response || "");
+                setSamState("helping");
+              }}
+              style={{ ...pickBtn(of.isIt === o.id), textAlign: "left" }}
+            >
+              {o.text}
+            </button>
+          ))}
+        </div>
+        {of.isIt && (
+          <p style={{ fontSize: 13.5, color: COLORS.textMuted, marginTop: 10 }}>
+            {(pack.isItOptions || []).find((o) => o.id === of.isIt)?.response}
+          </p>
+        )}
+
+        {of.isIt && (
+          <>
+            <p style={{ fontWeight: 800, fontFamily: "'Poppins', sans-serif", fontSize: 15, margin: "18px 0 8px" }}>
+              {pack.traitsPrompt}
+            </p>
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              {traitOpts.map((t, i) => (
+                <button
+                  key={t.text}
+                  type="button"
+                  className="gc-btn"
+                  disabled={of.traitsDone}
+                  onClick={() => pickTrait(i)}
+                  style={{ ...pickBtn(of.traits.includes(i)), textAlign: "left" }}
+                >
+                  {t.text}
+                </button>
+              ))}
+            </div>
+            {of.traitsDone && (
+              <div
+                style={{
+                  marginTop: 12,
+                  background: COLORS.tealSoft,
+                  border: `1.5px solid ${COLORS.teal}`,
+                  borderRadius: 12,
+                  padding: 12,
+                  fontSize: 13.5,
+                }}
+              >
+                {renderBold(pack.traitsReveal)}
+              </div>
+            )}
+          </>
+        )}
+
+        {of.traitsDone && (
+          <>
+            <p style={{ fontSize: 13.5, color: COLORS.textDark, margin: "18px 0 6px" }}>{renderBold(pack.predictSetup)}</p>
+            <p style={{ fontWeight: 800, fontFamily: "'Poppins', sans-serif", fontSize: 15, margin: "0 0 8px" }}>
+              {pack.predictPrompt}
+            </p>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>
+              {(pack.predictOptions || []).map((o) => (
+                <button
+                  key={o.id}
+                  type="button"
+                  className="gc-btn"
+                  disabled={of.locked}
+                  onClick={() => updateState({ openingFrame: { ...of, prediction: o.id } }, { skipSave: true })}
+                  style={{
+                    ...pickBtn(of.prediction === o.id),
+                    flex: "1 1 190px",
+                    textAlign: "left",
+                    minHeight: 74,
+                  }}
+                >
+                  <span style={{ display: "block", fontWeight: 800, fontFamily: "'Poppins', sans-serif" }}>{o.label}</span>
+                  <span style={{ display: "block", fontSize: 12.5, color: COLORS.textMuted, marginTop: 3 }}>{o.hint}</span>
+                </button>
+              ))}
+            </div>
+            {!of.locked ? (
+              <button
+                type="button"
+                className="gc-btn"
+                disabled={busy || !of.prediction}
+                onClick={async () => {
+                  const result = await grade("openingFrame", { prediction: of.prediction, isIt: of.isIt });
+                  setSamLine(result.message || "");
+                  setSamState("helping");
+                  updateState(
+                    { openingFrame: { ...of, locked: true } },
+                    { scores: { ...scores, openingFrame: result } }
+                  );
+                }}
+                style={{ ...primaryBtn, marginTop: 14, opacity: of.prediction ? 1 : 0.5 }}
+              >
+                {pack.lockLabel || "Lock in my guess"}
+              </button>
+            ) : (
+              <>
+                <div
+                  style={{
+                    marginTop: 14,
+                    background: COLORS.cream,
+                    border: "1.5px dashed #C9CDD9",
+                    borderRadius: 12,
+                    padding: 12,
+                    fontSize: 13.5,
+                  }}
+                >
+                  {renderBold(pack.lockedNote || "Locked in. HQ isn't telling you yet — you'll find out by watching the town get built.")}
+                </div>
+                <button type="button" className="gc-btn" onClick={goNext} style={{ ...primaryBtn, marginTop: 12 }}>
+                  Continue
+                </button>
+              </>
+            )}
+          </>
+        )}
+      </div>
+    );
+  }
+
+  function StoryTeach() {
+    const pack = briefing.storyTeach || {};
+    const st = phaseState.storyTeach;
+    const beats = pack.beats || [];
+    const i = Math.min(st.beatIndex, Math.max(beats.length - 1, 0));
+    const beat = beats[i] || {};
+    const mine = st.beats[beat.id] || {};
+    const isLast = i === beats.length - 1;
+    const img = art[beat.imageKey];
+
+    const setBeat = (patch, opts) =>
+      updateState(
+        { storyTeach: { ...st, beats: { ...st.beats, [beat.id]: { ...mine, ...patch } } } },
+        opts || { skipSave: true }
+      );
+
+    const chosen = mine.choiceIndex != null ? beat.choices?.[mine.choiceIndex] : null;
+
+    return (
+      <div style={card}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 10, flexWrap: "wrap" }}>
+          <h2 style={{ fontFamily: "'Poppins', sans-serif", margin: "0 0 4px 0" }}>{beat.title}</h2>
+          <span style={{ fontSize: 11, fontWeight: 800, letterSpacing: 0.6, color: COLORS.violet, textTransform: "uppercase" }}>
+            {beat.tag || `Problem ${i + 1} of ${beats.length}`}
+          </span>
+        </div>
+
+        {/* Ledger — fills one line per beat the student has named, so the
+            three reasons visibly accumulate instead of arriving as a list. */}
+        <div style={{ background: COLORS.cream, borderRadius: 12, padding: "10px 12px", margin: "8px 0 12px" }}>
+          <div style={{ fontSize: 10.5, fontWeight: 800, letterSpacing: 0.7, color: COLORS.textMuted, textTransform: "uppercase" }}>
+            {pack.ledgerTitle || "Why people stay"}
+          </div>
+          {beats.filter((b) => st.beats[b.id]?.named).length === 0 ? (
+            <div style={{ fontSize: 12.5, color: COLORS.textMuted, marginTop: 4 }}>
+              {pack.ledgerEmpty || "Nothing yet — you'll fill this in as the town grows."}
+            </div>
+          ) : (
+            beats
+              .filter((b) => st.beats[b.id]?.named)
+              .map((b, n) => (
+                <div key={b.id} style={{ fontSize: 13, fontWeight: 700, marginTop: 5, color: COLORS.textDark }}>
+                  <span style={{ color: COLORS.teal, fontWeight: 800 }}>{n + 1}. </span>
+                  {b.ledgerLine}
+                </div>
+              ))
+          )}
+        </div>
+
+        {img && (
+          <img
+            src={img}
+            alt=""
+            style={{ width: "100%", maxWidth: 520, borderRadius: 14, display: "block", marginBottom: 10 }}
+          />
+        )}
+        <p style={{ fontSize: 14.5, lineHeight: 1.6, color: COLORS.textDark, margin: "0 0 12px" }}>
+          {renderBold(beat.situation)}
+        </p>
+
+        <p style={{ fontWeight: 800, fontFamily: "'Poppins', sans-serif", fontSize: 15, margin: "0 0 8px" }}>
+          {beat.ask || "What should they do?"}
+        </p>
+        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+          {(beat.choices || []).map((c, ci) => (
+            <button
+              key={ci}
+              type="button"
+              className="gc-btn"
+              disabled={mine.choiceIndex != null}
+              onClick={() => {
+                setBeat({ choiceIndex: ci });
+                setSamAnchor("qc");
+              }}
+              style={{ ...pickBtn(mine.choiceIndex === ci), textAlign: "left" }}
+            >
+              {c.text}
+            </button>
+          ))}
+        </div>
+
+        {chosen && (
+          <>
+            <div
+              style={{
+                marginTop: 12,
+                background: chosen.best ? COLORS.tealSoft : "#FFF4DC",
+                border: `1.5px solid ${chosen.best ? COLORS.teal : "#FFC44D"}`,
+                borderRadius: 12,
+                padding: 12,
+                fontSize: 13.5,
+              }}
+            >
+              {chosen.best ? beat.bestLead || "That's what they chose too — and here's why it worked." : <><strong>If they had: </strong>{chosen.whatIf}</>}
+            </div>
+            <div
+              style={{
+                marginTop: 8,
+                background: "#E8F9EE",
+                border: `1.5px solid ${COLORS.success}`,
+                borderRadius: 12,
+                padding: 12,
+                fontSize: 13.5,
+              }}
+            >
+              {chosen.best ? renderBold(beat.did) : <><strong>What they actually did: </strong>{renderBold(beat.did)}</>}
+            </div>
+
+            {/* The student names the reason — THIS is what writes the ledger.
+                Handing them the label is what made the old Field Brief feel
+                like a list of facts instead of an explanation. */}
+            {!mine.named ? (
+              <>
+                <p style={{ fontWeight: 800, fontFamily: "'Poppins', sans-serif", fontSize: 15, margin: "16px 0 8px" }}>
+                  {pack.namePrompt || "So — why did those families stay? Name it, and it goes in the ledger."}
+                </p>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                  {(pack.reasons || []).map((r) => (
+                    <button
+                      key={r.id}
+                      type="button"
+                      className="gc-btn"
+                      onClick={async () => {
+                        const result = await grade("storyTeach", { beatId: beat.id, named: r.id });
+                        if (result.pass) {
+                          setSamLine(result.message || "That's it.");
+                          setSamState("celebrating");
+                          setBeat({ named: r.id }, { scores: { ...scores, [`storyTeach_${beat.id}`]: result } });
+                        } else {
+                          setSamLine(result.message || beat.nameWrong || "");
+                          setSamState("helping");
+                          setToast(result.message || "");
+                        }
+                      }}
+                      style={chipStyle(false)}
+                    >
+                      {r.label}
+                    </button>
+                  ))}
+                </div>
+              </>
+            ) : (
+              <>
+                {beat.vocabTerm && (
+                  <p style={{ fontSize: 13, margin: "14px 0 0", color: COLORS.textMuted }}>
+                    <strong style={{ color: COLORS.teal, fontFamily: "'Poppins', sans-serif" }}>{beat.vocabTerm}</strong>
+                    {" · "}
+                    {beat.vocabMeaning}
+                  </p>
+                )}
+                {beat.realWorld && (
+                  <div
+                    style={{
+                      marginTop: 10,
+                      background: COLORS.violetSoft,
+                      border: `1.5px solid ${COLORS.violet}`,
+                      borderRadius: 12,
+                      padding: 12,
+                    }}
+                  >
+                    <div style={{ fontSize: 10.5, fontWeight: 800, letterSpacing: 0.7, color: COLORS.violet, textTransform: "uppercase" }}>
+                      This really happened
+                    </div>
+                    <p style={{ margin: "4px 0 0", fontSize: 13.5 }}>{beat.realWorld}</p>
+                  </div>
+                )}
+
+                {/* Near-transfer: stretches the category so a student who has
+                    been pattern-matching on one example gets caught here. */}
+                {beat.stretch && (
+                  <>
+                    <p style={{ fontWeight: 800, fontFamily: "'Poppins', sans-serif", fontSize: 15, margin: "16px 0 8px" }}>
+                      {beat.stretch.q}
+                    </p>
+                    <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                      {beat.stretch.options.map((o, si) => (
+                        <button
+                          key={si}
+                          type="button"
+                          className="gc-btn"
+                          disabled={mine.stretchIndex != null}
+                          onClick={() => setBeat({ stretchIndex: si })}
+                          style={{ ...pickBtn(mine.stretchIndex === si), textAlign: "left" }}
+                        >
+                          {o.text}
+                        </button>
+                      ))}
+                    </div>
+                    {mine.stretchIndex != null && (
+                      <div
+                        style={{
+                          marginTop: 10,
+                          background: beat.stretch.options[mine.stretchIndex].ok ? "#E8F9EE" : "#FFF4DC",
+                          border: `1.5px solid ${beat.stretch.options[mine.stretchIndex].ok ? COLORS.success : "#FFC44D"}`,
+                          borderRadius: 12,
+                          padding: 12,
+                          fontSize: 13.5,
+                        }}
+                      >
+                        {renderBold(beat.stretch.options[mine.stretchIndex].why)}
+                      </div>
+                    )}
+                  </>
+                )}
+
+                {(!beat.stretch || mine.stretchIndex != null) && (
+                  <>
+                    {beat.bridge && !isLast && (
+                      <p style={{ fontSize: 13.5, fontWeight: 700, color: COLORS.teal, marginTop: 14 }}>{beat.bridge}</p>
+                    )}
+                    {isLast && st.done && (
+                      <div
+                        style={{
+                          marginTop: 14,
+                          background: COLORS.cream,
+                          border: "1.5px dashed #C9CDD9",
+                          borderRadius: 12,
+                          padding: 12,
+                          fontSize: 13.5,
+                        }}
+                      >
+                        {renderBold(
+                          phaseState.openingFrame.prediction === pack.firstReasonId
+                            ? pack.predictionRight || ""
+                            : (pack.predictionWrong || "").replace(
+                                "{GUESS}",
+                                (briefing.openingFrame?.predictOptions || []).find(
+                                  (o) => o.id === phaseState.openingFrame.prediction
+                                )?.label || "your guess"
+                              )
+                        )}
+                      </div>
+                    )}
+                    <button
+                      type="button"
+                      className="gc-btn"
+                      onClick={() => {
+                        if (isLast) {
+                          if (!st.done) updateState({ storyTeach: { ...st, done: true } });
+                          else goNext();
+                        } else {
+                          updateState({ storyTeach: { ...st, beatIndex: i + 1 } });
+                        }
+                      }}
+                      style={{ ...primaryBtn, marginTop: 12 }}
+                    >
+                      {isLast ? (st.done ? "Continue" : pack.finalLabel || "So — which one came first?") : beat.nextLabel || "Next →"}
+                    </button>
+                  </>
+                )}
+              </>
+            )}
+          </>
+        )}
+      </div>
+    );
+  }
+
+  function Synthesis() {
+    const pack = briefing.synthesis || {};
+    const sy = phaseState.synthesis;
+    const cards = pack.orderCards || [];
+    const causes = pack.causes || [];
+    const cause = causes[Math.min(sy.causeIndex, Math.max(causes.length - 1, 0))];
+    const removal = (pack.removals || []).find((r) => r.id === sy.removed);
+
+    return (
+      <div style={card}>
+        <h2 style={{ fontFamily: "'Poppins', sans-serif", margin: "0 0 4px 0" }}>{pack.title}</h2>
+
+        {/* Part 1 — sequencing. TEKS 3.17(B) pairs "sequence and categorize"
+            with this content standard; every other phase categorizes and
+            nothing sequenced until this existed. */}
+        <p style={{ fontSize: 11, fontWeight: 800, letterSpacing: 0.6, color: COLORS.gold, textTransform: "uppercase", marginTop: 12 }}>
+          {pack.orderTag || "Part 1 · What happened when"}
+        </p>
+        <p style={{ fontSize: 13.5, color: COLORS.textMuted, margin: "4px 0 8px" }}>{pack.orderPrompt}</p>
+        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+          {cards.map((c) => {
+            const rank = sy.order.indexOf(c.id);
+            return (
+              <button
+                key={c.id}
+                type="button"
+                className="gc-btn"
+                disabled={rank > -1}
+                onClick={async () => {
+                  const result = await grade("synthesis", { step: "order", pick: c.id, soFar: sy.order });
+                  if (!result.pass) {
+                    setSamLine(result.message || "");
+                    setSamState("helping");
+                    setToast(result.message || "");
+                    return;
+                  }
+                  const next = [...sy.order, c.id];
+                  setSamLine(result.message || "");
+                  setSamState(next.length === cards.length ? "celebrating" : "helping");
+                  updateState(
+                    { synthesis: { ...sy, order: next, orderDone: next.length === cards.length } },
+                    next.length === cards.length ? { scores: { ...scores, synthesisOrder: result } } : { skipSave: true }
+                  );
+                }}
+                style={{
+                  ...pickBtn(rank > -1),
+                  textAlign: "left",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 10,
+                }}
+              >
+                <span
+                  style={{
+                    flexShrink: 0,
+                    width: 24,
+                    height: 24,
+                    borderRadius: 999,
+                    display: "grid",
+                    placeItems: "center",
+                    fontSize: 12,
+                    fontWeight: 800,
+                    background: rank > -1 ? COLORS.teal : "#E1E2EE",
+                    color: rank > -1 ? COLORS.white : COLORS.textMuted,
+                  }}
+                >
+                  {rank > -1 ? rank + 1 : "?"}
+                </span>
+                {c.text}
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Part 2 — causation. Distractors are events from the wrong end of
+            the timeline, which is the characteristic grade-3 causal error. */}
+        {sy.orderDone && cause && !sy.causesDone && (
+          <>
+            <p style={{ fontSize: 11, fontWeight: 800, letterSpacing: 0.6, color: COLORS.gold, textTransform: "uppercase", marginTop: 20 }}>
+              {pack.causeTag || "Part 2 · What caused what"}
+            </p>
+            <p style={{ fontWeight: 800, fontFamily: "'Poppins', sans-serif", fontSize: 15, margin: "6px 0 8px" }}>{cause.q}</p>
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              {cause.options.map((o, oi) => (
+                <button
+                  key={oi}
+                  type="button"
+                  className="gc-btn"
+                  onClick={() => {
+                    const answered = { ...sy.causeAnswers, [cause.id]: oi };
+                    setSamLine(o.why);
+                    setSamState(o.ok ? "celebrating" : "helping");
+                    const advance = o.ok;
+                    updateState(
+                      {
+                        synthesis: {
+                          ...sy,
+                          causeAnswers: answered,
+                          causeIndex: advance ? sy.causeIndex + 1 : sy.causeIndex,
+                          causesDone: advance && sy.causeIndex + 1 >= causes.length,
+                        },
+                      },
+                      { skipSave: true }
+                    );
+                    setToast(o.why);
+                  }}
+                  style={{ ...pickBtn(false), textAlign: "left" }}
+                >
+                  {o.text}
+                </button>
+              ))}
+            </div>
+          </>
+        )}
+
+        {/* Part 3 — interdependence. The old version asserted "take one away
+            and there's no town" in a closing sentence; here they pull one
+            out and reason about what fails, which is the actual big idea. */}
+        {sy.causesDone && (
+          <>
+            <p style={{ fontSize: 11, fontWeight: 800, letterSpacing: 0.6, color: COLORS.gold, textTransform: "uppercase", marginTop: 20 }}>
+              {pack.removeTag || "Part 3 · Take one away"}
+            </p>
+            <p style={{ fontSize: 13.5, color: COLORS.textMuted, margin: "4px 0 8px" }}>{pack.removePrompt}</p>
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              {(pack.removals || []).map((r) => (
+                <button
+                  key={r.id}
+                  type="button"
+                  className="gc-btn"
+                  disabled={sy.passed}
+                  onClick={() => updateState({ synthesis: { ...sy, removed: r.id, breakAnswer: "" } }, { skipSave: true })}
+                  style={{ ...pickBtn(sy.removed === r.id), textAlign: "left" }}
+                >
+                  {r.label}
+                </button>
+              ))}
+            </div>
+
+            {removal && (
+              <>
+                <p style={{ fontWeight: 800, fontFamily: "'Poppins', sans-serif", fontSize: 15, margin: "16px 0 8px" }}>{removal.q}</p>
+                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                  {removal.options.map((o, oi) => (
+                    <button
+                      key={oi}
+                      type="button"
+                      className="gc-btn"
+                      disabled={sy.passed}
+                      onClick={async () => {
+                        const result = await grade("synthesis", { step: "break", removed: removal.id, pick: oi });
+                        setSamLine(result.message || "");
+                        setSamState(result.pass ? "celebrating" : "helping");
+                        setToast(result.message || "");
+                        updateState(
+                          { synthesis: { ...sy, breakAnswer: String(oi), passed: Boolean(result.pass) } },
+                          result.pass ? { scores: { ...scores, synthesis: result } } : { skipSave: true }
+                        );
+                      }}
+                      style={{ ...pickBtn(sy.breakAnswer === String(oi)), textAlign: "left" }}
+                    >
+                      {o.text}
+                    </button>
+                  ))}
+                </div>
+                {sy.passed && (
+                  <>
+                    <div
+                      style={{
+                        marginTop: 12,
+                        background: "#E8F9EE",
+                        border: `1.5px solid ${COLORS.success}`,
+                        borderRadius: 12,
+                        padding: 12,
+                        fontSize: 13.5,
+                      }}
+                    >
+                      {renderBold(pack.bigIdea || "")}
+                    </div>
+                    <button type="button" className="gc-btn" onClick={goNext} style={{ ...primaryBtn, marginTop: 12 }}>
+                      Continue
+                    </button>
+                  </>
+                )}
+              </>
+            )}
+          </>
+        )}
+      </div>
+    );
+  }
+
+  function Transfer() {
+    const pack = briefing.transfer || {};
+    const tr = phaseState.transfer;
+    const spots = pack.spots || [];
+    const need = pack.tapCount || 2;
+    const img = art[pack.imageKey];
+    const ready = tr.tapped.length === need && tr.claim;
+
+    const tapSpot = (id) => {
+      if (tr.passed) return;
+      const has = tr.tapped.includes(id);
+      let next = has ? tr.tapped.filter((x) => x !== id) : [...tr.tapped, id];
+      if (next.length > need) next = next.slice(-need);
+      setSamAnchor("image");
+      updateState({ transfer: { ...tr, tapped: next, checked: false } }, { skipSave: true });
+    };
+
+    return (
+      <div style={card}>
+        <h2 style={{ fontFamily: "'Poppins', sans-serif", margin: "0 0 4px 0" }}>{pack.title}</h2>
+        <p style={{ fontSize: 14, color: COLORS.textMuted, marginTop: 0 }}>{renderBold(pack.kidPrompt || "")}</p>
+
+        {img && (
+          <div style={{ position: "relative", width: "100%", maxWidth: 560, margin: "10px 0" }}>
+            <img src={img} alt={pack.imageAlt || ""} style={{ width: "100%", borderRadius: 14, display: "block" }} />
+            {spots.map((s) => {
+              const on = tr.tapped.includes(s.id);
+              return (
+                <button
+                  key={s.id}
+                  type="button"
+                  className="gc-btn"
+                  aria-label={s.label}
+                  aria-pressed={on}
+                  disabled={tr.passed}
+                  onClick={() => tapSpot(s.id)}
+                  style={{
+                    position: "absolute",
+                    left: `${s.x}%`,
+                    top: `${s.y}%`,
+                    transform: "translate(-50%, -50%)",
+                    width: 46,
+                    height: 46,
+                    borderRadius: 999,
+                    border: `3px solid ${on ? COLORS.violet : "rgba(255,255,255,.85)"}`,
+                    background: on ? "rgba(123,93,255,.28)" : "rgba(13,27,42,.14)",
+                    padding: 0,
+                  }}
+                />
+              );
+            })}
+          </div>
+        )}
+
+        {/* Which spots were tapped, in words — the art is a sketch stand-in
+            in some packs, and a student who can't read the picture still
+            needs to know what they selected. */}
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 10 }}>
+          {spots.map((s) => (
+            <button
+              key={`chip-${s.id}`}
+              type="button"
+              className="gc-btn"
+              disabled={tr.passed}
+              onClick={() => tapSpot(s.id)}
+              style={chipStyle(tr.tapped.includes(s.id))}
+            >
+              {s.label}
+            </button>
+          ))}
+        </div>
+
+        <p style={{ fontSize: 13.5, color: COLORS.textDark, margin: "10px 0 6px" }}>{pack.claimFrame}</p>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+          {(pack.claimOptions || []).map((o) => (
+            <button
+              key={o.id}
+              type="button"
+              className="gc-btn"
+              disabled={tr.passed}
+              onClick={() => updateState({ transfer: { ...tr, claim: o.id, checked: false } }, { skipSave: true })}
+              style={chipStyle(tr.claim === o.id)}
+            >
+              {o.label}
+            </button>
+          ))}
+        </div>
+
+        {tr.results?.message && (
+          <div
+            style={{
+              marginTop: 12,
+              background: tr.passed ? "#E8F9EE" : "#FFF4DC",
+              border: `1.5px solid ${tr.passed ? COLORS.success : "#FFC44D"}`,
+              borderRadius: 12,
+              padding: 12,
+              fontSize: 13.5,
+            }}
+          >
+            {renderBold(tr.results.message)}
+          </div>
+        )}
+
+        {!tr.passed ? (
+          <button
+            type="button"
+            className="gc-btn"
+            disabled={busy || !ready}
+            onClick={async () => {
+              const result = await grade("transfer", { tapped: tr.tapped, claim: tr.claim });
+              setSamLine(result.message || "");
+              setSamState(result.pass ? "celebrating" : "helping");
+              updateState(
+                { transfer: { ...tr, checked: true, results: result, passed: Boolean(result.pass) } },
+                result.pass ? { scores: { ...scores, transfer: result } } : { skipSave: true }
+              );
+            }}
+            style={{ ...primaryBtn, marginTop: 12, opacity: ready ? 1 : 0.5 }}
+          >
+            {pack.submitLabel || "Send my proof to HQ"}
+          </button>
+        ) : (
+          <button type="button" className="gc-btn" onClick={goNext} style={{ ...primaryBtn, marginTop: 12 }}>
+            Continue
+          </button>
+        )}
+      </div>
+    );
+  }
+
   let body = null;
   if (phaseId === "intelDrop") body = <IntelDrop />;
+  else if (phaseId === "openingFrame") body = <OpeningFrame />;
+  else if (phaseId === "storyTeach") body = <StoryTeach />;
+  else if (phaseId === "synthesis") body = <Synthesis />;
+  else if (phaseId === "transfer") body = <Transfer />;
   else if (phaseId === "fieldBrief") body = <FieldBrief />;
   else if (phaseId === "reasonSort") body = <ReasonSort />;
   else if (phaseId === "opsChoice") body = <OpsChoice />;
@@ -2846,7 +3998,32 @@ export default function BriefingClient({ student, assignment, briefing, initialS
           ))}
         </div>
 
-        {body}
+        {/* Read aloud. One control per phase rather than a speaker icon on
+            every line: it reads the rendered card top to bottom, so it
+            covers the phases that predate this too, with no per-content
+            authoring. See useReadAloud above for why it's browser TTS. */}
+        {readAloud.supported && (
+          <div data-tts-skip="1" style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 10, flexWrap: "wrap" }}>
+            <button
+              type="button"
+              className="gc-btn"
+              onClick={() => (readAloud.speaking ? readAloud.stop() : readAloud.speak(collectSpeakable(bodyRef.current)))}
+              style={{
+                borderRadius: 999,
+                padding: "7px 14px",
+                fontSize: 12.5,
+                fontWeight: 700,
+                background: readAloud.speaking ? COLORS.teal : COLORS.tealSoft,
+                color: readAloud.speaking ? COLORS.white : COLORS.teal,
+                border: `1.5px solid ${COLORS.teal}`,
+              }}
+            >
+              {readAloud.speaking ? "■ Stop" : "🔊 Read this to me"}
+            </button>
+          </div>
+        )}
+
+        <div ref={bodyRef}>{body}</div>
 
         {toast && (
           <div
@@ -2925,6 +4102,18 @@ const choiceBtn = {
   fontSize: 13,
   color: COLORS.textDark,
 };
+/** Selectable variant of `choiceBtn` above, for the v3 phases where a
+ * student picks one of several full-width options and the selection has
+ * to read clearly (the existing phases spread `choiceBtn` and set the two
+ * state colors inline; this just names that pattern once). */
+function pickBtn(on) {
+  return {
+    ...choiceBtn,
+    background: on ? COLORS.violetSoft : COLORS.white,
+    borderColor: on ? COLORS.violet : "#E1E2EE",
+    fontWeight: on ? 800 : 600,
+  };
+}
 function chipStyle(on) {
   return {
     borderRadius: 999,
