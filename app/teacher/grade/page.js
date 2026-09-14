@@ -15,8 +15,8 @@ import { COLORS, PAGE_ACCENTS, PAGE_BACKGROUNDS } from "../../../lib/teacherThem
 // colors are genuine status signals, not page branding, so they're
 // untouched, same principle as every other page in this redesign. No
 // query or grading logic changed. The individual grading screen
-// (grade/[submissionId]) is a much larger page and is its own separate
-// pass, not part of this one.
+// (grade/[submissionId]) is a much larger page and got its own separate
+// pass, done the same evening — also on TeacherHUD/panelStyle/ACCENT now.
 const ACCENT = PAGE_ACCENTS["/teacher/grade"];
 const BG = PAGE_BACKGROUNDS["/teacher/grade"];
 

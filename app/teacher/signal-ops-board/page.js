@@ -9,7 +9,7 @@ import { PAGE_ACCENTS } from "../../../lib/teacherTheme";
 
 // Sept 13 — moved the teacher-facing chrome (everything except the actual
 // projected board) to the console-interior look: TeacherSidebar +
-// TeacherPageBanner swapped for TeacherHUD, using Mission Control's pink
+// TeacherPageBanner swapped for TeacherHUD, using Mission Control's copper
 // accent since Signal Ops assignments are authored from the Assign flow.
 // Deliberately NOT touched: every color below, including the meters, vote
 // UI, and the projected board itself. This page's own "Soft Crystal

@@ -9,7 +9,7 @@ import { PAGE_ACCENTS } from "../../../lib/teacherTheme";
 
 // Sept 13 — moved the teacher-facing chrome (everything except the actual
 // projected board) to the console-interior look: TeacherSidebar +
-// TeacherPageBanner swapped for TeacherHUD, using Mission Control's pink
+// TeacherPageBanner swapped for TeacherHUD, using Mission Control's copper
 // accent since Distress Call is authored from the Assign flow. Deliberately
 // NOT touched: every color inside this file, including the picker chips,
 // the explainer card, and — especially — the projected board itself. That
