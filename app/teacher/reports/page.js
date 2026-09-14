@@ -166,11 +166,20 @@ export default function ReportsPage() {
             )}
           </div>
 
-          <div className="gc-card" onClick={() => router.push("/teacher/reports/standards")} style={{ ...panelStyle(ACCENT, { padding: "18px 20px", marginBottom: 20, display: "flex", alignItems: "center", gap: 16 }) }}>
+          <div className="gc-card" onClick={() => router.push("/teacher/reports/standards")} style={{ ...panelStyle(ACCENT, { padding: "18px 20px", marginBottom: 14, display: "flex", alignItems: "center", gap: 16 }) }}>
             <div style={{ width: 44, height: 44, borderRadius: 12, background: COLORS.white, display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, color: ACCENT, fontSize: 20, flexShrink: 0 }}>📊</div>
             <div style={{ flex: 1 }}>
               <div style={{ fontWeight: 700, fontSize: 15 }}>Standards Report — All Classes</div>
               <div style={{ fontSize: 12.5, color: COLORS.textMuted }}>How every standard is going, broken out class by class — one printable page.</div>
+            </div>
+            <div style={{ color: ACCENT, fontWeight: 700, fontSize: 13 }}>View →</div>
+          </div>
+
+          <div className="gc-card" onClick={() => router.push("/teacher/reports/curriculum")} style={{ ...panelStyle(ACCENT, { padding: "18px 20px", marginBottom: 20, display: "flex", alignItems: "center", gap: 16 }) }}>
+            <div style={{ width: 44, height: 44, borderRadius: 12, background: COLORS.white, display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, color: ACCENT, fontSize: 20, flexShrink: 0 }}>🧭</div>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontWeight: 700, fontSize: 15 }}>Curriculum Analytics</div>
+              <div style={{ fontSize: 12.5, color: COLORS.textMuted }}>Every case you've assigned, combined across all classes — completion, score, and how often work gets sent back.</div>
             </div>
             <div style={{ color: ACCENT, fontWeight: 700, fontSize: 13 }}>View →</div>
           </div>
