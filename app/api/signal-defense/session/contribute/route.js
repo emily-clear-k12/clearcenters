@@ -1,3 +1,4 @@
+import { randomUUID } from "crypto";
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "../../../../../lib/supabaseAdmin";
 import {
@@ -7,18 +8,14 @@ import {
   fetchParticipants,
   serializeSession,
 } from "../../../../../lib/signal-ops/sessionHelpers";
-import {
-  advanceLiveSession,
-  maybeOpenVoteAfterContribute,
-} from "../../../../../lib/signal-ops/sessionSim";
-import { SALVAGE_PER_CORRECT, POWER_PER_CORRECT } from "../../../../../lib/signal-ops/gameConfig";
 
-// Correct-answer contribution only. Wrong answers must never call this.
-// Personal blast stays client-side. V1.5 also restores Power against drain
-// and may open a class upgrade vote when Salvage crosses the threshold.
+// Correct-answer contribution only. Wrong answers never call this route.
+// The database function is atomic + idempotent so simultaneous classroom
+// answers cannot overwrite one another.
 export async function POST(request) {
   const body = await request.json().catch(() => ({}));
   const { assignmentId } = body || {};
+  const eventId = String(body?.eventId || randomUUID());
 
   if (!assignmentId) {
     return NextResponse.json({ error: "Missing assignmentId." }, { status: 400 });
@@ -41,27 +38,15 @@ export async function POST(request) {
   if (session.status !== "live") {
     return NextResponse.json({ error: "Session is not live yet." }, { status: 409 });
   }
-  if (session.outcome && session.outcome !== "ongoing") {
-    return NextResponse.json({ error: "Session already wrapped." }, { status: 409 });
+
+  const { data: advanced, error: tickError } = await supabaseAdmin.rpc(
+    "signal_ops_advance_session",
+    { p_session_id: session.id }
+  );
+  if (!tickError && advanced) {
+    session = Array.isArray(advanced) ? advanced[0] : advanced;
   }
 
-  const { data: participant } = await supabaseAdmin
-    .from("signal_ops_participants")
-    .select("id, correct_count")
-    .eq("session_id", session.id)
-    .eq("student_id", student.id)
-    .maybeSingle();
-
-  if (!participant) {
-    return NextResponse.json({ error: "Join the session first." }, { status: 403 });
-  }
-
-  // Tick first so drain/vote/wave stay authoritative before the bump.
-  try {
-    session = await advanceLiveSession(session);
-  } catch (err) {
-    console.error("Signal Ops pre-contribute tick failed:", err);
-  }
   if (!session || session.status !== "live" || (session.outcome && session.outcome !== "ongoing")) {
     const participants = session ? await fetchParticipants(session.id) : [];
     return NextResponse.json(
@@ -72,41 +57,23 @@ export async function POST(request) {
     );
   }
 
-  const nextSalvage = session.salvage + SALVAGE_PER_CORRECT;
-  const nextPower = Math.min(100, session.power + POWER_PER_CORRECT);
-  const nextTotal = session.total_correct + 1;
-
-  const { data: updated, error } = await supabaseAdmin
-    .from("signal_ops_sessions")
-    .update({
-      salvage: nextSalvage,
-      power: nextPower,
-      total_correct: nextTotal,
-    })
-    .eq("id", session.id)
-    .eq("status", "live")
-    .select("*")
-    .single();
+  const { data: updated, error } = await supabaseAdmin.rpc("signal_ops_submit_event", {
+    p_session_id: session.id,
+    p_student_id: student.id,
+    p_event_id: eventId,
+    p_event_type: "correct",
+    p_target: null,
+  });
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    const message = String(error.message || "Unable to send class power.");
+    const status = message.includes("student_not_in_session") ? 403 : 500;
+    return NextResponse.json({ error: message }, { status });
   }
 
-  await supabaseAdmin
-    .from("signal_ops_participants")
-    .update({
-      correct_count: (participant.correct_count || 0) + 1,
-      last_seen_at: new Date().toISOString(),
-    })
-    .eq("id", participant.id);
-
-  let finalSession = updated;
-  try {
-    finalSession = await maybeOpenVoteAfterContribute(updated);
-  } catch (err) {
-    console.error("Signal Ops vote-open failed:", err);
-  }
-
+  const finalSession = Array.isArray(updated) ? updated[0] : updated;
   const participants = await fetchParticipants(session.id);
-  return NextResponse.json(serializeSession(finalSession, participants, { myStudentId: student.id }));
+  return NextResponse.json(
+    serializeSession(finalSession || session, participants, { myStudentId: student.id })
+  );
 }
