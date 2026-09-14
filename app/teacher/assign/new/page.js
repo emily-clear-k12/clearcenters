@@ -326,7 +326,18 @@ function NewAssignmentContent() {
         }}
       />
 
-      <div style={{ position: "relative", zIndex: 1 }}>
+      {/* Sept 14 — this wrapper and the content wrapper below both had
+          zIndex: 1. Equal z-index means CSS falls back to DOM order to break
+          the tie, so the content div (later in the DOM) was painting over
+          this one wherever they overlapped — including over the HUD's own
+          open dropdown, which is what showed up as page-heading text
+          ghosting through the Mission Control/Observatory/Support Deck
+          menus on this page specifically (every other console page renders
+          TeacherHUD as a plain sibling, not inside a competing z-indexed
+          wrapper, so they never had this). Bumping this one above the
+          content wrapper fixes it without touching the content wrapper's
+          own stacking (still above the zIndex:0 background art). */}
+      <div style={{ position: "relative", zIndex: 2 }}>
         <TeacherHUD title="Challenge Library" subtitle="Mission Control — build a new assignment" accent={ACCENT} teacherEmail={teacherEmail} />
       </div>
 
