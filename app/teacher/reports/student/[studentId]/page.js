@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from "react";
 import { useRouter, useParams } from "next/navigation";
-import { ChevronLeft, Printer } from "lucide-react";
+import { ChevronLeft, Printer, Link2, Check } from "lucide-react";
 import { supabase } from "../../../../../lib/supabaseClient";
 import TeacherHUD from "../../../../../components/TeacherHUD";
 import { COLORS, PAGE_ACCENTS, PAGE_BACKGROUNDS } from "../../../../../lib/teacherTheme";
@@ -116,6 +116,8 @@ export default function StudentReportPage() {
   const [teacherEmail, setTeacherEmail] = useState("");
   const [notFound, setNotFound] = useState(false);
   const [report, setReport] = useState(null);
+  const [shareStatus, setShareStatus] = useState("idle"); // idle | loading | copied | error
+  const [shareError, setShareError] = useState("");
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data, error }) => {
@@ -256,6 +258,37 @@ export default function StudentReportPage() {
     setLoading(false);
   }, [studentId]);
 
+  // Copies a public, no-login-required link to this one student's report
+  // (app/report/[token]) — for a parent or admin. Get-or-create: the same
+  // link is returned every time until "Regenerate" is used, so sharing it
+  // twice doesn't create two different URLs.
+  const handleCopyShareLink = useCallback(async (regenerate) => {
+    setShareStatus("loading");
+    setShareError("");
+    try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const accessToken = sessionData?.session?.access_token;
+      if (!accessToken) throw new Error("Your session expired — refresh the page and try again.");
+
+      const res = await fetch("/api/teacher/reports/share-link", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ studentId, accessToken, regenerate: !!regenerate }),
+      });
+      const json = await res.json();
+      if (!res.ok || !json.success) throw new Error(json.error || "Couldn't create a share link.");
+
+      const url = `${window.location.origin}/report/${json.token}`;
+      await navigator.clipboard.writeText(url);
+      setShareStatus("copied");
+      setTimeout(() => setShareStatus("idle"), 2200);
+    } catch (err) {
+      setShareError(err.message || "Couldn't create a share link.");
+      setShareStatus("error");
+      setTimeout(() => setShareStatus("idle"), 3200);
+    }
+  }, [studentId]);
+
   if (loadingAuth || loading) {
     return <div style={{ minHeight: "100vh", background: COLORS.canvas, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Inter', sans-serif", color: COLORS.textMuted }}>Loading...</div>;
   }
@@ -308,14 +341,41 @@ export default function StudentReportPage() {
           <button onClick={() => router.push(`/teacher/reports/${report.classId}`)} className="gc-btn" style={{ display: "flex", alignItems: "center", gap: 6, background: "none", color: COLORS.textMuted, fontWeight: 700, fontSize: 13.5 }}>
             <ChevronLeft size={18} /> Back to {report.className}
           </button>
-          <button onClick={() => window.print()} className="gc-btn" style={{ display: "flex", alignItems: "center", gap: 8, background: ACCENT, color: COLORS.white, borderRadius: 999, padding: "10px 20px", fontWeight: 700, fontSize: 13.5 }}>
-            <Printer size={16} /> Print / Save as PDF
-          </button>
+          <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 3 }}>
+              <button
+                onClick={() => handleCopyShareLink(false)}
+                disabled={shareStatus === "loading"}
+                className="gc-btn"
+                style={{
+                  display: "flex", alignItems: "center", gap: 8,
+                  background: shareStatus === "copied" ? COLORS.success : COLORS.white,
+                  color: shareStatus === "copied" ? COLORS.white : ACCENT,
+                  border: `2px solid ${shareStatus === "copied" ? COLORS.success : ACCENT}`,
+                  borderRadius: 999, padding: "9px 18px", fontWeight: 700, fontSize: 13.5,
+                  opacity: shareStatus === "loading" ? 0.7 : 1,
+                }}
+              >
+                {shareStatus === "copied" ? <Check size={16} /> : <Link2 size={16} />}
+                {shareStatus === "loading" ? "Getting link…" : shareStatus === "copied" ? "Link Copied!" : "Copy Share Link"}
+              </button>
+              {shareStatus === "error" && <div style={{ fontSize: 11, color: COLORS.danger, maxWidth: 220, textAlign: "right" }}>{shareError}</div>}
+              {(shareStatus === "idle" || shareStatus === "copied") && (
+                <button onClick={() => handleCopyShareLink(true)} className="gc-btn" style={{ background: "none", color: COLORS.textMuted, fontSize: 10.5, fontWeight: 600, textDecoration: "underline", padding: 0 }}>
+                  Reset link (invalidates the old one)
+                </button>
+              )}
+            </div>
+            <button onClick={() => window.print()} className="gc-btn" style={{ display: "flex", alignItems: "center", gap: 8, background: ACCENT, color: COLORS.white, borderRadius: 999, padding: "10px 20px", fontWeight: 700, fontSize: 13.5 }}>
+              <Printer size={16} /> Print / Save as PDF
+            </button>
+          </div>
         </div>
 
         <div className="report-card" style={{ maxWidth: 800, margin: "0 auto", background: COLORS.white, borderRadius: 20, padding: 36, boxShadow: "0 8px 28px rgba(80,60,150,.16)" }}>
           <div style={{ marginBottom: 24 }}>
-            <div style={{ fontSize: 12, fontWeight: 700, color: ACCENT, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 6 }}>ClearCenters Student Report</div>
+            <img src="/clearcenters_logo.png" alt="ClearCenters" style={{ height: 26, marginBottom: 10, display: "block" }} />
+            <div style={{ fontSize: 12, fontWeight: 700, color: ACCENT, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 6 }}>Student Report</div>
             <h1 style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 700, fontSize: 26, margin: "0 0 4px 0" }}>{report.studentName}</h1>
             <div style={{ fontSize: 12.5, color: COLORS.textMuted }}>{report.className} · Generated {generatedDate}{teacherEmail ? ` · ${teacherEmail}` : ""}</div>
           </div>
