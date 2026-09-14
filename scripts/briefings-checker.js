@@ -60,8 +60,8 @@ const TEKS_VERBS = new Set([
 const LEADING_FILLERS = new Set(["that", "the", "a", "an", "their", "its"]);
 
 // Pull the comma-separated list out of an "as X, Y, and Z" / "including
-// X, Y, and Z" phrase into individual items; if there's no such list,
-// return the phrase whole.
+// X, Y, and Z" / "for X, Y, and Z" phrase into individual items; if
+// there's no such list, return the phrase whole.
 function splitEmbeddedList(phrase) {
   const m = phrase.match(/\b(?:as|including|for)\s+(.+)$/i);
   const listText = m ? m[1] : phrase;
@@ -122,6 +122,8 @@ function extractTeksSubParts(teksText) {
 
 // Pull every kid-facing string out of a lesson object, tagged by which
 // phase it came from, so coverage + readability can both walk one list.
+// Walks EVERY phase key present on the lesson object (not just the ones
+// listed in `phases`) so a mechanic used anywhere still gets scanned.
 function collectTextBlocks(lesson) {
   const blocks = [];
   const push = (phase, field, value) => {
@@ -143,7 +145,14 @@ function collectTextBlocks(lesson) {
   };
 
   if (lesson.samLines) walkStrings("samLines", "samLines", lesson.samLines);
-  for (const phaseKey of lesson.phases || []) {
+  const phaseKeys = new Set(lesson.phases || []);
+  // Defensive: also scan any of these known phase-content keys the lesson
+  // carries even if `phases` is missing/stale, so coverage checking never
+  // silently misses real content.
+  for (const key of ["intelDrop", "fieldBrief", "quickReview", "reasonSort", "matchPairs", "sequenceIt", "labelPicture", "trueFalseReason", "opsChoice", "evidenceDrop", "clearance"]) {
+    phaseKeys.add(key);
+  }
+  for (const phaseKey of phaseKeys) {
     if (lesson[phaseKey]) walkStrings(phaseKey, phaseKey, lesson[phaseKey]);
   }
   return blocks;
@@ -154,10 +163,11 @@ function checkTeksCoverage(lesson) {
   const blocks = collectTextBlocks(lesson);
 
   // Which phase types count as "taught," "practiced," "tested" — matches
-  // both the v1 phase names already shipping and the v2 phase types
-  // locked in ssFullLesson.schema.js / scienceLightReview.schema.js.
+  // both the v1 phase names already shipping and the v2 mechanic ids
+  // locked in mechanics.schema.js (used directly as phase ids at runtime
+  // — see the runtime note in ssFullLesson.schema.js).
   const TEACH_PHASES = ["fieldBrief", "quickReview", "intelDrop"];
-  const PRACTICE_PHASES = ["reasonSort", "opsChoice", "evidenceDrop", "practice"];
+  const PRACTICE_PHASES = ["reasonSort", "matchPairs", "sequenceIt", "labelPicture", "trueFalseReason", "opsChoice", "evidenceDrop"];
   const TEST_PHASES = ["clearance"];
 
   const STOPWORDS = new Set(["a", "an", "the", "of", "their", "its", "that", "and", "have", "has", "is", "are", "take", "takes", "for"]);
@@ -231,7 +241,7 @@ function isProseField(fieldPath) {
 }
 
 function checkReadability(lesson) {
-  const vocabTerms = ((lesson.fieldBrief && lesson.fieldBrief.vocab) || []).map((v) =>
+  const vocabTerms = ((lesson.fieldBrief && lesson.fieldBrief.vocab) || (lesson.quickReview && lesson.quickReview.vocab) || []).map((v) =>
     (v.term || "").toLowerCase()
   );
   const blocks = collectTextBlocks(lesson);

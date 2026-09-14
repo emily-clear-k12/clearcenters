@@ -19,17 +19,43 @@ const COLORS = {
   success: "#22C55E",
 };
 
-const PHASES = [
-  { id: "intelDrop", label: "Intel Drop" },
-  { id: "fieldBrief", label: "Field Brief" },
-  { id: "reasonSort", label: "Reason Sort" },
-  { id: "opsChoice", label: "Ops Choice" },
-  { id: "evidenceDrop", label: "Evidence Drop" },
-  { id: "clearance", label: "Clearance" },
-];
+// Sept 14, 2026 — Briefings v2 foundation. This used to be a single fixed
+// 6-phase array shared by every lesson (SS AND Science), which is exactly
+// why Science ended up a copy of the SS shape instead of a real review —
+// the player itself couldn't render anything else. PHASES is now computed
+// per-briefing inside BriefingClient() from `briefing.phases` (every
+// public pack already carries that array); DEFAULT_PHASE_IDS below is
+// only a defensive fallback for a pack that somehow omits it.
+const DEFAULT_PHASE_IDS = ["intelDrop", "fieldBrief", "reasonSort", "opsChoice", "evidenceDrop", "clearance"];
+
+const PHASE_LABELS = {
+  intelDrop: "Intel Drop",
+  fieldBrief: "Field Brief",
+  reasonSort: "Reason Sort",
+  opsChoice: "Ops Choice",
+  evidenceDrop: "Evidence Drop",
+  clearance: "Clearance",
+  // v2 additions — see lib/briefings/schema/mechanics.schema.js for the
+  // data contract each of these reads, and quickReview for the Science
+  // light-review shape's shorter recap phase (scienceLightReview.schema.js).
+  quickReview: "Quick Review",
+  matchPairs: "Match Pairs",
+  sequenceIt: "Sequence It",
+  labelPicture: "Label the Picture",
+  trueFalseReason: "True or False",
+};
 
 /** Phases that imply Reason Sort was already past (pre-P2 saves). */
 const PHASES_AFTER_REASON_SORT = ["opsChoice", "evidenceDrop", "clearance"];
+
+/** Every practice-mechanic phase id a lesson's `phases` array might use —
+ * see lib/briefings/schema/mechanics.schema.js's PRACTICE_MECHANICS
+ * (duplicated here, not imported, to keep this client self-contained the
+ * way the rest of this file already is). Used to resolve the Clearance
+ * "sort"/"practice1"/"practice2" progress gates generically instead of
+ * hardcoding "reasonSort" — that hardcoding is exactly what would have
+ * silently broken SS-3-2B's gate once it moved to a different mechanic. */
+const MECHANIC_PHASE_IDS = ["reasonSort", "matchPairs", "sequenceIt", "labelPicture", "trueFalseReason"];
 
 const SAM_ANCHORS = {
   home: { right: 18, bottom: 18 },
@@ -134,7 +160,58 @@ function migratePhaseState(saved) {
       graded: Boolean(clearance.graded),
       results: clearance.results || null,
     },
+    // v2 mechanic state slices. Unconditionally present (like the ones
+    // above) so a lesson can use any subset without extra migration code;
+    // a lesson that doesn't use a given mechanic just never touches it.
+    quickReview: {
+      quickCheckAnswer: s.quickReview?.quickCheckAnswer || "",
+      graded: Boolean(s.quickReview?.graded),
+      results: s.quickReview?.results || null,
+    },
+    matchPairs: {
+      selectedLeftId: s.matchPairs?.selectedLeftId || "",
+      matches: s.matchPairs?.matches || {},
+      checked: Boolean(s.matchPairs?.checked),
+      results: s.matchPairs?.results || null,
+      passed: Boolean(s.matchPairs?.passed),
+    },
+    sequenceIt: {
+      order: s.sequenceIt?.order || null, // null = not yet shuffled this session
+      checked: Boolean(s.sequenceIt?.checked),
+      results: s.sequenceIt?.results || null,
+      passed: Boolean(s.sequenceIt?.passed),
+    },
+    labelPicture: {
+      selectedWordId: s.labelPicture?.selectedWordId || "",
+      placements: s.labelPicture?.placements || {},
+      checked: Boolean(s.labelPicture?.checked),
+      results: s.labelPicture?.results || null,
+      passed: Boolean(s.labelPicture?.passed),
+    },
+    trueFalseReason: {
+      answers: s.trueFalseReason?.answers || {},
+      checked: Boolean(s.trueFalseReason?.checked),
+      results: s.trueFalseReason?.results || null,
+      passed: Boolean(s.trueFalseReason?.passed),
+    },
   };
+}
+
+/** Deterministic-enough shuffle seeded off a stable id string, so a
+ * reload doesn't keep re-shuffling a sequence the student already
+ * partially ordered (see SequenceIt below, which persists `order` once
+ * generated rather than recomputing every render). */
+function shuffleWithSeed(arr, seed) {
+  const a = [...arr];
+  let s = String(seed || "seed")
+    .split("")
+    .reduce((acc, ch) => (acc * 31 + ch.charCodeAt(0)) % 233280, 7);
+  for (let i = a.length - 1; i > 0; i--) {
+    s = (s * 9301 + 49297) % 233280;
+    const j = Math.floor((s / 233280) * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
 }
 
 
@@ -252,6 +329,11 @@ export default function BriefingClient({ student, assignment, briefing, initialS
   const router = useRouter();
   const art = briefing.art || {};
   const saved = initialSubmission?.phase_state || {};
+  // Per-briefing phase list — see the DEFAULT_PHASE_IDS comment above.
+  const PHASES = (briefing.phases && briefing.phases.length ? briefing.phases : DEFAULT_PHASE_IDS).map((id) => ({
+    id,
+    label: PHASE_LABELS[id] || id,
+  }));
 
   const [phaseIndex, setPhaseIndex] = useState(() => {
     const idx = PHASES.findIndex((p) => p.id === saved.currentPhase);
@@ -265,6 +347,10 @@ export default function BriefingClient({ student, assignment, briefing, initialS
   const [samLine, setSamLine] = useState("");
   const [samState, setSamState] = useState("idle");
   const [samAnchor, setSamAnchor] = useState("home");
+  // v2 engagement — hidden, ungraded bonus revealed once after Clearance.
+  // Local-only (not persisted): it's "just fun," never gates anything, and
+  // re-showing the reveal button on a later visit is fine.
+  const [bonusRevealed, setBonusRevealed] = useState(false);
 
   const phaseId = PHASES[phaseIndex].id;
   const samLines = briefing.samLines || {};
@@ -305,8 +391,9 @@ export default function BriefingClient({ student, assignment, briefing, initialS
     setSamLine(samLines[phaseId] || "");
     setSamState(phaseId === "clearance" && status === "cleared" ? "celebrating" : "helping");
     if (phaseId === "intelDrop") setSamAnchor("image");
-    else if (phaseId === "fieldBrief") setSamAnchor("qc");
-    else if (phaseId === "reasonSort") setSamAnchor("sort");
+    else if (phaseId === "fieldBrief" || phaseId === "quickReview") setSamAnchor("qc");
+    else if (phaseId === "reasonSort" || phaseId === "matchPairs" || phaseId === "sequenceIt" || phaseId === "labelPicture" || phaseId === "trueFalseReason")
+      setSamAnchor("sort");
     else if (phaseId === "opsChoice") setSamAnchor("chips");
     else if (phaseId === "evidenceDrop") setSamAnchor("postcard");
     else if (phaseId === "clearance") setSamAnchor(status === "cleared" ? "stamp" : "home");
@@ -1895,11 +1982,20 @@ export default function BriefingClient({ student, assignment, briefing, initialS
       { id: "sort", label: "Reason Sort complete" },
       { id: "postcard", label: "Postcard transmitted to HQ" },
     ];
+    // Which mechanic(s) this lesson actually uses for practice — SS lessons
+    // have exactly one (today: reasonSort or matchPairs); Science's
+    // light-review shape has two back to back.
+    const mechanicPhaseIds = (briefing.phases || []).filter((id) => MECHANIC_PHASE_IDS.includes(id));
     const gateDone = {
       claim: Boolean(phaseState.intel.revealed),
       field: Boolean(phaseState.field.graded),
-      sort: Boolean(phaseState.reasonSort?.passed),
+      // Legacy SS gate id — resolves to whichever mechanic the lesson uses.
+      sort: mechanicPhaseIds[0] ? Boolean(phaseState[mechanicPhaseIds[0]]?.passed) : false,
       postcard: phaseState.evidence.score != null,
+      // Science light-review gate ids.
+      review: Boolean(phaseState.quickReview?.graded),
+      practice1: mechanicPhaseIds[0] ? Boolean(phaseState[mechanicPhaseIds[0]]?.passed) : false,
+      practice2: mechanicPhaseIds[1] ? Boolean(phaseState[mechanicPhaseIds[1]]?.passed) : false,
     };
     const progressGates = gateDefs.map((g) => ({ ...g, done: Boolean(gateDone[g.id]) }));
     const gatesOk = progressGates.every((g) => g.done);
@@ -2137,11 +2233,525 @@ export default function BriefingClient({ student, assignment, briefing, initialS
             <p style={{ margin: 0, fontSize: 14, fontWeight: 700, color: COLORS.violet }}>
               {briefing.clearance.challengeCta || "Ask your teacher when you're ready for a Challenge"}
             </p>
+            <HiddenBonus />
             <PostcardMissionTrail briefing={briefing} art={art} evidence={phaseState.evidence} />
             <button type="button" className="gc-btn" onClick={() => router.push("/briefings")} style={{ ...primaryBtn, marginTop: 14 }}>
               Back to My Briefings
             </button>
           </div>
+        )}
+      </div>
+    );
+  }
+
+  // --- v2 mechanics -------------------------------------------------
+  // Generic "go to whatever comes next" helper — the four mechanics below
+  // (and QuickReview) don't hardcode a target phase like ReasonSort/
+  // OpsChoice/etc. do, because they can sit anywhere in a lesson's phase
+  // list (Science's light-review shape runs two of them back to back).
+  function goNext() {
+    goTo(phaseIndex + 1);
+  }
+
+  // Shown only on the Clearance "cleared" screen (see the JSX above this
+  // block). A silly, ungraded S.A.M. line — the "worth finishing" payoff
+  // from the Sept 14 engagement discussion. Explicitly NOT a confetti/
+  // celebration burst on every correct tap, which Emily didn't like.
+  function HiddenBonus() {
+    const bonus = briefing.engagement?.hiddenBonus;
+    if (!bonus?.enabled || !bonus?.samLine) return null;
+    if (!bonusRevealed) {
+      return (
+        <button
+          type="button"
+          className="gc-btn"
+          onClick={() => setBonusRevealed(true)}
+          style={{ ...ghostBtn, marginTop: 10 }}
+        >
+          🎁 One more thing from S.A.M....
+        </button>
+      );
+    }
+    return (
+      <div
+        style={{
+          marginTop: 10,
+          borderRadius: 12,
+          border: `1.5px dashed ${COLORS.gold}`,
+          background: "#FFFBEF",
+          padding: "10px 12px",
+          fontSize: 13,
+          color: COLORS.textDark,
+          maxWidth: "72%",
+        }}
+      >
+        {bonus.samLine}
+      </div>
+    );
+  }
+
+  function QuickReview() {
+    const pack = briefing.quickReview || {};
+    const qr = phaseState.quickReview;
+    const qc = pack.quickCheck || null;
+
+    return (
+      <div style={card}>
+        <h2 style={{ fontFamily: "'Poppins', sans-serif", margin: "0 0 4px 0" }}>{pack.title || "Quick Review"}</h2>
+        {pack.recapBody && (
+          <p style={{ fontSize: 14, color: COLORS.textDark, lineHeight: 1.5 }}>{renderBold(pack.recapBody)}</p>
+        )}
+        {Array.isArray(pack.vocab) && pack.vocab.length > 0 && (
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 8, margin: "10px 0 16px" }}>
+            {pack.vocab.map((v) => (
+              <span
+                key={v.term}
+                title={v.meaning}
+                style={{ ...chipStyle(false), display: "inline-flex", alignItems: "center", gap: 4 }}
+              >
+                {v.icon ? <span aria-hidden="true">{v.icon}</span> : null}
+                {v.term}
+              </span>
+            ))}
+          </div>
+        )}
+        {qc ? (
+          <>
+            <p style={{ fontSize: 13.5, fontWeight: 700, color: COLORS.textDark }}>{qc.prompt}</p>
+            {(qc.choices || []).map((c) => {
+              const picked = qr.quickCheckAnswer === c.id;
+              const graded = qr.graded;
+              const isCorrect = graded && qr.results?.correct === c.id;
+              const isWrongPick = graded && picked && !isCorrect;
+              return (
+                <button
+                  key={c.id}
+                  type="button"
+                  className="gc-btn"
+                  disabled={graded}
+                  onClick={() => updateState({ quickReview: { ...qr, quickCheckAnswer: c.id } }, { skipSave: true })}
+                  style={{
+                    ...choiceBtn,
+                    border: `2px solid ${isCorrect ? COLORS.success : isWrongPick ? "#EF4444" : picked ? COLORS.violet : "#E1E2EE"}`,
+                    background: picked ? COLORS.violetSoft : COLORS.white,
+                  }}
+                >
+                  {c.text}
+                </button>
+              );
+            })}
+            {!qr.graded ? (
+              <button
+                type="button"
+                className="gc-btn"
+                disabled={busy || !qr.quickCheckAnswer}
+                onClick={async () => {
+                  const result = await grade("quickReview", { answer: qr.quickCheckAnswer });
+                  setSamLine(result.message || "");
+                  setSamState(result.correct === qr.quickCheckAnswer ? "celebrating" : "helping");
+                  updateState({ quickReview: { ...qr, graded: true, results: result } });
+                }}
+                style={primaryBtn}
+              >
+                Check
+              </button>
+            ) : (
+              <button type="button" className="gc-btn" onClick={goNext} style={primaryBtn}>
+                Continue
+              </button>
+            )}
+          </>
+        ) : (
+          <button type="button" className="gc-btn" onClick={goNext} style={primaryBtn}>
+            Continue
+          </button>
+        )}
+      </div>
+    );
+  }
+
+  function MatchPairs() {
+    const pack = briefing.matchPairs || {};
+    const mp = phaseState.matchPairs;
+    const leftItems = pack.leftItems || [];
+    const rightItems = pack.rightItems || [];
+    const matches = mp.matches || {};
+    const usedRightIds = new Set(Object.values(matches));
+    const results = mp.results?.results || null;
+    const allMatched = leftItems.length > 0 && leftItems.every((it) => matches[it.id]);
+
+    function selectLeft(id) {
+      if (mp.passed) return;
+      updateState({ matchPairs: { ...mp, selectedLeftId: id } }, { skipSave: true });
+    }
+    function matchToRight(rightId) {
+      if (mp.passed || !mp.selectedLeftId || usedRightIds.has(rightId)) return;
+      updateState(
+        {
+          matchPairs: { ...mp, matches: { ...matches, [mp.selectedLeftId]: rightId }, selectedLeftId: "", checked: false, results: null },
+        },
+        { skipSave: true }
+      );
+    }
+    function unmatch(leftId) {
+      if (mp.passed || results?.[leftId]?.correct) return;
+      const next = { ...matches };
+      delete next[leftId];
+      updateState({ matchPairs: { ...mp, matches: next, checked: false } }, { skipSave: true });
+    }
+
+    return (
+      <div style={card}>
+        <h2 style={{ fontFamily: "'Poppins', sans-serif", margin: "0 0 4px 0" }}>{pack.title || "Match Pairs"}</h2>
+        <p style={{ fontSize: 14, color: COLORS.textMuted, marginTop: 0 }}>{pack.kidPrompt}</p>
+        <p style={{ fontSize: 12.5, color: COLORS.textMuted, marginTop: -4 }}>
+          Tip: tap one on the left, then tap its match on the right. Tap a matched pair to undo it.
+        </p>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginTop: 12 }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            {leftItems.map((it) => {
+              const matchedTo = matches[it.id];
+              const mark = results?.[it.id];
+              const border = mark == null ? (mp.selectedLeftId === it.id ? COLORS.violet : "#E1E2EE") : mark.correct ? COLORS.success : "#EF4444";
+              return (
+                <button
+                  key={it.id}
+                  type="button"
+                  className="gc-btn"
+                  onClick={() => (matchedTo ? unmatch(it.id) : selectLeft(it.id))}
+                  style={{
+                    ...choiceBtn,
+                    border: `2px solid ${border}`,
+                    background: matchedTo ? COLORS.violetSoft : mp.selectedLeftId === it.id ? COLORS.violetSoft : COLORS.white,
+                  }}
+                >
+                  {it.icon ? <span aria-hidden="true" style={{ marginRight: 6 }}>{it.icon}</span> : null}
+                  {it.text}
+                  {matchedTo ? ` → ${rightItems.find((r) => r.id === matchedTo)?.text || "?"}` : ""}
+                </button>
+              );
+            })}
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            {rightItems.map((it) => {
+              const taken = usedRightIds.has(it.id);
+              return (
+                <button
+                  key={it.id}
+                  type="button"
+                  className="gc-btn"
+                  disabled={taken || !mp.selectedLeftId || mp.passed}
+                  onClick={() => matchToRight(it.id)}
+                  style={{ ...choiceBtn, border: "2px solid #E1E2EE", opacity: taken ? 0.5 : 1 }}
+                >
+                  {it.icon ? <span aria-hidden="true" style={{ marginRight: 6 }}>{it.icon}</span> : null}
+                  {it.text}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+        {!mp.passed ? (
+          <button
+            type="button"
+            className="gc-btn"
+            disabled={busy || !allMatched}
+            onClick={async () => {
+              const result = await grade("matchPairs", { matches });
+              setToast(result.message || "");
+              if (result.pass) {
+                setSamLine(pack.helpPass || result.message || "Nice matching!");
+                setSamState("celebrating");
+                updateState({ matchPairs: { ...mp, checked: true, results: result, passed: true } }, { scores: { ...scores, matchPairs: result } });
+              } else {
+                setSamLine(pack.helpWrong || result.message || "Try another match.");
+                setSamState("helping");
+                updateState({ matchPairs: { ...mp, checked: true, results: result } }, { skipSave: true });
+              }
+            }}
+            style={{ ...primaryBtn, opacity: allMatched ? 1 : 0.6 }}
+          >
+            Check matches
+          </button>
+        ) : (
+          <button type="button" className="gc-btn" onClick={goNext} style={primaryBtn}>
+            Continue
+          </button>
+        )}
+      </div>
+    );
+  }
+
+  function SequenceIt() {
+    const pack = briefing.sequenceIt || {};
+    const si = phaseState.sequenceIt;
+    const steps = pack.steps || [];
+    const order = si.order || shuffleWithSeed(steps.map((s) => s.id), briefing.id + "-sequenceIt");
+    const results = si.results?.results || null;
+
+    function move(id, dir) {
+      if (si.passed) return;
+      const idx = order.indexOf(id);
+      const swapWith = idx + dir;
+      if (swapWith < 0 || swapWith >= order.length) return;
+      const next = [...order];
+      [next[idx], next[swapWith]] = [next[swapWith], next[idx]];
+      updateState({ sequenceIt: { ...si, order: next, checked: false, results: null } }, { skipSave: true });
+    }
+
+    return (
+      <div style={card}>
+        <h2 style={{ fontFamily: "'Poppins', sans-serif", margin: "0 0 4px 0" }}>{pack.title || "Sequence It"}</h2>
+        <p style={{ fontSize: 14, color: COLORS.textMuted, marginTop: 0 }}>{pack.kidPrompt}</p>
+        <p style={{ fontSize: 12.5, color: COLORS.textMuted, marginTop: -4 }}>Tip: use the arrows to put the steps in order.</p>
+        <div style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: 12 }}>
+          {order.map((id, i) => {
+            const step = steps.find((s) => s.id === id);
+            const mark = results?.[id];
+            const border = mark == null ? "#E1E2EE" : mark.correct ? COLORS.success : "#EF4444";
+            return (
+              <div
+                key={id}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 10,
+                  borderRadius: 12,
+                  border: `2px solid ${border}`,
+                  background: COLORS.white,
+                  padding: "8px 10px",
+                }}
+              >
+                <span style={{ fontWeight: 800, color: COLORS.violet, minWidth: 18 }}>{i + 1}.</span>
+                <span style={{ flex: 1, fontSize: 13.5 }}>
+                  {step?.icon ? <span aria-hidden="true" style={{ marginRight: 6 }}>{step.icon}</span> : null}
+                  {step?.text}
+                </span>
+                <button type="button" className="gc-btn" disabled={si.passed || i === 0} onClick={() => move(id, -1)} style={ghostBtn}>
+                  ↑
+                </button>
+                <button type="button" className="gc-btn" disabled={si.passed || i === order.length - 1} onClick={() => move(id, 1)} style={ghostBtn}>
+                  ↓
+                </button>
+              </div>
+            );
+          })}
+        </div>
+        {!si.passed ? (
+          <button
+            type="button"
+            className="gc-btn"
+            disabled={busy}
+            onClick={async () => {
+              const result = await grade("sequenceIt", { order });
+              setToast(result.message || "");
+              if (result.pass) {
+                setSamLine(pack.helpPass || result.message || "Nice ordering!");
+                setSamState("celebrating");
+                updateState({ sequenceIt: { ...si, order, checked: true, results: result, passed: true } }, { scores: { ...scores, sequenceIt: result } });
+              } else {
+                setSamLine(pack.helpWrong || result.message || "Try a different order.");
+                setSamState("helping");
+                updateState({ sequenceIt: { ...si, order, checked: true, results: result } }, { skipSave: true });
+              }
+            }}
+            style={primaryBtn}
+          >
+            Check order
+          </button>
+        ) : (
+          <button type="button" className="gc-btn" onClick={goNext} style={primaryBtn}>
+            Continue
+          </button>
+        )}
+      </div>
+    );
+  }
+
+  function LabelPicture() {
+    const pack = briefing.labelPicture || {};
+    const lp = phaseState.labelPicture;
+    const hotspots = pack.hotspots || [];
+    const wordBank = pack.wordBank || [];
+    const placements = lp.placements || {};
+    const usedWordIds = new Set(Object.values(placements));
+    const results = lp.results?.results || null;
+    const allPlaced = hotspots.length > 0 && hotspots.every((h) => placements[h.id]);
+    const img = pack.imageKey ? art?.[pack.imageKey] : null;
+
+    function selectWord(id) {
+      if (lp.passed || usedWordIds.has(id)) return;
+      updateState({ labelPicture: { ...lp, selectedWordId: id } }, { skipSave: true });
+    }
+    function placeOnHotspot(hotspotId) {
+      if (lp.passed || !lp.selectedWordId) return;
+      updateState(
+        {
+          labelPicture: { ...lp, placements: { ...placements, [hotspotId]: lp.selectedWordId }, selectedWordId: "", checked: false, results: null },
+        },
+        { skipSave: true }
+      );
+    }
+    function clearHotspot(hotspotId) {
+      if (lp.passed || results?.[hotspotId]?.correct) return;
+      const next = { ...placements };
+      delete next[hotspotId];
+      updateState({ labelPicture: { ...lp, placements: next, checked: false } }, { skipSave: true });
+    }
+
+    return (
+      <div style={card}>
+        <h2 style={{ fontFamily: "'Poppins', sans-serif", margin: "0 0 4px 0" }}>{pack.title || "Label the Picture"}</h2>
+        <p style={{ fontSize: 14, color: COLORS.textMuted, marginTop: 0 }}>{pack.kidPrompt}</p>
+        <div style={{ position: "relative", borderRadius: 14, overflow: "hidden", background: COLORS.violetSoft, minHeight: 220 }}>
+          {img && <img src={img} alt="" style={{ width: "100%", display: "block" }} />}
+          {hotspots.map((h) => {
+            const placedWordId = placements[h.id];
+            const mark = results?.[h.id];
+            const border = mark == null ? (placedWordId ? COLORS.violet : "#FFFFFF") : mark.correct ? COLORS.success : "#EF4444";
+            return (
+              <button
+                key={h.id}
+                type="button"
+                className="gc-btn"
+                onClick={() => (placedWordId ? clearHotspot(h.id) : placeOnHotspot(h.id))}
+                style={{
+                  position: "absolute",
+                  left: `${h.x}%`,
+                  top: `${h.y}%`,
+                  transform: "translate(-50%, -50%)",
+                  borderRadius: 999,
+                  padding: "6px 10px",
+                  fontSize: 12,
+                  fontWeight: 700,
+                  border: `2px solid ${border}`,
+                  background: placedWordId ? COLORS.white : "rgba(255,255,255,.85)",
+                  color: COLORS.textDark,
+                  minWidth: 28,
+                }}
+              >
+                {placedWordId ? wordBank.find((w) => w.id === placedWordId)?.text || "?" : "?"}
+              </button>
+            );
+          })}
+        </div>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 8, margin: "12px 0" }}>
+          {wordBank.map((w) => (
+            <button
+              key={w.id}
+              type="button"
+              className="gc-btn"
+              disabled={usedWordIds.has(w.id) || lp.passed}
+              onClick={() => selectWord(w.id)}
+              style={chipStyle(lp.selectedWordId === w.id)}
+            >
+              {w.text}
+            </button>
+          ))}
+        </div>
+        {!lp.passed ? (
+          <button
+            type="button"
+            className="gc-btn"
+            disabled={busy || !allPlaced}
+            onClick={async () => {
+              const result = await grade("labelPicture", { placements });
+              setToast(result.message || "");
+              if (result.pass) {
+                setSamLine(pack.helpPass || result.message || "Nice labeling!");
+                setSamState("celebrating");
+                updateState({ labelPicture: { ...lp, checked: true, results: result, passed: true } }, { scores: { ...scores, labelPicture: result } });
+              } else {
+                setSamLine(pack.helpWrong || result.message || "Try another label.");
+                setSamState("helping");
+                updateState({ labelPicture: { ...lp, checked: true, results: result } }, { skipSave: true });
+              }
+            }}
+            style={{ ...primaryBtn, opacity: allPlaced ? 1 : 0.6 }}
+          >
+            Check labels
+          </button>
+        ) : (
+          <button type="button" className="gc-btn" onClick={goNext} style={primaryBtn}>
+            Continue
+          </button>
+        )}
+      </div>
+    );
+  }
+
+  function TrueFalseReason() {
+    const pack = briefing.trueFalseReason || {};
+    const tf = phaseState.trueFalseReason;
+    const statements = pack.statements || [];
+    const answers = tf.answers || {};
+    const results = tf.results?.results || null;
+    const allAnswered = statements.length > 0 && statements.every((s) => answers[s.id]);
+
+    return (
+      <div style={card}>
+        <h2 style={{ fontFamily: "'Poppins', sans-serif", margin: "0 0 4px 0" }}>{pack.title || "True or False"}</h2>
+        <p style={{ fontSize: 14, color: COLORS.textMuted, marginTop: 0 }}>{pack.kidPrompt}</p>
+        <div style={{ display: "flex", flexDirection: "column", gap: 12, marginTop: 12 }}>
+          {statements.map((s) => {
+            const picked = answers[s.id];
+            const mark = results?.[s.id];
+            return (
+              <div key={s.id} style={{ borderRadius: 12, border: "2px solid #E1E2EE", padding: 10 }}>
+                <p style={{ margin: "0 0 8px 0", fontSize: 13.5 }}>{s.text}</p>
+                <div style={{ display: "flex", gap: 8 }}>
+                  {["true", "false"].map((v) => (
+                    <button
+                      key={v}
+                      type="button"
+                      className="gc-btn"
+                      disabled={tf.passed}
+                      onClick={() => updateState({ trueFalseReason: { ...tf, answers: { ...answers, [s.id]: v }, checked: false } }, { skipSave: true })}
+                      style={{
+                        ...chipStyle(picked === v),
+                        textTransform: "capitalize",
+                      }}
+                    >
+                      {v}
+                    </button>
+                  ))}
+                </div>
+                {mark && (
+                  <p style={{ margin: "8px 0 0 0", fontSize: 12.5, color: mark.correct ? COLORS.success : "#EF4444", fontWeight: 600 }}>
+                    {mark.correct ? "✓ " : "✗ "}
+                    {mark.reason}
+                  </p>
+                )}
+              </div>
+            );
+          })}
+        </div>
+        {!tf.passed ? (
+          <button
+            type="button"
+            className="gc-btn"
+            disabled={busy || !allAnswered}
+            onClick={async () => {
+              const result = await grade("trueFalseReason", { answers });
+              setToast(result.message || "");
+              if (result.pass) {
+                setSamLine(result.message || "Nice reasoning!");
+                setSamState("celebrating");
+                updateState({ trueFalseReason: { ...tf, checked: true, results: result, passed: true } }, { scores: { ...scores, trueFalseReason: result } });
+              } else {
+                setSamLine(result.message || "Check the reasons and try again.");
+                setSamState("helping");
+                updateState({ trueFalseReason: { ...tf, checked: true, results: result } }, { skipSave: true });
+              }
+            }}
+            style={{ ...primaryBtn, opacity: allAnswered ? 1 : 0.6 }}
+          >
+            Check answers
+          </button>
+        ) : (
+          <button type="button" className="gc-btn" onClick={goNext} style={primaryBtn}>
+            Continue
+          </button>
         )}
       </div>
     );
@@ -2153,6 +2763,11 @@ export default function BriefingClient({ student, assignment, briefing, initialS
   else if (phaseId === "reasonSort") body = <ReasonSort />;
   else if (phaseId === "opsChoice") body = <OpsChoice />;
   else if (phaseId === "evidenceDrop") body = <EvidenceDrop />;
+  else if (phaseId === "quickReview") body = <QuickReview />;
+  else if (phaseId === "matchPairs") body = <MatchPairs />;
+  else if (phaseId === "sequenceIt") body = <SequenceIt />;
+  else if (phaseId === "labelPicture") body = <LabelPicture />;
+  else if (phaseId === "trueFalseReason") body = <TrueFalseReason />;
   else body = <Clearance />;
 
   return (
@@ -2194,6 +2809,20 @@ export default function BriefingClient({ student, assignment, briefing, initialS
             {status === "cleared" ? "Cleared" : busy ? "Saving…" : "In progress"}
           </div>
         </div>
+
+        {briefing.engagement?.progressTrail?.enabled && (
+          <div
+            style={{ display: "flex", alignItems: "center", gap: 4, marginBottom: 8 }}
+            aria-hidden="true"
+            title={`Step ${phaseIndex + 1} of ${PHASES.length}`}
+          >
+            {PHASES.map((p, i) => (
+              <span key={p.id} style={{ fontSize: 15, opacity: i <= phaseIndex ? 1 : 0.28 }}>
+                {i < phaseIndex ? "👣" : i === phaseIndex ? "🚶" : "·"}
+              </span>
+            ))}
+          </div>
+        )}
 
         <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 16 }}>
           {PHASES.map((p, i) => (

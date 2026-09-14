@@ -265,5 +265,113 @@ export async function POST(request) {
     });
   }
 
+  // --- v2 mechanics (see lib/briefings/schema/mechanics.schema.js) -------
+  // Same public/server split and same "results dict + pass = every item
+  // correct" shape as reasonSort above, so a lesson can mix any of these
+  // in without the grading logic looking different per mechanic.
+
+  if (phase === "quickReview") {
+    const answer = String(payload?.answer || "");
+    const qc = server.quickReview?.quickCheck || null;
+    if (!qc) {
+      // A quickReview phase with no quick check is allowed (pure recap) —
+      // nothing to grade, just let the client move on.
+      return NextResponse.json({ pass: true, correct: answer || "" });
+    }
+    const ok = answer === qc.correct;
+    return NextResponse.json({
+      pass: true, // ungated — a review quick-check informs, doesn't block
+      correct: qc.correct,
+      wasCorrect: ok,
+      message: ok ? qc.rightMessage || "Right — that's the idea." : qc.wrongMessage || "Close — here's the reminder.",
+    });
+  }
+
+  if (phase === "matchPairs") {
+    const matches = payload?.matches || {};
+    const keys = server.matchPairs?.answerKey || {};
+    const results = {};
+    let correct = 0;
+    const total = Object.keys(keys).length;
+    for (const [leftId, expected] of Object.entries(keys)) {
+      const got = matches[leftId];
+      const ok = got === expected;
+      results[leftId] = { correct: ok, expected, got: got || null };
+      if (ok) correct += 1;
+    }
+    return NextResponse.json({
+      pass: correct === total && total > 0,
+      correct,
+      total,
+      results,
+      message: correct === total ? "Match Pairs locked — every pair fits." : "Some pairs need another look. Tap a miss and try again.",
+    });
+  }
+
+  if (phase === "sequenceIt") {
+    const order = Array.isArray(payload?.order) ? payload.order : [];
+    const correctOrder = server.sequenceIt?.correctOrder || [];
+    const results = {};
+    let correct = 0;
+    correctOrder.forEach((id, i) => {
+      const ok = order[i] === id;
+      results[id] = { correct: ok, expectedIndex: i, gotIndex: order.indexOf(id) };
+      if (ok) correct += 1;
+    });
+    const total = correctOrder.length;
+    return NextResponse.json({
+      pass: correct === total && total > 0,
+      correct,
+      total,
+      results,
+      message: correct === total ? "Sequence It locked — that's the right order." : "Not quite in order yet — check the arrows.",
+    });
+  }
+
+  if (phase === "labelPicture") {
+    const placements = payload?.placements || {};
+    const keys = server.labelPicture?.answerKey || {};
+    const results = {};
+    let correct = 0;
+    const total = Object.keys(keys).length;
+    for (const [hotspotId, expected] of Object.entries(keys)) {
+      const got = placements[hotspotId];
+      const ok = got === expected;
+      results[hotspotId] = { correct: ok, expected, got: got || null };
+      if (ok) correct += 1;
+    }
+    return NextResponse.json({
+      pass: correct === total && total > 0,
+      correct,
+      total,
+      results,
+      message: correct === total ? "Labels locked — every hotspot matches." : "A label or two is off — tap it to try again.",
+    });
+  }
+
+  if (phase === "trueFalseReason") {
+    const answers = payload?.answers || {};
+    const keys = server.trueFalseReason?.answerKey || {};
+    const results = {};
+    let correct = 0;
+    const total = Object.keys(keys).length;
+    for (const [id, expected] of Object.entries(keys)) {
+      const got = String(answers[id] || "");
+      const expectedStr = expected.isTrue ? "true" : "false";
+      const ok = got === expectedStr;
+      // Reason ships every time, right or wrong — it's meant to teach on
+      // a miss, not just reveal the miss (per the mechanic's own design).
+      results[id] = { correct: ok, expected: expectedStr, reason: expected.reason };
+      if (ok) correct += 1;
+    }
+    return NextResponse.json({
+      pass: correct === total && total > 0,
+      correct,
+      total,
+      results,
+      message: correct === total ? "Nice reasoning — every answer checks out." : "Read the reasons above, then try the misses again.",
+    });
+  }
+
   return NextResponse.json({ error: "Unknown phase." }, { status: 400 });
 }

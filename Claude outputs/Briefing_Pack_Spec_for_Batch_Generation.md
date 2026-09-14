@@ -1,5 +1,25 @@
 # My Briefings — Content Pack Spec (for batch generation)
 
+> **SUPERSEDED Sept 14, 2026 — see `docs/briefings/BRIEFINGS-V2-FOUNDATION-PLAN.md` first.**
+> This spec's "always this order, always all six phases" rule (below) is
+> exactly the assumption that made the original Science briefing
+> (SCI-3-6B) a disguised copy of the Social Studies shape instead of a
+> real review — Emily's own assessment once she saw it. The v2 foundation
+> now has TWO shapes, not one: a Social Studies full-lesson shape (this
+> doc's six phases, largely unchanged) and a separate, deliberately
+> lighter Science light-review shape (quickReview + two practice reps,
+> no Ops Choice/Evidence Drop). It also has a real, versioned practice-
+> mechanic menu (`lib/briefings/schema/mechanics.schema.js`) instead of
+> Reason Sort being the only option, a working TEKS-alignment +
+> readability checker (`scripts/briefings-checker.js`), and a local
+> TEKS research cache (`docs/briefings/teks-reference/`) to ground
+> generation instead of a bot inventing content from the standard's bare
+> text alone. Read the v2 doc before generating anything from this file —
+> the Social Studies-only sections below (phase list, file deliverables,
+> naming conventions) are still broadly accurate for THAT shape, but this
+> file has not been rewritten to cover the Science shape or the mechanic
+> menu, so don't treat its silence on those as "use the old way."
+
 This describes the exact shape of a "Briefing" — the mini-lesson-before-the-Challenge format live at `/briefing/[assignmentId]` — so a bot can generate new ones for other standards (grade 3/4/5, Science and Social Studies) without a developer touching app code. Two Briefings exist today as reference examples: `SS-3-2A-BR` (Why Communities Form) and `SS-3-2B-BR` (How Communities Meet Needs).
 
 ## What a Briefing is for
