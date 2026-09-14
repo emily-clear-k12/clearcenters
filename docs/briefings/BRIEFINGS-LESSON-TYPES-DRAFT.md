@@ -19,16 +19,18 @@ other three types.
 All Grade 3, 4 and 5 Social Studies TEKS, sorted by what kind of thinking the
 standard asks for — not by topic, not by grade.
 
-| Type of thinking | Roughly how many | Example standards |
+| Type of thinking | How many | Example standards |
 |---|---|---|
-| **Cause and effect** | ~45 | 3.2A why communities form · 4.3A causes and effects of the Texas Revolution · 5.4D how expanding slavery caused the Civil War |
-| **Categories** | ~25 | 3.7C which level of government provides which service · 5.7A rural/urban/suburban · 5.19A which right the Bill of Rights covers |
-| **People and what they did** | ~23 | 4.2E empresarios' motivations and impact · 5.2B Founding Fathers' motivations · 3.1B individuals who shaped communities |
-| **Comparing two things** | ~15 | 3.2B how two communities meet needs · 4.6B comparing Texas's four regions · 5.13A colonial systems of government |
-| *Map skills and recitation* | ~12 | *3.4B map scale · 4.14C the Pledge — **not briefing material**, exclude from the count* |
+| **Cause and effect** | 59 | 3.2A why communities form · 4.3A causes and effects of the Texas Revolution · 5.4D how expanding slavery caused the Civil War |
+| **Categories** | 35 | 3.7C which level of government provides which service · 5.7A rural/urban/suburban · 5.19A which right the Bill of Rights covers |
+| **People and what they did** | 24 | 4.2E empresarios' motivations and impact · 5.2B Founding Fathers' motivations · 3.1B individuals who shaped communities |
+| **Comparing two things** | 17 | 3.2B how two communities meet needs · 4.6B comparing Texas's four regions · 5.13A colonial systems of government |
+| *Map skills and recitation* | 12 | *3.4B map scale · 4.14C the Pledge — **not briefing material**, excluded* |
 
-Counts are approximate — a few standards sit on a line between two types, and those
-get assigned when the lesson is scoped, not now.
+These are exact counts, standard by standard — see
+`BRIEFINGS-ASSIGNMENT-TABLE.md`, which assigns a type to every Grade 3–5 standard and
+is the batch work order. **135 lessons, not the ~30 the original plan assumed** — that
+gap is a scope decision, and §4 of that document lays out the options.
 
 **One thing worth knowing:** the TEKS name these thinking moves themselves. Standard
 3.14C (and its twins 4.19C and 5.23C) lists them out — *sequencing, categorizing,
