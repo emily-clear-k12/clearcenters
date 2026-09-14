@@ -327,6 +327,7 @@ export default function HomeClient({ student, studentClass, assignments, mission
   // Just enough badge logic to show the student's CURRENT tier icon next to
   // their name in the header tile (Aug 27) — the full badge collection with
   // earned/locked state for every tier lives on its own /badges page.
+  const tiers = badgeTiers && badgeTiers.length > 0 ? badgeTiers : [];
   //
   // Sept 13 — tiers now gate on missionsCompleted instead of crystal_points,
   // per Emily's own longstanding plan (see app/badges/page.js's comment) to
@@ -334,7 +335,6 @@ export default function HomeClient({ student, studentClass, assignments, mission
   // point awards were diluting points as a "real effort" signal. Crystal
   // Points remain their own separate currency (S.A.M. skins, planets, Gear
   // Locker) — untouched here, this only changes what badge tiers measure.
-  const tiers = badgeTiers && badgeTiers.length > 0 ? badgeTiers : [];
   const currentTierIndex = [...tiers].reverse().findIndex((t) => missionsCompleted >= t.threshold);
   const currentTier = tiers.length > 0 ? (currentTierIndex >= 0 ? tiers[tiers.length - 1 - currentTierIndex] : tiers[0]) : null;
 
@@ -412,7 +412,30 @@ export default function HomeClient({ student, studentClass, assignments, mission
         >
           ⚙️
         </button>
-        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 3, paddingRight: 22 }}>
+        {/* Sept 14, 2026 — Messages inbox entry point (Feature 5, see
+            Teacher_SiteWide_Redesign_Plan.md). Same small-circle treatment
+            as the settings gear right next to it, but this one navigates
+            (there's a whole page to show, not a toggle panel). The gold
+            dot only appears once notif has actually loaded and reports at
+            least one unread message — see the fetch below. */}
+        <button
+          type="button"
+          onClick={() => router.push("/messages")}
+          className="gc-btn"
+          title="Messages"
+          style={{
+            position: "absolute", top: 10, right: 42, width: 26, height: 26, borderRadius: "50%",
+            background: "rgba(255,255,255,.85)", border: "none", cursor: "pointer",
+            display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13,
+            boxShadow: "0 2px 8px rgba(0,0,0,.12)", padding: 0,
+          }}
+        >
+          ✉️
+          {notif && notif.unreadMessageCount > 0 && (
+            <span style={{ position: "absolute", top: -3, right: -3, width: 12, height: 12, borderRadius: "50%", background: COLORS.gold, border: "1.5px solid white" }} />
+          )}
+        </button>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 3, paddingRight: 54 }}>
           {currentTier && (
             <img
               src={`/badges/transparent/${currentTier.tier_key}.png`}
