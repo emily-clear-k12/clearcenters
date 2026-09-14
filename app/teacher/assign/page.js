@@ -357,8 +357,8 @@ export default function MyClassesPage() {
               <button onClick={() => router.push(`/teacher/assign/display?classId=${selectedClass.id}`)} className="gc-btn" style={{ background: ACCENT, border: "none", borderRadius: 8, padding: "4px 10px", color: COLORS.white, fontWeight: 700 }}>
                 Present to Class
               </button>
-              <button onClick={() => window.open(`/teacher/roster/${selectedClass.id}`, "_blank")} className="gc-btn" style={{ background: "rgba(255,255,255,.55)", border: `1px solid ${COLORS.border}`, borderRadius: 8, padding: "4px 10px", color: COLORS.textDark, fontWeight: 700, display: "flex", alignItems: "center", gap: 5 }}>
-                <Printer size={13} /> Print Roster
+              <button onClick={() => router.push(`/teacher/roster/${selectedClass.id}`)} className="gc-btn" style={{ background: "rgba(255,255,255,.55)", border: `1px solid ${COLORS.border}`, borderRadius: 8, padding: "4px 10px", color: COLORS.textDark, fontWeight: 700, display: "flex", alignItems: "center", gap: 5 }}>
+                <Printer size={13} /> Manage Roster
               </button>
             </div>
           )}

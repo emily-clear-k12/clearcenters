@@ -172,7 +172,7 @@ export default function ClassSettingsPage() {
 
       <main style={{ padding: "28px 36px 40px", maxWidth: 780, margin: "0 auto" }}>
         <p style={{ color: COLORS.textMuted, fontSize: 14.5, lineHeight: 1.6, margin: "0 0 20px 0" }}>
-          Rename any of your classes below, or change its planet on the Hub. Roster management and other class-level preferences are coming soon.
+          Rename any of your classes below, or change its planet on the Hub. To add, remove, or transfer students, open a class's roster from My Classes ("Manage Roster").
         </p>
 
         {/* Your S.A.M. — which skin shows on the Hub's console

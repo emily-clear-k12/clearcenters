@@ -29,16 +29,42 @@ export async function POST(request) {
     return NextResponse.json({ error: "That class code doesn't match anything. Check with your teacher." }, { status: 401 });
   }
 
-  // 2. Find the student in that class by first name + PIN.
-  const { data: student, error: studentError } = await supabaseAdmin
+  // 2. Find the student in that class by first name + PIN. Only an active
+  // student can log in — Roster Management (app/teacher/roster/[classId])
+  // "removes" a student by flipping this flag rather than deleting their
+  // row, so a removed student's history stays intact but their login stops
+  // working immediately. Falls back to skipping this check if the
+  // `active` column doesn't exist yet (migration not run) so login never
+  // breaks outright over it — see Teacher_SiteWide_Redesign_Plan.md's
+  // "SQL delivered ≠ SQL run" note for why this fallback pattern exists.
+  let { data: student, error: studentError } = await supabaseAdmin
     .from("students")
     .select("id, first_name, crystal_points, streak_days")
     .eq("class_id", classRow.id)
     .ilike("first_name", firstName.trim())
     .eq("pin", pin.trim())
-    .single();
+    .eq("active", true)
+    .maybeSingle();
 
-  if (studentError || !student) {
+  if (studentError) {
+    // A bad `active` filter fails loudly (Postgres error), not just an
+    // empty result — that's the "migration not run yet" case. Falls back
+    // to the same lookup without it so login never breaks outright over a
+    // pending migration; a since-deactivated student just isn't blocked
+    // until the migration runs, same trade-off Overview's classes query
+    // makes for `planet_key`.
+    console.error("Student login's 'active' filter failed — falling back without it. Run the students.active migration in Teacher_SiteWide_Redesign_Plan.md if this persists:", studentError);
+    const fallback = await supabaseAdmin
+      .from("students")
+      .select("id, first_name, crystal_points, streak_days")
+      .eq("class_id", classRow.id)
+      .ilike("first_name", firstName.trim())
+      .eq("pin", pin.trim())
+      .maybeSingle();
+    student = fallback.data;
+  }
+
+  if (!student) {
     return NextResponse.json({ error: "That name and PIN don't match. Try again or ask your teacher." }, { status: 401 });
   }
 
