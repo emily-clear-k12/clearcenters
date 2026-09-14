@@ -382,15 +382,59 @@ real class/grade data before or shortly after this ships.
 
 ## Open questions to resolve before going further
 
-- **Now that Reports is up and running, Emily wants to revisit "easy to read
-  at a glance but still comprehensive"** for the class report → student
-  report flow specifically. Not yet scoped — likely candidates: whether the
-  class report's Student Summary rows need clearer visual hierarchy, whether
-  the student report's sections should reorder or condense, and whether the
-  expand-in-place vs. "View Full Report" split is still the right two-tier
-  model. To be worked through together, not decided unilaterally.
 - **`bg-bridge-console.jpg`'s destination** — saved but not yet mapped to a
   route.
+
+## Class report / student report "at a glance" pass — done Sept 14
+
+Resolves the open question above: now that Reports was live, Emily wanted to
+revisit "easy to read at a glance but still comprehensive" for the class
+report → student report flow. Scoped together into four independent moves,
+all approved and shipped this pass. No query, calculation, or data logic
+touched on either page — every number shown was already being computed;
+this only changes how it's surfaced and organized.
+
+- **At-a-glance chip strip**, added right under the title on both reports,
+  before the existing 4-stat row. Class report: reads the same
+  `bandCounts`/`missingWork` already computed for Class Performance/Missing
+  Work below, e.g. "3 students need support · 4 missing submissions across 2
+  assignments"; falls back to a single "✓ Everyone's on track, nothing
+  missing" chip when there's nothing to flag. Student report: same idea off
+  `band`/`missingCount`, e.g. "Needs Support — 62% average" or "2 assignments
+  not submitted"; same positive fallback when clean.
+- **Quick-jump section chips**, a `no-print` row of scroll-to buttons under
+  the at-a-glance strip — Performance/Missing Work/Standards/Students on the
+  class report, Trend/Assignments/Standards/Badges on the student report —
+  so a teacher can skip straight to a section instead of scrolling past
+  everything sequentially. Plain `scrollIntoView`, no library.
+- **Missing Work collapses fully-submitted assignments by default**
+  (class report only — the student report's Assignment History is a per-
+  student chronological record, not an aggregate needing the same triage).
+  A "Show all assignments (N fully submitted)" toggle reveals them; a new
+  `.gc-fully-submitted` class handles the show/hide on screen but is forced
+  back to visible with a `@media print` override, so a printed/PDF'd report
+  is always the complete record regardless of what was toggled on screen at
+  the time.
+- **Student Summary grouped by band** (class report only), worst-first —
+  Needs Support / Developing / Proficient / Excellent / No grade yet, each
+  its own small header with count, empty groups omitted. Previously one flat
+  list sorted weakest-first; grouping makes the cluster of struggling
+  students visible without reading every row's badge. Same expand-in-place
+  behavior and "View Full Report" link kept unchanged inside each row — that
+  two-tier model itself wasn't in question, only how the list of rows above
+  it was organized.
+
+Files touched: `app/teacher/reports/[classId]/page.js`,
+`app/teacher/reports/student/[studentId]/page.js`. Verified two ways: a full
+`next build` (all 72 routes compiled clean, same as every other pass in this
+doc), plus a standalone Node script re-implementing the new pure logic
+(band grouping, chip text/grammar, hidden-row counts) against 16 hand-built
+cases — including edge cases a screenshot wouldn't obviously surface, like
+an empty roster, a class with zero concerning students, and singular-vs-
+plural chip wording — all passing. No live screenshot pass this time since
+the sandbox's Supabase credentials are still placeholders (same limitation
+noted on the original Reports pass); worth a quick look with real class data
+once this ships.
 
 Resolved same day, decided rather than asked (Emily: "decide and proceed —
 we can always go back and change/update little things"): the

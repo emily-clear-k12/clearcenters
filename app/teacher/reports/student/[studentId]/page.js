@@ -307,6 +307,22 @@ export default function StudentReportPage() {
   const generatedDate = new Date().toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" });
   const delta = report.avgPct !== null && report.classAveragePct !== null ? report.avgPct - report.classAveragePct : null;
 
+  // Sept 14 — same at-a-glance treatment as the class report: surfaces the
+  // same numbers already computed above (band, missingCount) as a one-line
+  // callout right under the title, instead of requiring a scroll down to
+  // Assignment History to notice a student is struggling or has missing work.
+  const atAGlance = [];
+  if (report.band?.label === "Needs Support") atAGlance.push({ color: COLORS.danger, text: `Needs Support — ${report.avgPct}% average` });
+  else if (report.band?.label === "Developing") atAGlance.push({ color: COLORS.violet, text: `Developing — ${report.avgPct}% average` });
+  if (report.missingCount > 0) atAGlance.push({ color: COLORS.danger, text: `${report.missingCount} assignment${report.missingCount === 1 ? "" : "s"} not submitted` });
+  if (atAGlance.length === 0) atAGlance.push({ color: COLORS.success, text: "✓ On track, nothing missing" });
+
+  function jumpTo(id) {
+    if (typeof document === "undefined") return;
+    const el = document.getElementById(id);
+    if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
   return (
     <div
       className="reports-shell"
@@ -380,6 +396,25 @@ export default function StudentReportPage() {
             <div style={{ fontSize: 12.5, color: COLORS.textMuted }}>{report.className} · Generated {generatedDate}{teacherEmail ? ` · ${teacherEmail}` : ""}</div>
           </div>
 
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 18 }}>
+            {atAGlance.map((chip, i) => (
+              <div key={i} style={{ fontSize: 12.5, fontWeight: 700, padding: "6px 14px", borderRadius: 999, background: chip.color + "18", color: chip.color }}>{chip.text}</div>
+            ))}
+          </div>
+
+          <div className="no-print" style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 24 }}>
+            {[
+              { id: "section-trend", label: "Trend" },
+              { id: "section-assignments", label: "Assignments" },
+              { id: "section-standards", label: "Standards" },
+              { id: "section-badges", label: "Badges" },
+            ].map((s) => (
+              <button key={s.id} onClick={() => jumpTo(s.id)} className="gc-btn" style={{ background: "none", color: ACCENT, border: `1.5px solid ${ACCENT}55`, borderRadius: 999, padding: "6px 14px", fontWeight: 700, fontSize: 12 }}>
+                {s.label} ↓
+              </button>
+            ))}
+          </div>
+
           <div style={{ display: "flex", padding: "16px 0", borderTop: `1px solid ${COLORS.border}`, borderBottom: `1px solid ${COLORS.border}`, marginBottom: 24 }}>
             <StatBlock label="Missions Completed" value={`${report.missionsCompleted} of ${report.assignmentCount}`} />
             <StatBlock label="Average Score" value={report.avgPct !== null ? `${report.avgPct}%` : "—"} />
@@ -387,7 +422,7 @@ export default function StudentReportPage() {
             <StatBlock label="vs. Class Average" value={delta !== null ? `${delta >= 0 ? "+" : ""}${delta} pts` : "—"} />
           </div>
 
-          <div style={{ marginBottom: 28 }}>
+          <div id="section-trend" style={{ marginBottom: 28 }}>
             <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 2 }}>Score Over Time</div>
             <div style={{ fontSize: 12, color: COLORS.textMuted, marginBottom: 10 }}>
               <span style={{ color: COLORS.violet, fontWeight: 700 }}>● {report.studentName}</span>{"  "}
@@ -400,7 +435,7 @@ export default function StudentReportPage() {
             ]} labels={report.labels} />
           </div>
 
-          <div style={{ marginBottom: 28 }}>
+          <div id="section-assignments" style={{ marginBottom: 28 }}>
             <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 10 }}>Assignment History</div>
             {report.assignmentRows.length === 0 ? (
               <div style={{ fontSize: 13, color: COLORS.textMuted }}>Nothing assigned yet.</div>
@@ -426,7 +461,7 @@ export default function StudentReportPage() {
             )}
           </div>
 
-          <div style={{ marginBottom: 28 }}>
+          <div id="section-standards" style={{ marginBottom: 28 }}>
             <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 10 }}>Standards Mastery</div>
             {report.standardRows.length === 0 ? (
               <div style={{ fontSize: 13, color: COLORS.textMuted }}>No standards to show yet.</div>
@@ -445,7 +480,7 @@ export default function StudentReportPage() {
             )}
           </div>
 
-          <div>
+          <div id="section-badges">
             <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 10 }}>Badges &amp; Crystal Points</div>
             <div style={{ display: "flex", alignItems: "center", gap: 24, flexWrap: "wrap" }}>
               {report.earnedTiers.length > 0 ? (

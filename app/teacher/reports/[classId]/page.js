@@ -28,6 +28,13 @@ const BAND_ORDER = [
   { label: "Needs Support", color: COLORS.danger },
 ];
 
+// Sept 14 — worst-first, for the Student Summary groups and the at-a-glance
+// chips. Same triage order the summary was already sorted by; this just
+// makes it visually explicit (section headers a teacher can see at a
+// glance) instead of requiring them to read every row's badge in turn.
+const SUMMARY_GROUP_ORDER = ["Needs Support", "Developing", "Proficient", "Excellent"];
+const BAND_COLOR = Object.fromEntries(BAND_ORDER.map((b) => [b.label, b.color]));
+
 const RANGE_OPTIONS = [
   { key: "all", label: "All Time" },
   { key: "30", label: "Last 30 Days" },
@@ -165,6 +172,7 @@ export default function ClassReportPage() {
   const [customFrom, setCustomFrom] = useState("");
   const [customTo, setCustomTo] = useState("");
   const [expanded, setExpanded] = useState({});
+  const [showAllMissing, setShowAllMissing] = useState(false);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data, error }) => {
@@ -362,6 +370,45 @@ export default function ClassReportPage() {
     };
   }, [rawStudents, rawAssignments, rawSubmissions, targetsByAssignment, caseTitleMap, rangeStart, rangeEnd]);
 
+  // Sept 14 — groups Student Summary rows under band headers (worst-first)
+  // instead of one flat weakest-first list, so a scanning teacher sees "3
+  // kids need support" as its own cluster rather than having to read each
+  // row's badge to notice they're scattered through a long list. Sort order
+  // within a group is unchanged (avgPct ascending, same as before).
+  const groupedStudents = useMemo(() => {
+    const groups = SUMMARY_GROUP_ORDER.map((label) => ({ label, color: BAND_COLOR[label], students: [] }));
+    const noGrade = { label: "No grade yet", color: COLORS.textMuted, students: [] };
+    report.studentRows.forEach((r) => {
+      if (!r.band) { noGrade.students.push(r); return; }
+      const g = groups.find((g) => g.label === r.band.label);
+      (g || noGrade).students.push(r);
+    });
+    return [...groups, noGrade].filter((g) => g.students.length > 0);
+  }, [report.studentRows]);
+
+  // Sept 14 — the "at a glance" headline strip: surfaces the same numbers
+  // that were always in the report (bandCounts, missingWork), just as a
+  // one-line callout right under the title instead of requiring a scroll
+  // down to Class Performance / Missing Work to notice them.
+  const atAGlance = useMemo(() => {
+    const chips = [];
+    const needsSupport = report.bandCounts["Needs Support"] || 0;
+    const developing = report.bandCounts["Developing"] || 0;
+    const totalMissing = report.missingWork.reduce((sum, m) => sum + m.missing.length, 0);
+    const assignmentsWithMissing = report.missingWork.filter((m) => m.missing.length > 0).length;
+    if (needsSupport > 0) chips.push({ color: COLORS.danger, text: `${needsSupport} student${needsSupport === 1 ? "" : "s"} need${needsSupport === 1 ? "s" : ""} support` });
+    if (totalMissing > 0) chips.push({ color: COLORS.danger, text: `${totalMissing} missing submission${totalMissing === 1 ? "" : "s"} across ${assignmentsWithMissing} assignment${assignmentsWithMissing === 1 ? "" : "s"}` });
+    if (developing > 0) chips.push({ color: COLORS.violet, text: `${developing} student${developing === 1 ? "" : "s"} developing` });
+    if (chips.length === 0) chips.push({ color: COLORS.success, text: "✓ Everyone's on track, nothing missing" });
+    return chips;
+  }, [report.bandCounts, report.missingWork]);
+
+  function jumpTo(id) {
+    if (typeof document === "undefined") return;
+    const el = document.getElementById(id);
+    if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
   if (loadingAuth || loading) {
     return <div style={{ minHeight: "100vh", background: COLORS.canvas, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Inter', sans-serif", color: COLORS.textMuted }}>Loading...</div>;
   }
@@ -407,6 +454,11 @@ export default function ClassReportPage() {
           .reports-shell { background: white !important; background-image: none !important; }
           body, main { background: white !important; }
           .report-card { box-shadow: none !important; border: 1px solid #ddd !important; }
+          /* Fully-submitted rows collapse on screen (showAllMissing toggle)
+             but a printed/PDF'd report is a record for a file or an admin —
+             it should always show everything regardless of the on-screen
+             toggle state at the moment it was printed. */
+          .gc-fully-submitted { display: flex !important; opacity: 0.55; }
         }
       `}</style>
 
@@ -448,6 +500,25 @@ export default function ClassReportPage() {
             <div style={{ fontSize: 12.5, color: COLORS.textMuted }}>Generated {generatedDate}{teacherEmail ? ` · ${teacherEmail}` : ""}{range !== "all" ? ` · ${RANGE_OPTIONS.find((o) => o.key === range)?.label}` : ""}</div>
           </div>
 
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 18 }}>
+            {atAGlance.map((chip, i) => (
+              <div key={i} style={{ fontSize: 12.5, fontWeight: 700, padding: "6px 14px", borderRadius: 999, background: chip.color + "18", color: chip.color }}>{chip.text}</div>
+            ))}
+          </div>
+
+          <div className="no-print" style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 24 }}>
+            {[
+              { id: "section-performance", label: "Performance" },
+              { id: "section-missing", label: "Missing Work" },
+              { id: "section-standards", label: "Standards" },
+              { id: "section-students", label: "Students" },
+            ].map((s) => (
+              <button key={s.id} onClick={() => jumpTo(s.id)} className="gc-btn" style={{ background: "none", color: ACCENT, border: `1.5px solid ${ACCENT}55`, borderRadius: 999, padding: "6px 14px", fontWeight: 700, fontSize: 12 }}>
+                {s.label} ↓
+              </button>
+            ))}
+          </div>
+
           <div style={{ display: "flex", padding: "16px 0", borderTop: `1px solid ${COLORS.border}`, borderBottom: `1px solid ${COLORS.border}`, marginBottom: 24 }}>
             <StatBlock label="Students" value={report.studentCount} />
             <StatBlock label="Assignments" value={report.assignmentCount} />
@@ -455,27 +526,36 @@ export default function ClassReportPage() {
             <StatBlock label="Completion Rate" value={`${report.completionPct}%`} />
           </div>
 
-          <div style={{ marginBottom: 28 }}>
-            <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 2 }}>Class Average Over Time</div>
-            <div style={{ fontSize: 12, color: COLORS.textMuted, marginBottom: 10 }}>One point per assignment — shows growth instead of just a single snapshot number.</div>
-            <TrendChart series={[{ label: "Class Average", color: ACCENT, values: report.classWeeklyAvg, pointTitles: report.titles }]} labels={report.labels} />
+          <div id="section-performance">
+            <div style={{ marginBottom: 28 }}>
+              <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 2 }}>Class Average Over Time</div>
+              <div style={{ fontSize: 12, color: COLORS.textMuted, marginBottom: 10 }}>One point per assignment — shows growth instead of just a single snapshot number.</div>
+              <TrendChart series={[{ label: "Class Average", color: ACCENT, values: report.classWeeklyAvg, pointTitles: report.titles }]} labels={report.labels} />
+            </div>
+
+            <div style={{ marginBottom: 28 }}>
+              <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 10 }}>Class Performance</div>
+              <BandBar counts={report.bandCounts} />
+            </div>
           </div>
 
-          <div style={{ marginBottom: 28 }}>
-            <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 10 }}>Class Performance</div>
-            <BandBar counts={report.bandCounts} />
-          </div>
-
-          <div style={{ marginBottom: 28 }}>
+          <div id="section-missing" style={{ marginBottom: 28 }}>
             <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 2 }}>Missing Work</div>
             <div style={{ fontSize: 12, color: COLORS.textMuted, marginBottom: 10 }}>Click an assignment to see who still owes it.</div>
             {report.missingWork.length === 0 ? (
               <div style={{ fontSize: 13, color: COLORS.textMuted }}>No assignments in this range.</div>
             ) : (
               <div>
+                {report.missingWork.every((m) => m.missing.length === 0) && !showAllMissing && (
+                  <div style={{ fontSize: 13, color: COLORS.success, fontWeight: 600, marginBottom: 4 }}>✓ Nothing missing in this range.</div>
+                )}
                 {report.missingWork.map((m) => (
                   m.missing.length === 0 ? (
-                    <div key={m.assignmentId} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 4px", borderBottom: `1px solid ${COLORS.border}`, opacity: 0.55 }}>
+                    // Sept 14 — collapsed by default (showAllMissing) so this
+                    // section only shows what actually needs a look; still
+                    // always renders on paper via the .gc-fully-submitted
+                    // print override above.
+                    <div key={m.assignmentId} className="gc-fully-submitted" style={{ display: showAllMissing ? "flex" : "none", alignItems: "center", justifyContent: "space-between", padding: "10px 4px", borderBottom: `1px solid ${COLORS.border}`, opacity: 0.55 }}>
                       <div style={{ fontSize: 13, fontWeight: 600 }}>{m.title}</div>
                       <div style={{ fontSize: 11.5, color: COLORS.success, fontWeight: 700 }}>✓ everyone submitted</div>
                     </div>
@@ -489,11 +569,16 @@ export default function ClassReportPage() {
                     </details>
                   )
                 ))}
+                {report.missingWork.some((m) => m.missing.length === 0) && (
+                  <button onClick={() => setShowAllMissing((v) => !v)} className="gc-btn no-print" style={{ marginTop: 10, background: "none", color: ACCENT, fontWeight: 700, fontSize: 12, textDecoration: "underline", padding: 0 }}>
+                    {showAllMissing ? "Hide fully-submitted assignments" : `Show all assignments (${report.missingWork.filter((m) => m.missing.length === 0).length} fully submitted)`}
+                  </button>
+                )}
               </div>
             )}
           </div>
 
-          <div style={{ marginBottom: 28 }}>
+          <div id="section-standards" style={{ marginBottom: 28 }}>
             <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 2 }}>Standards Summary</div>
             <div style={{ fontSize: 12, color: COLORS.textMuted, marginBottom: 10 }}>Sorted so standards with the most kids still Developing or Needing Support show up first.</div>
             {report.standardRows.length === 0 ? (
@@ -510,63 +595,71 @@ export default function ClassReportPage() {
             )}
           </div>
 
-          <div>
+          <div id="section-students">
             <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 2 }}>Student Summary</div>
-            <div style={{ fontSize: 12, color: COLORS.textMuted, marginBottom: 10 }} className="no-print">Click any student to preview their trend and missing work — or open their full standalone report.</div>
-            <div style={{ display: "grid", gap: 2 }}>
-              {report.studentRows.map((r) => (
-                <div key={r.id} style={{ borderBottom: `1px solid ${COLORS.border}` }}>
-                  <button
-                    onClick={() => setExpanded((e) => ({ ...e, [r.id]: !e[r.id] }))}
-                    className="gc-btn no-print"
-                    style={{ display: "flex", alignItems: "center", width: "100%", gap: 10, padding: "10px 4px", background: "none", textAlign: "left", font: "inherit", color: "inherit" }}
-                  >
-                    <ChevronRight size={14} style={{ color: COLORS.textMuted, transform: expanded[r.id] ? "rotate(90deg)" : "none", transition: "transform 150ms ease", flexShrink: 0 }} />
-                    <div style={{ width: 140, fontWeight: 600, fontSize: 12.5 }}>{r.name}</div>
-                    <div style={{ width: 110, color: COLORS.textMuted, fontSize: 12.5 }}>{r.missionsCompleted} submitted</div>
-                    <div style={{ flex: 1 }} />
-                    <div style={{ width: 40, fontWeight: 700, textAlign: "right", fontSize: 12.5 }}>{r.avgPct !== null ? `${r.avgPct}%` : "—"}</div>
-                    {r.band ? (
-                      <span style={{ fontSize: 10.5, fontWeight: 700, padding: "2px 9px", borderRadius: 999, background: r.band.color + "22", color: r.band.color, marginLeft: 10 }}>{r.band.label}</span>
-                    ) : (
-                      <span style={{ fontSize: 10.5, color: COLORS.textMuted, marginLeft: 10 }}>No grades yet</span>
-                    )}
-                  </button>
-                  {/* print-only flat row, since the interactive button above is hidden when printing */}
-                  <div className="print-only" style={{ display: "none" }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 4px", fontSize: 12.5 }}>
-                      <div style={{ width: 140, fontWeight: 600 }}>{r.name}</div>
-                      <div style={{ width: 110, color: COLORS.textMuted }}>{r.missionsCompleted} submitted</div>
-                      <div style={{ flex: 1 }} />
-                      <div style={{ width: 40, fontWeight: 700, textAlign: "right" }}>{r.avgPct !== null ? `${r.avgPct}%` : "—"}</div>
-                      {r.band ? (
-                        <span style={{ fontSize: 10.5, fontWeight: 700, padding: "2px 9px", borderRadius: 999, background: r.band.color + "22", color: r.band.color }}>{r.band.label}</span>
-                      ) : (
-                        <span style={{ fontSize: 10.5, color: COLORS.textMuted }}>No grades yet</span>
+            <div style={{ fontSize: 12, color: COLORS.textMuted, marginBottom: 10 }} className="no-print">Grouped by band, weakest group first. Click any student to preview their trend and missing work — or open their full standalone report.</div>
+            {groupedStudents.map((group) => (
+              <div key={group.label} style={{ marginBottom: 18 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4, paddingTop: 6 }}>
+                  <div style={{ width: 9, height: 9, borderRadius: "50%", background: group.color, flexShrink: 0 }} />
+                  <div style={{ fontSize: 11.5, fontWeight: 700, color: group.color, textTransform: "uppercase", letterSpacing: 0.4 }}>{group.label} ({group.students.length})</div>
+                </div>
+                <div style={{ display: "grid", gap: 2 }}>
+                  {group.students.map((r) => (
+                    <div key={r.id} style={{ borderBottom: `1px solid ${COLORS.border}` }}>
+                      <button
+                        onClick={() => setExpanded((e) => ({ ...e, [r.id]: !e[r.id] }))}
+                        className="gc-btn no-print"
+                        style={{ display: "flex", alignItems: "center", width: "100%", gap: 10, padding: "10px 4px", background: "none", textAlign: "left", font: "inherit", color: "inherit" }}
+                      >
+                        <ChevronRight size={14} style={{ color: COLORS.textMuted, transform: expanded[r.id] ? "rotate(90deg)" : "none", transition: "transform 150ms ease", flexShrink: 0 }} />
+                        <div style={{ width: 140, fontWeight: 600, fontSize: 12.5 }}>{r.name}</div>
+                        <div style={{ width: 110, color: COLORS.textMuted, fontSize: 12.5 }}>{r.missionsCompleted} submitted</div>
+                        <div style={{ flex: 1 }} />
+                        <div style={{ width: 40, fontWeight: 700, textAlign: "right", fontSize: 12.5 }}>{r.avgPct !== null ? `${r.avgPct}%` : "—"}</div>
+                        {r.band ? (
+                          <span style={{ fontSize: 10.5, fontWeight: 700, padding: "2px 9px", borderRadius: 999, background: r.band.color + "22", color: r.band.color, marginLeft: 10 }}>{r.band.label}</span>
+                        ) : (
+                          <span style={{ fontSize: 10.5, color: COLORS.textMuted, marginLeft: 10 }}>No grades yet</span>
+                        )}
+                      </button>
+                      {/* print-only flat row, since the interactive button above is hidden when printing */}
+                      <div className="print-only" style={{ display: "none" }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 4px", fontSize: 12.5 }}>
+                          <div style={{ width: 140, fontWeight: 600 }}>{r.name}</div>
+                          <div style={{ width: 110, color: COLORS.textMuted }}>{r.missionsCompleted} submitted</div>
+                          <div style={{ flex: 1 }} />
+                          <div style={{ width: 40, fontWeight: 700, textAlign: "right" }}>{r.avgPct !== null ? `${r.avgPct}%` : "—"}</div>
+                          {r.band ? (
+                            <span style={{ fontSize: 10.5, fontWeight: 700, padding: "2px 9px", borderRadius: 999, background: r.band.color + "22", color: r.band.color }}>{r.band.label}</span>
+                          ) : (
+                            <span style={{ fontSize: 10.5, color: COLORS.textMuted }}>No grades yet</span>
+                          )}
+                        </div>
+                      </div>
+                      {expanded[r.id] && (
+                        <div className="no-print" style={{ padding: "6px 4px 16px 24px", display: "flex", gap: 24, flexWrap: "wrap" }}>
+                          <div style={{ width: 300 }}>
+                            <div style={{ fontSize: 10.5, fontWeight: 700, color: COLORS.textMuted, textTransform: "uppercase", marginBottom: 4 }}>Trend</div>
+                            <TrendChart series={[{ label: r.name, color: ACCENT, values: r.scores, pointTitles: report.titles }]} labels={report.labels} height={100} />
+                          </div>
+                          <div style={{ flex: 1, minWidth: 200 }}>
+                            {r.missingTitles.length > 0 ? (
+                              <div style={{ fontSize: 12, color: COLORS.danger }}><b>Missing:</b> {r.missingTitles.join(", ")}</div>
+                            ) : (
+                              <div style={{ fontSize: 12, color: COLORS.success }}>✓ Nothing missing</div>
+                            )}
+                            <button onClick={() => router.push(`/teacher/reports/student/${r.id}`)} className="gc-btn" style={{ marginTop: 10, background: ACCENT, color: COLORS.white, borderRadius: 999, padding: "8px 16px", fontWeight: 700, fontSize: 12.5 }}>
+                              View Full Report →
+                            </button>
+                          </div>
+                        </div>
                       )}
                     </div>
-                  </div>
-                  {expanded[r.id] && (
-                    <div className="no-print" style={{ padding: "6px 4px 16px 24px", display: "flex", gap: 24, flexWrap: "wrap" }}>
-                      <div style={{ width: 300 }}>
-                        <div style={{ fontSize: 10.5, fontWeight: 700, color: COLORS.textMuted, textTransform: "uppercase", marginBottom: 4 }}>Trend</div>
-                        <TrendChart series={[{ label: r.name, color: ACCENT, values: r.scores, pointTitles: report.titles }]} labels={report.labels} height={100} />
-                      </div>
-                      <div style={{ flex: 1, minWidth: 200 }}>
-                        {r.missingTitles.length > 0 ? (
-                          <div style={{ fontSize: 12, color: COLORS.danger }}><b>Missing:</b> {r.missingTitles.join(", ")}</div>
-                        ) : (
-                          <div style={{ fontSize: 12, color: COLORS.success }}>✓ Nothing missing</div>
-                        )}
-                        <button onClick={() => router.push(`/teacher/reports/student/${r.id}`)} className="gc-btn" style={{ marginTop: 10, background: ACCENT, color: COLORS.white, borderRadius: 999, padding: "8px 16px", fontWeight: 700, fontSize: 12.5 }}>
-                          View Full Report →
-                        </button>
-                      </div>
-                    </div>
-                  )}
+                  ))}
                 </div>
-              ))}
-            </div>
+              </div>
+            ))}
           </div>
         </div>
       </main>
