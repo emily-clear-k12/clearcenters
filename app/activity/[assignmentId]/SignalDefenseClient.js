@@ -27,6 +27,13 @@ function sessionIsPlayable(data) {
   return false;
 }
 
+function createSignalEventId() {
+  if (typeof globalThis.crypto?.randomUUID === "function") {
+    return globalThis.crypto.randomUUID();
+  }
+  return `signal-${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`;
+}
+
 // Sept 12, 2026 — V1.5 live crew: shared votes, power drain, wave damage.
 // Sept 12, 2026 (playtest): hide prototype demo UI during live class play.
 // Sept 12, 2026 (product): remove solo / fake-crew fallback entirely for
@@ -135,28 +142,51 @@ export default function SignalDefenseClient({
     }
   }, [studentFirstName]);
 
-  const contributeCorrect = useCallback(async () => {
+  const contributeCorrect = useCallback(async (providedEventId) => {
     if (!assignmentId || !liveRef.current.active) return;
     if (liveRef.current.status !== "live") return;
     if (liveRef.current.outcome && liveRef.current.outcome !== "ongoing") return;
-    try {
-      const res = await fetch("/api/signal-defense/session/contribute", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ assignmentId }),
-      });
-      const data = await res.json().catch(() => ({}));
-      if (res.ok && data.session) {
-        liveRef.current = {
-          active: data.active,
-          status: data.session.status,
-          sessionId: data.session.id,
-          outcome: data.session.outcome || "ongoing",
-        };
-        pushLiveToWidget(data);
+
+    // Keep one event ID across the bounded retry. If the first request reached
+    // Postgres but its response was lost, the unique event constraint makes
+    // the retry a no-op instead of counting the same correct answer twice.
+    const eventId = providedEventId || createSignalEventId();
+    let lastError = null;
+
+    for (let attempt = 0; attempt < 2; attempt += 1) {
+      try {
+        const res = await fetch("/api/signal-defense/session/contribute", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ assignmentId, eventId }),
+        });
+        const data = await res.json().catch(() => ({}));
+        if (res.ok) {
+          if (data.session) {
+            liveRef.current = {
+              active: data.active,
+              status: data.session.status,
+              sessionId: data.session.id,
+              outcome: data.session.outcome || "ongoing",
+            };
+            pushLiveToWidget(data);
+          }
+          return;
+        }
+
+        lastError = new Error(data.error || "Couldn't send class power.");
+        if (res.status < 500) break;
+      } catch (err) {
+        lastError = err;
       }
-    } catch (err) {
-      console.error("Signal Defense contribute failed:", err);
+
+      if (attempt === 0) {
+        await new Promise((resolve) => setTimeout(resolve, 250));
+      }
+    }
+
+    if (lastError) {
+      console.error("Signal Defense contribute failed:", lastError);
     }
   }, [assignmentId, pushLiveToWidget]);
 
@@ -197,8 +227,8 @@ export default function SignalDefenseClient({
         submitRun(result);
       });
       if (typeof win.SignalDefense.onContribute === "function") {
-        win.SignalDefense.onContribute(() => {
-          contributeCorrect();
+        win.SignalDefense.onContribute((event) => {
+          contributeCorrect(event?.eventId);
         });
       }
       if (typeof win.SignalDefense.onVote === "function") {
