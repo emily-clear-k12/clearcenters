@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useCallback, useMemo } from "react";
+import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "../../lib/supabaseClient";
 import { SAM_SKINS, FALLBACK_ICON, getSamSkin, DEFAULT_SAM_SKIN } from "../../lib/samSkins";
@@ -39,6 +39,13 @@ const COLORS = {
   white: "#FFFFFF",
   textMuted: "#A9B4CE",
   magenta: "#D65DE0", // Messages hologram's hue — nothing else in the app uses this pink/magenta family
+  // Mission Control's own accent (Sept 13) — this scene was reusing
+  // `warning` for a purely decorative planet color, which meant an actual
+  // "something needs attention" signal on this page would have been
+  // visually indistinguishable from Mission Control's normal branding.
+  // Matches the value in lib/teacherTheme.js so the planet's color here
+  // stays in sync with its console-interior page.
+  copper: "#E8935A",
 };
 
 // Real art will live here once generated (see the art spec doc) — nothing
@@ -211,6 +218,11 @@ const ICONS = {
   folder: (
     <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round">
       <path d="M3.5 6.5a1 1 0 0 1 1-1H9l2 2h8.5a1 1 0 0 1 1 1V18a1 1 0 0 1-1 1h-15a1 1 0 0 1-1-1Z" />
+    </svg>
+  ),
+  chevron: (
+    <svg viewBox="0 0 24 24" width="12" height="12" fill="none">
+      <path d="M6 9l6 6 6-6" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   ),
 };
@@ -516,6 +528,25 @@ export default function TeacherOverview() {
   const [awarding, setAwarding] = useState(false);
   const [awardSuccess, setAwardSuccess] = useState(null);
 
+  // Sept 14 — "Today, at a glance" digest. The subtitle below already
+  // computed a single N-things-need-attention number across all classes,
+  // but that number was a dead end: to act on it, a teacher had to hover
+  // each planet one at a time to see its breakdown. This turns that
+  // subtitle into a toggle that opens one consolidated, always-available
+  // list aggregated across every class, each line jumping straight to the
+  // page that fixes it. No new queries — perClassStats already computes
+  // pendingCount / needsCheckInCount / dueSoonCount per class.
+  const [digestOpen, setDigestOpen] = useState(false);
+  const digestRef = useRef(null);
+
+  useEffect(() => {
+    function onClickAway(e) {
+      if (digestRef.current && !digestRef.current.contains(e.target)) setDigestOpen(false);
+    }
+    document.addEventListener("mousedown", onClickAway);
+    return () => document.removeEventListener("mousedown", onClickAway);
+  }, []);
+
   useEffect(() => {
     supabase.auth.getUser().then(async ({ data, error: authError }) => {
       if (authError || !data?.user) {
@@ -716,6 +747,33 @@ export default function TeacherOverview() {
 
   const totalUrgent = perClassStats.reduce((sum, c) => sum + c.stats.pendingCount + c.stats.needsCheckInCount + c.stats.dueSoonCount, 0);
 
+  const digest = useMemo(() => {
+    let pending = 0, checkIn = 0, dueSoon = 0;
+    let pendingClasses = 0, checkInClasses = 0, dueSoonClasses = 0;
+    perClassStats.forEach((c) => {
+      if (c.stats.pendingCount > 0) { pending += c.stats.pendingCount; pendingClasses += 1; }
+      if (c.stats.needsCheckInCount > 0) { checkIn += c.stats.needsCheckInCount; checkInClasses += 1; }
+      if (c.stats.dueSoonCount > 0) { dueSoon += c.stats.dueSoonCount; dueSoonClasses += 1; }
+    });
+    return [
+      pending > 0 && {
+        key: "review", icon: ICONS.doc, color: COLORS.gold, count: pending, classCount: pendingClasses,
+        label: `submission${pending === 1 ? "" : "s"} to review`,
+        onGo: () => router.push("/teacher/grade"),
+      },
+      checkIn > 0 && {
+        key: "checkin", icon: ICONS.flag, color: COLORS.violet, count: checkIn, classCount: checkInClasses,
+        label: `student${checkIn === 1 ? "" : "s"} to check in with`,
+        onGo: () => router.push("/teacher/progress"),
+      },
+      dueSoon > 0 && {
+        key: "duesoon", icon: ICONS.calendar, color: COLORS.teal, count: dueSoon, classCount: dueSoonClasses,
+        label: `assignment${dueSoon === 1 ? "" : "s"} due within a week`,
+        onGo: () => router.push("/teacher/assign"),
+      },
+    ].filter(Boolean);
+  }, [perClassStats, router]);
+
   async function handleLogout() {
     await supabase.auth.signOut();
     router.push("/login");
@@ -774,15 +832,57 @@ export default function TeacherOverview() {
           <span style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 700, fontSize: 15, color: COLORS.white }}>ClearCenters</span>
         </div>
 
-        <div style={{ textAlign: "center" }}>
+        <div ref={digestRef} style={{ textAlign: "center", position: "relative" }}>
           <div style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 700, fontSize: 20, color: COLORS.white }}>
             Welcome Back{teacherFirstName ? `, ${teacherFirstName}` : ""}
           </div>
-          <div style={{ fontSize: 12.5, color: COLORS.textMuted, marginTop: 2 }}>
-            {totalUrgent > 0
-              ? `${totalUrgent} thing${totalUrgent === 1 ? "" : "s"} need${totalUrgent === 1 ? "s" : ""} your attention across ${classes.length} class${classes.length === 1 ? "" : "es"}.`
-              : "Everything's on track — nothing urgent right now."}
-          </div>
+          {totalUrgent > 0 ? (
+            <button
+              onClick={() => setDigestOpen((v) => !v)}
+              style={{ marginTop: 2, background: "none", border: "none", cursor: "pointer", padding: "2px 6px", display: "inline-flex", alignItems: "center", gap: 5, borderRadius: 999 }}
+              aria-expanded={digestOpen}
+              aria-label="Today, at a glance"
+            >
+              <span style={{ fontSize: 12.5, color: COLORS.gold, fontWeight: 700 }}>
+                {totalUrgent} thing{totalUrgent === 1 ? "" : "s"} need{totalUrgent === 1 ? "s" : ""} your attention across {classes.length} class{classes.length === 1 ? "" : "es"}.
+              </span>
+              <span style={{ display: "flex", color: COLORS.gold, opacity: 0.75, transform: digestOpen ? "rotate(180deg)" : "none", transition: "transform 150ms ease" }}>
+                {ICONS.chevron}
+              </span>
+            </button>
+          ) : (
+            <div style={{ fontSize: 12.5, color: COLORS.textMuted, marginTop: 2 }}>Everything's on track — nothing urgent right now.</div>
+          )}
+
+          {digestOpen && digest.length > 0 && (
+            <div
+              style={{
+                position: "absolute", top: "calc(100% + 10px)", left: "50%", transform: "translateX(-50%)",
+                width: 300, textAlign: "left", zIndex: 40,
+                background: COLORS.deepNavy, border: "1px solid rgba(255,255,255,.14)",
+                borderRadius: 14, padding: "8px 6px", boxShadow: "0 16px 44px rgba(0,0,0,.5)",
+              }}
+            >
+              <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: 0.6, textTransform: "uppercase", color: COLORS.textMuted, padding: "6px 10px 8px" }}>
+                Today, at a glance
+              </div>
+              {digest.map((d) => (
+                <div key={d.key} style={{ display: "flex", alignItems: "center", gap: 10, padding: "7px 10px" }}>
+                  <span style={{ color: d.color, flexShrink: 0, display: "flex" }}>{d.icon}</span>
+                  <span style={{ flex: 1, fontSize: 12.5, color: COLORS.white, lineHeight: 1.4 }}>
+                    <strong>{d.count}</strong> {d.label}
+                    {d.classCount > 1 && <span style={{ color: COLORS.textMuted }}> across {d.classCount} classes</span>}
+                  </span>
+                  <button
+                    onClick={() => { setDigestOpen(false); d.onGo(); }}
+                    style={{ background: "none", border: "none", color: COLORS.aqua, fontSize: 11.5, fontWeight: 700, cursor: "pointer", flexShrink: 0, padding: 0 }}
+                  >
+                    Go →
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
@@ -842,7 +942,7 @@ export default function TeacherOverview() {
           {/* Landmarks — hologram panels floating on the console, standing in
               for the old sidebar's nav groups. Positions match the 5 lit
               panel slots baked into the background art. */}
-          <Landmark art={ART.missionControl} icon={ICONS.launch} label="Mission Control" sub="Assign & Launch" accent={COLORS.warning} onClick={() => router.push("/teacher/assign")} {...CONSOLE_SLOTS[0]} />
+          <Landmark art={ART.missionControl} icon={ICONS.launch} label="Mission Control" sub="Assign & Launch" accent={COLORS.copper} onClick={() => router.push("/teacher/assign")} {...CONSOLE_SLOTS[0]} />
           <Landmark art={ART.observatory} icon={ICONS.telescope} label="Observatory" sub="Progress & Reports" accent={COLORS.aqua} onClick={() => router.push("/teacher/reports")} {...CONSOLE_SLOTS[1]} />
           <Landmark art={samArtFor(teacherSamSkin)} icon={ICONS.gem} label="S.A.M." sub="Results & Shortcuts" accent={COLORS.teal} onClick={() => setAwardModalOpen(true)} {...CONSOLE_SLOTS[2]} />
           <Landmark art={ART.beacon} icon={ICONS.mail} label="Messages" sub="Inbox & Updates" accent={COLORS.magenta} onClick={() => router.push("/teacher/messages")} {...CONSOLE_SLOTS[3]} />
