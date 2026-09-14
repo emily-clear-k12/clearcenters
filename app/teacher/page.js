@@ -896,24 +896,36 @@ export default function TeacherOverview() {
 
       {error && <div style={{ margin: "0 32px 12px", background: "#FBEAEA", color: "#B23A3A", borderRadius: 10, padding: "10px 14px", fontSize: 13 }}>{error}</div>}
 
-      {/* Scene — full-bleed, no card/frame: the background fills every
-          pixel left of the HUD down to the bottom edge of the window. The
-          art's own proportions (BG_ASPECT) are preserved on an inner
-          "canvas" that's always sized at least 100% x 100% of this
-          wrapper and center-cropped by overflow:hidden — the same
-          scale-and-crop math as CSS `background-size: cover`, just done
-          on a real element so the planet/console percent-coordinates
-          below still land exactly on the right spot on the art, cropped
-          or not. minHeight is a safety floor: below it (only on a window
-          wider than ~2.6x its own height) this wrapper stops shrinking
-          and the page scrolls instead of letting the crop eat into the
-          console buttons. */}
-      <div style={{ flex: 1, position: "relative", overflow: "hidden", minHeight: "38vw" }}>
+      {/* Scene — the art's own proportions (BG_ASPECT) are preserved on an
+          inner "canvas" box, so the planet/console percent-coordinates
+          below always land exactly on the right spot on the art.
+          Sept 13 (second pass): this used to crop the canvas to fill the
+          wrapper edge-to-edge like CSS `background-size: cover` (first
+          bottom-anchored, before that centered) — but ANY crop-to-fill
+          approach is a trade-off between two things that both need to
+          stay fully visible: the planets near the top of the art and the
+          console along the bottom. Center-crop cut the console off the
+          bottom on short windows; bottom-anchoring that fix then cut the
+          planets off the top instead on windows wide enough relative to
+          their height (which turned out to be the common case, not an
+          edge case). Switched to "contain" sizing instead: the canvas is
+          the LARGEST size that fits entirely inside the wrapper at the
+          art's real aspect ratio (inset:0 + margin:auto + max-width/
+          max-height:100%, no explicit width/height so the browser solves
+          for the biggest non-cropped fit), centered. Nothing in the art is
+          ever cropped — on window shapes that don't match the art's ratio,
+          you get a sliver of letterboxing (top/bottom or left/right) that
+          shows the plain starfield/navy background behind it, which reads
+          fine since it's the same dark-space look either way. minHeight is
+          just a floor so the scene can't shrink to an unreadably thin
+          sliver on an extremely short window — below it the page scrolls
+          instead, same fallback as before. */}
+      <div style={{ flex: 1, position: "relative", overflow: "hidden", minHeight: "26vw" }}>
         <div
           style={{
-            position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)",
+            position: "absolute", inset: 0, margin: "auto",
             aspectRatio: BG_ASPECT,
-            minWidth: "100%", minHeight: "100%", width: "auto", height: "auto",
+            maxWidth: "100%", maxHeight: "100%",
             backgroundImage: `url(${ART.background})`, backgroundSize: "100% 100%", backgroundPosition: "center",
             backgroundColor: COLORS.deepNavy,
           }}
