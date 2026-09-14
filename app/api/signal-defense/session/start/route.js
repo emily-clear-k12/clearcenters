@@ -8,12 +8,15 @@ import {
   serializeSession,
 } from "../../../../../lib/signal-ops/sessionHelpers";
 
-// Teacher opens a live Signal Ops session for an assignment. Kids auto-join
-// from the assignment page — no join code. Starts in "lobby" until Begin.
-// Fresh base each time (including regroup retries).
+const ALLOWED_DURATIONS = new Set([420, 480, 600]);
+
+// Teacher opens a Signal Defense lobby for an assignment. Students auto-join
+// from the assignment page; no join code is required.
 export async function POST(request) {
   const body = await request.json().catch(() => ({}));
   const { assignmentId, accessToken } = body || {};
+  const requestedDuration = Number(body?.durationSeconds || 480);
+  const durationSeconds = ALLOWED_DURATIONS.has(requestedDuration) ? requestedDuration : 480;
 
   if (!assignmentId || !accessToken) {
     return NextResponse.json({ error: "Missing assignmentId or accessToken." }, { status: 400 });
@@ -45,15 +48,26 @@ export async function POST(request) {
       class_id: assignment.class_id,
       teacher_id: teacher.id,
       status: "lobby",
+      duration_seconds: durationSeconds,
+      mission_ends_at: null,
       salvage: 0,
       power: 100,
+      shield: 70,
       base_health: 100,
+      lane_north: 70,
+      lane_shield: 70,
+      lane_core: 70,
       total_correct: 0,
       wave_index: 0,
+      last_attack_at: null,
+      last_event: null,
+      state_version: 0,
+      outcome: "ongoing",
+      // Legacy columns remain initialized while the old teacher surface is
+      // migrated to the new Live Ops view.
       next_vote_threshold: 48,
       upgrades: {},
       vote: null,
-      outcome: "ongoing",
       last_upgrade_id: null,
     })
     .select("*")
