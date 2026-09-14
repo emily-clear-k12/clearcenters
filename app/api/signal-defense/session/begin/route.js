@@ -9,7 +9,6 @@ import {
 } from "../../../../../lib/signal-ops/sessionHelpers";
 
 // Lobby -> live. Students polling the session auto-launch when they see live.
-// V1.5 starts wave 1 + meter tick clock.
 export async function POST(request) {
   const body = await request.json().catch(() => ({}));
   const { assignmentId, accessToken, sessionId } = body || {};
@@ -25,7 +24,11 @@ export async function POST(request) {
 
   let session = null;
   if (sessionId) {
-    const { data } = await supabaseAdmin.from("signal_ops_sessions").select("*").eq("id", sessionId).maybeSingle();
+    const { data } = await supabaseAdmin
+      .from("signal_ops_sessions")
+      .select("*")
+      .eq("id", sessionId)
+      .maybeSingle();
     session = data;
   } else {
     session = await fetchOpenSessionForAssignment(assignmentId);
@@ -49,16 +52,37 @@ export async function POST(request) {
     return NextResponse.json(serializeSession(session, participants));
   }
 
-  const now = new Date().toISOString();
+  const startedAt = new Date();
+  const durationSeconds = Number(session.duration_seconds || 480);
+  const missionEndsAt = new Date(startedAt.getTime() + durationSeconds * 1000).toISOString();
+  const now = startedAt.toISOString();
+
   const { data: updated, error } = await supabaseAdmin
     .from("signal_ops_sessions")
     .update({
       status: "live",
       started_at: now,
+      mission_ends_at: missionEndsAt,
       wave_index: 1,
       wave_started_at: now,
       meters_ticked_at: now,
+      last_attack_at: now,
+      salvage: 0,
+      power: 100,
+      shield: 70,
+      base_health: 100,
+      lane_north: 70,
+      lane_shield: 70,
+      lane_core: 70,
+      total_correct: 0,
       outcome: "ongoing",
+      ended_at: null,
+      last_event: {
+        id: `mission-start-${session.id}`,
+        type: "mission_start",
+        at: now,
+      },
+      state_version: Number(session.state_version || 0) + 1,
       vote: null,
       upgrades: {},
       next_vote_threshold: 48,

@@ -9,12 +9,10 @@ import {
   serializeSession,
   loadAssignmentWithTeacher,
 } from "../../../../lib/signal-ops/sessionHelpers";
-import { advanceLiveSession } from "../../../../lib/signal-ops/sessionSim";
 
 // GET /api/signal-defense/session?assignmentId=...
-// Teacher: pass accessToken. Student: cookie. Returns open session + roster
-// + shared meters, or { active:false } when solo/fake-crew should run.
-// Live polls also advance power drain / votes / waves server-side.
+// Teacher: pass accessToken. Student: cookie. The live session tick is handled
+// atomically in Postgres so every browser observes the same battle state.
 export async function GET(request) {
   const { searchParams } = new URL(request.url);
   const assignmentId = searchParams.get("assignmentId");
@@ -65,10 +63,13 @@ export async function GET(request) {
   }
 
   if (session.status === "live") {
-    try {
-      session = await advanceLiveSession(session);
-    } catch (err) {
-      console.error("Signal Ops tick failed:", err);
+    const { data: advanced, error } = await supabaseAdmin.rpc("signal_ops_advance_session", {
+      p_session_id: session.id,
+    });
+    if (error) {
+      console.error("Signal Defense session tick failed:", error);
+    } else if (advanced) {
+      session = Array.isArray(advanced) ? advanced[0] : advanced;
     }
   }
 

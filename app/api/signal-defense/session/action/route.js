@@ -9,16 +9,24 @@ import {
   serializeSession,
 } from "../../../../../lib/signal-ops/sessionHelpers";
 
-// Correct-answer contribution only. Wrong answers never call this route.
-// The database function is atomic + idempotent so simultaneous classroom
-// answers cannot overwrite one another.
+const POWER_MOVE_TARGETS = new Set(["gate", "shield", "core"]);
+
+// Student reward actions that affect the shared battle. These are never
+// academic penalties: they only add defense/resources to the class session.
 export async function POST(request) {
   const body = await request.json().catch(() => ({}));
-  const { assignmentId } = body || {};
+  const { assignmentId, action } = body || {};
+  const target = body?.target ? String(body.target) : null;
   const eventId = String(body?.eventId || randomUUID());
 
-  if (!assignmentId) {
-    return NextResponse.json({ error: "Missing assignmentId." }, { status: 400 });
+  if (!assignmentId || !action) {
+    return NextResponse.json({ error: "Missing assignmentId or action." }, { status: 400 });
+  }
+  if (action !== "power_move" && action !== "crystal_surge") {
+    return NextResponse.json({ error: "Invalid action." }, { status: 400 });
+  }
+  if (action === "power_move" && !POWER_MOVE_TARGETS.has(target)) {
+    return NextResponse.json({ error: "Invalid Power Move target." }, { status: 400 });
   }
 
   const student = await getStudentFromCookie();
@@ -32,27 +40,21 @@ export async function POST(request) {
   }
 
   let session = await fetchOpenSessionForAssignment(assignmentId);
-  if (!session) {
-    return NextResponse.json({ error: "No live session." }, { status: 404 });
-  }
-  if (session.status !== "live") {
-    return NextResponse.json({ error: "Session is not live yet." }, { status: 409 });
+  if (!session || session.status !== "live") {
+    return NextResponse.json({ error: "No live Signal Defense mission." }, { status: 409 });
   }
 
-  const { data: advanced, error: tickError } = await supabaseAdmin.rpc(
-    "signal_ops_advance_session",
-    { p_session_id: session.id }
-  );
-  if (!tickError && advanced) {
-    session = Array.isArray(advanced) ? advanced[0] : advanced;
-  }
+  const { data: advanced } = await supabaseAdmin.rpc("signal_ops_advance_session", {
+    p_session_id: session.id,
+  });
+  if (advanced) session = Array.isArray(advanced) ? advanced[0] : advanced;
 
-  if (!session || session.status !== "live" || (session.outcome && session.outcome !== "ongoing")) {
+  if (!session || session.status !== "live" || session.outcome !== "ongoing") {
     const participants = session ? await fetchParticipants(session.id) : [];
     return NextResponse.json(
       session
         ? serializeSession(session, participants, { myStudentId: student.id })
-        : { error: "Session ended." },
+        : { error: "Mission ended." },
       { status: session ? 200 : 409 }
     );
   }
@@ -61,12 +63,12 @@ export async function POST(request) {
     p_session_id: session.id,
     p_student_id: student.id,
     p_event_id: eventId,
-    p_event_type: "correct",
-    p_target: null,
+    p_event_type: action,
+    p_target: action === "power_move" ? target : null,
   });
 
   if (error) {
-    const message = String(error.message || "Unable to send class power.");
+    const message = String(error.message || "Unable to send Signal Defense action.");
     const status = message.includes("student_not_in_session") ? 403 : 500;
     return NextResponse.json({ error: message }, { status });
   }
