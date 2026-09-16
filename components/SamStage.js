@@ -13,17 +13,28 @@ import { getSamSkin, getSamStateAsset, FALLBACK_ICON } from "../lib/samSkins";
 // packs (720x560 renders with real motion) to read at all. This renders
 // S.A.M. much bigger (default 150px).
 //
-// Sept 4, 2026 (later same day, part 2) — real animated art wired in.
-// Two stacked layers, both absolutely positioned at `inset: 0` with
-// `object-fit: contain` inside the same `size` x `size` box:
-//   1. the skin's animated platform WebP (the surface S.A.M. floats on)
-//   2. the skin's animated WebP for the current `state` (defaults "idle")
-// Both layers in a skin's set share the same 720x560 source canvas (every
-// file Emily sent was checked), so scaling them identically this way
-// lines them up correctly with no per-skin offset math. If a skin is ever
-// missing its platform art, this falls back to the original CSS-only
-// blurred shadow ellipse instead of leaving S.A.M. floating with nothing
-// under it.
+// Sept 4, 2026 (later same day, part 2) — real animated art wired in: the
+// skin's animated WebP for the current `state` (defaults "idle"),
+// absolutely positioned at `inset: 0` with `object-fit: contain` inside
+// the `size` x `size` box.
+//
+// Sept 16, 2026 — the platform is gone. S.A.M. used to render as two
+// stacked layers, with the skin's animated platform WebP (a disc/surface
+// to sit or float on) under the character, plus a CSS blurred-shadow
+// ellipse as a fallback for any skin missing that art. Emily doesn't want
+// it in any context — it had already been switched off case-by-case on
+// SamGuide and was meant to be off on Home too (it wasn't — the prop was
+// never actually passed there, so the disc was still showing on the
+// student home screen). Rather than keep a per-caller opt-out that's easy
+// to forget, the layer and the `showPlatform` prop are both removed, so
+// every S.A.M. everywhere reads as genuinely floating.
+//
+// Nothing about the character itself changed. The platform art and the
+// character art were always separate files drawn on a shared 720x560
+// canvas, so dropping the platform layer leaves S.A.M. at the exact same
+// size and position in the box as before — just with nothing under it.
+// The art is still listed in lib/samSkins.js (`platform` /
+// `platformPoster`) if this is ever wanted back.
 //
 // `state` picks which of the 6 animated states plays (idle, moving,
 // celebrating, thinking, helping, sleeping) — see getSamStateAsset in
@@ -31,10 +42,9 @@ import { getSamSkin, getSamStateAsset, FALLBACK_ICON } from "../lib/samSkins";
 // "idle" yet; wiring real state changes to real trigger moments (a hint
 // requested, a correct answer, a page transition, etc.) is a separate,
 // not-yet-scoped follow-up — see SAM_Companion_Concept_v1.md.
-export default function SamStage({ skinKey, alt = "S.A.M.", size = 150, state = "idle", onClick, style = {}, showPlatform = true }) {
+export default function SamStage({ skinKey, alt = "S.A.M.", size = 150, state = "idle", onClick, style = {} }) {
   const skin = getSamSkin(skinKey);
   const charSrc = getSamStateAsset(skin, state);
-  const platformSrc = skin && skin.platform;
 
   return (
     <button
@@ -51,36 +61,6 @@ export default function SamStage({ skinKey, alt = "S.A.M.", size = 150, state = 
         ...style,
       }}
     >
-      {/* Sept 12, 2026 — showPlatform lets a caller drop the platform layer
-          entirely (both the real art and the CSS fallback shadow below).
-          Used by HomeClient's wandering companion, per Emily's ask to take
-          the platform away so S.A.M. reads as actually floating between
-          spots rather than standing on an invisible-but-implied surface
-          each time it lands. Every other caller (Missions, activities)
-          still defaults to true and is unaffected. */}
-      {showPlatform && (platformSrc ? (
-        <img
-          src={platformSrc}
-          alt=""
-          aria-hidden="true"
-          style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "contain", pointerEvents: "none" }}
-        />
-      ) : (
-        // Fallback "platform" — a soft blurred shadow anchoring S.A.M. to
-        // one spot — only used if a skin somehow has no platform art.
-        <div
-          style={{
-            position: "absolute",
-            left: "50%",
-            bottom: size * 0.04,
-            transform: "translateX(-50%)",
-            width: size * 0.62,
-            height: size * 0.14,
-            borderRadius: "50%",
-            background: "radial-gradient(closest-side, rgba(13,20,35,.32), rgba(13,20,35,0) 75%)",
-          }}
-        />
-      ))}
       <img
         src={charSrc}
         alt={alt}

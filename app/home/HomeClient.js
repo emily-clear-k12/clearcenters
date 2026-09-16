@@ -871,8 +871,10 @@ export default function HomeClient({ student, studentClass, assignments, mission
           "companion" presence (SamStage), per Emily's flag that S.A.M. was
           too small anywhere for the new animation packs to ever read.
           Same click-to-toggle-tooltip behavior — just big enough to
-          actually be seen, with a soft shadow "platform" grounding it
-          instead of floating at an arbitrary size.
+          actually be seen.
+          Sept 16, 2026: S.A.M. used to render on a platform disc here —
+          that layer is gone from SamStage entirely now, so it reads as
+          floating between waypoints instead of landing on a surface.
           Sept 12, 2026: no longer pinned to one corner — this wrapper div
           carries the position/transition now (SAM_WAYPOINTS above) so
           S.A.M. glides between spots instead of sitting fixed at

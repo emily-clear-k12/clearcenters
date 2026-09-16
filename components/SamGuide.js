@@ -205,18 +205,16 @@ export default function SamGuide({
       }}
     >
       <div style={{ position: "relative", pointerEvents: "auto" }}>
-        {/* Sept 12, 2026 — showPlatform={false}, matching the same fix on
-            Home's wandering companion: Emily flagged the platform disc
-            under S.A.M. as still showing up here too. SamGuide is a
-            floating guide by nature (it hops between anchors), so no
-            other caller needs the platform layer either. */}
+        {/* Sept 16, 2026 — the showPlatform={false} that used to be here is
+            gone because the platform layer itself is gone from SamStage
+            for every caller (see the note at the top of SamStage.js).
+            Nothing to opt out of anymore. */}
         <SamStage
           skinKey={skinKey}
           alt={alt}
           size={size}
           state={animState}
           onClick={handleTap}
-          showPlatform={false}
         />
         {visibleBubble && (
           <div style={bubbleStyle} role="status">
