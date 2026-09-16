@@ -30,8 +30,9 @@ const BG = PAGE_BACKGROUNDS["/teacher/assign/new"];
 // Detective is now part of Fact-Check Desk (video/caption claim format).
 // Comment Court / The Tribunal (and the retired You Be the Judge + Comment
 // Section + Bracket Battle types it absorbed) was removed Sept 12 2026 —
-// those shapes now live as Signal Check caseShape variants, not a separate
-// engine. Coming-soon tiles stay `real: false` ("Coming Soon") until they
+// those shapes became the Signal Check "Weigh-In" and "Thread" formats
+// rather than a separate engine, and both of those were themselves retired
+// Sept 16 2026 (see SignalCheckClient.js), so none of them ship today. Coming-soon tiles stay `real: false` ("Coming Soon") until they
 // have authored content. Group Chat, Fact-Check Desk
 // (branded "Signal Check" in the UI, engine "fact_check_desk"), Mission Map
 // (as of Aug 30 2026), and — as of Sept 3 2026, one case ("3.8B-SL", "Ramp
@@ -80,50 +81,19 @@ function matchesChallenge(caseEngine, challengeKey) {
 }
 
 
-function teksFromStandard(standard) {
-  return String(standard || "").replace(/^SS\./i, "").replace(/-SC(-WI|-TH)?$/i, "");
-}
-
-function formatFromStandard(standard) {
-  const s = String(standard || "");
-  if (/-SC-WI$/i.test(s)) return { id: "weigh_in", label: "Weigh-In" };
-  if (/-SC-TH$/i.test(s)) return { id: "thread", label: "Thread" };
-  return { id: "verdict", label: "Verdict" };
-}
-
-
-function isClassicStandard(standard) {
-  return /-SC$/i.test(standard) && !/-SC-(WI|TH)$/i.test(standard);
-}
-
-function compareTeks(a, b) {
-  const parse = (t) => {
-    const m = String(t).match(/^(\d+)\.(\d+)([A-Za-z]?)/);
-    if (!m) return [99, 99, t];
-    return [parseInt(m[1], 10), parseInt(m[2], 10), m[3] || ""];
-  };
-  const [ga, na, la] = parse(a);
-  const [gb, nb, lb] = parse(b);
-  if (ga !== gb) return ga - gb;
-  if (na !== nb) return na - nb;
-  return String(la).localeCompare(String(lb));
-}
-
-function groupSignalCheckCases(list) {
-  const map = new Map();
-  for (const c of list) {
-    const teks = teksFromStandard(c.standard);
-    if (!map.has(teks)) map.set(teks, []);
-    map.get(teks).push(c);
-  }
-  const order = ["verdict", "weigh_in", "thread"];
-  return [...map.entries()].map(([teks, items]) => {
-    const classic = items.find((c) => isClassicStandard(c.standard));
-    const familyTitle = classic?.title || items[0].title;
-    const thumbStandard = classic?.standard || items[0].standard;
-    const ordered = order.flatMap((id) => items.filter((c) => formatFromStandard(c.standard).id === id));
-    return { teks, familyTitle, thumbStandard, items: ordered };
-  }).sort((a, b) => compareTeks(a.teks, b.teks));
+// Sept 16, 2026 — Signal Check used to ship each TEKS standard in three
+// formats (Verdict, Weigh-In, Thread), so this file grouped its cases into
+// one card per standard with a chip per format, instead of the plain tile
+// grid every other challenge type uses. Weigh-In and Thread are gone, so
+// the grouping helpers went with them and Signal Check now renders as
+// tiles like everything else.
+//
+// The retired cases may still have rows in the `cases` table — see
+// remove_signal_check_wi_th_cases.sql. This filter keeps them out of the
+// library either way, so a stale row can't put a retired case back in
+// front of a teacher.
+function isRetiredSignalCheckCase(standard) {
+  return /-SC-(WI|TH)$/i.test(String(standard || ""));
 }
 
 
@@ -206,20 +176,13 @@ function NewAssignmentContent() {
   const filteredCases = cases.filter((c) => {
     if (c.grade !== parseInt(browseGrade) || c.subject !== browseSubject) return false;
     if (!matchesChallenge(c.engine, selectedChallenge?.key)) return false;
+    if (isRetiredSignalCheckCase(c.standard)) return false;
     if (!searchQ) return true;
-    const fmt = formatFromStandard(c.standard).label.toLowerCase();
-    const teks = teksFromStandard(c.standard).toLowerCase();
     return (
       (c.title || "").toLowerCase().includes(searchQ) ||
-      (c.standard || "").toLowerCase().includes(searchQ) ||
-      fmt.includes(searchQ) ||
-      teks.includes(searchQ)
+      (c.standard || "").toLowerCase().includes(searchQ)
     );
   });
-
-  const signalGroups = selectedChallenge?.key === "fact_check_desk"
-    ? groupSignalCheckCases(filteredCases)
-    : [];
 
   const targetClass = classes.find((c) => c.id === assignClassId);
 
@@ -342,7 +305,7 @@ function NewAssignmentContent() {
       </div>
 
       <div style={{ position: "relative", zIndex: 1, flex: 1, padding: "28px 36px 40px", display: "flex", justifyContent: "center" }}>
-        <div style={{ width: "100%", maxWidth: challengeStep === "library" ? 1240 : challengeStep === "caseList" && selectedChallenge?.key === "fact_check_desk" ? 1180 : challengeStep === "caseList" ? 920 : 640 }}>
+        <div style={{ width: "100%", maxWidth: challengeStep === "library" ? 1240 : challengeStep === "caseList" ? 920 : 640 }}>
           <button onClick={() => router.push("/teacher/assign")} className="gc-btn" style={{ display: "flex", alignItems: "center", gap: 6, background: "none", color: COLORS.textMuted, fontSize: 13, fontWeight: 600, marginBottom: 14 }}>
             <ChevronLeft size={16} /> Back to My Classes
           </button>
@@ -382,7 +345,6 @@ function NewAssignmentContent() {
             </div>
           ) : (
             <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-              <div style={{ display: "flex", gap: 14, alignItems: "flex-start" }}>
               <div style={{ flex: 1, minWidth: 0, ...panelStyle(ACCENT, { padding: 16 }) }}>
                 {challengeStep === "library" && (
                   <>
@@ -454,94 +416,13 @@ function NewAssignmentContent() {
                     <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", marginBottom: 10 }}>
                       <div style={{ fontWeight: 700, fontSize: 13, color: COLORS.textDark }}>3. Choose a case — {browseGrade === "3" ? "3rd" : `${browseGrade}th`} Grade {browseSubject}</div>
                       <div style={{ fontSize: 11.5, color: COLORS.textMuted }}>
-                        {selectedChallenge?.key === "fact_check_desk"
-                          ? `${signalGroups.length} standard${signalGroups.length === 1 ? "" : "s"} · ${filteredCases.length} case${filteredCases.length === 1 ? "" : "s"}`
-                          : `${filteredCases.length} case${filteredCases.length === 1 ? "" : "s"}`}
+                        {`${filteredCases.length} case${filteredCases.length === 1 ? "" : "s"}`}
                       </div>
                     </div>
                     <div style={{ position: "relative", marginBottom: 12 }}>
                       <Search size={15} style={{ position: "absolute", left: 10, top: 10, color: COLORS.textMuted }} />
-                      <input value={caseSearch} onChange={(e) => setCaseSearch(e.target.value)} placeholder={selectedChallenge?.key === "fact_check_desk" ? "Search by standard, title, or format..." : "Search by title or standard..."} style={{ width: "100%", border: "2px solid #ECEAF5", borderRadius: 10, padding: "8px 10px 8px 32px", fontSize: 13, boxSizing: "border-box" }} />
+                      <input value={caseSearch} onChange={(e) => setCaseSearch(e.target.value)} placeholder="Search by title or standard..." style={{ width: "100%", border: "2px solid #ECEAF5", borderRadius: 10, padding: "8px 10px 8px 32px", fontSize: 13, boxSizing: "border-box" }} />
                     </div>
-                    {selectedChallenge?.key === "fact_check_desk" ? (
-                      <div style={{ display: "flex", flexDirection: "column", gap: 10, maxHeight: 420, overflowY: "auto" }}>
-                        {signalGroups.map((g) => {
-                          const groupSelected = selectedCase && g.items.some((c) => c.standard === selectedCase.standard);
-                          return (
-                            <div
-                              key={g.teks}
-                              style={{
-                                background: COLORS.white,
-                                border: groupSelected ? `2px solid ${ACCENT}` : `1.5px solid ${COLORS.border}`,
-                                borderRadius: 14,
-                                overflow: "hidden",
-                                // Sept 13, 2026 — the bug: this card's parent is a
-                                // flex column with maxHeight:420 + overflowY:auto,
-                                // meant to let 19 stacked cards scroll past that
-                                // cap. But a flex item's browser-computed minimum
-                                // height defaults to its CONTENT height only when
-                                // overflow is "visible" — the instant a flex item
-                                // has overflow:hidden (needed here to clip the
-                                // image's corners to the border-radius), its
-                                // automatic minimum drops to 0. With 19 cards each
-                                // wanting ~130-150px but only 420px of room, flexbox
-                                // shrank every one of them down toward that 0 floor
-                                // (~12px each, confirmed live via getBoundingClientRect)
-                                // instead of ever reaching the scrollbar — so every
-                                // row rendered as a sliver clipping almost all of its
-                                // own content (and the Verdict/Weigh-In/Thread chips
-                                // below it entirely). flexShrink:0 is the fix: it
-                                // stops this card from shrinking below its natural
-                                // content size at all, so the column overflows its
-                                // 420px cap the way it was always supposed to and
-                                // overflowY:auto scrolls it instead of crushing it.
-                                flexShrink: 0,
-                                boxShadow: groupSelected ? `0 6px 16px ${ACCENT}29` : "0 2px 8px rgba(13,27,42,.05)",
-                              }}
-                            >
-                              <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 12px 8px" }}>
-                                <div style={{ width: 44, height: 44, borderRadius: 8, overflow: "hidden", flexShrink: 0, background: COLORS.canvas }}>
-                                  <img src={caseImagePath(g.thumbStandard)} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
-                                </div>
-                                <div style={{ minWidth: 0 }}>
-                                  <span style={{ display: "inline-block", fontSize: 10.5, fontWeight: 700, color: ACCENT, background: `${ACCENT}22`, padding: "2px 8px", borderRadius: 999, marginBottom: 4 }}>{g.teks}</span>
-                                  <div style={{ fontSize: 13.5, fontWeight: 700, lineHeight: 1.3, color: COLORS.textDark }}>{g.familyTitle}</div>
-                                </div>
-                              </div>
-                              <div style={{ display: "flex", flexWrap: "wrap", gap: 6, padding: "0 12px 12px" }}>
-                                {g.items.map((c) => {
-                                  const fmt = formatFromStandard(c.standard);
-                                  const isSelected = selectedCase && selectedCase.standard === c.standard;
-                                  return (
-                                    <button
-                                      key={c.standard}
-                                      className="gc-btn"
-                                      onClick={() => { setSelectedCase(c); }}
-                                      style={{
-                                        border: isSelected ? `1.5px solid ${ACCENT}` : `1.5px solid ${COLORS.border}`,
-                                        background: isSelected ? ACCENT : "rgba(255,255,255,.55)",
-                                        color: isSelected ? COLORS.white : COLORS.textDark,
-                                        borderRadius: 999,
-                                        padding: "6px 12px",
-                                        fontSize: 12,
-                                        fontWeight: 700,
-                                      }}
-                                    >
-                                      {fmt.label}
-                                    </button>
-                                  );
-                                })}
-                              </div>
-                            </div>
-                          );
-                        })}
-                        {signalGroups.length === 0 && (
-                          <div style={{ fontSize: 13, color: COLORS.textMuted, textAlign: "center", padding: 16 }}>
-                            No {browseGrade === "3" ? "3rd" : `${browseGrade}th`} Grade {browseSubject} cases yet — check back once they're added!
-                          </div>
-                        )}
-                      </div>
-                    ) : (
                     <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(150px, 1fr))", gap: 12, maxHeight: 420, overflowY: "auto" }}>
                       {filteredCases.map((c) => {
                         const isSelected = selectedCase && selectedCase.standard === c.standard;
@@ -563,28 +444,8 @@ function NewAssignmentContent() {
                         </div>
                       )}
                     </div>
-                    )}
                   </>
                 )}
-              </div>
-              {challengeStep === "caseList" && selectedChallenge?.key === "fact_check_desk" && (
-                <div style={{ width: 280, flexShrink: 0, ...panelStyle(ACCENT, { padding: 16 }) }}>
-                  <div style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 700, fontSize: 14, marginBottom: 4, color: COLORS.textDark }}>What kids do</div>
-                  <div style={{ fontSize: 11.5, color: COLORS.textMuted, marginBottom: 12 }}>Same TEKS. Three formats. Here’s the difference:</div>
-                  <div style={{ fontSize: 12.5, color: COLORS.textDark, lineHeight: 1.45, marginBottom: 10 }}>
-                    <span style={{ fontWeight: 700 }}>Verdict</span>
-                    <div style={{ color: COLORS.textMuted, marginTop: 2 }}>Kids stamp one claim True, Misleading, or False using the evidence.</div>
-                  </div>
-                  <div style={{ fontSize: 12.5, color: COLORS.textDark, lineHeight: 1.45, marginBottom: 10 }}>
-                    <span style={{ fontWeight: 700 }}>Weigh-In</span>
-                    <div style={{ color: COLORS.textMuted, marginTop: 2 }}>Two sides disagree. Kids pick who’s right and prove it.</div>
-                  </div>
-                  <div style={{ fontSize: 12.5, color: COLORS.textDark, lineHeight: 1.45 }}>
-                    <span style={{ fontWeight: 700 }}>Thread</span>
-                    <div style={{ color: COLORS.textMuted, marginTop: 2 }}>Kids flag comments on a claim, then write a short reply.</div>
-                  </div>
-                </div>
-              )}
               </div>
 
               {selectedCase && (selectedCase.learning_target || selectedCase.lesson_summary || selectedCase.misconception_note) && (
@@ -595,11 +456,7 @@ function NewAssignmentContent() {
                     </div>
                     <div>
                       <div style={{ fontSize: 14, fontWeight: 700, color: COLORS.textDark }}>{selectedCase.title}</div>
-                      <div style={{ fontSize: 11, color: COLORS.textMuted }}>
-                        {selectedCase.engine === "fact_check_desk"
-                          ? `${teksFromStandard(selectedCase.standard)} · ${formatFromStandard(selectedCase.standard).label}`
-                          : selectedCase.standard}
-                      </div>
+                      <div style={{ fontSize: 11, color: COLORS.textMuted }}>{selectedCase.standard}</div>
                     </div>
                   </div>
 

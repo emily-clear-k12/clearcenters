@@ -4,19 +4,11 @@ import { supabaseAdmin } from "../../../../lib/supabaseAdmin";
 import { callClaude, extractJSON } from "../../../../lib/anthropic";
 import { getSignalCheckServerCase } from "../../../../lib/cases/signal-check/index.server";
 
-function summarizeForHumans(caseData, stemMode, statementAnswers, extras = {}) {
-  const shape = extras.caseShape || caseData?.caseShape || "classic";
-  if (shape === "weigh_in") {
-    const side = extras.sideId || "(no side)";
-    const evid = (extras.reasonEvidenceIds || []).filter(Boolean).join(", ") || "(none)";
-    return `Weigh-In side: ${side} — evidence: ${evid}`;
-  }
-  if (shape === "thread") {
-    const flags = extras.commentFlags || {};
-    const flagLine = Object.keys(flags).map((id) => `${id}=${flags[id]}`).join("; ") || "(none)";
-    const evid = (extras.replyEvidenceIds || []).filter(Boolean).join(", ") || "(none)";
-    return `Thread flags: ${flagLine}\nReply evidence: ${evid}`;
-  }
+// Sept 16, 2026 — the Weigh-In and Thread branches that used to live here
+// are gone along with those formats (see SignalCheckClient.js for why).
+// Signal Check grades one thing again: a verdict plus the student's
+// reasoning for each signal.
+function summarizeForHumans(caseData, stemMode, statementAnswers) {
   // Human-readable text for the generic `attempt2` column every other page
   // already knows how to display (Reports, Progress, notifications) — the
   // full structured breakdown lives in signal_data for the grading page.
@@ -47,48 +39,6 @@ function gradeDropdown(caseData, statementAnswers) {
   const score = ratio === 1 ? 2 : ratio > 0 ? 1 : 0;
   const rationale = `Matched ${correct} of ${ids.length} signal verdicts exactly.`;
   return { score, rationale };
-}
-
-function gradeWeighIn(caseData, sideId, reasonEvidenceIds) {
-  if (!caseData?.correctSideId) return { score: null, rationale: null };
-  const sideOk = sideId === caseData.correctSideId;
-  const picks = (reasonEvidenceIds || []).filter(Boolean);
-  const must = caseData.rulingMustInclude || [];
-  // Soft check: at least one must-include token appears in joined pick ids
-  // (dropdown mode stores evidence ids, not prose).
-  const joined = picks.join(" ").toLowerCase();
-  const hintHits = must.filter((m) => joined.includes(String(m).toLowerCase())).length;
-  if (sideOk && picks.length >= 2) {
-    return { score: 2, rationale: `Picked correct side (${caseData.correctSideId}) with ${picks.length} evidence picks.` };
-  }
-  if (sideOk || hintHits > 0) {
-    return { score: 1, rationale: sideOk ? "Correct side, but evidence picks were thin or missing." : "Side missed; some related evidence tokens present." };
-  }
-  return { score: 0, rationale: `Expected side ${caseData.correctSideId}; student picked ${sideId || "(none)"}.` };
-}
-
-function gradeThread(caseData, commentFlags, replyEvidenceIds) {
-  const map = caseData?.commentFlags || {};
-  const ids = Object.keys(map);
-  if (ids.length === 0) return { score: null, rationale: null };
-  let correct = 0;
-  ids.forEach((id) => {
-    if ((commentFlags || {})[id] === map[id]) correct++;
-  });
-  const mustIds = caseData.mustFlagIds || ids;
-  let mustCorrect = 0;
-  mustIds.forEach((id) => {
-    if ((commentFlags || {})[id] === map[id]) mustCorrect++;
-  });
-  const replyOk = (replyEvidenceIds || []).filter(Boolean).length >= 2;
-  const ratio = mustIds.length ? mustCorrect / mustIds.length : 0;
-  if (ratio === 1 && replyOk) {
-    return { score: 2, rationale: `Flagged ${correct}/${ids.length} comments correctly; reply cited evidence.` };
-  }
-  if (ratio >= 0.5 || (mustCorrect > 0 && replyOk)) {
-    return { score: 1, rationale: `Matched ${mustCorrect}/${mustIds.length} key flags.` };
-  }
-  return { score: 0, rationale: `Matched ${mustCorrect}/${mustIds.length} key flags.` };
 }
 
 async function gradeWithClaude(caseData, stemMode, statementAnswers) {
@@ -150,29 +100,15 @@ export async function POST(request) {
     statementAnswers,
     checklist,
     practiceContext,
-    caseShape: bodyShape,
-    sideId,
-    reasonEvidenceIds,
-    commentFlags,
-    replyEvidenceIds,
   } = body;
 
   const caseData = getSignalCheckServerCase(caseStandard);
-  const caseShape = bodyShape || caseData?.caseShape || "classic";
 
   let aiScore = null;
   let aiRationale = null;
 
   if (caseData) {
-    if (caseShape === "weigh_in") {
-      const result = gradeWeighIn(caseData, sideId, reasonEvidenceIds);
-      aiScore = result.score;
-      aiRationale = result.rationale;
-    } else if (caseShape === "thread") {
-      const result = gradeThread(caseData, commentFlags, replyEvidenceIds);
-      aiScore = result.score;
-      aiRationale = result.rationale;
-    } else if (stemMode === "dropdown") {
+    if (stemMode === "dropdown") {
       const result = gradeDropdown(caseData, statementAnswers);
       aiScore = result.score;
       aiRationale = result.rationale;
@@ -184,22 +120,11 @@ export async function POST(request) {
   }
 
   const fields = {
-    attempt2: summarizeForHumans(caseData, stemMode, statementAnswers, {
-      caseShape,
-      sideId,
-      reasonEvidenceIds,
-      commentFlags,
-      replyEvidenceIds,
-    }),
+    attempt2: summarizeForHumans(caseData, stemMode, statementAnswers),
     checklist: checklist || null,
     signal_data: {
-      caseShape,
       stemMode: stemMode || null,
       statementAnswers: statementAnswers || {},
-      sideId: sideId || null,
-      reasonEvidenceIds: reasonEvidenceIds || null,
-      commentFlags: commentFlags || null,
-      replyEvidenceIds: replyEvidenceIds || null,
       // Sensor Sort is practice only — shown to the teacher as context,
       // never factored into ai_score or teacher_grade.
       practiceContext: practiceContext || null,
