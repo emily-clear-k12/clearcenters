@@ -51,6 +51,16 @@ const PHASE_LABELS = {
   storyTeach: "Field Brief",
   synthesis: "Put It Together",
   transfer: "New Town",
+  // The other three v3 pairs (Sept 16, 2026). Type 1 uses storyTeach +
+  // synthesis above; these are comparison, people and categories. All three
+  // synthesis phases share the "Put It Together" label on purpose — to a
+  // student they are the same beat of the lesson, whatever the shape.
+  sideBySide: "Two Places",
+  contrastSynthesis: "Put It Together",
+  theDecision: "The Decision",
+  contributionSynthesis: "Put It Together",
+  wrongDesk: "The Wrong Desk",
+  boundarySynthesis: "Put It Together",
 };
 
 /** Phases that imply Reason Sort was already past (pre-P2 saves). */
@@ -236,6 +246,62 @@ function migratePhaseState(saved) {
       checked: Boolean(s.transfer?.checked),
       results: s.transfer?.results || null,
       passed: Boolean(s.transfer?.passed),
+    },
+    // --- v3 type-specific slices (Sept 16, 2026) ---
+    // Unconditional, like every slice above: a save written before these
+    // phases existed has to come back with them present, or the first render
+    // of a resumed lesson reads undefined and throws.
+    //
+    // The three teach phases share one shape (roundIndex / rounds / done);
+    // the three synthesis phases share another (a sort, a middle question
+    // set, and one final counterfactual in `finalAnswer` + `passed`).
+    sideBySide: {
+      roundIndex: s.sideBySide?.roundIndex || 0,
+      // per round: { predictIndex, whyId, stretchIndex }
+      rounds: s.sideBySide?.rounds || {},
+      done: Boolean(s.sideBySide?.done),
+    },
+    contrastSynthesis: {
+      selectedItemId: s.contrastSynthesis?.selectedItemId || "",
+      placed: s.contrastSynthesis?.placed || {},
+      sortDone: Boolean(s.contrastSynthesis?.sortDone),
+      causeIndex: s.contrastSynthesis?.causeIndex || 0,
+      causeAnswers: s.contrastSynthesis?.causeAnswers || {},
+      causesDone: Boolean(s.contrastSynthesis?.causesDone),
+      finalAnswer: s.contrastSynthesis?.finalAnswer || "",
+      passed: Boolean(s.contrastSynthesis?.passed),
+    },
+    theDecision: {
+      roundIndex: s.theDecision?.roundIndex || 0,
+      // per round: { decisionIndex, kindId, stretchIndex }
+      rounds: s.theDecision?.rounds || {},
+      done: Boolean(s.theDecision?.done),
+    },
+    contributionSynthesis: {
+      selectedItemId: s.contributionSynthesis?.selectedItemId || "",
+      placed: s.contributionSynthesis?.placed || {},
+      sortDone: Boolean(s.contributionSynthesis?.sortDone),
+      attrIndex: s.contributionSynthesis?.attrIndex || 0,
+      attrAnswers: s.contributionSynthesis?.attrAnswers || {},
+      attrsDone: Boolean(s.contributionSynthesis?.attrsDone),
+      finalAnswer: s.contributionSynthesis?.finalAnswer || "",
+      passed: Boolean(s.contributionSynthesis?.passed),
+    },
+    wrongDesk: {
+      roundIndex: s.wrongDesk?.roundIndex || 0,
+      // per round: { routeIndex, ruleId, stretchIndex }
+      rounds: s.wrongDesk?.rounds || {},
+      done: Boolean(s.wrongDesk?.done),
+    },
+    boundarySynthesis: {
+      selectedItemId: s.boundarySynthesis?.selectedItemId || "",
+      placed: s.boundarySynthesis?.placed || {},
+      sortDone: Boolean(s.boundarySynthesis?.sortDone),
+      boundaryIndex: s.boundarySynthesis?.boundaryIndex || 0,
+      boundaryAnswers: s.boundarySynthesis?.boundaryAnswers || {},
+      boundariesDone: Boolean(s.boundarySynthesis?.boundariesDone),
+      finalAnswer: s.boundarySynthesis?.finalAnswer || "",
+      passed: Boolean(s.boundarySynthesis?.passed),
     },
   };
 }
@@ -3378,6 +3444,7 @@ export default function BriefingClient({ student, assignment, briefing, initialS
           <img
             src={img}
             alt=""
+            onError={hideIfMissing}
             style={{ width: "100%", maxWidth: 520, borderRadius: 14, display: "block", marginBottom: 10 }}
           />
         )}
@@ -3775,6 +3842,1021 @@ export default function BriefingClient({ student, assignment, briefing, initialS
     );
   }
 
+  /* ------------------------------------------------------------------
+   * v3 type-specific phases (Sept 16, 2026).
+   *
+   * Type 1 (ssThinking) already had its pair: storyTeach + synthesis, above.
+   * These are the other three pairs, built to the same rules:
+   *
+   *   ssComparison  sideBySide        + contrastSynthesis
+   *   ssPeople      theDecision       + contributionSynthesis
+   *   ssCategory    wrongDesk         + boundarySynthesis
+   *
+   * Each teach phase is a ledger that fills one line per round, and the
+   * graded step in every one of them is NAMING the reason — the same move
+   * storyTeach makes, for the same reason: handing a student the label is
+   * what turned the old Field Brief into a list of facts.
+   *
+   * Each synthesis phase is three parts: a server-graded sort, a set of
+   * publicly-keyed reasoning questions, and one final server-graded
+   * counterfactual. Part 1 is identical UI in all three, so it is written
+   * once in renderSortIntoColumns below and CALLED rather than mounted,
+   * which keeps it a plain render with no remount on every keystroke.
+   * ------------------------------------------------------------------ */
+
+  /** Part 1 of all three v3 synthesis phases: tap an item, then tap the
+   * column it belongs in. `phaseKey` is both the grade-route phase and the
+   * phaseState key; `slice` is that key's state. */
+  function renderSortIntoColumns({ pack, slice, phaseKey }) {
+    const items = pack.sortItems || [];
+    const columns = pack.columns || [];
+    const placed = slice.placed || {};
+    const sel = slice.selectedItemId || "";
+    const unplaced = items.filter((it) => !placed[it.id]);
+
+    const place = async (columnId) => {
+      if (!sel) return;
+      const result = await grade(phaseKey, { step: "sort", itemId: sel, columnId });
+      if (!result.pass) {
+        setSamLine(result.message || "");
+        setSamState("helping");
+        setToast(result.message || "");
+        return;
+      }
+      const nextPlaced = { ...placed, [sel]: columnId };
+      const done = items.every((it) => nextPlaced[it.id]);
+      setSamLine(result.message || "");
+      setSamState(done ? "celebrating" : "helping");
+      updateState(
+        { [phaseKey]: { ...slice, placed: nextPlaced, selectedItemId: "", sortDone: done } },
+        done ? { scores: { ...scores, [`${phaseKey}Sort`]: result } } : { skipSave: true }
+      );
+    };
+
+    return (
+      <>
+        <p style={{ fontSize: 11, fontWeight: 800, letterSpacing: 0.6, color: COLORS.gold, textTransform: "uppercase", marginTop: 12 }}>
+          {pack.sortTag || "Part 1 · Sort them"}
+        </p>
+        <p style={{ fontSize: 13.5, color: COLORS.textMuted, margin: "4px 0 8px" }}>{pack.sortPrompt}</p>
+
+        {unplaced.length > 0 && (
+          <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 12 }}>
+            {unplaced.map((it) => (
+              <button
+                key={it.id}
+                type="button"
+                className="gc-btn"
+                onClick={() => {
+                  setSamAnchor("sort");
+                  updateState(
+                    { [phaseKey]: { ...slice, selectedItemId: sel === it.id ? "" : it.id } },
+                    { skipSave: true }
+                  );
+                }}
+                style={{ ...pickBtn(sel === it.id), textAlign: "left" }}
+              >
+                {it.text}
+              </button>
+            ))}
+          </div>
+        )}
+
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: `repeat(${Math.min(columns.length, 4)}, minmax(0, 1fr))`,
+            gap: 10,
+          }}
+        >
+          {columns.map((col) => {
+            const mine = items.filter((it) => placed[it.id] === col.id);
+            return (
+              <button
+                key={col.id}
+                type="button"
+                className="gc-btn"
+                disabled={!sel}
+                onClick={() => place(col.id)}
+                style={{
+                  textAlign: "left",
+                  borderRadius: 14,
+                  padding: 12,
+                  minHeight: 96,
+                  alignSelf: "stretch",
+                  background: sel ? COLORS.violetSoft : COLORS.cream,
+                  border: `2px dashed ${sel ? COLORS.violet : "#D8DAE6"}`,
+                  opacity: sel ? 1 : 0.85,
+                }}
+              >
+                <div style={{ fontSize: 12, fontWeight: 800, color: COLORS.textDark, marginBottom: 6 }}>{col.label}</div>
+                {mine.map((it) => (
+                  <div key={it.id} style={{ fontSize: 11.5, color: COLORS.textMuted, marginTop: 4, lineHeight: 1.35 }}>
+                    ✓ {it.text}
+                  </div>
+                ))}
+              </button>
+            );
+          })}
+        </div>
+
+        {slice.sortDone && pack.sortDoneMessage && (
+          <div
+            style={{
+              marginTop: 12,
+              background: COLORS.tealSoft,
+              border: `1.5px solid ${COLORS.teal}`,
+              borderRadius: 12,
+              padding: 12,
+              fontSize: 13.5,
+            }}
+          >
+            {renderBold(pack.sortDoneMessage)}
+          </div>
+        )}
+      </>
+    );
+  }
+
+  /** Parts 2 of the three synthesis phases: publicly-keyed reasoning
+   * questions, one at a time, advancing only on the right answer. Same
+   * contract as Synthesis's `causes` — `{ id, q, options:[{text, ok, why}] }`. */
+  function renderReasonQuestions({ list, tag, index, answers, onAnswer }) {
+    const q = list[Math.min(index, Math.max(list.length - 1, 0))];
+    if (!q) return null;
+    return (
+      <>
+        <p style={{ fontSize: 11, fontWeight: 800, letterSpacing: 0.6, color: COLORS.gold, textTransform: "uppercase", marginTop: 20 }}>
+          {tag}
+        </p>
+        <p style={{ fontWeight: 800, fontFamily: "'Poppins', sans-serif", fontSize: 15, margin: "6px 0 8px" }}>{q.q}</p>
+        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+          {(q.options || []).map((o, oi) => (
+            <button
+              key={oi}
+              type="button"
+              className="gc-btn"
+              onClick={() => {
+                setSamLine(o.why);
+                setSamState(o.ok ? "celebrating" : "helping");
+                setToast(o.why);
+                onAnswer(q, oi, Boolean(o.ok), { ...answers, [q.id]: oi });
+              }}
+              style={{ ...pickBtn(false), textAlign: "left" }}
+            >
+              {o.text}
+            </button>
+          ))}
+        </div>
+      </>
+    );
+  }
+
+  /** Part 3 of the three synthesis phases: one server-graded counterfactual.
+   * `spec` is `{ q, options:[{text, isNoChange}] }`; `step` is the grade-route
+   * step name ("change" for contrastSynthesis, "remove" for the other two). */
+  function renderCounterfactual({ pack, slice, phaseKey, spec, step, tag, prompt }) {
+    if (!spec) return null;
+    return (
+      <>
+        <p style={{ fontSize: 11, fontWeight: 800, letterSpacing: 0.6, color: COLORS.gold, textTransform: "uppercase", marginTop: 20 }}>
+          {tag}
+        </p>
+        {prompt && <p style={{ fontSize: 13.5, color: COLORS.textMuted, margin: "4px 0 8px" }}>{renderBold(prompt)}</p>}
+        <p style={{ fontWeight: 800, fontFamily: "'Poppins', sans-serif", fontSize: 15, margin: "10px 0 8px" }}>{spec.q}</p>
+        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+          {(spec.options || []).map((o, oi) => (
+            <button
+              key={oi}
+              type="button"
+              className="gc-btn"
+              disabled={slice.passed}
+              onClick={async () => {
+                const result = await grade(phaseKey, { step, pick: oi });
+                setSamLine(result.message || "");
+                setSamState(result.pass ? "celebrating" : "helping");
+                setToast(result.message || "");
+                updateState(
+                  { [phaseKey]: { ...slice, finalAnswer: String(oi), passed: Boolean(result.pass) } },
+                  result.pass ? { scores: { ...scores, [phaseKey]: result } } : { skipSave: true }
+                );
+              }}
+              style={{ ...pickBtn(slice.finalAnswer === String(oi)), textAlign: "left" }}
+            >
+              {o.text}
+            </button>
+          ))}
+        </div>
+        {slice.passed && (
+          <>
+            <div
+              style={{
+                marginTop: 12,
+                background: "#E8F9EE",
+                border: `1.5px solid ${COLORS.success}`,
+                borderRadius: 12,
+                padding: 12,
+                fontSize: 13.5,
+              }}
+            >
+              {renderBold(pack.bigIdea || "")}
+            </div>
+            <button type="button" className="gc-btn" onClick={goNext} style={{ ...primaryBtn, marginTop: 12 }}>
+              Continue
+            </button>
+          </>
+        )}
+      </>
+    );
+  }
+
+  /** The ledger shared by sideBySide / theDecision / wrongDesk — one line per
+   * round the student has named, so the reasons visibly accumulate. */
+  function renderLedger({ pack, rounds, mineFor, namedKey }) {
+    const filled = rounds.filter((r) => mineFor(r)?.[namedKey]);
+    return (
+      <div style={{ background: COLORS.cream, borderRadius: 12, padding: "10px 12px", margin: "8px 0 12px" }}>
+        <div style={{ fontSize: 10.5, fontWeight: 800, letterSpacing: 0.7, color: COLORS.textMuted, textTransform: "uppercase" }}>
+          {pack.ledgerTitle || "Your ledger"}
+        </div>
+        {filled.length === 0 ? (
+          <div style={{ fontSize: 12.5, color: COLORS.textMuted, marginTop: 4 }}>
+            {pack.ledgerEmpty || "Nothing yet — you'll fill this in one round at a time."}
+          </div>
+        ) : (
+          filled.map((r, n) => (
+            <div key={r.id} style={{ fontSize: 13, fontWeight: 700, marginTop: 5, color: COLORS.textDark }}>
+              <span style={{ color: COLORS.teal, fontWeight: 800 }}>{n + 1}. </span>
+              {r.ledgerLine}
+            </div>
+          ))
+        )}
+      </div>
+    );
+  }
+
+  /** The vocab / this-really-happened / stretch tail shared by all three
+   * teach phases, shown once the round's graded naming step is passed. */
+  function renderRoundTail({ round, mine, setRound }) {
+    return (
+      <>
+        {round.vocabTerm && (
+          <p style={{ fontSize: 13, margin: "14px 0 0", color: COLORS.textMuted }}>
+            <strong style={{ color: COLORS.teal, fontFamily: "'Poppins', sans-serif" }}>{round.vocabTerm}</strong>
+            {" · "}
+            {round.vocabMeaning}
+          </p>
+        )}
+        {round.realWorld && (
+          <div
+            style={{
+              marginTop: 10,
+              background: COLORS.violetSoft,
+              border: `1.5px solid ${COLORS.violet}`,
+              borderRadius: 12,
+              padding: 12,
+            }}
+          >
+            <div style={{ fontSize: 10.5, fontWeight: 800, letterSpacing: 0.7, color: COLORS.violet, textTransform: "uppercase" }}>
+              This really happened
+            </div>
+            <p style={{ margin: "4px 0 0", fontSize: 13.5 }}>{round.realWorld}</p>
+          </div>
+        )}
+        {round.stretch && (
+          <>
+            <p style={{ fontWeight: 800, fontFamily: "'Poppins', sans-serif", fontSize: 15, margin: "16px 0 8px" }}>
+              {round.stretch.q}
+            </p>
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              {(round.stretch.options || []).map((o, si) => (
+                <button
+                  key={si}
+                  type="button"
+                  className="gc-btn"
+                  disabled={mine.stretchIndex != null}
+                  onClick={() => setRound({ stretchIndex: si })}
+                  style={{ ...pickBtn(mine.stretchIndex === si), textAlign: "left" }}
+                >
+                  {o.text}
+                </button>
+              ))}
+            </div>
+            {mine.stretchIndex != null && (
+              <div
+                style={{
+                  marginTop: 10,
+                  background: round.stretch.options[mine.stretchIndex].ok ? "#E8F9EE" : "#FFF4DC",
+                  border: `1.5px solid ${round.stretch.options[mine.stretchIndex].ok ? COLORS.success : "#FFC44D"}`,
+                  borderRadius: 12,
+                  padding: 12,
+                  fontSize: 13.5,
+                }}
+              >
+                {renderBold(round.stretch.options[mine.stretchIndex].why)}
+              </div>
+            )}
+          </>
+        )}
+      </>
+    );
+  }
+
+  /** The end-of-phase payoff: did the opening prediction hold? Every teach
+   * phase settles it the same way, against `pack.resolvesPredictionTo`. */
+  function renderPredictionPayoff(pack) {
+    const guess = phaseState.openingFrame.prediction;
+    const right = pack.resolvesPredictionTo && guess === pack.resolvesPredictionTo;
+    return (
+      <div
+        style={{
+          marginTop: 14,
+          background: COLORS.cream,
+          border: "1.5px dashed #C9CDD9",
+          borderRadius: 12,
+          padding: 12,
+          fontSize: 13.5,
+        }}
+      >
+        {renderBold(
+          right
+            ? pack.predictionRight || ""
+            : (pack.predictionWrong || "").replace(
+                "{GUESS}",
+                (briefing.openingFrame?.predictOptions || []).find((o) => o.id === guess)?.label || "your guess"
+              )
+        )}
+      </div>
+    );
+  }
+
+  /** The Next / final button shared by the three teach phases. */
+  function renderRoundNextButton({ round, isLast, slice, phaseKey, pack }) {
+    return (
+      <button
+        type="button"
+        className="gc-btn"
+        onClick={() => {
+          if (isLast) {
+            if (!slice.done) updateState({ [phaseKey]: { ...slice, done: true } });
+            else goNext();
+          } else {
+            updateState({ [phaseKey]: { ...slice, roundIndex: slice.roundIndex + 1 } });
+          }
+        }}
+        style={{ ...primaryBtn, marginTop: 12 }}
+      >
+        {isLast ? (slice.done ? "Continue" : pack.finalLabel || "So — what did that add up to?") : round.nextLabel || "Next →"}
+      </button>
+    );
+  }
+
+  /* —— Type 2: comparison —————————————————————————————————— */
+
+  function SideBySide() {
+    const pack = briefing.sideBySide || {};
+    const sb = phaseState.sideBySide;
+    const rounds = pack.rounds || [];
+    const i = Math.min(sb.roundIndex, Math.max(rounds.length - 1, 0));
+    const round = rounds[i] || {};
+    const mine = sb.rounds[round.id] || {};
+    const isLast = i === rounds.length - 1;
+    const img = art[round.imageKey];
+    const guessed = mine.predictIndex != null ? round.predictOptions?.[mine.predictIndex] : null;
+
+    const setRound = (patch, opts) =>
+      updateState(
+        { sideBySide: { ...sb, rounds: { ...sb.rounds, [round.id]: { ...mine, ...patch } } } },
+        opts || { skipSave: true }
+      );
+
+    return (
+      <div style={card}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 10, flexWrap: "wrap" }}>
+          <h2 style={{ fontFamily: "'Poppins', sans-serif", margin: "0 0 4px 0" }}>{round.needLabel}</h2>
+          <span style={{ fontSize: 11, fontWeight: 800, letterSpacing: 0.6, color: COLORS.violet, textTransform: "uppercase" }}>
+            {round.tag || `Job ${i + 1} of ${rounds.length}`}
+          </span>
+        </div>
+
+        {renderLedger({ pack, rounds, mineFor: (r) => sb.rounds[r.id], namedKey: "whyId" })}
+
+        {img && (
+          <img
+            src={img}
+            alt=""
+            onError={hideIfMissing}
+            style={{ width: "100%", maxWidth: 520, borderRadius: 14, display: "block", marginBottom: 10 }}
+          />
+        )}
+
+        {/* The home side is always shown first and never guessed — a student
+            has to have one worked example before predicting the other. */}
+        <div
+          style={{
+            background: COLORS.tealSoft,
+            border: `1.5px solid ${COLORS.teal}`,
+            borderRadius: 12,
+            padding: 12,
+            marginBottom: 12,
+          }}
+        >
+          <div style={{ fontSize: 10.5, fontWeight: 800, letterSpacing: 0.7, color: COLORS.teal, textTransform: "uppercase" }}>
+            {pack.homeName || "Here"}
+          </div>
+          {round.homeLead && (
+            <p style={{ margin: "4px 0 0", fontSize: 13, fontWeight: 700, color: COLORS.textDark }}>{round.homeLead}</p>
+          )}
+          <p style={{ margin: "4px 0 0", fontSize: 13.5, lineHeight: 1.55 }}>{renderBold(round.homeWay)}</p>
+        </div>
+
+        <p style={{ fontSize: 14.5, lineHeight: 1.6, color: COLORS.textDark, margin: "0 0 12px" }}>
+          {renderBold(round.awaySetup)}
+        </p>
+
+        <p style={{ fontWeight: 800, fontFamily: "'Poppins', sans-serif", fontSize: 15, margin: "0 0 8px" }}>
+          {round.predictPrompt}
+        </p>
+        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+          {(round.predictOptions || []).map((o, oi) => (
+            <button
+              key={oi}
+              type="button"
+              className="gc-btn"
+              disabled={mine.predictIndex != null}
+              onClick={() => {
+                setRound({ predictIndex: oi });
+                setSamAnchor("qc");
+              }}
+              style={{ ...pickBtn(mine.predictIndex === oi), textAlign: "left" }}
+            >
+              {o.text}
+            </button>
+          ))}
+        </div>
+
+        {guessed && (
+          <>
+            <div
+              style={{
+                marginTop: 12,
+                background: guessed.best ? COLORS.tealSoft : "#FFF4DC",
+                border: `1.5px solid ${guessed.best ? COLORS.teal : "#FFC44D"}`,
+                borderRadius: 12,
+                padding: 12,
+                fontSize: 13.5,
+              }}
+            >
+              {guessed.best ? (
+                pack.bestLead || "That's how they do it — and here's what it actually looks like."
+              ) : (
+                <>
+                  <strong>If they did: </strong>
+                  {guessed.whatIf}
+                </>
+              )}
+            </div>
+            <div
+              style={{
+                marginTop: 8,
+                background: "#E8F9EE",
+                border: `1.5px solid ${COLORS.success}`,
+                borderRadius: 12,
+                padding: 12,
+                fontSize: 13.5,
+              }}
+            >
+              <div style={{ fontSize: 10.5, fontWeight: 800, letterSpacing: 0.7, color: COLORS.success, textTransform: "uppercase" }}>
+                {pack.awayName || "There"}
+              </div>
+              <p style={{ margin: "4px 0 0" }}>{renderBold(round.awayWay)}</p>
+            </div>
+
+            {/* The graded step: naming WHY the two differ. Three rounds, three
+                different causes — enforced by auditComparisonQuality, so a
+                student cannot tap the same answer three times and pass. */}
+            {!mine.whyId ? (
+              <>
+                <p style={{ fontWeight: 800, fontFamily: "'Poppins', sans-serif", fontSize: 15, margin: "16px 0 8px" }}>
+                  {round.whyPrompt || "Why is it done differently there?"}
+                </p>
+                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                  {(round.whyOptions || []).map((w) => (
+                    <button
+                      key={w.id}
+                      type="button"
+                      className="gc-btn"
+                      onClick={async () => {
+                        const result = await grade("sideBySide", { roundId: round.id, whyId: w.id });
+                        if (result.pass) {
+                          setSamLine(result.message || "That's it.");
+                          setSamState("celebrating");
+                          setRound({ whyId: w.id }, { scores: { ...scores, [`sideBySide_${round.id}`]: result } });
+                        } else {
+                          setSamLine(result.message || "");
+                          setSamState("helping");
+                          setToast(result.message || "");
+                        }
+                      }}
+                      style={{ ...pickBtn(false), textAlign: "left" }}
+                    >
+                      {w.text}
+                    </button>
+                  ))}
+                </div>
+              </>
+            ) : (
+              <>
+                {renderRoundTail({ round, mine, setRound })}
+                {(!round.stretch || mine.stretchIndex != null) && (
+                  <>
+                    {isLast && sb.done && renderPredictionPayoff(pack)}
+                    {renderRoundNextButton({ round, isLast, slice: sb, phaseKey: "sideBySide", pack })}
+                  </>
+                )}
+              </>
+            )}
+          </>
+        )}
+      </div>
+    );
+  }
+
+  function ContrastSynthesis() {
+    const pack = briefing.contrastSynthesis || {};
+    const cs = phaseState.contrastSynthesis;
+    const causes = pack.causes || [];
+
+    return (
+      <div style={card}>
+        <h2 style={{ fontFamily: "'Poppins', sans-serif", margin: "0 0 4px 0" }}>{pack.title}</h2>
+
+        {renderSortIntoColumns({ pack, slice: cs, phaseKey: "contrastSynthesis" })}
+
+        {cs.sortDone &&
+          !cs.causesDone &&
+          renderReasonQuestions({
+            list: causes,
+            tag: pack.causeTag || "Part 2 · What made the difference",
+            index: cs.causeIndex,
+            answers: cs.causeAnswers,
+            onAnswer: (q, oi, ok, answers) =>
+              updateState(
+                {
+                  contrastSynthesis: {
+                    ...cs,
+                    causeAnswers: answers,
+                    causeIndex: ok ? cs.causeIndex + 1 : cs.causeIndex,
+                    causesDone: ok && cs.causeIndex + 1 >= causes.length,
+                  },
+                },
+                { skipSave: true }
+              ),
+          })}
+
+        {cs.causesDone &&
+          renderCounterfactual({
+            pack,
+            slice: cs,
+            phaseKey: "contrastSynthesis",
+            spec: pack.changeOne,
+            step: "change",
+            tag: pack.changeTag || "Part 3 · Change one thing",
+            prompt: pack.changePrompt,
+          })}
+      </div>
+    );
+  }
+
+  /* —— Type 3: people —————————————————————————————————————— */
+
+  function TheDecision() {
+    const pack = briefing.theDecision || {};
+    const td = phaseState.theDecision;
+    const rounds = pack.rounds || [];
+    const i = Math.min(td.roundIndex, Math.max(rounds.length - 1, 0));
+    const round = rounds[i] || {};
+    const mine = td.rounds[round.id] || {};
+    const isLast = i === rounds.length - 1;
+    const img = art[round.imageKey];
+    const chosen = mine.decisionIndex != null ? round.decisionOptions?.[mine.decisionIndex] : null;
+
+    const setRound = (patch, opts) =>
+      updateState(
+        { theDecision: { ...td, rounds: { ...td.rounds, [round.id]: { ...mine, ...patch } } } },
+        opts || { skipSave: true }
+      );
+
+    return (
+      <div style={card}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 10, flexWrap: "wrap" }}>
+          <h2 style={{ fontFamily: "'Poppins', sans-serif", margin: "0 0 4px 0" }}>{round.personName}</h2>
+          <span style={{ fontSize: 11, fontWeight: 800, letterSpacing: 0.6, color: COLORS.violet, textTransform: "uppercase" }}>
+            {round.tag || `Decision ${i + 1} of ${rounds.length}`}
+          </span>
+        </div>
+        {round.personBlurb && (
+          <p style={{ margin: "0 0 8px", fontSize: 13, color: COLORS.textMuted, lineHeight: 1.5 }}>{round.personBlurb}</p>
+        )}
+
+        {renderLedger({ pack, rounds, mineFor: (r) => td.rounds[r.id], namedKey: "kindId" })}
+
+        {img && (
+          <img
+            src={img}
+            alt=""
+            onError={hideIfMissing}
+            style={{ width: "100%", maxWidth: 520, borderRadius: 14, display: "block", marginBottom: 10 }}
+          />
+        )}
+        <p style={{ fontSize: 14.5, lineHeight: 1.6, color: COLORS.textDark, margin: "0 0 12px" }}>
+          {renderBold(round.situation)}
+        </p>
+
+        {/* NO option is marked `best` here — that is the Type 3 rule. Exactly
+            one carries `actual: true`, meaning "this is what the person did",
+            which is a fact about history and not a verdict on the student. */}
+        <p style={{ fontWeight: 800, fontFamily: "'Poppins', sans-serif", fontSize: 15, margin: "0 0 8px" }}>
+          {round.decisionPrompt || "What do you do?"}
+        </p>
+        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+          {(round.decisionOptions || []).map((o, oi) => (
+            <button
+              key={oi}
+              type="button"
+              className="gc-btn"
+              disabled={mine.decisionIndex != null}
+              onClick={() => {
+                setRound({ decisionIndex: oi });
+                setSamAnchor("qc");
+              }}
+              style={{ ...pickBtn(mine.decisionIndex === oi), textAlign: "left" }}
+            >
+              {o.text}
+            </button>
+          ))}
+        </div>
+
+        {chosen && (
+          <>
+            <div
+              style={{
+                marginTop: 12,
+                background: chosen.actual ? COLORS.tealSoft : "#FFF4DC",
+                border: `1.5px solid ${chosen.actual ? COLORS.teal : "#FFC44D"}`,
+                borderRadius: 12,
+                padding: 12,
+                fontSize: 13.5,
+              }}
+            >
+              {renderBold(chosen.response)}
+            </div>
+
+            <div
+              style={{
+                marginTop: 8,
+                background: "#E8F9EE",
+                border: `1.5px solid ${COLORS.success}`,
+                borderRadius: 12,
+                padding: 12,
+                fontSize: 13.5,
+              }}
+            >
+              <div style={{ fontSize: 10.5, fontWeight: 800, letterSpacing: 0.7, color: COLORS.success, textTransform: "uppercase" }}>
+                What happened
+              </div>
+              <p style={{ margin: "4px 0 0" }}>{renderBold(round.whatHappened)}</p>
+            </div>
+
+            {/* Consequence AND cost, always together. A person who only ever
+                gets a consequence is a statue; the cost is what makes the
+                decision a decision. */}
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginTop: 8 }}>
+              {round.consequence && (
+                <div style={{ background: COLORS.violetSoft, borderRadius: 12, padding: 12, fontSize: 13 }}>
+                  <div style={{ fontSize: 10.5, fontWeight: 800, letterSpacing: 0.7, color: COLORS.violet, textTransform: "uppercase" }}>
+                    What it made possible
+                  </div>
+                  <p style={{ margin: "4px 0 0" }}>{renderBold(round.consequence)}</p>
+                </div>
+              )}
+              {round.cost && (
+                <div style={{ background: "#FFF4DC", borderRadius: 12, padding: 12, fontSize: 13 }}>
+                  <div style={{ fontSize: 10.5, fontWeight: 800, letterSpacing: 0.7, color: "#B07A12", textTransform: "uppercase" }}>
+                    What it cost
+                  </div>
+                  <p style={{ margin: "4px 0 0" }}>{renderBold(round.cost)}</p>
+                </div>
+              )}
+            </div>
+
+            {!mine.kindId ? (
+              <>
+                <p style={{ fontWeight: 800, fontFamily: "'Poppins', sans-serif", fontSize: 15, margin: "16px 0 8px" }}>
+                  {pack.namePrompt || "So what kind of work was that? Name it, and it goes in the ledger."}
+                </p>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                  {(round.kindOptions || []).map((k) => (
+                    <button
+                      key={k.id}
+                      type="button"
+                      className="gc-btn"
+                      onClick={async () => {
+                        const result = await grade("theDecision", { roundId: round.id, kindId: k.id });
+                        if (result.pass) {
+                          setSamLine(result.message || "That's it.");
+                          setSamState("celebrating");
+                          setRound({ kindId: k.id }, { scores: { ...scores, [`theDecision_${round.id}`]: result } });
+                        } else {
+                          setSamLine(result.message || "");
+                          setSamState("helping");
+                          setToast(result.message || "");
+                        }
+                      }}
+                      style={chipStyle(false)}
+                    >
+                      {k.label}
+                    </button>
+                  ))}
+                </div>
+              </>
+            ) : (
+              <>
+                {renderRoundTail({ round, mine, setRound })}
+                {(!round.stretch || mine.stretchIndex != null) && (
+                  <>
+                    {isLast && td.done && renderPredictionPayoff(pack)}
+                    {renderRoundNextButton({ round, isLast, slice: td, phaseKey: "theDecision", pack })}
+                  </>
+                )}
+              </>
+            )}
+          </>
+        )}
+      </div>
+    );
+  }
+
+  function ContributionSynthesis() {
+    const pack = briefing.contributionSynthesis || {};
+    const cn = phaseState.contributionSynthesis;
+    const attributions = pack.attributions || [];
+
+    return (
+      <div style={card}>
+        <h2 style={{ fontFamily: "'Poppins', sans-serif", margin: "0 0 4px 0" }}>{pack.title}</h2>
+
+        {renderSortIntoColumns({ pack, slice: cn, phaseKey: "contributionSynthesis" })}
+
+        {cn.sortDone &&
+          !cn.attrsDone &&
+          renderReasonQuestions({
+            list: attributions,
+            tag: pack.attributionTag || "Part 2 · What would be missing",
+            index: cn.attrIndex,
+            answers: cn.attrAnswers,
+            onAnswer: (q, oi, ok, answers) =>
+              updateState(
+                {
+                  contributionSynthesis: {
+                    ...cn,
+                    attrAnswers: answers,
+                    attrIndex: ok ? cn.attrIndex + 1 : cn.attrIndex,
+                    attrsDone: ok && cn.attrIndex + 1 >= attributions.length,
+                  },
+                },
+                { skipSave: true }
+              ),
+          })}
+
+        {cn.attrsDone &&
+          renderCounterfactual({
+            pack,
+            slice: cn,
+            phaseKey: "contributionSynthesis",
+            spec: pack.removeOne,
+            step: "remove",
+            tag: pack.removeTag || "Part 3 · Take one kind away",
+            prompt: pack.removePrompt,
+          })}
+      </div>
+    );
+  }
+
+  /* —— Type 4: categories ————————————————————————————————— */
+
+  function WrongDesk() {
+    const pack = briefing.wrongDesk || {};
+    const wd = phaseState.wrongDesk;
+    const rounds = pack.rounds || [];
+    const i = Math.min(wd.roundIndex, Math.max(rounds.length - 1, 0));
+    const round = rounds[i] || {};
+    const mine = wd.rounds[round.id] || {};
+    const isLast = i === rounds.length - 1;
+    const img = art[round.imageKey];
+    const routed = mine.routeIndex != null ? round.routeOptions?.[mine.routeIndex] : null;
+
+    const setRound = (patch, opts) =>
+      updateState(
+        { wrongDesk: { ...wd, rounds: { ...wd.rounds, [round.id]: { ...mine, ...patch } } } },
+        opts || { skipSave: true }
+      );
+
+    return (
+      <div style={card}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 10, flexWrap: "wrap" }}>
+          <h2 style={{ fontFamily: "'Poppins', sans-serif", margin: "0 0 4px 0" }}>{round.tag || `Plan ${i + 1}`}</h2>
+          <span style={{ fontSize: 11, fontWeight: 800, letterSpacing: 0.6, color: COLORS.violet, textTransform: "uppercase" }}>
+            {`${i + 1} of ${rounds.length}`}
+          </span>
+        </div>
+
+        {renderLedger({ pack, rounds, mineFor: (r) => wd.rounds[r.id], namedKey: "ruleId" })}
+
+        {img && (
+          <img
+            src={img}
+            alt=""
+            onError={hideIfMissing}
+            style={{ width: "100%", maxWidth: 520, borderRadius: 14, display: "block", marginBottom: 10 }}
+          />
+        )}
+        <p style={{ fontSize: 14.5, lineHeight: 1.6, color: COLORS.textDark, margin: "0 0 10px" }}>
+          {renderBold(round.situation)}
+        </p>
+
+        {round.wrongDeskLine && (
+          <div
+            style={{
+              background: "#FFF4DC",
+              border: "1.5px solid #FFC44D",
+              borderRadius: 12,
+              padding: 12,
+              fontSize: 13.5,
+              fontWeight: 700,
+              marginBottom: 10,
+            }}
+          >
+            {renderBold(round.wrongDeskLine)}
+          </div>
+        )}
+
+        <div
+          style={{
+            background: COLORS.cream,
+            border: "1.5px solid #E1E2EE",
+            borderRadius: 12,
+            padding: 12,
+            fontSize: 13.5,
+            marginBottom: 12,
+          }}
+        >
+          <div style={{ fontSize: 10.5, fontWeight: 800, letterSpacing: 0.7, color: COLORS.textMuted, textTransform: "uppercase" }}>
+            What went wrong
+          </div>
+          <p style={{ margin: "4px 0 0", lineHeight: 1.55 }}>{renderBold(round.whatWentWrong)}</p>
+        </div>
+
+        <p style={{ fontWeight: 800, fontFamily: "'Poppins', sans-serif", fontSize: 15, margin: "0 0 8px" }}>
+          {round.routePrompt || "Where does that belong?"}
+        </p>
+        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+          {(round.routeOptions || []).map((o, oi) => (
+            <button
+              key={oi}
+              type="button"
+              className="gc-btn"
+              disabled={mine.routeIndex != null}
+              onClick={() => {
+                setRound({ routeIndex: oi });
+                setSamAnchor("qc");
+              }}
+              style={{ ...pickBtn(mine.routeIndex === oi), textAlign: "left" }}
+            >
+              {o.text}
+            </button>
+          ))}
+        </div>
+
+        {routed && (
+          <>
+            <div
+              style={{
+                marginTop: 12,
+                background: routed.best ? COLORS.tealSoft : "#FFF4DC",
+                border: `1.5px solid ${routed.best ? COLORS.teal : "#FFC44D"}`,
+                borderRadius: 12,
+                padding: 12,
+                fontSize: 13.5,
+              }}
+            >
+              {routed.best ? (
+                pack.routeRightLead || "That's the one. Now say what decided it."
+              ) : (
+                <>
+                  <strong>Not quite: </strong>
+                  {renderBold(routed.whatIf)}
+                </>
+              )}
+            </div>
+
+            {/* The graded step names the RULE, not the category. That is the
+                Type 4 rule: a student who can only name the bin has learned a
+                label; a student who can name the rule can sort a bin nobody
+                taught them. */}
+            {!mine.ruleId ? (
+              <>
+                <p style={{ fontWeight: 800, fontFamily: "'Poppins', sans-serif", fontSize: 15, margin: "16px 0 8px" }}>
+                  {pack.rulePrompt || "So which rule decided that? Name it, and it goes in the ledger."}
+                </p>
+                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                  {(round.ruleOptions || []).map((r) => (
+                    <button
+                      key={r.id}
+                      type="button"
+                      className="gc-btn"
+                      onClick={async () => {
+                        const result = await grade("wrongDesk", { roundId: round.id, ruleId: r.id });
+                        if (result.pass) {
+                          setSamLine(result.message || "That's it.");
+                          setSamState("celebrating");
+                          setRound({ ruleId: r.id }, { scores: { ...scores, [`wrongDesk_${round.id}`]: result } });
+                        } else {
+                          setSamLine(result.message || "");
+                          setSamState("helping");
+                          setToast(result.message || "");
+                        }
+                      }}
+                      style={{ ...pickBtn(false), textAlign: "left" }}
+                    >
+                      {r.label}
+                    </button>
+                  ))}
+                </div>
+              </>
+            ) : (
+              <>
+                {renderRoundTail({ round, mine, setRound })}
+                {(!round.stretch || mine.stretchIndex != null) && (
+                  <>
+                    {isLast && wd.done && renderPredictionPayoff(pack)}
+                    {renderRoundNextButton({ round, isLast, slice: wd, phaseKey: "wrongDesk", pack })}
+                  </>
+                )}
+              </>
+            )}
+          </>
+        )}
+      </div>
+    );
+  }
+
+  function BoundarySynthesis() {
+    const pack = briefing.boundarySynthesis || {};
+    const bs = phaseState.boundarySynthesis;
+    const boundaries = pack.boundaries || [];
+
+    return (
+      <div style={card}>
+        <h2 style={{ fontFamily: "'Poppins', sans-serif", margin: "0 0 4px 0" }}>{pack.title}</h2>
+
+        {renderSortIntoColumns({ pack, slice: bs, phaseKey: "boundarySynthesis" })}
+
+        {bs.sortDone &&
+          !bs.boundariesDone &&
+          renderReasonQuestions({
+            list: boundaries,
+            tag: pack.boundaryTag || "Part 2 · The ones that do not sit still",
+            index: bs.boundaryIndex,
+            answers: bs.boundaryAnswers,
+            onAnswer: (q, oi, ok, answers) =>
+              updateState(
+                {
+                  boundarySynthesis: {
+                    ...bs,
+                    boundaryAnswers: answers,
+                    boundaryIndex: ok ? bs.boundaryIndex + 1 : bs.boundaryIndex,
+                    boundariesDone: ok && bs.boundaryIndex + 1 >= boundaries.length,
+                  },
+                },
+                { skipSave: true }
+              ),
+          })}
+
+        {bs.boundariesDone &&
+          renderCounterfactual({
+            pack,
+            slice: bs,
+            phaseKey: "boundarySynthesis",
+            spec: pack.removeOne,
+            step: "remove",
+            tag: pack.removeTag || "Part 3 · Rub out the lines",
+            prompt: pack.removePrompt,
+          })}
+      </div>
+    );
+  }
+
   function Transfer() {
     const pack = briefing.transfer || {};
     const tr = phaseState.transfer;
@@ -3911,6 +4993,12 @@ export default function BriefingClient({ student, assignment, briefing, initialS
   else if (phaseId === "storyTeach") body = <StoryTeach />;
   else if (phaseId === "synthesis") body = <Synthesis />;
   else if (phaseId === "transfer") body = <Transfer />;
+  else if (phaseId === "sideBySide") body = <SideBySide />;
+  else if (phaseId === "contrastSynthesis") body = <ContrastSynthesis />;
+  else if (phaseId === "theDecision") body = <TheDecision />;
+  else if (phaseId === "contributionSynthesis") body = <ContributionSynthesis />;
+  else if (phaseId === "wrongDesk") body = <WrongDesk />;
+  else if (phaseId === "boundarySynthesis") body = <BoundarySynthesis />;
   else if (phaseId === "fieldBrief") body = <FieldBrief />;
   else if (phaseId === "reasonSort") body = <ReasonSort />;
   else if (phaseId === "opsChoice") body = <OpsChoice />;
@@ -4060,6 +5148,15 @@ export default function BriefingClient({ student, assignment, briefing, initialS
       </main>
     </div>
   );
+}
+
+/** Art for the v3 lessons is commissioned in batches and lands after the
+ * lesson does, so every round image has to survive not existing yet. A
+ * missing file would otherwise render a browser's broken-image icon in the
+ * middle of the teach; this just removes the element instead, which is what
+ * "the lesson, minus the images" is supposed to look like. */
+function hideIfMissing(e) {
+  e.currentTarget.style.display = "none";
 }
 
 const labelStyle = { display: "block", fontSize: 11.5, fontWeight: 700, color: COLORS.textMuted, margin: "10px 0 4px" };

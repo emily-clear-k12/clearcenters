@@ -492,6 +492,98 @@ export async function POST(request) {
     return NextResponse.json({ pass: false, softFail: true, message: "Unknown step." });
   }
 
+  /* ---------------------------------------------------------------
+   * v3 type-specific phases (Sept 16, 2026).
+   *
+   * Three teach phases and three synthesis phases, one pair per shape:
+   *   ssComparison  sideBySide   + contrastSynthesis
+   *   ssPeople      theDecision  + contributionSynthesis
+   *   ssCategory    wrongDesk    + boundarySynthesis
+   *
+   * The three teach phases are the same branch with a different key name,
+   * because they grade the same move: the student NAMES the reason, and
+   * naming it is what writes the ledger line. `namedKeyFor` below keeps the
+   * per-shape vocabulary in the packs rather than smearing it through here.
+   *
+   * The three synthesis phases are likewise one branch each, with two steps:
+   * "sort" (an item into a column, keyed by sortAnswers) and one final
+   * counterfactual ("change" for contrast, "remove" for the other two —
+   * both accepted everywhere, since the difference is only a word).
+   * --------------------------------------------------------------- */
+
+  /** One teach round: did the student name the right reason? */
+  function gradeNamedRound(packKey, keyName) {
+    const rounds = (server[packKey] || {}).rounds || {};
+    const round = rounds[String(payload?.roundId || "")];
+    if (!round) {
+      return NextResponse.json({ pass: false, softFail: true, message: "That round isn't part of this briefing." });
+    }
+    const picked = String(payload?.[keyName] || "");
+    const ok = picked === round[keyName];
+    return NextResponse.json({
+      pass: ok,
+      softFail: !ok,
+      roundId: String(payload?.roundId || ""),
+      message: ok
+        ? round[`${keyName.replace(/Id$/, "")}Right`] || "That's it — written into your ledger."
+        : round[`${keyName.replace(/Id$/, "")}Wrong`] || "Look again. Which one actually decided it?",
+    });
+  }
+
+  if (phase === "sideBySide") return gradeNamedRound("sideBySide", "whyId");
+  if (phase === "theDecision") return gradeNamedRound("theDecision", "kindId");
+  if (phase === "wrongDesk") return gradeNamedRound("wrongDesk", "ruleId");
+
+  /** One synthesis phase: a keyed sort, then one keyed counterfactual. */
+  function gradeSynthesisPhase(packKey) {
+    const sy = server[packKey] || {};
+    const step = String(payload?.step || "");
+
+    if (step === "sort") {
+      const answers = sy.sortAnswers || {};
+      const itemId = String(payload?.itemId || "");
+      if (!(itemId in answers)) {
+        return NextResponse.json({ pass: false, softFail: true, message: "That card isn't part of this briefing." });
+      }
+      const ok = String(payload?.columnId || "") === answers[itemId];
+      // `complete` is advisory — the client already knows how many cards it
+      // has placed. It's here so a later report can tell a finished sort from
+      // an abandoned one without replaying every call.
+      return NextResponse.json({
+        pass: ok,
+        softFail: !ok,
+        itemId,
+        message: ok
+          ? sy.sortRightMessage || "Filed."
+          : (sy.sortWrongMessages || {})[itemId] || "Not that one. Read it again — what is it actually telling you?",
+      });
+    }
+
+    // "change" (contrastSynthesis) and "remove" (the other two) are the same
+    // graded move under two names: pull one thing out, say what breaks.
+    if (step === "change" || step === "remove") {
+      const spec = sy.changeOne || sy.removeOne;
+      if (!spec) {
+        return NextResponse.json({ pass: false, softFail: true, message: "Nothing to change here." });
+      }
+      const idx = Number(payload?.pick);
+      const ok = idx === spec.correctIndex;
+      return NextResponse.json({
+        pass: ok,
+        softFail: !ok,
+        message: ok
+          ? spec.rightMessage || "Right — and that's the whole idea."
+          : (spec.wrongMessages || [])[idx] || "Try it the other way round: take that away and see what still works.",
+      });
+    }
+
+    return NextResponse.json({ pass: false, softFail: true, message: "Unknown step." });
+  }
+
+  if (phase === "contrastSynthesis") return gradeSynthesisPhase("contrastSynthesis");
+  if (phase === "contributionSynthesis") return gradeSynthesisPhase("contributionSynthesis");
+  if (phase === "boundarySynthesis") return gradeSynthesisPhase("boundarySynthesis");
+
   if (phase === "transfer") {
     const tr = server.transfer || {};
     const tapped = Array.isArray(payload?.tapped) ? payload.tapped : [];
