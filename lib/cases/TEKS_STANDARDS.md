@@ -61,8 +61,19 @@ Newsroom's `-BN` suffix (e.g. `5.6D-BN`).
 - **4.7** has no sub-letter in the real TEKS — it's just "4.7" (Forces:
   gravity, friction, magnetism, contact/at-a-distance forces). There is no
   `4.7B`.
-- **5.9** and **5.11** also have no sub-letters — just "5.9" (Earth's
-  rotation/day-night/shadows) and "5.11" (natural resource conservation).
+- ⚠️ **5.9 — THIS NOTE WAS WRONG, corrected Sept 16, 2026.** It used to say
+  5.9 has no sub-letter. It does: **5.9A**. TEA's own *2024–2025 STAAR Grade 5
+  Science TEKS comparison* lists "5.9A — demonstrate that Earth rotates on its
+  axis once approximately every 24 hours" as a **Readiness** standard, and
+  teksguide.org agrees. Two existing cases were built on the bare code while
+  this note said otherwise — `5.9-SC` (Signal Check) and `5.9-SL` (Simulation
+  Lab). Their *content* is fine; it's the code that's short a letter.
+  Renaming them means changing `cases.standard`, which existing assignments
+  point at, so that's a deliberate migration and not a quiet fix — it has NOT
+  been done. New content should use **5.9A**.
+- **5.11** — still unconfirmed. The old note claimed no sub-letter here
+  either; given 5.9 was wrong, don't trust it. Check the real PDF before
+  authoring against 5.11 or 5.11A.
 - **5.10** only goes up to **5.10C** (water cycle → 5.10A, sedimentary rocks
   & fossil fuels → 5.10B, landform formation → 5.10C). There is no `5.10D`.
 - **3.6** only goes up to **3.6D** (matter properties → states → heating/
