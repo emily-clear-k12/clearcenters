@@ -476,15 +476,48 @@ export default function SimulationLabClient({
 
   const activeCfg = round === "roundOne" ? publicCase.roundOne : publicCase.roundTwo;
   const activeLog = round === "roundOne" ? trialLogRoundOne : trialLogRoundTwo;
-  const atMax = activeLog.length >= activeCfg.maxTrials;
 
-  // Force the student onward once a round's maxTrials is reached — between
-  // minTrials and maxTrials, a "I'm ready" button (rendered below) lets the
+  // Every possible setting for the variable — used both to cap trials
+  // (just below) and to work out which settings are still "untested" for
+  // the Data Table step (predict an untested value, design doc §10.2
+  // point 2 / §10.5).
+  const allSettings = [];
+  for (let v = variable.min; v <= variable.max; v += variable.step) allSettings.push(v);
+
+  // Sept 16, 2026 — the Data Table step asks the student to predict a
+  // setting they never tested, and its dropdown is built from whatever
+  // settings their own trial log didn't cover. If a round's trial cap is
+  // high enough for them to test EVERY setting, that dropdown comes up
+  // empty and the mission becomes impossible to finish: hitting maxTrials
+  // auto-advances into the step (the effect below), and Submit Prediction
+  // can never enable without a choice, with no way back.
+  //
+  // Shadow Tracker (5.9-SL) hit exactly that. Its morning window is 8:00
+  // to noon in 1-hour steps — only 5 settings — against the same cap of 5
+  // every other case uses, and every other case has 9 settings. A student
+  // who ran all 5 Round 2 trials was stuck for good, so the more thorough
+  // the student, the more likely they were to lose the whole attempt.
+  //
+  // Capping here rather than in that one case's file fixes it for every
+  // case at once, including any authored later: whatever a case asks for,
+  // the round the Data Table draws from always leaves at least one
+  // setting untested. Cases with room to spare (9 settings, cap 5) are
+  // unaffected.
+  const dataTableRound = (publicCase.dataTableStep && publicCase.dataTableStep.targetRound) || "roundTwo";
+  function maxTrialsFor(roundKey, cfg) {
+    if (roundKey !== dataTableRound) return cfg.maxTrials;
+    return Math.min(cfg.maxTrials, Math.max(1, allSettings.length - 1));
+  }
+  const activeMaxTrials = maxTrialsFor(round, activeCfg);
+  const atMax = activeLog.length >= activeMaxTrials;
+
+  // Force the student onward once a round's trial cap is reached — between
+  // minTrials and that cap, a "I'm ready" button (rendered below) lets the
   // student choose when to stop, matching Emily's "min 3, max 5, their
   // choice" framing (design doc §10.2 point 4).
   useEffect(() => {
     if (labStep !== "console") return;
-    if (activeLog.length >= activeCfg.maxTrials) {
+    if (activeLog.length >= activeMaxTrials) {
       setLabStep(round === "roundOne" ? "checkpoint1" : "dataTable");
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -560,11 +593,6 @@ export default function SimulationLabClient({
     showSam("roundTwoBegin");
   }
 
-  // Every possible setting for the variable — used to compute which
-  // settings are still "untested" for the v3 Data Table step (predict an
-  // untested value, design doc §10.2 point 2 / §10.5).
-  const allSettings = [];
-  for (let v = variable.min; v <= variable.max; v += variable.step) allSettings.push(v);
   const testedInRoundTwo = new Set(trialLogRoundTwo.map((t) => t[variable.id]));
   const untestedSettings = allSettings.filter((v) => !testedInRoundTwo.has(v));
 
@@ -1367,7 +1395,7 @@ export default function SimulationLabClient({
               </div>
             )}
 
-            {labStep === "console" && activeLog.length >= activeCfg.minTrials && activeLog.length < activeCfg.maxTrials && (
+            {labStep === "console" && activeLog.length >= activeCfg.minTrials && activeLog.length < activeMaxTrials && (
               <button
                 className="sl-btn"
                 onClick={() => setLabStep(round === "roundOne" ? "checkpoint1" : "dataTable")}
