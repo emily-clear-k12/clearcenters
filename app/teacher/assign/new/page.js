@@ -8,6 +8,7 @@ import { engineSupportsDistressCall } from "../../../../lib/distressCallEngines"
 import { GAME_SKINS, DEFAULT_GAME_SKIN } from "../../../../lib/frequencyRushSkins";
 import TeacherHUD from "../../../../components/TeacherHUD";
 import { COLORS, PAGE_ACCENTS, PAGE_BACKGROUNDS, panelStyle } from "../../../../lib/teacherTheme";
+import { missionMapTeksLabel, missionMapTeksCode } from "../../../../lib/cases/mission-map/teksLabels";
 
 // Sept 13 — moved to the console-interior look, same pattern as My Classes,
 // Reports, and Student Progress: TeacherSidebar+TeacherPageBanner swapped
@@ -433,7 +434,13 @@ function NewAssignmentContent() {
                             </div>
                             <div style={{ padding: "10px 12px 12px 12px" }}>
                               <div style={{ fontSize: 13, fontWeight: 700, lineHeight: 1.3, marginBottom: 4, color: COLORS.textDark }}>{c.title}</div>
-                              <span style={{ display: "inline-block", fontSize: 10.5, fontWeight: 700, color: ACCENT, background: `${ACCENT}22`, padding: "2px 8px", borderRadius: 999 }}>{c.standard}</span>
+                              {/* Sept 16, 2026 — for Mission Map this chip used
+                                  to show the case's internal concept number
+                                  (3.1-MM), which reads like a TEKS code and
+                                  isn't one. Show the real standard instead
+                                  when we have it; every other engine already
+                                  puts the real standard in `standard`. */}
+                              <span style={{ display: "inline-block", fontSize: 10.5, fontWeight: 700, color: ACCENT, background: `${ACCENT}22`, padding: "2px 8px", borderRadius: 999 }}>{missionMapTeksCode(c.standard) || c.standard}</span>
                             </div>
                           </button>
                         );
@@ -456,7 +463,9 @@ function NewAssignmentContent() {
                     </div>
                     <div>
                       <div style={{ fontSize: 14, fontWeight: 700, color: COLORS.textDark }}>{selectedCase.title}</div>
-                      <div style={{ fontSize: 11, color: COLORS.textMuted }}>{selectedCase.standard}</div>
+                      <div style={{ fontSize: 11, color: COLORS.textMuted }}>
+                        {missionMapTeksLabel(selectedCase.standard) || selectedCase.standard}
+                      </div>
                     </div>
                   </div>
 

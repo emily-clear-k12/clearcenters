@@ -7,6 +7,7 @@ import { GENERIC_HINTS, getCaseHints } from "../../../lib/hints";
 import SamIcon from "../../../components/SamIcon";
 import SamStage from "../../../components/SamStage";
 import DistressCallBadge from "../../../components/DistressCallBadge";
+import { missionMapTeksLabel } from "../../../lib/cases/mission-map/teksLabels";
 
 // Mission Map's own locked palette — light sky-blue with a signal-gold
 // accent for cleared ground (revised Aug 30 v3: replaced an initial dark
@@ -1052,7 +1053,18 @@ export default function MissionMapClient({
 
         {phase === "brief" && (
           <div>
-            <h1 style={{ fontFamily: "'Poppins', sans-serif", fontSize: 24 }}>{publicCase.title}</h1>
+            <h1 style={{ fontFamily: "'Poppins', sans-serif", fontSize: 24, marginBottom: 4 }}>{publicCase.title}</h1>
+            {/* Sept 16, 2026 — show the real standard, the way Signal Check
+                already does in its own header. A Mission Map case code is an
+                internal concept number, not a TEKS code (3.1-MM teaches
+                3.12B), so the code on its own told a teacher looking over a
+                student's shoulder the wrong thing. Falls back to the case
+                code if the lookup has no entry. */}
+            {(missionMapTeksLabel(caseStandard) || publicCase.teksLabel) && (
+              <div style={{ fontSize: 11.5, letterSpacing: 0.3, color: "rgba(31,42,68,.55)", fontWeight: 600, marginBottom: 12 }}>
+                {missionMapTeksLabel(caseStandard) || publicCase.teksLabel}
+              </div>
+            )}
             <p style={{ color: "rgba(31,42,68,.85)", lineHeight: 1.6 }}>{publicCase.mission.briefText}</p>
             <div style={{ background: "rgba(31,42,68,.05)", border: "1px solid rgba(31,42,68,.1)", borderRadius: 12, padding: 16, margin: "16px 0" }}>
               <div style={{ fontSize: 11, letterSpacing: 1, color: COLORS.gold, fontWeight: 700, marginBottom: 6 }}>MISSION GOAL</div>

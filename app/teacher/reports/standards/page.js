@@ -6,6 +6,7 @@ import { ChevronLeft, Printer } from "lucide-react";
 import { supabase } from "../../../../lib/supabaseClient";
 import TeacherHUD from "../../../../components/TeacherHUD";
 import { COLORS, PAGE_ACCENTS, PAGE_BACKGROUNDS } from "../../../../lib/teacherTheme";
+import { missionMapTeksCode } from "../../../../lib/cases/mission-map/teksLabels";
 
 // Sept 13 — moved to the console-interior look, same pattern as the rest of
 // Reports. Same reasoning as the class/student reports: plain opaque white
@@ -165,7 +166,16 @@ export default function StandardsReportPage() {
                 <div style={{ display: "grid", gap: 2 }}>
                   {g.standards.map((row) => (
                     <div key={row.standard} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 4px", borderBottom: `1px solid ${COLORS.border}`, fontSize: 12.5 }}>
-                      <div style={{ width: 220, fontWeight: 600 }}>{row.title} <span style={{ color: COLORS.textMuted, fontWeight: 400 }}>({row.standard})</span></div>
+                      {/* Sept 16, 2026 — this is a standards report, so the
+                          number beside each case has to be the real standard.
+                          Mission Map's `standard` is an internal concept
+                          number (3.1-MM) that isn't the TEKS the case teaches
+                          (3.12B), which made a quarter of this report's rows
+                          misleading and hid the fact that a Mission Map case
+                          and, say, a Signal Check case can cover the same
+                          standard. Everything else already stores the real
+                          standard, so it passes straight through. */}
+                      <div style={{ width: 220, fontWeight: 600 }}>{row.title} <span style={{ color: COLORS.textMuted, fontWeight: 400 }}>({missionMapTeksCode(row.standard) || row.standard})</span></div>
                       <div style={{ width: 80, color: COLORS.textMuted }}>{row.gradedCount} graded</div>
                       <div style={{ flex: 1 }} />
                       <div style={{ width: 40, fontWeight: 700, textAlign: "right" }}>{row.avgPct}%</div>

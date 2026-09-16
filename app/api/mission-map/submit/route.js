@@ -4,15 +4,24 @@ import { supabaseAdmin } from "../../../../lib/supabaseAdmin";
 import { callClaude, extractJSON } from "../../../../lib/anthropic";
 import { getMissionMapServerCase } from "../../../../lib/cases/mission-map/index.server";
 
-function summarizeForHumans(caseData, checkpointResults, finalResponseText) {
+// Sept 16, 2026 — this summary used to report the browser's own
+// first-try-correct count while mission_map_data stored a different,
+// server-verified count of final answers. Both were labelled "correct", so
+// one submission could show two different numbers: a student who missed
+// once and got it on the second attempt counted in one and not the other.
+// The summary now leads with the server-verified figure (how many
+// checkpoints the student ended up right on, re-checked against this
+// engine's own answer key) and reports first-try separately, as the
+// distinct thing it is.
+function summarizeForHumans(caseData, checkpointResults, finalResponseText, correctCount, total) {
   // Same convention as every other engine's submit route: a plain-English
   // summary goes into the generic `attempt2` column so Reports/Progress/
   // teacher views work without any Mission-Map-specific rendering logic.
   // The full structured breakdown lives in mission_map_data instead.
-  const total = checkpointResults.length;
-  const correct = checkpointResults.filter((r) => r.firstTryCorrect).length;
+  const firstTry = checkpointResults.filter((r) => r.firstTryCorrect).length;
   const lockedWrong = checkpointResults.filter((r) => r.lockedInWrong).length;
-  return `Mission Map (${caseData ? caseData.title : "unknown case"}): ${correct}/${total} checkpoints correct on the first try` +
+  return `Mission Map (${caseData ? caseData.title : "unknown case"}): ${correctCount}/${total} checkpoints correct` +
+    ` (${firstTry} on the first try)` +
     (lockedWrong > 0 ? `, ${lockedWrong} locked in wrong after repeated misses` : "") +
     `.\nFinal response: ${finalResponseText || "(no response written)"}`;
 }
@@ -95,13 +104,30 @@ export async function POST(request) {
 
   // "Clean run" recognition — added Sept 1 2026 alongside S.A.M.'s reactive
   // dialogue, both aimed at the same feedback ("something's missing, feels
-  // blah"). Computed server-side from the client's own per-checkpoint
-  // results (never trusted as a bare client-sent flag) so a student can't
-  // just claim one. Purely a positive callout, never a penalty: a run that
-  // isn't clean gets no badge and no negative language anywhere — same
-  // no-shame rule the rest of this engine follows for misses.
+  // blah"). Purely a positive callout, never a penalty: a run that isn't
+  // clean gets no badge and no negative language anywhere — same no-shame
+  // rule the rest of this engine follows for misses.
+  //
+  // Sept 16, 2026 — the comment here used to claim this was computed
+  // server-side and "never trusted as a bare client-sent flag". It was
+  // exactly that: it read the browser's own `firstTryCorrect`. Now the
+  // "correct" half is re-checked against this engine's own answer key, the
+  // same key scoreCheckpoints() uses, and only "was it the first attempt"
+  // comes from the client — that one genuinely can't be verified here,
+  // since the server never sees the individual attempts. Being honest about
+  // which half is which matters more than the badge does; nothing about a
+  // clean run affects a grade.
   const results = checkpointResults || [];
-  const cleanRun = results.length > 0 && results.every((r) => r.firstTryCorrect);
+  const byId = {};
+  results.forEach((r) => { byId[r.id] = r; });
+  const cleanRun =
+    !!caseData &&
+    Array.isArray(caseData.checkpoints) &&
+    caseData.checkpoints.length > 0 &&
+    caseData.checkpoints.every((cp) => {
+      const r = byId[cp.id];
+      return !!r && r.finalChoiceId === expectedAnswerFor(cp) && r.attempts === 1;
+    });
 
   let aiScore = null;
   let aiRationale = null;
@@ -112,7 +138,7 @@ export async function POST(request) {
   }
 
   const fields = {
-    attempt2: summarizeForHumans(caseData, checkpointResults || [], finalResponseText),
+    attempt2: summarizeForHumans(caseData, checkpointResults || [], finalResponseText, correctCount, total),
     checklist: checklist || null,
     mission_map_data: {
       checkpointResults: checkpointResults || [],
