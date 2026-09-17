@@ -1,9 +1,8 @@
 import Link from "next/link";
 
-// CI2.0 home in the sandbox. A starting point: each card becomes a real
-// CI2.0 page as the build plan moves forward.
 const AREAS = [
-  { href: "/v2/teacher", title: "Teacher · This Week", note: "The 10-minute Monday" },
+  { href: "/v2/teacher", title: "Teacher · This Week", note: "Week at a glance · publish and drag" },
+  { href: "/v2/teacher/day?d=2", title: "Teacher · Daily Focus", note: "Wednesday · already published" },
   { href: "/v2/student", title: "Student · My Day", note: "Now / Next / Later" },
 ];
 
