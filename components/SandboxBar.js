@@ -1,8 +1,8 @@
 "use client";
 
 // CI2.0 sandbox bar — a slim strip at the very top of every page that lets
-// Emily flip between the current site (A), the CI2.0 pages (B) and the
-// bold CI2.0 concept (C). B and C share the same foundation; only the look differs.
+// Emily flip between the current site (A) and the approved CI2.0 pages (B).
+// Legacy concept paths still map back to B, but are no longer offered as a tab.
 //
 // SAFETY: this bar only renders when NEXT_PUBLIC_SANDBOX is "true". That
 // variable is set ONLY for the ci2-sandbox preview site in Vercel, never for
@@ -55,7 +55,6 @@ export default function SandboxBar() {
   const hrefs = {
     A: version === "A" ? pathname : bToA(bPath),
     B: bPath,
-    C: "/v2c" + bPath.slice("/v2".length),
   };
 
   const pill = (active) => ({
@@ -91,7 +90,6 @@ export default function SandboxBar() {
       <span style={{ opacity: 0.75 }}>made-up data · not the live site</span>
       <Link href={hrefs.A} style={pill(version === "A")}>A · Current site</Link>
       <Link href={hrefs.B} style={pill(version === "B")}>B · CI2.0</Link>
-      <Link href={hrefs.C} style={pill(version === "C")}>C · Concept</Link>
     </div>
   );
 }
