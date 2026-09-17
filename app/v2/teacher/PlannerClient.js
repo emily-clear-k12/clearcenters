@@ -419,7 +419,7 @@ export default function PlannerClient() {
       <DetailsPanel act={p.selected} setup={p.setup} onClose={() => p.setSelectedId(null)} onMoveTo={p.moveTo} onRemove={p.remove} onPreview={() => p.setToast({text:'Activity previews will be connected in the next build.'})} onToggleClass={p.toggleClass} />
       {p.showLevels && <LevelDrawer level={p.level} onChoose={p.setLevel} onClose={() => p.setShowLevels(false)} />}
       <Toast toast={p.toast} />
-      <style>{`
+      <style dangerouslySetInnerHTML={{ __html: `
         .mission-bridge{color:#242049;max-width:1420px;margin:auto;--violet:#7b45ef;--line:#d8d8f2}
         .mission-bridge *{box-sizing:border-box}
         .mission-bridge button,.mission-bridge select{font-family:inherit}
@@ -497,7 +497,7 @@ export default function PlannerClient() {
         @media(max-width:1150px){.bridge-layout{grid-template-columns:205px minmax(0,1fr);gap:20px}.bridge-subject{grid-template-columns:1fr}.bridge-subject-label{align-items:center}.bridge-subject-label>div:last-child{display:flex;gap:12px;align-items:baseline}.bridge-day.is-selected:after{width:18px;right:-20px}.bridge-console{padding:22px 18px 10px}}
         @media(max-width:760px){.bridge-header{padding:20px;border-radius:24px}.bridge-heading h1 span{display:block;margin:8px 0 0;font-size:16px}.bridge-publish{align-items:flex-start}.bridge-publish small{text-align:left}.bridge-filters label{max-width:100%}.bridge-filters select{max-width:210px}.bridge-level{margin-left:0}.bridge-layout{grid-template-columns:1fr;gap:22px}.bridge-rail{padding:0}.bridge-days{display:flex;overflow:auto;gap:10px;padding:5px 3px 10px}.bridge-days:before,.bridge-day:before,.bridge-day:after{display:none}.bridge-day{flex:0 0 157px;padding:12px}.bridge-day-top strong{font-size:14px}.bridge-day-top>span{font-size:10px}.bridge-sam{margin-top:8px;padding:5px 14px;gap:8px}.bridge-sam>img{width:50px!important;height:50px!important}.bridge-sam p{display:inline;margin-left:8px}.bridge-sam .bridge-link{display:block}.bridge-console{border-radius:24px;min-height:0;padding:20px 14px 10px}.bridge-preview{font-size:10px}.bridge-preview label{flex-wrap:wrap}.bridge-activities{grid-template-columns:1fr}.bridge-subject{padding:14px 12px}.bridge-console-heading h2{font-size:25px}}
         @media(prefers-reduced-motion:reduce){.mission-bridge *{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
-      `}</style>
+      ` }} />
     </PageShell>
   );
 }
