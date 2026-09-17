@@ -1,9 +1,9 @@
 import Link from "next/link";
 
 const AREAS = [
-  { href: "/v2/teacher", title: "Teacher · This Week", note: "Week at a glance · publish and drag" },
-  { href: "/v2/teacher/day?d=2", title: "Teacher · Daily Focus", note: "Wednesday · already published" },
-  { href: "/v2/student", title: "Student · My Day", note: "Now / Next / Later" },
+  { href: "/v2/teacher", title: "Teacher \u00b7 This Week", note: "Week at a glance \u00b7 publish and drag" },
+  { href: "/v2/teacher/day?d=2", title: "Teacher \u00b7 Daily Focus", note: "Wednesday \u00b7 already published" },
+  { href: "/v2/student", title: "Student \u00b7 Home", note: "Current ClearCenters student dashboard" },
 ];
 
 export default function CI2Home() {
