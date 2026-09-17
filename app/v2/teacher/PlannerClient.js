@@ -1,27 +1,12 @@
 "use client";
 
-// CI2.0 · Teacher · This Week — the five-day planner (prototype, pretend data).
+// CI2.0 · Teacher · This Week — Mission Bridge (prototype, pretend data).
 //
-// Design decisions (Emily, Sept 16 2026):
-// - Day-by-day structure. Inside each day, activities are grouped BY SUBJECT,
-//   with "Teach together", "Student work" and "Small group" kept together so
-//   a teacher reads one subject's plan in one place.
-// - The calendar sits on one mostly opaque, pale panel; the space art stays
-//   visible around the edges. Dark text, larger titles, subject color as a
-//   narrow stripe plus a small label.
-// - Fits the teacher's assignment: only her subjects; a subject filter when
-//   she teaches more than one; compact subject sections for self-contained
-//   teachers that expand when needed.
-// - Subjects and classes are separate controls. Shared lessons are planned
-//   once for selected classes; small groups and reteach stay class-specific.
-// - SAM is one compact strip. Suggestions sit beside the subject and day they
-//   belong to. Grading stays reachable but never blocks publishing.
-// - Clicking an activity opens details in a side panel; the week stays
-//   visible. Activities move by dragging or with "Move to…".
-// - Publish week is the main action, with wording about which classes it
-//   affects and when student work opens.
+// Approved Mission Bridge: day navigation on the left, readable subject bays,
+// full-week overview and existing activity controls. B-only visual update;
+// shared planner state and the C concept stay unchanged. Sample data only.
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { usePlanner } from "../../../lib/v2/usePlanner";
 import SamIcon from "../../../components/SamIcon";
 import { COLORS } from "../../../lib/teacherTheme";
@@ -39,7 +24,6 @@ import {
 
 const INK = COLORS.textDark;
 const MUTED = "#5E577F";
-const PAPER = "rgba(252,251,255,.97)";
 const LINE = "#E6E1F5";
 const KIND_ORDER = { teach: 0, work: 1, small: 2 };
 
@@ -153,7 +137,7 @@ function ActivityRow({ act, setup, compact, selected, onOpen, onMoveTo, menuOpen
           </div>
         ) : (
           <div style={{ fontSize: 13, color: MUTED, marginTop: 3 }}>
-            {act.minutes} min · {act.who}
+            {act.product} · {act.minutes} min · {act.who}
             {cls && ` · ${cls}`}
           </div>
         )}
@@ -227,69 +211,6 @@ function SuggestionCard({ sug, setup, onAccept, onDismiss }) {
 }
 
 // ---------- subject section inside a day ----------
-
-function SubjectSection({ subjectKey, acts, suggestions, setup, compact, onToggleCompact, showEmpty, hideHeader, ctx }) {
-  const subject = SUBJECTS[subjectKey];
-  const total = acts.reduce((m, x) => m + x.minutes, 0);
-  const expanded = !compact || suggestions.length > 0;
-
-  if (!acts.length && !suggestions.length) {
-    if (!showEmpty) return null;
-    return (
-      <div style={{ borderLeft: `4px solid ${subject.color}55`, padding: "4px 0 4px 10px", fontSize: 13, color: MUTED }}>
-        <span style={{ fontWeight: 700, color: subject.color }}>{subject.name}</span> · nothing planned
-      </div>
-    );
-  }
-
-  return (
-    <section style={{ borderLeft: `4px solid ${subject.color}`, paddingLeft: 10 }}>
-      {!hideHeader && (
-      <button
-        type="button"
-        onClick={onToggleCompact}
-        disabled={!ctx.canCompact}
-        aria-expanded={expanded}
-        style={{
-          display: "flex",
-          alignItems: "baseline",
-          justifyContent: "space-between",
-          width: "100%",
-          background: "transparent",
-          border: "none",
-          padding: "0 0 6px",
-          cursor: ctx.canCompact ? "pointer" : "default",
-          fontFamily: "inherit",
-        }}
-      >
-        <span style={{ fontSize: 12, fontWeight: 800, color: subject.color, textTransform: "uppercase", letterSpacing: 0.6 }}>{subject.name}</span>
-        <span style={{ fontSize: 12, color: MUTED }}>
-          {total} min{ctx.canCompact ? (expanded ? " ▾" : " ▸") : ""}
-        </span>
-      </button>
-      )}
-      <div style={{ display: "grid", gap: 6 }}>
-        {acts.map((act) => (
-          <ActivityRow
-            key={act.id}
-            act={act}
-            setup={setup}
-            compact={!expanded}
-            selected={ctx.selectedId === act.id}
-            onOpen={ctx.openDetails}
-            onMoveTo={ctx.moveTo}
-            menuOpen={ctx.menuId === act.id}
-            onMenu={ctx.setMenuId}
-            isRoutine={ctx.routineIds.includes(act.id)}
-          />
-        ))}
-        {suggestions.map((s) => (
-          <SuggestionCard key={s.id} sug={s} setup={setup} onAccept={() => ctx.acceptSuggestion(s)} onDismiss={() => ctx.dismissSuggestion(s.id)} />
-        ))}
-      </div>
-    </section>
-  );
-}
 
 // ---------- details side panel ----------
 
@@ -400,324 +321,183 @@ function DetailsPanel({ act, setup, onClose, onMoveTo, onRemove, onPreview, onTo
 // ---------- page ----------
 
 export default function PlannerClient() {
-  const {
-    setupKey,
-    setSetupKey,
-    setup,
-    activities,
-    handled,
-    routineIds,
-    classFilter,
-    setClassFilter,
-    subjectFilter,
-    setSubjectFilter,
-    expandedSections,
-    setExpandedSections,
-    selectedId,
-    setSelectedId,
-    menuId,
-    setMenuId,
-    dragOverDay,
-    setDragOverDay,
-    level,
-    setLevel,
-    showLevels,
-    setShowLevels,
-    published,
-    toast,
-    setToast,
-    flashDays,
-    multiSubject,
-    multiClass,
-    canCompact,
-    levelTitle,
-    shownSubjects,
-    visible,
-    openSuggestions,
-    selected,
-    classList,
-    moveTo,
-    remove,
-    toggleClass,
-    acceptSuggestion,
-    dismissSuggestion,
-    publish,
-    showSuggestions,
-  } = usePlanner();
-
+  const p = usePlanner();
+  const [day, setDay] = useState(2);
+  const [fullWeek, setFullWeek] = useState(false);
+  const [review, setReview] = useState(false);
+  const dayActs = p.visible.filter(x => x.day === day);
+  const suggestions = p.openSuggestions.filter(s => s.day === day);
+  const [notice, setNotice] = useState(false);
   const ctx = {
-    selectedId,
-    openDetails: (id) => {
-      setSelectedId(id);
-      setMenuId(null);
-    },
-    moveTo,
-    menuId,
-    setMenuId,
-    routineIds,
-    acceptSuggestion,
-    dismissSuggestion,
-    canCompact,
+    selectedId: p.selectedId, openDetails: id => { p.setSelectedId(id); p.setMenuId(null); },
+    moveTo: p.moveTo, menuId: p.menuId, setMenuId: p.setMenuId,
+    routineIds: p.routineIds, acceptSuggestion: p.acceptSuggestion,
+    dismissSuggestion: p.dismissSuggestion, canCompact: false,
   };
-
-  const suggestionCount = openSuggestions.length;
-  const oneSubject = SUBJECTS[setup.subjects[0]];
-
+  const chooseDay = i => { setDay(i); setFullWeek(false); setReview(false); };
+  const drop = (e, i) => { e.preventDefault(); p.setDragOverDay(null); p.moveTo(e.dataTransfer.getData('text/plain'), i); };
+  const dayTotal = acts => acts.reduce((n, a) => n + a.minutes, 0);
   return (
     <PageShell>
-      {/* Sandbox-only: preview the planner for different teaching assignments */}
-      <div style={{ display: "flex", justifyContent: "center", marginBottom: 12 }}>
-        <label
-          htmlFor="setup"
-          style={{
-            background: "rgba(255,255,255,.92)",
-            border: "1px dashed #B9A6F5",
-            borderRadius: 999,
-            padding: "5px 6px 5px 14px",
-            color: INK,
-            display: "flex",
-            alignItems: "center",
-            gap: 8,
-            fontSize: 13,
-            flexWrap: "wrap",
-          }}
-        >
-          <strong>Sandbox · Preview as:</strong>
-          <select
-            id="setup"
-            value={setupKey}
-            onChange={(e) => setSetupKey(e.target.value)}
-            style={{ border: `1px solid ${LINE}`, borderRadius: 999, padding: "4px 10px", fontFamily: "inherit", fontSize: 13, color: INK, background: "#fff" }}
-          >
-            {Object.entries(TEACHER_SETUPS).map(([k, v]) => (
-              <option key={k} value={k}>
-                {v.label}
-              </option>
-            ))}
-          </select>
-        </label>
-      </div>
-
-      <div style={{ background: PAPER, borderRadius: 20, boxShadow: "0 16px 50px rgba(60,40,130,.22)" }}>
-        {/* Header */}
-        <div
-          style={{
-            padding: "18px 22px",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            gap: 16,
-            flexWrap: "wrap",
-            borderBottom: `1px solid ${LINE}`,
-          }}
-        >
-          <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
-            <Button aria-label="Previous week" onClick={() => setToast({ text: "Other weeks open in a later CI2.0 build." })}>
-              ‹
-            </Button>
-            <h1 style={{ fontFamily: "'Poppins', sans-serif", fontSize: "clamp(22px, 3vw, 30px)", margin: 0, color: INK }}>This Week · {DEMO_WEEK.label}</h1>
-            <Button aria-label="Next week" onClick={() => setToast({ text: "Other weeks open in a later CI2.0 build." })}>
-              ›
-            </Button>
-            <button
-              type="button"
-              onClick={() => setShowLevels(true)}
-              style={{ background: "#F3EFFC", border: "none", borderRadius: 999, padding: "6px 12px", fontSize: 13, color: INK, cursor: "pointer", fontFamily: "inherit" }}
-            >
-              {levelTitle} · <span style={{ color: "#6D3FD9", fontWeight: 700 }}>Change</span>
-            </button>
-          </div>
-
-          <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 4 }}>
-            {published ? (
-              <span style={{ fontWeight: 700, color: "#15803D", background: "#DCFCE7", borderRadius: 999, padding: "10px 18px" }}>✓ Week published</span>
-            ) : (
-              <Button kind="primary" onClick={publish}>
-                Publish week
-              </Button>
-            )}
-            <span style={{ fontSize: 12, color: MUTED, textAlign: "right" }}>For {classList} · student work opens Mon, Oct 6 at 7:00 AM</span>
-          </div>
+      <div className="mission-bridge">
+        <div className="bridge-preview">
+          <span>DESIGN PREVIEW · Sample data</span>
+          <label>Teaching assignment <select aria-label="Preview teaching assignment" value={p.setupKey} onChange={e => p.setSetupKey(e.target.value)}>
+            {Object.entries(TEACHER_SETUPS).map(([key, setup]) => <option key={key} value={key}>{setup.label}</option>)}
+          </select></label>
         </div>
-
-        {/* Controls + SAM strip */}
-        <div
-          style={{
-            padding: "12px 22px",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            gap: 12,
-            flexWrap: "wrap",
-            borderBottom: `1px solid ${LINE}`,
-            background: "#FAF8FF",
-          }}
-        >
-          <div style={{ display: "flex", gap: 14, flexWrap: "wrap", alignItems: "center" }}>
-            {multiClass && (
-              <div role="group" aria-label="Class" style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-                <Chip active={classFilter === "all"} onClick={() => setClassFilter("all")}>
-                  All my classes
-                </Chip>
-                {setup.classes.map((c) => (
-                  <Chip key={c.key} active={classFilter === c.key} onClick={() => setClassFilter(c.key)}>
-                    {c.name}
-                  </Chip>
-                ))}
-              </div>
-            )}
-            {multiClass && multiSubject && <span aria-hidden="true" style={{ width: 1, height: 24, background: LINE }} />}
-            {multiSubject ? (
-              <div role="group" aria-label="Subject" style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-                <Chip active={subjectFilter === "all"} onClick={() => setSubjectFilter("all")}>
-                  All subjects
-                </Chip>
-                {setup.subjects.map((k) => (
-                  <Chip key={k} active={subjectFilter === k} color={SUBJECTS[k].color} onClick={() => setSubjectFilter(k)}>
-                    {SUBJECTS[k].name}
-                  </Chip>
-                ))}
-              </div>
-            ) : (
-              <span style={{ fontSize: 14, color: MUTED, display: "inline-flex", alignItems: "center", gap: 6 }}>
-                <span style={{ width: 9, height: 9, borderRadius: 999, background: oneSubject.color }} />
-                <strong style={{ color: INK }}>{oneSubject.name}</strong> · Unit: {oneSubject.unit}
-              </span>
-            )}
+        <header className="bridge-header bridge-frame">
+          <div className="bridge-heading"><span className="bridge-eyebrow">YOUR PLANNING BRIDGE</span><h1>This Week <span>{DEMO_WEEK.label}</span></h1></div>
+          <div className="bridge-publish">
+            <Button kind="primary" onClick={p.publish}>{p.published ? '✓ Preview published' : 'Publish week'}</Button>
+            <small>For {p.classList} · Monday at 7:00 AM</small>
           </div>
-
-          <div style={{ display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 14, color: INK }}>
-              <SamIcon skinKey="cosmic" size={26} />
-              <span>Your week is ready to review.</span>
-              {suggestionCount > 0 && (
-                <button
-                  type="button"
-                  onClick={showSuggestions}
-                  style={{
-                    background: "#FFF1E0",
-                    border: "1px solid #F5C58B",
-                    borderRadius: 999,
-                    padding: "2px 10px",
-                    fontSize: 13,
-                    fontWeight: 700,
-                    color: "#9A4A00",
-                    cursor: "pointer",
-                    fontFamily: "inherit",
-                  }}
-                >
-                  {suggestionCount} suggestion{suggestionCount === 1 ? "" : "s"}
-                </button>
-              )}
+          <div className="bridge-filters">
+            <label>Class <select aria-label="Class" value={p.classFilter} onChange={e => p.setClassFilter(e.target.value)}>
+              <option value="all">{p.multiClass ? 'All my classes' : p.setup.classes[0].name}</option>
+              {p.multiClass && p.setup.classes.map(c => <option key={c.key} value={c.key}>{c.name}</option>)}
+            </select></label>
+            <label>Subjects <select aria-label="Subjects" value={p.subjectFilter} onChange={e => p.setSubjectFilter(e.target.value)}>
+              <option value="all">{p.setup.subjects.map(s => SUBJECTS[s].name).join(' + ')}</option>
+              {p.multiSubject && p.setup.subjects.map(s => <option key={s} value={s}>{SUBJECTS[s].name}</option>)}
+            </select></label>
+            <button className="bridge-level" onClick={() => p.setShowLevels(true)}>✦ {p.levelTitle} <span>⌄</span></button>
+          </div>
+        </header>
+        <div className="bridge-layout">
+          <aside className="bridge-rail">
+            <nav className="bridge-days" aria-label="Choose a planning day">
+              {DAY_NAMES.map((name, i) => {
+                const acts = p.visible.filter(a => a.day === i);
+                const count = p.openSuggestions.filter(s => s.day === i).length;
+                return <button key={name} id={`day-${i}`} className={`bridge-day ${day === i && !fullWeek ? 'is-selected' : ''} ${p.dragOverDay === i ? 'is-drop' : ''}`}
+                  aria-pressed={day === i && !fullWeek} onClick={() => chooseDay(i)}
+                  onDragOver={e => { e.preventDefault(); p.setDragOverDay(i); }} onDragLeave={() => p.setDragOverDay(null)} onDrop={e => drop(e, i)}>
+                  <span className="bridge-day-top"><strong>{name}</strong><span>{DATES[i]}</span></span>
+                  <span className="bridge-day-subjects">{p.shownSubjects.filter(s => acts.some(a => a.subject === s)).map(s => <span key={s}><i style={{background: SUBJECTS[s].color}} />{SUBJECTS[s].name}</span>)}</span>
+                  <span className="bridge-day-foot">{acts.length} activities{count > 0 && <span className="bridge-suggestion-dot" aria-label={`${count} suggestions`}>✦ {count}</span>}</span>
+                </button>;
+              })}
+            </nav>
+            <div className="bridge-sam">
+              <SamIcon skinKey="cosmic" size={100} />
+              <div><strong>SAM’s quick look</strong><p>{p.openSuggestions.length ? `${p.openSuggestions.length} ideas to support your week.` : 'You’re all caught up on suggestions.'}</p>
+              {p.openSuggestions.length > 0 && <button className="bridge-link" onClick={() => { setDay(p.openSuggestions[0].day); setFullWeek(false); setReview(true); }}>Review suggestions →</button>}</div>
             </div>
-            <button
-              type="button"
-              onClick={() => setToast({ text: "Grading opens in the Check area in a later CI2.0 build." })}
-              style={{ background: "transparent", border: "none", color: "#6D3FD9", fontWeight: 600, fontSize: 14, cursor: "pointer", fontFamily: "inherit", padding: 0 }}
-            >
-              {DEMO_WEEK.gradingCount} to grade →
-            </button>
-          </div>
+          </aside>
+          <section className="bridge-console bridge-frame" aria-label="Weekly plan">
+            <div className="bridge-console-heading">
+              <div><span className="bridge-eyebrow">{fullWeek ? 'THE WEEK AT A GLANCE' : 'YOUR DAY, READY TO SHAPE'}</span><h2>{fullWeek ? 'Your full week' : DAY_NAMES[day]} <span>{!fullWeek && DATES[day]}</span></h2>
+              <p>{fullWeek ? 'Select any activity to review or move it.' : `${dayActs.length} activities · ${dayTotal(dayActs)} min${p.classFilter === 'all' && p.multiClass ? ' across displayed plans' : ' planned'}`}</p></div>
+              <button className="bridge-secondary" onClick={() => setFullWeek(v => !v)}>{fullWeek ? 'Back to selected day' : '▦ View full week'}</button>
+            </div>
+            <div className="bridge-content" key={`${fullWeek}-${day}`}>
+              {(fullWeek ? [0,1,2,3,4] : [day]).map(i => <div className="bridge-day-content" key={i}>
+                {fullWeek && <h3 className="bridge-overview-day">{DAY_NAMES[i]} <span>{DATES[i]}</span><button className="bridge-link" onClick={() => chooseDay(i)}>Open day →</button></h3>}
+                {p.shownSubjects.map(sk => {
+                  const subject = SUBJECTS[sk];
+                  const acts = p.visible.filter(a => a.day === i && a.subject === sk).sort((a,b) => KIND_ORDER[a.kind] - KIND_ORDER[b.kind]);
+                  return <section className="bridge-subject" key={sk} style={{'--subject': subject.color}} aria-label={`${DAY_NAMES[i]} ${subject.name}`}>
+                    <div className="bridge-subject-label"><div className="bridge-subject-symbol" aria-hidden="true">{sk === 'math' ? '▦' : sk === 'science' ? '⚗' : sk === 'elar' ? 'Aa' : '◎'}</div><div><h3>{subject.name}</h3><p>{subject.unit}</p></div></div>
+                    <div className="bridge-activities">{acts.map(act => <ActivityRow key={act.id} act={act} setup={p.setup} compact={false} selected={p.selectedId === act.id} onOpen={ctx.openDetails} onMoveTo={p.moveTo} menuOpen={p.menuId === act.id} onMenu={p.setMenuId} isRoutine={p.routineIds.includes(act.id)} />)}
+                      {!acts.length && <div className="bridge-empty">Room in your day.<br/><span>No {subject.name.toLowerCase()} activities planned.</span></div>}
+                    </div>
+                  </section>;
+                })}
+              </div>)}
+            </div>
+            {!fullWeek && suggestions.length > 0 && <div className="bridge-review">
+              <button className="bridge-review-toggle" onClick={() => setReview(v => !v)} aria-expanded={review}><span>✦ {suggestions.length} suggestion{suggestions.length === 1 ? '' : 's'} for {DAY_NAMES[day]}</span><span>{review ? 'Hide' : 'Review'} {review ? '−' : '+'}</span></button>
+              {review && <div className="bridge-suggestion-list">{suggestions.map(s => <SuggestionCard key={s.id} sug={s} setup={p.setup} onAccept={() => p.acceptSuggestion(s)} onDismiss={() => p.dismissSuggestion(s.id)} />)}</div>}
+            </div>}
+            <footer className="bridge-console-footer"><span>◉ {p.published ? 'Published in this preview' : 'Sample plan · changes last until refresh'}</span><button className="bridge-link" onClick={() => setNotice(v => !v)} aria-expanded={notice}>Planning across classes ⓘ</button></footer>
+            {notice && <p className="bridge-note">Shared activities are planned once for all classes. Open an activity to choose its classes. Moving a shared activity moves it for every class assigned to it. Publishing in this prototype applies to {p.classList}; class and subject filters only change the view. Nothing is sent to students.</p>}
+          </section>
         </div>
-
-        {/* Five-day planner */}
-        <div className="v2-planner-scroll">
-          <div className="v2-planner-grid">
-            {DAYS.map((d, dayIndex) => {
-              const dayActs = visible.filter((x) => x.day === dayIndex);
-              const dayMinutes = dayActs.reduce((m, x) => m + x.minutes, 0);
-              const hasSuggestion = openSuggestions.some((s) => s.day === dayIndex);
-              return (
-                <section
-                  key={d}
-                  id={`day-${dayIndex}`}
-                  aria-label={`${DAY_NAMES[dayIndex]}, ${DATES[dayIndex]}`}
-                  onDragOver={(e) => {
-                    e.preventDefault();
-                    if (dragOverDay !== dayIndex) setDragOverDay(dayIndex);
-                  }}
-                  onDragLeave={(e) => {
-                    if (!e.currentTarget.contains(e.relatedTarget)) setDragOverDay(null);
-                  }}
-                  onDrop={(e) => {
-                    e.preventDefault();
-                    setDragOverDay(null);
-                    moveTo(e.dataTransfer.getData("text/plain"), dayIndex);
-                  }}
-                  style={{
-                    background: dragOverDay === dayIndex ? "#EFE9FF" : "#F6F4FB",
-                    border: `1px solid ${dragOverDay === dayIndex ? "#B9A6F5" : LINE}`,
-                    borderRadius: 14,
-                    padding: 12,
-                    display: "grid",
-                    gap: 14,
-                    alignContent: "start",
-                    minHeight: 220,
-                    boxShadow: flashDays && hasSuggestion ? "0 0 0 3px #F5A55B" : "none",
-                    transition: "box-shadow .2s",
-                  }}
-                >
-                  <header style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 8 }}>
-                    <h2 style={{ margin: 0, fontFamily: "'Poppins', sans-serif", fontSize: 18, color: INK }}>
-                      {DAY_NAMES[dayIndex]} <span style={{ fontWeight: 500, color: MUTED, fontSize: 14 }}>{DATES[dayIndex]}</span>
-                    </h2>
-                    <span style={{ fontSize: 12, color: MUTED, whiteSpace: "nowrap" }}>{dayMinutes} min</span>
-                  </header>
-                  {shownSubjects.map((sk) => {
-                    const acts = dayActs.filter((x) => x.subject === sk).sort((p, q) => KIND_ORDER[p.kind] - KIND_ORDER[q.kind]);
-                    const sugs = openSuggestions.filter((s) => s.subject === sk && s.day === dayIndex);
-                    const key = `${dayIndex}-${sk}`;
-                    const compact = canCompact && subjectFilter === "all" && !expandedSections[key];
-                    return (
-                      <SubjectSection
-                        key={sk}
-                        subjectKey={sk}
-                        acts={acts}
-                        suggestions={sugs}
-                        setup={setup}
-                        compact={compact}
-                        showEmpty={shownSubjects.length === 2}
-                        hideHeader={shownSubjects.length === 1}
-                        onToggleCompact={() => setExpandedSections((o) => ({ ...o, [key]: !o[key] }))}
-                        ctx={ctx}
-                      />
-                    );
-                  })}
-                  {dayActs.length === 0 && shownSubjects.length === 1 && (
-                    <div style={{ fontSize: 14, color: MUTED }}>Nothing planned. Drag an activity here.</div>
-                  )}
-                </section>
-              );
-            })}
-          </div>
-        </div>
-
-        <div style={{ padding: "8px 22px 16px", fontSize: 13, color: MUTED, display: "flex", justifyContent: "space-between", gap: 10, flexWrap: "wrap" }}>
-          <span>Click an activity for details · Drag it to another day, or use ⋯ → Move to</span>
-          {canCompact && subjectFilter === "all" && <span>Subjects are compact · click a subject name to see details</span>}
-        </div>
+        <p className="bridge-hint">Select an activity to see details · Move it using its menu or drag it to a day</p>
       </div>
-
+      <DetailsPanel act={p.selected} setup={p.setup} onClose={() => p.setSelectedId(null)} onMoveTo={p.moveTo} onRemove={p.remove} onPreview={() => p.setToast({text:'Activity previews will be connected in the next build.'})} onToggleClass={p.toggleClass} />
+      {p.showLevels && <LevelDrawer level={p.level} onChoose={p.setLevel} onClose={() => p.setShowLevels(false)} />}
+      <Toast toast={p.toast} />
       <style>{`
-        .v2-planner-scroll { overflow-x: auto; padding: 16px 22px 6px; }
-        .v2-planner-grid { display: grid; grid-template-columns: repeat(5, minmax(210px, 1fr)); gap: 12px; align-items: start; min-width: 1100px; }
-        @media (max-width: 720px) {
-          .v2-planner-scroll { overflow-x: visible; padding: 12px; }
-          .v2-planner-grid { grid-template-columns: 1fr; min-width: 0; }
-        }
+        .mission-bridge{color:#242049;max-width:1420px;margin:auto;--violet:#7b45ef;--line:#d8d8f2}
+        .mission-bridge *{box-sizing:border-box}
+        .mission-bridge button,.mission-bridge select{font-family:inherit}
+        .mission-bridge button{cursor:pointer}
+        .mission-bridge button:focus-visible,.mission-bridge select:focus-visible{outline:3px solid #5835c9;outline-offset:4px}
+        .bridge-preview{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin:0 8px 12px;font-size:11px;color:#474169}
+        .bridge-preview>span{letter-spacing:1.4px;font-weight:700;background:#f9f7ffed;padding:7px 12px;border-radius:20px}
+        .bridge-preview label{background:#f9f7ffed;border:1px dashed #aa96e6;border-radius:20px;padding:4px 12px;display:flex;gap:8px;align-items:center}
+        .bridge-preview select{border:0;background:transparent;color:inherit;font-size:12px;max-width:240px;padding:4px}
+        .bridge-frame{background:linear-gradient(115deg,rgba(255,255,255,.98),rgba(243,241,255,.97));border:2px solid #fff;box-shadow:0 0 0 2px #bac9ec,0 0 0 6px #f5f6ffc9,0 0 0 8px #c7bff090,0 14px 34px #343b7b26,inset 0 2px 0 white}
+        .bridge-header{border-radius:30px 30px 24px 24px;padding:22px 28px;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:18px;margin-bottom:28px;position:relative}
+        .bridge-header:after{content:'';position:absolute;bottom:-7px;left:10%;width:26%;height:3px;border-radius:10px;background:#8ae9ff;box-shadow:0 0 10px #3dbdfb;pointer-events:none}
+        .bridge-eyebrow{font-size:10px;letter-spacing:1.9px;font-weight:800;color:#72649b}
+        .bridge-heading h1{font-family:'Poppins',sans-serif;font-size:clamp(28px,3vw,42px);letter-spacing:-1.5px;line-height:1.25;margin:4px 0 0}
+        .bridge-heading h1 span{font-family:'Inter',sans-serif;font-size:19px;font-weight:500;letter-spacing:0;margin-left:18px;color:#655b83;white-space:nowrap}
+        .bridge-publish{display:flex;flex-direction:column;align-items:flex-end;gap:9px;max-width:390px}
+        .bridge-publish>button{background:linear-gradient(120deg,#9659fa,#713ce9)!important;box-shadow:0 5px 16px #8153e73d,inset 0 1px 0 #ffffff60;min-width:200px}
+        .bridge-publish small{font-size:11px;color:#655b83;text-align:right;line-height:1.5}
+        .bridge-filters{display:flex;align-items:center;gap:12px;width:100%;flex-wrap:wrap}
+        .bridge-filters label{display:flex;align-items:center;gap:9px;background:#fff;border:1px solid var(--line);border-radius:30px;padding:7px 13px;font-size:11px;font-weight:700;color:#6c6485}
+        .bridge-filters select{max-width:290px;border:0;background:transparent;color:#292348;font-size:13px;font-weight:650;padding:2px 5px}
+        .bridge-level{margin-left:auto;border:1px solid #ded4fa;background:#f8f5ff;color:#55457e;border-radius:24px;padding:10px 14px;font-size:12px}
+        .bridge-level span{margin-left:12px}
+        .bridge-layout{display:grid;grid-template-columns:240px minmax(0,1fr);gap:28px;align-items:start}
+        .bridge-rail{padding:2px 0 0 15px;min-width:0}
+        .bridge-days{position:relative;display:grid;gap:12px}
+        .bridge-days:before{content:'';position:absolute;left:-12px;top:35px;bottom:35px;width:3px;background:linear-gradient(#70d9f5,#a98cff,#70d9f5);box-shadow:0 0 8px #fff,0 0 14px #57cfff}
+        .bridge-day{position:relative;width:100%;text-align:left;border:2px solid #fafcff;border-radius:17px;padding:15px 16px 12px;background:linear-gradient(125deg,#fff,#edf2ffee);color:#282448;box-shadow:0 0 0 1px #becae5,0 5px 12px #485a941a,inset 0 -3px 0 #dce4f4;transition:box-shadow .18s,transform .18s,border-color .18s}
+        .bridge-day:before{content:'';position:absolute;left:-20px;top:27px;width:11px;height:11px;background:#ecfdff;border:2px solid #6bd8f1;border-radius:50%;box-shadow:0 0 8px #b5f5ff}
+        .bridge-day:hover{transform:translateX(2px);box-shadow:0 0 0 1px #a997e9,0 6px 18px #624f9928}
+        .bridge-day.is-selected,.bridge-day.is-drop{border-color:#ac7dff;background:linear-gradient(120deg,#fff,#ede5ff);box-shadow:0 0 0 2px #faf5ff,0 0 20px #ad82f677,inset 0 -2px 0 #dfcafa}
+        .bridge-day.is-selected:before{background:#9254ed;border-color:white;box-shadow:0 0 0 3px #b295ef,0 0 16px #a777ff}
+        .bridge-day.is-selected:after{content:'';position:absolute;right:-28px;top:35px;width:26px;height:3px;background:#d3bcff;box-shadow:0 0 9px #ad6dff;pointer-events:none}
+        .bridge-day-top{display:flex;justify-content:space-between;gap:8px;align-items:baseline}
+        .bridge-day-top strong{font-size:17px;letter-spacing:-.3px}
+        .bridge-day-top>span{font-size:12px;color:#74678b}
+        .bridge-day-subjects{display:flex;gap:7px;flex-wrap:wrap;margin-top:9px;font-size:11px;color:#615876;line-height:1.4}
+        .bridge-day-subjects>span{display:inline-flex;align-items:center;gap:4px}
+        .bridge-day-subjects i{display:inline-block;width:6px;height:6px;border-radius:50%}
+        .bridge-day-foot{display:flex;justify-content:space-between;font-size:10px;color:#706582;margin-top:9px}
+        .bridge-suggestion-dot{color:#895219}
+        .bridge-sam{margin-top:22px;display:flex;align-items:center;gap:0;background:linear-gradient(120deg,#f9fbffdf,#eeebffe6);border:1px solid white;border-radius:20px;padding:12px 12px 12px 0;box-shadow:0 4px 14px #343b7b20}
+        .bridge-sam>img{width:74px!important;height:90px!important}
+        .bridge-sam strong{font-size:12px}.bridge-sam p{font-size:12px;color:#665b7c;line-height:1.5;margin:5px 0 8px}
+        .bridge-link{border:0;background:transparent;color:#6f3ed2;font-size:12px;font-weight:650;padding:3px 0;text-align:left}
+        .bridge-console{border-radius:34px;min-width:0;position:relative;padding:26px 24px 12px;min-height:580px}
+        .bridge-console:before{content:'';position:absolute;right:35px;top:-7px;width:120px;height:3px;background:#c5a0ff;box-shadow:0 0 12px #a070ef;border-radius:10px}
+        .bridge-console-heading{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:24px;flex-wrap:wrap}
+        .bridge-console-heading h2{font-family:'Poppins',sans-serif;font-size:clamp(24px,2.4vw,34px);letter-spacing:-.8px;line-height:1.3;margin:5px 0}
+        .bridge-console-heading h2 span{font-size:17px;font-weight:500;color:#72668a;letter-spacing:0;margin-left:10px}
+        .bridge-console-heading p{font-size:12px;color:#746b8c;margin:0}
+        .bridge-secondary{background:#fff;border:1px solid #d7c7f5;color:#58379c;padding:10px 15px;border-radius:22px;font-size:12px;font-weight:650}
+        .bridge-content{animation:bridge-enter .2s ease-out}
+        .bridge-day-content{display:grid;gap:18px}
+        .bridge-day-content+.bridge-day-content{margin-top:28px}
+        .bridge-subject{display:grid;grid-template-columns:150px minmax(0,1fr);gap:16px;align-items:start;padding:19px 16px;border-radius:18px;border:1px solid #dce5f3;border-left:5px solid var(--subject);background:linear-gradient(120deg,#f3f7ff,#f7f9ff);min-width:0}
+        .bridge-subject-label{display:flex;gap:9px;align-items:center;min-width:0}
+        .bridge-subject-symbol{font-size:25px;color:var(--subject);font-weight:700}
+        .bridge-subject-label h3{font-family:'Poppins',sans-serif;font-size:18px;line-height:1.2;margin:0;letter-spacing:-.4px}
+        .bridge-subject-label p{font-size:11px;line-height:1.4;color:#736789;margin:5px 0 0}
+        .bridge-activities{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(220px,100%),1fr));gap:10px;min-width:0}
+        .bridge-activities>div{min-width:0;border-left:3px solid var(--subject)!important;border-radius:12px!important;box-shadow:0 3px 10px #485a9409}
+        .bridge-activities>div>button:first-child{padding:13px 5px 13px 12px!important}
+        .bridge-empty{padding:16px;font-size:13px;line-height:1.7;background:#ffffff85;color:#5c5476}
+        .bridge-empty span{font-size:12px}
+        .bridge-review{border:1px solid #e4d9f7;background:#f6f0ff;border-radius:15px;margin-top:22px;overflow:hidden}
+        .bridge-review-toggle{display:flex;justify-content:space-between;gap:16px;align-items:center;width:100%;padding:13px 16px;background:transparent;border:0;color:#5e428c;font-size:12px;font-weight:650;text-align:left}
+        .bridge-suggestion-list{padding:0 14px 14px;display:grid;gap:10px}
+        .bridge-console-footer{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;border-top:1px solid #e5e1f3;margin-top:24px;padding:17px 0 4px;font-size:11px;color:#716582}
+        .bridge-note{font-size:12px;line-height:1.7;background:#f0ecfb;padding:14px;border-radius:10px}
+        .bridge-hint{font-size:11px;text-align:center;color:#50476e;background:#f5f4ffdf;width:fit-content;max-width:100%;padding:8px 18px;border-radius:20px;margin:22px auto 0}
+        .bridge-overview-day{display:flex;align-items:center;gap:12px;font-size:20px;margin:4px 0 0}.bridge-overview-day>span{font-size:12px;color:#786c8c}.bridge-overview-day>button{margin-left:auto}
+        @keyframes bridge-enter{from{opacity:.65;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
+        @media(min-width:1600px){.bridge-layout{grid-template-columns:270px minmax(0,1fr)}.bridge-subject{grid-template-columns:175px minmax(0,1fr)}}
+        @media(max-width:1150px){.bridge-layout{grid-template-columns:205px minmax(0,1fr);gap:20px}.bridge-subject{grid-template-columns:1fr}.bridge-subject-label{align-items:center}.bridge-subject-label>div:last-child{display:flex;gap:12px;align-items:baseline}.bridge-day.is-selected:after{width:18px;right:-20px}.bridge-console{padding:22px 18px 10px}}
+        @media(max-width:760px){.bridge-header{padding:20px;border-radius:24px}.bridge-heading h1 span{display:block;margin:8px 0 0;font-size:16px}.bridge-publish{align-items:flex-start}.bridge-publish small{text-align:left}.bridge-filters label{max-width:100%}.bridge-filters select{max-width:210px}.bridge-level{margin-left:0}.bridge-layout{grid-template-columns:1fr;gap:22px}.bridge-rail{padding:0}.bridge-days{display:flex;overflow:auto;gap:10px;padding:5px 3px 10px}.bridge-days:before,.bridge-day:before,.bridge-day:after{display:none}.bridge-day{flex:0 0 157px;padding:12px}.bridge-day-top strong{font-size:14px}.bridge-day-top>span{font-size:10px}.bridge-sam{margin-top:8px;padding:5px 14px;gap:8px}.bridge-sam>img{width:50px!important;height:50px!important}.bridge-sam p{display:inline;margin-left:8px}.bridge-sam .bridge-link{display:block}.bridge-console{border-radius:24px;min-height:0;padding:20px 14px 10px}.bridge-preview{font-size:10px}.bridge-preview label{flex-wrap:wrap}.bridge-activities{grid-template-columns:1fr}.bridge-subject{padding:14px 12px}.bridge-console-heading h2{font-size:25px}}
+        @media(prefers-reduced-motion:reduce){.mission-bridge *{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
       `}</style>
-
-      <DetailsPanel
-        act={selected}
-        setup={setup}
-        onClose={() => setSelectedId(null)}
-        onMoveTo={moveTo}
-        onRemove={remove}
-        onPreview={() => setToast({ text: "Activity preview opens in a later CI2.0 build." })}
-        onToggleClass={toggleClass}
-      />
-      {showLevels && <LevelDrawer level={level} onChoose={setLevel} onClose={() => setShowLevels(false)} />}
-      <Toast toast={toast} />
     </PageShell>
   );
 }
