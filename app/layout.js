@@ -1,3 +1,5 @@
+import SandboxBar from "../components/SandboxBar";
+
 export const metadata = {
   title: "ClearCenters HQ",
   description: "Your mission hub for learning, evidence, and adventure.",
@@ -13,7 +15,10 @@ export default function RootLayout({ children }) {
           rel="stylesheet"
         />
       </head>
-      <body style={{ margin: 0, fontFamily: "'Inter', sans-serif" }}>{children}</body>
+      <body style={{ margin: 0, fontFamily: "'Inter', sans-serif" }}>
+        <SandboxBar />
+        {children}
+      </body>
     </html>
   );
 }
