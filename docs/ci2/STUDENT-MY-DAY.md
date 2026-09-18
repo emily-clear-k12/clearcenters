@@ -9,7 +9,7 @@ See also: [STUDENT-ACTIVITY-STUB.md](./STUDENT-ACTIVITY-STUB.md)
 
 ## Demo
 - Students: **Leo · Kai · Riley** switcher on My Day (light chips — not a roster)
-- Default: **Leo** (Room 12 · Ms. Rivera); switch persists in `ci2.student.demoKid`
+- Default: **Leo** (Room 12 · Mrs. Barrons); switch persists in `ci2.student.demoKid`
 - Today: Wednesday (matches teacher Daily Focus `d=2`)
 - Missions from teacher Wed: Equivalent fractions (ClearLesson), The Pizza Problem (Center), Purpose match stations (may-do)
 - Per-kid namespaces so demos don’t collide: progress / Teacher checked / practice assigned
