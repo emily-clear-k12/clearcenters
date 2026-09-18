@@ -29,6 +29,7 @@ import {
   subjectMeta,
 } from "../../../../lib/v2/demoGrading";
 import { WHO_NEEDS_ME_HREF } from "../../../../lib/v2/demoWhoNeedsMe";
+import { REPORTS_HREF } from "../../../../lib/v2/demoReports";
 
 /**
  * CI2.0 grading inbox stub.
@@ -70,7 +71,8 @@ export default function GradingInboxClient() {
 
   useEffect(() => {
     if (!toast) return;
-    const t = setTimeout(() => setToast(null), 2200);
+    const ms = toast.growthHref ? 4200 : 2200;
+    const t = setTimeout(() => setToast(null), ms);
     return () => clearTimeout(t);
   }, [toast]);
 
@@ -116,6 +118,8 @@ export default function GradingInboxClient() {
       const stampNote = stamped.length ? " · stamped on My Day." : ".";
       setToast({
         text: `Confirmed ${focused.studentFirst} · ${score}/${focused.maxScore}. You're the scorer of record${stampNote}`,
+        growthHref: REPORTS_HREF,
+        growthLabel: "See growth →",
       });
       setAdjusting(false);
       setDraftScore(null);
@@ -392,9 +396,33 @@ export default function GradingInboxClient() {
               boxShadow: "0 12px 32px rgba(46,36,89,.28)",
               zIndex: 30,
               maxWidth: "90vw",
+              display: "flex",
+              alignItems: "center",
+              gap: 12,
+              flexWrap: "wrap",
+              justifyContent: "center",
             }}
           >
-            {toast.text}
+            <span>{toast.text}</span>
+            {toast.growthHref && (
+              <Link
+                href={toast.growthHref}
+                style={{
+                  fontSize: 13,
+                  fontWeight: 800,
+                  color: INK,
+                  textDecoration: "none",
+                  background: MINT,
+                  borderRadius: 999,
+                  padding: "6px 12px",
+                  border: `1px solid ${LINE}`,
+                  whiteSpace: "nowrap",
+                }}
+                title="Calm glance by standard — demo bars, not live analytics"
+              >
+                {toast.growthLabel || "See growth →"}
+              </Link>
+            )}
           </div>
         )}
       </Glass>

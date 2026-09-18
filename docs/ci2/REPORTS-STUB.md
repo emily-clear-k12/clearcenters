@@ -25,6 +25,7 @@ Teachers need a calm **glance** at a few standards — class ready % and who may
 |------|----------|
 | **V2TopBar · Grow** | Lands on `/v2/teacher/reports` |
 | **TeacherSubnav · Reports** | Same stub (next to Grading) |
+| **Grading · after Confirm** | Calm **See growth →** chip → Reports (nav only; no live analytics claim) |
 
 ## Click tour
 1. `/v2` → top bar **Grow** (or Daily Focus → subnav **Reports**)
