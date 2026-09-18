@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import {
   StationShell,
@@ -20,18 +20,31 @@ import {
   LIBRARY_HREF,
 } from "../../../../lib/v2/demoLibrary";
 
+const FLAVORS = ["Briefing", "Challenge", "Practice", "Project"];
+
 /**
  * CI2.0 Library browse stub — glance-first glass cards.
- * Add to Daily Focus / This Week → ci2.teacher.addedActivities.
+ * Chip filters by type + simple title search. Add → ci2.teacher.addedActivities.
  */
 export default function LibraryClient() {
   const [toast, setToast] = useState(null);
+  const [flavor, setFlavor] = useState("all");
+  const [query, setQuery] = useState("");
 
   useEffect(() => {
     if (!toast) return;
     const t = setTimeout(() => setToast(null), 3200);
     return () => clearTimeout(t);
   }, [toast]);
+
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    return DEMO_LIBRARY_CARDS.filter((card) => {
+      if (flavor !== "all" && card.flavor !== flavor) return false;
+      if (q && !String(card.title || "").toLowerCase().includes(q)) return false;
+      return true;
+    });
+  }, [flavor, query]);
 
   const add = useCallback((card, target) => {
     const entry = addLibraryCardToPlanner(card, target);
@@ -97,7 +110,7 @@ export default function LibraryClient() {
           Glance-first picks — add to Daily Focus or This Week without leaving the glass.
         </p>
 
-        <div style={{ marginTop: 12, display: "flex", flexWrap: "wrap", gap: 8 }}>
+        <div style={{ marginTop: 12, display: "flex", flexWrap: "wrap", gap: 8, alignItems: "center" }}>
           <span
             style={{
               ...glanceChipStyle("ready"),
@@ -107,7 +120,7 @@ export default function LibraryClient() {
               fontWeight: 800,
             }}
           >
-            {DEMO_LIBRARY_CARDS.length} demo cards
+            {filtered.length} of {DEMO_LIBRARY_CARDS.length}
           </span>
           <Link
             href="/v2/teacher/day?d=2"
@@ -123,6 +136,59 @@ export default function LibraryClient() {
           </Link>
         </div>
 
+        {/* Type chips + title filter — stub only, not a catalog search */}
+        <div
+          role="search"
+          aria-label="Filter library"
+          style={{ marginTop: 16, display: "flex", flexDirection: "column", gap: 10 }}
+        >
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+            <button
+              type="button"
+              onClick={() => setFlavor("all")}
+              aria-pressed={flavor === "all"}
+              style={chipBtn(flavor === "all")}
+            >
+              All
+            </button>
+            {FLAVORS.map((f) => (
+              <button
+                key={f}
+                type="button"
+                onClick={() => setFlavor(f)}
+                aria-pressed={flavor === f}
+                style={chipBtn(flavor === f)}
+              >
+                {f}
+              </button>
+            ))}
+          </div>
+          <label style={{ display: "block", maxWidth: 360 }}>
+            <span style={{ position: "absolute", width: 1, height: 1, overflow: "hidden", clip: "rect(0 0 0 0)" }}>
+              Filter by title
+            </span>
+            <input
+              type="search"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Filter by title…"
+              style={{
+                width: "100%",
+                boxSizing: "border-box",
+                border: `1px solid ${LINE}`,
+                borderRadius: 999,
+                padding: "10px 16px",
+                fontSize: 14,
+                fontWeight: 600,
+                color: INK,
+                background: "rgba(255,255,255,.9)",
+                fontFamily: "inherit",
+                outline: "none",
+              }}
+            />
+          </label>
+        </div>
+
         <section
           aria-label="Library cards"
           style={{
@@ -132,7 +198,22 @@ export default function LibraryClient() {
             gap: 14,
           }}
         >
-          {DEMO_LIBRARY_CARDS.map((card) => {
+          {filtered.length === 0 && (
+            <div
+              style={{
+                ...glanceCardStyle("ready"),
+                borderRadius: 18,
+                padding: "18px 16px",
+                gridColumn: "1 / -1",
+                color: MUTED,
+                fontSize: 14,
+                lineHeight: 1.45,
+              }}
+            >
+              Nothing matches that filter. Try All, or clear the title search.
+            </div>
+          )}
+          {filtered.map((card) => {
             const tone = card.glance === "needsYou" ? "needsYou" : "ready";
             return (
               <article
@@ -220,6 +301,21 @@ export default function LibraryClient() {
       )}
     </StationShell>
   );
+}
+
+function chipBtn(active) {
+  return {
+    border: active ? "none" : `1px solid ${LINE}`,
+    background: active ? LAVENDER : "rgba(255,255,255,.9)",
+    color: active ? "#fff" : LAVENDER,
+    borderRadius: 999,
+    padding: "6px 14px",
+    fontWeight: 800,
+    fontSize: 12,
+    cursor: "pointer",
+    fontFamily: "inherit",
+    boxShadow: active ? "0 4px 14px rgba(139,108,255,.28)" : "none",
+  };
 }
 
 const btnPrimary = {
