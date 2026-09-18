@@ -13,11 +13,14 @@ import {
   SamGlance,
   RoomCards,
   SingleRoomLabel,
+  HandsOffChip,
+  SundayPreviewModal,
   INK,
   MUTED,
   LINE,
   LAVENDER,
   SOFT_LAV,
+  MINT,
 } from "../../../components/v2/StationShell";
 import { Toast } from "../../../components/v2/weekKit";
 
@@ -92,6 +95,7 @@ export default function StationDayClient() {
             <div style={{ marginTop: 10, display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
               <SetupSwitcher setupKey={p.setupKey} onChange={p.setSetupKey} />
               {!p.multiClass && <SingleRoomLabel cls={cls} setup={p.setup} />}
+              <HandsOffChip level={p.level} onOpenPreview={() => p.setShowSundayPreview(true)} />
             </div>
           </div>
           <button
@@ -180,7 +184,7 @@ export default function StationDayClient() {
                     display: "flex",
                     gap: 0,
                     alignItems: "stretch",
-                    background: isNow ? SOFT_LAV : "#fff",
+                    background: act.auto ? MINT : isNow ? SOFT_LAV : "#fff",
                     border: `1px solid ${isNow ? "#D9CFFF" : LINE}`,
                     borderRadius: 16,
                     overflow: "hidden",
@@ -222,6 +226,7 @@ export default function StationDayClient() {
                     <div style={{ minWidth: 0 }}>
                       <div style={{ fontSize: 11, fontWeight: 800, color: sub.color, textTransform: "uppercase" }}>
                         {sub.name} · {KINDS[act.kind]?.short || act.kind}
+                        {act.auto ? " · auto" : ""}
                       </div>
                       <div style={{ fontWeight: 700, color: INK, fontSize: isNow ? 17 : 15 }}>{act.title}</div>
                       <div style={{ fontSize: 13, color: MUTED }}>
@@ -267,7 +272,8 @@ export default function StationDayClient() {
           <div style={{ display: "flex", justifyContent: "space-between", gap: 12 }}>
             <div>
               <div style={{ fontSize: 12, fontWeight: 800, color: SUBJECTS[opened.subject].color, textTransform: "uppercase" }}>
-                {SUBJECTS[opened.subject].name} · {KINDS[opened.kind].label}
+                {SUBJECTS[opened.subject].name} · {KINDS[opened.kind]?.label || opened.kind}
+                {opened.auto ? " · auto" : ""}
               </div>
               <h2 style={{ margin: "4px 0", fontFamily: "'Poppins', sans-serif", color: INK }}>{opened.title}</h2>
               <p style={{ margin: 0, color: MUTED, fontSize: 14 }}>
@@ -290,6 +296,17 @@ export default function StationDayClient() {
           </div>
         </Glass>
       )}
+      <SundayPreviewModal
+        open={p.showSundayPreview}
+        onClose={() => p.setShowSundayPreview(false)}
+        rows={p.outboundPreview}
+        weekLabel={DEMO_WEEK.label}
+        onChangeDay={(d) => {
+          p.setShowSundayPreview(false);
+          router.push(`/v2/teacher/day?d=${d}`);
+        }}
+        onAcknowledge={p.acknowledgeSundayPreview}
+      />
       <Toast toast={p.toast} />
     </StationShell>
   );

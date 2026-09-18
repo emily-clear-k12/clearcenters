@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import V2TopBar from "./V2TopBar";
-import { DEMO_TEACHER, TEACHER_SETUPS, SUBJECTS, HANDS_OFF_LEVELS, setupUnitLabel } from "../../lib/v2/demoWeek";
+import { DEMO_TEACHER, TEACHER_SETUPS, SUBJECTS, HANDS_OFF_LEVELS, DAYS, DAY_NAMES, DATES, setupUnitLabel, handsOffLevelMeta } from "../../lib/v2/demoWeek";
 
 const BG = "/teacher/console/bg-platform-room.jpg";
 
@@ -263,49 +263,334 @@ export function SingleRoomLabel({ cls, setup }) {
 }
 
 /**
- * Small hands-off dial: I'll plan / Plan for me / Run it.
- * Wired to HANDS_OFF_LEVELS; light behavior (toast via onChange).
+ * Tangible hands-off dial: I'll plan / Plan for me / Run it.
+ * Shows brief body for the active level; optional subjectLabel for per-subject scope.
  */
-export function HandsOffDial({ level, onChange }) {
+export function HandsOffDial({ level, onChange, subjectLabel, compact }) {
+  const meta = handsOffLevelMeta(level);
+  return (
+    <div style={{ display: "inline-flex", flexDirection: "column", gap: 4, alignItems: "flex-start", maxWidth: compact ? 320 : 520 }}>
+      <div
+        role="group"
+        aria-label={subjectLabel ? `How weeks run · ${subjectLabel}` : "How weeks run"}
+        style={{
+          display: "inline-flex",
+          gap: 4,
+          background: "rgba(255,255,255,.85)",
+          border: `1px solid ${LINE}`,
+          borderRadius: 999,
+          padding: 3,
+          flexWrap: "wrap",
+          boxShadow: level === "run_for_me" ? "0 0 0 2px rgba(139,108,255,.25)" : "none",
+        }}
+      >
+        {HANDS_OFF_LEVELS.map((l) => {
+          const on = l.key === level;
+          return (
+            <button
+              key={l.key}
+              type="button"
+              title={l.body}
+              aria-pressed={on}
+              onClick={() => onChange(l.key)}
+              style={{
+                border: "none",
+                borderRadius: 999,
+                padding: compact ? "5px 10px" : "6px 12px",
+                fontSize: compact ? 11 : 12,
+                fontWeight: 700,
+                cursor: "pointer",
+                fontFamily: "inherit",
+                color: on ? "#fff" : MUTED,
+                background: on ? LAVENDER : "transparent",
+              }}
+            >
+              {l.short || l.title}
+            </button>
+          );
+        })}
+      </div>
+      {!compact && (
+        <div style={{ fontSize: 12, color: MUTED, lineHeight: 1.35, paddingLeft: 4 }}>
+          {subjectLabel ? (
+            <span style={{ fontWeight: 700, color: INK }}>{subjectLabel}: </span>
+          ) : null}
+          {meta.body}
+          {meta.dialHint ? <span style={{ color: LAVENDER }}> · {meta.dialHint}</span> : null}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/** Light chip reflecting current hands-off on Daily Focus. */
+export function HandsOffChip({ level, onOpenPreview }) {
+  const meta = handsOffLevelMeta(level);
+  return (
+    <div style={{ display: "inline-flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+      <span
+        style={{
+          fontSize: 12,
+          fontWeight: 700,
+          color: INK,
+          background: SOFT_LAV,
+          border: `1px solid ${LINE}`,
+          borderRadius: 999,
+          padding: "6px 12px",
+        }}
+        title={meta.body}
+      >
+        Weeks: {meta.short}
+      </span>
+      {(level === "plan_for_me" || level === "run_for_me") && onOpenPreview && (
+        <button
+          type="button"
+          onClick={onOpenPreview}
+          style={{
+            border: "none",
+            background: "transparent",
+            color: LAVENDER,
+            fontWeight: 700,
+            fontSize: 12,
+            cursor: "pointer",
+            fontFamily: "inherit",
+            textDecoration: "underline",
+            padding: 0,
+          }}
+        >
+          Preview what goes out
+        </button>
+      )}
+    </div>
+  );
+}
+
+/**
+ * Sunday preview / safety net — "Here's what goes out".
+ * Lists outbound assigns by day / subject / period; Change + Looks good.
+ */
+export function SundayPreviewModal({ open, onClose, rows, onChangeDay, onAcknowledge, weekLabel }) {
+  if (!open) return null;
+
+  const byDay = {};
+  for (const r of rows || []) {
+    if (!byDay[r.day]) byDay[r.day] = [];
+    byDay[r.day].push(r);
+  }
+
   return (
     <div
-      role="group"
-      aria-label="How weeks run"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Sunday preview"
       style={{
-        display: "inline-flex",
-        gap: 4,
-        background: "rgba(255,255,255,.85)",
-        border: `1px solid ${LINE}`,
-        borderRadius: 999,
-        padding: 3,
-        flexWrap: "wrap",
+        position: "fixed",
+        inset: 0,
+        background: "rgba(46,36,89,.40)",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        padding: 16,
+        zIndex: 40,
       }}
+      onClick={onClose}
     >
-      {HANDS_OFF_LEVELS.map((l) => {
-        const on = l.key === level;
-        return (
+      <div
+        onClick={(e) => e.stopPropagation()}
+        style={{
+          background: "rgba(255,255,255,.97)",
+          borderRadius: 22,
+          padding: "22px 22px 18px",
+          maxWidth: 640,
+          width: "100%",
+          maxHeight: "min(86vh, 720px)",
+          overflow: "auto",
+          boxShadow: "0 24px 60px rgba(46,36,89,.28)",
+          border: `1px solid ${LINE}`,
+        }}
+      >
+        <div style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "flex-start" }}>
+          <div>
+            <h2 style={{ fontFamily: "'Poppins', sans-serif", margin: 0, fontSize: 22, color: INK }}>
+              Here&apos;s what goes out
+            </h2>
+            <p style={{ margin: "4px 0 0", color: MUTED, fontSize: 14 }}>
+              {weekLabel || "This week"} · Sunday preview · change anything before it assigns
+            </p>
+          </div>
           <button
-            key={l.key}
             type="button"
-            title={l.body}
-            aria-pressed={on}
-            onClick={() => onChange(l.key)}
+            onClick={onClose}
+            aria-label="Close"
+            style={{ border: "none", background: "transparent", color: MUTED, fontWeight: 700, cursor: "pointer", fontSize: 18 }}
+          >
+            ×
+          </button>
+        </div>
+
+        <div style={{ marginTop: 16, display: "grid", gap: 14 }}>
+          {DAYS.map((d, i) => {
+            const items = byDay[i] || [];
+            if (items.length === 0) return null;
+            return (
+              <section key={d} style={{ background: SOFT_LAV, borderRadius: 14, padding: "12px 12px 10px", border: `1px solid ${LINE}` }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8, gap: 8, flexWrap: "wrap" }}>
+                  <div style={{ fontWeight: 800, color: INK, fontSize: 14 }}>
+                    {DAY_NAMES[i]} · {DATES[i]}
+                  </div>
+                  {onChangeDay && !items.every((x) => x.type === "calendar") && (
+                    <button
+                      type="button"
+                      onClick={() => onChangeDay(i)}
+                      style={{
+                        border: `1px solid ${LAVENDER}`,
+                        background: "#fff",
+                        color: LAVENDER,
+                        borderRadius: 999,
+                        padding: "4px 12px",
+                        fontWeight: 700,
+                        fontSize: 12,
+                        cursor: "pointer",
+                        fontFamily: "inherit",
+                      }}
+                    >
+                      Change
+                    </button>
+                  )}
+                </div>
+                <div style={{ display: "grid", gap: 6 }}>
+                  {items.map((r) => {
+                    if (r.type === "calendar") {
+                      return (
+                        <div
+                          key={r.id}
+                          style={{
+                            background: CREAM,
+                            border: `1px solid ${LINE}`,
+                            borderRadius: 10,
+                            padding: "10px 12px",
+                            color: "#8A6A20",
+                            fontWeight: 700,
+                            fontSize: 13,
+                          }}
+                        >
+                          {r.text}
+                        </div>
+                      );
+                    }
+                    const sub = SUBJECTS[r.subject];
+                    return (
+                      <div
+                        key={r.id}
+                        style={{
+                          display: "flex",
+                          gap: 10,
+                          alignItems: "flex-start",
+                          background: "#fff",
+                          border: `1px solid ${LINE}`,
+                          borderRadius: 10,
+                          padding: "8px 10px",
+                        }}
+                      >
+                        <span style={{ width: 5, alignSelf: "stretch", background: sub?.color || LAVENDER, borderRadius: 4 }} />
+                        <div style={{ minWidth: 0, flex: 1 }}>
+                          <div style={{ fontSize: 11, fontWeight: 800, color: sub?.color || MUTED, textTransform: "uppercase" }}>
+                            {sub?.name || r.subject} · {r.periodLabel}
+                            {r.auto ? " · auto" : ""}
+                          </div>
+                          <div style={{ fontSize: 14, fontWeight: 650, color: INK }}>{r.title}</div>
+                          {r.minutes != null && (
+                            <div style={{ fontSize: 12, color: MUTED }}>{r.minutes} min</div>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </section>
+            );
+          })}
+        </div>
+
+        <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginTop: 18, flexWrap: "wrap" }}>
+          <button
+            type="button"
+            onClick={onClose}
             style={{
-              border: "none",
+              border: `1px solid ${LINE}`,
+              background: "#fff",
+              color: INK,
               borderRadius: 999,
-              padding: "6px 12px",
-              fontSize: 12,
+              padding: "10px 16px",
               fontWeight: 700,
+              fontSize: 14,
               cursor: "pointer",
               fontFamily: "inherit",
-              color: on ? "#fff" : MUTED,
-              background: on ? LAVENDER : "transparent",
             }}
           >
-            {l.short || l.title}
+            Keep editing
           </button>
-        );
-      })}
+          <button
+            type="button"
+            onClick={onAcknowledge}
+            style={{
+              border: "none",
+              background: LAVENDER,
+              color: "#fff",
+              borderRadius: 999,
+              padding: "10px 18px",
+              fontWeight: 700,
+              fontSize: 14,
+              cursor: "pointer",
+              fontFamily: "inherit",
+            }}
+          >
+            Looks good
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/** Banner prompting Sunday preview when Plan for me / Run it is on. */
+export function SundayPreviewBanner({ onOpen, acked }) {
+  if (acked) return null;
+  return (
+    <div
+      style={{
+        margin: "0 0 14px",
+        display: "flex",
+        alignItems: "center",
+        gap: 12,
+        flexWrap: "wrap",
+        background: CREAM,
+        border: `1px solid ${LINE}`,
+        borderRadius: 14,
+        padding: "10px 14px",
+      }}
+    >
+      <div style={{ flex: 1, minWidth: 200, color: INK, fontSize: 14, lineHeight: 1.35 }}>
+        <strong>Sunday preview:</strong> peek at what goes out this week before anything assigns.
+      </div>
+      <button
+        type="button"
+        onClick={onOpen}
+        style={{
+          border: "none",
+          background: LAVENDER,
+          color: "#fff",
+          borderRadius: 999,
+          padding: "8px 14px",
+          fontWeight: 700,
+          fontSize: 13,
+          cursor: "pointer",
+          fontFamily: "inherit",
+          whiteSpace: "nowrap",
+        }}
+      >
+        Preview what goes out
+      </button>
     </div>
   );
 }
