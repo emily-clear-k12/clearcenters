@@ -11,11 +11,19 @@ Kids need calm helpers without leaving the glass look — **read aloud** (fake p
 2. Set **text size** S/M/L in prefs chip (optional)
 3. Tap quiet **Tools** on a mission/practice card → inline panel (prefs/text-size honored)
 4. Or tap **Tools** (footer) → `/v2/student/tools` · panel uses same text size
-5. **Play · fake** → pretend read-aloud status (no audio)
-6. Tap a **word chip** (e.g. fraction) → calm hint line
-7. **Turn highlight on** → amber wash on a sample line
-8. **← My Day** · or open an activity → **Tools** → same panel inline (Close) · text size still honored
-9. Choices persist in this browser (`Reset tools` clears)
+5. **First Tools open this session for this kid** → one calm **SAM** line (not spammy); later opens stay quiet. Sound on → calm click (already wired); sound off → silent
+6. **Play · fake** → pretend read-aloud status (no audio)
+7. Tap a **word chip** (e.g. fraction) → calm hint line
+8. **Turn highlight on** → amber wash on a sample line
+9. **← My Day** · or open an activity → **Tools** → same panel inline (Close) · text size still honored
+10. Switch demo kid → tip may show once for the new kid (session key is per-kid)
+11. Choices persist in this browser (`Reset tools` clears)
+
+## SAM tip (Tools open)
+- First open per **browser session** + **demo kid** → one calm SAM bubble (`TOOLS_SAM_TIP_LINE`)
+- Tracked in `sessionStorage` (`ci2.session.toolsSamTip.{kid}`) — clears when the tab session ends; never localStorage spam
+- Reuses the quiet SamBubble look (lavender SAM chip + short G3–5 line)
+- Respects sound pref via existing `playCalmClick` on open
 
 ## Tone
 - Student glass / warm lavender cream (matches My Day + activity)
@@ -28,11 +36,12 @@ Kids need calm helpers without leaving the glass look — **read aloud** (fake p
 |-----|------|
 | `ci2.student.tools` | Play state, selected chip, highlight on/off |
 | `ci2.student.prefs.{kid}` | Text size (and name/sound) — Tools reads size only |
+| `ci2.session.toolsSamTip.{kid}` | Session flag — SAM tip already shown for this kid |
 
 ## Files
-- `lib/v2/demoStudentTools.js` — chips + localStorage helpers
-- `lib/v2/demoStudentPrefs.js` — text size scale / class
-- `components/v2/StudentToolsPanel.js` — shared panel (honors prefs)
+- `lib/v2/demoStudentTools.js` — chips + localStorage helpers · `shouldShowToolsSamTip` / `markToolsSamTipSeen` (session)
+- `lib/v2/demoStudentPrefs.js` — text size scale / class · `playCalmClick`
+- `components/v2/StudentToolsPanel.js` — shared panel (honors prefs) · first-open SAM tip
 - `app/v2/student/tools/` — full page shell
 - `app/v2/student/StudentMyDayClient.js` — Tools → page + quiet per-card inline Tools
 - `app/v2/student/activity/[id]/StudentActivityClient.js` — Tools → inline panel + shell scale

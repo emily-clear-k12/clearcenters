@@ -14,6 +14,7 @@ import {
   SOFT_LAV,
   MINT,
   CREAM,
+  glanceCardStyle,
 } from "../../../../components/v2/StationShell";
 import {
   DEMO_GRADING_SUBMISSIONS,
@@ -320,8 +321,66 @@ export default function GradingInboxClient() {
             </div>
             <div style={{ display: "grid", gap: 8, maxHeight: "min(62vh, 560px)", overflow: "auto" }}>
               {pending.length === 0 && (
-                <div style={{ color: MUTED, fontSize: 14, padding: "14px 8px" }}>
-                  Nothing waiting. Nice work — you&apos;re caught up.
+                <div
+                  role="status"
+                  style={{
+                    ...glanceCardStyle("ready"),
+                    borderRadius: 16,
+                    padding: "22px 16px",
+                    color: INK,
+                    textAlign: "center",
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    gap: 10,
+                    boxShadow: "0 8px 22px rgba(46,36,89,.06)",
+                  }}
+                >
+                  <div style={{ fontWeight: 800, fontSize: 15, lineHeight: 1.3 }}>
+                    {studentFilter ? `No pending for ${studentFilter}` : "All clear"}
+                  </div>
+                  <div style={{ color: MUTED, fontSize: 13, lineHeight: 1.45, maxWidth: 260 }}>
+                    {studentFilter
+                      ? "Nothing waiting for this student — head back when you are ready."
+                      : "Nothing waiting. Nice work — you are caught up."}
+                  </div>
+                  <div style={{ display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "center", marginTop: 2 }}>
+                    <Link
+                      href="/v2/teacher/day?d=2"
+                      style={{
+                        border: "none",
+                        background: LAVENDER,
+                        color: "#fff",
+                        borderRadius: 999,
+                        padding: "9px 16px",
+                        fontWeight: 800,
+                        fontSize: 13,
+                        textDecoration: "none",
+                        display: "inline-flex",
+                        alignItems: "center",
+                        boxShadow: "0 6px 18px rgba(139,108,255,.28)",
+                      }}
+                    >
+                      Open Daily Focus
+                    </Link>
+                    <Link
+                      href={WHO_NEEDS_ME_HREF}
+                      style={{
+                        border: `1px solid ${LINE}`,
+                        background: "rgba(255,255,255,.92)",
+                        color: INK,
+                        borderRadius: 999,
+                        padding: "9px 14px",
+                        fontWeight: 700,
+                        fontSize: 13,
+                        textDecoration: "none",
+                        display: "inline-flex",
+                        alignItems: "center",
+                      }}
+                    >
+                      Check-ins
+                    </Link>
+                  </div>
                 </div>
               )}
               {pending.map((s) => {
@@ -407,17 +466,61 @@ export default function GradingInboxClient() {
           <section aria-label="Focus card">
             {!focused ? (
               <div
+                role="status"
                 style={{
-                  background: MINT,
-                  border: `1px solid ${LINE}`,
+                  ...glanceCardStyle("ready"),
                   borderRadius: 18,
                   padding: "28px 22px",
                   color: INK,
-                  fontSize: 15,
-                  lineHeight: 1.45,
+                  textAlign: "center",
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  gap: 12,
+                  boxShadow: "0 8px 22px rgba(46,36,89,.06)",
                 }}
               >
-                <strong>You&apos;re clear.</strong> No submissions need a look right now. When kids turn work in, SAM will queue a first read here — you still confirm every score.
+                <div style={{ fontWeight: 800, fontSize: 17, lineHeight: 1.3 }}>You&apos;re clear</div>
+                <div style={{ color: MUTED, fontSize: 14, lineHeight: 1.45, maxWidth: 420 }}>
+                  No submissions need a look right now. When kids turn work in, SAM will queue a first read here — you still confirm every score.
+                </div>
+                <div style={{ display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "center" }}>
+                  <Link
+                    href="/v2/teacher/day?d=2"
+                    style={{
+                      border: "none",
+                      background: LAVENDER,
+                      color: "#fff",
+                      borderRadius: 999,
+                      padding: "10px 18px",
+                      fontWeight: 800,
+                      fontSize: 14,
+                      textDecoration: "none",
+                      display: "inline-flex",
+                      alignItems: "center",
+                      boxShadow: "0 6px 18px rgba(139,108,255,.28)",
+                    }}
+                  >
+                    Open Daily Focus
+                  </Link>
+                  <Link
+                    href={WHO_NEEDS_ME_HREF}
+                    style={{
+                      border: `1px solid ${LINE}`,
+                      background: "rgba(255,255,255,.92)",
+                      color: INK,
+                      borderRadius: 999,
+                      padding: "10px 16px",
+                      fontWeight: 700,
+                      fontSize: 14,
+                      textDecoration: "none",
+                      display: "inline-flex",
+                      alignItems: "center",
+                    }}
+                  >
+                    Check-ins
+                  </Link>
+                </div>
               </div>
             ) : (
               <FocusCard

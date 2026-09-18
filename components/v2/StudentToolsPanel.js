@@ -10,6 +10,9 @@ import {
   toggleReadAloudFake,
   wordChipById,
   STUDENT_TOOLS_KEY,
+  TOOLS_SAM_TIP_LINE,
+  shouldShowToolsSamTip,
+  markToolsSamTipSeen,
 } from "../../lib/v2/demoStudentTools";
 import {
   loadStudentPrefs,
@@ -39,6 +42,7 @@ export default function StudentToolsPanel({
 }) {
   const [state, setState] = useState(() => ({ ...loadStudentTools(), hydrated: false }));
   const [textSize, setTextSize] = useState(() => loadStudentPrefs().textSize || "M");
+  const [samTip, setSamTip] = useState(null);
 
   function refresh() {
     setState({ ...loadStudentTools(), hydrated: true });
@@ -52,6 +56,13 @@ export default function StudentToolsPanel({
     refresh();
     refreshPrefs();
     playCalmClick(); // Tools open — calm click when soundOn
+    // First Tools open per session/kid — one calm SAM line (not spammy).
+    // Defer session mark so React Strict Mode remount still shows the tip once.
+    let tipTimer = null;
+    if (shouldShowToolsSamTip()) {
+      setSamTip(TOOLS_SAM_TIP_LINE);
+      tipTimer = setTimeout(() => markToolsSamTipSeen(), 400);
+    }
     const onStorage = (e) => {
       if (!e.key || e.key === STUDENT_TOOLS_KEY) refresh();
       if (!e.key || e.key.startsWith("ci2.student.prefs.")) refreshPrefs();
@@ -60,6 +71,7 @@ export default function StudentToolsPanel({
     window.addEventListener("ci2-student-tools-updated", refresh);
     window.addEventListener("ci2-student-prefs-updated", refreshPrefs);
     return () => {
+      if (tipTimer) clearTimeout(tipTimer);
       window.removeEventListener("storage", onStorage);
       window.removeEventListener("ci2-student-tools-updated", refresh);
       window.removeEventListener("ci2-student-prefs-updated", refreshPrefs);
@@ -130,6 +142,42 @@ export default function StudentToolsPanel({
           </button>
         ) : null}
       </div>
+
+      {samTip ? (
+        <div
+          role="status"
+          style={{
+            marginTop: 14,
+            display: "flex",
+            gap: 12,
+            alignItems: "flex-start",
+            background: "rgba(255,255,255,.88)",
+            border: `1px solid ${LINE}`,
+            borderRadius: 16,
+            padding: "10px 12px",
+          }}
+        >
+          <div
+            aria-hidden
+            style={{
+              width: 36,
+              height: 36,
+              borderRadius: 12,
+              background: "linear-gradient(145deg, #B8A4FF, #8B6CFF)",
+              color: "#fff",
+              fontWeight: 800,
+              fontSize: 12,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              flexShrink: 0,
+            }}
+          >
+            SAM
+          </div>
+          <p style={{ margin: 0, color: INK, fontSize: 14, lineHeight: 1.4, paddingTop: 6 }}>{samTip}</p>
+        </div>
+      ) : null}
 
       {/* Read aloud */}
       <section aria-label="Read aloud" style={{ marginTop: 18 }}>

@@ -15,8 +15,12 @@ Sunday preview / Hands-off should not be a **dead end**. **Apply to This Week** 
 
 Persists: `ci2.teacher.handsOffLevels` (per subject). Routines: `ci2.teacher.routines.[setupKey]`.
 
+**Dial ↔ Sunday preview sync:** changing the dial immediately refreshes Sunday preview copy + outbound blocks (live `outboundPreview` from levels). Persist + `ci2-hands-off-updated` (and cross-tab `storage` on the levels key) so the modal never shows a stale lean/full week.
+
 ## Sunday preview
 - **Here's what goes out** — outbound assigns by day / subject / period
+- Live strip: **Hands-off · {short}** + dial hint + outbound count (updates with the dial)
+- Empty weekdays show a quiet “Nothing outbound…” line when the dial is lean
 - **Change** → Daily Focus for that day
 - **Apply to This Week** → demo routine blocks → `ci2.teacher.addedActivities` (`added-sunday-*`)
 - **Looks good** → ack only (no tiles)
@@ -36,17 +40,19 @@ Persists: `ci2.teacher.handsOffLevels` (per subject). Routines: `ci2.teacher.rou
 | `ci2.sunday.pendingUndo` | Session flag so Day → Week can re-show Apply toast |
 | `ci2.teacher.handsOffLevels` | Dial per subject |
 | `ci2.teacher.routines.*` | Sentence routines |
+| event `ci2-hands-off-updated` | Same-tab refresh after dial change |
 
 ## Click tour
 1. `/v2/teacher` (This Week) · set Hands-off to **Plan for me** or **Run it**
-2. Open **Sunday preview** (header or banner)
-3. Tap **Apply to This Week** → toast with **Undo** · modal closes
-4. See mint chip **From Sunday · on This Week** (+ inline **Undo**) and new **Routine · …** / **From Sunday · …** tiles on the week grid
-5. Tap toast **Undo** (or chip Undo) → Sunday tiles removed · chip clears
-6. From Daily Focus · Apply → lands on This Week with toast Undo still available
-7. Open a minted tile → quiet **From Sunday** provenance (`plannerProvenanceLabel`); first time → **Tiles remember where they came from.** (dismissible)
-8. Daily Focus Hands-off chip → **Preview what goes out** → same Apply
-9. How my weeks run → **Apply to This Week** also available
+2. Open **Sunday preview** (header or banner) — note Hands-off strip + outbound count
+3. Change the dial (or close, flip dial, reopen) — preview copy/blocks refresh immediately (no stale lean/full week)
+4. Tap **Apply to This Week** → toast with **Undo** · modal closes
+5. See mint chip **From Sunday · on This Week** (+ inline **Undo**) and new **Routine · …** / **From Sunday · …** tiles on the week grid
+6. Tap toast **Undo** (or chip Undo) → Sunday tiles removed · chip clears
+7. From Daily Focus · Apply → lands on This Week with toast Undo still available
+8. Open a minted tile → quiet **From Sunday** provenance (`plannerProvenanceLabel`); first time → **Tiles remember where they came from.** (dismissible)
+9. Daily Focus Hands-off chip → **Preview what goes out** → same Apply
+10. How my weeks run → **Apply to This Week** also available
 
 ## Provenance
 Bridge tiles carry `fromSunday: true` + `added-sunday-*` ids. Daily Focus / This Week show quiet **From Sunday** via `plannerProvenanceLabel` (same helper as Library / Check-ins / live teach). Quiet only — sense-making full pass still deferred.
@@ -54,8 +60,8 @@ Bridge tiles carry `fromSunday: true` + `added-sunday-*` ids. Daily Focus / This
 ## Files
 - `lib/v2/demoSundayBridge.js` — build blocks + applied meta + remove / pending undo
 - `lib/v2/demoLibrary.js` — `plannerProvenanceLabel` (“From Sunday”)
-- `lib/v2/usePlanner.js` — `applySundayToThisWeek` · `undoSundayToThisWeek`
-- `components/v2/StationShell.js` — modal + banner Apply CTAs
+- `lib/v2/usePlanner.js` — `applySundayToThisWeek` · `undoSundayToThisWeek` · `setLevel` → `ci2-hands-off-updated`
+- `components/v2/StationShell.js` — modal + banner Apply CTAs · live Hands-off strip on Sunday preview
 - `components/v2/HowMyWeeksRun.js` — Apply chip
 - `app/v2/teacher/StationWeekClient.js` — banner · chip + Undo · modal · provenance
 - `app/v2/teacher/StationDayClient.js` — modal Apply → This Week · pending undo · provenance

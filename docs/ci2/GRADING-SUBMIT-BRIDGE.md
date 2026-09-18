@@ -13,6 +13,7 @@ Teacher plans, student Start/Submit, and grading inbox existed separately. This 
 4. Open teacher **Check / Grading** (`/v2/teacher/grading`)
 5. See **Leo**’s new item at the top (chip: Just in) · Needs you count includes it
 5b. Optional: **Check-ins** → kid with pending work → **Open grading** → `/v2/teacher/grading?student=Kai` focuses/filters that student (Clear chip restores full inbox)
+5c. When inbox is empty → calm glass empty state + primary **Open Daily Focus** (and **Check-ins**) — matches Check-ins empty tone
 6. **Confirm** (or Skip) — confirmed IDs persist as before; Confirm also stamps matching My Day mission/practice as **Teacher checked** (calm chip) into the **demo kid namespace** matching `studentFirst` (Leo/Kai/Riley); switcher + SAM celebrate stay scoped
 7. After Confirm, calm chip **See growth →** links to Reports (`/v2/teacher/reports`) — stub glance only; does **not** claim live analytics (Reports honesty: Demo data · not live yet)
 8. Optional: Daily Focus SAM glance “N to grade” increments (same tab via `ci2-grading-updated`; cross-tab via `storage`)
@@ -33,7 +34,7 @@ Live row shape mirrors demo grading items: `id` (`live-{missionId}`), `studentFi
 - `app/v2/teacher/check-ins/CheckInsClient.js` — **Open grading** when pending matches kid
 - `app/v2/student/activity/[id]/StudentActivityClient.js` — Submit → enqueue
 - `app/v2/student/StudentMyDayClient.js` — Teacher checked chip
-- `app/v2/teacher/grading/GradingInboxClient.js` — demo + live list · `?student=` focus · Confirm → **See growth →** Reports nudge
+- `app/v2/teacher/grading/GradingInboxClient.js` — demo + live list · `?student=` focus · Confirm → **See growth →** Reports nudge · empty-state calm glass + Daily Focus / Check-ins CTAs
 - `lib/v2/demoReports.js` — `REPORTS_HREF`
 - `app/v2/teacher/StationDayClient.js` — SAM glance count listens to inbox key
 

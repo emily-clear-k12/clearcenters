@@ -870,14 +870,16 @@ export function GlanceLegendHint({ show = false }) {
  * Sunday preview / safety net — "Here's what goes out".
  * Lists outbound assigns by day / subject / period; Change + Looks good.
  */
-export function SundayPreviewModal({ open, onClose, rows, onChangeDay, onAcknowledge, onApplyToWeek, applied, weekLabel }) {
+export function SundayPreviewModal({ open, onClose, rows, onChangeDay, onAcknowledge, onApplyToWeek, applied, weekLabel, dialLevel }) {
   if (!open) return null;
 
+  const meta = handsOffLevelMeta(dialLevel);
   const byDay = {};
   for (const r of rows || []) {
     if (!byDay[r.day]) byDay[r.day] = [];
     byDay[r.day].push(r);
   }
+  const assignCount = (rows || []).filter((r) => r.type === "assign").length;
 
   return (
     <div
@@ -929,10 +931,45 @@ export function SundayPreviewModal({ open, onClose, rows, onChangeDay, onAcknowl
           </button>
         </div>
 
-        <div style={{ marginTop: 16, display: "grid", gap: 14 }}>
+        {/* Live with Hands-off dial — refreshes when dial changes (no stale copy). */}
+        <div
+          role="status"
+          key={`dial-${dialLevel || "default"}-${assignCount}`}
+          style={{
+            marginTop: 12,
+            background: SOFT_LAV,
+            border: `1px solid ${LINE}`,
+            borderRadius: 14,
+            padding: "10px 12px",
+            fontSize: 13,
+            color: INK,
+            lineHeight: 1.4,
+          }}
+        >
+          <strong style={{ color: LAVENDER }}>Hands-off · {meta?.short || "Plan for me"}</strong>
+          {meta?.dialHint ? <span style={{ color: MUTED }}> · {meta.dialHint}</span> : null}
+          <span style={{ color: MUTED }}>
+            {" "}
+            · {assignCount} outbound block{assignCount === 1 ? "" : "s"} (updates with the dial)
+          </span>
+        </div>
+
+        <div style={{ marginTop: 16, display: "grid", gap: 14 }} key={`rows-${dialLevel || "default"}-${assignCount}`}>
           {DAYS.map((d, i) => {
             const items = byDay[i] || [];
-            if (items.length === 0) return null;
+            if (items.length === 0) {
+              // Lean dial / filtered days — show quiet empty so preview never looks stuck.
+              return (
+                <section key={d} style={{ background: "#fff", borderRadius: 14, padding: "12px 12px 10px", border: `1px dashed ${LINE}` }}>
+                  <div style={{ fontWeight: 800, color: INK, fontSize: 14 }}>
+                    {DAY_NAMES[i]} · {DATES[i]}
+                  </div>
+                  <div style={{ marginTop: 6, fontSize: 13, color: MUTED }}>
+                    Nothing outbound this day for the current dial.
+                  </div>
+                </section>
+              );
+            }
             return (
               <section key={d} style={{ background: SOFT_LAV, borderRadius: 14, padding: "12px 12px 10px", border: `1px solid ${LINE}` }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8, gap: 8, flexWrap: "wrap" }}>

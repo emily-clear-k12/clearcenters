@@ -627,6 +627,7 @@ export default function StationDayClient() {
         onClose={() => p.setShowSundayPreview(false)}
         rows={p.outboundPreview}
         weekLabel={DEMO_WEEK.label}
+        dialLevel={p.level}
         onChangeDay={(d) => {
           p.setShowSundayPreview(false);
           router.push(`/v2/teacher/day?d=${d}`);
