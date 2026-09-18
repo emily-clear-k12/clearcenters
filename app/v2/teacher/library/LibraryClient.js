@@ -17,6 +17,8 @@ import {
 import {
   DEMO_LIBRARY_CARDS,
   addLibraryCardToPlanner,
+  libraryStandardChip,
+  removeAddedActivity,
   LIBRARY_HREF,
 } from "../../../../lib/v2/demoLibrary";
 
@@ -24,7 +26,8 @@ const FLAVORS = ["Briefing", "Challenge", "Practice", "Project"];
 
 /**
  * CI2.0 Library browse stub — glance-first glass cards.
- * Chip filters by type + simple title search. Add → ci2.teacher.addedActivities.
+ * Chip filters by type + simple title search. TEKS chip → Standard info when stub matches.
+ * Add → ci2.teacher.addedActivities.
  */
 export default function LibraryClient() {
   const [toast, setToast] = useState(null);
@@ -33,7 +36,8 @@ export default function LibraryClient() {
 
   useEffect(() => {
     if (!toast) return;
-    const t = setTimeout(() => setToast(null), 3200);
+    const ms = toast.undoId ? 5600 : 3200;
+    const t = setTimeout(() => setToast(null), ms);
     return () => clearTimeout(t);
   }, [toast]);
 
@@ -50,11 +54,23 @@ export default function LibraryClient() {
     const entry = addLibraryCardToPlanner(card, target);
     if (!entry) return;
     if (target === "daily_focus") {
-      setToast({ text: `Added “${card.title}” to Daily Focus (today).` });
+      setToast({
+        text: `Added “${card.title}” to Daily Focus (today).`,
+        undoId: entry.id,
+      });
     } else {
-      setToast({ text: `Added “${card.title}” to This Week planner.` });
+      setToast({
+        text: `Added “${card.title}” to This Week planner.`,
+        undoId: entry.id,
+      });
     }
   }, []);
+
+  const undoAdd = useCallback(() => {
+    if (!toast?.undoId) return;
+    const ok = removeAddedActivity(toast.undoId);
+    setToast({ text: ok ? "Undone — removed from planner." : "Nothing to undo." });
+  }, [toast]);
 
   return (
     <StationShell active="library">
@@ -243,6 +259,32 @@ export default function LibraryClient() {
                   <span style={{ fontSize: 11, fontWeight: 700, color: MUTED }}>
                     {card.product} · {card.minutes} min
                   </span>
+                  {(() => {
+                    const std = libraryStandardChip(card);
+                    if (!std) return null;
+                    const chipStyle = {
+                      ...glanceChipStyle("ready"),
+                      borderRadius: 999,
+                      padding: "3px 10px",
+                      fontSize: 11,
+                      fontWeight: 800,
+                      textDecoration: "none",
+                      display: "inline-flex",
+                      alignItems: "center",
+                    };
+                    if (std.href) {
+                      return (
+                        <Link href={std.href} style={chipStyle} title="Open Standard info stub">
+                          {std.label}
+                        </Link>
+                      );
+                    }
+                    return (
+                      <span style={chipStyle} title="Standard chip (no stub yet)">
+                        {std.label}
+                      </span>
+                    );
+                  })()}
                 </div>
                 <div style={{ fontWeight: 800, color: INK, fontSize: 17, lineHeight: 1.25 }}>
                   {card.title}
@@ -294,9 +336,32 @@ export default function LibraryClient() {
             zIndex: 40,
             maxWidth: "calc(100% - 28px)",
             textAlign: "center",
+            display: "flex",
+            alignItems: "center",
+            gap: 12,
+            justifyContent: "center",
           }}
         >
-          {toast.text}
+          <span>{toast.text}</span>
+          {toast.undoId && (
+            <button
+              type="button"
+              onClick={undoAdd}
+              style={{
+                border: "1px solid rgba(255,255,255,.45)",
+                background: "rgba(255,255,255,.16)",
+                color: "#fff",
+                borderRadius: 999,
+                padding: "4px 12px",
+                fontWeight: 800,
+                fontSize: 13,
+                cursor: "pointer",
+                fontFamily: "inherit",
+              }}
+            >
+              Undo
+            </button>
+          )}
         </div>
       )}
     </StationShell>
