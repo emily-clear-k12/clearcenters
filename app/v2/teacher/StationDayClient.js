@@ -4,8 +4,24 @@ import { useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { usePlanner } from "../../../lib/v2/usePlanner";
 import { SUBJECTS, DAYS, DAY_NAMES, DATES, KINDS, PRODUCT_INFO, DEMO_WEEK } from "../../../lib/v2/demoWeek";
-import { StationShell, Glass, Pill, SelectChip, TeacherSubnav, SetupSwitcher, INK, MUTED, LINE, LAVENDER } from "../../../components/v2/StationShell";
+import {
+  StationShell,
+  Glass,
+  Pill,
+  TeacherSubnav,
+  SetupSwitcher,
+  SamGlance,
+  RoomCards,
+  SingleRoomLabel,
+  INK,
+  MUTED,
+  LINE,
+  LAVENDER,
+  SOFT_LAV,
+} from "../../../components/v2/StationShell";
 import { Toast } from "../../../components/v2/weekKit";
+
+const AGENDA_LABELS = ["Now", "Next", "Later"];
 
 export default function StationDayClient() {
   const router = useRouter();
@@ -14,17 +30,50 @@ export default function StationDayClient() {
   const day = Math.min(4, Math.max(0, Number(params.get("d") ?? 2)));
   const [openId, setOpenId] = useState(params.get("open"));
   const cls = p.setup.classes.find((c) => c.key === p.classFilter) || p.setup.classes[0];
+  const selectedClass = p.classFilter === "all" ? p.setup.classes[0]?.key : p.classFilter;
   const items = p.visible.filter((a) => a.day === day);
-  const teach = items.filter((a) => a.kind === "teach");
-  const work = items.filter((a) => a.kind !== "teach");
+  // Agenda rise-to-top: teach first, then work/small — labeled Now → Next → Later
+  const agenda = useMemo(() => {
+    const teach = items.filter((a) => a.kind === "teach");
+    const rest = items.filter((a) => a.kind !== "teach");
+    return [...teach, ...rest];
+  }, [items]);
   const minutes = items.reduce((s, a) => s + (a.minutes || 0), 0);
   const opened = items.find((a) => a.id === openId) || p.activities.find((a) => a.id === openId);
-  const needs = p.openSuggestions.filter((s) => s.day === day);
+  const daySuggestions = p.openSuggestions.filter((s) => s.day === day || s.day == null);
 
-  const classOptions = useMemo(
-    () => p.setup.classes.map((c) => ({ value: c.key, label: c.name + (c.students ? " · " + c.students + " students" : "") })),
-    [p.setup.classes]
-  );
+  const needsByClass = useMemo(() => {
+    const map = {};
+    for (const c of p.setup.classes) map[c.key] = 0;
+    for (const s of p.openSuggestions) {
+      if (s.classKey && map[s.classKey] != null) map[s.classKey] += 1;
+    }
+    return map;
+  }, [p.setup.classes, p.openSuggestions]);
+
+  const glanceItems = useMemo(() => {
+    const list = [];
+    const className = cls?.name;
+    for (const s of daySuggestions.slice(0, 2)) {
+      list.push({
+        id: s.id,
+        text: s.text(className),
+        actionLabel: s.action,
+        tone: "cream",
+        onAction: () => p.acceptSuggestion(s),
+      });
+    }
+    if (DEMO_WEEK.gradingCount > 0 && list.length < 3) {
+      list.push({
+        id: "glance-grade",
+        text: `${DEMO_WEEK.gradingCount} submissions are ready when you are — no rush.`,
+        actionLabel: "Open grading",
+        tone: "mint",
+        onAction: () => p.setToast({ text: "Grading opens here next — skeleton for now." }),
+      });
+    }
+    return list.slice(0, 3);
+  }, [daySuggestions, cls?.name, p]);
 
   function projectStub(title) {
     p.setToast({ text: `Would project "${title}" — skeleton` });
@@ -38,26 +87,40 @@ export default function StationDayClient() {
           <div>
             <h1 style={{ fontFamily: "'Poppins', sans-serif", margin: 0, fontSize: 34, color: INK }}>Daily Focus</h1>
             <div style={{ color: MUTED, marginTop: 2 }}>
-              {DAY_NAMES[day]} · {DATES[day]} · {p.published ? "already published" : "not published yet"} · {minutes} min
+              Teach today · {DAY_NAMES[day]} · {DATES[day]} · {p.published ? "published" : "not published yet"} · {minutes} min
             </div>
             <div style={{ marginTop: 10, display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
               <SetupSwitcher setupKey={p.setupKey} onChange={p.setSetupKey} />
-              {p.multiClass ? (
-                <SelectChip value={p.classFilter === "all" ? p.setup.classes[0].key : p.classFilter} onChange={p.setClassFilter} options={classOptions} />
-              ) : (
-                <span style={{ fontSize: 13, fontWeight: 600, color: MUTED, padding: "6px 4px" }}>
-                  {cls?.name}
-                  {cls?.students ? ` · ${cls.students} students` : ""}
-                </span>
-              )}
+              {!p.multiClass && <SingleRoomLabel cls={cls} setup={p.setup} />}
             </div>
           </div>
-          <button type="button" onClick={() => router.push("/v2/teacher")} style={{ background: "#fff", color: INK, border: "1px solid " + LINE, borderRadius: 999, padding: "10px 16px", fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>
-            Back to week
+          <button
+            type="button"
+            onClick={() => router.push("/v2/teacher")}
+            style={{ background: "#fff", color: INK, border: "1px solid " + LINE, borderRadius: 999, padding: "10px 16px", fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}
+          >
+            This Week · plan
           </button>
         </div>
 
-        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", margin: "16px 0 12px" }}>
+        {p.multiClass && (
+          <RoomCards
+            classes={p.setup.classes}
+            selectedKey={selectedClass}
+            onSelect={p.setClassFilter}
+            setup={p.setup}
+            needsByClass={needsByClass}
+          />
+        )}
+
+        <div style={{ marginTop: 14 }}>
+          <SamGlance
+            items={glanceItems}
+            emptyLabel={`Nothing waiting for ${cls?.name || "this class"} today. Nice.`}
+          />
+        </div>
+
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", margin: "4px 0 12px" }}>
           {p.multiSubject && (
             <Pill active={p.subjectFilter === "all"} onClick={() => p.setSubjectFilter("all")}>
               All subjects
@@ -74,7 +137,22 @@ export default function StationDayClient() {
           {DAYS.map((label, i) => {
             const on = i === day;
             return (
-              <button key={label} type="button" onClick={() => router.push("/v2/teacher/day?d=" + i)} style={{ borderRadius: 999, padding: "7px 12px", border: "1px solid " + (on ? LAVENDER : LINE), background: on ? LAVENDER : "#fff", color: on ? "#fff" : INK, fontWeight: 700, fontSize: 13, cursor: "pointer", fontFamily: "inherit" }}>
+              <button
+                key={label}
+                type="button"
+                onClick={() => router.push("/v2/teacher/day?d=" + i)}
+                style={{
+                  borderRadius: 999,
+                  padding: "7px 12px",
+                  border: "1px solid " + (on ? LAVENDER : LINE),
+                  background: on ? LAVENDER : "#fff",
+                  color: on ? "#fff" : INK,
+                  fontWeight: 700,
+                  fontSize: 13,
+                  cursor: "pointer",
+                  fontFamily: "inherit",
+                }}
+              >
                 {label} {DATES[i].split(" ")[1]}
                 {i === 2 ? " · TODAY" : ""}
               </button>
@@ -82,24 +160,106 @@ export default function StationDayClient() {
           })}
         </div>
 
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-          <Lane title="Teach together" items={teach} onOpen={setOpenId} onProject={projectStub} showProject />
-          <Lane title="Student work" items={work} onOpen={setOpenId} />
-        </div>
-
-        <div style={{ marginTop: 14, background: "#FFF7E8", border: "1px solid #F0D7A0", borderRadius: 14, padding: "10px 14px", color: INK, fontSize: 14, display: "flex", gap: 12, flexWrap: "wrap", alignItems: "center" }}>
-          <strong>Needs you</strong>
-          {needs.length === 0 && <span style={{ color: MUTED }}>Nothing waiting for {cls?.name || "this class"} today. Nice.</span>}
-          {needs.slice(0, 3).map((s) => (
-            <span key={s.id}>
-              {s.text(cls?.name)}{" "}
-              <button type="button" onClick={() => p.acceptSuggestion(s)} style={{ border: "none", background: "transparent", color: LAVENDER, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>
-                {s.action}
-              </button>
-            </span>
-          ))}
-          <span style={{ marginLeft: "auto", color: MUTED }}>{DEMO_WEEK.gradingCount} to grade</span>
-        </div>
+        {/* Now → Next → Later agenda (day-of home) */}
+        <section aria-label="Today's agenda">
+          <div style={{ fontWeight: 800, color: INK, marginBottom: 10, fontSize: 13, letterSpacing: 0.4 }}>
+            NOW → NEXT → LATER
+          </div>
+          <div style={{ display: "grid", gap: 10 }}>
+            {agenda.length === 0 && (
+              <div style={{ color: MUTED, fontSize: 14, padding: "12px 4px" }}>Nothing on the agenda for this room today.</div>
+            )}
+            {agenda.map((act, idx) => {
+              const sub = SUBJECTS[act.subject];
+              const label = idx < 3 ? AGENDA_LABELS[idx] : "Later";
+              const isNow = idx === 0;
+              return (
+                <div
+                  key={act.id}
+                  style={{
+                    display: "flex",
+                    gap: 0,
+                    alignItems: "stretch",
+                    background: isNow ? SOFT_LAV : "#fff",
+                    border: `1px solid ${isNow ? "#D9CFFF" : LINE}`,
+                    borderRadius: 16,
+                    overflow: "hidden",
+                    boxShadow: isNow ? "0 8px 22px rgba(139,108,255,.12)" : "none",
+                  }}
+                >
+                  <div
+                    style={{
+                      width: 72,
+                      flexShrink: 0,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      background: isNow ? "rgba(139,108,255,.14)" : "#F7F4FF",
+                      fontWeight: 800,
+                      fontSize: 12,
+                      color: isNow ? LAVENDER : MUTED,
+                      letterSpacing: 0.3,
+                    }}
+                  >
+                    {label}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setOpenId(act.id)}
+                    style={{
+                      flex: 1,
+                      display: "flex",
+                      gap: 10,
+                      textAlign: "left",
+                      background: "transparent",
+                      border: "none",
+                      padding: "12px 10px",
+                      cursor: "pointer",
+                      fontFamily: "inherit",
+                    }}
+                  >
+                    <span style={{ width: 5, alignSelf: "stretch", background: sub.color, borderRadius: 4 }} />
+                    <div style={{ minWidth: 0 }}>
+                      <div style={{ fontSize: 11, fontWeight: 800, color: sub.color, textTransform: "uppercase" }}>
+                        {sub.name} · {KINDS[act.kind]?.short || act.kind}
+                      </div>
+                      <div style={{ fontWeight: 700, color: INK, fontSize: isNow ? 17 : 15 }}>{act.title}</div>
+                      <div style={{ fontSize: 13, color: MUTED }}>
+                        {act.minutes} min · {act.who}
+                      </div>
+                    </div>
+                  </button>
+                  {act.kind === "teach" && (
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        projectStub(act.title);
+                      }}
+                      title="Project (skeleton)"
+                      style={{
+                        alignSelf: "center",
+                        marginRight: 12,
+                        border: `1px solid ${LINE}`,
+                        background: isNow ? LAVENDER : "#fff",
+                        color: isNow ? "#fff" : LAVENDER,
+                        borderRadius: 999,
+                        padding: "8px 14px",
+                        fontSize: 13,
+                        fontWeight: 700,
+                        cursor: "pointer",
+                        fontFamily: "inherit",
+                        whiteSpace: "nowrap",
+                      }}
+                    >
+                      Project
+                    </button>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </section>
       </Glass>
 
       {opened && (
@@ -132,63 +292,5 @@ export default function StationDayClient() {
       )}
       <Toast toast={p.toast} />
     </StationShell>
-  );
-}
-
-function Lane({ title, items, onOpen, onProject, showProject }) {
-  return (
-    <div style={{ background: "#fff", border: "1px solid " + LINE, borderRadius: 16, padding: 12 }}>
-      <div style={{ fontWeight: 800, color: INK, marginBottom: 10 }}>{title.toUpperCase()}</div>
-      <div style={{ display: "grid", gap: 8 }}>
-        {items.length === 0 && <div style={{ color: MUTED, fontSize: 14 }}>Nothing in this lane today.</div>}
-        {items.map((act) => {
-          const sub = SUBJECTS[act.subject];
-          return (
-            <div key={act.id} style={{ display: "flex", gap: 8, alignItems: "stretch", background: "#FBFBFF", border: "1px solid " + LINE, borderRadius: 12, overflow: "hidden" }}>
-              <button
-                type="button"
-                onClick={() => onOpen(act.id)}
-                style={{ flex: 1, display: "flex", gap: 10, textAlign: "left", background: "transparent", border: "none", padding: "10px 10px 10px 0", cursor: "pointer", fontFamily: "inherit" }}
-              >
-                <span style={{ width: 6, alignSelf: "stretch", background: sub.color, borderRadius: "12px 0 0 12px" }} />
-                <div>
-                  <div style={{ fontSize: 11, fontWeight: 800, color: sub.color, textTransform: "uppercase" }}>{sub.name}</div>
-                  <div style={{ fontWeight: 700, color: INK }}>{act.title}</div>
-                  <div style={{ fontSize: 13, color: MUTED }}>
-                    {act.minutes} min · {act.who}
-                  </div>
-                </div>
-              </button>
-              {showProject && onProject && (
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onProject(act.title);
-                  }}
-                  title="Project (skeleton)"
-                  style={{
-                    alignSelf: "center",
-                    marginRight: 8,
-                    border: `1px solid ${LINE}`,
-                    background: "#fff",
-                    color: LAVENDER,
-                    borderRadius: 999,
-                    padding: "6px 10px",
-                    fontSize: 12,
-                    fontWeight: 700,
-                    cursor: "pointer",
-                    fontFamily: "inherit",
-                    whiteSpace: "nowrap",
-                  }}
-                >
-                  Project
-                </button>
-              )}
-            </div>
-          );
-        })}
-      </div>
-    </div>
   );
 }

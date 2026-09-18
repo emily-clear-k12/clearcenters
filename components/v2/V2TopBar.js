@@ -2,14 +2,14 @@
 
 // CI2.0 teacher top bar. Same light-glass look as TeacherHUD, but with the
 // CI2.0 navigation: Plan · Teach · Check · Grow, plus Library.
-// Only Plan exists so far; the others show as "coming soon".
+// Plan lands on Daily Focus (teach today); This Week stays under Plan subnav.
 
 import Link from "next/link";
 import SamIcon from "../SamIcon";
 import { COLORS } from "../../lib/teacherTheme";
 
 const NAV = [
-  { key: "plan", label: "Plan", href: "/v2/teacher" },
+  { key: "plan", label: "Plan", href: "/v2/teacher/day?d=2" },
   { key: "teach", label: "Teach" },
   { key: "check", label: "Check" },
   { key: "grow", label: "Grow" },

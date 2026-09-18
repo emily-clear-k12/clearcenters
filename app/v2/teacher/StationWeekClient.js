@@ -1,21 +1,76 @@
 "use client";
 
+import { useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { usePlanner } from "../../../lib/v2/usePlanner";
-import { SUBJECTS, DAYS, DATES, DEMO_WEEK } from "../../../lib/v2/demoWeek";
-import { StationShell, Glass, Pill, SelectChip, TeacherSubnav, SetupSwitcher, INK, MUTED, LINE, LAVENDER } from "../../../components/v2/StationShell";
+import { SUBJECTS, DAYS, DATES, DEMO_WEEK, HANDS_OFF_LEVELS } from "../../../lib/v2/demoWeek";
+import {
+  StationShell,
+  Glass,
+  Pill,
+  TeacherSubnav,
+  SetupSwitcher,
+  SamGlance,
+  RoomCards,
+  SingleRoomLabel,
+  HandsOffDial,
+  INK,
+  MUTED,
+  LINE,
+  LAVENDER,
+} from "../../../components/v2/StationShell";
 import { Toast } from "../../../components/v2/weekKit";
 
 export default function StationWeekClient() {
   const router = useRouter();
   const p = usePlanner();
   const cls = p.setup.classes.find((c) => c.key === p.classFilter) || p.setup.classes[0];
+  const selectedClass = p.classFilter === "all" ? p.setup.classes[0]?.key : p.classFilter;
+
+  const needsByClass = useMemo(() => {
+    const map = {};
+    for (const c of p.setup.classes) map[c.key] = 0;
+    for (const s of p.openSuggestions) {
+      if (s.classKey && map[s.classKey] != null) map[s.classKey] += 1;
+    }
+    return map;
+  }, [p.setup.classes, p.openSuggestions]);
+
+  const glanceItems = useMemo(() => {
+    const items = [];
+    const className = cls?.name;
+    for (const s of p.openSuggestions.slice(0, 2)) {
+      items.push({
+        id: s.id,
+        text: s.text(className),
+        actionLabel: s.action,
+        tone: "cream",
+        onAction: () => p.acceptSuggestion(s),
+      });
+    }
+    if (DEMO_WEEK.gradingCount > 0 && items.length < 3) {
+      items.push({
+        id: "glance-grade",
+        text: `${DEMO_WEEK.gradingCount} submissions are ready when you are — no rush.`,
+        actionLabel: "Open grading",
+        tone: "mint",
+        onAction: () => p.setToast({ text: "Grading opens here next — skeleton for now." }),
+      });
+    }
+    return items.slice(0, 3);
+  }, [p.openSuggestions, cls?.name, p]);
 
   function onDrop(day, e) {
     e.preventDefault();
     const id = e.dataTransfer.getData("text/plain");
     p.setDragOverDay(null);
     if (id) p.moveTo(id, day);
+  }
+
+  function onHandsOff(key) {
+    p.setLevel(key);
+    const title = HANDS_OFF_LEVELS.find((l) => l.key === key)?.title || key;
+    p.setToast({ text: `Weeks will run as: ${title}.` });
   }
 
   return (
@@ -25,24 +80,13 @@ export default function StationWeekClient() {
         <div style={{ display: "flex", justifyContent: "space-between", gap: 12, flexWrap: "wrap", alignItems: "flex-start" }}>
           <div>
             <h1 style={{ fontFamily: "'Poppins', sans-serif", margin: 0, fontSize: 34, color: INK }}>This Week</h1>
-            <div style={{ color: MUTED, marginTop: 2 }}>{DEMO_WEEK.label}</div>
+            <div style={{ color: MUTED, marginTop: 2 }}>
+              {DEMO_WEEK.label} · Plan & publish · then teach from Daily Focus
+            </div>
             <div style={{ marginTop: 10, display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
               <SetupSwitcher setupKey={p.setupKey} onChange={p.setSetupKey} />
-              {p.multiClass ? (
-                <SelectChip
-                  value={p.classFilter === "all" ? p.setup.classes[0].key : p.classFilter}
-                  onChange={p.setClassFilter}
-                  options={p.setup.classes.map((c) => ({
-                    value: c.key,
-                    label: c.name + (c.students ? ` · ${c.students} students` : ""),
-                  }))}
-                />
-              ) : (
-                <span style={{ fontSize: 13, fontWeight: 600, color: MUTED, padding: "6px 4px" }}>
-                  {cls?.name}
-                  {cls?.students ? ` · ${cls.students} students` : ""}
-                </span>
-              )}
+              {!p.multiClass && <SingleRoomLabel cls={cls} setup={p.setup} />}
+              <HandsOffDial level={p.level} onChange={onHandsOff} />
             </div>
           </div>
           <button
@@ -64,7 +108,24 @@ export default function StationWeekClient() {
           </button>
         </div>
 
-        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", margin: "16px 0 18px" }}>
+        {p.multiClass && (
+          <RoomCards
+            classes={p.setup.classes}
+            selectedKey={selectedClass}
+            onSelect={p.setClassFilter}
+            setup={p.setup}
+            needsByClass={needsByClass}
+          />
+        )}
+
+        <div style={{ marginTop: 14 }}>
+          <SamGlance
+            items={glanceItems}
+            emptyLabel={`Nothing waiting for ${cls?.name || "this class"} this week. Nice.`}
+          />
+        </div>
+
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", margin: "4px 0 18px" }}>
           {p.multiSubject && (
             <Pill active={p.subjectFilter === "all"} onClick={() => p.setSubjectFilter("all")}>
               All subjects
@@ -159,7 +220,7 @@ export default function StationWeekClient() {
           })}
         </div>
         <p style={{ margin: "14px 0 0", color: MUTED, fontSize: 13 }}>
-          Drag a tile to move it for {cls?.name || "this class"} only. Open a day header for Daily Focus.
+          Drag a tile to move it for {cls?.name || "this class"} only. Daily Focus is your teach-today home.
         </p>
       </Glass>
       <Toast toast={p.toast} />
