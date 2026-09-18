@@ -15,7 +15,7 @@ Teachers need a light place to browse a few ready activities and drop them onto 
 6. **Filter by title…** — simple text match on card title (stub, not catalog search)
 7. **Add to Daily Focus** → writes `ci2.teacher.addedActivities` for today (`d=2`); toast offers **Undo**
 8. Open **Daily Focus** → tile appears (same browser)
-9. **Add to This Week** → same planner extras key; toast **Undo** removes the minted tile; open **This Week** to see it
+9. **Add to This Week** → same planner extras key; toast **Undo** removes the minted tile; open **This Week** / Daily Focus → quiet **From Library** provenance on the tile
 10. Student My Day may surface teacher-added tiles when day matches
 
 ## Storage (same browser only)
@@ -24,7 +24,7 @@ Teachers need a light place to browse a few ready activities and drop them onto 
 | `ci2.teacher.addedActivities` | Planner extras (same key as Add Activity / usePlanner) |
 
 ## Files
-- `lib/v2/demoLibrary.js` — demo cards (+ `standard`) + add / `removeAddedActivity` Undo helper + `libraryStandardChip`
+- `lib/v2/demoLibrary.js` — demo cards (+ `standard`) + add / `removeAddedActivity` + `libraryStandardChip` + `plannerProvenanceLabel`
 - `lib/v2/demoStandardsUnit.js` — `hasStandardStub` / `STANDARDS_HREF` for linkable chips
 - `app/v2/teacher/library/` — page + `LibraryClient` (chip + title filters + TEKS chips)
 - `components/v2/V2TopBar.js` — Library href wired

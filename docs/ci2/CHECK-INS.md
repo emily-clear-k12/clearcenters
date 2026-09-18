@@ -21,7 +21,7 @@ Departmentalized teachers also need the **same period/class lens** as Daily Focu
    - Period 2 → Riley
    - Period 3 → Maya (or live Leo inheriting that room)
 5. Act: **Pull for small group** → amber block on **today’s** Daily Focus (`d=2`); **Reteach tomorrow** → amber block on **tomorrow** (`d=3`). Kid names stub; merges same period + day + kind
-6. **Add to This Week** → mints a planner tile via `ci2.teacher.addedActivities` (same as Library / Sunday); period-aware when `periodId` is set. Kid stays on Check-ins. Toast offers **Undo** to remove that minted tile
+6. **Add to This Week** → mints a planner tile via `ci2.teacher.addedActivities` (same as Library / Sunday); period-aware when `periodId` is set. Kid stays on Check-ins. Toast offers **Undo** to remove that minted tile. Daily Focus / This Week show quiet **From Check-ins** provenance
 7. **Looks good / dismiss** → clears from list only (no Focus block)
 8. Optional: **Family note** on a kid card → teacher one-pager stub (celebrate + ask-at-home · copy message)
 9. Open **← Daily Focus** (`d=2`) → **FROM CHECK-INS · TODAY** for small-group pulls; switch to **Thu** (`d=3`) → **FROM CHECK-INS · TOMORROW** for reteach pulls (period filter still applies)

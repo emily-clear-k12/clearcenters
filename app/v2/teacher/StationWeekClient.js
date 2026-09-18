@@ -15,6 +15,7 @@ import {
 import { PROJECT_HREF } from "../../../lib/v2/demoProject";
 import { LESSON_PLAN_HREF } from "../../../lib/v2/demoLessonPlan";
 import { LIVE_TEACH_HREF } from "../../../lib/v2/demoLiveTeach";
+import { plannerProvenanceLabel } from "../../../lib/v2/demoLibrary";
 import {
   StationShell,
   Glass,
@@ -472,6 +473,10 @@ export default function StationWeekClient() {
                               {sub.name}
                               {act.kind === "teach" ? " · Teach" : ""}
                               {act.auto ? " · auto" : ""}
+                              {(() => {
+                                const prov = plannerProvenanceLabel(act);
+                                return prov ? ` · ${prov}` : "";
+                              })()}
                             </div>
                             <div style={{ fontSize: 13, fontWeight: 650, color: INK, lineHeight: 1.25 }}>{act.title}</div>
                           </div>
