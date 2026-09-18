@@ -24,6 +24,7 @@ import {
 } from "../../../lib/v2/demoWhoNeedsMe";
 import { PROJECT_HREF } from "../../../lib/v2/demoProject";
 import { LESSON_PLAN_HREF } from "../../../lib/v2/demoLessonPlan";
+import { LIVE_TEACH_HREF } from "../../../lib/v2/demoLiveTeach";
 import {
   StationShell,
   Glass,
@@ -197,6 +198,10 @@ export default function StationDayClient() {
 
   function openLessonPlan(act) {
     router.push(LESSON_PLAN_HREF(act.id));
+  }
+
+  function openLiveTeach(act) {
+    router.push(LIVE_TEACH_HREF(act.id));
   }
 
   return (
@@ -418,13 +423,36 @@ export default function StationDayClient() {
                         type="button"
                         onClick={(e) => {
                           e.stopPropagation();
+                          openLiveTeach(act);
+                        }}
+                        title="Open teach live present mode"
+                        style={{
+                          border: isNow ? "none" : `1px solid ${GLANCE.teach.border}`,
+                          background: isNow ? GLANCE.teach.fg : GLANCE.teach.bg,
+                          color: isNow ? "#fff" : GLANCE.teach.fg,
+                          borderRadius: 999,
+                          padding: "8px 12px",
+                          fontSize: 13,
+                          fontWeight: 700,
+                          cursor: "pointer",
+                          fontFamily: "inherit",
+                          whiteSpace: "nowrap",
+                          boxShadow: isNow ? "0 6px 16px rgba(123,107,184,.22)" : "none",
+                        }}
+                      >
+                        Teach live
+                      </button>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
                           openLessonPlan(act);
                         }}
                         title="Open lesson plan stub"
                         style={{
                           border: `1px solid ${GLANCE.teach.border}`,
-                          background: isNow ? GLANCE.teach.fg : GLANCE.teach.bg,
-                          color: isNow ? "#fff" : GLANCE.teach.fg,
+                          background: GLANCE.teach.bg,
+                          color: GLANCE.teach.fg,
                           borderRadius: 999,
                           padding: "8px 12px",
                           fontSize: 13,
@@ -484,8 +512,15 @@ export default function StationDayClient() {
                 <div style={{ marginTop: 12, display: "flex", gap: 8, flexWrap: "wrap" }}>
                   <button
                     type="button"
-                    onClick={() => openLessonPlan(opened)}
+                    onClick={() => openLiveTeach(opened)}
                     style={{ background: GLANCE.teach.fg, color: "#fff", border: "none", borderRadius: 999, padding: "8px 16px", fontWeight: 700, cursor: "pointer", fontFamily: "inherit", boxShadow: "0 6px 16px rgba(123,107,184,.22)" }}
+                  >
+                    Teach live
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => openLessonPlan(opened)}
+                    style={{ background: GLANCE.teach.bg, color: GLANCE.teach.fg, border: `1px solid ${GLANCE.teach.border}`, borderRadius: 999, padding: "8px 16px", fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}
                   >
                     Lesson plan
                   </button>

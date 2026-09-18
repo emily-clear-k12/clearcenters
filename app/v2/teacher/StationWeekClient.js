@@ -14,6 +14,7 @@ import {
 } from "../../../lib/v2/demoWhoNeedsMe";
 import { PROJECT_HREF } from "../../../lib/v2/demoProject";
 import { LESSON_PLAN_HREF } from "../../../lib/v2/demoLessonPlan";
+import { LIVE_TEACH_HREF } from "../../../lib/v2/demoLiveTeach";
 import {
   StationShell,
   Glass,
@@ -202,7 +203,6 @@ export default function StationWeekClient() {
             </button>
           </div>
         </div>
-
         {p.needsSundayPreview && (
           <div style={{ marginTop: 14 }}>
             <SundayPreviewBanner onOpen={() => p.setShowSundayPreview(true)} acked={p.sundayAcked} />
@@ -458,6 +458,28 @@ export default function StationWeekClient() {
                         </button>
                         {act.kind === "teach" && (
                           <div style={{ alignSelf: "center", marginRight: 4, display: "flex", gap: 4, flexShrink: 0 }}>
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                router.push(LIVE_TEACH_HREF(act.id));
+                              }}
+                              title="Teach live"
+                              style={{
+                                border: "none",
+                                background: GLANCE.teach.fg,
+                                color: "#fff",
+                                borderRadius: 999,
+                                padding: "4px 8px",
+                                fontSize: 11,
+                                fontWeight: 700,
+                                cursor: "pointer",
+                                fontFamily: "inherit",
+                                whiteSpace: "nowrap",
+                              }}
+                            >
+                              Live
+                            </button>
                             <button
                               type="button"
                               onClick={(e) => {
