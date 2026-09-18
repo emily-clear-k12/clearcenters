@@ -34,6 +34,7 @@ import {
   getWhoNeedsMeCards,
   loadWhoNeedsChoices,
   pushCheckInToDailyFocus,
+  pushCheckInToThisWeek,
   reasonLabel,
   recordWhoNeedsAction,
   WHO_NEEDS_ME_STORAGE_KEY,
@@ -138,6 +139,21 @@ export default function CheckInsClient() {
     }
   }, [selectedClass]);
 
+  /** Mint a This Week tile via ci2.teacher.addedActivities (same as Library / Sunday). */
+  const addToThisWeek = useCallback((card) => {
+    const entry = pushCheckInToThisWeek(card, {
+      periodId: card.periodId || selectedClass || "A",
+    });
+    if (!entry) return;
+    const room =
+      entry.classes !== "all" && Array.isArray(entry.classes)
+        ? ` · period ${entry.classes[0]}`
+        : "";
+    setToast({
+      text: `${card.studentFirst} · added to This Week${room}.`,
+    });
+  }, [selectedClass]);
+
   return (
     <StationShell>
       <TeacherSubnav active="day" />
@@ -170,6 +186,12 @@ export default function CheckInsClient() {
                 style={{ fontSize: 13, fontWeight: 700, color: LAVENDER, textDecoration: "none" }}
               >
                 ← Daily Focus
+              </Link>
+              <Link
+                href="/v2/teacher"
+                style={{ fontSize: 13, fontWeight: 700, color: LAVENDER, textDecoration: "none" }}
+              >
+                This Week →
               </Link>
               <Link
                 href={GRADING_INBOX_HREF}
@@ -318,6 +340,23 @@ export default function CheckInsClient() {
                     }}
                   >
                     Reteach tomorrow
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => addToThisWeek(card)}
+                    style={{
+                      border: `1px solid ${LINE}`,
+                      background: "rgba(255,255,255,.9)",
+                      color: INK,
+                      borderRadius: 999,
+                      padding: "8px 14px",
+                      fontWeight: 700,
+                      fontSize: 13,
+                      cursor: "pointer",
+                      fontFamily: "inherit",
+                    }}
+                  >
+                    Add to This Week
                   </button>
                   <button
                     type="button"

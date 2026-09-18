@@ -21,11 +21,12 @@ Departmentalized teachers also need the **same period/class lens** as Daily Focu
    - Period 2 → Riley
    - Period 3 → Maya (or live Leo inheriting that room)
 5. Act: **Pull for small group** → amber block on **today’s** Daily Focus (`d=2`); **Reteach tomorrow** → amber block on **tomorrow** (`d=3`). Kid names stub; merges same period + day + kind
-6. **Looks good / dismiss** → clears from list only (no Focus block)
-7. Optional: **Family note** on a kid card → teacher one-pager stub (celebrate + ask-at-home · copy message)
-8. Open **← Daily Focus** (`d=2`) → **FROM CHECK-INS · TODAY** for small-group pulls; switch to **Thu** (`d=3`) → **FROM CHECK-INS · TOMORROW** for reteach pulls (period filter still applies)
-9. Switch Setup back to **Self-contained** → filter hides; single room label only
-10. Optional: Grading inbox header → **Check-ins**
+6. **Add to This Week** → mints a planner tile via `ci2.teacher.addedActivities` (same as Library / Sunday); period-aware when `periodId` is set. Kid stays on Check-ins
+7. **Looks good / dismiss** → clears from list only (no Focus block)
+8. Optional: **Family note** on a kid card → teacher one-pager stub (celebrate + ask-at-home · copy message)
+9. Open **← Daily Focus** (`d=2`) → **FROM CHECK-INS · TODAY** for small-group pulls; switch to **Thu** (`d=3`) → **FROM CHECK-INS · TOMORROW** for reteach pulls (period filter still applies)
+10. Switch Setup back to **Self-contained** → filter hides; single room label only
+11. Optional: Grading inbox header → **Check-ins**
 
 ## Tone
 - Calm **ready** / **needs you** language (lavender / cream / mint — never scary red)
@@ -47,13 +48,14 @@ Departmentalized teachers also need the **same period/class lens** as Daily Focu
 |-----|------|
 | `ci2.whoNeedsMe.choices` | Per-kid action stubs (`small_group` / `reteach_tomorrow` / `dismiss`) |
 | `ci2.checkins.focusBlocks` | Small-group / reteach blocks pulled onto Daily Focus (day · periodId · names) |
+| `ci2.teacher.addedActivities` | **Add to This Week** mints planner extras (same key as Library / Sunday / usePlanner) |
 | `ci2.grading.inbox` | Live submits (optional “just submitted” card) |
 | `ci2.grading.confirmedIds` | Affects which inbox rows still count as pending |
 | `ci2.teacher.setupKey` | Self vs departmentalized (shared with planner) |
 | `ci2.teacher.classFilter` | Selected period/room (shared — Day ↔ Week ↔ Check-ins) |
 
 ## Files
-- `lib/v2/demoWhoNeedsMe.js` — demo kids + `periodId`, period filter, Check-ins → Daily Focus blocks
+- `lib/v2/demoWhoNeedsMe.js` — demo kids + `periodId`, period filter, Check-ins → Daily Focus blocks + This Week tiles
 - `app/v2/teacher/check-ins/` — page + `CheckInsClient` (SetupSwitcher / RoomCards / SingleRoomLabel; Family note link)
 - `app/v2/teacher/family/[id]/` — Family note stub (see FAMILY-STUB.md)
 - `app/v2/teacher/who-needs-me/` — redirect → `/v2/teacher/check-ins`
@@ -67,7 +69,7 @@ Departmentalized teachers also need the **same period/class lens** as Daily Focu
 - No real standards analytics or AI grouping
 - No live roster sync / multi-device / real period membership from SIS
 - Live submits do not yet write `periodId` at enqueue time (inherit selected room on Check-ins / glance)
-- Small group / reteach write **Daily Focus** blocks (`ci2.checkins.focusBlocks`) — not week planner tiles
+- Small group / reteach write **Daily Focus** blocks (`ci2.checkins.focusBlocks`); **Add to This Week** separately mints planner tiles (`ci2.teacher.addedActivities`)
 - Focus blocks are stub only (no auto scheduling, no roster sync). Reteach tomorrow **does** date the block for tomorrow (`FOCUS_TOMORROW_DAY`); open Daily Focus `?d=3` to see it
 - 2-period setups (e.g. ELAR + SS): demo Maya is `periodId: C` so she won’t appear until a 3-period setup or live inherit
 - Do **not** merge to `main`
