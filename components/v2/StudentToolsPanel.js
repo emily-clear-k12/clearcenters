@@ -15,6 +15,7 @@ import {
   loadStudentPrefs,
   TEXT_SIZE_CLASS,
   textSizeFontPx,
+  playCalmClick,
 } from "../../lib/v2/demoStudentPrefs";
 
 const INK = "#2E2459";
@@ -50,6 +51,7 @@ export default function StudentToolsPanel({
   useEffect(() => {
     refresh();
     refreshPrefs();
+    playCalmClick(); // Tools open — calm click when soundOn
     const onStorage = (e) => {
       if (!e.key || e.key === STUDENT_TOOLS_KEY) refresh();
       if (!e.key || e.key.startsWith("ci2.student.prefs.")) refreshPrefs();

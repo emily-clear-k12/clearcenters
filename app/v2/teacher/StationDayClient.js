@@ -253,6 +253,12 @@ export default function StationDayClient() {
     router.push(LIVE_TEACH_HREF(act.id));
   }
 
+  // Today strip · Teach → live teach for primary teach block; else scroll to agenda.
+  const primaryTeach = agenda.find((a) => a.kind === "teach") || null;
+  const teachHref = primaryTeach
+    ? LIVE_TEACH_HREF(primaryTeach.id)
+    : "#today-teach";
+
   return (
     <StationShell>
       <TeacherSubnav active="day" gradeCount={gradePending} checkInsCount={whoNeedsCount} />
@@ -274,9 +280,9 @@ export default function StationDayClient() {
               planCount={items.length}
               teachCount={items.filter((a) => a.kind === "teach").length}
               checkCount={whoNeedsCount > 0 ? whoNeedsCount : gradePending}
-              checkNeeds={whoNeedsCount > 0 || gradePending > 0}
+              checkNeeds={whoNeedsCount > 0}
               planHref="/v2/teacher"
-              teachHref={null}
+              teachHref={teachHref}
               checkHref={whoNeedsCount > 0 ? WHO_NEEDS_ME_HREF : GRADING_INBOX_HREF}
             />
           </div>
@@ -420,7 +426,7 @@ export default function StationDayClient() {
         )}
 
         {/* Now → Next → Later agenda (day-of home) */}
-        <section aria-label="Today's agenda">
+        <section id="today-teach" aria-label="Today's agenda">
           <div style={{ fontWeight: 800, color: INK, marginBottom: 10, fontSize: 13, letterSpacing: 0.4 }}>
             NOW → NEXT → LATER
           </div>

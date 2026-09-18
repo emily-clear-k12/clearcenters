@@ -749,7 +749,7 @@ export function HandsOffChip({ level, onOpenPreview }) {
 /** Calm entry chip → Check-ins (reteach / small-group stub). Path: /v2/teacher/check-ins. */
 /**
  * Quiet Daily Focus loop strip — Plan · Teach · Check with tiny counts.
- * 20% glance grammar; amber only when Check needs attention.
+ * 20% glance grammar; amber Check only when checkNeeds (Check-ins). Plan / Teach / Check are clickable hrefs.
  */
 export function TodayLoopStrip({
   planCount = 0,
@@ -763,7 +763,8 @@ export function TodayLoopStrip({
   const plan = Number(planCount) || 0;
   const teach = Number(teachCount) || 0;
   const check = Number(checkCount) || 0;
-  const needs = checkNeeds || check > 0;
+  // Amber only when Check-ins need attention — grading count alone stays quiet.
+  const needs = !!checkNeeds;
 
   const seg = (label, count, href, meaning) => {
     const chip = (

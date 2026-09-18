@@ -13,9 +13,10 @@ Kids need a tiny bit of control without leaving the glance-first shell — **dis
 4. Edit **Display name** → greeting + SAM use the new name
 5. Tap **S / M / L** → page text scale softens up or down
 6. Open **Tools** or **Start** an activity / project → same text size (`ci2-text-s|m|l` + font-size)
-7. Tap **Sound on/off** → stub preference (no audio yet)
-8. Switch demo kid **Leo → Kai** → prefs are per-kid (`ci2.student.prefs.{kid}`)
-9. **Reset prefs** → back to that kid’s defaults
+7. Tap **Sound on/off** → per-kid preference
+8. With **sound on** → short calm click when **Tools** opens and when activity / project **Submit** succeeds (Web Audio); **sound off** → silent
+9. Switch demo kid **Leo → Kai** → prefs are per-kid (`ci2.student.prefs.{kid}`)
+10. **Reset prefs** → back to that kid’s defaults
 
 ## Tone
 - Student glass / warm lavender cream (matches My Day)
@@ -28,15 +29,15 @@ Kids need a tiny bit of control without leaving the glance-first shell — **dis
 | `ci2.student.prefs.{kid}` | `{ displayName, textSize, soundOn }` per Leo / Kai / Riley |
 
 ## Files
-- `lib/v2/demoStudentPrefs.js` — defaults + load/save/reset · `TEXT_SIZE_CLASS` / `textSizeFontPx`
+- `lib/v2/demoStudentPrefs.js` — defaults + load/save/reset · `TEXT_SIZE_CLASS` / `textSizeFontPx` · `playCalmClick` (Web Audio stub)
 - `app/v2/student/StudentMyDayClient.js` — chip + glass panel + scale
-- `components/v2/StudentToolsPanel.js` — Tools panel honors text size
+- `components/v2/StudentToolsPanel.js` — Tools panel honors text size · calm click on open when soundOn
 - `app/v2/student/tools/StudentToolsClient.js` — Tools page shell scale
-- `app/v2/student/activity/[id]/StudentActivityClient.js` — activity shell scale
-- `app/v2/student/project/[id]/StudentProjectClient.js` — project shell scale
+- `app/v2/student/activity/[id]/StudentActivityClient.js` — activity shell scale · calm click on Submit when soundOn
+- `app/v2/student/project/[id]/StudentProjectClient.js` — project shell scale · calm click on Submit when soundOn
 
 ## Gaps (out of scope)
-- No real TTS / sound effects (toggle is preference only)
+- No real TTS / voice read-aloud (Tools read-aloud stays fake); sound is a short calm click only
 - No account sync, roster names, or teacher-controlled nicknames API
 - No dark mode / full accessibility settings panel
 - Do **not** merge to `main`

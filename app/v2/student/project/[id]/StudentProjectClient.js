@@ -12,6 +12,7 @@ import {
   loadStudentPrefs,
   TEXT_SIZE_CLASS,
   textSizeFontPx,
+  playCalmClick,
 } from "../../../../../lib/v2/demoStudentPrefs";
 
 const INK = "#2E2459";
@@ -93,6 +94,7 @@ export default function StudentProjectClient({ projectId }) {
   function handleSubmit() {
     if (submitting) return;
     setSubmitting(true);
+    playCalmClick();
     const missionId = shell.id; // project-act-N
     markMissionDone(missionId);
     const chipLines = (shell.checkpoints || [])

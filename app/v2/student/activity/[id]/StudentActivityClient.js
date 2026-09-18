@@ -18,6 +18,7 @@ import {
   loadStudentPrefs,
   TEXT_SIZE_CLASS,
   textSizeFontPx,
+  playCalmClick,
 } from "../../../../../lib/v2/demoStudentPrefs";
 
 const INK = "#2E2459";
@@ -108,6 +109,7 @@ export default function StudentActivityClient({ missionId }) {
       return;
     }
     setSubmitting(true);
+    playCalmClick();
     markMissionDone(mission.id);
     // Same-browser bridge → teacher /v2/teacher/grading
     enqueueStudentSubmission({
