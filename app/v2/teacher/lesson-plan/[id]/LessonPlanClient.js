@@ -26,11 +26,44 @@ export default function LessonPlanClient({ lessonId }) {
   const router = useRouter();
   const plan = useMemo(() => getLessonPlanStub(lessonId), [lessonId]);
   const [detailsOpen, setDetailsOpen] = useState(false);
+  const [linkCopied, setLinkCopied] = useState(false);
+
+  function handlePrint() {
+    if (typeof window !== "undefined") window.print();
+  }
+
+  async function handleCopyLink() {
+    const url =
+      typeof window !== "undefined"
+        ? window.location.href
+        : plan?.id
+          ? `/v2/teacher/lesson-plan/${encodeURIComponent(plan.id)}`
+          : "";
+    try {
+      if (navigator?.clipboard?.writeText) {
+        await navigator.clipboard.writeText(url);
+      } else {
+        const ta = document.createElement("textarea");
+        ta.value = url;
+        ta.setAttribute("readonly", "");
+        ta.style.position = "absolute";
+        ta.style.left = "-9999px";
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand("copy");
+        document.body.removeChild(ta);
+      }
+      setLinkCopied(true);
+      setTimeout(() => setLinkCopied(false), 2200);
+    } catch {
+      setLinkCopied(false);
+    }
+  }
 
   if (!plan) {
     return (
       <StationShell>
-        <TeacherSubnav active="day" />
+        <div className="ci2-no-print"><TeacherSubnav active="day" /></div>
         <Glass>
           <h1 style={{ fontFamily: "'Poppins', sans-serif", margin: 0, fontSize: 28, color: INK }}>
             Lesson plan not found
@@ -60,8 +93,8 @@ export default function LessonPlanClient({ lessonId }) {
 
   return (
     <StationShell>
-      <TeacherSubnav active="day" />
-      <Glass style={{ padding: "22px 22px 20px" }}>
+      <div className="ci2-no-print"><TeacherSubnav active="day" /></div>
+      <Glass className="ci2-lesson-print" style={{ padding: "22px 22px 20px" }}>
         <div
           style={{
             display: "grid",
@@ -214,7 +247,44 @@ export default function LessonPlanClient({ lessonId }) {
                 </Link>
               )}
             </div>
-          </div>
+          
+              <button
+                type="button"
+                onClick={handlePrint}
+                className="ci2-no-print"
+                style={{
+                  border: `1px solid ${LINE}`,
+                  background: "#fff",
+                  color: INK,
+                  borderRadius: 999,
+                  padding: "12px 18px",
+                  fontWeight: 700,
+                  fontSize: 14,
+                  cursor: "pointer",
+                  fontFamily: "inherit",
+                }}
+              >
+                Print
+              </button>
+              <button
+                type="button"
+                onClick={handleCopyLink}
+                className="ci2-no-print"
+                style={{
+                  border: `1px solid ${GLANCE.teach.border}`,
+                  background: GLANCE.teach.bg,
+                  color: GLANCE.teach.fg,
+                  borderRadius: 999,
+                  padding: "12px 18px",
+                  fontWeight: 700,
+                  fontSize: 14,
+                  cursor: "pointer",
+                  fontFamily: "inherit",
+                }}
+              >
+                {linkCopied ? "Link copied ✓" : "Copy link"}
+              </button>
+            </div>
 
           {/* RIGHT — teach spine + exit */}
           <div
@@ -390,6 +460,21 @@ export default function LessonPlanClient({ lessonId }) {
           .ci2-lesson-onepager, [style*="grid-template-columns: minmax(240px"] {
             grid-template-columns: 1fr !important;
           }
+        }
+        @media print {
+          body * { visibility: hidden !important; }
+          .ci2-lesson-print, .ci2-lesson-print * { visibility: visible !important; }
+          .ci2-lesson-print {
+            position: absolute !important;
+            left: 0 !important;
+            top: 0 !important;
+            width: 100% !important;
+            background: #fff !important;
+            box-shadow: none !important;
+            border: none !important;
+            padding: 12px !important;
+          }
+          .ci2-no-print, nav, header { display: none !important; }
         }
       `}</style>
     </StationShell>
