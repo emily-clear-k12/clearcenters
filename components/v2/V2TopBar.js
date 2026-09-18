@@ -13,7 +13,7 @@ const NAV = [
   { key: "teach", label: "Teach" },
   { key: "check", label: "Check", href: "/v2/teacher/grading" },
   { key: "grow", label: "Grow", href: "/v2/teacher/reports" },
-  { key: "library", label: "Library" },
+  { key: "library", label: "Library", href: "/v2/teacher/library" },
 ];
 
 export default function V2TopBar({ active = "plan", teacherName }) {
