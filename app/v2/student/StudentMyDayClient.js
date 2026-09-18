@@ -305,15 +305,61 @@ export default function StudentMyDayClient() {
             NOW → NEXT → LATER
           </div>
           <div style={{ display: "grid", gap: 12 }}>
-            {missions.map((m) => (
-              <MissionCard
-                key={m.id}
-                mission={m}
-                locked={!m.done && !m.must && mustsRemaining(m.id).length > 0}
-                teacherChecked={teacherCheckedIds.includes(m.id)}
-                onStart={() => handleStart(m)}
-              />
-            ))}
+            {missions.length === 0 ? (
+              <div
+                role="status"
+                style={{
+                  background: "rgba(255,255,255,.92)",
+                  border: `1px solid ${LINE}`,
+                  borderRadius: 22,
+                  padding: "28px 22px",
+                  textAlign: "center",
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  gap: 12,
+                  boxShadow: "0 8px 22px rgba(46,36,89,.06)",
+                }}
+              >
+                <div style={{ fontWeight: 800, color: INK, fontSize: 18, lineHeight: 1.3 }}>
+                  Your day is clear for now
+                </div>
+                <div style={{ color: MUTED, fontSize: 14, lineHeight: 1.45, maxWidth: 360 }}>
+                  When something lands here, Start will open it. You can still try a first mission anytime.
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSamMsg("Opening your first mission — you've got this.");
+                    router.push("/v2/student/activity/stu-now-equiv");
+                  }}
+                  style={{
+                    border: "none",
+                    background: LAVENDER,
+                    color: "#fff",
+                    borderRadius: 999,
+                    padding: "10px 18px",
+                    fontWeight: 800,
+                    fontSize: 14,
+                    cursor: "pointer",
+                    fontFamily: "inherit",
+                    boxShadow: "0 6px 18px rgba(139,108,255,.28)",
+                  }}
+                >
+                  Start first mission
+                </button>
+              </div>
+            ) : (
+              missions.map((m) => (
+                <MissionCard
+                  key={m.id}
+                  mission={m}
+                  locked={!m.done && !m.must && mustsRemaining(m.id).length > 0}
+                  teacherChecked={teacherCheckedIds.includes(m.id)}
+                  onStart={() => handleStart(m)}
+                />
+              ))
+            )}
           </div>
         </section>
 

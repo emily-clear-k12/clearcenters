@@ -26,6 +26,7 @@ Departmentalized teachers also need the **same period/class lens** as Daily Focu
 8. Optional: **Family note** on a kid card → teacher one-pager stub (celebrate + ask-at-home · copy message)
 9. Open **← Daily Focus** (`d=2`) → **FROM CHECK-INS · TODAY** for small-group pulls; switch to **Thu** (`d=3`) → **FROM CHECK-INS · TOMORROW** for reteach pulls (period filter still applies)
 10. Switch Setup back to **Self-contained** → filter hides; single room label only
+10b. Period / dismiss until list empty → calm empty glass + **Open Daily Focus** (not a sad gray void)
 11. Optional: Grading inbox header → **Check-ins**
 
 ## Tone

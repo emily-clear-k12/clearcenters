@@ -12,7 +12,7 @@ Teachers need a light place to browse a few ready activities and drop them onto 
 3. Each card shows a small **TEKS / standard chip** (e.g. TEKS 4.3C)
 4. Tap a chip when it matches a Standard info stub → `/v2/teacher/standards#{code}`; unknown codes stay a plain chip
 5. **Filter chips** — All / Briefing / Challenge / Practice / Project (type only)
-6. **Filter by title…** — simple text match on card title (stub, not catalog search)
+6. **Filter by title…** — simple text match on card title (stub, not catalog search); no matches → calm empty + **Browse Library**
 7. **Add to Daily Focus** → writes `ci2.teacher.addedActivities` for today (`d=2`); toast offers **Undo**
 8. Open **Daily Focus** → tile appears (same browser)
 9. **Add to This Week** → same planner extras key; toast **Undo** removes the minted tile; open **This Week** / Daily Focus → quiet **From Library** provenance on the tile
@@ -31,6 +31,9 @@ Teachers need a light place to browse a few ready activities and drop them onto 
 - `app/v2/teacher/library/` — page + `LibraryClient` (chip + title filters + TEKS chips)
 - `components/v2/V2TopBar.js` — Library href wired
 - `components/v2/StationShell.js` — TeacherSubnav Library link
+
+## Empty filter
+- When chips / title filter match nothing → calm ready glass (not a gray void) + one primary **Browse Library** (clears to All + empty search)
 
 ## Gaps (out of scope)
 - No real catalog search, standards filter, or cross-device sync

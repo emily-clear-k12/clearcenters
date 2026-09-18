@@ -14,6 +14,9 @@ See also: [STUDENT-ACTIVITY-STUB.md](./STUDENT-ACTIVITY-STUB.md)
 - Missions from teacher Wed: Equivalent fractions (ClearLesson), The Pizza Problem (Center), Purpose match stations (may-do)
 - Per-kid namespaces so demos don’t collide: progress / Teacher checked / practice assigned
 
+## Empty day
+- When My Day has **no missions** → calm empty glass + one primary **Start first mission** (opens demo Now activity stub) — glance-first, not a gray void
+
 ## Demo student switcher
 1. `/v2/student` → chips **Leo / Kai / Riley**
 2. Complete a mission as Leo → checkmark sticks

@@ -225,18 +225,41 @@ export default function CheckInsClient() {
         <section aria-label="Check-ins cards" style={{ marginTop: 18, display: "grid", gap: 12 }}>
           {cards.length === 0 && (
             <div
+              role="status"
               style={{
                 ...glanceCardStyle("ready"),
-                borderRadius: 16,
-                padding: "18px 16px",
+                borderRadius: 20,
+                padding: "28px 22px",
                 color: INK,
-                fontSize: 15,
-                lineHeight: 1.45,
+                textAlign: "center",
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                gap: 12,
+                boxShadow: "0 8px 22px rgba(46,36,89,.06)",
               }}
             >
-              {p.multiClass
-                ? `Everyone's in good shape for ${periodLabel} right now. Nothing waiting.`
-                : "Everyone's in good shape right now. Nothing waiting."}
+              <div style={{ fontWeight: 800, fontSize: 17, lineHeight: 1.3 }}>
+                {p.multiClass
+                  ? `All clear for ${periodLabel}`
+                  : "All clear right now"}
+              </div>
+              <div style={{ color: MUTED, fontSize: 14, lineHeight: 1.45, maxWidth: 380 }}>
+                {p.multiClass
+                  ? `Everyone's in good shape for ${periodLabel}. Nothing waiting — head back when you're ready.`
+                  : "Everyone's in good shape. Nothing waiting — head back when you're ready."}
+              </div>
+              <Link
+                href="/v2/teacher/day?d=2"
+                style={{
+                  ...btnPrimaryLink,
+                  textDecoration: "none",
+                  display: "inline-flex",
+                  alignItems: "center",
+                }}
+              >
+                Open Daily Focus
+              </Link>
             </div>
           )}
 
