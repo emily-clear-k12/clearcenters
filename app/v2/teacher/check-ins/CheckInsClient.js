@@ -25,6 +25,8 @@ import {
   GRADING_INBOX_HREF,
   GRADING_INBOX_KEY,
   GRADING_STORAGE_KEY,
+  findPendingForStudent,
+  gradingInboxHref,
   loadConfirmedIds,
   subjectMeta,
 } from "../../../../lib/v2/demoGrading";
@@ -277,6 +279,8 @@ export default function CheckInsClient() {
               p.multiClass && card.periodId
                 ? p.setup.classes.find((c) => c.key === card.periodId)?.name
                 : null;
+            const pendingGrade =
+              hydrated ? findPendingForStudent(card.studentFirst, confirmedIds) : null;
             return (
               <article
                 key={card.id}
@@ -438,6 +442,26 @@ export default function CheckInsClient() {
                   >
                     Family note
                   </Link>
+                  {pendingGrade && (
+                    <Link
+                      href={gradingInboxHref({ studentFirst: card.studentFirst })}
+                      title={`Open grading · ${pendingGrade.assignment}`}
+                      style={{
+                        border: `1px solid ${LINE}`,
+                        background: "rgba(255,255,255,.9)",
+                        color: INK,
+                        borderRadius: 999,
+                        padding: "8px 14px",
+                        fontWeight: 700,
+                        fontSize: 13,
+                        textDecoration: "none",
+                        display: "inline-flex",
+                        alignItems: "center",
+                      }}
+                    >
+                      Open grading
+                    </Link>
+                  )}
                 </div>
               </article>
             );

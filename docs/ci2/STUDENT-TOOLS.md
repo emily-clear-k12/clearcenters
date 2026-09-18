@@ -9,12 +9,13 @@ Kids need calm helpers without leaving the glass look — **read aloud** (fake p
 ## Click tour
 1. `/v2` → **Student · My Day**
 2. Set **text size** S/M/L in prefs chip (optional)
-3. Tap **Tools** (footer) → `/v2/student/tools` · panel uses same text size
-4. **Play · fake** → pretend read-aloud status (no audio)
-5. Tap a **word chip** (e.g. fraction) → calm hint line
-6. **Turn highlight on** → amber wash on a sample line
-7. **← My Day** · or open an activity → **Tools** → same panel inline (Close) · text size still honored
-8. Choices persist in this browser (`Reset tools` clears)
+3. Tap quiet **Tools** on a mission/practice card → inline panel (prefs/text-size honored)
+4. Or tap **Tools** (footer) → `/v2/student/tools` · panel uses same text size
+5. **Play · fake** → pretend read-aloud status (no audio)
+6. Tap a **word chip** (e.g. fraction) → calm hint line
+7. **Turn highlight on** → amber wash on a sample line
+8. **← My Day** · or open an activity → **Tools** → same panel inline (Close) · text size still honored
+9. Choices persist in this browser (`Reset tools` clears)
 
 ## Tone
 - Student glass / warm lavender cream (matches My Day + activity)
@@ -33,7 +34,7 @@ Kids need calm helpers without leaving the glass look — **read aloud** (fake p
 - `lib/v2/demoStudentPrefs.js` — text size scale / class
 - `components/v2/StudentToolsPanel.js` — shared panel (honors prefs)
 - `app/v2/student/tools/` — full page shell
-- `app/v2/student/StudentMyDayClient.js` — Tools → page
+- `app/v2/student/StudentMyDayClient.js` — Tools → page + quiet per-card inline Tools
 - `app/v2/student/activity/[id]/StudentActivityClient.js` — Tools → inline panel + shell scale
 
 ## Gaps (out of scope)

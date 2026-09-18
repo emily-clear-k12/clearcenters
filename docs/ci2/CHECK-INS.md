@@ -24,6 +24,7 @@ Departmentalized teachers also need the **same period/class lens** as Daily Focu
 6. **Add to This Week** → mints a planner tile via `ci2.teacher.addedActivities` (same as Library / Sunday); period-aware when `periodId` is set. Kid stays on Check-ins. Toast offers **Undo** to remove that minted tile. Daily Focus / This Week show quiet **From Check-ins** provenance; first minted provenance tile may show calm one-liner **Tiles remember where they came from.** (dismiss → localStorage)
 7. **Looks good / dismiss** → clears from list only (no Focus block)
 8. **Family note** on a kid card (clear ready-chip action) → `/v2/teacher/family/[id]?period=` deep link for that kid; stamps/syncs `ci2.teacher.classFilter` when period is known so return keeps the room lens
+8b. When that kid has a **pending grading** row (same browser · demo or live), calm **Open grading** → `/v2/teacher/grading?student=Kai` (focuses/filters inbox to that student). Hide when no pending match.
 9. On Family note: celebrate + ask-at-home · copy · Send (demo) · optional Period chip · **← Check-ins**
 10. Open **← Daily Focus** (`d=2`) → **FROM CHECK-INS · TODAY** for small-group pulls; switch to **Thu** (`d=3`) → **FROM CHECK-INS · TOMORROW** for reteach pulls (period filter still applies)
 11. Switch Setup back to **Self-contained** → filter hides; single room label only
@@ -67,7 +68,8 @@ Departmentalized teachers also need the **same period/class lens** as Daily Focu
 - `lib/v2/usePlanner.js` — shared setup + `classFilter` persistence
 - `app/v2/teacher/StationDayClient.js` — chip + SAM glance + amber From Check-ins blocks
 - `app/v2/teacher/StationWeekClient.js` — chip + SAM glance (period-filtered count)
-- `app/v2/teacher/grading/GradingInboxClient.js` — header link
+- `app/v2/teacher/grading/GradingInboxClient.js` — header link · `?student=` focus/filter from Check-ins
+- `lib/v2/demoGrading.js` — `gradingInboxHref` · `findPendingForStudent`
 
 ## Gaps (out of scope)
 - No real standards analytics or AI grouping
@@ -77,4 +79,5 @@ Departmentalized teachers also need the **same period/class lens** as Daily Focu
 - Focus blocks are stub only (no auto scheduling, no roster sync). Reteach tomorrow **does** date the block for tomorrow (`FOCUS_TOMORROW_DAY`); open Daily Focus `?d=3` to see it
 - 2-period setups (e.g. ELAR + SS): demo Maya is `periodId: C` so she won’t appear until a 3-period setup or live inherit
 - Family note period sync is localStorage classFilter only (no SIS room names on the chip beyond Period A/B/C)
+- Open grading matches by `studentFirst` only (same-browser pending demo/live); no roster id join
 - Do **not** merge to `main`

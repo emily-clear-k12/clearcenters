@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import {
   StationShell,
   Glass,
@@ -37,11 +38,14 @@ import { REPORTS_HREF } from "../../../../lib/v2/demoReports";
  * Demo items + same-browser live submits (ci2.grading.inbox).
  */
 export default function GradingInboxClient() {
+  const searchParams = useSearchParams();
+  const studentParam = (searchParams.get("student") || "").trim();
   const [confirmedIds, setConfirmedIds] = useState([]);
   const [liveInbox, setLiveInbox] = useState([]);
   const [hydrated, setHydrated] = useState(false);
   const [sortMode, setSortMode] = useState("oldest"); // oldest | standard
   const [focusId, setFocusId] = useState(null);
+  const [studentFilter, setStudentFilter] = useState(studentParam);
   const [adjusting, setAdjusting] = useState(false);
   const [draftScore, setDraftScore] = useState(null);
   const [toast, setToast] = useState(null);
@@ -79,10 +83,18 @@ export default function GradingInboxClient() {
   const confirmedSet = useMemo(() => new Set(confirmedIds), [confirmedIds]);
 
   // liveInbox in deps so same-tab submit → inbox refresh works
-  const pending = useMemo(() => {
+  const pendingAll = useMemo(() => {
     void liveInbox;
     return getPendingSubmissions(confirmedIds, sortMode);
   }, [confirmedIds, sortMode, liveInbox]);
+
+  const pending = useMemo(() => {
+    const name = String(studentFilter || "").trim().toLowerCase();
+    if (!name) return pendingAll;
+    return pendingAll.filter(
+      (s) => String(s.studentFirst || "").trim().toLowerCase() === name
+    );
+  }, [pendingAll, studentFilter]);
 
   const done = useMemo(() => {
     const live = liveInbox.filter((s) => confirmedSet.has(s.id));
@@ -95,6 +107,20 @@ export default function GradingInboxClient() {
     const hit = pending.find((s) => s.id === focusId);
     return hit || pending[0];
   }, [pending, focusId]);
+
+  useEffect(() => {
+    setStudentFilter(studentParam);
+  }, [studentParam]);
+
+  // Check-ins deep link: focus first matching pending for ?student=
+  useEffect(() => {
+    if (!hydrated || !studentParam) return;
+    const name = studentParam.toLowerCase();
+    const hit = pendingAll.find(
+      (s) => String(s.studentFirst || "").trim().toLowerCase() === name
+    );
+    if (hit) setFocusId(hit.id);
+  }, [hydrated, studentParam, pendingAll]);
 
   useEffect(() => {
     if (focused && focusId !== focused.id) setFocusId(focused.id);
@@ -206,6 +232,41 @@ export default function GradingInboxClient() {
               >
                 Check-ins
               </Link>
+              {studentFilter && (
+                <span
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: 8,
+                    fontSize: 13,
+                    fontWeight: 700,
+                    color: INK,
+                    background: MINT,
+                    border: `1px solid ${LINE}`,
+                    borderRadius: 999,
+                    padding: "5px 10px 5px 12px",
+                  }}
+                >
+                  Focus · {studentFilter}
+                  <button
+                    type="button"
+                    onClick={() => setStudentFilter("")}
+                    title="Clear student focus"
+                    style={{
+                      border: "none",
+                      background: "transparent",
+                      color: MUTED,
+                      fontWeight: 800,
+                      fontSize: 12,
+                      cursor: "pointer",
+                      fontFamily: "inherit",
+                      padding: 0,
+                    }}
+                  >
+                    Clear
+                  </button>
+                </span>
+              )}
               <span style={{ fontSize: 12, color: MUTED }}>
                 Keys: Enter confirm · C change · S skip
               </span>

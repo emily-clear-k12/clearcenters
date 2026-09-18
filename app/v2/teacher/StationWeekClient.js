@@ -164,10 +164,17 @@ export default function StationWeekClient() {
 
   const levelMeta = HANDS_OFF_LEVELS.find((l) => l.key === p.level);
 
+  function handlePrint() {
+    if (typeof window !== "undefined") window.print();
+  }
+
   return (
     <StationShell>
-      <TeacherSubnav active="week" checkInsCount={whoNeedsCount} />
+      <div className="ci2-no-print">
+        <TeacherSubnav active="week" checkInsCount={whoNeedsCount} />
+      </div>
       <Glass>
+        <div className="ci2-week-print">
         <div style={{ display: "flex", justifyContent: "space-between", gap: 12, flexWrap: "wrap", alignItems: "flex-start" }}>
           <div>
             <h1 style={{ fontFamily: "'Poppins', sans-serif", margin: 0, fontSize: 34, color: INK }}>This Week</h1>
@@ -178,13 +185,31 @@ export default function StationWeekClient() {
               <SetupSwitcher setupKey={p.setupKey} onChange={p.setSetupKey} />
               {!p.multiClass && <SingleRoomLabel cls={cls} setup={p.setup} />}
             </div>
-            <div style={{ marginTop: 12, display: "flex", gap: 10, flexWrap: "wrap", alignItems: "flex-start" }}>
+            <div className="ci2-no-print" style={{ marginTop: 12, display: "flex", gap: 10, flexWrap: "wrap", alignItems: "flex-start" }}>
               <HandsOffDial level={p.level} onChange={onHandsOff} subjectLabel={dialSubjectLabel} />
               <WhoNeedsMeChip count={whoNeedsCount} href={WHO_NEEDS_ME_HREF} />
               <WeeksRunEntry onOpen={() => p.setShowWeeksRun(true)} routineCount={p.enabledRoutineCount} />
             </div>
           </div>
-          <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
+          <div className="ci2-no-print" style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
+            <button
+              type="button"
+              onClick={handlePrint}
+              title="Print a glance-first This Week sheet"
+              style={{
+                background: "#fff",
+                color: INK,
+                border: `1px solid ${LINE}`,
+                borderRadius: 999,
+                padding: "10px 16px",
+                fontWeight: 700,
+                fontSize: 14,
+                cursor: "pointer",
+                fontFamily: "inherit",
+              }}
+            >
+              Print
+            </button>
             <AddActivityButton onClick={() => p.openAddActivity({ day: 2 })} />
             <button
               type="button"
@@ -523,7 +548,7 @@ export default function StationWeekClient() {
                           </div>
                         </button>
                         {act.kind === "teach" && (
-                          <div style={{ alignSelf: "center", marginRight: 4, display: "flex", gap: 4, flexShrink: 0 }}>
+                          <div className="ci2-no-print" style={{ alignSelf: "center", marginRight: 4, display: "flex", gap: 4, flexShrink: 0 }}>
                             <button
                               type="button"
                               onClick={(e) => {
@@ -615,7 +640,26 @@ export default function StationWeekClient() {
         <p style={{ margin: "14px 0 0", color: MUTED, fontSize: 13 }}>
           Drag a tile to move it for {cls?.name || "this class"} only. Dial: {levelMeta?.short || p.level}. Daily Focus is your teach-today home.
         </p>
+        </div>
       </Glass>
+      <style>{`
+        @media print {
+          body * { visibility: hidden !important; }
+          .ci2-week-print, .ci2-week-print * { visibility: visible !important; }
+          .ci2-week-print {
+            position: absolute !important;
+            left: 0 !important;
+            top: 0 !important;
+            width: 100% !important;
+            max-width: none !important;
+            background: #fff !important;
+            box-shadow: none !important;
+            padding: 12px 16px !important;
+          }
+          .ci2-no-print { display: none !important; }
+        }
+      `}</style>
+      <div className="ci2-no-print">
       <SundayPreviewModal
         open={p.showSundayPreview}
         onClose={() => p.setShowSundayPreview(false)}
@@ -659,6 +703,7 @@ export default function StationWeekClient() {
         defaults={p.addActivityDefaults}
       />
       <Toast toast={p.toast} />
+      </div>
     </StationShell>
   );
 }

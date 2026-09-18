@@ -36,6 +36,7 @@ import {
   markTeacherCheckedCelebrated,
 } from "../../../lib/v2/demoGrading";
 import { STUDENT_TOOLS_HREF } from "../../../lib/v2/demoStudentTools";
+import StudentToolsPanel from "../../../components/v2/StudentToolsPanel";
 import {
   STUDENT_PREFS_KEY,
   TEXT_SIZE_SCALE,
@@ -58,7 +59,7 @@ const SLOT_LABEL = { now: "NOW", next: "NEXT", later: "LATER" };
  * CI2.0 Student · My Day skeleton.
  * Start / Continue → /v2/student/activity/[id] (real activity stub).
  * Progress: localStorage ci2.student.missionProgress.{kid} (Leo/Kai/Riley demos).
- * Tools → /v2/student/tools (read-aloud / word chips / highlight stub).
+ * Tools → footer route + quiet per-card Tools (inline panel; prefs/text-size honored).
  * Print → glance-first print sheet (ci2-myday-print / ci2-no-print).
  */
 export default function StudentMyDayClient() {
@@ -80,6 +81,7 @@ export default function StudentMyDayClient() {
     soundOn: false,
   }));
   const [prefsOpen, setPrefsOpen] = useState(false);
+  const [toolsMissionId, setToolsMissionId] = useState(null);
 
   function refreshProgress() {
     const { doneIds: ids } = readStudentProgress();
@@ -404,6 +406,14 @@ export default function StudentMyDayClient() {
                   locked={!m.done && !m.must && mustsRemaining(m.id).length > 0}
                   teacherChecked={teacherCheckedIds.includes(m.id)}
                   onStart={() => handleStart(m)}
+                  toolsOpen={toolsMissionId === m.id}
+                  onTools={() => {
+                    const next = toolsMissionId === m.id ? null : m.id;
+                    setToolsMissionId(next);
+                    if (next) {
+                      setSamMsg(`Tools for “${m.title}” — read aloud, word chips, soft highlight.`);
+                    }
+                  }}
                 />
               ))
             )}
@@ -627,7 +637,7 @@ function PrefsGlass({ open, prefs, student, onToggle, onChange, onReset }) {
   );
 }
 
-function MissionCard({ mission, locked, teacherChecked, onStart }) {
+function MissionCard({ mission, locked, teacherChecked, onStart, toolsOpen = false, onTools = null }) {
   const isNow = mission.slot === "now" && !mission.done;
   const label = mission.done
     ? "DONE"
@@ -760,7 +770,38 @@ function MissionCard({ mission, locked, teacherChecked, onStart }) {
           </div>
         </div>
       </div>
-      <div className="ci2-no-print" style={{ padding: "0 14px 14px", display: "flex", justifyContent: "flex-end" }}>
+      <div
+        className="ci2-no-print"
+        style={{
+          padding: "0 14px 14px",
+          display: "flex",
+          justifyContent: "flex-end",
+          gap: 8,
+          flexWrap: "wrap",
+          alignItems: "center",
+        }}
+      >
+        {onTools && (
+          <button
+            type="button"
+            onClick={onTools}
+            title="Open student tools"
+            aria-expanded={toolsOpen}
+            style={{
+              border: `1px solid ${LINE}`,
+              background: toolsOpen ? "rgba(139,108,255,.10)" : "rgba(255,255,255,.85)",
+              color: toolsOpen ? LAVENDER : MUTED,
+              borderRadius: 999,
+              padding: "8px 12px",
+              fontWeight: 700,
+              fontSize: 12,
+              cursor: "pointer",
+              fontFamily: "inherit",
+            }}
+          >
+            Tools
+          </button>
+        )}
         <button
           type="button"
           onClick={onStart}
@@ -774,6 +815,15 @@ function MissionCard({ mission, locked, teacherChecked, onStart }) {
           {locked ? "Not yet" : cta}
         </button>
       </div>
+      {toolsOpen && onTools && (
+        <div className="ci2-no-print" style={{ padding: "0 14px 14px" }}>
+          <StudentToolsPanel
+            compact
+            onClose={onTools}
+            backHref={null}
+          />
+        </div>
+      )}
     </article>
   );
 }
