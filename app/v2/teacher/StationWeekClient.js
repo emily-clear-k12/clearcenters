@@ -102,7 +102,7 @@ export default function StationWeekClient() {
       items.push({
         id: "glance-who-needs",
         text: whoNeedsGlanceText(whoNeedsCount),
-        actionLabel: "Who needs me",
+        actionLabel: "Check-ins",
         tone: "cream",
         href: WHO_NEEDS_ME_HREF,
       });

@@ -38,6 +38,8 @@ import {
   LAVENDER,
   SOFT_LAV,
   MINT,
+  GLANCE,
+  glanceChipStyle,
 } from "../../../components/v2/StationShell";
 import { HowMyWeeksRunDrawer, WeeksRunEntry } from "../../../components/v2/HowMyWeeksRun";
 import { AddActivityModal, AddActivityButton } from "../../../components/v2/AddActivityModal";
@@ -112,12 +114,13 @@ export default function StationDayClient() {
   const glanceItems = useMemo(() => {
     const list = [];
     const className = cls?.name;
-    // Who needs me first when kids are waiting (Emily max-3 glance rule)
+    // Check-ins first when kids are waiting (Emily max-3 glance rule)
     if (whoNeedsCount > 0) {
       list.push({
         id: "glance-who-needs",
         text: whoNeedsGlanceText(whoNeedsCount),
-        actionLabel: "Who needs me",
+        actionLabel: "Check-ins",
+        meaning: "needsYou",
         tone: "cream",
         href: WHO_NEEDS_ME_HREF,
       });
@@ -128,6 +131,7 @@ export default function StationDayClient() {
         id: s.id,
         text: s.text(className),
         actionLabel: s.action,
+        meaning: "needsYou",
         tone: "cream",
         onAction: () => p.acceptSuggestion(s),
       });
@@ -137,7 +141,8 @@ export default function StationDayClient() {
         id: "glance-grade",
         text: `${gradePending} to grade — ready when you are, no rush.`,
         actionLabel: "Open grading",
-        tone: "mint",
+        meaning: "toGrade",
+        tone: "coral",
         href: GRADING_INBOX_HREF,
       });
     }
@@ -181,7 +186,7 @@ export default function StationDayClient() {
 
   return (
     <StationShell>
-      <TeacherSubnav active="day" />
+      <TeacherSubnav active="day" gradeCount={gradePending} />
       <Glass>
         <div style={{ display: "flex", justifyContent: "space-between", gap: 12, flexWrap: "wrap", alignItems: "flex-start" }}>
           <div>
@@ -356,9 +361,9 @@ export default function StationDayClient() {
                       style={{
                         alignSelf: "center",
                         marginRight: 12,
-                        border: `1px solid ${LINE}`,
-                        background: isNow ? LAVENDER : "#fff",
-                        color: isNow ? "#fff" : LAVENDER,
+                        border: `1px solid ${GLANCE.project.border}`,
+                        background: isNow ? GLANCE.project.fg : GLANCE.project.bg,
+                        color: isNow ? "#fff" : GLANCE.project.fg,
                         borderRadius: 999,
                         padding: "8px 14px",
                         fontSize: 13,
@@ -395,7 +400,7 @@ export default function StationDayClient() {
                 <button
                   type="button"
                   onClick={() => openProject(opened)}
-                  style={{ marginTop: 12, background: LAVENDER, color: "#fff", border: "none", borderRadius: 999, padding: "8px 16px", fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}
+                  style={{ marginTop: 12, background: GLANCE.project.fg, color: "#fff", border: "none", borderRadius: 999, padding: "8px 16px", fontWeight: 700, cursor: "pointer", fontFamily: "inherit", boxShadow: "0 6px 16px rgba(91,79,154,.22)" }}
                 >
                   Project
                 </button>

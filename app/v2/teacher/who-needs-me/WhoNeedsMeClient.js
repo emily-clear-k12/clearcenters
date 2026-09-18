@@ -16,6 +16,9 @@ import {
   SOFT_LAV,
   MINT,
   CREAM,
+  GLANCE,
+  glanceChipStyle,
+  glanceCardStyle,
 } from "../../../../components/v2/StationShell";
 import { usePlanner } from "../../../../lib/v2/usePlanner";
 import {
@@ -36,7 +39,7 @@ import {
 } from "../../../../lib/v2/demoWhoNeedsMe";
 
 /**
- * CI2.0 Who needs me — reteach / small-group stub.
+ * CI2.0 Check-ins (display) — reteach / small-group stub. Route: /who-needs-me.
  * 1–3 calm cards. Actions persist in localStorage; dismissed leave the list.
  * Departmentalized: same RoomCards / classFilter as Daily Focus (synced via usePlanner).
  */
@@ -134,7 +137,7 @@ export default function WhoNeedsMeClient() {
         <div style={{ display: "flex", justifyContent: "space-between", gap: 12, flexWrap: "wrap", alignItems: "flex-start" }}>
           <div>
             <h1 style={{ fontFamily: "'Poppins', sans-serif", margin: 0, fontSize: 34, color: INK }}>
-              Who needs me
+              Check-ins
             </h1>
             <div style={{ color: MUTED, marginTop: 2 }}>
               1–3 kids · calm look · not a spreadsheet
@@ -147,11 +150,9 @@ export default function WhoNeedsMeClient() {
                 style={{
                   fontSize: 13,
                   fontWeight: 800,
-                  color: cards.length ? "#8A6A20" : "#2FA36B",
-                  background: cards.length ? CREAM : MINT,
+                  ...glanceChipStyle(cards.length ? "needsYou" : "ready"),
                   borderRadius: 999,
                   padding: "5px 12px",
-                  border: `1px solid ${LINE}`,
                 }}
               >
                 {cards.length === 0 ? "All clear" : `${cards.length} worth a look`}
@@ -182,12 +183,11 @@ export default function WhoNeedsMeClient() {
           />
         )}
 
-        <section aria-label="Who needs me cards" style={{ marginTop: 18, display: "grid", gap: 12 }}>
+        <section aria-label="Check-ins cards" style={{ marginTop: 18, display: "grid", gap: 12 }}>
           {cards.length === 0 && (
             <div
               style={{
-                background: MINT,
-                border: `1px solid ${LINE}`,
+                ...glanceCardStyle("ready"),
                 borderRadius: 16,
                 padding: "18px 16px",
                 color: INK,
@@ -212,8 +212,7 @@ export default function WhoNeedsMeClient() {
               <article
                 key={card.id}
                 style={{
-                  background: needsYou ? CREAM : SOFT_LAV,
-                  border: `1px solid ${needsYou ? LINE : "#D9CFFF"}`,
+                  ...glanceCardStyle(needsYou ? "needsYou" : "ready"),
                   borderRadius: 18,
                   padding: "14px 16px",
                   boxShadow: "0 8px 22px rgba(46,36,89,.08)",
@@ -229,9 +228,8 @@ export default function WhoNeedsMeClient() {
                         style={{
                           fontSize: 12,
                           fontWeight: 800,
-                          color: needsYou ? "#8A6A20" : "#2FA36B",
-                          background: needsYou ? "#fff" : MINT,
-                          border: `1px solid ${LINE}`,
+                          ...glanceChipStyle(needsYou ? "needsYou" : "ready"),
+                          background: needsYou ? "rgba(255,255,255,.75)" : GLANCE.ready.bg,
                           borderRadius: 999,
                           padding: "3px 10px",
                         }}
@@ -317,9 +315,9 @@ export default function WhoNeedsMeClient() {
                     type="button"
                     onClick={() => act(card, "dismiss")}
                     style={{
-                      border: `1px solid ${LINE}`,
-                      background: "#fff",
-                      color: MUTED,
+                      border: `1px solid ${GLANCE.ready.border}`,
+                      background: GLANCE.ready.bg,
+                      color: GLANCE.ready.fg,
                       borderRadius: 999,
                       padding: "8px 14px",
                       fontWeight: 700,

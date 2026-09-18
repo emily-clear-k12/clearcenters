@@ -3,6 +3,7 @@
 import Link from "next/link";
 import V2TopBar from "./V2TopBar";
 import { DEMO_TEACHER, TEACHER_SETUPS, SUBJECTS, HANDS_OFF_LEVELS, DAYS, DAY_NAMES, DATES, setupUnitLabel, handsOffLevelMeta } from "../../lib/v2/demoWeek";
+import { GLANCE, GLANCE_CSS_VARS, glanceToken, glanceChipStyle, glanceCardStyle, GLANCE_LEGEND_HINT } from "../../lib/v2/glanceGrammar";
 
 const BG = "/teacher/console/bg-platform-room.jpg";
 
@@ -14,9 +15,12 @@ export const MINT = "#E8F6EF";
 export const CREAM = "#FFF8EE";
 export const SOFT_LAV = "#F3EEFF";
 
+// Glance grammar re-exports (soft meaning cues — see lib/v2/glanceGrammar.js)
+export { GLANCE, glanceToken, glanceChipStyle, glanceCardStyle, GLANCE_LEGEND_HINT };
+
 export function StationShell({ children, active = "plan" }) {
   return (
-    <div style={{ minHeight: "100vh", background: "#EDE8FA" }}>
+    <div style={{ minHeight: "100vh", background: "#EDE8FA", ...GLANCE_CSS_VARS }}>
       <V2TopBar active={active} teacherName={DEMO_TEACHER.name} />
       <div
         style={{
@@ -36,12 +40,14 @@ export function StationShell({ children, active = "plan" }) {
 }
 
 /** Plan subnav: Daily Focus (teach today) | This Week (plan/publish). Demo today = Wed=2. */
-export function TeacherSubnav({ active }) {
+export function TeacherSubnav({ active, gradeCount }) {
+  const n = typeof gradeCount === "number" ? gradeCount : 0;
   const links = [
     { key: "day", label: "Daily Focus", href: "/v2/teacher/day?d=2", hint: "Teach today" },
     { key: "week", label: "This Week", href: "/v2/teacher", hint: "Plan & publish" },
     { key: "grading", label: "Grading", href: "/v2/teacher/grading", hint: "Confirm scores" },
   ];
+  const gradeTone = glanceToken("toGrade");
   return (
     <nav
       aria-label="Teacher plan"
@@ -57,6 +63,7 @@ export function TeacherSubnav({ active }) {
     >
       {links.map((l) => {
         const on = l.key === active;
+        const showGradeCount = l.key === "grading" && n > 0;
         return (
           <Link
             key={l.key}
@@ -71,9 +78,30 @@ export function TeacherSubnav({ active }) {
               textDecoration: "none",
               color: on ? "#fff" : INK,
               background: on ? LAVENDER : "transparent",
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 6,
             }}
           >
             {l.label}
+            {showGradeCount && (
+              <span
+                aria-label={`${n} to grade`}
+                style={{
+                  fontSize: 11,
+                  fontWeight: 800,
+                  color: on ? "#fff" : gradeTone.fg,
+                  background: on ? "rgba(255,255,255,.22)" : gradeTone.bg,
+                  border: on ? "1px solid rgba(255,255,255,.35)" : `1px solid ${gradeTone.border}`,
+                  borderRadius: 999,
+                  padding: "1px 7px",
+                  minWidth: 18,
+                  textAlign: "center",
+                }}
+              >
+                {n}
+              </span>
+            )}
           </Link>
         );
       })}
@@ -150,8 +178,7 @@ export function SamGlance({ items, emptyLabel }) {
                 alignItems: "center",
                 gap: 10,
                 flexWrap: "wrap",
-                background: item.tone === "mint" ? MINT : item.tone === "cream" ? CREAM : "#fff",
-                border: `1px solid ${LINE}`,
+                ...glanceCardStyle(item.meaning || item.tone || "teach"),
                 borderRadius: 12,
                 padding: "10px 12px",
               }}
@@ -261,14 +288,13 @@ export function MorningCard({ greeting, agendaLine, win, watch, onDismiss }) {
       {agendaLine && (
         <div
           style={{
-            background: SOFT_LAV,
-            border: `1px solid #D9CFFF`,
+            ...glanceCardStyle("teach"),
             borderRadius: 12,
             padding: "10px 12px",
             marginBottom: 8,
           }}
         >
-          <div style={{ fontSize: 11, fontWeight: 800, color: LAVENDER, letterSpacing: 0.4, marginBottom: 2 }}>TODAY · NOW</div>
+          <div style={{ fontSize: 11, fontWeight: 800, color: GLANCE.teach.fg, letterSpacing: 0.4, marginBottom: 2 }}>TODAY · NOW</div>
           <div style={{ color: INK, fontSize: 15, fontWeight: 700, lineHeight: 1.35 }}>{agendaLine}</div>
         </div>
       )}
@@ -276,14 +302,13 @@ export function MorningCard({ greeting, agendaLine, win, watch, onDismiss }) {
       {win && (
         <div
           style={{
-            background: MINT,
-            border: `1px solid ${LINE}`,
+            ...glanceCardStyle("ready"),
             borderRadius: 12,
             padding: "10px 12px",
             marginBottom: 8,
           }}
         >
-          <div style={{ fontSize: 11, fontWeight: 800, color: "#2FA36B", letterSpacing: 0.4, marginBottom: 2 }}>WIN · YESTERDAY</div>
+          <div style={{ fontSize: 11, fontWeight: 800, color: GLANCE.ready.fg, letterSpacing: 0.4, marginBottom: 2 }}>WIN · YESTERDAY</div>
           <div style={{ color: INK, fontSize: 14, lineHeight: 1.4 }}>{win}</div>
         </div>
       )}
@@ -291,13 +316,12 @@ export function MorningCard({ greeting, agendaLine, win, watch, onDismiss }) {
       {watch && (
         <div
           style={{
-            background: CREAM,
-            border: `1px solid ${LINE}`,
+            ...glanceCardStyle("needsYou"),
             borderRadius: 12,
             padding: "10px 12px",
           }}
         >
-          <div style={{ fontSize: 11, fontWeight: 800, color: "#B8860B", letterSpacing: 0.4, marginBottom: 2 }}>WATCH · NOT YET</div>
+          <div style={{ fontSize: 11, fontWeight: 800, color: GLANCE.needsYou.fg, letterSpacing: 0.4, marginBottom: 2 }}>WATCH · NOT YET</div>
           <div style={{ color: INK, fontSize: 14, lineHeight: 1.4 }}>{watch}</div>
         </div>
       )}
@@ -348,8 +372,7 @@ export function RoomCards({ classes, selectedKey, onSelect, setup, needsByClass 
                 marginTop: 8,
                 fontSize: 12,
                 fontWeight: 700,
-                color: ready ? "#2FA36B" : "#8A6A20",
-                background: ready ? MINT : CREAM,
+                ...glanceChipStyle(ready ? "ready" : "needsYou"),
                 display: "inline-flex",
                 alignItems: "center",
                 gap: 4,
@@ -483,21 +506,19 @@ export function HandsOffChip({ level, onOpenPreview }) {
 }
 
 
-/** Calm entry chip → Who needs me (reteach / small-group stub). */
+/** Calm entry chip → Check-ins (reteach / small-group stub). URL keeps /who-needs-me. */
 export function WhoNeedsMeChip({ count, href = "/v2/teacher/who-needs-me" }) {
   const n = typeof count === "number" ? count : 0;
-  const label = n === 0 ? "Who needs me · clear" : n === 1 ? "Who needs me · 1" : `Who needs me · ${n}`;
+  const label = n === 0 ? "Check-ins · clear" : n === 1 ? "Check-ins · 1" : `Check-ins · ${n}`;
   const ready = n === 0;
   return (
     <Link
       href={href}
-      title="Open reteach / small-group stub"
+      title="Open Check-ins"
       style={{
         fontSize: 12,
         fontWeight: 700,
-        color: ready ? "#2FA36B" : "#8A6A20",
-        background: ready ? MINT : CREAM,
-        border: `1px solid ${LINE}`,
+        ...glanceChipStyle(ready ? "ready" : "needsYou"),
         borderRadius: 999,
         padding: "6px 12px",
         textDecoration: "none",
@@ -506,6 +527,25 @@ export function WhoNeedsMeChip({ count, href = "/v2/teacher/who-needs-me" }) {
     >
       {label}
     </Link>
+  );
+}
+
+/** Tiny collapsed legend hint — docs first; optional one-liner, never a loud key. */
+export function GlanceLegendHint({ show = false }) {
+  if (!show) return null;
+  return (
+    <p
+      title={GLANCE_LEGEND_HINT}
+      style={{
+        margin: "0 0 8px",
+        fontSize: 11,
+        color: MUTED,
+        opacity: 0.75,
+        letterSpacing: 0.2,
+      }}
+    >
+      {GLANCE_LEGEND_HINT}
+    </p>
   );
 }
 

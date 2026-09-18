@@ -20,7 +20,7 @@ Emily locked **Project button on teach blocks** — teach heart only, not every 
    - **Checkpoint strip**: Day 1 / 2 / 3 as short chips (Research / Draft / Share)
    - **Who it’s for** toggle only (Whole class | Small group) — tiny stub names if small group
    - **Details** collapsed — tap to expand Why/TEKS, longer beats, evidence body
-5. Optional: toggle **Small group** → tiny demo names (Kai · Riley) + Who needs me link.
+5. Optional: toggle **Small group** → tiny demo names (Kai · Riley) + Check-ins link.
 6. Expand **Details** when you want the essay bits.
 7. **Assign to My Day** (primary CTA stays visible) → writes `ci2.project.assigned` + remembers audience in `ci2.project.audience`.
 8. **← Daily Focus** / **Back to Daily Focus** returns to the teach day.
@@ -57,7 +57,7 @@ Demo teach examples (ids stable from `DEMO_ACTIVITIES` order): `act-8` Equivalen
 ## Gaps (out of scope)
 - No full project builder, rubrics engine, or real multi-week planner
 - Checkpoints + evidence product are stub copy (not live planner / grading)
-- Small group is stub only — demo names + Who needs me link; no roster sync
+- Small group is stub only — demo names + Check-ins link; no roster sync
 - Student Open on Project does not launch a real activity player (toast only)
 - No SIS / multi-device sync; localStorage only
 - Assign does not create week tiles or publish to a roster

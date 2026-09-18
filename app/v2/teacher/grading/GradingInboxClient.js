@@ -197,7 +197,7 @@ export default function GradingInboxClient() {
                   padding: "5px 12px",
                 }}
               >
-                Who needs me
+                Check-ins
               </Link>
               <span style={{ fontSize: 12, color: MUTED }}>
                 Keys: Enter confirm · C change · S skip

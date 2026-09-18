@@ -1,4 +1,6 @@
-# CI2.0 · Who needs me (reteach / small-group stub)
+# CI2.0 · Check-ins (reteach / small-group stub)
+
+**Display name:** Check-ins · **Route (kept):** `/v2/teacher/who-needs-me`
 
 Branch: `ci2-sandbox`  
 Route: `/v2/teacher/who-needs-me`
@@ -11,14 +13,14 @@ Departmentalized teachers also need the **same period/class lens** as Daily Focu
 ## Click tour
 1. `/v2` → **Teacher · Daily Focus** (`/v2/teacher/day?d=2`)
 2. **Setup** → departmentalized (e.g. Math only · 3 periods)
-3. See **Who needs me** chip (header) and SAM glance row — counts match the **selected period**
-4. Open **Who needs me** → RoomCards (Period 1 / 2 / 3); switch period → list filters
+3. See **Check-ins** chip (header) and SAM glance row — counts match the **selected period**
+4. Open **Check-ins** → RoomCards (Period 1 / 2 / 3); switch period → list filters
    - Period 1 → Kai (demo)
    - Period 2 → Riley
    - Period 3 → Maya (or live Leo inheriting that room)
 5. Act: **Pull for small group**, **Reteach tomorrow**, or **Looks good / dismiss**
 6. Switch Setup back to **Self-contained** → filter hides; single room label only
-7. Optional: Grading inbox header → **Who needs me**
+7. Optional: Grading inbox header → **Check-ins**
 
 ## Tone
 - Calm **ready** / **needs you** language (lavender / cream / mint — never scary red)
@@ -42,7 +44,7 @@ Departmentalized teachers also need the **same period/class lens** as Daily Focu
 | `ci2.grading.inbox` | Live submits (optional “just submitted” card) |
 | `ci2.grading.confirmedIds` | Affects which inbox rows still count as pending |
 | `ci2.teacher.setupKey` | Self vs departmentalized (shared with planner) |
-| `ci2.teacher.classFilter` | Selected period/room (shared — Day ↔ Week ↔ Who needs me) |
+| `ci2.teacher.classFilter` | Selected period/room (shared — Day ↔ Week ↔ Check-ins) |
 
 ## Files
 - `lib/v2/demoWhoNeedsMe.js` — demo kids + `periodId`, period filter helpers, merge with live inbox
@@ -56,7 +58,7 @@ Departmentalized teachers also need the **same period/class lens** as Daily Focu
 ## Gaps (out of scope)
 - No real standards analytics or AI grouping
 - No live roster sync / multi-device / real period membership from SIS
-- Live submits do not yet write `periodId` at enqueue time (inherit selected room on Who needs me / glance)
+- Live submits do not yet write `periodId` at enqueue time (inherit selected room on Check-ins / glance)
 - Actions are stubs (toast + localStorage only — do not create week tiles yet)
 - 2-period setups (e.g. ELAR + SS): demo Maya is `periodId: C` so she won’t appear until a 3-period setup or live inherit
 - Do **not** merge to `main`

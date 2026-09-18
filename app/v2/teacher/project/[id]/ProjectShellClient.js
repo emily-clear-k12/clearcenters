@@ -14,6 +14,8 @@ import {
   SOFT_LAV,
   MINT,
   CREAM,
+  GLANCE,
+  glanceChipStyle,
 } from "../../../../../components/v2/StationShell";
 import {
   assignProjectToMyDay,
@@ -132,12 +134,25 @@ export default function ProjectShellClient({ projectId }) {
               style={{
                 fontSize: 12,
                 fontWeight: 800,
-                color: shell.subjectColor,
+                color: GLANCE.project.fg,
                 textTransform: "uppercase",
                 letterSpacing: 0.3,
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 8,
               }}
             >
-              Project · {shell.subjectName}
+              <span
+                aria-hidden
+                style={{
+                  width: 8,
+                  height: 8,
+                  borderRadius: 999,
+                  background: GLANCE.project.fg,
+                  opacity: 0.85,
+                }}
+              />
+              Project · <span style={{ color: shell.subjectColor }}>{shell.subjectName}</span>
             </div>
             <p
               style={{
@@ -190,7 +205,7 @@ export default function ProjectShellClient({ projectId }) {
           >
             {shell.title}
           </span>
-          <Chip label={shell.evidence.chip || shell.evidence.label} tone="lav" />
+          <Chip label={shell.evidence.chip || shell.evidence.label} tone="project" />
           <Chip label={shell.span.chip || shell.span.label} />
           <Chip label={audienceChip} />
         </div>
@@ -313,7 +328,7 @@ export default function ProjectShellClient({ projectId }) {
                 href={shell.whoNeedsMeHref || "/v2/teacher/who-needs-me"}
                 style={{ color: LAVENDER, fontWeight: 700, fontSize: 12 }}
               >
-                Who needs me →
+                Check-ins →
               </Link>
             </div>
           )}
@@ -446,13 +461,13 @@ export default function ProjectShellClient({ projectId }) {
 
               <div
                 style={{
-                  background: SOFT_LAV,
-                  border: `1px solid #D9CFFF`,
+                  background: GLANCE.project.bg,
+                  border: `1px solid ${GLANCE.project.border}`,
                   borderRadius: 16,
                   padding: "14px 16px",
                 }}
               >
-                <div style={{ fontSize: 11, fontWeight: 800, color: LAVENDER, letterSpacing: 0.4 }}>
+                <div style={{ fontSize: 11, fontWeight: 800, color: GLANCE.project.fg, letterSpacing: 0.4 }}>
                   EVIDENCE PRODUCT
                 </div>
                 <div style={{ fontWeight: 800, color: INK, fontSize: 16, marginTop: 4 }}>
@@ -546,6 +561,23 @@ export default function ProjectShellClient({ projectId }) {
 }
 
 function Chip({ label, tone }) {
+  if (tone === "project") {
+    return (
+      <span
+        style={{
+          display: "inline-flex",
+          alignItems: "center",
+          ...glanceChipStyle("project"),
+          borderRadius: 999,
+          padding: "6px 12px",
+          fontSize: 12,
+          fontWeight: 700,
+        }}
+      >
+        {label}
+      </span>
+    );
+  }
   const lav = tone === "lav";
   return (
     <span
