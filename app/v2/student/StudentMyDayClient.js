@@ -26,6 +26,10 @@ import {
   PRACTICE_ASSIGNED_KEY,
   readAssignedPracticeForDay,
 } from "../../../lib/v2/demoLiveTeach";
+import {
+  TEACHER_CHECKED_KEY,
+  loadTeacherCheckedIds,
+} from "../../../lib/v2/demoGrading";
 import { STUDENT_TOOLS_HREF } from "../../../lib/v2/demoStudentTools";
 
 const INK = "#2E2459";
@@ -53,6 +57,7 @@ export default function StudentMyDayClient() {
   const [teacherAdded, setTeacherAdded] = useState([]);
   const [projectAssigned, setProjectAssigned] = useState([]);
   const [practiceAssigned, setPracticeAssigned] = useState([]);
+  const [teacherCheckedIds, setTeacherCheckedIds] = useState([]);
   const [doneIds, setDoneIds] = useState(() => new Set());
   const [toast, setToast] = useState(null);
   const [samMsg, setSamMsg] = useState(day.samLine);
@@ -66,31 +71,37 @@ export default function StudentMyDayClient() {
     const refreshTeacher = () => setTeacherAdded(readTeacherAddedForDay(day.dayIndex));
     const refreshProjects = () => setProjectAssigned(readAssignedProjectsForDay(day.dayIndex));
     const refreshPractice = () => setPracticeAssigned(readAssignedPracticeForDay(day.dayIndex));
+    const refreshChecked = () => setTeacherCheckedIds(loadTeacherCheckedIds());
     refreshTeacher();
     refreshProjects();
     refreshPractice();
+    refreshChecked();
     refreshProgress();
     const onStorage = (e) => {
       if (!e.key || e.key === ADDED_ACTIVITIES_KEY) refreshTeacher();
       if (!e.key || e.key === PROJECT_ASSIGNED_KEY) refreshProjects();
       if (!e.key || e.key === PRACTICE_ASSIGNED_KEY) refreshPractice();
+      if (!e.key || e.key === TEACHER_CHECKED_KEY) refreshChecked();
       if (!e.key || e.key === STUDENT_PROGRESS_KEY) refreshProgress();
     };
     const onFocus = () => {
       refreshTeacher();
       refreshProjects();
       refreshPractice();
+      refreshChecked();
       refreshProgress();
     };
     window.addEventListener("storage", onStorage);
     window.addEventListener("focus", onFocus);
     window.addEventListener("ci2-project-assigned", refreshProjects);
     window.addEventListener("ci2-practice-assigned", refreshPractice);
+    window.addEventListener("ci2-teacher-checked-updated", refreshChecked);
     return () => {
       window.removeEventListener("storage", onStorage);
       window.removeEventListener("focus", onFocus);
       window.removeEventListener("ci2-project-assigned", refreshProjects);
       window.removeEventListener("ci2-practice-assigned", refreshPractice);
+      window.removeEventListener("ci2-teacher-checked-updated", refreshChecked);
     };
   }, [day.dayIndex]);
 
@@ -233,6 +244,7 @@ export default function StudentMyDayClient() {
                 key={m.id}
                 mission={m}
                 locked={!m.done && !m.must && mustsRemaining(m.id).length > 0}
+                teacherChecked={teacherCheckedIds.includes(m.id)}
                 onStart={() => handleStart(m)}
               />
             ))}
@@ -264,7 +276,7 @@ export default function StudentMyDayClient() {
   );
 }
 
-function MissionCard({ mission, locked, onStart }) {
+function MissionCard({ mission, locked, teacherChecked, onStart }) {
   const isNow = mission.slot === "now" && !mission.done;
   const label = mission.done
     ? "DONE"
@@ -367,6 +379,21 @@ function MissionCard({ mission, locked, onStart }) {
                 }}
               >
                 Practice
+              </span>
+            )}
+            {teacherChecked && (
+              <span
+                style={{
+                  fontSize: 11,
+                  fontWeight: 800,
+                  color: "#2F7A5B",
+                  background: "rgba(47,122,91,.12)",
+                  borderRadius: 999,
+                  padding: "2px 8px",
+                }}
+                title="Your teacher looked at this — calm check, not a grade scare."
+              >
+                Teacher checked
               </span>
             )}
           </div>

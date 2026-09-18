@@ -25,6 +25,7 @@ import {
   loadLiveInbox,
   productLabel,
   saveConfirmedIds,
+  stampTeacherCheckedFromSubmission,
   subjectMeta,
 } from "../../../../lib/v2/demoGrading";
 import { WHO_NEEDS_ME_HREF } from "../../../../lib/v2/demoWhoNeedsMe";
@@ -110,9 +111,11 @@ export default function GradingInboxClient() {
       if (!focused) return;
       const next = [...confirmedIds, focused.id];
       persist(next);
+      const stamped = stampTeacherCheckedFromSubmission(focused);
       const score = scoreOverride != null ? scoreOverride : focused.samScore;
+      const stampNote = stamped.length ? " · stamped on My Day." : ".";
       setToast({
-        text: `Confirmed ${focused.studentFirst} · ${score}/${focused.maxScore}. You're the scorer of record.`,
+        text: `Confirmed ${focused.studentFirst} · ${score}/${focused.maxScore}. You're the scorer of record${stampNote}`,
       });
       setAdjusting(false);
       setDraftScore(null);

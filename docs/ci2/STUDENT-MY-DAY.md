@@ -31,3 +31,9 @@ See also: [STUDENT-ACTIVITY-STUB.md](./STUDENT-ACTIVITY-STUB.md)
 - **Open** → `/v2/student/project/[id]` — checkpoint chips, evidence product, Submit stub
 - Submit marks progress + queues teacher grading (`ci2.grading.inbox`) like activity Submit
 - See also: [PROJECT-ON-TEACH.md](./PROJECT-ON-TEACH.md) · [STUDENT-TOOLS.md](./STUDENT-TOOLS.md)
+
+## Teacher checked stamp
+- Teacher **Confirm** in Grading stamps the matching mission/practice on My Day (`ci2.student.teacherChecked`)
+- Calm mint chip: **Teacher checked** — not a scary grade badge
+- Live submits use `missionId`; demo rows may match by title (pizza / equivalent / purpose)
+- Same-browser localStorage only
