@@ -14,10 +14,10 @@ export const MINT = "#E8F6EF";
 export const CREAM = "#FFF8EE";
 export const SOFT_LAV = "#F3EEFF";
 
-export function StationShell({ children }) {
+export function StationShell({ children, active = "plan" }) {
   return (
     <div style={{ minHeight: "100vh", background: "#EDE8FA" }}>
-      <V2TopBar active="plan" teacherName={DEMO_TEACHER.name} />
+      <V2TopBar active={active} teacherName={DEMO_TEACHER.name} />
       <div
         style={{
           position: "relative",
@@ -40,6 +40,7 @@ export function TeacherSubnav({ active }) {
   const links = [
     { key: "day", label: "Daily Focus", href: "/v2/teacher/day?d=2", hint: "Teach today" },
     { key: "week", label: "This Week", href: "/v2/teacher", hint: "Plan & publish" },
+    { key: "grading", label: "Grading", href: "/v2/teacher/grading", hint: "Confirm scores" },
   ];
   return (
     <nav
@@ -156,7 +157,25 @@ export function SamGlance({ items, emptyLabel }) {
               }}
             >
               <div style={{ flex: 1, minWidth: 180, color: INK, fontSize: 14, lineHeight: 1.35 }}>{item.text}</div>
-              {item.actionLabel && (
+              {item.actionLabel && item.href && (
+                <Link
+                  href={item.href}
+                  style={{
+                    border: `1px solid ${LAVENDER}`,
+                    background: "#fff",
+                    color: LAVENDER,
+                    borderRadius: 999,
+                    padding: "6px 12px",
+                    fontWeight: 700,
+                    fontSize: 13,
+                    textDecoration: "none",
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  {item.actionLabel}
+                </Link>
+              )}
+              {item.actionLabel && !item.href && (
                 <button
                   type="button"
                   onClick={item.onAction}

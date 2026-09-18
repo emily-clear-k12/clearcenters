@@ -1,9 +1,10 @@
 "use client";
 
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { usePlanner } from "../../../lib/v2/usePlanner";
 import { SUBJECTS, DAYS, DATES, DEMO_WEEK, HANDS_OFF_LEVELS } from "../../../lib/v2/demoWeek";
+import { GRADING_INBOX_HREF, getPendingCount, loadConfirmedIds } from "../../../lib/v2/demoGrading";
 import {
   StationShell,
   Glass,
@@ -29,6 +30,18 @@ import { Toast } from "../../../components/v2/weekKit";
 export default function StationWeekClient() {
   const router = useRouter();
   const p = usePlanner();
+  const [gradePending, setGradePending] = useState(DEMO_WEEK.gradingCount);
+  useEffect(() => {
+    setGradePending(getPendingCount(loadConfirmedIds()));
+    const onStorage = (e) => {
+      if (e.key === "ci2.grading.confirmedIds") setGradePending(getPendingCount(loadConfirmedIds()));
+    };
+    window.addEventListener("storage", onStorage);
+    window.addEventListener("focus", () => setGradePending(getPendingCount(loadConfirmedIds())));
+    return () => {
+      window.removeEventListener("storage", onStorage);
+    };
+  }, []);
   const cls = p.setup.classes.find((c) => c.key === p.classFilter) || p.setup.classes[0];
   const selectedClass = p.classFilter === "all" ? p.setup.classes[0]?.key : p.classFilter;
 
@@ -60,17 +73,17 @@ export default function StationWeekClient() {
         onAction: () => p.acceptSuggestion(s),
       });
     }
-    if (DEMO_WEEK.gradingCount > 0 && items.length < 3) {
+    if (gradePending > 0 && items.length < 3) {
       items.push({
         id: "glance-grade",
-        text: `${DEMO_WEEK.gradingCount} submissions are ready when you are — no rush.`,
+        text: `${gradePending} to grade — ready when you are, no rush.`,
         actionLabel: "Open grading",
         tone: "mint",
-        onAction: () => p.setToast({ text: "Grading opens here next — skeleton for now." }),
+        href: GRADING_INBOX_HREF,
       });
     }
     return items.slice(0, 3);
-  }, [p.openSuggestions, cls?.name, p]);
+  }, [p.openSuggestions, cls?.name, gradePending]);
 
   function onDrop(day, e) {
     e.preventDefault();

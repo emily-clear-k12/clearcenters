@@ -1,9 +1,10 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { usePlanner } from "../../../lib/v2/usePlanner";
 import { SUBJECTS, DAYS, DAY_NAMES, DATES, KINDS, PRODUCT_INFO, DEMO_WEEK } from "../../../lib/v2/demoWeek";
+import { GRADING_INBOX_HREF, getPendingCount, loadConfirmedIds } from "../../../lib/v2/demoGrading";
 import {
   StationShell,
   Glass,
@@ -32,6 +33,18 @@ export default function StationDayClient() {
   const router = useRouter();
   const params = useSearchParams();
   const p = usePlanner();
+  const [gradePending, setGradePending] = useState(DEMO_WEEK.gradingCount);
+  useEffect(() => {
+    setGradePending(getPendingCount(loadConfirmedIds()));
+    const onStorage = (e) => {
+      if (e.key === "ci2.grading.confirmedIds") setGradePending(getPendingCount(loadConfirmedIds()));
+    };
+    window.addEventListener("storage", onStorage);
+    window.addEventListener("focus", () => setGradePending(getPendingCount(loadConfirmedIds())));
+    return () => {
+      window.removeEventListener("storage", onStorage);
+    };
+  }, []);
   const day = Math.min(4, Math.max(0, Number(params.get("d") ?? 2)));
   const [openId, setOpenId] = useState(params.get("open"));
   const cls = p.setup.classes.find((c) => c.key === p.classFilter) || p.setup.classes[0];
@@ -68,17 +81,17 @@ export default function StationDayClient() {
         onAction: () => p.acceptSuggestion(s),
       });
     }
-    if (DEMO_WEEK.gradingCount > 0 && list.length < 3) {
+    if (gradePending > 0 && list.length < 3) {
       list.push({
         id: "glance-grade",
-        text: `${DEMO_WEEK.gradingCount} submissions are ready when you are — no rush.`,
+        text: `${gradePending} to grade — ready when you are, no rush.`,
         actionLabel: "Open grading",
         tone: "mint",
-        onAction: () => p.setToast({ text: "Grading opens here next — skeleton for now." }),
+        href: GRADING_INBOX_HREF,
       });
     }
     return list.slice(0, 3);
-  }, [daySuggestions, cls?.name, p]);
+  }, [daySuggestions, cls?.name, gradePending]);
 
   function projectStub(title) {
     p.setToast({ text: `Would project "${title}" — skeleton` });
