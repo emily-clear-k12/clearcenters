@@ -13,6 +13,8 @@ import {
 } from "../../../lib/v2/demoGrading";
 import {
   FOCUS_BLOCKS_KEY,
+  FOCUS_TODAY_DAY,
+  FOCUS_TOMORROW_DAY,
   focusBlockKindLabel,
   focusBlockNamesLine,
   getWhoNeedsCountsByClass,
@@ -304,7 +306,11 @@ export default function StationDayClient() {
         {focusBlocks.length > 0 && (
           <section aria-label="Small group and reteach from Check-ins" style={{ marginBottom: 16 }}>
             <div style={{ fontWeight: 800, color: GLANCE.needsYou.fg, marginBottom: 10, fontSize: 13, letterSpacing: 0.4 }}>
-              FROM CHECK-INS · TODAY
+              {day === FOCUS_TODAY_DAY
+                ? "FROM CHECK-INS · TODAY"
+                : day === FOCUS_TOMORROW_DAY
+                  ? "FROM CHECK-INS · TOMORROW"
+                  : "FROM CHECK-INS"}
             </div>
             <div style={{ display: "grid", gap: 10 }}>
               {focusBlocks.map((block) => (

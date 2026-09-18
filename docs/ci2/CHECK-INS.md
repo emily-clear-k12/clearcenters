@@ -20,10 +20,10 @@ Departmentalized teachers also need the **same period/class lens** as Daily Focu
    - Period 1 → Kai (demo)
    - Period 2 → Riley
    - Period 3 → Maya (or live Leo inheriting that room)
-5. Act: **Pull for small group** or **Reteach tomorrow** → writes an amber block onto **today’s Daily Focus** (kid names stub; merges same period)
+5. Act: **Pull for small group** → amber block on **today’s** Daily Focus (`d=2`); **Reteach tomorrow** → amber block on **tomorrow** (`d=3`). Kid names stub; merges same period + day + kind
 6. **Looks good / dismiss** → clears from list only (no Focus block)
 7. Optional: **Family note** on a kid card → teacher one-pager stub (celebrate + ask-at-home · copy message)
-8. Open **← Daily Focus** → see **FROM CHECK-INS · TODAY** amber cards (period filter still applies)
+8. Open **← Daily Focus** (`d=2`) → **FROM CHECK-INS · TODAY** for small-group pulls; switch to **Thu** (`d=3`) → **FROM CHECK-INS · TOMORROW** for reteach pulls (period filter still applies)
 9. Switch Setup back to **Self-contained** → filter hides; single room label only
 10. Optional: Grading inbox header → **Check-ins**
 
@@ -68,6 +68,6 @@ Departmentalized teachers also need the **same period/class lens** as Daily Focu
 - No live roster sync / multi-device / real period membership from SIS
 - Live submits do not yet write `periodId` at enqueue time (inherit selected room on Check-ins / glance)
 - Small group / reteach write **Daily Focus** blocks (`ci2.checkins.focusBlocks`) — not week planner tiles
-- Focus blocks are stub only (no auto scheduling, no roster sync, no tomorrow-day jump yet)
+- Focus blocks are stub only (no auto scheduling, no roster sync). Reteach tomorrow **does** date the block for tomorrow (`FOCUS_TOMORROW_DAY`); open Daily Focus `?d=3` to see it
 - 2-period setups (e.g. ELAR + SS): demo Maya is `periodId: C` so she won’t appear until a 3-period setup or live inherit
 - Do **not** merge to `main`

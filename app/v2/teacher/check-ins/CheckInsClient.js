@@ -129,9 +129,9 @@ export default function CheckInsClient() {
       });
       const names = block?.studentNames?.join(" · ") || name;
       if (action === "small_group") {
-        setToast({ text: `${names} · on Daily Focus · small group.` });
+        setToast({ text: `${names} · on Daily Focus · today · small group.` });
       } else {
-        setToast({ text: `${names} · on Daily Focus · reteach.` });
+        setToast({ text: `${names} · on Daily Focus · tomorrow · reteach.` });
       }
     } else {
       setToast({ text: `${name} · looks good. Cleared for now.` });
