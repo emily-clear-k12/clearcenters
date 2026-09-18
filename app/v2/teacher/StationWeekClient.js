@@ -12,6 +12,7 @@ import {
   WHO_NEEDS_ME_HREF,
   WHO_NEEDS_ME_STORAGE_KEY,
 } from "../../../lib/v2/demoWhoNeedsMe";
+import { PROJECT_HREF } from "../../../lib/v2/demoProject";
 import {
   StationShell,
   Glass,
@@ -413,7 +414,6 @@ export default function StationWeekClient() {
                           e.dataTransfer.setData("text/plain", act.id);
                           e.dataTransfer.effectAllowed = "move";
                         }}
-                        onClick={() => router.push(`/v2/teacher/day?d=${i}&open=${act.id}`)}
                         style={{
                           display: "flex",
                           gap: 8,
@@ -426,15 +426,61 @@ export default function StationWeekClient() {
                           boxShadow: act.auto ? "0 0 0 1px rgba(47,163,107,.15)" : "none",
                         }}
                       >
-                        <span style={{ width: 6, alignSelf: "stretch", background: sub.color, borderRadius: "12px 0 0 12px" }} />
-                        <span style={{ color: MUTED, letterSpacing: 1, fontSize: 12, paddingTop: 4 }}>{act.auto ? "⟳" : "⋮⋮"}</span>
-                        <div style={{ minWidth: 0 }}>
-                          <div style={{ fontSize: 11, fontWeight: 800, color: sub.color, textTransform: "uppercase" }}>
-                            {sub.name}
-                            {act.auto ? " · auto" : ""}
+                        <button
+                          type="button"
+                          onClick={() => router.push(`/v2/teacher/day?d=${i}&open=${act.id}`)}
+                          style={{
+                            flex: 1,
+                            display: "flex",
+                            gap: 8,
+                            alignItems: "flex-start",
+                            background: "transparent",
+                            border: "none",
+                            padding: 0,
+                            cursor: "inherit",
+                            fontFamily: "inherit",
+                            textAlign: "left",
+                            minWidth: 0,
+                          }}
+                        >
+                          <span style={{ width: 6, alignSelf: "stretch", background: sub.color, borderRadius: "12px 0 0 12px" }} />
+                          <span style={{ color: MUTED, letterSpacing: 1, fontSize: 12, paddingTop: 4 }}>{act.auto ? "⟳" : "⋮⋮"}</span>
+                          <div style={{ minWidth: 0 }}>
+                            <div style={{ fontSize: 11, fontWeight: 800, color: sub.color, textTransform: "uppercase" }}>
+                              {sub.name}
+                              {act.kind === "teach" ? " · Teach" : ""}
+                              {act.auto ? " · auto" : ""}
+                            </div>
+                            <div style={{ fontSize: 13, fontWeight: 650, color: INK, lineHeight: 1.25 }}>{act.title}</div>
                           </div>
-                          <div style={{ fontSize: 13, fontWeight: 650, color: INK, lineHeight: 1.25 }}>{act.title}</div>
-                        </div>
+                        </button>
+                        {act.kind === "teach" && (
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              router.push(PROJECT_HREF(act.id));
+                            }}
+                            title="Open project shell"
+                            style={{
+                              alignSelf: "center",
+                              marginRight: 4,
+                              border: `1px solid ${LINE}`,
+                              background: "#fff",
+                              color: LAVENDER,
+                              borderRadius: 999,
+                              padding: "4px 8px",
+                              fontSize: 11,
+                              fontWeight: 700,
+                              cursor: "pointer",
+                              fontFamily: "inherit",
+                              whiteSpace: "nowrap",
+                              flexShrink: 0,
+                            }}
+                          >
+                            Project
+                          </button>
+                        )}
                       </div>
                     );
                   })}

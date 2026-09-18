@@ -17,6 +17,10 @@ import {
   STUDENT_PROGRESS_KEY,
   readStudentProgress,
 } from "../../../lib/v2/demoStudentActivity";
+import {
+  PROJECT_ASSIGNED_KEY,
+  readAssignedProjectsForDay,
+} from "../../../lib/v2/demoProject";
 
 const INK = "#2E2459";
 const MUTED = "#5E577F";
@@ -40,6 +44,7 @@ export default function StudentMyDayClient() {
   const searchParams = useSearchParams();
 
   const [teacherAdded, setTeacherAdded] = useState([]);
+  const [projectAssigned, setProjectAssigned] = useState([]);
   const [doneIds, setDoneIds] = useState(() => new Set());
   const [toast, setToast] = useState(null);
   const [samMsg, setSamMsg] = useState(day.samLine);
@@ -51,21 +56,27 @@ export default function StudentMyDayClient() {
 
   useEffect(() => {
     const refreshTeacher = () => setTeacherAdded(readTeacherAddedForDay(day.dayIndex));
+    const refreshProjects = () => setProjectAssigned(readAssignedProjectsForDay(day.dayIndex));
     refreshTeacher();
+    refreshProjects();
     refreshProgress();
     const onStorage = (e) => {
       if (!e.key || e.key === ADDED_ACTIVITIES_KEY) refreshTeacher();
+      if (!e.key || e.key === PROJECT_ASSIGNED_KEY) refreshProjects();
       if (!e.key || e.key === STUDENT_PROGRESS_KEY) refreshProgress();
     };
     const onFocus = () => {
       refreshTeacher();
+      refreshProjects();
       refreshProgress();
     };
     window.addEventListener("storage", onStorage);
     window.addEventListener("focus", onFocus);
+    window.addEventListener("ci2-project-assigned", refreshProjects);
     return () => {
       window.removeEventListener("storage", onStorage);
       window.removeEventListener("focus", onFocus);
+      window.removeEventListener("ci2-project-assigned", refreshProjects);
     };
   }, [day.dayIndex]);
 
@@ -85,17 +96,25 @@ export default function StudentMyDayClient() {
 
   const missions = useMemo(() => {
     const built = buildStudentDayMissions(day.missions, teacherAdded);
+    // Cheap bridge: teacher-assigned projects append as Later · Project (may-do).
+    const projectIds = new Set(projectAssigned.map((m) => m.id));
+    const withoutDup = built.filter((m) => !projectIds.has(m.id));
+    const withProjects = [...withoutDup, ...projectAssigned.map((m) => ({ ...m, slot: "later" }))];
     // Re-slot: first incomplete = NOW, then NEXT, then LATER. Done cards keep order but mark done.
-    const incomplete = built.filter((m) => !doneIds.has(m.id));
-    const complete = built.filter((m) => doneIds.has(m.id));
+    const incomplete = withProjects.filter((m) => !doneIds.has(m.id));
+    const complete = withProjects.filter((m) => doneIds.has(m.id));
     // Show incomplete first (so NOW advances), then completed strip at end of list
     const ordered = [...incomplete, ...complete];
     return ordered.map((m, i) => {
       const done = doneIds.has(m.id);
       let slot = "later";
       if (!done) {
-        const incIdx = incomplete.findIndex((x) => x.id === m.id);
-        slot = incIdx === 0 ? "now" : incIdx === 1 ? "next" : "later";
+        if (m.isProject) {
+          slot = "later";
+        } else {
+          const incIdx = incomplete.filter((x) => !x.isProject).findIndex((x) => x.id === m.id);
+          slot = incIdx === 0 ? "now" : incIdx === 1 ? "next" : "later";
+        }
       } else {
         slot = "later";
       }
@@ -103,7 +122,7 @@ export default function StudentMyDayClient() {
       if (incomplete.length === 0 && i === 0) slot = "now";
       return { ...m, slot, done };
     });
-  }, [day.missions, teacherAdded, doneIds]);
+  }, [day.missions, teacherAdded, projectAssigned, doneIds]);
 
   useEffect(() => {
     if (!toast) return;
@@ -126,6 +145,15 @@ export default function StudentMyDayClient() {
     if (!mission.must && mustsRemaining(mission.id).length > 0) {
       setSamMsg(day.samMustFirst);
       setToast({ text: day.samMustFirst, tone: "soft" });
+      return;
+    }
+    // Project cards are a cheap Later stub — no full student project player yet.
+    if (mission.isProject) {
+      setSamMsg(`“${mission.title}” is a multi-day project stub. Evidence later — you're all set for now.`);
+      setToast({
+        text: "Project shell is teacher-side for now. Card stays on Later until the real player lands.",
+        tone: "soft",
+      });
       return;
     }
     setSamMsg(day.samStarted(mission.title));
@@ -227,7 +255,11 @@ export default function StudentMyDayClient() {
 
 function MissionCard({ mission, locked, onStart }) {
   const isNow = mission.slot === "now" && !mission.done;
-  const label = mission.done ? "DONE" : SLOT_LABEL[mission.slot] || "LATER";
+  const label = mission.done
+    ? "DONE"
+    : mission.isProject
+      ? "LATER · PROJECT"
+      : SLOT_LABEL[mission.slot] || "LATER";
   const color = subjectColor(mission.subject);
   const cta = mission.done
     ? "Done ✓"
@@ -295,6 +327,20 @@ function MissionCard({ mission, locked, onStart }) {
             </span>
             {mission.fromTeacherAdd && (
               <span style={{ fontSize: 11, fontWeight: 700, color: MUTED }}>From teacher</span>
+            )}
+            {mission.isProject && (
+              <span
+                style={{
+                  fontSize: 11,
+                  fontWeight: 800,
+                  color: LAVENDER,
+                  background: "rgba(139,108,255,.12)",
+                  borderRadius: 999,
+                  padding: "2px 8px",
+                }}
+              >
+                Project
+              </span>
             )}
           </div>
           <div style={{ fontWeight: 800, color: INK, fontSize: isNow ? 20 : 16, lineHeight: 1.25 }}>

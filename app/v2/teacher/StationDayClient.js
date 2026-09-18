@@ -18,6 +18,7 @@ import {
   WHO_NEEDS_ME_HREF,
   WHO_NEEDS_ME_STORAGE_KEY,
 } from "../../../lib/v2/demoWhoNeedsMe";
+import { PROJECT_HREF } from "../../../lib/v2/demoProject";
 import {
   StationShell,
   Glass,
@@ -174,8 +175,8 @@ export default function StationDayClient() {
     setMorningDismissed(true);
   }
 
-  function projectStub(title) {
-    p.setToast({ text: `Would project "${title}" — skeleton` });
+  function openProject(act) {
+    router.push(PROJECT_HREF(act.id));
   }
 
   return (
@@ -349,9 +350,9 @@ export default function StationDayClient() {
                       type="button"
                       onClick={(e) => {
                         e.stopPropagation();
-                        projectStub(act.title);
+                        openProject(act);
                       }}
-                      title="Project (skeleton)"
+                      title="Open project shell"
                       style={{
                         alignSelf: "center",
                         marginRight: 12,
@@ -393,7 +394,7 @@ export default function StationDayClient() {
               {opened.kind === "teach" && (
                 <button
                   type="button"
-                  onClick={() => projectStub(opened.title)}
+                  onClick={() => openProject(opened)}
                   style={{ marginTop: 12, background: LAVENDER, color: "#fff", border: "none", borderRadius: 999, padding: "8px 16px", fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}
                 >
                   Project
