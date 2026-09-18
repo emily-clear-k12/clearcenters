@@ -11,6 +11,11 @@ import {
   wordChipById,
   STUDENT_TOOLS_KEY,
 } from "../../lib/v2/demoStudentTools";
+import {
+  loadStudentPrefs,
+  TEXT_SIZE_CLASS,
+  textSizeFontPx,
+} from "../../lib/v2/demoStudentPrefs";
 
 const INK = "#2E2459";
 const MUTED = "#5E577F";
@@ -32,21 +37,30 @@ export default function StudentToolsPanel({
   backHref = "/v2/student",
 }) {
   const [state, setState] = useState(() => ({ ...loadStudentTools(), hydrated: false }));
+  const [textSize, setTextSize] = useState(() => loadStudentPrefs().textSize || "M");
 
   function refresh() {
     setState({ ...loadStudentTools(), hydrated: true });
   }
 
+  function refreshPrefs() {
+    setTextSize(loadStudentPrefs().textSize || "M");
+  }
+
   useEffect(() => {
     refresh();
+    refreshPrefs();
     const onStorage = (e) => {
       if (!e.key || e.key === STUDENT_TOOLS_KEY) refresh();
+      if (!e.key || e.key.startsWith("ci2.student.prefs.")) refreshPrefs();
     };
     window.addEventListener("storage", onStorage);
     window.addEventListener("ci2-student-tools-updated", refresh);
+    window.addEventListener("ci2-student-prefs-updated", refreshPrefs);
     return () => {
       window.removeEventListener("storage", onStorage);
       window.removeEventListener("ci2-student-tools-updated", refresh);
+      window.removeEventListener("ci2-student-prefs-updated", refreshPrefs);
     };
   }, []);
 
@@ -75,8 +89,12 @@ export default function StudentToolsPanel({
     });
   }
 
+  const sizeClass = TEXT_SIZE_CLASS[textSize] || TEXT_SIZE_CLASS.M;
+
   return (
     <div
+      className={sizeClass}
+      data-ci2-text-size={textSize}
       style={{
         background: "rgba(255,255,255,.88)",
         border: `1px solid ${LINE}`,
@@ -84,6 +102,7 @@ export default function StudentToolsPanel({
         padding: compact ? "16px 16px 18px" : "22px 20px 24px",
         boxShadow: "0 12px 36px rgba(139,108,255,.14)",
         backdropFilter: "blur(10px)",
+        fontSize: `${textSizeFontPx(textSize)}px`,
       }}
     >
       <div style={{ display: "flex", justifyContent: "space-between", gap: 10, flexWrap: "wrap", alignItems: "flex-start" }}>

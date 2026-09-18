@@ -747,6 +747,82 @@ export function HandsOffChip({ level, onOpenPreview }) {
 
 
 /** Calm entry chip → Check-ins (reteach / small-group stub). Path: /v2/teacher/check-ins. */
+/**
+ * Quiet Daily Focus loop strip — Plan · Teach · Check with tiny counts.
+ * 20% glance grammar; amber only when Check needs attention.
+ */
+export function TodayLoopStrip({
+  planCount = 0,
+  teachCount = 0,
+  checkCount = 0,
+  planHref = "/v2/teacher",
+  teachHref = null,
+  checkHref = "/v2/teacher/check-ins",
+  checkNeeds = false,
+}) {
+  const plan = Number(planCount) || 0;
+  const teach = Number(teachCount) || 0;
+  const check = Number(checkCount) || 0;
+  const needs = checkNeeds || check > 0;
+
+  const seg = (label, count, href, meaning) => {
+    const chip = (
+      <span
+        style={{
+          display: "inline-flex",
+          alignItems: "center",
+          gap: 6,
+          borderRadius: 999,
+          padding: "5px 11px",
+          fontSize: 12,
+          fontWeight: 700,
+          ...glanceChipStyle(meaning),
+          whiteSpace: "nowrap",
+        }}
+      >
+        <span style={{ opacity: 0.85 }}>{label}</span>
+        <span style={{ fontWeight: 800 }}>{count}</span>
+      </span>
+    );
+    if (!href) return <span key={label}>{chip}</span>;
+    return (
+      <Link key={label} href={href} style={{ textDecoration: "none" }} title={`${label} · ${count}`}>
+        {chip}
+      </Link>
+    );
+  };
+
+  return (
+    <div
+      aria-label="Today loop"
+      style={{
+        marginTop: 10,
+        display: "flex",
+        flexWrap: "wrap",
+        alignItems: "center",
+        gap: 8,
+      }}
+    >
+      <span
+        style={{
+          fontSize: 11,
+          fontWeight: 800,
+          color: MUTED,
+          letterSpacing: 0.35,
+          textTransform: "uppercase",
+        }}
+      >
+        Today
+      </span>
+      {seg("Plan", plan, planHref, "ready")}
+      <span style={{ color: MUTED, fontSize: 12, opacity: 0.55 }}>·</span>
+      {seg("Teach", teach, teachHref, "teach")}
+      <span style={{ color: MUTED, fontSize: 12, opacity: 0.55 }}>·</span>
+      {seg("Check", check, checkHref, needs ? "needsYou" : "ready")}
+    </div>
+  );
+}
+
 export function WhoNeedsMeChip({ count, href = "/v2/teacher/check-ins" }) {
   const n = typeof count === "number" ? count : 0;
   const label = n === 0 ? "Check-ins · clear" : n === 1 ? "Check-ins · 1" : `Check-ins · ${n}`;

@@ -10,7 +10,7 @@ Branch: `ci2-sandbox` · Route: `/v2/student/activity/[id]`
 - Mission title, subject color, product kid label
 - Short directions + 1–2 demo items (multiple choice and/or short response)
 - **SAM hint** button: 3-step stub (nudge → hint → example), positive “not yet” voice
-- **Tools** stub: read-aloud placeholder
+- **Tools** stub: read-aloud placeholder · shell honors student text-size prefs (S/M/L)
 - **Submit** writes `ci2.student.missionProgress` **and** queues a grading item in `ci2.grading.inbox` (Leo → teacher Grading), then returns to My Day
 - Back link → My Day
 

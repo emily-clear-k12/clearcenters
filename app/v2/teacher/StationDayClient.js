@@ -34,6 +34,7 @@ import {
   dismissProvenanceHelper,
   PROVENANCE_HELPER_TEXT,
 } from "../../../lib/v2/demoLibrary";
+import { writeSundayPendingUndo } from "../../../lib/v2/demoSundayBridge";
 import {
   StationShell,
   Glass,
@@ -48,6 +49,7 @@ import {
   SingleRoomLabel,
   HandsOffChip,
   WhoNeedsMeChip,
+  TodayLoopStrip,
   SundayPreviewModal,
   INK,
   MUTED,
@@ -268,6 +270,15 @@ export default function StationDayClient() {
               <WhoNeedsMeChip count={whoNeedsCount} href={WHO_NEEDS_ME_HREF} />
               <WeeksRunEntry onOpen={() => p.setShowWeeksRun(true)} routineCount={p.enabledRoutineCount} />
             </div>
+            <TodayLoopStrip
+              planCount={items.length}
+              teachCount={items.filter((a) => a.kind === "teach").length}
+              checkCount={whoNeedsCount > 0 ? whoNeedsCount : gradePending}
+              checkNeeds={whoNeedsCount > 0 || gradePending > 0}
+              planHref="/v2/teacher"
+              teachHref={null}
+              checkHref={whoNeedsCount > 0 ? WHO_NEEDS_ME_HREF : GRADING_INBOX_HREF}
+            />
           </div>
           <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
             <AddActivityButton onClick={() => p.openAddActivity({ day })} />
@@ -616,7 +627,11 @@ export default function StationDayClient() {
         }}
         onAcknowledge={p.acknowledgeSundayPreview}
         onApplyToWeek={() => {
-          p.applySundayToThisWeek();
+          const blocks = p.applySundayToThisWeek();
+          writeSundayPendingUndo({
+            count: Array.isArray(blocks) ? blocks.length : 0,
+            at: Date.now(),
+          });
           router.push("/v2/teacher");
         }}
         applied={p.sundayApplied}

@@ -229,17 +229,35 @@ export default function StationWeekClient() {
               margin: "0 0 14px",
               display: "inline-flex",
               alignItems: "center",
-              gap: 8,
+              gap: 10,
               background: MINT,
               border: `1px solid ${LINE}`,
               borderRadius: 999,
-              padding: "6px 14px",
+              padding: "6px 8px 6px 14px",
               fontSize: 13,
               fontWeight: 700,
               color: INK,
             }}
           >
-            From Sunday · on This Week
+            <span>From Sunday · on This Week</span>
+            <button
+              type="button"
+              onClick={() => p.undoSundayToThisWeek()}
+              title="Remove Sunday bridge tiles"
+              style={{
+                border: `1px solid ${LINE}`,
+                background: "rgba(255,255,255,.9)",
+                color: INK,
+                borderRadius: 999,
+                padding: "4px 12px",
+                fontWeight: 800,
+                fontSize: 12,
+                cursor: "pointer",
+                fontFamily: "inherit",
+              }}
+            >
+              Undo
+            </button>
           </div>
         )}
         {p.needsSundayPreview && (

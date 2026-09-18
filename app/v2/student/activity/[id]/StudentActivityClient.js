@@ -14,6 +14,11 @@ import {
 import { DEMO_STUDENT } from "../../../../../lib/v2/demoStudentDay";
 import { DEMO_TEACHER } from "../../../../../lib/v2/demoWeek";
 import StudentToolsPanel from "../../../../../components/v2/StudentToolsPanel";
+import {
+  loadStudentPrefs,
+  TEXT_SIZE_CLASS,
+  textSizeFontPx,
+} from "../../../../../lib/v2/demoStudentPrefs";
 
 const INK = "#2E2459";
 const MUTED = "#5E577F";
@@ -36,6 +41,21 @@ export default function StudentActivityClient({ missionId }) {
   const [toolsOpen, setToolsOpen] = useState(false);
   const [toast, setToast] = useState(null);
   const [submitting, setSubmitting] = useState(false);
+  const [textSize, setTextSize] = useState(() => loadStudentPrefs().textSize || "M");
+
+  useEffect(() => {
+    const refresh = () => setTextSize(loadStudentPrefs().textSize || "M");
+    refresh();
+    const onStorage = (e) => {
+      if (!e.key || e.key.startsWith("ci2.student.prefs.")) refresh();
+    };
+    window.addEventListener("storage", onStorage);
+    window.addEventListener("ci2-student-prefs-updated", refresh);
+    return () => {
+      window.removeEventListener("storage", onStorage);
+      window.removeEventListener("ci2-student-prefs-updated", refresh);
+    };
+  }, []);
 
   if (!activity) {
     return (
@@ -113,7 +133,11 @@ export default function StudentActivityClient({ missionId }) {
       : samSteps[Math.min(samStep, samSteps.length - 1)];
 
   return (
-    <main style={pageStyle()}>
+    <main
+      className={TEXT_SIZE_CLASS[textSize] || TEXT_SIZE_CLASS.M}
+      data-ci2-text-size={textSize}
+      style={{ ...pageStyle(), fontSize: `${textSizeFontPx(textSize)}px` }}
+    >
       <div style={{ maxWidth: 520, margin: "0 auto", padding: "24px 16px 88px" }}>
         <div style={{ display: "flex", justifyContent: "space-between", gap: 10, flexWrap: "wrap" }}>
           <Link href="/v2/student" style={{ ...ghostBtn(), textDecoration: "none", display: "inline-block" }}>

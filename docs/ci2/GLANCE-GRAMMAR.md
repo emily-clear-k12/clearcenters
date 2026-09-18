@@ -31,6 +31,7 @@ Icon name hints live on the token (`amber-soft`, `teal-check`, `soft-purple`, `i
 | Check-ins nav | **Plan subnav** (TeacherSubnav Check-ins + soft **amber** count when period-filtered who-needs > 0 · same lens as Daily Focus / Check-ins) |
 | Grading | **Right / nav** (TeacherSubnav Grading + coral count when pending) |
 | Morning card | **Under** title row, above or with SAM glance · always **Open Check-ins** CTA; amber shell when Check-ins needs > 0 |
+| Today loop strip | **Under** Daily Focus title chips · quiet **Plan · Teach · Check** counts (blocks today / teach rows / check-ins or grading) · amber only on Check when needs |
 | SAM morning tip | **Beside / under** morning card when Check-ins wait · one calm SamBubble line · session+day key (no spam) |
 | Provenance helper | Quiet one-liner above glance when minted tiles appear · dismiss → localStorage · not a tour |
 | Project | **Right edge** of teach agenda row; indigo accent |
@@ -39,13 +40,15 @@ Icon name hints live on the token (`amber-soft`, `teal-check`, `soft-purple`, `i
 ## Applied (whisper)
 
 - `components/v2/StationShell.js` — CSS vars on shell; SamGlance / MorningCard (Open Check-ins CTA · amber when needs > 0) / SamBubble / ProvenanceHelperLine / RoomCards / WhoNeedsMeChip (label **Check-ins**) / TeacherSubnav **Check-ins** link + **period-filtered** amber who-needs count + coral grade count
-- `app/v2/teacher/StationDayClient.js` — glance `meaning` keys; Project indigo; `gradeCount` on subnav; morning `checkInsCount`; SAM Check-ins tip (session+day); provenance helper
+- `app/v2/teacher/StationDayClient.js` — glance `meaning` keys; **TodayLoopStrip** (Plan · Teach · Check); Project indigo; `gradeCount` on subnav; morning `checkInsCount`; SAM Check-ins tip (session+day); provenance helper
+- `components/v2/StationShell.js` — `TodayLoopStrip` (quiet 20% glance; amber Check only when needs)
 - `app/v2/teacher/check-ins/CheckInsClient.js` — Check-ins title; amber cards; teal dismiss / clear
 - `app/v2/teacher/project/[id]/ProjectShellClient.js` — two-column one-pager; indigo header + evidence chip; right notes fill the glass
 
 ## Click tour
 
-1. Daily Focus → **SAM morning** card under title · always **Open Check-ins** (amber + “n waiting” when needs > 0)
+1. Daily Focus → quiet **Today** strip under title chips · **Plan · Teach · Check** tiny counts (amber Check only when needs)
+1a. Daily Focus → **SAM morning** card under title · always **Open Check-ins** (amber + “n waiting” when needs > 0)
 1b. When Check-ins wait → calm **SamBubble** once per session/day (“n Check-ins ready when you are”) near morning card — not every render
 1c. First minted tile with From Library / Check-ins / Sunday / live teach → quiet **Tiles remember where they came from.** · Got it dismisses (localStorage)
 2. Daily Focus → SAM glance amber for Check-ins; coral for to-grade; Project indigo on teach row right
@@ -59,7 +62,7 @@ Icon name hints live on the token (`amber-soft`, `teal-check`, `soft-purple`, `i
 - Student screens
 - V2TopBar Check coral count (Check-ins amber lives on TeacherSubnav)
 - Loud on-screen color key
-- Full sense-making / nav tours (provenance stays a one-liner)
+- Full sense-making / nav tours (provenance stays a one-liner; Today loop is a light strip only)
 - (Done) Route rename → `/v2/teacher/check-ins`; legacy `/who-needs-me` redirects
 - Analytics
 - Merge to `main`
