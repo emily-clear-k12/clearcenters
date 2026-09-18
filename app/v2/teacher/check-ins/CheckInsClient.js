@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import {
   StationShell,
   Glass,
@@ -51,10 +52,23 @@ import { FAMILY_NOTE_HREF } from "../../../../lib/v2/demoFamilyNote";
  */
 export default function CheckInsClient() {
   const p = usePlanner();
+  const searchParams = useSearchParams();
   const [choices, setChoices] = useState({});
   const [confirmedIds, setConfirmedIds] = useState([]);
   const [hydrated, setHydrated] = useState(false);
   const [toast, setToast] = useState(null);
+
+  // Quiet period sync — Reports spark / Family note deep links may pass ?period=.
+  useEffect(() => {
+    const period = (searchParams?.get("period") || "").trim();
+    if (!period || period === "all") return;
+    try {
+      window.localStorage.setItem("ci2.teacher.classFilter", period);
+    } catch {
+      /* ignore */
+    }
+    if (typeof p.setClassFilter === "function") p.setClassFilter(period);
+  }, [searchParams]); // period query only — setClassFilter is stable enough for demo
 
   const refresh = useCallback(() => {
     setChoices(loadWhoNeedsChoices());

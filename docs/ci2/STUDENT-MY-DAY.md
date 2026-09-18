@@ -3,9 +3,9 @@
 Branch: `ci2-sandbox` · Route: `/v2/student`
 
 ## Click path
-`/v2` → **Student · My Day** → Now / Next / Later → **Start** on Now → `/v2/student/activity/[id]` → Submit → My Day progress (checkmark + NOW advances). Optional: **Print** → glance-first paper sheet. Quiet **Tools** on each mission/practice card → inline Student Tools (prefs/text-size honored); footer **Tools** still routes to `/v2/student/tools`.
+`/v2` → **Student · My Day** → Now / Next / Later → **Start** on Now → `/v2/student/activity/[id]` → Submit → My Day progress (checkmark + NOW advances). Optional: **Print** → glance-first paper sheet.
 
-See also: [STUDENT-ACTIVITY-STUB.md](./STUDENT-ACTIVITY-STUB.md) · [STUDENT-TOOLS.md](./STUDENT-TOOLS.md)
+See also: [STUDENT-ACTIVITY-STUB.md](./STUDENT-ACTIVITY-STUB.md)
 
 ## Demo
 - Students: **Leo · Kai · Riley** switcher on My Day (light chips — not a roster)
@@ -28,7 +28,8 @@ See also: [STUDENT-ACTIVITY-STUB.md](./STUDENT-ACTIVITY-STUB.md) · [STUDENT-TOO
 - `usePlanner` persists Add / suggestion tiles; Student My Day surfaces today’s extras near Now
 - **Gap:** only works same browser/device; no publish, no Supabase, no cross-device
 - **Gap:** base demo tiles (non-Add) are not mirrored live from teacher board edits — curated `DEMO_STUDENT_DAY` only
-- Progress key: `ci2.student.missionProgress.{kid}` (activity Submit; Leo migrates legacy unscoped key)
+- Progress key: `ci2.student.missionProgress.{kid}` (activity / project Submit; Leo migrates legacy unscoped key)
+- Submit fires `ci2-student-progress-updated` so My Day re-slots **Next → Now** without a hard refresh (`?done=` celebrates on return)
 - Active kid: `ci2.student.demoKid`
 - Out of scope: auth, full SAM chat, game worlds, merge to main
 
@@ -51,12 +52,6 @@ See also: [STUDENT-ACTIVITY-STUB.md](./STUDENT-ACTIVITY-STUB.md) · [STUDENT-TOO
 - On screen stays glance-first (Now → Next → Later cards)
 - No server PDF — `window.print` only
 
-## Tools on mission cards
-- Each Now / Next / Later mission or practice card shows a quiet **Tools** entry beside Start
-- Opens **Student Tools** inline (compact panel — same as activity shell); honors `ci2.student.prefs.{kid}` text size
-- Footer **Tools** link still goes to `/v2/student/tools` full page
-- Hide on print via `.ci2-no-print`
-
 ## Preferences stub
 - Light prefs chip on My Day: display name · text size S/M/L · sound on/off
 - Per-kid localStorage (`ci2.student.prefs.{kid}`) — see [STUDENT-PREFS-STUB.md](./STUDENT-PREFS-STUB.md)
@@ -74,8 +69,7 @@ See also: [STUDENT-ACTIVITY-STUB.md](./STUDENT-ACTIVITY-STUB.md) · [STUDENT-TOO
 - Same-browser only; clear site data to reset
 
 ## Files
-- `app/v2/student/StudentMyDayClient.js` — My Day shell · Print + print CSS · per-card Tools
-- `components/v2/StudentToolsPanel.js` — shared Tools panel (inline from cards)
+- `app/v2/student/StudentMyDayClient.js` — My Day shell · Print + print CSS
 - `lib/v2/demoStudentDay.js` — day model / teacher-add bridge
 - `docs/ci2/STUDENT-MY-DAY.md` — this note
 

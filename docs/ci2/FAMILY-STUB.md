@@ -12,6 +12,7 @@ Teachers need a calm **family one-pager** — kid name, today’s focus in plain
 - **Today’s focus** (plain language)
 - Two chips: **Celebrate** (teal) · **Ask at home** (amber)
 - Message stub + **Copy message** + **Send to family** (demo)
+- Calm success toast after Send · optional **Undo** clears Sent · demo flag
 - Links: ← Check-ins · Reports · Daily Focus
 
 Not a parent login. Teacher share sheet only.
@@ -22,25 +23,27 @@ Not a parent login. Teacher share sheet only.
 3. On the kid card tap clear **Family note** → `/v2/teacher/family/wnm-kai?period=A`
 4. Glance: focus · celebrate · ask-at-home · Period chip · copy message
 5. **Copy message** → clipboard stub (toast “Copied ✓”)
-6. **Send to family** → calm “Queued for family · demo only” + **Sent · demo ✓** (localStorage `ci2.family.sentDemo`)
-7. **← Check-ins** → same period still selected (`ci2.teacher.classFilter` synced)
-8. Optional: **Reports** → footer **Family note** (demo Kai) → same stub (no period query)
+6. **Send to family** → calm toast “Note queued for … · demo only — no SMS” + **Sent · demo ✓** (localStorage `ci2.family.sentDemo`)
+7. Optional **Undo** on the toast → clears Sent · demo for this note
+8. **← Check-ins** → same period still selected (`ci2.teacher.classFilter` synced)
+9. Optional: **Reports** → footer **Family note** (demo Kai) → same stub (no period query)
 
 ## Tone
 - Assistant, glass / StationShell — 80% beauty / 20% glance grammar
 - Calm ready / needs-you whispers on celebrate / ask chips
 - G3-teacher voice; short home sentences
+- Send toast matches planner Undo pattern (dark pill · Undo link)
 
 ## Files
-- `lib/v2/demoFamilyNote.js` — stub model + `FAMILY_NOTE_HREF(id, { periodId })` + sent-demo helpers
-- `app/v2/teacher/family/[id]/` — page + `FamilyNoteClient` (period query sync)
+- `lib/v2/demoFamilyNote.js` — stub model + `FAMILY_NOTE_HREF(id, { periodId })` + sent-demo helpers (`mark` / `clear`)
+- `app/v2/teacher/family/[id]/` — page + `FamilyNoteClient` (period query sync · toast Undo)
 - `app/v2/teacher/check-ins/CheckInsClient.js` — clear Family note on each kid card
 - `app/v2/teacher/reports/ReportsClient.js` — one clear Family note link
 - `docs/ci2/FAMILY-STUB.md` — this note · `docs/ci2/CHECK-INS.md`
 
 ## Gaps (out of scope)
 - No parent portal / auth / real SMS / email send
-- Send is a queued-demo confirmation only (same browser)
+- Send is a queued-demo confirmation only (same browser); Undo clears the flag only
 - Copy is browser clipboard only (same device)
 - Period chip shows class key (A/B/C), not fancy room titles
 - Demo kids only (Check-ins roster)

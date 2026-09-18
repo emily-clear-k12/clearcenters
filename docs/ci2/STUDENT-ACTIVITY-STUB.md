@@ -3,7 +3,7 @@
 Branch: `ci2-sandbox` · Route: `/v2/student/activity/[id]`
 
 ## Click path
-`/v2` → **Student · My Day** → **Start** on NOW (or unlocked NEXT) → activity shell → answer stub items → **Submit** → My Day with checkmark + NOW advanced.
+`/v2` → **Student · My Day** → **Start** on NOW (or unlocked NEXT) → activity shell → answer stub items → **Submit** → My Day with checkmark + **Next becomes Now** (no hard refresh; progress persisted).
 
 ## What it is
 - Skeleton activity shell matching My Day vibe (warm lavender / cream)
@@ -23,8 +23,9 @@ Branch: `ci2-sandbox` · Route: `/v2/student/activity/[id]`
 | `from-teacher-*` | Teacher Add | Generic ready stub |
 
 ## Progress
-- Key: `ci2.student.missionProgress` → `{ doneIds: string[], updatedAt }`
-- My Day re-slots incomplete cards so first open = NOW
+- Key: `ci2.student.missionProgress.{kid}` → `{ doneIds: string[], updatedAt }`
+- `markMissionDone` persists + fires `ci2-student-progress-updated`
+- Return via `?done=` — My Day re-slots incomplete cards so first open = NOW (Next advances)
 - Done cards show ✓ / DONE chip; Start disabled
 
 ## Grading bridge

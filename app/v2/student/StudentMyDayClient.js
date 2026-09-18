@@ -58,7 +58,7 @@ const SLOT_LABEL = { now: "NOW", next: "NEXT", later: "LATER" };
 /**
  * CI2.0 Student · My Day skeleton.
  * Start / Continue → /v2/student/activity/[id] (real activity stub).
- * Progress: localStorage ci2.student.missionProgress.{kid} (Leo/Kai/Riley demos).
+ * Progress: localStorage ci2.student.missionProgress.{kid} — Submit advances Now/Next/Later without refresh.
  * Tools → footer route + quiet per-card Tools (inline panel; prefs/text-size honored).
  * Print → glance-first print sheet (ci2-myday-print / ci2-no-print).
  */
@@ -127,6 +127,7 @@ export default function StudentMyDayClient() {
       const s = getActiveDemoStudent();
       setSamMsg(`${s.name}'s day — progress stays with each kid.`);
     };
+    const onProgress = () => refreshProgress();
     window.addEventListener("storage", onStorage);
     window.addEventListener("focus", onFocus);
     window.addEventListener("ci2-project-assigned", refreshProjects);
@@ -134,6 +135,7 @@ export default function StudentMyDayClient() {
     window.addEventListener("ci2-teacher-checked-updated", refreshChecked);
     window.addEventListener("ci2-demo-kid-changed", onKid);
     window.addEventListener("ci2-student-prefs-updated", refreshPrefs);
+    window.addEventListener("ci2-student-progress-updated", onProgress);
     return () => {
       window.removeEventListener("storage", onStorage);
       window.removeEventListener("focus", onFocus);
@@ -142,19 +144,27 @@ export default function StudentMyDayClient() {
       window.removeEventListener("ci2-teacher-checked-updated", refreshChecked);
       window.removeEventListener("ci2-demo-kid-changed", onKid);
       window.removeEventListener("ci2-student-prefs-updated", refreshPrefs);
+      window.removeEventListener("ci2-student-progress-updated", onProgress);
     };
   }, [day.dayIndex]);
 
-  // Celebrate return from activity Submit (?done=missionId)
+  // Celebrate return from activity/project Submit (?done=missionId) — Next becomes Now.
   useEffect(() => {
     const doneParam = searchParams?.get("done");
     if (!doneParam) return;
     refreshProgress();
     const title =
       day.missions.find((m) => m.id === doneParam)?.title ||
-      (doneParam.startsWith("from-teacher-") ? "that activity" : "your mission");
-    setSamMsg(`Check! “${title}” is done. Next card when you're ready.`);
-    setToast({ text: `Nice — “${title}” checked off. Keep going.`, tone: "ok" });
+      (doneParam.startsWith("from-teacher-")
+        ? "that activity"
+        : doneParam.startsWith("project-") || doneParam.startsWith("practice-")
+          ? "that work"
+          : "your mission");
+    setSamMsg(`Check! “${title}” is done. Next is now Now — keep going.`);
+    setToast({
+      text: `Nice — “${title}” checked off. Next is now Now.`,
+      tone: "ok",
+    });
     // Clear query so refresh doesn't re-toast
     router.replace("/v2/student", { scroll: false });
   }, [searchParams, day.missions, router]);

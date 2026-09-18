@@ -32,6 +32,7 @@ Small group → demo names + **Check-ins →** (not “Who needs me”).
 11. Optional: **This Week** teach tiles also show a compact **Project** (same shell).
 12. Student: `/v2/student` shows a **Later · Project** card when assigned — evidence product name (and “small group” if chosen).
 13. **Open** → `/v2/student/project/[id]` light shell: checkpoint chips · evidence product · Submit stub (queues grading like activity Submit).
+14. **Submit project** → marks progress + returns to My Day with `?done=` — **Next becomes Now** without refresh (same `ci2.student.missionProgress` + event as activity).
 
 
 ## Tone

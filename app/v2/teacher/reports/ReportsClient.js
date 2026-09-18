@@ -15,27 +15,42 @@ import {
   glanceChipStyle,
   glanceCardStyle,
 } from "../../../../components/v2/StationShell";
-import { getReportsStub } from "../../../../lib/v2/demoReports";
+import {
+  getReportsStub,
+  softClassPctLabel,
+  softNeedsLabel,
+} from "../../../../lib/v2/demoReports";
 import { FAMILY_NOTE_HREF, FAMILY_NOTE_DEFAULT_ID } from "../../../../lib/v2/demoFamilyNote";
 import {
   getWhoNeedsMeCount,
+  readSelectedClassFilter,
   WHO_NEEDS_ME_STORAGE_KEY,
+  CHECK_INS_HREF,
 } from "../../../../lib/v2/demoWhoNeedsMe";
 
 /**
  * CI2.0 Reports by standard — glance-first stub (not a spreadsheet).
- * Honesty first: demo bars + one real Check-ins waiting count (same browser).
+ * Honesty first: demo bars + one real Check-ins waiting spark (same browser, period-aware).
  */
 export default function ReportsClient() {
   const stub = getReportsStub();
   const [liveCheckIns, setLiveCheckIns] = useState(null);
+  const [periodId, setPeriodId] = useState(null);
 
   useEffect(() => {
     const refresh = () => {
       try {
-        setLiveCheckIns(getWhoNeedsMeCount());
+        const period = readSelectedClassFilter();
+        setPeriodId(period && period !== "all" ? period : null);
+        setLiveCheckIns(
+          getWhoNeedsMeCount(undefined, undefined, {
+            classFilter: period,
+            inheritPeriodId: period || "A",
+          })
+        );
       } catch {
         setLiveCheckIns(0);
+        setPeriodId(null);
       }
     };
     refresh();
@@ -44,7 +59,9 @@ export default function ReportsClient() {
         !e.key ||
         e.key === WHO_NEEDS_ME_STORAGE_KEY ||
         e.key === "ci2.grading.inbox" ||
-        e.key === "ci2.grading.confirmedIds"
+        e.key === "ci2.grading.confirmedIds" ||
+        e.key === "ci2.teacher.classFilter" ||
+        e.key === "ci2.teacher.setupKey"
       ) {
         refresh();
       }
@@ -59,12 +76,17 @@ export default function ReportsClient() {
     };
   }, []);
 
+  const checkInsHref =
+    periodId && periodId !== "all"
+      ? `${CHECK_INS_HREF}?period=${encodeURIComponent(periodId)}`
+      : stub.checkInsHref || CHECK_INS_HREF;
+
   const liveLabel =
     liveCheckIns == null
       ? "Check-ins · …"
       : liveCheckIns === 0
-        ? "Check-ins waiting · 0"
-        : `Check-ins waiting · ${liveCheckIns}`;
+        ? "Check-ins waiting · 0 · live"
+        : `Check-ins waiting · ${liveCheckIns} · live`;
 
   return (
     <StationShell active="grow">
@@ -148,10 +170,45 @@ export default function ReportsClient() {
         >
           <Chip label={`${stub.summary.standards} standards · demo`} />
           <Chip label={`~${stub.summary.avgClassPct}% class ready · demo`} tone="ready" />
-          <Chip
-            label={liveLabel}
-            tone={liveCheckIns && liveCheckIns > 0 ? "needsYou" : "ready"}
-          />
+          <Link
+            href={checkInsHref}
+            title="Open Check-ins (live waiting count · this browser)"
+            style={{
+              textDecoration: "none",
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 8,
+              fontSize: 12,
+              fontWeight: 800,
+              borderRadius: 999,
+              padding: "5px 11px",
+              ...glanceChipStyle(
+                liveCheckIns && liveCheckIns > 0 ? "needsYou" : "ready"
+              ),
+              boxShadow:
+                liveCheckIns && liveCheckIns > 0
+                  ? "0 0 0 1px rgba(232, 168, 74, 0.35)"
+                  : "none",
+            }}
+          >
+            <span
+              aria-hidden
+              style={{
+                width: 7,
+                height: 7,
+                borderRadius: 999,
+                background:
+                  liveCheckIns && liveCheckIns > 0
+                    ? GLANCE.needsYou.fg
+                    : GLANCE.ready.fg,
+                boxShadow:
+                  liveCheckIns && liveCheckIns > 0
+                    ? `0 0 0 3px ${GLANCE.needsYou.bg}`
+                    : "none",
+              }}
+            />
+            {liveLabel}
+          </Link>
         </div>
 
         <section
@@ -216,7 +273,7 @@ export default function ReportsClient() {
                         padding: "6px 12px",
                       }}
                     >
-                      {row.classPct}% class
+                      {softClassPctLabel(row.classPct)}
                     </span>
                     <span
                       style={{
@@ -227,9 +284,7 @@ export default function ReportsClient() {
                         padding: "6px 12px",
                       }}
                     >
-                      {needs
-                        ? `Demo · may need ${row.needsCheckIn}`
-                        : "Demo · clear"}
+                      {softNeedsLabel(row.needsCheckIn)}
                     </span>
                   </div>
                 </div>
@@ -269,7 +324,7 @@ export default function ReportsClient() {
           }}
         >
           <Link
-            href={stub.checkInsHref}
+            href={checkInsHref}
             style={{
               background: GLANCE.needsYou.bg,
               color: GLANCE.needsYou.fg,
@@ -317,9 +372,9 @@ export default function ReportsClient() {
         </div>
 
         <p style={{ margin: "16px 0 0", color: MUTED, fontSize: 12, lineHeight: 1.45 }}>
-          Honesty pass — bars and per-standard counts are demo stubs. The{" "}
-          <strong>Check-ins waiting</strong> chip is a real same-browser count from Check-ins
-          (not a fake % or precision metric).
+          Honesty pass — bars and per-standard cues are soft demo stubs (no fake kid counts). The{" "}
+          <strong>Check-ins waiting · live</strong> spark is a real same-browser count (period lens when
+          set) — tap it to open Check-ins.
         </p>
       </Glass>
     </StationShell>

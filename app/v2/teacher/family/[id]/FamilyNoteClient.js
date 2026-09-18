@@ -19,6 +19,7 @@ import {
   getFamilyNoteStub,
   isFamilyNoteSent,
   markFamilyNoteSent,
+  clearFamilyNoteSent,
   FAMILY_SENT_KEY,
 } from "../../../../../lib/v2/demoFamilyNote";
 
@@ -33,7 +34,7 @@ export default function FamilyNoteClient({ noteId }) {
   const note = useMemo(() => getFamilyNoteStub(noteId), [noteId]);
   const [copied, setCopied] = useState(false);
   const [sent, setSent] = useState(false);
-  const [sendFlash, setSendFlash] = useState(false);
+  const [toast, setToast] = useState(null);
 
   const periodFromQuery = (searchParams?.get("period") || "").trim();
   const periodId =
@@ -68,12 +69,28 @@ export default function FamilyNoteClient({ noteId }) {
     };
   }, [note?.id]);
 
+  useEffect(() => {
+    if (!toast) return;
+    const ms = toast.undo ? 5600 : 3200;
+    const t = setTimeout(() => setToast(null), ms);
+    return () => clearTimeout(t);
+  }, [toast]);
+
   function handleSendToFamily() {
     if (!note) return;
     markFamilyNoteSent(note.id, { studentFirst: note.studentFirst });
     setSent(true);
-    setSendFlash(true);
-    setTimeout(() => setSendFlash(false), 3200);
+    setToast({
+      text: `Note queued for ${note.studentFirst}'s family · demo only — no SMS.`,
+      undo: true,
+    });
+  }
+
+  function handleUndoSent() {
+    if (!note) return;
+    clearFamilyNoteSent(note.id);
+    setSent(false);
+    setToast({ text: "Undone — Sent · demo cleared.", undo: false });
   }
 
   async function copyMessage() {
@@ -317,20 +334,7 @@ export default function FamilyNoteClient({ noteId }) {
           >
             {sent ? "Sent · demo ✓" : "Send to family"}
           </button>
-          {sendFlash && (
-            <p
-              role="status"
-              style={{
-                margin: "10px 0 0",
-                color: GLANCE.ready.fg,
-                fontSize: 13,
-                fontWeight: 600,
-                lineHeight: 1.4,
-              }}
-            >
-              Queued for family · demo only — no SMS or email sent. Copy still works anytime.
-            </p>
-          )}
+
         </section>
 
         <div
@@ -393,9 +397,52 @@ export default function FamilyNoteClient({ noteId }) {
         </div>
 
         <p style={{ margin: "16px 0 0", color: MUTED, fontSize: 12, lineHeight: 1.45 }}>
-          Teacher share sheet stub — Send queues a demo confirmation (no SMS/email, no parent login).
+          Teacher share sheet stub — Send queues a demo confirmation (no SMS/email, no parent login). Undo clears the Sent · demo flag in this browser.
         </p>
       </Glass>
+
+      {toast && (
+        <div
+          role="status"
+          style={{
+            position: "fixed",
+            left: "50%",
+            bottom: 24,
+            transform: "translateX(-50%)",
+            background: INK,
+            color: "#fff",
+            borderRadius: 999,
+            padding: "10px 18px",
+            display: "flex",
+            alignItems: "center",
+            gap: 14,
+            fontSize: 14,
+            fontWeight: 600,
+            boxShadow: "0 10px 30px rgba(42,35,80,.35)",
+            zIndex: 30,
+            maxWidth: "calc(100% - 32px)",
+          }}
+        >
+          <span>{toast.text}</span>
+          {toast.undo && (
+            <button
+              type="button"
+              onClick={handleUndoSent}
+              style={{
+                background: "transparent",
+                border: "none",
+                color: GLANCE.ready.fg,
+                fontWeight: 800,
+                cursor: "pointer",
+                fontFamily: "inherit",
+                fontSize: 14,
+              }}
+            >
+              Undo
+            </button>
+          )}
+        </div>
+      )}
     </StationShell>
   );
 }
