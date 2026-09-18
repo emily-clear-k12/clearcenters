@@ -36,10 +36,14 @@ export default function StationWeekClient() {
     const onStorage = (e) => {
       if (e.key === "ci2.grading.confirmedIds") setGradePending(getPendingCount(loadConfirmedIds()));
     };
+    const refresh = () => setGradePending(getPendingCount(loadConfirmedIds()));
     window.addEventListener("storage", onStorage);
-    window.addEventListener("focus", () => setGradePending(getPendingCount(loadConfirmedIds())));
+    window.addEventListener("focus", refresh);
+    window.addEventListener("ci2-grading-updated", refresh);
     return () => {
       window.removeEventListener("storage", onStorage);
+      window.removeEventListener("focus", refresh);
+      window.removeEventListener("ci2-grading-updated", refresh);
     };
   }, []);
   const cls = p.setup.classes.find((c) => c.key === p.classFilter) || p.setup.classes[0];
