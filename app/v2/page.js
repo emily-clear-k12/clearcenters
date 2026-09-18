@@ -12,7 +12,12 @@ const AREAS = [
     title: "Teacher · This Week",
     note: "Plan & publish · 5-day calendar · hands-off dial · drag tiles",
   },
-  { href: "/v2/student", title: "Student · Home", note: "Current ClearCenters student dashboard" },
+  {
+    href: "/v2/student",
+    title: "Student · My Day",
+    note: "Leo's day · Now / Next / Later · must-do before may-do · SAM",
+    student: true,
+  },
 ];
 
 export default function CI2Home() {
@@ -23,6 +28,7 @@ export default function CI2Home() {
         <p style={{ color: "#5C5480", marginTop: 0 }}>Sandbox preview. Pages appear here as they are built.</p>
         <p style={{ color: "#5C5480", marginTop: 8, fontSize: 14, background: "#fff", border: "1px solid #E3DEFA", borderRadius: 12, padding: "10px 14px" }}>
           Start on <strong>Daily Focus</strong> (teach today). Switch Setup to Math · 3 periods, pick a room card, then jump to This Week — your period stays synced.
+          Kids land on <strong>Student · My Day</strong> — same Wednesday demo loop.
         </p>
         <div style={{ display: "grid", gap: 16, gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", marginTop: 24 }}>
           {AREAS.map((a) => (
@@ -33,8 +39,8 @@ export default function CI2Home() {
                 display: "block",
                 padding: 20,
                 borderRadius: 16,
-                background: a.primary ? "#F3EEFF" : "#fff",
-                border: a.primary ? "2px solid #8B6CFF" : "1px solid #E3DEFA",
+                background: a.primary ? "#F3EEFF" : a.student ? "#FFF8EE" : "#fff",
+                border: a.primary ? "2px solid #8B6CFF" : a.student ? "2px solid #E8C96A" : "1px solid #E3DEFA",
                 textDecoration: "none",
                 color: "#2E2459",
               }}
@@ -43,6 +49,9 @@ export default function CI2Home() {
               <div style={{ color: "#5C5480", marginTop: 6 }}>{a.note}</div>
               {a.primary && (
                 <div style={{ marginTop: 10, fontSize: 12, fontWeight: 700, color: "#8B6CFF" }}>Primary teacher home →</div>
+              )}
+              {a.student && (
+                <div style={{ marginTop: 10, fontSize: 12, fontWeight: 700, color: "#B8860B" }}>Student home →</div>
               )}
             </Link>
           ))}
