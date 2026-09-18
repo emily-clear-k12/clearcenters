@@ -7,10 +7,18 @@ Route: `/v2/teacher/reports`
 Teachers need a calm **glance** at a few standards — class ready % and who may need a **Check-in** — without opening a spreadsheet. Skeleton only; demo bars + chips.
 
 ## Layout
-- SAM one-liner + summary chips (standards count · avg class % · Check-ins needing)
-- 3–5 demo standard cards: TEKS · plain words · **class %** bar · **Check-ins · n / clear** chip
+- Honesty chip / banner: **Demo data · not live yet** (stub looks live — call it out)
+- SAM one-liner + summary chips (standards count · avg class % · **live Check-ins waiting**)
+- 3–5 demo standard cards: TEKS · plain words · **class %** bar · **Demo · may need n / clear** chip
 - Soft ready (teal) / needs-you (amber) washes — 80% beauty / 20% grammar
 - Links: **Check-ins →** · **Family note** · **← Daily Focus**
+
+## Honesty
+| Surface | Real? |
+|---------|-------|
+| Class % bars / per-standard “may need” | **Demo** — not SIS / gradebook |
+| Summary **Check-ins waiting · n** | **Real** same-browser `getWhoNeedsMeCount()` |
+| Do not invent precision beyond that count | — |
 
 ## Nav
 | Spot | Behavior |
@@ -20,10 +28,12 @@ Teachers need a calm **glance** at a few standards — class ready % and who may
 
 ## Click tour
 1. `/v2` → top bar **Grow** (or Daily Focus → subnav **Reports**)
-2. See 5 demo standards with bars + Check-ins chips
-3. Tap **Check-ins →** → `/v2/teacher/check-ins`
-4. Optional: **Family note** → teacher one-pager stub (demo Kai)
-5. **← Daily Focus** returns to teach today
+2. See **Demo data · not live yet** chip first
+3. Summary shows demo standards / avg % plus **Check-ins waiting · n** (live from Check-ins)
+4. Cards still show demo bars — labeled Demo · may need / clear
+5. Tap **Check-ins →** → `/v2/teacher/check-ins`
+6. Optional: **Family note** → teacher one-pager stub (demo Kai)
+7. **← Daily Focus** returns to teach today
 
 ## Files
 - `lib/v2/demoReports.js` — demo rows + `REPORTS_HREF`
@@ -35,6 +45,6 @@ Teachers need a calm **glance** at a few standards — class ready % and who may
 
 ## Gaps (out of scope)
 - No live analytics, SIS roster %, or gradebook export
-- Counts are demo stubs (not wired to Check-ins localStorage yet)
+- Per-standard needs counts stay demo (only the summary Check-ins waiting chip is live)
 - No filters / print / share
 - Do **not** merge to `main`

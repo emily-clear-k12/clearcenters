@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import {
   StationShell,
@@ -16,18 +17,76 @@ import {
 } from "../../../../components/v2/StationShell";
 import { getReportsStub } from "../../../../lib/v2/demoReports";
 import { FAMILY_NOTE_HREF, FAMILY_NOTE_DEFAULT_ID } from "../../../../lib/v2/demoFamilyNote";
+import {
+  getWhoNeedsMeCount,
+  WHO_NEEDS_ME_STORAGE_KEY,
+} from "../../../../lib/v2/demoWhoNeedsMe";
 
 /**
  * CI2.0 Reports by standard — glance-first stub (not a spreadsheet).
- * 3–5 demo standards with class % bars + needs Check-in chips.
+ * Honesty first: demo bars + one real Check-ins waiting count (same browser).
  */
 export default function ReportsClient() {
   const stub = getReportsStub();
+  const [liveCheckIns, setLiveCheckIns] = useState(null);
+
+  useEffect(() => {
+    const refresh = () => {
+      try {
+        setLiveCheckIns(getWhoNeedsMeCount());
+      } catch {
+        setLiveCheckIns(0);
+      }
+    };
+    refresh();
+    const onStorage = (e) => {
+      if (
+        !e.key ||
+        e.key === WHO_NEEDS_ME_STORAGE_KEY ||
+        e.key === "ci2.grading.inbox" ||
+        e.key === "ci2.grading.confirmedIds"
+      ) {
+        refresh();
+      }
+    };
+    window.addEventListener("storage", onStorage);
+    window.addEventListener("focus", refresh);
+    window.addEventListener("ci2-who-needs-updated", refresh);
+    return () => {
+      window.removeEventListener("storage", onStorage);
+      window.removeEventListener("focus", refresh);
+      window.removeEventListener("ci2-who-needs-updated", refresh);
+    };
+  }, []);
+
+  const liveLabel =
+    liveCheckIns == null
+      ? "Check-ins · …"
+      : liveCheckIns === 0
+        ? "Check-ins waiting · 0"
+        : `Check-ins waiting · ${liveCheckIns}`;
 
   return (
     <StationShell active="grow">
       <TeacherSubnav active="reports" />
       <Glass style={{ padding: "22px 22px 20px" }}>
+        <div
+          role="status"
+          style={{
+            marginBottom: 14,
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 8,
+            borderRadius: 999,
+            padding: "7px 14px",
+            fontSize: 13,
+            fontWeight: 800,
+            ...glanceChipStyle("needsYou"),
+          }}
+        >
+          {stub.honesty || "Demo data · not live yet"}
+        </div>
+
         <div
           style={{
             fontSize: 12,
@@ -87,15 +146,11 @@ export default function ReportsClient() {
             alignItems: "center",
           }}
         >
-          <Chip label={`${stub.summary.standards} standards`} />
-          <Chip label={`~${stub.summary.avgClassPct}% class ready`} tone="ready" />
+          <Chip label={`${stub.summary.standards} standards · demo`} />
+          <Chip label={`~${stub.summary.avgClassPct}% class ready · demo`} tone="ready" />
           <Chip
-            label={
-              stub.summary.standardsNeedingCheckIn === 0
-                ? "Check-ins · clear"
-                : `${stub.summary.standardsNeedingCheckIn} need Check-ins`
-            }
-            tone={stub.summary.standardsNeedingCheckIn === 0 ? "ready" : "needsYou"}
+            label={liveLabel}
+            tone={liveCheckIns && liveCheckIns > 0 ? "needsYou" : "ready"}
           />
         </div>
 
@@ -173,8 +228,8 @@ export default function ReportsClient() {
                       }}
                     >
                       {needs
-                        ? `Check-ins · ${row.needsCheckIn}`
-                        : "Check-ins · clear"}
+                        ? `Demo · may need ${row.needsCheckIn}`
+                        : "Demo · clear"}
                     </span>
                   </div>
                 </div>
@@ -262,7 +317,9 @@ export default function ReportsClient() {
         </div>
 
         <p style={{ margin: "16px 0 0", color: MUTED, fontSize: 12, lineHeight: 1.45 }}>
-          Stub only — demo bars, not live analytics or a gradebook export.
+          Honesty pass — bars and per-standard counts are demo stubs. The{" "}
+          <strong>Check-ins waiting</strong> chip is a real same-browser count from Check-ins
+          (not a fake % or precision metric).
         </p>
       </Glass>
     </StationShell>
