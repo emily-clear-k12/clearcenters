@@ -20,6 +20,12 @@ See also: [STUDENT-ACTIVITY-STUB.md](./STUDENT-ACTIVITY-STUB.md)
 - Progress key: `ci2.student.missionProgress` (activity Submit)
 - Out of scope: auth, full SAM chat, game worlds, merge to main
 
+## Practice from Teach live
+- Teacher **Assign practice** on `/v2/teacher/live-teach/[id]` → key `ci2.practice.assigned`
+- Student My Day shows a **Practice** card in Now / Next / Later (may-do by default)
+- **Start** reuses the activity stub (`practice-[activityId]`)
+- See also: [LIVE-TEACH-STUB.md](./LIVE-TEACH-STUB.md)
+
 ## Later · Project
 - Teacher **Assign to My Day** → Later · Project card (evidence label · optional small group)
 - **Open** → `/v2/student/project/[id]` — checkpoint chips, evidence product, Submit stub

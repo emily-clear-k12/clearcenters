@@ -22,6 +22,10 @@ import {
   readAssignedProjectsForDay,
   STUDENT_PROJECT_HREF,
 } from "../../../lib/v2/demoProject";
+import {
+  PRACTICE_ASSIGNED_KEY,
+  readAssignedPracticeForDay,
+} from "../../../lib/v2/demoLiveTeach";
 import { STUDENT_TOOLS_HREF } from "../../../lib/v2/demoStudentTools";
 
 const INK = "#2E2459";
@@ -48,6 +52,7 @@ export default function StudentMyDayClient() {
 
   const [teacherAdded, setTeacherAdded] = useState([]);
   const [projectAssigned, setProjectAssigned] = useState([]);
+  const [practiceAssigned, setPracticeAssigned] = useState([]);
   const [doneIds, setDoneIds] = useState(() => new Set());
   const [toast, setToast] = useState(null);
   const [samMsg, setSamMsg] = useState(day.samLine);
@@ -60,26 +65,32 @@ export default function StudentMyDayClient() {
   useEffect(() => {
     const refreshTeacher = () => setTeacherAdded(readTeacherAddedForDay(day.dayIndex));
     const refreshProjects = () => setProjectAssigned(readAssignedProjectsForDay(day.dayIndex));
+    const refreshPractice = () => setPracticeAssigned(readAssignedPracticeForDay(day.dayIndex));
     refreshTeacher();
     refreshProjects();
+    refreshPractice();
     refreshProgress();
     const onStorage = (e) => {
       if (!e.key || e.key === ADDED_ACTIVITIES_KEY) refreshTeacher();
       if (!e.key || e.key === PROJECT_ASSIGNED_KEY) refreshProjects();
+      if (!e.key || e.key === PRACTICE_ASSIGNED_KEY) refreshPractice();
       if (!e.key || e.key === STUDENT_PROGRESS_KEY) refreshProgress();
     };
     const onFocus = () => {
       refreshTeacher();
       refreshProjects();
+      refreshPractice();
       refreshProgress();
     };
     window.addEventListener("storage", onStorage);
     window.addEventListener("focus", onFocus);
     window.addEventListener("ci2-project-assigned", refreshProjects);
+    window.addEventListener("ci2-practice-assigned", refreshPractice);
     return () => {
       window.removeEventListener("storage", onStorage);
       window.removeEventListener("focus", onFocus);
       window.removeEventListener("ci2-project-assigned", refreshProjects);
+      window.removeEventListener("ci2-practice-assigned", refreshPractice);
     };
   }, [day.dayIndex]);
 
@@ -99,14 +110,17 @@ export default function StudentMyDayClient() {
 
   const missions = useMemo(() => {
     const built = buildStudentDayMissions(day.missions, teacherAdded);
-    // Cheap bridge: teacher-assigned projects append as Later · Project (may-do).
+    // Practice from Teach live — may-do cards that can land in Now/Next/Later.
+    const practiceIds = new Set(practiceAssigned.map((m) => m.id));
+    const withoutPracticeDup = built.filter((m) => !practiceIds.has(m.id));
+    const withPractice = [...withoutPracticeDup, ...practiceAssigned];
+    // Projects append as Later · Project (may-do).
     const projectIds = new Set(projectAssigned.map((m) => m.id));
-    const withoutDup = built.filter((m) => !projectIds.has(m.id));
+    const withoutDup = withPractice.filter((m) => !projectIds.has(m.id));
     const withProjects = [...withoutDup, ...projectAssigned.map((m) => ({ ...m, slot: "later" }))];
-    // Re-slot: first incomplete = NOW, then NEXT, then LATER. Done cards keep order but mark done.
+    // Re-slot: first incomplete non-project = NOW, then NEXT, then LATER.
     const incomplete = withProjects.filter((m) => !doneIds.has(m.id));
     const complete = withProjects.filter((m) => doneIds.has(m.id));
-    // Show incomplete first (so NOW advances), then completed strip at end of list
     const ordered = [...incomplete, ...complete];
     return ordered.map((m, i) => {
       const done = doneIds.has(m.id);
@@ -121,11 +135,10 @@ export default function StudentMyDayClient() {
       } else {
         slot = "later";
       }
-      // If everything done, first card stays visual calm
       if (incomplete.length === 0 && i === 0) slot = "now";
       return { ...m, slot, done };
     });
-  }, [day.missions, teacherAdded, projectAssigned, doneIds]);
+  }, [day.missions, teacherAdded, projectAssigned, practiceAssigned, doneIds]);
 
   useEffect(() => {
     if (!toast) return;
@@ -257,7 +270,9 @@ function MissionCard({ mission, locked, onStart }) {
     ? "DONE"
     : mission.isProject
       ? "LATER · PROJECT"
-      : SLOT_LABEL[mission.slot] || "LATER";
+      : mission.isPractice
+        ? `${SLOT_LABEL[mission.slot] || "LATER"} · PRACTICE`
+        : SLOT_LABEL[mission.slot] || "LATER";
   const color = subjectColor(mission.subject);
   const cta = mission.done
     ? "Done ✓"
@@ -338,6 +353,20 @@ function MissionCard({ mission, locked, onStart }) {
                 }}
               >
                 Project
+              </span>
+            )}
+            {mission.isPractice && (
+              <span
+                style={{
+                  fontSize: 11,
+                  fontWeight: 800,
+                  color: LAVENDER,
+                  background: "rgba(139,108,255,.12)",
+                  borderRadius: 999,
+                  padding: "2px 8px",
+                }}
+              >
+                Practice
               </span>
             )}
           </div>

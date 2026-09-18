@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -15,7 +15,12 @@ import {
   GLANCE,
   glanceChipStyle,
 } from "../../../../../components/v2/StationShell";
-import { getLiveTeachStub } from "../../../../../lib/v2/demoLiveTeach";
+import {
+  assignPracticeToMyDay,
+  getLiveTeachStub,
+  isPracticeAssigned,
+  PRACTICE_ASSIGNED_KEY,
+} from "../../../../../lib/v2/demoLiveTeach";
 
 /**
  * CI2.0 Live teach shell — present-mode skeleton.
@@ -27,6 +32,29 @@ export default function LiveTeachClient({ lessonId }) {
   const shell = useMemo(() => getLiveTeachStub(lessonId), [lessonId]);
   const [beatIdx, setBeatIdx] = useState(0);
   const [assigned, setAssigned] = useState(false);
+
+  useEffect(() => {
+    if (!shell?.id) return;
+    const refresh = () => setAssigned(isPracticeAssigned(shell.id));
+    refresh();
+    const onStorage = (e) => {
+      if (!e.key || e.key === PRACTICE_ASSIGNED_KEY) refresh();
+    };
+    window.addEventListener("storage", onStorage);
+    window.addEventListener("focus", refresh);
+    window.addEventListener("ci2-practice-assigned", refresh);
+    return () => {
+      window.removeEventListener("storage", onStorage);
+      window.removeEventListener("focus", refresh);
+      window.removeEventListener("ci2-practice-assigned", refresh);
+    };
+  }, [shell?.id]);
+
+  function handleAssignPractice() {
+    if (!shell) return;
+    assignPracticeToMyDay(shell);
+    setAssigned(true);
+  }
 
   if (!shell) {
     return (
@@ -281,7 +309,7 @@ export default function LiveTeachClient({ lessonId }) {
 
           <button
             type="button"
-            onClick={() => setAssigned(true)}
+            onClick={handleAssignPractice}
             title={shell.assignPracticeHint}
             style={{
               border: assigned ? `1px solid ${GLANCE.ready.border}` : "none",
@@ -296,7 +324,7 @@ export default function LiveTeachClient({ lessonId }) {
               boxShadow: assigned ? "none" : "0 6px 16px rgba(91,79,154,.22)",
             }}
           >
-            {assigned ? "Practice queued ✓" : shell.assignPracticeLabel}
+            {assigned ? "Practice on My Day ✓" : shell.assignPracticeLabel}
           </button>
         </div>
 
@@ -337,7 +365,7 @@ export default function LiveTeachClient({ lessonId }) {
         </div>
 
         <p style={{ margin: "14px 0 0", color: MUTED, fontSize: 12, lineHeight: 1.45 }}>
-          Skeleton only — calm present mode, not a slide deck builder or lesson authoring tool.
+          Present mode skeleton — Assign practice writes a My Day card (same browser). Not a slide deck builder.
         </p>
       </Glass>
     </StationShell>
