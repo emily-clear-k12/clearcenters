@@ -76,7 +76,7 @@ export default function GradingInboxClient() {
 
   useEffect(() => {
     if (!toast) return;
-    const ms = toast.growthHref ? 4200 : 2200;
+    const ms = toast.myDayHref || toast.growthHref ? 5200 : 2200;
     const t = setTimeout(() => setToast(null), ms);
     return () => clearTimeout(t);
   }, [toast]);
@@ -147,6 +147,9 @@ export default function GradingInboxClient() {
         text: `Confirmed ${focused.studentFirst} · ${score}/${focused.maxScore}. You're the scorer of record${stampNote}`,
         growthHref: REPORTS_HREF,
         growthLabel: "See growth →",
+        // Optional same-browser back-link when the stamp landed on My Day.
+        myDayHref: stamped.length ? "/v2/student" : null,
+        myDayLabel: "See My Day",
       });
       setAdjusting(false);
       setDraftScore(null);
@@ -568,6 +571,25 @@ export default function GradingInboxClient() {
             }}
           >
             <span>{toast.text}</span>
+            {toast.myDayHref && (
+              <Link
+                href={toast.myDayHref}
+                style={{
+                  fontSize: 13,
+                  fontWeight: 800,
+                  color: "#fff",
+                  textDecoration: "none",
+                  background: "#2F7A5B",
+                  borderRadius: 999,
+                  padding: "6px 12px",
+                  border: "1px solid rgba(255,255,255,.35)",
+                  whiteSpace: "nowrap",
+                }}
+                title="Open student My Day — Teacher checked stamp (same browser)"
+              >
+                {toast.myDayLabel || "See My Day"}
+              </Link>
+            )}
             {toast.growthHref && (
               <Link
                 href={toast.growthHref}

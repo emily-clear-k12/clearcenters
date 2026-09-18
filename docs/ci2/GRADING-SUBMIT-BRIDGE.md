@@ -33,10 +33,15 @@ Live row shape mirrors demo grading items: `id` (`live-{missionId}`), `studentFi
 - `lib/v2/demoGrading.js` — inbox helpers, pending merge, enqueue · `gradingInboxHref` · `findPendingForStudent`
 - `app/v2/teacher/check-ins/CheckInsClient.js` — **Open grading** when pending matches kid
 - `app/v2/student/activity/[id]/StudentActivityClient.js` — Submit → enqueue
-- `app/v2/student/StudentMyDayClient.js` — Teacher checked chip
-- `app/v2/teacher/grading/GradingInboxClient.js` — demo + live list · `?student=` focus · Confirm → **See growth →** Reports nudge · empty-state calm glass + Daily Focus / Check-ins CTAs
+- `app/v2/student/StudentMyDayClient.js` — unmistakable **✓ Teacher checked** chip (mint border)
+- `app/v2/teacher/grading/GradingInboxClient.js` — demo + live list · `?student=` focus · Confirm → **See My Day** (when stamped) + **See growth →** · empty-state calm glass + Daily Focus / Check-ins CTAs
 - `lib/v2/demoReports.js` — `REPORTS_HREF`
 - `app/v2/teacher/StationDayClient.js` — SAM glance count listens to inbox key
+
+
+## Confirm → Teacher checked clarity
+- After **Confirm**, toast notes the My Day stamp and offers an optional **See My Day** chip (same-browser `/v2/student`) beside **See growth →**
+- My Day card chip uses stronger mint border + **✓ Teacher checked** copy so the stamp is unmistakable at a glance (calm, not a grade scare)
 
 ## Gaps (out of scope)
 - No real auth, class roster, or cross-device sync

@@ -20,6 +20,8 @@ import {
   libraryStandardChip,
   removeAddedActivity,
   LIBRARY_HREF,
+  loadLibraryFavorites,
+  toggleLibraryFavorite,
 } from "../../../../lib/v2/demoLibrary";
 
 const FLAVORS = ["Briefing", "Challenge", "Practice", "Project"];
@@ -33,6 +35,13 @@ export default function LibraryClient() {
   const [toast, setToast] = useState(null);
   const [flavor, setFlavor] = useState("all");
   const [query, setQuery] = useState("");
+  const [favorites, setFavorites] = useState([]);
+  const [favHydrated, setFavHydrated] = useState(false);
+
+  useEffect(() => {
+    setFavorites(loadLibraryFavorites());
+    setFavHydrated(true);
+  }, []);
 
   useEffect(() => {
     if (!toast) return;
@@ -41,14 +50,30 @@ export default function LibraryClient() {
     return () => clearTimeout(t);
   }, [toast]);
 
+  const favSet = useMemo(() => new Set(favorites), [favorites]);
+
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     return DEMO_LIBRARY_CARDS.filter((card) => {
-      if (flavor !== "all" && card.flavor !== flavor) return false;
+      if (flavor === "favorites") {
+        if (!favSet.has(card.id)) return false;
+      } else if (flavor !== "all" && card.flavor !== flavor) {
+        return false;
+      }
       if (q && !String(card.title || "").toLowerCase().includes(q)) return false;
       return true;
     });
-  }, [flavor, query]);
+  }, [flavor, query, favSet]);
+
+  const toggleHeart = useCallback((card) => {
+    if (!card?.id) return;
+    const next = toggleLibraryFavorite(card.id);
+    setFavorites(next);
+    const on = next.includes(card.id);
+    setToast({
+      text: on ? `Saved “${card.title}” to Favorites.` : `Removed “${card.title}” from Favorites.`,
+    });
+  }, []);
 
   const add = useCallback((card, target) => {
     const entry = addLibraryCardToPlanner(card, target);
@@ -178,6 +203,15 @@ export default function LibraryClient() {
                 {f}
               </button>
             ))}
+            <button
+              type="button"
+              onClick={() => setFlavor("favorites")}
+              aria-pressed={flavor === "favorites"}
+              style={chipBtn(flavor === "favorites")}
+              title="Show hearted Library cards (this device)"
+            >
+              ♥ Favorites{favHydrated && favorites.length ? ` · ${favorites.length}` : ""}
+            </button>
           </div>
           <label style={{ display: "block", maxWidth: 360 }}>
             <span style={{ position: "absolute", width: 1, height: 1, overflow: "hidden", clip: "rect(0 0 0 0)" }}>
@@ -275,6 +309,32 @@ export default function LibraryClient() {
                   >
                     {card.flavor}
                   </span>
+                  <button
+                    type="button"
+                    onClick={() => toggleHeart(card)}
+                    aria-pressed={favSet.has(card.id)}
+                    aria-label={favSet.has(card.id) ? "Remove from Favorites" : "Add to Favorites"}
+                    title={favSet.has(card.id) ? "Remove from Favorites" : "Save to Favorites"}
+                    style={{
+                      marginLeft: "auto",
+                      border: favSet.has(card.id) ? "1px solid rgba(139,108,255,.45)" : `1px solid ${LINE}`,
+                      background: favSet.has(card.id) ? "rgba(139,108,255,.14)" : "rgba(255,255,255,.9)",
+                      color: favSet.has(card.id) ? LAVENDER : MUTED,
+                      borderRadius: 999,
+                      width: 34,
+                      height: 34,
+                      display: "inline-flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      fontSize: 16,
+                      fontWeight: 800,
+                      cursor: "pointer",
+                      fontFamily: "inherit",
+                      lineHeight: 1,
+                    }}
+                  >
+                    {favSet.has(card.id) ? "♥" : "♡"}
+                  </button>
                   <span style={{ fontSize: 11, fontWeight: 700, color: MUTED }}>
                     {card.product} · {card.minutes} min
                   </span>

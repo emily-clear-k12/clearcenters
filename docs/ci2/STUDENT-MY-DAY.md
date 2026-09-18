@@ -58,7 +58,8 @@ See also: [STUDENT-ACTIVITY-STUB.md](./STUDENT-ACTIVITY-STUB.md)
 
 ## Teacher checked stamp
 - Teacher **Confirm** in Grading stamps the matching mission/practice on My Day (`ci2.student.teacherChecked.{kid}` · namespace from submission `studentFirst`)
-- Calm mint chip: **Teacher checked** — not a scary grade badge
+- Unmistakable calm mint chip: **✓ Teacher checked** (stronger border/color) — not a scary grade badge
+- Grading Confirm toast may offer **See My Day** back-link when the stamp landed (same browser)
 - Live submits use `missionId`; demo rows may match by title (pizza / equivalent / purpose)
 - Same-browser localStorage only
 

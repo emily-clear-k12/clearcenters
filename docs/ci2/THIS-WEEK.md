@@ -19,9 +19,19 @@ Plan & publish the week board — then teach from Daily Focus. Print gives a gla
 
 ## Files
 - `app/v2/teacher/StationWeekClient.js` — This Week board · Print stub
+- `lib/v2/usePlanner.js` — setup + period/room restore (shared with Daily Focus)
+- `components/v2/StationShell.js` — SetupSwitcher
 - `app/v2/teacher/ThisWeekClient.js` — thin wrapper
 - `docs/ci2/THIS-WEEK.md` — this note
 - See also: [SUNDAY-HANDS-OFF.md](./SUNDAY-HANDS-OFF.md) · [LESSON-PLAN-STUB.md](./LESSON-PLAN-STUB.md)
+
+
+## Last setup / room memory
+- `ci2.teacher.setupKey` + `ci2.teacher.classFilter` persist the last Setup + period/room (Mrs. Barrons demo)
+- `ci2.teacher.classFilterBySetup` remembers the last room **per setup** so switching Math ↔ ELAR+SS restores the right period
+- Daily Focus / This Week hydrate from the same keys via `usePlanner` — departmentalized teachers don’t reset to Period 1 every visit
+- Soft toast once per session: **Back in Period 2 · Math only.** (sessionStorage gate; quiet on Day↔Week remounts). Private mode → no toast
+- See also: SetupSwitcher in `StationShell.js`
 
 ## Gaps (out of scope)
 - Print is `window.print` + CSS only (no server PDF)

@@ -755,16 +755,19 @@ function MissionCard({ mission, locked, teacherChecked, onStart, toolsOpen = fal
             {teacherChecked && (
               <span
                 style={{
-                  fontSize: 11,
+                  fontSize: 12,
                   fontWeight: 800,
-                  color: "#2F7A5B",
-                  background: "rgba(47,122,91,.12)",
+                  color: "#1F6B4A",
+                  background: "rgba(47,122,91,.18)",
+                  border: "1.5px solid #2F7A5B",
                   borderRadius: 999,
-                  padding: "2px 8px",
+                  padding: "3px 10px",
+                  letterSpacing: 0.2,
+                  boxShadow: "0 2px 8px rgba(47,122,91,.16)",
                 }}
-                title="Your teacher looked at this — calm check, not a grade scare."
+                title="Mrs. Barrons checked this — calm teacher look, not a grade scare."
               >
-                Teacher checked
+                ✓ Teacher checked
               </span>
             )}
           </div>
