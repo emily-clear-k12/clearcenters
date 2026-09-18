@@ -35,7 +35,7 @@ Persists: `ci2.teacher.handsOffLevels` (per subject). Routines: `ci2.teacher.rou
 2. Open **Sunday preview** (header or banner)
 3. Tap **Apply to This Week** → toast · modal closes
 4. See mint chip **From Sunday · on This Week** and new **Routine · …** / **From Sunday · …** tiles on the week grid
-5. Open a minted tile on **This Week** / **Daily Focus** → quiet **From Sunday** provenance (`plannerProvenanceLabel`)
+5. Open a minted tile on **This Week** / **Daily Focus** → quiet **From Sunday** provenance (`plannerProvenanceLabel`); first time → **Tiles remember where they came from.** (dismissible)
 6. Optional undo from toast · clears bridge tiles
 7. Daily Focus Hands-off chip → **Preview what goes out** → same Apply (then jumps to This Week)
 8. How my weeks run → **Apply to This Week** also available

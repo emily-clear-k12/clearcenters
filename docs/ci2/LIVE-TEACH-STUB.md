@@ -19,7 +19,7 @@ Teachers need a **calm present mode** from Daily Focus teach blocks — big obje
 3. Tap **Teach live** → `/v2/teacher/live-teach/act-8`
 4. Glance big objective · advance Beat 1 → 2 → 3
 5. **Assign practice** → “Practice on My Day ✓” (writes `ci2.practice.assigned`) **and** mints a planner tile (`added-live-*` · `fromLiveTeach`)
-6. Open **Daily Focus** / **This Week** → quiet **From live teach** provenance on the practice tile
+6. Open **Daily Focus** / **This Week** → quiet **From live teach** provenance on the practice tile; first time → **Tiles remember where they came from.** (dismissible)
 7. Open `/v2/student` (same browser) → practice card under Now / Next / Later
 8. **Start** → `/v2/student/activity/practice-[id]` (activity stub) · Submit marks progress
 9. Optional: **Lesson plan** / **Project** · **← Daily Focus**

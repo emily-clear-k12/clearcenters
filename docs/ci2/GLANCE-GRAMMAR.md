@@ -30,19 +30,21 @@ Icon name hints live on the token (`amber-soft`, `teal-check`, `soft-purple`, `i
 | Check-ins | **Left / stack** (header chip + glance + Check-ins page cards). Route `/v2/teacher/check-ins` |
 | Grading | **Right / nav** (TeacherSubnav Grading + coral count when pending) |
 | Morning card | **Under** title row, above or with SAM glance · always **Open Check-ins** CTA; amber shell when Check-ins needs > 0 |
+| Provenance helper | Quiet one-liner above glance when minted tiles appear · dismiss → localStorage · not a tour |
 | Project | **Right edge** of teach agenda row; indigo accent |
 | Primary CTA | Consistent corner (Assign / Looks good — existing patterns) |
 
 ## Applied (whisper)
 
-- `components/v2/StationShell.js` — CSS vars on shell; SamGlance / MorningCard (Open Check-ins CTA · amber when needs > 0) / RoomCards / WhoNeedsMeChip (label **Check-ins**) / TeacherSubnav grade count
-- `app/v2/teacher/StationDayClient.js` — glance `meaning` keys; Project indigo; `gradeCount` on subnav; morning `checkInsCount`
+- `components/v2/StationShell.js` — CSS vars on shell; SamGlance / MorningCard (Open Check-ins CTA · amber when needs > 0) / ProvenanceHelperLine / RoomCards / WhoNeedsMeChip (label **Check-ins**) / TeacherSubnav grade count
+- `app/v2/teacher/StationDayClient.js` — glance `meaning` keys; Project indigo; `gradeCount` on subnav; morning `checkInsCount`; provenance helper
 - `app/v2/teacher/check-ins/CheckInsClient.js` — Check-ins title; amber cards; teal dismiss / clear
 - `app/v2/teacher/project/[id]/ProjectShellClient.js` — two-column one-pager; indigo header + evidence chip; right notes fill the glass
 
 ## Click tour
 
 1. Daily Focus → **SAM morning** card under title · always **Open Check-ins** (amber + “n waiting” when needs > 0)
+1b. First minted tile with From Library / Check-ins / Sunday / live teach → quiet **Tiles remember where they came from.** · Got it dismisses (localStorage)
 2. Daily Focus → SAM glance amber for Check-ins; coral for to-grade; Project indigo on teach row right
 3. Check-ins → amber cards; teal “Looks good / dismiss”; period filter unchanged
 3. Project → **two-column one-pager** — left Assign · right teacher notes; indigo “Project ·” + evidence chip; Details only for rare extras
@@ -53,6 +55,7 @@ Icon name hints live on the token (`amber-soft`, `teal-check`, `soft-purple`, `i
 - Student screens
 - V2TopBar Check coral count (subnav only this pass)
 - Loud on-screen color key
+- Full sense-making / nav tours (provenance stays a one-liner)
 - (Done) Route rename → `/v2/teacher/check-ins`; legacy `/who-needs-me` redirects
 - Analytics
 - Merge to `main`

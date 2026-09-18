@@ -27,7 +27,13 @@ import {
 import { PROJECT_HREF } from "../../../lib/v2/demoProject";
 import { LESSON_PLAN_HREF } from "../../../lib/v2/demoLessonPlan";
 import { LIVE_TEACH_HREF } from "../../../lib/v2/demoLiveTeach";
-import { plannerProvenanceLabel } from "../../../lib/v2/demoLibrary";
+import {
+  plannerProvenanceLabel,
+  anyMintedProvenance,
+  isProvenanceHelperDismissed,
+  dismissProvenanceHelper,
+  PROVENANCE_HELPER_TEXT,
+} from "../../../lib/v2/demoLibrary";
 import {
   StationShell,
   Glass,
@@ -36,6 +42,7 @@ import {
   SetupSwitcher,
   MorningCard,
   SamGlance,
+  ProvenanceHelperLine,
   RoomCards,
   SingleRoomLabel,
   HandsOffChip,
@@ -195,6 +202,19 @@ export default function StationDayClient() {
     setMorningDismissed(true);
   }
 
+  // One-time provenance helper (quiet; localStorage dismiss)
+  const [showProvenanceHelper, setShowProvenanceHelper] = useState(false);
+  useEffect(() => {
+    const hasMinted = anyMintedProvenance(items);
+    setShowProvenanceHelper(hasMinted && !isProvenanceHelperDismissed());
+  }, [items]);
+
+  function onDismissProvenanceHelper() {
+    dismissProvenanceHelper();
+    setShowProvenanceHelper(false);
+  }
+
+
   function openProject(act) {
     router.push(PROJECT_HREF(act.id));
   }
@@ -259,6 +279,11 @@ export default function StationDayClient() {
               checkInsHref={WHO_NEEDS_ME_HREF}
             />
           )}
+          <ProvenanceHelperLine
+            show={showProvenanceHelper}
+            onDismiss={onDismissProvenanceHelper}
+            text={PROVENANCE_HELPER_TEXT}
+          />
           <SamGlance
             items={glanceItems}
             emptyLabel={`Nothing waiting for ${cls?.name || "this class"} today. Nice.`}

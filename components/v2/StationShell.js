@@ -233,6 +233,57 @@ export function SamGlance({ items, emptyLabel }) {
 }
 
 /**
+ * One-time quiet provenance helper (not a tour modal).
+ * “Tiles remember where they came from.” — dismiss → localStorage.
+ */
+export function ProvenanceHelperLine({ show, onDismiss, text = "Tiles remember where they came from." }) {
+  if (!show) return null;
+  return (
+    <div
+      role="status"
+      style={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        gap: 10,
+        flexWrap: "wrap",
+        margin: "0 0 12px",
+        padding: "8px 12px",
+        borderRadius: 12,
+        background: "rgba(255,255,255,.72)",
+        border: `1px solid ${LINE}`,
+        color: MUTED,
+        fontSize: 13,
+        lineHeight: 1.35,
+      }}
+    >
+      <span>{text}</span>
+      {onDismiss && (
+        <button
+          type="button"
+          onClick={onDismiss}
+          aria-label="Dismiss provenance tip"
+          style={{
+            border: `1px solid ${LINE}`,
+            background: "#fff",
+            color: MUTED,
+            borderRadius: 999,
+            padding: "4px 10px",
+            fontSize: 12,
+            fontWeight: 700,
+            cursor: "pointer",
+            fontFamily: "inherit",
+            whiteSpace: "nowrap",
+          }}
+        >
+          Got it
+        </button>
+      )}
+    </div>
+  );
+}
+
+/**
  * Period-as-rooms for departmentalized setups.
  * Bigger room cards replace tiny period chips.
  */

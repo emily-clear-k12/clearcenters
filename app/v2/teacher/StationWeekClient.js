@@ -15,7 +15,13 @@ import {
 import { PROJECT_HREF } from "../../../lib/v2/demoProject";
 import { LESSON_PLAN_HREF } from "../../../lib/v2/demoLessonPlan";
 import { LIVE_TEACH_HREF } from "../../../lib/v2/demoLiveTeach";
-import { plannerProvenanceLabel } from "../../../lib/v2/demoLibrary";
+import {
+  plannerProvenanceLabel,
+  anyMintedProvenance,
+  isProvenanceHelperDismissed,
+  dismissProvenanceHelper,
+  PROVENANCE_HELPER_TEXT,
+} from "../../../lib/v2/demoLibrary";
 import {
   StationShell,
   Glass,
@@ -23,6 +29,7 @@ import {
   TeacherSubnav,
   SetupSwitcher,
   SamGlance,
+  ProvenanceHelperLine,
   RoomCards,
   SingleRoomLabel,
   HandsOffDial,
@@ -45,6 +52,7 @@ export default function StationWeekClient() {
   const p = usePlanner();
   const [gradePending, setGradePending] = useState(DEMO_WEEK.gradingCount);
   const [whoNeedsCount, setWhoNeedsCount] = useState(0);
+  const [showProvenanceHelper, setShowProvenanceHelper] = useState(false);
   const cls = p.setup.classes.find((c) => c.key === p.classFilter) || p.setup.classes[0];
   const selectedClass = p.classFilter === "all" ? p.setup.classes[0]?.key : p.classFilter;
   useEffect(() => {
@@ -80,6 +88,16 @@ export default function StationWeekClient() {
       window.removeEventListener("ci2-who-needs-updated", refresh);
     };
   }, [selectedClass]);
+
+  useEffect(() => {
+    const hasMinted = anyMintedProvenance(p.visible || p.activities || []);
+    setShowProvenanceHelper(hasMinted && !isProvenanceHelperDismissed());
+  }, [p.visible, p.activities]);
+
+  function onDismissProvenanceHelper() {
+    dismissProvenanceHelper();
+    setShowProvenanceHelper(false);
+  }
 
   const dialSubjectLabel =
     p.subjectFilter === "all"
@@ -241,6 +259,11 @@ export default function StationWeekClient() {
         )}
 
         <div style={{ marginTop: 14 }}>
+          <ProvenanceHelperLine
+            show={showProvenanceHelper}
+            onDismiss={onDismissProvenanceHelper}
+            text={PROVENANCE_HELPER_TEXT}
+          />
           <SamGlance
             items={glanceItems}
             emptyLabel={

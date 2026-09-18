@@ -16,6 +16,7 @@ Teachers need a light place to browse a few ready activities and drop them onto 
 7. **Add to Daily Focus** → writes `ci2.teacher.addedActivities` for today (`d=2`); toast offers **Undo**
 8. Open **Daily Focus** → tile appears (same browser)
 9. **Add to This Week** → same planner extras key; toast **Undo** removes the minted tile; open **This Week** / Daily Focus → quiet **From Library** provenance on the tile
+10. First time a minted provenance tile appears → calm one-liner **Tiles remember where they came from.** · **Got it** → `ci2.provenance.helperDismissed` (not a tour modal)
 10. Student My Day may surface teacher-added tiles when day matches
 
 ## Storage (same browser only)
@@ -24,7 +25,8 @@ Teachers need a light place to browse a few ready activities and drop them onto 
 | `ci2.teacher.addedActivities` | Planner extras (same key as Add Activity / usePlanner) |
 
 ## Files
-- `lib/v2/demoLibrary.js` — demo cards (+ `standard`) + add / `removeAddedActivity` + `libraryStandardChip` + `plannerProvenanceLabel`
+- `lib/v2/demoLibrary.js` — demo cards (+ `standard`) + add / `removeAddedActivity` + `libraryStandardChip` + `plannerProvenanceLabel` + provenance helper dismiss helpers
+- `components/v2/StationShell.js` — `ProvenanceHelperLine`
 - `lib/v2/demoStandardsUnit.js` — `hasStandardStub` / `STANDARDS_HREF` for linkable chips
 - `app/v2/teacher/library/` — page + `LibraryClient` (chip + title filters + TEKS chips)
 - `components/v2/V2TopBar.js` — Library href wired
