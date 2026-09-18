@@ -4,11 +4,14 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
-  DEMO_STUDENT,
   DEMO_STUDENT_DAY,
+  DEMO_STUDENT_KIDS,
+  DEMO_KID_STORAGE_KEY,
   buildStudentDayMissions,
+  getActiveDemoStudent,
   productKidLabel,
   readTeacherAddedForDay,
+  setActiveDemoKidId,
   subjectColor,
   subjectName,
   ADDED_ACTIVITIES_KEY,
@@ -47,15 +50,15 @@ const SLOT_LABEL = { now: "NOW", next: "NEXT", later: "LATER" };
 /**
  * CI2.0 Student · My Day skeleton.
  * Start / Continue → /v2/student/activity/[id] (real activity stub).
- * Progress: localStorage ci2.student.missionProgress (same browser).
+ * Progress: localStorage ci2.student.missionProgress.{kid} (Leo/Kai/Riley demos).
  * Tools → /v2/student/tools (read-aloud / word chips / highlight stub).
  */
 export default function StudentMyDayClient() {
-  const student = DEMO_STUDENT;
   const day = DEMO_STUDENT_DAY;
   const router = useRouter();
   const searchParams = useSearchParams();
 
+  const [student, setStudent] = useState(() => getActiveDemoStudent());
   const [teacherAdded, setTeacherAdded] = useState([]);
   const [projectAssigned, setProjectAssigned] = useState([]);
   const [practiceAssigned, setPracticeAssigned] = useState([]);
@@ -74,36 +77,43 @@ export default function StudentMyDayClient() {
     const refreshProjects = () => setProjectAssigned(readAssignedProjectsForDay(day.dayIndex));
     const refreshPractice = () => setPracticeAssigned(readAssignedPracticeForDay(day.dayIndex));
     const refreshChecked = () => setTeacherCheckedIds(loadTeacherCheckedIds());
-    refreshTeacher();
-    refreshProjects();
-    refreshPractice();
-    refreshChecked();
-    refreshProgress();
-    const onStorage = (e) => {
-      if (!e.key || e.key === ADDED_ACTIVITIES_KEY) refreshTeacher();
-      if (!e.key || e.key === PROJECT_ASSIGNED_KEY) refreshProjects();
-      if (!e.key || e.key === PRACTICE_ASSIGNED_KEY) refreshPractice();
-      if (!e.key || e.key === TEACHER_CHECKED_KEY) refreshChecked();
-      if (!e.key || e.key === STUDENT_PROGRESS_KEY) refreshProgress();
-    };
-    const onFocus = () => {
+    const refreshKid = () => {
+      const s = getActiveDemoStudent();
+      setStudent(s);
       refreshTeacher();
       refreshProjects();
       refreshPractice();
       refreshChecked();
       refreshProgress();
     };
+    refreshKid();
+    const onStorage = (e) => {
+      if (!e.key || e.key === ADDED_ACTIVITIES_KEY) refreshTeacher();
+      if (!e.key || e.key === PROJECT_ASSIGNED_KEY) refreshProjects();
+      if (!e.key || e.key === PRACTICE_ASSIGNED_KEY) refreshPractice();
+      if (!e.key || e.key === TEACHER_CHECKED_KEY) refreshChecked();
+      if (!e.key || e.key === STUDENT_PROGRESS_KEY) refreshProgress();
+      if (!e.key || e.key === DEMO_KID_STORAGE_KEY) refreshKid();
+    };
+    const onFocus = () => refreshKid();
+    const onKid = () => {
+      refreshKid();
+      const s = getActiveDemoStudent();
+      setSamMsg(`${s.name}'s day — progress stays with each kid.`);
+    };
     window.addEventListener("storage", onStorage);
     window.addEventListener("focus", onFocus);
     window.addEventListener("ci2-project-assigned", refreshProjects);
     window.addEventListener("ci2-practice-assigned", refreshPractice);
     window.addEventListener("ci2-teacher-checked-updated", refreshChecked);
+    window.addEventListener("ci2-demo-kid-changed", onKid);
     return () => {
       window.removeEventListener("storage", onStorage);
       window.removeEventListener("focus", onFocus);
       window.removeEventListener("ci2-project-assigned", refreshProjects);
       window.removeEventListener("ci2-practice-assigned", refreshPractice);
       window.removeEventListener("ci2-teacher-checked-updated", refreshChecked);
+      window.removeEventListener("ci2-demo-kid-changed", onKid);
     };
   }, [day.dayIndex]);
 
@@ -221,7 +231,47 @@ export default function StudentMyDayClient() {
           </Link>
         </header>
 
-        <SamBubble text={allDone ? "All set for today — great work, Leo." : samMsg} />
+        <div
+          role="group"
+          aria-label="Demo student"
+          style={{ marginTop: 14, display: "flex", flexWrap: "wrap", gap: 8, alignItems: "center" }}
+        >
+          <span style={{ fontSize: 12, fontWeight: 700, color: MUTED }}>Demo</span>
+          {DEMO_STUDENT_KIDS.map((kid) => {
+            const active = kid.id === student.id;
+            return (
+              <button
+                key={kid.id}
+                type="button"
+                aria-pressed={active}
+                onClick={() => {
+                  setActiveDemoKidId(kid.id);
+                  setStudent(kid);
+                  refreshProgress();
+                  setTeacherCheckedIds(loadTeacherCheckedIds());
+                  setPracticeAssigned(readAssignedPracticeForDay(day.dayIndex));
+                  setSamMsg(`${kid.name}'s day — progress stays with each kid.`);
+                }}
+                style={{
+                  border: active ? "none" : `1px solid ${LINE}`,
+                  background: active ? LAVENDER : "rgba(255,255,255,.9)",
+                  color: active ? "#fff" : LAVENDER,
+                  borderRadius: 999,
+                  padding: "6px 14px",
+                  fontWeight: 800,
+                  fontSize: 13,
+                  cursor: "pointer",
+                  fontFamily: "inherit",
+                  boxShadow: active ? "0 4px 14px rgba(139,108,255,.28)" : "none",
+                }}
+              >
+                {kid.name}
+              </button>
+            );
+          })}
+        </div>
+
+        <SamBubble text={allDone ? `All set for today — great work, ${student.name}.` : samMsg} />
 
         {day.doneYesterday?.length > 0 && (
           <section aria-label="Done yesterday" style={{ marginTop: 18 }}>

@@ -8,20 +8,29 @@ Branch: `ci2-sandbox` · Route: `/v2/student`
 See also: [STUDENT-ACTIVITY-STUB.md](./STUDENT-ACTIVITY-STUB.md)
 
 ## Demo
-- Student: **Leo** (Room 12 · Ms. Rivera)
+- Students: **Leo · Kai · Riley** switcher on My Day (light chips — not a roster)
+- Default: **Leo** (Room 12 · Ms. Rivera); switch persists in `ci2.student.demoKid`
 - Today: Wednesday (matches teacher Daily Focus `d=2`)
 - Missions from teacher Wed: Equivalent fractions (ClearLesson), The Pizza Problem (Center), Purpose match stations (may-do)
+- Per-kid namespaces so demos don’t collide: progress / Teacher checked / practice assigned
+
+## Demo student switcher
+1. `/v2/student` → chips **Leo / Kai / Riley**
+2. Complete a mission as Leo → checkmark sticks
+3. Switch to Kai → empty progress (own namespace)
+4. Switch back to Leo → Leo’s checkmarks return
 
 ## Teacher Add bridge
 - Key: `ci2.teacher.addedActivities` (localStorage, same browser)
 - `usePlanner` persists Add / suggestion tiles; Student My Day surfaces today’s extras near Now
 - **Gap:** only works same browser/device; no publish, no Supabase, no cross-device
 - **Gap:** base demo tiles (non-Add) are not mirrored live from teacher board edits — curated `DEMO_STUDENT_DAY` only
-- Progress key: `ci2.student.missionProgress` (activity Submit)
+- Progress key: `ci2.student.missionProgress.{kid}` (activity Submit; Leo migrates legacy unscoped key)
+- Active kid: `ci2.student.demoKid`
 - Out of scope: auth, full SAM chat, game worlds, merge to main
 
 ## Practice from Teach live
-- Teacher **Assign practice** on `/v2/teacher/live-teach/[id]` → key `ci2.practice.assigned`
+- Teacher **Assign practice** on `/v2/teacher/live-teach/[id]` → key `ci2.practice.assigned.{kid}` (defaults to active/Leo)
 - Student My Day shows a **Practice** card in Now / Next / Later (may-do by default)
 - **Start** reuses the activity stub (`practice-[activityId]`)
 - See also: [LIVE-TEACH-STUB.md](./LIVE-TEACH-STUB.md)
@@ -33,7 +42,7 @@ See also: [STUDENT-ACTIVITY-STUB.md](./STUDENT-ACTIVITY-STUB.md)
 - See also: [PROJECT-ON-TEACH.md](./PROJECT-ON-TEACH.md) · [STUDENT-TOOLS.md](./STUDENT-TOOLS.md)
 
 ## Teacher checked stamp
-- Teacher **Confirm** in Grading stamps the matching mission/practice on My Day (`ci2.student.teacherChecked`)
+- Teacher **Confirm** in Grading stamps the matching mission/practice on My Day (`ci2.student.teacherChecked.{kid}`)
 - Calm mint chip: **Teacher checked** — not a scary grade badge
 - Live submits use `missionId`; demo rows may match by title (pizza / equivalent / purpose)
 - Same-browser localStorage only
@@ -41,5 +50,5 @@ See also: [STUDENT-ACTIVITY-STUB.md](./STUDENT-ACTIVITY-STUB.md)
 ## SAM celebrate on Teacher checked
 - When a **new** Teacher checked stamp appears (live event or on load), SAM glance line celebrates **once** (calm kid voice via `samTeacherChecked`)
 - Uses existing `SamBubble` / `setSamMsg` pattern — not a full SAM chat
-- Celebrated ids stored in `ci2.student.teacherCheckedCelebrated` so refresh doesn’t re-cheer
+- Celebrated ids stored in `ci2.student.teacherCheckedCelebrated.{kid}` so refresh doesn’t re-cheer
 - Same-browser only; clear site data to reset
