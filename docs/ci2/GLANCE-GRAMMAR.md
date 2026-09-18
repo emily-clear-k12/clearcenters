@@ -29,21 +29,22 @@ Icon name hints live on the token (`amber-soft`, `teal-check`, `soft-purple`, `i
 | SAM strip | Always **top** (under title / after morning when shown) |
 | Check-ins | **Left / stack** (header chip + glance + Check-ins page cards). Route `/v2/teacher/check-ins` |
 | Grading | **Right / nav** (TeacherSubnav Grading + coral count when pending) |
-| Morning card | **Under** title row, above or with SAM glance |
+| Morning card | **Under** title row, above or with SAM glance · always **Open Check-ins** CTA; amber shell when Check-ins needs > 0 |
 | Project | **Right edge** of teach agenda row; indigo accent |
 | Primary CTA | Consistent corner (Assign / Looks good — existing patterns) |
 
 ## Applied (whisper)
 
-- `components/v2/StationShell.js` — CSS vars on shell; SamGlance / MorningCard / RoomCards / WhoNeedsMeChip (label **Check-ins**) / TeacherSubnav grade count
-- `app/v2/teacher/StationDayClient.js` — glance `meaning` keys; Project indigo; `gradeCount` on subnav
+- `components/v2/StationShell.js` — CSS vars on shell; SamGlance / MorningCard (Open Check-ins CTA · amber when needs > 0) / RoomCards / WhoNeedsMeChip (label **Check-ins**) / TeacherSubnav grade count
+- `app/v2/teacher/StationDayClient.js` — glance `meaning` keys; Project indigo; `gradeCount` on subnav; morning `checkInsCount`
 - `app/v2/teacher/check-ins/CheckInsClient.js` — Check-ins title; amber cards; teal dismiss / clear
 - `app/v2/teacher/project/[id]/ProjectShellClient.js` — two-column one-pager; indigo header + evidence chip; right notes fill the glass
 
 ## Click tour
 
-1. Daily Focus → SAM glance amber for Check-ins; coral for to-grade; Project indigo on teach row right
-2. Check-ins → amber cards; teal “Looks good / dismiss”; period filter unchanged
+1. Daily Focus → **SAM morning** card under title · always **Open Check-ins** (amber + “n waiting” when needs > 0)
+2. Daily Focus → SAM glance amber for Check-ins; coral for to-grade; Project indigo on teach row right
+3. Check-ins → amber cards; teal “Looks good / dismiss”; period filter unchanged
 3. Project → **two-column one-pager** — left Assign · right teacher notes; indigo “Project ·” + evidence chip; Details only for rare extras
 
 ## Gaps (out of scope)

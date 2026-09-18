@@ -239,52 +239,103 @@ export function SamGlance({ items, emptyLabel }) {
 
 /**
  * SAM morning card — ~30-second warm open on Daily Focus.
- * Agenda headline + one win (first) + one calm watch. Not Needs-you (that's SamGlance).
+ * Agenda headline + one win (first) + one calm watch.
+ * Always offers a calm Open Check-ins CTA; amber glance when needs > 0.
  */
-export function MorningCard({ greeting, agendaLine, win, watch, onDismiss }) {
+export function MorningCard({
+  greeting,
+  agendaLine,
+  win,
+  watch,
+  onDismiss,
+  checkInsCount = 0,
+  checkInsHref = "/v2/teacher/check-ins",
+}) {
+  const needs = Number(checkInsCount) > 0;
+  const ctaLabel = needs
+    ? `Open Check-ins · ${checkInsCount} waiting`
+    : "Open Check-ins";
+
   return (
     <section
       aria-label="SAM morning card"
       style={{
         margin: "0 0 16px",
-        background: "linear-gradient(135deg, rgba(243,238,255,.98), rgba(255,255,255,.94))",
-        border: `1px solid ${LINE}`,
+        background: needs
+          ? "linear-gradient(135deg, rgba(255,244,230,.98), rgba(255,255,255,.96))"
+          : "linear-gradient(135deg, rgba(243,238,255,.98), rgba(255,255,255,.94))",
+        border: needs
+          ? `1px solid ${GLANCE.needsYou.border}`
+          : `1px solid ${LINE}`,
         borderRadius: 18,
         padding: "14px 16px 12px",
-        boxShadow: "0 10px 28px rgba(139,108,255,.12)",
+        boxShadow: needs
+          ? "0 10px 28px rgba(196,140,60,.12)"
+          : "0 10px 28px rgba(139,108,255,.12)",
       }}
     >
       <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 10, flexWrap: "wrap", marginBottom: 10 }}>
         <div>
           <div style={{ display: "flex", alignItems: "baseline", gap: 8, flexWrap: "wrap" }}>
-            <span style={{ fontWeight: 800, color: INK, fontSize: 13, letterSpacing: 0.3 }}>SAM morning</span>
-            <span style={{ color: MUTED, fontSize: 12 }}>~30 seconds · honest + calm</span>
+            <span
+              style={{
+                fontWeight: 800,
+                color: needs ? GLANCE.needsYou.fg : INK,
+                fontSize: 13,
+                letterSpacing: 0.3,
+              }}
+            >
+              SAM morning
+            </span>
+            <span style={{ color: MUTED, fontSize: 12 }}>
+              {needs ? "~30 seconds · Check-ins waiting" : "~30 seconds · honest + calm"}
+            </span>
           </div>
           {greeting && (
             <div style={{ marginTop: 4, color: INK, fontSize: 15, fontWeight: 600, lineHeight: 1.35 }}>{greeting}</div>
           )}
         </div>
-        {onDismiss && (
-          <button
-            type="button"
-            onClick={onDismiss}
-            aria-label="Dismiss morning card for today"
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
+          <a
+            href={checkInsHref}
+            title={needs ? "Kids waiting for a Check-in" : "Open Check-ins"}
             style={{
-              border: `1px solid ${LINE}`,
-              background: "#fff",
-              color: MUTED,
+              border: needs ? `1px solid ${GLANCE.needsYou.border}` : `1px solid ${LINE}`,
+              background: needs ? GLANCE.needsYou.bg : "#fff",
+              color: needs ? GLANCE.needsYou.fg : MUTED,
               borderRadius: 999,
               padding: "6px 12px",
               fontSize: 12,
-              fontWeight: 700,
-              cursor: "pointer",
-              fontFamily: "inherit",
+              fontWeight: 800,
+              textDecoration: "none",
               whiteSpace: "nowrap",
+              fontFamily: "inherit",
             }}
           >
-            Dismiss today
-          </button>
-        )}
+            {ctaLabel}
+          </a>
+          {onDismiss && (
+            <button
+              type="button"
+              onClick={onDismiss}
+              aria-label="Dismiss morning card for today"
+              style={{
+                border: `1px solid ${LINE}`,
+                background: "#fff",
+                color: MUTED,
+                borderRadius: 999,
+                padding: "6px 12px",
+                fontSize: 12,
+                fontWeight: 700,
+                cursor: "pointer",
+                fontFamily: "inherit",
+                whiteSpace: "nowrap",
+              }}
+            >
+              Dismiss today
+            </button>
+          )}
+        </div>
       </div>
 
       {agendaLine && (
@@ -321,10 +372,27 @@ export function MorningCard({ greeting, agendaLine, win, watch, onDismiss }) {
             ...glanceCardStyle("needsYou"),
             borderRadius: 12,
             padding: "10px 12px",
+            marginBottom: 8,
           }}
         >
           <div style={{ fontSize: 11, fontWeight: 800, color: GLANCE.needsYou.fg, letterSpacing: 0.4, marginBottom: 2 }}>WATCH · NOT YET</div>
           <div style={{ color: INK, fontSize: 14, lineHeight: 1.4 }}>{watch}</div>
+        </div>
+      )}
+
+      {needs && (
+        <div
+          style={{
+            marginTop: 2,
+            fontSize: 12,
+            fontWeight: 700,
+            color: GLANCE.needsYou.fg,
+            lineHeight: 1.4,
+          }}
+        >
+          {checkInsCount === 1
+            ? "1 kid waiting on Check-ins — a calm pull when you are ready."
+            : `${checkInsCount} kids waiting on Check-ins — a calm pull when you are ready.`}
         </div>
       )}
     </section>

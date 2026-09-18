@@ -255,6 +255,8 @@ export default function StationDayClient() {
               win={morningCard.win}
               watch={morningCard.watch}
               onDismiss={dismissMorningCard}
+              checkInsCount={whoNeedsCount}
+              checkInsHref={WHO_NEEDS_ME_HREF}
             />
           )}
           <SamGlance
