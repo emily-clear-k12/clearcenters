@@ -43,6 +43,7 @@ import {
   SetupSwitcher,
   MorningCard,
   SamGlance,
+  SamMorningGlanceRow,
   SamBubble,
   ProvenanceHelperLine,
   RoomCards,
@@ -268,7 +269,7 @@ export default function StationDayClient() {
     <StationShell>
       <style>{`
         .df-bento{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(260px,1fr);gap:16px;align-items:start}
-        .df-top{display:grid;gap:12px;margin:0 0 16px}
+        .df-top{display:grid;gap:10px;margin:0 0 14px}
         .df-rail{display:flex;flex-direction:column;gap:12px;position:sticky;top:12px}
         .df-peek{display:flex;flex-direction:column;gap:8px}
         @media (max-width:960px){
@@ -297,19 +298,28 @@ export default function StationDayClient() {
           </div>
         </div>
 
-        {/* TOP full width: SAM glance + morning (max 3) + period switcher */}
+        {/* TOP full width: SAM morning | glance side-by-side (stack on narrow) + period switcher */}
         <section className="df-top" aria-label="Morning glance band">
-          {!morningDismissed && (
-            <MorningCard
-              greeting={morningCard.greeting}
-              agendaLine={morningCard.agendaLine}
-              win={morningCard.win}
-              watch={morningCard.watch}
-              onDismiss={dismissMorningCard}
-              checkInsCount={whoNeedsCount}
-              checkInsHref={WHO_NEEDS_ME_HREF}
+          <SamMorningGlanceRow style={!morningDismissed ? undefined : { gridTemplateColumns: "1fr" }}>
+            {!morningDismissed && (
+              <MorningCard
+                compact
+                greeting={morningCard.greeting}
+                agendaLine={morningCard.agendaLine}
+                win={morningCard.win}
+                watch={morningCard.watch}
+                onDismiss={dismissMorningCard}
+                checkInsCount={whoNeedsCount}
+                checkInsHref={WHO_NEEDS_ME_HREF}
+              />
+            )}
+            <SamGlance
+              compact
+              items={glanceItems}
+              emptyLabel={`Nothing waiting for ${cls?.name || "this class"} today. Nice.`}
+              style={!morningDismissed ? undefined : { gridColumn: "1 / -1" }}
             />
-          )}
+          </SamMorningGlanceRow>
           {samMorningTip && (
             <SamBubble text={samMorningTip} style={{ margin: 0 }} />
           )}
@@ -317,10 +327,6 @@ export default function StationDayClient() {
             show={showProvenanceHelper}
             onDismiss={onDismissProvenanceHelper}
             text={PROVENANCE_HELPER_TEXT}
-          />
-          <SamGlance
-            items={glanceItems}
-            emptyLabel={`Nothing waiting for ${cls?.name || "this class"} today. Nice.`}
           />
 
           {p.multiClass && (

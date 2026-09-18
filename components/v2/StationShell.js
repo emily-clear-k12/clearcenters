@@ -225,43 +225,55 @@ export function SetupSwitcher({ setupKey, onChange }) {
 
 /**
  * SAM glance strip — max 3 calm needs with one-tap actions.
- * Soft lavender/cream/mint only; never scary red.
+ * Soft lavender/cream/white; amber only when a row truly needs you.
+ * compact: shorter for side-by-side SAM morning | glance row.
  */
-export function SamGlance({ items, emptyLabel }) {
+export function SamGlance({ items, emptyLabel, compact = false, style }) {
   const shown = (items || []).slice(0, 3);
+  const pad = compact ? "8px 12px" : "12px 14px";
+  const rowPad = compact ? "7px 10px" : "10px 12px";
   return (
     <section
       aria-label="SAM glance"
       style={{
-        margin: "0 0 16px",
-        background: SOFT_LAV,
+        margin: 0,
+        background: "linear-gradient(135deg, rgba(243,238,255,.96), rgba(255,255,255,.97))",
         border: `1px solid ${LINE}`,
-        borderRadius: 16,
-        padding: "12px 14px",
+        borderRadius: compact ? 14 : 16,
+        padding: pad,
+        height: "100%",
+        boxSizing: "border-box",
+        ...style,
       }}
     >
-      <div style={{ display: "flex", alignItems: "baseline", gap: 8, marginBottom: shown.length ? 10 : 0, flexWrap: "wrap" }}>
-        <span style={{ fontWeight: 800, color: INK, fontSize: 13, letterSpacing: 0.3 }}>SAM glance</span>
-        <span style={{ color: MUTED, fontSize: 12 }}>up to 3 things worth a look</span>
+      <div style={{ display: "flex", alignItems: "baseline", gap: 8, marginBottom: shown.length ? (compact ? 6 : 10) : 0, flexWrap: "wrap" }}>
+        <span style={{ fontWeight: 800, color: INK, fontSize: compact ? 12 : 13, letterSpacing: 0.3 }}>SAM glance</span>
+        <span style={{ color: MUTED, fontSize: compact ? 11 : 12 }}>up to 3 things worth a look</span>
       </div>
       {shown.length === 0 ? (
-        <div style={{ color: MUTED, fontSize: 14 }}>{emptyLabel || "Nothing waiting right now. You're in good shape."}</div>
+        <div style={{ color: MUTED, fontSize: compact ? 13 : 14 }}>{emptyLabel || "Nothing waiting right now. You're in good shape."}</div>
       ) : (
-        <div style={{ display: "grid", gap: 8 }}>
-          {shown.map((item) => (
+        <div style={{ display: "grid", gap: compact ? 6 : 8 }}>
+          {shown.map((item) => {
+            const meaning = item.meaning || item.tone || "teach";
+            const isNeeds = String(meaning).toLowerCase().includes("need") || meaning === "cream" || meaning === "amber";
+            const rowStyle = isNeeds
+              ? glanceCardStyle("needsYou")
+              : { background: "rgba(255,255,255,.88)", border: `1px solid ${LINE}` };
+            return (
             <div
               key={item.id}
               style={{
                 display: "flex",
                 alignItems: "center",
-                gap: 10,
+                gap: 8,
                 flexWrap: "wrap",
-                ...glanceCardStyle(item.meaning || item.tone || "teach"),
-                borderRadius: 12,
-                padding: "10px 12px",
+                ...rowStyle,
+                borderRadius: 10,
+                padding: rowPad,
               }}
             >
-              <div style={{ flex: 1, minWidth: 180, color: INK, fontSize: 14, lineHeight: 1.35 }}>{item.text}</div>
+              <div style={{ flex: 1, minWidth: compact ? 120 : 180, color: INK, fontSize: compact ? 13 : 14, lineHeight: 1.3 }}>{item.text}</div>
               {item.actionLabel && item.href && (
                 <Link
                   href={item.href}
@@ -270,9 +282,9 @@ export function SamGlance({ items, emptyLabel }) {
                     background: "#fff",
                     color: LAVENDER,
                     borderRadius: 999,
-                    padding: "6px 12px",
+                    padding: compact ? "4px 10px" : "6px 12px",
                     fontWeight: 700,
-                    fontSize: 13,
+                    fontSize: compact ? 12 : 13,
                     textDecoration: "none",
                     whiteSpace: "nowrap",
                   }}
@@ -289,9 +301,9 @@ export function SamGlance({ items, emptyLabel }) {
                     background: "#fff",
                     color: LAVENDER,
                     borderRadius: 999,
-                    padding: "6px 12px",
+                    padding: compact ? "4px 10px" : "6px 12px",
                     fontWeight: 700,
-                    fontSize: 13,
+                    fontSize: compact ? 12 : 13,
                     cursor: "pointer",
                     fontFamily: "inherit",
                     whiteSpace: "nowrap",
@@ -301,10 +313,34 @@ export function SamGlance({ items, emptyLabel }) {
                 </button>
               )}
             </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </section>
+  );
+}
+
+/**
+ * Side-by-side SAM morning | SAM glance at the top (md+).
+ * Stacks on narrow screens. Short band — keep height quiet.
+ */
+export function SamMorningGlanceRow({ children, style }) {
+  return (
+    <div className="sam-mg-row" style={{ margin: "0 0 14px", ...style }}>
+      <style>{`
+        .sam-mg-row{
+          display:grid;
+          grid-template-columns:minmax(0,1fr) minmax(0,1fr);
+          gap:12px;
+          align-items:stretch;
+        }
+        @media (max-width:720px){
+          .sam-mg-row{grid-template-columns:1fr}
+        }
+      `}</style>
+      {children}
+    </div>
   );
 }
 
@@ -408,9 +444,10 @@ export function ProvenanceHelperLine({ show, onDismiss, text = "Tiles remember w
  */
 
 /**
- * SAM morning card — ~30-second warm open on Daily Focus.
- * Agenda headline + one win (first) + one calm watch.
- * Always offers a calm Open Check-ins CTA; amber glance when needs > 0.
+ * SAM morning card — ~30-second warm open on Daily Focus / This Week.
+ * Soft lavender/cream/white chrome — never amber fills inside SAM shell.
+ * Amber only on real-need CTA / WATCH cues when Check-ins wait.
+ * compact: shorter for side-by-side with SAM glance.
  */
 export function MorningCard({
   greeting,
@@ -420,6 +457,8 @@ export function MorningCard({
   onDismiss,
   checkInsCount = 0,
   checkInsHref = "/v2/teacher/check-ins",
+  compact = false,
+  style,
 }) {
   const needs = Number(checkInsCount) > 0;
   const ctaLabel = needs
@@ -430,42 +469,39 @@ export function MorningCard({
     <section
       aria-label="SAM morning card"
       style={{
-        margin: "0 0 16px",
-        background: needs
-          ? "linear-gradient(135deg, rgba(255,244,230,.98), rgba(255,255,255,.96))"
-          : "linear-gradient(135deg, rgba(243,238,255,.98), rgba(255,255,255,.94))",
-        border: needs
-          ? `1px solid ${GLANCE.needsYou.border}`
-          : `1px solid ${LINE}`,
-        borderRadius: 18,
-        padding: "14px 16px 12px",
-        boxShadow: needs
-          ? "0 10px 28px rgba(196,140,60,.12)"
-          : "0 10px 28px rgba(139,108,255,.12)",
+        margin: 0,
+        background: "linear-gradient(135deg, rgba(243,238,255,.98), rgba(255,248,238,.94), rgba(255,255,255,.97))",
+        border: `1px solid ${LINE}`,
+        borderRadius: compact ? 14 : 18,
+        padding: compact ? "10px 12px 8px" : "14px 16px 12px",
+        boxShadow: "0 8px 22px rgba(139,108,255,.10)",
+        height: "100%",
+        boxSizing: "border-box",
+        ...style,
       }}
     >
-      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 10, flexWrap: "wrap", marginBottom: 10 }}>
+      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 8, flexWrap: "wrap", marginBottom: compact ? 6 : 10 }}>
         <div>
           <div style={{ display: "flex", alignItems: "baseline", gap: 8, flexWrap: "wrap" }}>
             <span
               style={{
                 fontWeight: 800,
-                color: needs ? GLANCE.needsYou.fg : INK,
-                fontSize: 13,
+                color: INK,
+                fontSize: compact ? 12 : 13,
                 letterSpacing: 0.3,
               }}
             >
               SAM morning
             </span>
-            <span style={{ color: MUTED, fontSize: 12 }}>
-              {needs ? "~30 seconds · Check-ins waiting" : "~30 seconds · honest + calm"}
+            <span style={{ color: MUTED, fontSize: compact ? 11 : 12 }}>
+              {needs ? "~30 sec · Check-ins waiting" : "~30 seconds · honest + calm"}
             </span>
           </div>
           {greeting && (
-            <div style={{ marginTop: 4, color: INK, fontSize: 15, fontWeight: 600, lineHeight: 1.35 }}>{greeting}</div>
+            <div style={{ marginTop: 2, color: INK, fontSize: compact ? 13 : 15, fontWeight: 600, lineHeight: 1.3 }}>{greeting}</div>
           )}
         </div>
-        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
+        <div style={{ display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center" }}>
           <a
             href={checkInsHref}
             title={needs ? "Kids waiting for a Check-in" : "Open Check-ins"}
@@ -474,8 +510,8 @@ export function MorningCard({
               background: needs ? GLANCE.needsYou.bg : "#fff",
               color: needs ? GLANCE.needsYou.fg : MUTED,
               borderRadius: 999,
-              padding: "6px 12px",
-              fontSize: 12,
+              padding: compact ? "4px 10px" : "6px 12px",
+              fontSize: compact ? 11 : 12,
               fontWeight: 800,
               textDecoration: "none",
               whiteSpace: "nowrap",
@@ -494,8 +530,8 @@ export function MorningCard({
                 background: "#fff",
                 color: MUTED,
                 borderRadius: 999,
-                padding: "6px 12px",
-                fontSize: 12,
+                padding: compact ? "4px 10px" : "6px 12px",
+                fontSize: compact ? 11 : 12,
                 fontWeight: 700,
                 cursor: "pointer",
                 fontFamily: "inherit",
@@ -511,50 +547,52 @@ export function MorningCard({
       {agendaLine && (
         <div
           style={{
-            ...glanceCardStyle("teach"),
-            borderRadius: 12,
-            padding: "10px 12px",
-            marginBottom: 8,
+            background: "rgba(255,255,255,.88)",
+            border: `1px solid ${LINE}`,
+            borderRadius: 10,
+            padding: compact ? "7px 10px" : "10px 12px",
+            marginBottom: compact ? 6 : 8,
           }}
         >
-          <div style={{ fontSize: 11, fontWeight: 800, color: GLANCE.teach.fg, letterSpacing: 0.4, marginBottom: 2 }}>TODAY · NOW</div>
-          <div style={{ color: INK, fontSize: 15, fontWeight: 700, lineHeight: 1.35 }}>{agendaLine}</div>
+          <div style={{ fontSize: 10, fontWeight: 800, color: GLANCE.teach.fg, letterSpacing: 0.4, marginBottom: 1 }}>TODAY · NOW</div>
+          <div style={{ color: INK, fontSize: compact ? 13 : 15, fontWeight: 700, lineHeight: 1.3 }}>{agendaLine}</div>
         </div>
       )}
 
+      <div style={{ display: "grid", gridTemplateColumns: compact && win && watch ? "1fr 1fr" : "1fr", gap: compact ? 6 : 8 }}>
       {win && (
         <div
           style={{
-            background: "rgba(255,255,255,.78)",
+            background: "rgba(255,255,255,.82)",
             border: `1px solid ${LINE}`,
-            borderRadius: 12,
-            padding: "10px 12px",
-            marginBottom: 8,
+            borderRadius: 10,
+            padding: compact ? "7px 10px" : "10px 12px",
           }}
         >
-          <div style={{ fontSize: 11, fontWeight: 800, color: MUTED, letterSpacing: 0.4, marginBottom: 2 }}>WIN · YESTERDAY</div>
-          <div style={{ color: INK, fontSize: 14, lineHeight: 1.4 }}>{win}</div>
+          <div style={{ fontSize: 10, fontWeight: 800, color: MUTED, letterSpacing: 0.4, marginBottom: 1 }}>WIN · YESTERDAY</div>
+          <div style={{ color: INK, fontSize: compact ? 12 : 14, lineHeight: 1.35 }}>{win}</div>
         </div>
       )}
 
       {watch && (
         <div
           style={{
-            ...(needs ? glanceCardStyle("needsYou") : { background: "rgba(255,255,255,.78)", border: `1px solid ${LINE}` }),
-            borderRadius: 12,
-            padding: "10px 12px",
-            marginBottom: 8,
+            background: "rgba(255,255,255,.82)",
+            border: `1px solid ${LINE}`,
+            borderRadius: 10,
+            padding: compact ? "7px 10px" : "10px 12px",
           }}
         >
-          <div style={{ fontSize: 11, fontWeight: 800, color: needs ? GLANCE.needsYou.fg : MUTED, letterSpacing: 0.4, marginBottom: 2 }}>WATCH · NOT YET</div>
-          <div style={{ color: INK, fontSize: 14, lineHeight: 1.4 }}>{watch}</div>
+          <div style={{ fontSize: 10, fontWeight: 800, color: needs ? GLANCE.needsYou.fg : MUTED, letterSpacing: 0.4, marginBottom: 1 }}>WATCH · NOT YET</div>
+          <div style={{ color: INK, fontSize: compact ? 12 : 14, lineHeight: 1.35 }}>{watch}</div>
         </div>
       )}
+      </div>
 
-      {needs && (
+      {needs && !compact && (
         <div
           style={{
-            marginTop: 2,
+            marginTop: 6,
             fontSize: 12,
             fontWeight: 700,
             color: GLANCE.needsYou.fg,

@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { usePlanner } from "../../../lib/v2/usePlanner";
-import { SUBJECTS, DAYS, DATES, DEMO_WEEK, HANDS_OFF_LEVELS } from "../../../lib/v2/demoWeek";
+import { SUBJECTS, DAYS, DATES, DEMO_WEEK, HANDS_OFF_LEVELS, buildMorningCardDemo } from "../../../lib/v2/demoWeek";
 import { GRADING_INBOX_HREF, GRADING_INBOX_KEY, GRADING_STORAGE_KEY, getPendingCount, loadConfirmedIds } from "../../../lib/v2/demoGrading";
 import {
   getWhoNeedsCountsByClass,
@@ -12,8 +12,6 @@ import {
   WHO_NEEDS_ME_HREF,
   WHO_NEEDS_ME_STORAGE_KEY,
 } from "../../../lib/v2/demoWhoNeedsMe";
-import { PROJECT_HREF } from "../../../lib/v2/demoProject";
-import { LESSON_PLAN_HREF } from "../../../lib/v2/demoLessonPlan";
 import { LIVE_TEACH_HREF } from "../../../lib/v2/demoLiveTeach";
 import {
   plannerProvenanceLabel,
@@ -28,7 +26,9 @@ import {
   Pill,
   TeacherSubnav,
   SetupSwitcher,
+  MorningCard,
   SamGlance,
+  SamMorningGlanceRow,
   ProvenanceHelperLine,
   RoomCards,
   SingleRoomLabel,
@@ -98,6 +98,45 @@ export default function StationWeekClient() {
     dismissProvenanceHelper();
     setShowProvenanceHelper(false);
   }
+
+  // SAM morning (same dismiss key as Daily Focus for today)
+  const todayDay = 2;
+  const morningDismissKey = `ci2.morning.dismissed.${DATES[todayDay] || todayDay}`;
+  const [morningDismissed, setMorningDismissed] = useState(false);
+  useEffect(() => {
+    try {
+      setMorningDismissed(window.localStorage.getItem(morningDismissKey) === "1");
+    } catch {
+      setMorningDismissed(false);
+    }
+  }, [morningDismissKey]);
+
+  function dismissMorningCard() {
+    try {
+      window.localStorage.setItem(morningDismissKey, "1");
+    } catch {
+      /* ignore */
+    }
+    setMorningDismissed(true);
+  }
+
+  const todayAgenda = useMemo(() => {
+    const items = (p.visible || []).filter((a) => a.day === todayDay);
+    const teach = items.find((a) => a.kind === "teach");
+    return teach || items[0] || null;
+  }, [p.visible]);
+
+  const morningCard = useMemo(
+    () =>
+      buildMorningCardDemo({
+        subjects: p.setup.subjects,
+        classKey: selectedClass,
+        className: cls?.name,
+        subjectFilter: p.subjectFilter,
+        agendaNow: todayAgenda,
+      }),
+    [p.setup.subjects, selectedClass, cls?.name, p.subjectFilter, todayAgenda]
+  );
 
   const dialSubjectLabel =
     p.subjectFilter === "all"
@@ -307,14 +346,30 @@ export default function StationWeekClient() {
             onDismiss={onDismissProvenanceHelper}
             text={PROVENANCE_HELPER_TEXT}
           />
-          <SamGlance
-            items={glanceItems}
-            emptyLabel={
-              p.level === "i_plan"
-                ? `Suggestions are ready for ${cls?.name || "this class"} — build from here.`
-                : `Nothing waiting for ${cls?.name || "this class"} this week. Nice.`
-            }
-          />
+          <SamMorningGlanceRow style={!morningDismissed ? undefined : { gridTemplateColumns: "1fr" }}>
+            {!morningDismissed && (
+              <MorningCard
+                compact
+                greeting={morningCard.greeting}
+                agendaLine={morningCard.agendaLine}
+                win={morningCard.win}
+                watch={morningCard.watch}
+                onDismiss={dismissMorningCard}
+                checkInsCount={whoNeedsCount}
+                checkInsHref={WHO_NEEDS_ME_HREF}
+              />
+            )}
+            <SamGlance
+              compact
+              items={glanceItems}
+              emptyLabel={
+                p.level === "i_plan"
+                  ? `Suggestions are ready for ${cls?.name || "this class"} — build from here.`
+                  : `Nothing waiting for ${cls?.name || "this class"} this week. Nice.`
+              }
+              style={!morningDismissed ? undefined : { gridColumn: "1 / -1" }}
+            />
+          </SamMorningGlanceRow>
         </div>
 
         {p.openRoutineOffers?.[0] && (
@@ -547,8 +602,26 @@ export default function StationWeekClient() {
                             <div style={{ fontSize: 13, fontWeight: 650, color: INK, lineHeight: 1.25 }}>{act.title}</div>
                           </div>
                         </button>
-                        {act.kind === "teach" && (
-                          <div className="ci2-no-print" style={{ alignSelf: "center", marginRight: 4, display: "flex", gap: 4, flexShrink: 0 }}>
+                        <div className="ci2-no-print" style={{ alignSelf: "center", marginRight: 4, display: "flex", flexDirection: "column", gap: 4, flexShrink: 0, alignItems: "flex-end" }}>
+                          <span
+                            title={act.product || "Crystal Instruction"}
+                            style={{
+                              border: `1px dashed ${LINE}`,
+                              background: "rgba(255,255,255,.88)",
+                              color: MUTED,
+                              borderRadius: 999,
+                              padding: "3px 8px",
+                              fontSize: 10,
+                              fontWeight: 700,
+                              whiteSpace: "nowrap",
+                              maxWidth: 110,
+                              overflow: "hidden",
+                              textOverflow: "ellipsis",
+                            }}
+                          >
+                            {act.product || "ClearLessons"}
+                          </span>
+                          {act.kind === "teach" && (
                             <button
                               type="button"
                               onClick={(e) => {
@@ -557,66 +630,22 @@ export default function StationWeekClient() {
                               }}
                               title="Teach live"
                               style={{
-                                border: "none",
-                                background: GLANCE.teach.fg,
-                                color: "#fff",
-                                borderRadius: 999,
-                                padding: "4px 8px",
-                                fontSize: 11,
-                                fontWeight: 700,
-                                cursor: "pointer",
-                                fontFamily: "inherit",
-                                whiteSpace: "nowrap",
-                              }}
-                            >
-                              Live
-                            </button>
-                            <button
-                              type="button"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                router.push(LESSON_PLAN_HREF(act.id));
-                              }}
-                              title="Open lesson plan stub"
-                              style={{
                                 border: `1px solid ${LINE}`,
                                 background: "#fff",
                                 color: GLANCE.teach.fg,
                                 borderRadius: 999,
-                                padding: "4px 8px",
-                                fontSize: 11,
+                                padding: "3px 8px",
+                                fontSize: 10,
                                 fontWeight: 700,
                                 cursor: "pointer",
                                 fontFamily: "inherit",
                                 whiteSpace: "nowrap",
                               }}
                             >
-                              Lesson
+                              Teach
                             </button>
-                            <button
-                              type="button"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                router.push(PROJECT_HREF(act.id));
-                              }}
-                              title="Open project shell"
-                              style={{
-                                border: `1px solid ${LINE}`,
-                                background: "#fff",
-                                color: LAVENDER,
-                                borderRadius: 999,
-                                padding: "4px 8px",
-                                fontSize: 11,
-                                fontWeight: 700,
-                                cursor: "pointer",
-                                fontFamily: "inherit",
-                                whiteSpace: "nowrap",
-                              }}
-                            >
-                              Project
-                            </button>
-                          </div>
-                        )}
+                          )}
+                        </div>
                       </div>
                     );
                   })}
@@ -628,8 +657,29 @@ export default function StationWeekClient() {
                     />
                   </div>
                   {items.length === 0 && (
-                    <div style={{ color: MUTED, fontSize: 12, padding: "8px 6px" }}>
-                      {p.level === "i_plan" ? "Open for your plan — add here or from Daily Focus." : "Nothing planned — tap + Add."}
+                    <div style={{ padding: "6px 4px", display: "grid", gap: 6 }}>
+                      <div style={{ color: MUTED, fontSize: 11, lineHeight: 1.35 }}>
+                        {p.level === "i_plan" ? "Open for your plan — light product placeholders:" : "Nothing planned — light product placeholders:"}
+                      </div>
+                      <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
+                        {["ClearLessons", "ClearSheets", "ClearCenters", "ClassCade Showdown"].map((name) => (
+                          <span
+                            key={name}
+                            style={{
+                              border: `1px dashed ${LINE}`,
+                              background: "rgba(255,255,255,.75)",
+                              color: MUTED,
+                              borderRadius: 999,
+                              padding: "3px 7px",
+                              fontSize: 10,
+                              fontWeight: 650,
+                              whiteSpace: "nowrap",
+                            }}
+                          >
+                            {name}
+                          </span>
+                        ))}
+                      </div>
                     </div>
                   )}
                 </div>
