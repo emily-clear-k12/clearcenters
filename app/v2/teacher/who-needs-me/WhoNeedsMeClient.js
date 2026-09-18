@@ -6,6 +6,9 @@ import {
   StationShell,
   Glass,
   TeacherSubnav,
+  SetupSwitcher,
+  RoomCards,
+  SingleRoomLabel,
   INK,
   MUTED,
   LINE,
@@ -14,6 +17,7 @@ import {
   MINT,
   CREAM,
 } from "../../../../components/v2/StationShell";
+import { usePlanner } from "../../../../lib/v2/usePlanner";
 import {
   GRADING_INBOX_HREF,
   GRADING_INBOX_KEY,
@@ -23,6 +27,7 @@ import {
 } from "../../../../lib/v2/demoGrading";
 import {
   actionLabel,
+  getWhoNeedsCountsByClass,
   getWhoNeedsMeCards,
   loadWhoNeedsChoices,
   reasonLabel,
@@ -33,8 +38,10 @@ import {
 /**
  * CI2.0 Who needs me — reteach / small-group stub.
  * 1–3 calm cards. Actions persist in localStorage; dismissed leave the list.
+ * Departmentalized: same RoomCards / classFilter as Daily Focus (synced via usePlanner).
  */
 export default function WhoNeedsMeClient() {
+  const p = usePlanner();
   const [choices, setChoices] = useState({});
   const [confirmedIds, setConfirmedIds] = useState([]);
   const [hydrated, setHydrated] = useState(false);
@@ -75,27 +82,50 @@ export default function WhoNeedsMeClient() {
     return () => clearTimeout(t);
   }, [toast]);
 
+  const cls = p.setup.classes.find((c) => c.key === p.classFilter) || p.setup.classes[0];
+  const selectedClass = p.classFilter === "all" ? p.setup.classes[0]?.key : p.classFilter;
+  const filterOpts = useMemo(
+    () => ({
+      classFilter: selectedClass,
+      inheritPeriodId: selectedClass || "A",
+    }),
+    [selectedClass]
+  );
+
   const cards = useMemo(() => {
     void choices;
     void confirmedIds;
-    return hydrated ? getWhoNeedsMeCards(choices, confirmedIds) : getWhoNeedsMeCards({}, []);
-  }, [choices, confirmedIds, hydrated]);
+    if (!hydrated || !p.hydrated) {
+      return getWhoNeedsMeCards({}, [], filterOpts);
+    }
+    return getWhoNeedsMeCards(choices, confirmedIds, filterOpts);
+  }, [choices, confirmedIds, hydrated, p.hydrated, filterOpts]);
 
-  const act = useCallback(
-    (card, action) => {
-      const next = recordWhoNeedsAction(card.id, action);
-      setChoices(next);
-      const name = card.studentFirst;
-      if (action === "small_group") {
-        setToast({ text: `${name} · pulled for small group (stub).` });
-      } else if (action === "reteach_tomorrow") {
-        setToast({ text: `${name} · reteach tomorrow (stub).` });
-      } else {
-        setToast({ text: `${name} · looks good. Cleared for now.` });
-      }
-    },
-    []
-  );
+  const needsByClass = useMemo(() => {
+    const keys = p.setup.classes.map((c) => c.key);
+    const base = {};
+    for (const k of keys) base[k] = 0;
+    if (!hydrated || !p.hydrated) return base;
+    return {
+      ...base,
+      ...getWhoNeedsCountsByClass(keys, choices, confirmedIds),
+    };
+  }, [p.setup.classes, choices, confirmedIds, hydrated, p.hydrated]);
+
+  const periodLabel = cls?.name || "this class";
+
+  const act = useCallback((card, action) => {
+    const next = recordWhoNeedsAction(card.id, action);
+    setChoices(next);
+    const name = card.studentFirst;
+    if (action === "small_group") {
+      setToast({ text: `${name} · pulled for small group (stub).` });
+    } else if (action === "reteach_tomorrow") {
+      setToast({ text: `${name} · reteach tomorrow (stub).` });
+    } else {
+      setToast({ text: `${name} · looks good. Cleared for now.` });
+    }
+  }, []);
 
   return (
     <StationShell>
@@ -108,8 +138,11 @@ export default function WhoNeedsMeClient() {
             </h1>
             <div style={{ color: MUTED, marginTop: 2 }}>
               1–3 kids · calm look · not a spreadsheet
+              {p.multiClass ? ` · ${periodLabel}` : ""}
             </div>
             <div style={{ marginTop: 10, display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
+              <SetupSwitcher setupKey={p.setupKey} onChange={p.setSetupKey} />
+              {!p.multiClass && <SingleRoomLabel cls={cls} setup={p.setup} />}
               <span
                 style={{
                   fontSize: 13,
@@ -139,6 +172,16 @@ export default function WhoNeedsMeClient() {
           </div>
         </div>
 
+        {p.multiClass && (
+          <RoomCards
+            classes={p.setup.classes}
+            selectedKey={selectedClass}
+            onSelect={p.setClassFilter}
+            setup={p.setup}
+            needsByClass={needsByClass}
+          />
+        )}
+
         <section aria-label="Who needs me cards" style={{ marginTop: 18, display: "grid", gap: 12 }}>
           {cards.length === 0 && (
             <div
@@ -152,13 +195,19 @@ export default function WhoNeedsMeClient() {
                 lineHeight: 1.45,
               }}
             >
-              Everyone&apos;s in good shape right now. Nothing waiting.
+              {p.multiClass
+                ? `Everyone's in good shape for ${periodLabel} right now. Nothing waiting.`
+                : "Everyone's in good shape right now. Nothing waiting."}
             </div>
           )}
 
           {cards.map((card) => {
             const sub = subjectMeta(card.subject);
             const needsYou = card.tone === "needs_you";
+            const roomName =
+              p.multiClass && card.periodId
+                ? p.setup.classes.find((c) => c.key === card.periodId)?.name
+                : null;
             return (
               <article
                 key={card.id}
@@ -189,6 +238,21 @@ export default function WhoNeedsMeClient() {
                       >
                         {needsYou ? "needs you" : "ready"}
                       </span>
+                      {roomName && (
+                        <span
+                          style={{
+                            fontSize: 11,
+                            fontWeight: 700,
+                            color: MUTED,
+                            background: "#fff",
+                            border: `1px solid ${LINE}`,
+                            borderRadius: 999,
+                            padding: "3px 10px",
+                          }}
+                        >
+                          {roomName}
+                        </span>
+                      )}
                       <span
                         style={{
                           fontSize: 11,

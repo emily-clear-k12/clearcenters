@@ -6,6 +6,7 @@ import { usePlanner } from "../../../lib/v2/usePlanner";
 import { SUBJECTS, DAYS, DATES, DEMO_WEEK, HANDS_OFF_LEVELS } from "../../../lib/v2/demoWeek";
 import { GRADING_INBOX_HREF, GRADING_INBOX_KEY, GRADING_STORAGE_KEY, getPendingCount, loadConfirmedIds } from "../../../lib/v2/demoGrading";
 import {
+  getWhoNeedsCountsByClass,
   getWhoNeedsMeCount,
   whoNeedsGlanceText,
   WHO_NEEDS_ME_HREF,
@@ -39,10 +40,17 @@ export default function StationWeekClient() {
   const p = usePlanner();
   const [gradePending, setGradePending] = useState(DEMO_WEEK.gradingCount);
   const [whoNeedsCount, setWhoNeedsCount] = useState(0);
+  const cls = p.setup.classes.find((c) => c.key === p.classFilter) || p.setup.classes[0];
+  const selectedClass = p.classFilter === "all" ? p.setup.classes[0]?.key : p.classFilter;
   useEffect(() => {
     const refresh = () => {
       setGradePending(getPendingCount(loadConfirmedIds()));
-      setWhoNeedsCount(getWhoNeedsMeCount());
+      setWhoNeedsCount(
+        getWhoNeedsMeCount(undefined, undefined, {
+          classFilter: selectedClass,
+          inheritPeriodId: selectedClass || "A",
+        })
+      );
     };
     refresh();
     const onStorage = (e) => {
@@ -50,7 +58,8 @@ export default function StationWeekClient() {
         e.key === GRADING_STORAGE_KEY ||
         e.key === GRADING_INBOX_KEY ||
         e.key === WHO_NEEDS_ME_STORAGE_KEY ||
-        e.key === "ci2.grading.confirmedIds"
+        e.key === "ci2.grading.confirmedIds" ||
+        e.key === "ci2.teacher.classFilter"
       ) {
         refresh();
       }
@@ -65,9 +74,7 @@ export default function StationWeekClient() {
       window.removeEventListener("ci2-grading-updated", refresh);
       window.removeEventListener("ci2-who-needs-updated", refresh);
     };
-  }, []);
-  const cls = p.setup.classes.find((c) => c.key === p.classFilter) || p.setup.classes[0];
-  const selectedClass = p.classFilter === "all" ? p.setup.classes[0]?.key : p.classFilter;
+  }, [selectedClass]);
 
   const dialSubjectLabel =
     p.subjectFilter === "all"
@@ -82,6 +89,8 @@ export default function StationWeekClient() {
     for (const s of p.openSuggestions) {
       if (s.classKey && map[s.classKey] != null) map[s.classKey] += 1;
     }
+    const whoBy = getWhoNeedsCountsByClass(Object.keys(map));
+    for (const k of Object.keys(map)) map[k] += whoBy[k] || 0;
     return map;
   }, [p.setup.classes, p.openSuggestions]);
 

@@ -12,6 +12,7 @@ import {
   loadConfirmedIds,
 } from "../../../lib/v2/demoGrading";
 import {
+  getWhoNeedsCountsByClass,
   getWhoNeedsMeCount,
   whoNeedsGlanceText,
   WHO_NEEDS_ME_HREF,
@@ -49,17 +50,27 @@ export default function StationDayClient() {
   const p = usePlanner();
   const [gradePending, setGradePending] = useState(DEMO_WEEK.gradingCount);
   const [whoNeedsCount, setWhoNeedsCount] = useState(0);
+  const day = Math.min(4, Math.max(0, Number(params.get("d") ?? 2)));
+  const [openId, setOpenId] = useState(params.get("open"));
+  const cls = p.setup.classes.find((c) => c.key === p.classFilter) || p.setup.classes[0];
+  const selectedClass = p.classFilter === "all" ? p.setup.classes[0]?.key : p.classFilter;
   useEffect(() => {
     const refresh = () => {
       setGradePending(getPendingCount(loadConfirmedIds()));
-      setWhoNeedsCount(getWhoNeedsMeCount());
+      setWhoNeedsCount(
+        getWhoNeedsMeCount(undefined, undefined, {
+          classFilter: selectedClass,
+          inheritPeriodId: selectedClass || "A",
+        })
+      );
     };
     refresh();
     const onStorage = (e) => {
       if (
         e.key === GRADING_STORAGE_KEY ||
         e.key === GRADING_INBOX_KEY ||
-        e.key === WHO_NEEDS_ME_STORAGE_KEY
+        e.key === WHO_NEEDS_ME_STORAGE_KEY ||
+        e.key === "ci2.teacher.classFilter"
       ) {
         refresh();
       }
@@ -74,11 +85,7 @@ export default function StationDayClient() {
       window.removeEventListener("ci2-grading-updated", refresh);
       window.removeEventListener("ci2-who-needs-updated", refresh);
     };
-  }, []);
-  const day = Math.min(4, Math.max(0, Number(params.get("d") ?? 2)));
-  const [openId, setOpenId] = useState(params.get("open"));
-  const cls = p.setup.classes.find((c) => c.key === p.classFilter) || p.setup.classes[0];
-  const selectedClass = p.classFilter === "all" ? p.setup.classes[0]?.key : p.classFilter;
+  }, [selectedClass]);
   const items = p.visible.filter((a) => a.day === day);
   // Agenda rise-to-top: teach first, then work/small — labeled Now → Next → Later
   const agenda = useMemo(() => {
@@ -96,6 +103,8 @@ export default function StationDayClient() {
     for (const s of p.openSuggestions) {
       if (s.classKey && map[s.classKey] != null) map[s.classKey] += 1;
     }
+    const whoBy = getWhoNeedsCountsByClass(Object.keys(map));
+    for (const k of Object.keys(map)) map[k] += whoBy[k] || 0;
     return map;
   }, [p.setup.classes, p.openSuggestions]);
 
