@@ -22,6 +22,8 @@ import {
   SOFT_LAV,
   MINT,
 } from "../../../components/v2/StationShell";
+import { HowMyWeeksRunDrawer, WeeksRunEntry } from "../../../components/v2/HowMyWeeksRun";
+import { AddActivityModal, AddActivityButton } from "../../../components/v2/AddActivityModal";
 import { Toast } from "../../../components/v2/weekKit";
 
 const AGENDA_LABELS = ["Now", "Next", "Later"];
@@ -96,6 +98,8 @@ export default function StationDayClient() {
               <SetupSwitcher setupKey={p.setupKey} onChange={p.setSetupKey} />
               {!p.multiClass && <SingleRoomLabel cls={cls} setup={p.setup} />}
               <HandsOffChip level={p.level} onOpenPreview={() => p.setShowSundayPreview(true)} />
+              <WeeksRunEntry onOpen={() => p.setShowWeeksRun(true)} routineCount={p.enabledRoutineCount} />
+              <AddActivityButton onClick={() => p.openAddActivity({ day })} label="+ Add" />
             </div>
           </div>
           <button
@@ -306,6 +310,30 @@ export default function StationDayClient() {
           router.push(`/v2/teacher/day?d=${d}`);
         }}
         onAcknowledge={p.acknowledgeSundayPreview}
+      />
+      <HowMyWeeksRunDrawer
+        open={p.showWeeksRun}
+        onClose={() => p.setShowWeeksRun(false)}
+        routines={p.routines}
+        subjects={p.setup.subjects}
+        dialLevel={p.level}
+        onUpdateRoutine={p.updateRoutine}
+        onAddRoutine={p.addRoutine}
+        onToggleRoutine={p.toggleRoutine}
+        onAcceptOffer={p.acceptRoutineOffer}
+        onDismissOffer={p.dismissRoutineOffer}
+        dismissedOffers={p.dismissedOffers}
+        onOpenSundayPreview={() => p.setShowSundayPreview(true)}
+        onOpenHandsOff={() => { p.setShowWeeksRun(false); router.push('/v2/teacher'); }}
+      />
+      <AddActivityModal
+        open={p.showAddActivity}
+        onClose={() => p.setShowAddActivity(false)}
+        onAdd={(payload) => p.addActivity({ ...payload, day: payload.day ?? day })}
+        subjects={p.setup.subjects}
+        classes={p.setup.classes}
+        multiClass={p.multiClass}
+        defaults={p.addActivityDefaults || { day }}
       />
       <Toast toast={p.toast} />
     </StationShell>

@@ -22,6 +22,8 @@ import {
   LAVENDER,
   MINT,
 } from "../../../components/v2/StationShell";
+import { HowMyWeeksRunDrawer, WeeksRunEntry } from "../../../components/v2/HowMyWeeksRun";
+import { AddActivityModal, AddActivityButton } from "../../../components/v2/AddActivityModal";
 import { Toast } from "../../../components/v2/weekKit";
 
 export default function StationWeekClient() {
@@ -97,11 +99,13 @@ export default function StationWeekClient() {
               <SetupSwitcher setupKey={p.setupKey} onChange={p.setSetupKey} />
               {!p.multiClass && <SingleRoomLabel cls={cls} setup={p.setup} />}
             </div>
-            <div style={{ marginTop: 12 }}>
+            <div style={{ marginTop: 12, display: "flex", gap: 10, flexWrap: "wrap", alignItems: "flex-start" }}>
               <HandsOffDial level={p.level} onChange={onHandsOff} subjectLabel={dialSubjectLabel} />
+              <WeeksRunEntry onOpen={() => p.setShowWeeksRun(true)} routineCount={p.enabledRoutineCount} />
             </div>
           </div>
           <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
+            <AddActivityButton onClick={() => p.openAddActivity({ day: 2 })} label="+ Add" />
             <button
               type="button"
               onClick={() => p.setShowSundayPreview(true)}
@@ -165,6 +169,77 @@ export default function StationWeekClient() {
             }
           />
         </div>
+
+        {p.openRoutineOffers?.[0] && (
+          <div
+            style={{
+              margin: "0 0 14px",
+              display: "flex",
+              alignItems: "center",
+              gap: 12,
+              flexWrap: "wrap",
+              background: p.openRoutineOffers[0].type === "hands_off_bump" ? MINT : "#FFF8EE",
+              border: `1px solid ${LINE}`,
+              borderRadius: 14,
+              padding: "10px 14px",
+            }}
+          >
+            <div style={{ flex: 1, minWidth: 200, color: INK, fontSize: 14, lineHeight: 1.35 }}>
+              <strong>SAM:</strong> {p.openRoutineOffers[0].text}
+            </div>
+            <button
+              type="button"
+              onClick={() => p.acceptRoutineOffer(p.openRoutineOffers[0])}
+              style={{
+                border: "none",
+                background: LAVENDER,
+                color: "#fff",
+                borderRadius: 999,
+                padding: "8px 14px",
+                fontWeight: 700,
+                fontSize: 13,
+                cursor: "pointer",
+                fontFamily: "inherit",
+                whiteSpace: "nowrap",
+              }}
+            >
+              {p.openRoutineOffers[0].acceptLabel}
+            </button>
+            <button
+              type="button"
+              onClick={() => p.dismissRoutineOffer(p.openRoutineOffers[0].id)}
+              style={{
+                border: `1px solid ${LINE}`,
+                background: "#fff",
+                color: MUTED,
+                borderRadius: 999,
+                padding: "7px 12px",
+                fontWeight: 700,
+                fontSize: 12,
+                cursor: "pointer",
+                fontFamily: "inherit",
+              }}
+            >
+              Not now
+            </button>
+            <button
+              type="button"
+              onClick={() => p.setShowWeeksRun(true)}
+              style={{
+                border: "none",
+                background: "transparent",
+                color: LAVENDER,
+                fontWeight: 700,
+                fontSize: 12,
+                cursor: "pointer",
+                fontFamily: "inherit",
+                textDecoration: "underline",
+              }}
+            >
+              How my weeks run
+            </button>
+          </div>
+        )}
 
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap", margin: "4px 0 10px", alignItems: "center" }}>
           {p.multiSubject && (
@@ -298,9 +373,16 @@ export default function StationWeekClient() {
                       </div>
                     );
                   })}
+                  <div style={{ marginTop: 4 }}>
+                    <AddActivityButton
+                      compact
+                      label="+ Add"
+                      onClick={() => p.openAddActivity({ day: i, subject: p.subjectFilter !== "all" ? p.subjectFilter : undefined })}
+                    />
+                  </div>
                   {items.length === 0 && (
                     <div style={{ color: MUTED, fontSize: 12, padding: "8px 6px" }}>
-                      {p.level === "i_plan" ? "Open for your plan — add from Daily Focus." : "Nothing planned — open Daily Focus to add."}
+                      {p.level === "i_plan" ? "Open for your plan — add here or from Daily Focus." : "Nothing planned — tap + Add."}
                     </div>
                   )}
                 </div>
@@ -322,6 +404,33 @@ export default function StationWeekClient() {
           router.push(`/v2/teacher/day?d=${day}`);
         }}
         onAcknowledge={p.acknowledgeSundayPreview}
+      />
+      <HowMyWeeksRunDrawer
+        open={p.showWeeksRun}
+        onClose={() => p.setShowWeeksRun(false)}
+        routines={p.routines}
+        subjects={p.setup.subjects}
+        dialLevel={p.level}
+        onUpdateRoutine={p.updateRoutine}
+        onAddRoutine={p.addRoutine}
+        onToggleRoutine={p.toggleRoutine}
+        onAcceptOffer={p.acceptRoutineOffer}
+        onDismissOffer={p.dismissRoutineOffer}
+        dismissedOffers={p.dismissedOffers}
+        onOpenSundayPreview={() => p.setShowSundayPreview(true)}
+        onOpenHandsOff={() => {
+          p.setShowWeeksRun(false);
+          p.setToast({ text: "Use the hands-off dial above to change how weeks run." });
+        }}
+      />
+      <AddActivityModal
+        open={p.showAddActivity}
+        onClose={() => p.setShowAddActivity(false)}
+        onAdd={(payload) => p.addActivity(payload)}
+        subjects={p.setup.subjects}
+        classes={p.setup.classes}
+        multiClass={p.multiClass}
+        defaults={p.addActivityDefaults}
       />
       <Toast toast={p.toast} />
     </StationShell>
