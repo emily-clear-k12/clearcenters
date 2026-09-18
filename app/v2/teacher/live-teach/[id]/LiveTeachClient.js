@@ -52,7 +52,14 @@ export default function LiveTeachClient({ lessonId }) {
 
   function handleAssignPractice() {
     if (!shell) return;
-    assignPracticeToMyDay(shell);
+    let classKey = null;
+    try {
+      const ck = window.localStorage.getItem("ci2.teacher.classFilter");
+      classKey = ck && String(ck).trim() ? String(ck).trim() : null;
+    } catch {
+      classKey = null;
+    }
+    assignPracticeToMyDay(shell, { classKey });
     setAssigned(true);
   }
 
@@ -365,7 +372,7 @@ export default function LiveTeachClient({ lessonId }) {
         </div>
 
         <p style={{ margin: "14px 0 0", color: MUTED, fontSize: 12, lineHeight: 1.45 }}>
-          Present mode skeleton — Assign practice writes a My Day card (same browser). Not a slide deck builder.
+          Present mode skeleton — Assign practice writes a My Day card + period-stamped planner tile (same browser). Not a slide deck builder.
         </p>
       </Glass>
     </StationShell>

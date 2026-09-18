@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   StationShell,
   Glass,
@@ -29,10 +29,27 @@ import {
  */
 export default function FamilyNoteClient({ noteId }) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const note = useMemo(() => getFamilyNoteStub(noteId), [noteId]);
   const [copied, setCopied] = useState(false);
   const [sent, setSent] = useState(false);
   const [sendFlash, setSendFlash] = useState(false);
+
+  const periodFromQuery = (searchParams?.get("period") || "").trim();
+  const periodId =
+    periodFromQuery && periodFromQuery !== "all"
+      ? periodFromQuery
+      : note?.periodId || null;
+
+  // Cheap period sync — keep Check-ins room lens when deep-linking from a kid card.
+  useEffect(() => {
+    if (!periodId || typeof window === "undefined") return;
+    try {
+      window.localStorage.setItem("ci2.teacher.classFilter", periodId);
+    } catch {
+      /* ignore */
+    }
+  }, [periodId]);
 
   useEffect(() => {
     if (!note?.id) return;
@@ -187,6 +204,7 @@ export default function FamilyNoteClient({ noteId }) {
             color={note.subjectColor}
           />
           {note.assignment ? <Chip label={note.assignment} /> : null}
+          {periodId ? <Chip label={`Period ${periodId}`} /> : null}
         </div>
 
         <section style={{ marginTop: 22 }}>

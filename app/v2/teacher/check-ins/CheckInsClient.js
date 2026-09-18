@@ -252,10 +252,17 @@ export default function CheckInsClient() {
               <Link
                 href="/v2/teacher/day?d=2"
                 style={{
-                  ...btnPrimaryLink,
+                  border: "none",
+                  background: LAVENDER,
+                  color: "#fff",
+                  borderRadius: 999,
+                  padding: "10px 18px",
+                  fontWeight: 800,
+                  fontSize: 14,
                   textDecoration: "none",
                   display: "inline-flex",
                   alignItems: "center",
+                  boxShadow: "0 6px 18px rgba(139,108,255,.28)",
                 }}
               >
                 Open Daily Focus
@@ -408,15 +415,21 @@ export default function CheckInsClient() {
                     Looks good / dismiss
                   </button>
                   <Link
-                    href={FAMILY_NOTE_HREF(card.id)}
-                    title="Open Family note stub"
+                    href={FAMILY_NOTE_HREF(card.id, {
+                      periodId: card.periodId || selectedClass,
+                    })}
+                    title="Family note for this kid"
+                    onClick={() => {
+                      const pid = card.periodId || selectedClass;
+                      if (pid && pid !== "all") p.setClassFilter(pid);
+                    }}
                     style={{
-                      border: `1px solid ${LINE}`,
-                      background: "#fff",
-                      color: INK,
+                      border: `1px solid ${GLANCE.ready.border}`,
+                      background: GLANCE.ready.bg,
+                      color: GLANCE.ready.fg,
                       borderRadius: 999,
                       padding: "8px 14px",
-                      fontWeight: 700,
+                      fontWeight: 800,
                       fontSize: 13,
                       textDecoration: "none",
                       display: "inline-flex",

@@ -59,6 +59,7 @@ const SLOT_LABEL = { now: "NOW", next: "NEXT", later: "LATER" };
  * Start / Continue → /v2/student/activity/[id] (real activity stub).
  * Progress: localStorage ci2.student.missionProgress.{kid} (Leo/Kai/Riley demos).
  * Tools → /v2/student/tools (read-aloud / word chips / highlight stub).
+ * Print → glance-first print sheet (ci2-myday-print / ci2-no-print).
  */
 export default function StudentMyDayClient() {
   const day = DEMO_STUDENT_DAY;
@@ -240,9 +241,16 @@ export default function StudentMyDayClient() {
   const sizeScale = TEXT_SIZE_SCALE[prefs.textSize] || 1;
   const shownName = prefs.displayName || student.name;
 
+  function handlePrint() {
+    if (typeof window !== "undefined") window.print();
+  }
+
   return (
     <main style={{ ...pageStyle(), fontSize: `${16 * sizeScale}px` }}>
-      <div style={{ maxWidth: 520, margin: "0 auto", padding: "24px 16px 80px" }}>
+      <div
+        className="ci2-myday-print"
+        style={{ maxWidth: 520, margin: "0 auto", padding: "24px 16px 80px" }}
+      >
         <header style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12 }}>
           <div>
             <div style={{ fontSize: 13, fontWeight: 700, color: MUTED }}>{day.dateLabel}</div>
@@ -253,14 +261,25 @@ export default function StudentMyDayClient() {
               {student.className} · {student.teacher}
             </div>
           </div>
-          <Link href="/v2" style={{ ...ghostBtn(), textDecoration: "none", display: "inline-block" }}>
-            CI2 home
-          </Link>
+          <div className="ci2-no-print" style={{ display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "flex-end" }}>
+            <button
+              type="button"
+              onClick={handlePrint}
+              title="Print a glance-first My Day sheet"
+              style={ghostBtn()}
+            >
+              Print
+            </button>
+            <Link href="/v2" style={{ ...ghostBtn(), textDecoration: "none", display: "inline-block" }}>
+              CI2 home
+            </Link>
+          </div>
         </header>
 
         <div
           role="group"
           aria-label="Demo student"
+          className="ci2-no-print"
           style={{ marginTop: 14, display: "flex", flexWrap: "wrap", gap: 8, alignItems: "center" }}
         >
           <span style={{ fontSize: 12, fontWeight: 700, color: MUTED }}>Demo</span>
@@ -391,6 +410,7 @@ export default function StudentMyDayClient() {
           </div>
         </section>
 
+        <div className="ci2-no-print">
         <PrefsGlass
           open={prefsOpen}
           prefs={prefs}
@@ -430,15 +450,35 @@ export default function StudentMyDayClient() {
             Teacher preview · class code {student.classCodeStub}
           </span>
         </div>
+        </div>
 
         {teacherAdded.length > 0 && (
-          <p style={{ marginTop: 16, fontSize: 12, color: MUTED }}>
+          <p className="ci2-no-print" style={{ marginTop: 16, fontSize: 12, color: MUTED }}>
             Showing {teacherAdded.length} item{teacherAdded.length === 1 ? "" : "s"} your teacher added for
             today (this browser).
           </p>
         )}
       </div>
-      <Toast toast={toast} />
+      <div className="ci2-no-print">
+        <Toast toast={toast} />
+      </div>
+      <style>{`
+        @media print {
+          body * { visibility: hidden !important; }
+          .ci2-myday-print, .ci2-myday-print * { visibility: visible !important; }
+          .ci2-myday-print {
+            position: absolute !important;
+            left: 0 !important;
+            top: 0 !important;
+            width: 100% !important;
+            max-width: none !important;
+            background: #fff !important;
+            box-shadow: none !important;
+            padding: 12px 16px !important;
+          }
+          .ci2-no-print { display: none !important; }
+        }
+      `}</style>
     </main>
   );
 }
@@ -720,7 +760,7 @@ function MissionCard({ mission, locked, teacherChecked, onStart }) {
           </div>
         </div>
       </div>
-      <div style={{ padding: "0 14px 14px", display: "flex", justifyContent: "flex-end" }}>
+      <div className="ci2-no-print" style={{ padding: "0 14px 14px", display: "flex", justifyContent: "flex-end" }}>
         <button
           type="button"
           onClick={onStart}

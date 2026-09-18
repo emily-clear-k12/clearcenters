@@ -23,11 +23,12 @@ Departmentalized teachers also need the **same period/class lens** as Daily Focu
 5. Act: **Pull for small group** → amber block on **today’s** Daily Focus (`d=2`); **Reteach tomorrow** → amber block on **tomorrow** (`d=3`). Kid names stub; merges same period + day + kind
 6. **Add to This Week** → mints a planner tile via `ci2.teacher.addedActivities` (same as Library / Sunday); period-aware when `periodId` is set. Kid stays on Check-ins. Toast offers **Undo** to remove that minted tile. Daily Focus / This Week show quiet **From Check-ins** provenance; first minted provenance tile may show calm one-liner **Tiles remember where they came from.** (dismiss → localStorage)
 7. **Looks good / dismiss** → clears from list only (no Focus block)
-8. Optional: **Family note** on a kid card → teacher one-pager stub (celebrate + ask-at-home · copy message)
-9. Open **← Daily Focus** (`d=2`) → **FROM CHECK-INS · TODAY** for small-group pulls; switch to **Thu** (`d=3`) → **FROM CHECK-INS · TOMORROW** for reteach pulls (period filter still applies)
-10. Switch Setup back to **Self-contained** → filter hides; single room label only
-10b. Period / dismiss until list empty → calm empty glass + **Open Daily Focus** (not a sad gray void)
-11. Optional: Grading inbox header → **Check-ins**
+8. **Family note** on a kid card (clear ready-chip action) → `/v2/teacher/family/[id]?period=` deep link for that kid; stamps/syncs `ci2.teacher.classFilter` when period is known so return keeps the room lens
+9. On Family note: celebrate + ask-at-home · copy · Send (demo) · optional Period chip · **← Check-ins**
+10. Open **← Daily Focus** (`d=2`) → **FROM CHECK-INS · TODAY** for small-group pulls; switch to **Thu** (`d=3`) → **FROM CHECK-INS · TOMORROW** for reteach pulls (period filter still applies)
+11. Switch Setup back to **Self-contained** → filter hides; single room label only
+11b. Period / dismiss until list empty → calm empty glass + **Open Daily Focus** (not a sad gray void)
+12. Optional: Grading inbox header → **Check-ins**
 
 ## Tone
 - Calm **ready** / **needs you** language (lavender / cream / mint — never scary red)
@@ -58,8 +59,9 @@ Departmentalized teachers also need the **same period/class lens** as Daily Focu
 ## Files
 - `lib/v2/demoWhoNeedsMe.js` — demo kids + `periodId`, period filter, Check-ins → Daily Focus blocks + This Week tiles
 - `lib/v2/demoLibrary.js` — `removeAddedActivity` shared Undo helper for minted planner tiles
-- `app/v2/teacher/check-ins/` — page + `CheckInsClient` (SetupSwitcher / RoomCards / SingleRoomLabel; Family note link)
-- `app/v2/teacher/family/[id]/` — Family note stub (see FAMILY-STUB.md)
+- `app/v2/teacher/check-ins/` — page + `CheckInsClient` (SetupSwitcher / RoomCards / SingleRoomLabel; clear **Family note** deep link + period sync)
+- `app/v2/teacher/family/[id]/` — Family note stub (period query · see FAMILY-STUB.md)
+- `lib/v2/demoFamilyNote.js` — `FAMILY_NOTE_HREF(id, { periodId })`
 - `app/v2/teacher/who-needs-me/` — redirect → `/v2/teacher/check-ins`
 - `components/v2/StationShell.js` — `WhoNeedsMeChip`, `RoomCards`, `SetupSwitcher`, `TeacherSubnav` Check-ins amber count (period-filtered)
 - `lib/v2/usePlanner.js` — shared setup + `classFilter` persistence
@@ -74,4 +76,5 @@ Departmentalized teachers also need the **same period/class lens** as Daily Focu
 - Small group / reteach write **Daily Focus** blocks (`ci2.checkins.focusBlocks`); **Add to This Week** separately mints planner tiles (`ci2.teacher.addedActivities`) with toast **Undo** (`removeAddedActivity`)
 - Focus blocks are stub only (no auto scheduling, no roster sync). Reteach tomorrow **does** date the block for tomorrow (`FOCUS_TOMORROW_DAY`); open Daily Focus `?d=3` to see it
 - 2-period setups (e.g. ELAR + SS): demo Maya is `periodId: C` so she won’t appear until a 3-period setup or live inherit
+- Family note period sync is localStorage classFilter only (no SIS room names on the chip beyond Period A/B/C)
 - Do **not** merge to `main`

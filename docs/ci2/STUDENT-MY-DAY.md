@@ -3,7 +3,7 @@
 Branch: `ci2-sandbox` · Route: `/v2/student`
 
 ## Click path
-`/v2` → **Student · My Day** → Now / Next / Later → **Start** on Now → `/v2/student/activity/[id]` → Submit → My Day progress (checkmark + NOW advances).
+`/v2` → **Student · My Day** → Now / Next / Later → **Start** on Now → `/v2/student/activity/[id]` → Submit → My Day progress (checkmark + NOW advances). Optional: **Print** → glance-first paper sheet.
 
 See also: [STUDENT-ACTIVITY-STUB.md](./STUDENT-ACTIVITY-STUB.md)
 
@@ -44,6 +44,13 @@ See also: [STUDENT-ACTIVITY-STUB.md](./STUDENT-ACTIVITY-STUB.md)
 - Submit marks progress + queues teacher grading (`ci2.grading.inbox`) like activity Submit
 - See also: [PROJECT-ON-TEACH.md](./PROJECT-ON-TEACH.md) · [STUDENT-TOOLS.md](./STUDENT-TOOLS.md)
 
+
+## Print My Day
+- **Print** on My Day header → browser print dialog
+- Print-friendly CSS (same spirit as lesson plan): `.ci2-myday-print` sheet · `.ci2-no-print` hides demo chips / prefs / Tools / Start CTAs / toast
+- On screen stays glance-first (Now → Next → Later cards)
+- No server PDF — `window.print` only
+
 ## Preferences stub
 - Light prefs chip on My Day: display name · text size S/M/L · sound on/off
 - Per-kid localStorage (`ci2.student.prefs.{kid}`) — see [STUDENT-PREFS-STUB.md](./STUDENT-PREFS-STUB.md)
@@ -59,3 +66,13 @@ See also: [STUDENT-ACTIVITY-STUB.md](./STUDENT-ACTIVITY-STUB.md)
 - Uses existing `SamBubble` / `setSamMsg` pattern — not a full SAM chat
 - Celebrated ids stored in `ci2.student.teacherCheckedCelebrated.{kid}` so refresh doesn’t re-cheer
 - Same-browser only; clear site data to reset
+
+## Files
+- `app/v2/student/StudentMyDayClient.js` — My Day shell · Print + print CSS
+- `lib/v2/demoStudentDay.js` — day model / teacher-add bridge
+- `docs/ci2/STUDENT-MY-DAY.md` — this note
+
+## Gaps (print)
+- Print is `window.print` + CSS only (no server PDF / email-home pack)
+- Demo switcher / prefs / Tools chrome hide on paper; mission CTAs hide so the sheet stays glance-first
+- Do **not** merge to `main`
