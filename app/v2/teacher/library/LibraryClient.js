@@ -17,7 +17,6 @@ import {
 import {
   DEMO_LIBRARY_CARDS,
   addLibraryCardToPlanner,
-  libraryStandardChip,
   LIBRARY_HREF,
 } from "../../../../lib/v2/demoLibrary";
 
@@ -25,8 +24,7 @@ const FLAVORS = ["Briefing", "Challenge", "Practice", "Project"];
 
 /**
  * CI2.0 Library browse stub — glance-first glass cards.
- * Chip filters by type + simple title search. TEKS chip → Standard info when stub matches.
- * Add → ci2.teacher.addedActivities.
+ * Chip filters by type + simple title search. Add → ci2.teacher.addedActivities.
  */
 export default function LibraryClient() {
   const [toast, setToast] = useState(null);
@@ -245,32 +243,6 @@ export default function LibraryClient() {
                   <span style={{ fontSize: 11, fontWeight: 700, color: MUTED }}>
                     {card.product} · {card.minutes} min
                   </span>
-                  {(() => {
-                    const std = libraryStandardChip(card);
-                    if (!std) return null;
-                    const chipStyle = {
-                      ...glanceChipStyle("ready"),
-                      borderRadius: 999,
-                      padding: "3px 10px",
-                      fontSize: 11,
-                      fontWeight: 800,
-                      textDecoration: "none",
-                      display: "inline-flex",
-                      alignItems: "center",
-                    };
-                    if (std.href) {
-                      return (
-                        <Link href={std.href} style={chipStyle} title="Open Standard info stub">
-                          {std.label}
-                        </Link>
-                      );
-                    }
-                    return (
-                      <span style={chipStyle} title="Standard chip (no stub yet)">
-                        {std.label}
-                      </span>
-                    );
-                  })()}
                 </div>
                 <div style={{ fontWeight: 800, color: INK, fontSize: 17, lineHeight: 1.25 }}>
                   {card.title}

@@ -39,6 +39,7 @@ import {
   recordWhoNeedsAction,
   WHO_NEEDS_ME_STORAGE_KEY,
 } from "../../../../lib/v2/demoWhoNeedsMe";
+import { removeAddedActivity } from "../../../../lib/v2/demoLibrary";
 import { FAMILY_NOTE_HREF } from "../../../../lib/v2/demoFamilyNote";
 
 /**
@@ -84,7 +85,8 @@ export default function CheckInsClient() {
 
   useEffect(() => {
     if (!toast) return;
-    const t = setTimeout(() => setToast(null), 2200);
+    const ms = toast.undoId ? 5600 : 2200;
+    const t = setTimeout(() => setToast(null), ms);
     return () => clearTimeout(t);
   }, [toast]);
 
@@ -151,8 +153,15 @@ export default function CheckInsClient() {
         : "";
     setToast({
       text: `${card.studentFirst} · added to This Week${room}.`,
+      undoId: entry.id,
     });
   }, [selectedClass]);
+
+  const undoAddToWeek = useCallback(() => {
+    if (!toast?.undoId) return;
+    const ok = removeAddedActivity(toast.undoId);
+    setToast({ text: ok ? "Undone — removed from This Week." : "Nothing to undo." });
+  }, [toast]);
 
   return (
     <StationShell>
@@ -431,9 +440,31 @@ export default function CheckInsClient() {
             boxShadow: "0 12px 32px rgba(46,36,89,.35)",
             zIndex: 50,
             maxWidth: "90vw",
+            display: "flex",
+            alignItems: "center",
+            gap: 12,
           }}
         >
-          {toast.text}
+          <span>{toast.text}</span>
+          {toast.undoId && (
+            <button
+              type="button"
+              onClick={undoAddToWeek}
+              style={{
+                border: "1px solid rgba(255,255,255,.45)",
+                background: "rgba(255,255,255,.12)",
+                color: "#fff",
+                borderRadius: 999,
+                padding: "4px 12px",
+                fontWeight: 800,
+                fontSize: 13,
+                cursor: "pointer",
+                fontFamily: "inherit",
+              }}
+            >
+              Undo
+            </button>
+          )}
         </div>
       )}
     </StationShell>

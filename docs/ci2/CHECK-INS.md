@@ -21,7 +21,7 @@ Departmentalized teachers also need the **same period/class lens** as Daily Focu
    - Period 2 → Riley
    - Period 3 → Maya (or live Leo inheriting that room)
 5. Act: **Pull for small group** → amber block on **today’s** Daily Focus (`d=2`); **Reteach tomorrow** → amber block on **tomorrow** (`d=3`). Kid names stub; merges same period + day + kind
-6. **Add to This Week** → mints a planner tile via `ci2.teacher.addedActivities` (same as Library / Sunday); period-aware when `periodId` is set. Kid stays on Check-ins
+6. **Add to This Week** → mints a planner tile via `ci2.teacher.addedActivities` (same as Library / Sunday); period-aware when `periodId` is set. Kid stays on Check-ins. Toast offers **Undo** to remove that minted tile
 7. **Looks good / dismiss** → clears from list only (no Focus block)
 8. Optional: **Family note** on a kid card → teacher one-pager stub (celebrate + ask-at-home · copy message)
 9. Open **← Daily Focus** (`d=2`) → **FROM CHECK-INS · TODAY** for small-group pulls; switch to **Thu** (`d=3`) → **FROM CHECK-INS · TOMORROW** for reteach pulls (period filter still applies)
@@ -56,6 +56,7 @@ Departmentalized teachers also need the **same period/class lens** as Daily Focu
 
 ## Files
 - `lib/v2/demoWhoNeedsMe.js` — demo kids + `periodId`, period filter, Check-ins → Daily Focus blocks + This Week tiles
+- `lib/v2/demoLibrary.js` — `removeAddedActivity` shared Undo helper for minted planner tiles
 - `app/v2/teacher/check-ins/` — page + `CheckInsClient` (SetupSwitcher / RoomCards / SingleRoomLabel; Family note link)
 - `app/v2/teacher/family/[id]/` — Family note stub (see FAMILY-STUB.md)
 - `app/v2/teacher/who-needs-me/` — redirect → `/v2/teacher/check-ins`
@@ -69,7 +70,7 @@ Departmentalized teachers also need the **same period/class lens** as Daily Focu
 - No real standards analytics or AI grouping
 - No live roster sync / multi-device / real period membership from SIS
 - Live submits do not yet write `periodId` at enqueue time (inherit selected room on Check-ins / glance)
-- Small group / reteach write **Daily Focus** blocks (`ci2.checkins.focusBlocks`); **Add to This Week** separately mints planner tiles (`ci2.teacher.addedActivities`)
+- Small group / reteach write **Daily Focus** blocks (`ci2.checkins.focusBlocks`); **Add to This Week** separately mints planner tiles (`ci2.teacher.addedActivities`) with toast **Undo** (`removeAddedActivity`)
 - Focus blocks are stub only (no auto scheduling, no roster sync). Reteach tomorrow **does** date the block for tomorrow (`FOCUS_TOMORROW_DAY`); open Daily Focus `?d=3` to see it
 - 2-period setups (e.g. ELAR + SS): demo Maya is `periodId: C` so she won’t appear until a 3-period setup or live inherit
 - Do **not** merge to `main`
