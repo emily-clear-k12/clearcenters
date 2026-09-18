@@ -7,6 +7,7 @@ import { getStudentProjectShell } from "../../../../../lib/v2/demoProject";
 import { markMissionDone } from "../../../../../lib/v2/demoStudentActivity";
 import { enqueueStudentSubmission } from "../../../../../lib/v2/demoGrading";
 import { DEMO_STUDENT } from "../../../../../lib/v2/demoStudentDay";
+import { DEMO_TEACHER } from "../../../../../lib/v2/demoWeek";
 
 const INK = "#2E2459";
 const MUTED = "#5E577F";
@@ -90,7 +91,7 @@ export default function StudentProjectClient({ projectId }) {
       maxScore: 4,
       standard: shell.standard || null,
     });
-    setToast({ text: "Project submitted — Ms. Rivera will see it in Grading.", tone: "ok" });
+    setToast({ text: `Project submitted — ${DEMO_TEACHER.name} will see it in Grading.`, tone: "ok" });
     setTimeout(() => {
       router.push(`/v2/student?done=${encodeURIComponent(missionId)}`);
     }, 450);

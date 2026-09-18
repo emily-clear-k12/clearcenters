@@ -12,6 +12,7 @@ import {
   enqueueStudentSubmission,
 } from "../../../../../lib/v2/demoGrading";
 import { DEMO_STUDENT } from "../../../../../lib/v2/demoStudentDay";
+import { DEMO_TEACHER } from "../../../../../lib/v2/demoWeek";
 import StudentToolsPanel from "../../../../../components/v2/StudentToolsPanel";
 
 const INK = "#2E2459";
@@ -100,7 +101,7 @@ export default function StudentActivityClient({ missionId }) {
       samReason: "First read stub — confirm when you've looked.",
       maxScore: 4,
     });
-    setToast({ text: "Nice work — Ms. Rivera will see this in Grading.", tone: "ok" });
+    setToast({ text: `Nice work — ${DEMO_TEACHER.name} will see this in Grading.`, tone: "ok" });
     setTimeout(() => {
       router.push(`/v2/student?done=${encodeURIComponent(mission.id)}`);
     }, 450);
