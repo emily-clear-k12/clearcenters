@@ -12,6 +12,12 @@ import {
   loadConfirmedIds,
 } from "../../../lib/v2/demoGrading";
 import {
+  getWhoNeedsMeCount,
+  whoNeedsGlanceText,
+  WHO_NEEDS_ME_HREF,
+  WHO_NEEDS_ME_STORAGE_KEY,
+} from "../../../lib/v2/demoWhoNeedsMe";
+import {
   StationShell,
   Glass,
   Pill,
@@ -22,6 +28,7 @@ import {
   RoomCards,
   SingleRoomLabel,
   HandsOffChip,
+  WhoNeedsMeChip,
   SundayPreviewModal,
   INK,
   MUTED,
@@ -41,21 +48,31 @@ export default function StationDayClient() {
   const params = useSearchParams();
   const p = usePlanner();
   const [gradePending, setGradePending] = useState(DEMO_WEEK.gradingCount);
+  const [whoNeedsCount, setWhoNeedsCount] = useState(0);
   useEffect(() => {
-    setGradePending(getPendingCount(loadConfirmedIds()));
+    const refresh = () => {
+      setGradePending(getPendingCount(loadConfirmedIds()));
+      setWhoNeedsCount(getWhoNeedsMeCount());
+    };
+    refresh();
     const onStorage = (e) => {
-      if (e.key === GRADING_STORAGE_KEY || e.key === GRADING_INBOX_KEY) {
-        setGradePending(getPendingCount(loadConfirmedIds()));
+      if (
+        e.key === GRADING_STORAGE_KEY ||
+        e.key === GRADING_INBOX_KEY ||
+        e.key === WHO_NEEDS_ME_STORAGE_KEY
+      ) {
+        refresh();
       }
     };
-    const refresh = () => setGradePending(getPendingCount(loadConfirmedIds()));
     window.addEventListener("storage", onStorage);
     window.addEventListener("focus", refresh);
     window.addEventListener("ci2-grading-updated", refresh);
+    window.addEventListener("ci2-who-needs-updated", refresh);
     return () => {
       window.removeEventListener("storage", onStorage);
       window.removeEventListener("focus", refresh);
       window.removeEventListener("ci2-grading-updated", refresh);
+      window.removeEventListener("ci2-who-needs-updated", refresh);
     };
   }, []);
   const day = Math.min(4, Math.max(0, Number(params.get("d") ?? 2)));
@@ -85,7 +102,18 @@ export default function StationDayClient() {
   const glanceItems = useMemo(() => {
     const list = [];
     const className = cls?.name;
-    for (const s of daySuggestions.slice(0, 2)) {
+    // Who needs me first when kids are waiting (Emily max-3 glance rule)
+    if (whoNeedsCount > 0) {
+      list.push({
+        id: "glance-who-needs",
+        text: whoNeedsGlanceText(whoNeedsCount),
+        actionLabel: "Who needs me",
+        tone: "cream",
+        href: WHO_NEEDS_ME_HREF,
+      });
+    }
+    const suggestionSlots = Math.max(0, 2 - list.length);
+    for (const s of daySuggestions.slice(0, suggestionSlots)) {
       list.push({
         id: s.id,
         text: s.text(className),
@@ -104,7 +132,7 @@ export default function StationDayClient() {
       });
     }
     return list.slice(0, 3);
-  }, [daySuggestions, cls?.name, gradePending]);
+  }, [daySuggestions, cls?.name, gradePending, whoNeedsCount]);
 
   const morningCard = useMemo(
     () =>
@@ -155,6 +183,7 @@ export default function StationDayClient() {
               <SetupSwitcher setupKey={p.setupKey} onChange={p.setSetupKey} />
               {!p.multiClass && <SingleRoomLabel cls={cls} setup={p.setup} />}
               <HandsOffChip level={p.level} onOpenPreview={() => p.setShowSundayPreview(true)} />
+              <WhoNeedsMeChip count={whoNeedsCount} href={WHO_NEEDS_ME_HREF} />
               <WeeksRunEntry onOpen={() => p.setShowWeeksRun(true)} routineCount={p.enabledRoutineCount} />
             </div>
           </div>

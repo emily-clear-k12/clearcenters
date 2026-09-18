@@ -482,6 +482,33 @@ export function HandsOffChip({ level, onOpenPreview }) {
   );
 }
 
+
+/** Calm entry chip → Who needs me (reteach / small-group stub). */
+export function WhoNeedsMeChip({ count, href = "/v2/teacher/who-needs-me" }) {
+  const n = typeof count === "number" ? count : 0;
+  const label = n === 0 ? "Who needs me · clear" : n === 1 ? "Who needs me · 1" : `Who needs me · ${n}`;
+  const ready = n === 0;
+  return (
+    <Link
+      href={href}
+      title="Open reteach / small-group stub"
+      style={{
+        fontSize: 12,
+        fontWeight: 700,
+        color: ready ? "#2FA36B" : "#8A6A20",
+        background: ready ? MINT : CREAM,
+        border: `1px solid ${LINE}`,
+        borderRadius: 999,
+        padding: "6px 12px",
+        textDecoration: "none",
+        whiteSpace: "nowrap",
+      }}
+    >
+      {label}
+    </Link>
+  );
+}
+
 /**
  * Sunday preview / safety net — "Here's what goes out".
  * Lists outbound assigns by day / subject / period; Change + Looks good.

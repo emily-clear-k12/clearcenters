@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import {
   StationShell,
   Glass,
@@ -26,6 +27,7 @@ import {
   saveConfirmedIds,
   subjectMeta,
 } from "../../../../lib/v2/demoGrading";
+import { WHO_NEEDS_ME_HREF } from "../../../../lib/v2/demoWhoNeedsMe";
 
 /**
  * CI2.0 grading inbox stub.
@@ -182,6 +184,21 @@ export default function GradingInboxClient() {
               >
                 {pendingCount === 0 ? "Caught up" : `${pendingCount} to grade`}
               </span>
+              <Link
+                href={WHO_NEEDS_ME_HREF}
+                style={{
+                  fontSize: 13,
+                  fontWeight: 700,
+                  color: LAVENDER,
+                  textDecoration: "none",
+                  border: `1px solid ${LAVENDER}`,
+                  background: "#fff",
+                  borderRadius: 999,
+                  padding: "5px 12px",
+                }}
+              >
+                Who needs me
+              </Link>
               <span style={{ fontSize: 12, color: MUTED }}>
                 Keys: Enter confirm · C change · S skip
               </span>

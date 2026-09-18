@@ -4,7 +4,13 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { usePlanner } from "../../../lib/v2/usePlanner";
 import { SUBJECTS, DAYS, DATES, DEMO_WEEK, HANDS_OFF_LEVELS } from "../../../lib/v2/demoWeek";
-import { GRADING_INBOX_HREF, getPendingCount, loadConfirmedIds } from "../../../lib/v2/demoGrading";
+import { GRADING_INBOX_HREF, GRADING_INBOX_KEY, GRADING_STORAGE_KEY, getPendingCount, loadConfirmedIds } from "../../../lib/v2/demoGrading";
+import {
+  getWhoNeedsMeCount,
+  whoNeedsGlanceText,
+  WHO_NEEDS_ME_HREF,
+  WHO_NEEDS_ME_STORAGE_KEY,
+} from "../../../lib/v2/demoWhoNeedsMe";
 import {
   StationShell,
   Glass,
@@ -15,6 +21,7 @@ import {
   RoomCards,
   SingleRoomLabel,
   HandsOffDial,
+  WhoNeedsMeChip,
   SundayPreviewModal,
   SundayPreviewBanner,
   INK,
@@ -31,19 +38,32 @@ export default function StationWeekClient() {
   const router = useRouter();
   const p = usePlanner();
   const [gradePending, setGradePending] = useState(DEMO_WEEK.gradingCount);
+  const [whoNeedsCount, setWhoNeedsCount] = useState(0);
   useEffect(() => {
-    setGradePending(getPendingCount(loadConfirmedIds()));
-    const onStorage = (e) => {
-      if (e.key === "ci2.grading.confirmedIds") setGradePending(getPendingCount(loadConfirmedIds()));
+    const refresh = () => {
+      setGradePending(getPendingCount(loadConfirmedIds()));
+      setWhoNeedsCount(getWhoNeedsMeCount());
     };
-    const refresh = () => setGradePending(getPendingCount(loadConfirmedIds()));
+    refresh();
+    const onStorage = (e) => {
+      if (
+        e.key === GRADING_STORAGE_KEY ||
+        e.key === GRADING_INBOX_KEY ||
+        e.key === WHO_NEEDS_ME_STORAGE_KEY ||
+        e.key === "ci2.grading.confirmedIds"
+      ) {
+        refresh();
+      }
+    };
     window.addEventListener("storage", onStorage);
     window.addEventListener("focus", refresh);
     window.addEventListener("ci2-grading-updated", refresh);
+    window.addEventListener("ci2-who-needs-updated", refresh);
     return () => {
       window.removeEventListener("storage", onStorage);
       window.removeEventListener("focus", refresh);
       window.removeEventListener("ci2-grading-updated", refresh);
+      window.removeEventListener("ci2-who-needs-updated", refresh);
     };
   }, []);
   const cls = p.setup.classes.find((c) => c.key === p.classFilter) || p.setup.classes[0];
@@ -68,7 +88,17 @@ export default function StationWeekClient() {
   const glanceItems = useMemo(() => {
     const items = [];
     const className = cls?.name;
-    for (const s of p.openSuggestions.slice(0, 2)) {
+    if (whoNeedsCount > 0) {
+      items.push({
+        id: "glance-who-needs",
+        text: whoNeedsGlanceText(whoNeedsCount),
+        actionLabel: "Who needs me",
+        tone: "cream",
+        href: WHO_NEEDS_ME_HREF,
+      });
+    }
+    const suggestionSlots = Math.max(0, 2 - items.length);
+    for (const s of p.openSuggestions.slice(0, suggestionSlots)) {
       items.push({
         id: s.id,
         text: s.text(className),
@@ -87,7 +117,7 @@ export default function StationWeekClient() {
       });
     }
     return items.slice(0, 3);
-  }, [p.openSuggestions, cls?.name, gradePending]);
+  }, [p.openSuggestions, cls?.name, gradePending, whoNeedsCount]);
 
   function onDrop(day, e) {
     e.preventDefault();
@@ -118,6 +148,7 @@ export default function StationWeekClient() {
             </div>
             <div style={{ marginTop: 12, display: "flex", gap: 10, flexWrap: "wrap", alignItems: "flex-start" }}>
               <HandsOffDial level={p.level} onChange={onHandsOff} subjectLabel={dialSubjectLabel} />
+              <WhoNeedsMeChip count={whoNeedsCount} href={WHO_NEEDS_ME_HREF} />
               <WeeksRunEntry onOpen={() => p.setShowWeeksRun(true)} routineCount={p.enabledRoutineCount} />
             </div>
           </div>
