@@ -36,6 +36,13 @@ import {
   markTeacherCheckedCelebrated,
 } from "../../../lib/v2/demoGrading";
 import { STUDENT_TOOLS_HREF } from "../../../lib/v2/demoStudentTools";
+import {
+  STUDENT_PREFS_KEY,
+  TEXT_SIZE_SCALE,
+  loadStudentPrefs,
+  saveStudentPrefs,
+  resetStudentPrefs,
+} from "../../../lib/v2/demoStudentPrefs";
 
 const INK = "#2E2459";
 const MUTED = "#5E577F";
@@ -66,6 +73,12 @@ export default function StudentMyDayClient() {
   const [doneIds, setDoneIds] = useState(() => new Set());
   const [toast, setToast] = useState(null);
   const [samMsg, setSamMsg] = useState(day.samLine);
+  const [prefs, setPrefs] = useState(() => ({
+    displayName: "Leo",
+    textSize: "M",
+    soundOn: false,
+  }));
+  const [prefsOpen, setPrefsOpen] = useState(false);
 
   function refreshProgress() {
     const { doneIds: ids } = readStudentProgress();
@@ -77,6 +90,7 @@ export default function StudentMyDayClient() {
     const refreshProjects = () => setProjectAssigned(readAssignedProjectsForDay(day.dayIndex));
     const refreshPractice = () => setPracticeAssigned(readAssignedPracticeForDay(day.dayIndex));
     const refreshChecked = () => setTeacherCheckedIds(loadTeacherCheckedIds());
+    const refreshPrefs = () => setPrefs(loadStudentPrefs());
     const refreshKid = () => {
       const s = getActiveDemoStudent();
       setStudent(s);
@@ -85,15 +99,24 @@ export default function StudentMyDayClient() {
       refreshPractice();
       refreshChecked();
       refreshProgress();
+      refreshPrefs();
     };
     refreshKid();
     const onStorage = (e) => {
       if (!e.key || e.key === ADDED_ACTIVITIES_KEY) refreshTeacher();
       if (!e.key || e.key === PROJECT_ASSIGNED_KEY) refreshProjects();
       if (!e.key || e.key === PRACTICE_ASSIGNED_KEY) refreshPractice();
-      if (!e.key || e.key === TEACHER_CHECKED_KEY) refreshChecked();
-      if (!e.key || e.key === STUDENT_PROGRESS_KEY) refreshProgress();
+      // Scoped keys: ci2.student.teacherChecked.{kid}
+      if (!e.key || e.key === TEACHER_CHECKED_KEY || e.key.startsWith(TEACHER_CHECKED_KEY + ".")) {
+        refreshChecked();
+      }
+      if (!e.key || e.key === STUDENT_PROGRESS_KEY || e.key.startsWith(STUDENT_PROGRESS_KEY + ".")) {
+        refreshProgress();
+      }
       if (!e.key || e.key === DEMO_KID_STORAGE_KEY) refreshKid();
+      if (!e.key || e.key === STUDENT_PREFS_KEY || e.key.startsWith(STUDENT_PREFS_KEY + ".")) {
+        refreshPrefs();
+      }
     };
     const onFocus = () => refreshKid();
     const onKid = () => {
@@ -107,6 +130,7 @@ export default function StudentMyDayClient() {
     window.addEventListener("ci2-practice-assigned", refreshPractice);
     window.addEventListener("ci2-teacher-checked-updated", refreshChecked);
     window.addEventListener("ci2-demo-kid-changed", onKid);
+    window.addEventListener("ci2-student-prefs-updated", refreshPrefs);
     return () => {
       window.removeEventListener("storage", onStorage);
       window.removeEventListener("focus", onFocus);
@@ -114,6 +138,7 @@ export default function StudentMyDayClient() {
       window.removeEventListener("ci2-practice-assigned", refreshPractice);
       window.removeEventListener("ci2-teacher-checked-updated", refreshChecked);
       window.removeEventListener("ci2-demo-kid-changed", onKid);
+      window.removeEventListener("ci2-student-prefs-updated", refreshPrefs);
     };
   }, [day.dayIndex]);
 
@@ -212,15 +237,17 @@ export default function StudentMyDayClient() {
   }
 
   const allDone = missions.length > 0 && missions.every((m) => m.done);
+  const sizeScale = TEXT_SIZE_SCALE[prefs.textSize] || 1;
+  const shownName = prefs.displayName || student.name;
 
   return (
-    <main style={pageStyle()}>
+    <main style={{ ...pageStyle(), fontSize: `${16 * sizeScale}px` }}>
       <div style={{ maxWidth: 520, margin: "0 auto", padding: "24px 16px 80px" }}>
         <header style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12 }}>
           <div>
             <div style={{ fontSize: 13, fontWeight: 700, color: MUTED }}>{day.dateLabel}</div>
             <h1 style={{ fontFamily: "'Poppins', sans-serif", color: INK, fontSize: 30, margin: "4px 0 0" }}>
-              {day.greeting(student.name)}
+              {day.greeting(prefs.displayName || student.name)}
             </h1>
             <div style={{ fontSize: 13, color: MUTED, marginTop: 4 }}>
               {student.className} · {student.teacher}
@@ -250,6 +277,7 @@ export default function StudentMyDayClient() {
                   refreshProgress();
                   setTeacherCheckedIds(loadTeacherCheckedIds());
                   setPracticeAssigned(readAssignedPracticeForDay(day.dayIndex));
+                  setPrefs(loadStudentPrefs(kid.id));
                   setSamMsg(`${kid.name}'s day — progress stays with each kid.`);
                 }}
                 style={{
@@ -271,7 +299,7 @@ export default function StudentMyDayClient() {
           })}
         </div>
 
-        <SamBubble text={allDone ? `All set for today — great work, ${student.name}.` : samMsg} />
+        <SamBubble text={allDone ? `All set for today — great work, ${shownName}.` : samMsg} />
 
         {day.doneYesterday?.length > 0 && (
           <section aria-label="Done yesterday" style={{ marginTop: 18 }}>
@@ -363,7 +391,34 @@ export default function StudentMyDayClient() {
           </div>
         </section>
 
-        <div style={{ display: "flex", gap: 10, marginTop: 28, flexWrap: "wrap", alignItems: "center" }}>
+        <PrefsGlass
+          open={prefsOpen}
+          prefs={prefs}
+          student={student}
+          onToggle={() => setPrefsOpen((v) => !v)}
+          onChange={(partial) => {
+            const next = saveStudentPrefs(partial);
+            setPrefs(next);
+            if (partial.displayName != null) {
+              setSamMsg(`Got it — I’ll call you ${next.displayName}.`);
+            } else if (partial.textSize != null) {
+              setSamMsg(`Text size ${next.textSize} — still glance-first.`);
+            } else if (partial.soundOn != null) {
+              setSamMsg(
+                next.soundOn
+                  ? "Sound on — soft cues when they’re ready (stub)."
+                  : "Sound off — quiet glass."
+              );
+            }
+          }}
+          onReset={() => {
+            const next = resetStudentPrefs();
+            setPrefs(next);
+            setSamMsg("Prefs cleared — back to calm defaults.");
+          }}
+        />
+
+        <div style={{ display: "flex", gap: 10, marginTop: 16, flexWrap: "wrap", alignItems: "center" }}>
           <Link
             href={STUDENT_TOOLS_HREF}
             style={{ ...ghostBtn(), textDecoration: "none", display: "inline-block" }}
@@ -385,6 +440,150 @@ export default function StudentMyDayClient() {
       </div>
       <Toast toast={toast} />
     </main>
+  );
+}
+
+function PrefsGlass({ open, prefs, student, onToggle, onChange, onReset }) {
+  return (
+    <section aria-label="My preferences" style={{ marginTop: 28 }}>
+      <div style={{ display: "flex", flexWrap: "wrap", gap: 8, alignItems: "center" }}>
+        <button
+          type="button"
+          onClick={onToggle}
+          aria-expanded={open}
+          title="Light prefs — this browser only"
+          style={{
+            border: `1px solid ${LINE}`,
+            background: "rgba(255,255,255,.88)",
+            color: INK,
+            borderRadius: 999,
+            padding: "7px 14px",
+            fontWeight: 800,
+            fontSize: 13,
+            cursor: "pointer",
+            fontFamily: "inherit",
+            boxShadow: "0 2px 10px rgba(46,36,89,.05)",
+          }}
+        >
+          {prefs.displayName || student.name}
+          <span style={{ fontWeight: 700, color: MUTED, marginLeft: 8 }}>
+            · {prefs.textSize} · {prefs.soundOn ? "sound on" : "sound off"}
+          </span>
+        </button>
+        {!open && (
+          <span style={{ fontSize: 12, color: MUTED }}>Prefs · this browser</span>
+        )}
+      </div>
+      {open && (
+        <div
+          style={{
+            marginTop: 10,
+            background: "rgba(255,255,255,.92)",
+            border: `1px solid ${LINE}`,
+            borderRadius: 20,
+            padding: "16px 16px 14px",
+            boxShadow: "0 8px 24px rgba(46,36,89,.06)",
+          }}
+        >
+          <div style={{ fontSize: 12, fontWeight: 800, color: MUTED, letterSpacing: 0.4, marginBottom: 12 }}>
+            MY PREFS · STUB
+          </div>
+          <label style={{ display: "block", marginBottom: 14 }}>
+            <span style={{ fontSize: 12, fontWeight: 700, color: MUTED }}>Display name</span>
+            <input
+              type="text"
+              value={prefs.displayName}
+              maxLength={24}
+              aria-label="Display name"
+              onChange={(e) => onChange({ displayName: e.target.value })}
+              style={{
+                display: "block",
+                width: "100%",
+                marginTop: 6,
+                border: `1px solid ${LINE}`,
+                borderRadius: 12,
+                padding: "10px 12px",
+                fontSize: 15,
+                fontWeight: 700,
+                color: INK,
+                background: CREAM,
+                fontFamily: "inherit",
+                boxSizing: "border-box",
+              }}
+            />
+          </label>
+          <div style={{ marginBottom: 14 }} role="group" aria-label="Text size">
+            <div style={{ fontSize: 12, fontWeight: 700, color: MUTED, marginBottom: 6 }}>Text size</div>
+            <div style={{ display: "flex", gap: 8 }}>
+              {["S", "M", "L"].map((sz) => {
+                const on = prefs.textSize === sz;
+                return (
+                  <button
+                    key={sz}
+                    type="button"
+                    aria-pressed={on}
+                    onClick={() => onChange({ textSize: sz })}
+                    style={{
+                      flex: 1,
+                      border: on ? "none" : `1px solid ${LINE}`,
+                      background: on ? LAVENDER : "rgba(255,255,255,.95)",
+                      color: on ? "#fff" : LAVENDER,
+                      borderRadius: 999,
+                      padding: "8px 0",
+                      fontWeight: 800,
+                      fontSize: 13,
+                      cursor: "pointer",
+                      fontFamily: "inherit",
+                    }}
+                  >
+                    {sz}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
+            <button
+              type="button"
+              aria-pressed={prefs.soundOn}
+              onClick={() => onChange({ soundOn: !prefs.soundOn })}
+              style={{
+                border: prefs.soundOn ? "none" : `1px solid ${LINE}`,
+                background: prefs.soundOn ? LAVENDER : "rgba(255,255,255,.95)",
+                color: prefs.soundOn ? "#fff" : LAVENDER,
+                borderRadius: 999,
+                padding: "8px 16px",
+                fontWeight: 800,
+                fontSize: 13,
+                cursor: "pointer",
+                fontFamily: "inherit",
+              }}
+            >
+              Sound {prefs.soundOn ? "on" : "off"}
+            </button>
+            <button
+              type="button"
+              onClick={onReset}
+              style={{
+                border: "none",
+                background: "transparent",
+                color: MUTED,
+                fontWeight: 700,
+                fontSize: 12,
+                cursor: "pointer",
+                fontFamily: "inherit",
+                textDecoration: "underline",
+              }}
+            >
+              Reset prefs
+            </button>
+          </div>
+          <p style={{ margin: "12px 0 0", fontSize: 12, color: MUTED, lineHeight: 1.4 }}>
+            Local only · per demo kid · no account sync.
+          </p>
+        </div>
+      )}
+    </section>
   );
 }
 

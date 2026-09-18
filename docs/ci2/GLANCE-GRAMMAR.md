@@ -28,7 +28,7 @@ Icon name hints live on the token (`amber-soft`, `teal-check`, `soft-purple`, `i
 |------|------|
 | SAM strip | Always **top** (under title / after morning when shown) |
 | Check-ins | **Left / stack** (header chip + glance + Check-ins page cards). Route `/v2/teacher/check-ins` |
-| Check-ins nav | **Plan subnav** (TeacherSubnav Check-ins + soft **amber** count when who-needs > 0 · same grammar as morning card) |
+| Check-ins nav | **Plan subnav** (TeacherSubnav Check-ins + soft **amber** count when period-filtered who-needs > 0 · same lens as Daily Focus / Check-ins) |
 | Grading | **Right / nav** (TeacherSubnav Grading + coral count when pending) |
 | Morning card | **Under** title row, above or with SAM glance · always **Open Check-ins** CTA; amber shell when Check-ins needs > 0 |
 | SAM morning tip | **Beside / under** morning card when Check-ins wait · one calm SamBubble line · session+day key (no spam) |
@@ -38,7 +38,7 @@ Icon name hints live on the token (`amber-soft`, `teal-check`, `soft-purple`, `i
 
 ## Applied (whisper)
 
-- `components/v2/StationShell.js` — CSS vars on shell; SamGlance / MorningCard (Open Check-ins CTA · amber when needs > 0) / SamBubble / ProvenanceHelperLine / RoomCards / WhoNeedsMeChip (label **Check-ins**) / TeacherSubnav **Check-ins** link + amber who-needs count + coral grade count
+- `components/v2/StationShell.js` — CSS vars on shell; SamGlance / MorningCard (Open Check-ins CTA · amber when needs > 0) / SamBubble / ProvenanceHelperLine / RoomCards / WhoNeedsMeChip (label **Check-ins**) / TeacherSubnav **Check-ins** link + **period-filtered** amber who-needs count + coral grade count
 - `app/v2/teacher/StationDayClient.js` — glance `meaning` keys; Project indigo; `gradeCount` on subnav; morning `checkInsCount`; SAM Check-ins tip (session+day); provenance helper
 - `app/v2/teacher/check-ins/CheckInsClient.js` — Check-ins title; amber cards; teal dismiss / clear
 - `app/v2/teacher/project/[id]/ProjectShellClient.js` — two-column one-pager; indigo header + evidence chip; right notes fill the glass
@@ -49,7 +49,7 @@ Icon name hints live on the token (`amber-soft`, `teal-check`, `soft-purple`, `i
 1b. When Check-ins wait → calm **SamBubble** once per session/day (“n Check-ins ready when you are”) near morning card — not every render
 1c. First minted tile with From Library / Check-ins / Sunday / live teach → quiet **Tiles remember where they came from.** · Got it dismisses (localStorage)
 2. Daily Focus → SAM glance amber for Check-ins; coral for to-grade; Project indigo on teach row right
-2b. TeacherSubnav → **Check-ins** item; soft **amber** count when who-needs > 0 (self-loads; same glance as morning card)
+2b. TeacherSubnav → **Check-ins** item; soft **amber** count when period-filtered who-needs > 0 (self-loads with `ci2.teacher.classFilter`; same glance as morning card)
 3. Check-ins → amber cards; teal “Looks good / dismiss”; period filter unchanged
 3. Project → **two-column one-pager** — left Assign · right teacher notes; indigo “Project ·” + evidence chip; Details only for rare extras
 

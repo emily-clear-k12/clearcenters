@@ -44,8 +44,12 @@ See also: [STUDENT-ACTIVITY-STUB.md](./STUDENT-ACTIVITY-STUB.md)
 - Submit marks progress + queues teacher grading (`ci2.grading.inbox`) like activity Submit
 - See also: [PROJECT-ON-TEACH.md](./PROJECT-ON-TEACH.md) · [STUDENT-TOOLS.md](./STUDENT-TOOLS.md)
 
+## Preferences stub
+- Light prefs chip on My Day: display name · text size S/M/L · sound on/off
+- Per-kid localStorage (`ci2.student.prefs.{kid}`) — see [STUDENT-PREFS-STUB.md](./STUDENT-PREFS-STUB.md)
+
 ## Teacher checked stamp
-- Teacher **Confirm** in Grading stamps the matching mission/practice on My Day (`ci2.student.teacherChecked.{kid}`)
+- Teacher **Confirm** in Grading stamps the matching mission/practice on My Day (`ci2.student.teacherChecked.{kid}` · namespace from submission `studentFirst`)
 - Calm mint chip: **Teacher checked** — not a scary grade badge
 - Live submits use `missionId`; demo rows may match by title (pizza / equivalent / purpose)
 - Same-browser localStorage only

@@ -8,6 +8,8 @@ import { GLANCE, GLANCE_CSS_VARS, glanceToken, glanceChipStyle, glanceCardStyle,
 import {
   CHECK_INS_HREF,
   getWhoNeedsMeCount,
+  readSelectedClassFilter,
+  TEACHER_CLASS_FILTER_KEY,
   WHO_NEEDS_ME_STORAGE_KEY,
 } from "../../lib/v2/demoWhoNeedsMe";
 import { GRADING_INBOX_KEY, GRADING_STORAGE_KEY } from "../../lib/v2/demoGrading";
@@ -46,7 +48,8 @@ export function StationShell({ children, active = "plan" }) {
   );
 }
 
-/** Plan subnav: Daily Focus | This Week | Check-ins | Grading | Reports | Library. Demo today = Wed=2. */
+/** Plan subnav: Daily Focus | This Week | Check-ins | Grading | Reports | Library. Demo today = Wed=2.
+ * Check-ins amber count self-loads with current period/room filter (same lens as Daily Focus / Check-ins). */
 export function TeacherSubnav({ active, gradeCount, checkInsCount: checkInsCountProp }) {
   const n = typeof gradeCount === "number" ? gradeCount : 0;
   const [checkInsLocal, setCheckInsLocal] = useState(0);
@@ -55,7 +58,13 @@ export function TeacherSubnav({ active, gradeCount, checkInsCount: checkInsCount
     if (typeof checkInsCountProp === "number") return undefined;
     const refresh = () => {
       try {
-        setCheckInsLocal(getWhoNeedsMeCount());
+        const selectedClass = readSelectedClassFilter();
+        setCheckInsLocal(
+          getWhoNeedsMeCount(undefined, undefined, {
+            classFilter: selectedClass,
+            inheritPeriodId: selectedClass || "A",
+          })
+        );
       } catch (_) {
         setCheckInsLocal(0);
       }
@@ -66,7 +75,8 @@ export function TeacherSubnav({ active, gradeCount, checkInsCount: checkInsCount
         !e.key ||
         e.key === WHO_NEEDS_ME_STORAGE_KEY ||
         e.key === GRADING_STORAGE_KEY ||
-        e.key === GRADING_INBOX_KEY
+        e.key === GRADING_INBOX_KEY ||
+        e.key === TEACHER_CLASS_FILTER_KEY
       ) {
         refresh();
       }
@@ -75,11 +85,13 @@ export function TeacherSubnav({ active, gradeCount, checkInsCount: checkInsCount
     window.addEventListener("focus", refresh);
     window.addEventListener("ci2-who-needs-updated", refresh);
     window.addEventListener("ci2-grading-updated", refresh);
+    window.addEventListener("ci2-class-filter-updated", refresh);
     return () => {
       window.removeEventListener("storage", onStorage);
       window.removeEventListener("focus", refresh);
       window.removeEventListener("ci2-who-needs-updated", refresh);
       window.removeEventListener("ci2-grading-updated", refresh);
+      window.removeEventListener("ci2-class-filter-updated", refresh);
     };
   }, [checkInsCountProp]);
 

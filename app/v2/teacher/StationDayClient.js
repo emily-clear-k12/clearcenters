@@ -253,7 +253,7 @@ export default function StationDayClient() {
 
   return (
     <StationShell>
-      <TeacherSubnav active="day" gradeCount={gradePending} />
+      <TeacherSubnav active="day" gradeCount={gradePending} checkInsCount={whoNeedsCount} />
       <Glass>
         <div style={{ display: "flex", justifyContent: "space-between", gap: 12, flexWrap: "wrap", alignItems: "flex-start" }}>
           <div>

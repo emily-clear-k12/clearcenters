@@ -12,7 +12,7 @@ Teacher plans, student Start/Submit, and grading inbox existed separately. This 
 3. Answer stub items → **Submit**
 4. Open teacher **Check / Grading** (`/v2/teacher/grading`)
 5. See **Leo**’s new item at the top (chip: Just in) · Needs you count includes it
-6. **Confirm** (or Skip) — confirmed IDs persist as before; Confirm also stamps matching My Day mission/practice as **Teacher checked** (calm chip)
+6. **Confirm** (or Skip) — confirmed IDs persist as before; Confirm also stamps matching My Day mission/practice as **Teacher checked** (calm chip) into the **demo kid namespace** matching `studentFirst` (Leo/Kai/Riley); switcher + SAM celebrate stay scoped
 7. After Confirm, calm chip **See growth →** links to Reports (`/v2/teacher/reports`) — stub glance only; does **not** claim live analytics (Reports honesty: Demo data · not live yet)
 8. Optional: Daily Focus SAM glance “N to grade” increments (same tab via `ci2-grading-updated`; cross-tab via `storage`)
 
@@ -22,7 +22,8 @@ Teacher plans, student Start/Submit, and grading inbox existed separately. This 
 | `ci2.student.missionProgress` | Student My Day done ids (unchanged) |
 | `ci2.grading.inbox` | Live submits from student activity |
 | `ci2.grading.confirmedIds` | Teacher Confirm persistence (demo + live ids) |
-| `ci2.student.teacherChecked` | Mission ids stamped when teacher Confirms (My Day calm chip) |
+| `ci2.student.teacherChecked.{kid}` | Mission ids stamped when teacher Confirms (My Day calm chip · Leo/Kai/Riley namespace from `studentFirst`) |
+| `ci2.student.teacherCheckedCelebrated.{kid}` | SAM celebrate-once ids per demo kid |
 
 Live row shape mirrors demo grading items: `id` (`live-{missionId}`), `studentFirst` (Leo), `assignment`, `subject`, `product`, `submittedAt`, `workSnippet`, optional `samScore` / `samReason`.
 
@@ -38,5 +39,6 @@ Live row shape mirrors demo grading items: `id` (`live-{missionId}`), `studentFi
 - No real auth, class roster, or cross-device sync
 - No Supabase / AI scoring API — SAM score is a stub suggestion
 - Same-browser localStorage only; clearing site data resets the bridge
+- Confirm stamps the kid namespace for Leo/Kai/Riley; other demo names fall back to the active demo kid so the stamp still lands
 - **See growth →** is a calm nav nudge only — Reports stays demo; no live gradebook / SIS analytics
 - Do **not** merge to `main`

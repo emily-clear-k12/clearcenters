@@ -166,7 +166,7 @@ export default function StationWeekClient() {
 
   return (
     <StationShell>
-      <TeacherSubnav active="week" />
+      <TeacherSubnav active="week" checkInsCount={whoNeedsCount} />
       <Glass>
         <div style={{ display: "flex", justifyContent: "space-between", gap: 12, flexWrap: "wrap", alignItems: "flex-start" }}>
           <div>

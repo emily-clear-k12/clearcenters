@@ -15,7 +15,7 @@ Departmentalized teachers also need the **same period/class lens** as Daily Focu
 ## Click tour
 1. `/v2` → **Teacher · Daily Focus** (`/v2/teacher/day?d=2`)
 2. **Setup** → departmentalized (e.g. Math only · 3 periods)
-3. See **Check-ins** chip (header) and SAM glance row — counts match the **selected period**; Plan subnav **Check-ins** shows soft amber count when who-needs > 0
+3. See **Check-ins** chip (header) and SAM glance row — counts match the **selected period**; Plan subnav **Check-ins** soft amber count uses the **same period/room filter** (not unfiltered who-needs)
 4. Open **Check-ins** (`/v2/teacher/check-ins`) → RoomCards (Period 1 / 2 / 3); switch period → list filters
    - Period 1 → Kai (demo)
    - Period 2 → Riley
@@ -41,7 +41,7 @@ Departmentalized teachers also need the **same period/class lens** as Daily Focu
 
 - Demo kids carry `periodId` (`A` / `B` / `C` = class keys in `TEACHER_SETUPS`).
 - Live inbox rows (Leo) use `periodId` / `classKey` when present; otherwise **inherit the currently selected room**.
-- SAM glance + `WhoNeedsMeChip` on Day/Week use the **filtered** count for the selected period (assistant lens — not all-rooms).
+- SAM glance + `WhoNeedsMeChip` + **TeacherSubnav Check-ins badge** on Day/Week/Grading/Library/Reports use the **filtered** count for the selected period (assistant lens — not all-rooms).
 - RoomCards “needs you” badges include Check-ins counts **per period** (plus existing suggestion counts).
 
 ## Storage (same browser only)
@@ -61,7 +61,7 @@ Departmentalized teachers also need the **same period/class lens** as Daily Focu
 - `app/v2/teacher/check-ins/` — page + `CheckInsClient` (SetupSwitcher / RoomCards / SingleRoomLabel; Family note link)
 - `app/v2/teacher/family/[id]/` — Family note stub (see FAMILY-STUB.md)
 - `app/v2/teacher/who-needs-me/` — redirect → `/v2/teacher/check-ins`
-- `components/v2/StationShell.js` — `WhoNeedsMeChip`, `RoomCards`, `SetupSwitcher`
+- `components/v2/StationShell.js` — `WhoNeedsMeChip`, `RoomCards`, `SetupSwitcher`, `TeacherSubnav` Check-ins amber count (period-filtered)
 - `lib/v2/usePlanner.js` — shared setup + `classFilter` persistence
 - `app/v2/teacher/StationDayClient.js` — chip + SAM glance + amber From Check-ins blocks
 - `app/v2/teacher/StationWeekClient.js` — chip + SAM glance (period-filtered count)
