@@ -233,6 +233,49 @@ export function SamGlance({ items, emptyLabel }) {
 }
 
 /**
+ * Quiet SAM voice bubble (teacher) — reuse student SamBubble pattern.
+ * One calm line; caller gates spam with session/day keys.
+ */
+export function SamBubble({ text, style }) {
+  if (!text) return null;
+  return (
+    <div
+      role="status"
+      style={{
+        display: "flex",
+        gap: 12,
+        alignItems: "flex-start",
+        background: "rgba(255,255,255,.88)",
+        border: `1px solid ${LINE}`,
+        borderRadius: 16,
+        padding: "10px 12px",
+        ...style,
+      }}
+    >
+      <div
+        aria-hidden
+        style={{
+          width: 36,
+          height: 36,
+          borderRadius: 12,
+          background: "linear-gradient(145deg, #B8A4FF, #8B6CFF)",
+          color: "#fff",
+          fontWeight: 800,
+          fontSize: 12,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          flexShrink: 0,
+        }}
+      >
+        SAM
+      </div>
+      <p style={{ margin: 0, color: INK, fontSize: 14, lineHeight: 1.4, paddingTop: 6 }}>{text}</p>
+    </div>
+  );
+}
+
+/**
  * One-time quiet provenance helper (not a tour modal).
  * “Tiles remember where they came from.” — dismiss → localStorage.
  */

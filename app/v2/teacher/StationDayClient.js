@@ -42,6 +42,7 @@ import {
   SetupSwitcher,
   MorningCard,
   SamGlance,
+  SamBubble,
   ProvenanceHelperLine,
   RoomCards,
   SingleRoomLabel,
@@ -214,6 +215,29 @@ export default function StationDayClient() {
     setShowProvenanceHelper(false);
   }
 
+  // SAM morning tip when Check-ins wait — once per day (no spam every render)
+  const samMorningTipKey = `ci2.morning.samCheckInsTip.${DATES[day] || day}`;
+  const [samMorningTip, setSamMorningTip] = useState(null);
+  useEffect(() => {
+    if (whoNeedsCount <= 0) {
+      setSamMorningTip(null);
+      return;
+    }
+    try {
+      if (window.sessionStorage.getItem(samMorningTipKey) === "1") {
+        setSamMorningTip(null);
+        return;
+      }
+      window.sessionStorage.setItem(samMorningTipKey, "1");
+    } catch {
+      /* still show once this mount */
+    }
+    const line =
+      whoNeedsCount === 1
+        ? "1 Check-in ready when you are"
+        : `${whoNeedsCount} Check-ins ready when you are`;
+    setSamMorningTip(line);
+  }, [whoNeedsCount, samMorningTipKey]);
 
   function openProject(act) {
     router.push(PROJECT_HREF(act.id));
@@ -278,6 +302,9 @@ export default function StationDayClient() {
               checkInsCount={whoNeedsCount}
               checkInsHref={WHO_NEEDS_ME_HREF}
             />
+          )}
+          {samMorningTip && (
+            <SamBubble text={samMorningTip} style={{ margin: "0 0 12px" }} />
           )}
           <ProvenanceHelperLine
             show={showProvenanceHelper}
