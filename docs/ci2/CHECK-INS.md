@@ -2,10 +2,10 @@
 
 **Doc rename:** was `WHO-NEEDS-ME.md` → **`CHECK-INS.md`** (calm display; no guilt).
 
-**Display name:** Check-ins · **Route (kept):** `/v2/teacher/who-needs-me`
+**Display name:** Check-ins · **Route:** `/v2/teacher/check-ins`
 
 Branch: `ci2-sandbox`  
-Route: `/v2/teacher/who-needs-me`
+Route: `/v2/teacher/check-ins` (legacy `/v2/teacher/who-needs-me` redirects)
 
 ## Why
 SAM glance and grading already surface “needs you.” Teachers need a calm place to act — pick 1–3 kids for reteach or small group — without opening a spreadsheet. Analytics / time-on-task come later; this is **action from data** (demo + live inbox).
@@ -16,7 +16,7 @@ Departmentalized teachers also need the **same period/class lens** as Daily Focu
 1. `/v2` → **Teacher · Daily Focus** (`/v2/teacher/day?d=2`)
 2. **Setup** → departmentalized (e.g. Math only · 3 periods)
 3. See **Check-ins** chip (header) and SAM glance row — counts match the **selected period**
-4. Open **Check-ins** → RoomCards (Period 1 / 2 / 3); switch period → list filters
+4. Open **Check-ins** (`/v2/teacher/check-ins`) → RoomCards (Period 1 / 2 / 3); switch period → list filters
    - Period 1 → Kai (demo)
    - Period 2 → Riley
    - Period 3 → Maya (or live Leo inheriting that room)
@@ -53,7 +53,8 @@ Departmentalized teachers also need the **same period/class lens** as Daily Focu
 
 ## Files
 - `lib/v2/demoWhoNeedsMe.js` — demo kids + `periodId`, period filter, Check-ins → Daily Focus blocks
-- `app/v2/teacher/who-needs-me/` — page + client (SetupSwitcher / RoomCards / SingleRoomLabel)
+- `app/v2/teacher/check-ins/` — page + `CheckInsClient` (SetupSwitcher / RoomCards / SingleRoomLabel)
+- `app/v2/teacher/who-needs-me/` — redirect → `/v2/teacher/check-ins`
 - `components/v2/StationShell.js` — `WhoNeedsMeChip`, `RoomCards`, `SetupSwitcher`
 - `lib/v2/usePlanner.js` — shared setup + `classFilter` persistence
 - `app/v2/teacher/StationDayClient.js` — chip + SAM glance + amber From Check-ins blocks

@@ -27,7 +27,7 @@ Icon name hints live on the token (`amber-soft`, `teal-check`, `soft-purple`, `i
 | Spot | Rule |
 |------|------|
 | SAM strip | Always **top** (under title / after morning when shown) |
-| Check-ins | **Left / stack** (header chip + glance + Check-ins page cards). Route still `/v2/teacher/who-needs-me` |
+| Check-ins | **Left / stack** (header chip + glance + Check-ins page cards). Route `/v2/teacher/check-ins` |
 | Grading | **Right / nav** (TeacherSubnav Grading + coral count when pending) |
 | Morning card | **Under** title row, above or with SAM glance |
 | Project | **Right edge** of teach agenda row; indigo accent |
@@ -37,7 +37,7 @@ Icon name hints live on the token (`amber-soft`, `teal-check`, `soft-purple`, `i
 
 - `components/v2/StationShell.js` — CSS vars on shell; SamGlance / MorningCard / RoomCards / WhoNeedsMeChip (label **Check-ins**) / TeacherSubnav grade count
 - `app/v2/teacher/StationDayClient.js` — glance `meaning` keys; Project indigo; `gradeCount` on subnav
-- `app/v2/teacher/who-needs-me/WhoNeedsMeClient.js` — Check-ins title; amber cards; teal dismiss / clear
+- `app/v2/teacher/check-ins/CheckInsClient.js` — Check-ins title; amber cards; teal dismiss / clear
 - `app/v2/teacher/project/[id]/ProjectShellClient.js` — two-column one-pager; indigo header + evidence chip; right notes fill the glass
 
 ## Click tour
@@ -52,6 +52,6 @@ Icon name hints live on the token (`amber-soft`, `teal-check`, `soft-purple`, `i
 - Student screens
 - V2TopBar Check coral count (subnav only this pass)
 - Loud on-screen color key
-- Route rename (URL kept `/who-needs-me`; display = **Check-ins**)
+- (Done) Route rename → `/v2/teacher/check-ins`; legacy `/who-needs-me` redirects
 - Analytics
 - Merge to `main`

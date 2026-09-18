@@ -506,8 +506,8 @@ export function HandsOffChip({ level, onOpenPreview }) {
 }
 
 
-/** Calm entry chip → Check-ins (reteach / small-group stub). URL keeps /who-needs-me. */
-export function WhoNeedsMeChip({ count, href = "/v2/teacher/who-needs-me" }) {
+/** Calm entry chip → Check-ins (reteach / small-group stub). Path: /v2/teacher/check-ins. */
+export function WhoNeedsMeChip({ count, href = "/v2/teacher/check-ins" }) {
   const n = typeof count === "number" ? count : 0;
   const label = n === 0 ? "Check-ins · clear" : n === 1 ? "Check-ins · 1" : `Check-ins · ${n}`;
   const ready = n === 0;

@@ -253,7 +253,7 @@ export default function ProjectShellClient({ projectId }) {
                 >
                   <span>{(shell.smallGroupDemoNames || []).join(" · ") || "Stub names"}</span>
                   <Link
-                    href={shell.whoNeedsMeHref || "/v2/teacher/who-needs-me"}
+                    href={shell.whoNeedsMeHref || "/v2/teacher/check-ins"}
                     style={{ color: LAVENDER, fontWeight: 700, fontSize: 12 }}
                   >
                     Check-ins →

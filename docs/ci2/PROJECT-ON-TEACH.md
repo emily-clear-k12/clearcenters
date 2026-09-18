@@ -66,7 +66,7 @@ Demo teach examples (ids stable from `DEMO_ACTIVITIES` order): `act-8` Equivalen
 - `app/v2/student/StudentMyDayClient.js` — Later · Project card
 - `docs/ci2/PROJECT-ON-TEACH.md` — this note
 - `docs/ci2/STANDARDS-UNIT-STUBS.md` — Standard info + Unit guide stub note
-- `docs/ci2/CHECK-INS.md` — Check-ins (display); route `/who-needs-me`
+- `docs/ci2/CHECK-INS.md` — Check-ins; route `/v2/teacher/check-ins`
 - `docs/ci2/GLANCE-GRAMMAR.md` — soft meaning cues
 
 ## Gaps (out of scope)
