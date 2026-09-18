@@ -56,7 +56,6 @@ import {
   LINE,
   LAVENDER,
   SOFT_LAV,
-  MINT,
   GLANCE,
   glanceChipStyle,
   glanceCardStyle,
@@ -259,56 +258,47 @@ export default function StationDayClient() {
     ? LIVE_TEACH_HREF(primaryTeach.id)
     : "#today-teach";
 
+  const glassQuiet = {
+    background: "rgba(255,255,255,.82)",
+    border: `1px solid ${LINE}`,
+    borderRadius: 16,
+  };
+
   return (
     <StationShell>
+      <style>{`
+        .df-bento{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(260px,1fr);gap:16px;align-items:start}
+        .df-top{display:grid;gap:12px;margin:0 0 16px}
+        .df-rail{display:flex;flex-direction:column;gap:12px;position:sticky;top:12px}
+        .df-peek{display:flex;flex-direction:column;gap:8px}
+        @media (max-width:960px){
+          .df-bento{grid-template-columns:1fr}
+          .df-rail{position:static}
+        }
+      `}</style>
       <TeacherSubnav active="day" gradeCount={gradePending} checkInsCount={whoNeedsCount} />
       <Glass>
-        <div style={{ display: "flex", justifyContent: "space-between", gap: 12, flexWrap: "wrap", alignItems: "flex-start" }}>
+        {/* Title · setup — short hierarchy */}
+        <div style={{ display: "flex", justifyContent: "space-between", gap: 12, flexWrap: "wrap", alignItems: "flex-start", marginBottom: 12 }}>
           <div>
-            <h1 style={{ fontFamily: "'Poppins', sans-serif", margin: 0, fontSize: 34, color: INK }}>Daily Focus</h1>
-            <div style={{ color: MUTED, marginTop: 2 }}>
+            <h1 style={{ fontFamily: "'Poppins', sans-serif", margin: 0, fontSize: 30, color: INK, letterSpacing: -0.3 }}>Daily Focus</h1>
+            <div style={{ color: MUTED, marginTop: 2, fontSize: 14 }}>
               Teach today · {DAY_NAMES[day]} · {DATES[day]} · {p.published ? "published" : "not published yet"} · {minutes} min
             </div>
             <div style={{ marginTop: 10, display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
               <SetupSwitcher setupKey={p.setupKey} onChange={p.setSetupKey} />
               {!p.multiClass && <SingleRoomLabel cls={cls} setup={p.setup} />}
-              <HandsOffChip level={p.level} onOpenPreview={() => p.setShowSundayPreview(true)} />
-              <WhoNeedsMeChip count={whoNeedsCount} href={WHO_NEEDS_ME_HREF} />
-              <WeeksRunEntry onOpen={() => p.setShowWeeksRun(true)} routineCount={p.enabledRoutineCount} />
             </div>
-            <TodayLoopStrip
-              planCount={items.length}
-              teachCount={items.filter((a) => a.kind === "teach").length}
-              checkCount={whoNeedsCount > 0 ? whoNeedsCount : gradePending}
-              checkNeeds={whoNeedsCount > 0}
-              planHref="/v2/teacher"
-              teachHref={teachHref}
-              checkHref={whoNeedsCount > 0 ? WHO_NEEDS_ME_HREF : GRADING_INBOX_HREF}
-            />
           </div>
+          {/* Compact chips — not giant colored tiles */}
           <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
-            <AddActivityButton onClick={() => p.openAddActivity({ day })} />
-            <button
-              type="button"
-              onClick={() => router.push("/v2/teacher")}
-              style={{ background: "#fff", color: INK, border: "1px solid " + LINE, borderRadius: 999, padding: "10px 16px", fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}
-            >
-              This Week · plan
-            </button>
+            <HandsOffChip level={p.level} onOpenPreview={() => p.setShowSundayPreview(true)} />
+            <WeeksRunEntry onOpen={() => p.setShowWeeksRun(true)} routineCount={p.enabledRoutineCount} />
           </div>
         </div>
 
-        {p.multiClass && (
-          <RoomCards
-            classes={p.setup.classes}
-            selectedKey={selectedClass}
-            onSelect={p.setClassFilter}
-            setup={p.setup}
-            needsByClass={needsByClass}
-          />
-        )}
-
-        <div style={{ marginTop: 14 }}>
+        {/* TOP full width: SAM glance + morning (max 3) + period switcher */}
+        <section className="df-top" aria-label="Morning glance band">
           {!morningDismissed && (
             <MorningCard
               greeting={morningCard.greeting}
@@ -321,7 +311,7 @@ export default function StationDayClient() {
             />
           )}
           {samMorningTip && (
-            <SamBubble text={samMorningTip} style={{ margin: "0 0 12px" }} />
+            <SamBubble text={samMorningTip} style={{ margin: 0 }} />
           )}
           <ProvenanceHelperLine
             show={showProvenanceHelper}
@@ -332,249 +322,350 @@ export default function StationDayClient() {
             items={glanceItems}
             emptyLabel={`Nothing waiting for ${cls?.name || "this class"} today. Nice.`}
           />
-        </div>
 
-        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", margin: "4px 0 12px" }}>
-          {p.multiSubject && (
-            <Pill active={p.subjectFilter === "all"} onClick={() => p.setSubjectFilter("all")}>
-              All subjects
-            </Pill>
+          {p.multiClass && (
+            <RoomCards
+              classes={p.setup.classes}
+              selectedKey={selectedClass}
+              onSelect={p.setClassFilter}
+              setup={p.setup}
+              needsByClass={needsByClass}
+            />
           )}
-          {p.setup.subjects.map((key) => (
-            <Pill key={key} active={p.subjectFilter === key || (!p.multiSubject && p.subjectFilter === "all")} onClick={() => p.setSubjectFilter(key)} color={SUBJECTS[key].color}>
-              {SUBJECTS[key].name}
-            </Pill>
-          ))}
-        </div>
 
-        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 16 }}>
-          {DAYS.map((label, i) => {
-            const on = i === day;
-            return (
-              <button
-                key={label}
-                type="button"
-                onClick={() => router.push("/v2/teacher/day?d=" + i)}
-                style={{
-                  borderRadius: 999,
-                  padding: "7px 12px",
-                  border: "1px solid " + (on ? LAVENDER : LINE),
-                  background: on ? LAVENDER : "#fff",
-                  color: on ? "#fff" : INK,
-                  fontWeight: 700,
-                  fontSize: 13,
-                  cursor: "pointer",
-                  fontFamily: "inherit",
-                }}
-              >
-                {label} {DATES[i].split(" ")[1]}
-                {i === 2 ? " · TODAY" : ""}
-              </button>
-            );
-          })}
-        </div>
-
-        {/* Check-ins → Daily Focus pulls (amber glance) */}
-        {focusBlocks.length > 0 && (
-          <section aria-label="Small group and reteach from Check-ins" style={{ marginBottom: 16 }}>
-            <div style={{ fontWeight: 800, color: GLANCE.needsYou.fg, marginBottom: 10, fontSize: 13, letterSpacing: 0.4 }}>
-              {day === FOCUS_TODAY_DAY
-                ? "FROM CHECK-INS · TODAY"
-                : day === FOCUS_TOMORROW_DAY
-                  ? "FROM CHECK-INS · TOMORROW"
-                  : "FROM CHECK-INS"}
-            </div>
-            <div style={{ display: "grid", gap: 10 }}>
-              {focusBlocks.map((block) => (
-                <div
-                  key={block.id}
-                  style={{
-                    ...glanceCardStyle("needsYou"),
-                    borderRadius: 16,
-                    padding: "12px 14px",
-                    display: "flex",
-                    gap: 12,
-                    alignItems: "flex-start",
-                    boxShadow: "0 6px 18px rgba(166,124,61,.1)",
-                  }}
-                >
-                  <div
-                    style={{
-                      ...glanceChipStyle("needsYou"),
-                      borderRadius: 999,
-                      padding: "6px 10px",
-                      fontSize: 11,
-                      fontWeight: 800,
-                      flexShrink: 0,
-                      letterSpacing: 0.3,
-                    }}
-                  >
-                    {focusBlockKindLabel(block.kind).toUpperCase()}
-                  </div>
-                  <div style={{ minWidth: 0, flex: 1 }}>
-                    <div style={{ fontWeight: 800, color: INK, fontSize: 16 }}>{block.title}</div>
-                    <div style={{ fontSize: 13, color: MUTED, marginTop: 2 }}>
-                      {focusBlockNamesLine(block)}
-                      {block.standard ? ` · ${block.standard}` : ""}
-                      {" · stub from Check-ins"}
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </section>
-        )}
-
-        {/* Now → Next → Later agenda (day-of home) */}
-        <section id="today-teach" aria-label="Today's agenda">
-          <div style={{ fontWeight: 800, color: INK, marginBottom: 10, fontSize: 13, letterSpacing: 0.4 }}>
-            NOW → NEXT → LATER
-          </div>
-          <div style={{ display: "grid", gap: 10 }}>
-            {agenda.length === 0 && (
-              <div style={{ color: MUTED, fontSize: 14, padding: "12px 4px" }}>Nothing on the agenda for this room today.</div>
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
+            {p.multiSubject && (
+              <Pill active={p.subjectFilter === "all"} onClick={() => p.setSubjectFilter("all")}>
+                All subjects
+              </Pill>
             )}
-            {agenda.map((act, idx) => {
-              const sub = SUBJECTS[act.subject];
-              const label = idx < 3 ? AGENDA_LABELS[idx] : "Later";
-              const isNow = idx === 0;
+            {p.setup.subjects.map((key) => (
+              <Pill key={key} active={p.subjectFilter === key || (!p.multiSubject && p.subjectFilter === "all")} onClick={() => p.setSubjectFilter(key)} color={SUBJECTS[key].color}>
+                {SUBJECTS[key].name}
+              </Pill>
+            ))}
+            <span style={{ width: 1, height: 22, background: LINE, margin: "0 2px" }} aria-hidden />
+            {DAYS.map((label, i) => {
+              const on = i === day;
               return (
-                <div
-                  key={act.id}
+                <button
+                  key={label}
+                  type="button"
+                  onClick={() => router.push("/v2/teacher/day?d=" + i)}
                   style={{
-                    display: "flex",
-                    gap: 0,
-                    alignItems: "stretch",
-                    background: act.auto ? MINT : isNow ? SOFT_LAV : "#fff",
-                    border: `1px solid ${isNow ? "#D9CFFF" : LINE}`,
-                    borderRadius: 16,
-                    overflow: "hidden",
-                    boxShadow: isNow ? "0 8px 22px rgba(139,108,255,.12)" : "none",
+                    borderRadius: 999,
+                    padding: "6px 11px",
+                    border: "1px solid " + (on ? LAVENDER : LINE),
+                    background: on ? LAVENDER : "rgba(255,255,255,.9)",
+                    color: on ? "#fff" : INK,
+                    fontWeight: 700,
+                    fontSize: 12,
+                    cursor: "pointer",
+                    fontFamily: "inherit",
                   }}
                 >
-                  <div
-                    style={{
-                      width: 72,
-                      flexShrink: 0,
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      background: isNow ? "rgba(139,108,255,.14)" : "#F7F4FF",
-                      fontWeight: 800,
-                      fontSize: 12,
-                      color: isNow ? LAVENDER : MUTED,
-                      letterSpacing: 0.3,
-                    }}
-                  >
-                    {label}
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => setOpenId(act.id)}
-                    style={{
-                      flex: 1,
-                      display: "flex",
-                      gap: 10,
-                      textAlign: "left",
-                      background: "transparent",
-                      border: "none",
-                      padding: "12px 10px",
-                      cursor: "pointer",
-                      fontFamily: "inherit",
-                    }}
-                  >
-                    <span style={{ width: 5, alignSelf: "stretch", background: sub.color, borderRadius: 4 }} />
-                    <div style={{ minWidth: 0 }}>
-                      <div style={{ fontSize: 11, fontWeight: 800, color: sub.color, textTransform: "uppercase" }}>
-                        {sub.name} · {KINDS[act.kind]?.short || act.kind}
-                        {act.auto ? " · auto" : ""}
-                      </div>
-                      <div style={{ fontWeight: 700, color: INK, fontSize: isNow ? 17 : 15 }}>{act.title}</div>
-                      <div style={{ fontSize: 13, color: MUTED }}>
-                        {act.minutes} min · {act.who}
-                        {(() => {
-                          const prov = plannerProvenanceLabel(act);
-                          return prov ? ` · ${prov}` : "";
-                        })()}
-                      </div>
-                    </div>
-                  </button>
-                  {act.kind === "teach" && (
-                    <div style={{ alignSelf: "center", marginRight: 12, display: "flex", gap: 6, flexShrink: 0 }}>
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          openLiveTeach(act);
-                        }}
-                        title="Open teach live present mode"
-                        style={{
-                          border: isNow ? "none" : `1px solid ${GLANCE.teach.border}`,
-                          background: isNow ? GLANCE.teach.fg : GLANCE.teach.bg,
-                          color: isNow ? "#fff" : GLANCE.teach.fg,
-                          borderRadius: 999,
-                          padding: "8px 12px",
-                          fontSize: 13,
-                          fontWeight: 700,
-                          cursor: "pointer",
-                          fontFamily: "inherit",
-                          whiteSpace: "nowrap",
-                          boxShadow: isNow ? "0 6px 16px rgba(123,107,184,.22)" : "none",
-                        }}
-                      >
-                        Teach live
-                      </button>
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          openLessonPlan(act);
-                        }}
-                        title="Open lesson plan stub"
-                        style={{
-                          border: `1px solid ${GLANCE.teach.border}`,
-                          background: GLANCE.teach.bg,
-                          color: GLANCE.teach.fg,
-                          borderRadius: 999,
-                          padding: "8px 12px",
-                          fontSize: 13,
-                          fontWeight: 700,
-                          cursor: "pointer",
-                          fontFamily: "inherit",
-                          whiteSpace: "nowrap",
-                        }}
-                      >
-                        Lesson plan
-                      </button>
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          openProject(act);
-                        }}
-                        title="Open project shell"
-                        style={{
-                          border: `1px solid ${GLANCE.project.border}`,
-                          background: isNow ? GLANCE.project.fg : GLANCE.project.bg,
-                          color: isNow ? "#fff" : GLANCE.project.fg,
-                          borderRadius: 999,
-                          padding: "8px 14px",
-                          fontSize: 13,
-                          fontWeight: 700,
-                          cursor: "pointer",
-                          fontFamily: "inherit",
-                          whiteSpace: "nowrap",
-                        }}
-                      >
-                        Project
-                      </button>
-                    </div>
-                  )}
-                </div>
+                  {label} {DATES[i].split(" ")[1]}
+                  {i === 2 ? " · TODAY" : ""}
+                </button>
               );
             })}
           </div>
         </section>
+
+        {/* Connected bento: left ~60% teach spine · right ~40% loop + peeks */}
+        <div className="df-bento">
+          <div aria-label="Teach spine">
+            {/* Check-ins → Daily Focus pulls (amber only for real needs) */}
+            {focusBlocks.length > 0 && (
+              <section aria-label="Small group and reteach from Check-ins" style={{ marginBottom: 14 }}>
+                <div style={{ fontWeight: 800, color: GLANCE.needsYou.fg, marginBottom: 8, fontSize: 12, letterSpacing: 0.4 }}>
+                  {day === FOCUS_TODAY_DAY
+                    ? "FROM CHECK-INS · TODAY"
+                    : day === FOCUS_TOMORROW_DAY
+                      ? "FROM CHECK-INS · TOMORROW"
+                      : "FROM CHECK-INS"}
+                </div>
+                <div style={{ display: "grid", gap: 8 }}>
+                  {focusBlocks.map((block) => (
+                    <div
+                      key={block.id}
+                      style={{
+                        ...glanceCardStyle("needsYou"),
+                        borderRadius: 14,
+                        padding: "10px 12px",
+                        display: "flex",
+                        gap: 10,
+                        alignItems: "flex-start",
+                        boxShadow: "0 4px 14px rgba(166,124,61,.08)",
+                      }}
+                    >
+                      <div
+                        style={{
+                          ...glanceChipStyle("needsYou"),
+                          borderRadius: 999,
+                          padding: "5px 9px",
+                          fontSize: 10,
+                          fontWeight: 800,
+                          flexShrink: 0,
+                          letterSpacing: 0.3,
+                        }}
+                      >
+                        {focusBlockKindLabel(block.kind).toUpperCase()}
+                      </div>
+                      <div style={{ minWidth: 0, flex: 1 }}>
+                        <div style={{ fontWeight: 800, color: INK, fontSize: 15 }}>{block.title}</div>
+                        <div style={{ fontSize: 12, color: MUTED, marginTop: 2 }}>
+                          {focusBlockNamesLine(block)}
+                          {block.standard ? ` · ${block.standard}` : ""}
+                          {" · stub from Check-ins"}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </section>
+            )}
+
+            {/* Now → Next → Later agenda hero */}
+            <section id="today-teach" aria-label="Today's agenda">
+              <div style={{ fontWeight: 800, color: INK, marginBottom: 10, fontSize: 12, letterSpacing: 0.4 }}>
+                NOW → NEXT → LATER
+              </div>
+              <div style={{ display: "grid", gap: 10 }}>
+                {agenda.length === 0 && (
+                  <div style={{ color: MUTED, fontSize: 14, padding: "12px 4px" }}>Nothing on the agenda for this room today.</div>
+                )}
+                {agenda.map((act, idx) => {
+                  const sub = SUBJECTS[act.subject];
+                  const label = idx < 3 ? AGENDA_LABELS[idx] : "Later";
+                  const isNow = idx === 0;
+                  return (
+                    <div
+                      key={act.id}
+                      style={{
+                        display: "flex",
+                        gap: 0,
+                        alignItems: "stretch",
+                        background: isNow ? SOFT_LAV : "rgba(255,255,255,.92)",
+                        border: `1px solid ${isNow ? "#D9CFFF" : LINE}`,
+                        borderRadius: 16,
+                        overflow: "hidden",
+                        boxShadow: isNow ? "0 8px 22px rgba(139,108,255,.12)" : "none",
+                      }}
+                    >
+                      <div
+                        style={{
+                          width: 72,
+                          flexShrink: 0,
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          background: isNow ? "rgba(139,108,255,.14)" : "rgba(247,244,255,.65)",
+                          fontWeight: 800,
+                          fontSize: 12,
+                          color: isNow ? LAVENDER : MUTED,
+                          letterSpacing: 0.3,
+                        }}
+                      >
+                        {label}
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setOpenId(act.id)}
+                        style={{
+                          flex: 1,
+                          display: "flex",
+                          gap: 10,
+                          textAlign: "left",
+                          background: "transparent",
+                          border: "none",
+                          padding: "12px 10px",
+                          cursor: "pointer",
+                          fontFamily: "inherit",
+                        }}
+                      >
+                        <span style={{ width: 5, alignSelf: "stretch", background: sub.color, borderRadius: 4, opacity: 0.85 }} />
+                        <div style={{ minWidth: 0 }}>
+                          <div style={{ fontSize: 11, fontWeight: 800, color: MUTED, textTransform: "uppercase", letterSpacing: 0.2 }}>
+                            {sub.name} · {KINDS[act.kind]?.short || act.kind}
+                            {act.auto ? " · auto" : ""}
+                          </div>
+                          <div style={{ fontWeight: 700, color: INK, fontSize: isNow ? 17 : 15 }}>{act.title}</div>
+                          <div style={{ fontSize: 13, color: MUTED }}>
+                            {act.minutes} min · {act.who}
+                            {(() => {
+                              const prov = plannerProvenanceLabel(act);
+                              return prov ? ` · ${prov}` : "";
+                            })()}
+                          </div>
+                        </div>
+                      </button>
+                      {act.kind === "teach" && (
+                        <div style={{ alignSelf: "center", marginRight: 12, display: "flex", gap: 6, flexShrink: 0, flexWrap: "wrap", justifyContent: "flex-end" }}>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              openLiveTeach(act);
+                            }}
+                            title="Open teach live present mode"
+                            style={{
+                              border: isNow ? "none" : `1px solid ${GLANCE.teach.border}`,
+                              background: isNow ? GLANCE.teach.fg : GLANCE.teach.bg,
+                              color: isNow ? "#fff" : GLANCE.teach.fg,
+                              borderRadius: 999,
+                              padding: "8px 12px",
+                              fontSize: 13,
+                              fontWeight: 700,
+                              cursor: "pointer",
+                              fontFamily: "inherit",
+                              whiteSpace: "nowrap",
+                              boxShadow: isNow ? "0 6px 16px rgba(123,107,184,.22)" : "none",
+                            }}
+                          >
+                            Teach live
+                          </button>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              openLessonPlan(act);
+                            }}
+                            title="Open lesson plan stub"
+                            style={{
+                              border: `1px solid ${LINE}`,
+                              background: "rgba(255,255,255,.9)",
+                              color: GLANCE.teach.fg,
+                              borderRadius: 999,
+                              padding: "8px 12px",
+                              fontSize: 13,
+                              fontWeight: 700,
+                              cursor: "pointer",
+                              fontFamily: "inherit",
+                              whiteSpace: "nowrap",
+                            }}
+                          >
+                            Lesson plan
+                          </button>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              openProject(act);
+                            }}
+                            title="Open project shell"
+                            style={{
+                              border: `1px solid ${GLANCE.project.border}`,
+                              background: isNow ? GLANCE.project.fg : "rgba(255,255,255,.9)",
+                              color: isNow ? "#fff" : GLANCE.project.fg,
+                              borderRadius: 999,
+                              padding: "8px 14px",
+                              fontSize: 13,
+                              fontWeight: 700,
+                              cursor: "pointer",
+                              fontFamily: "inherit",
+                              whiteSpace: "nowrap",
+                            }}
+                          >
+                            Project
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </section>
+          </div>
+
+          {/* Right ~40%: loop · peeks · add / light routines */}
+          <aside className="df-rail" aria-label="Today side rail">
+            <div style={{ ...glassQuiet, padding: "12px 14px" }}>
+              <TodayLoopStrip
+                planCount={items.length}
+                teachCount={items.filter((a) => a.kind === "teach").length}
+                checkCount={whoNeedsCount > 0 ? whoNeedsCount : gradePending}
+                checkNeeds={whoNeedsCount > 0}
+                planHref="/v2/teacher"
+                teachHref={teachHref}
+                checkHref={whoNeedsCount > 0 ? WHO_NEEDS_ME_HREF : GRADING_INBOX_HREF}
+              />
+            </div>
+
+            <div className="df-peek">
+              <a
+                href={WHO_NEEDS_ME_HREF}
+                style={{
+                  textDecoration: "none",
+                  display: "block",
+                  padding: "12px 14px",
+                  borderRadius: 14,
+                  border: whoNeedsCount > 0 ? `1px solid ${GLANCE.needsYou.border}` : `1px solid ${LINE}`,
+                  background: whoNeedsCount > 0 ? GLANCE.needsYou.bg : "rgba(255,255,255,.82)",
+                  color: INK,
+                }}
+              >
+                <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: 0.35, color: whoNeedsCount > 0 ? GLANCE.needsYou.fg : MUTED }}>
+                  CHECK-INS
+                </div>
+                <div style={{ fontWeight: 700, marginTop: 4, fontSize: 15 }}>
+                  {whoNeedsCount > 0 ? `${whoNeedsCount} waiting` : "Clear · open anytime"}
+                </div>
+              </a>
+              <a
+                href={GRADING_INBOX_HREF}
+                style={{
+                  textDecoration: "none",
+                  display: "block",
+                  padding: "12px 14px",
+                  borderRadius: 14,
+                  border: `1px solid ${LINE}`,
+                  background: "rgba(255,255,255,.82)",
+                  color: INK,
+                }}
+              >
+                <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: 0.35, color: MUTED }}>GRADING</div>
+                <div style={{ fontWeight: 700, marginTop: 4, fontSize: 15 }}>
+                  {gradePending > 0 ? `${gradePending} ready when you are` : "Inbox clear"}
+                </div>
+              </a>
+            </div>
+
+            <div style={{ ...glassQuiet, padding: "12px 14px", display: "flex", flexDirection: "column", gap: 10 }}>
+              <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: 0.35, color: MUTED }}>ADD · ROUTINES</div>
+              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                <AddActivityButton onClick={() => p.openAddActivity({ day })} />
+                <button
+                  type="button"
+                  onClick={() => router.push("/v2/teacher")}
+                  style={{ background: "#fff", color: INK, border: "1px solid " + LINE, borderRadius: 999, padding: "10px 16px", fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}
+                >
+                  This Week · plan
+                </button>
+              </div>
+              <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
+                <WhoNeedsMeChip count={whoNeedsCount} href={WHO_NEEDS_ME_HREF} />
+                <button
+                  type="button"
+                  onClick={() => p.setShowSundayPreview(true)}
+                  style={{
+                    border: `1px solid ${LINE}`,
+                    background: "rgba(255,255,255,.9)",
+                    color: MUTED,
+                    borderRadius: 999,
+                    padding: "6px 12px",
+                    fontSize: 12,
+                    fontWeight: 700,
+                    cursor: "pointer",
+                    fontFamily: "inherit",
+                  }}
+                >
+                  Sunday preview
+                </button>
+              </div>
+            </div>
+          </aside>
+        </div>
       </Glass>
 
       {opened && (

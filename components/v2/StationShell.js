@@ -525,13 +525,14 @@ export function MorningCard({
       {win && (
         <div
           style={{
-            ...glanceCardStyle("ready"),
+            background: "rgba(255,255,255,.78)",
+            border: `1px solid ${LINE}`,
             borderRadius: 12,
             padding: "10px 12px",
             marginBottom: 8,
           }}
         >
-          <div style={{ fontSize: 11, fontWeight: 800, color: GLANCE.ready.fg, letterSpacing: 0.4, marginBottom: 2 }}>WIN · YESTERDAY</div>
+          <div style={{ fontSize: 11, fontWeight: 800, color: MUTED, letterSpacing: 0.4, marginBottom: 2 }}>WIN · YESTERDAY</div>
           <div style={{ color: INK, fontSize: 14, lineHeight: 1.4 }}>{win}</div>
         </div>
       )}
@@ -539,13 +540,13 @@ export function MorningCard({
       {watch && (
         <div
           style={{
-            ...glanceCardStyle("needsYou"),
+            ...(needs ? glanceCardStyle("needsYou") : { background: "rgba(255,255,255,.78)", border: `1px solid ${LINE}` }),
             borderRadius: 12,
             padding: "10px 12px",
             marginBottom: 8,
           }}
         >
-          <div style={{ fontSize: 11, fontWeight: 800, color: GLANCE.needsYou.fg, letterSpacing: 0.4, marginBottom: 2 }}>WATCH · NOT YET</div>
+          <div style={{ fontSize: 11, fontWeight: 800, color: needs ? GLANCE.needsYou.fg : MUTED, letterSpacing: 0.4, marginBottom: 2 }}>WATCH · NOT YET</div>
           <div style={{ color: INK, fontSize: 14, lineHeight: 1.4 }}>{watch}</div>
         </div>
       )}
@@ -612,7 +613,9 @@ export function RoomCards({ classes, selectedKey, onSelect, setup, needsByClass 
                 marginTop: 8,
                 fontSize: 12,
                 fontWeight: 700,
-                ...glanceChipStyle(ready ? "ready" : "needsYou"),
+                ...(ready
+                  ? { color: MUTED, background: "rgba(255,255,255,.85)", border: `1px solid ${LINE}` }
+                  : glanceChipStyle("needsYou")),
                 display: "inline-flex",
                 alignItems: "center",
                 gap: 4,
@@ -620,7 +623,7 @@ export function RoomCards({ classes, selectedKey, onSelect, setup, needsByClass 
                 padding: "3px 10px",
               }}
             >
-              {ready ? "✓ ready" : "needs you"}
+              {ready ? "ready" : "needs you"}
             </div>
           </button>
         );
@@ -749,7 +752,7 @@ export function HandsOffChip({ level, onOpenPreview }) {
 /** Calm entry chip → Check-ins (reteach / small-group stub). Path: /v2/teacher/check-ins. */
 /**
  * Quiet Daily Focus loop strip — Plan · Teach · Check with tiny counts.
- * 20% glance grammar; amber Check only when checkNeeds (Check-ins). Plan / Teach / Check are clickable hrefs.
+ * Glass/calm Plan · soft Teach · amber Check only when checkNeeds. No decorative green/yellow.
  */
 export function TodayLoopStrip({
   planCount = 0,
@@ -766,7 +769,24 @@ export function TodayLoopStrip({
   // Amber only when Check-ins need attention — grading count alone stays quiet.
   const needs = !!checkNeeds;
 
+  const quiet = {
+    color: INK,
+    background: "rgba(255,255,255,.88)",
+    border: `1px solid ${LINE}`,
+  };
+  const teachQuiet = {
+    color: GLANCE.teach.fg,
+    background: "rgba(243,238,255,.72)",
+    border: `1px solid ${LINE}`,
+  };
+
   const seg = (label, count, href, meaning) => {
+    const tone =
+      meaning === "needsYou"
+        ? glanceChipStyle("needsYou")
+        : meaning === "teach"
+          ? teachQuiet
+          : quiet;
     const chip = (
       <span
         style={{
@@ -777,7 +797,7 @@ export function TodayLoopStrip({
           padding: "5px 11px",
           fontSize: 12,
           fontWeight: 700,
-          ...glanceChipStyle(meaning),
+          ...tone,
           whiteSpace: "nowrap",
         }}
       >
@@ -797,7 +817,7 @@ export function TodayLoopStrip({
     <div
       aria-label="Today loop"
       style={{
-        marginTop: 10,
+        marginTop: 0,
         display: "flex",
         flexWrap: "wrap",
         alignItems: "center",
@@ -815,11 +835,11 @@ export function TodayLoopStrip({
       >
         Today
       </span>
-      {seg("Plan", plan, planHref, "ready")}
+      {seg("Plan", plan, planHref, "quiet")}
       <span style={{ color: MUTED, fontSize: 12, opacity: 0.55 }}>·</span>
       {seg("Teach", teach, teachHref, "teach")}
       <span style={{ color: MUTED, fontSize: 12, opacity: 0.55 }}>·</span>
-      {seg("Check", check, checkHref, needs ? "needsYou" : "ready")}
+      {seg("Check", check, checkHref, needs ? "needsYou" : "quiet")}
     </div>
   );
 }
@@ -835,7 +855,9 @@ export function WhoNeedsMeChip({ count, href = "/v2/teacher/check-ins" }) {
       style={{
         fontSize: 12,
         fontWeight: 700,
-        ...glanceChipStyle(ready ? "ready" : "needsYou"),
+        ...(ready
+          ? { color: MUTED, background: "rgba(255,255,255,.88)", border: `1px solid ${LINE}` }
+          : glanceChipStyle("needsYou")),
         borderRadius: 999,
         padding: "6px 12px",
         textDecoration: "none",
