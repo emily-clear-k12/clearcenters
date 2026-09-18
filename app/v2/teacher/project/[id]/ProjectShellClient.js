@@ -19,24 +19,33 @@ import {
   assignProjectToMyDay,
   getProjectShell,
   isProjectAssigned,
+  loadAudienceChoice,
+  saveAudienceChoice,
   PROJECT_ASSIGNED_KEY,
+  PROJECT_AUDIENCE_KEY,
 } from "../../../../../lib/v2/demoProject";
 
 /**
- * CI2.0 Project-on-teach shell (skeleton).
- * Title · TEKS stub · days span · evidence product · Assign to My Day → localStorage.
+ * CI2.0 Project-on-teach shell (thickened stub).
+ * Title · Why/TEKS · checkpoints · evidence product · Who it's for · Assign to My Day.
  */
 export default function ProjectShellClient({ projectId }) {
   const router = useRouter();
   const shell = useMemo(() => getProjectShell(projectId), [projectId]);
   const [assigned, setAssigned] = useState(false);
+  const [audienceId, setAudienceId] = useState("whole_class");
   const [toast, setToast] = useState(null);
+
+  useEffect(() => {
+    if (!shell) return;
+    setAudienceId(loadAudienceChoice(shell.id, shell.defaultAudience || "whole_class"));
+  }, [shell]);
 
   useEffect(() => {
     setAssigned(isProjectAssigned(projectId));
     const refresh = () => setAssigned(isProjectAssigned(projectId));
     const onStorage = (e) => {
-      if (!e.key || e.key === PROJECT_ASSIGNED_KEY) refresh();
+      if (!e.key || e.key === PROJECT_ASSIGNED_KEY || e.key === PROJECT_AUDIENCE_KEY) refresh();
     };
     window.addEventListener("storage", onStorage);
     window.addEventListener("focus", refresh);
@@ -85,11 +94,22 @@ export default function ProjectShellClient({ projectId }) {
     );
   }
 
-  function handleAssign() {
-    assignProjectToMyDay(shell);
-    setAssigned(true);
-    setToast({ text: "Assigned to My Day (this browser) — shows as a Later · Project card for students." });
+  function handleAudience(nextId) {
+    setAudienceId(nextId);
+    saveAudienceChoice(shell.id, nextId);
   }
+
+  function handleAssign() {
+    assignProjectToMyDay(shell, { audienceId });
+    setAssigned(true);
+    const who =
+      audienceId === "small_group" ? "small group" : "whole class";
+    setToast({
+      text: `Assigned to My Day (${who}) — Later · Project card shows “${shell.evidence.label}”.`,
+    });
+  }
+
+  const isSmall = audienceId === "small_group";
 
   return (
     <StationShell>
@@ -105,7 +125,7 @@ export default function ProjectShellClient({ projectId }) {
               {shell.title}
             </h1>
             <p style={{ margin: "6px 0 0", color: MUTED, fontSize: 14 }}>
-              Lightweight multi-day / evidence vibe — skeleton only. Not a full project builder.
+              Checkpoints · evidence product · who it’s for — still a skeleton, not a full builder.
             </p>
           </div>
           <Link
@@ -141,12 +161,32 @@ export default function ProjectShellClient({ projectId }) {
           </div>
         )}
 
+        {/* Why + TEKS — light */}
+        <div
+          style={{
+            marginTop: 16,
+            background: "#fff",
+            border: `1px solid ${LINE}`,
+            borderRadius: 16,
+            padding: "14px 16px",
+          }}
+        >
+          <div style={{ fontSize: 11, fontWeight: 800, color: MUTED, letterSpacing: 0.4 }}>WHY · TEKS</div>
+          <p style={{ margin: "6px 0 0", color: INK, fontSize: 14, lineHeight: 1.45 }}>{shell.why}</p>
+          <div style={{ marginTop: 8, fontSize: 13, color: MUTED }}>
+            <span style={{ fontWeight: 700, color: shell.subjectColor }}>{shell.teksLabel}</span>
+            {" · "}
+            {shell.span.label}
+            {shell.productAbout ? ` · ${shell.product}` : ""}
+          </div>
+        </div>
+
         <div
           style={{
             display: "grid",
             gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
             gap: 12,
-            marginTop: 18,
+            marginTop: 14,
           }}
         >
           <MetaCard label="TEKS" value={shell.teksLabel} hint="Stub — wire real standards later" />
@@ -162,6 +202,69 @@ export default function ProjectShellClient({ projectId }) {
           />
         </div>
 
+        {/* Checkpoints */}
+        <div style={{ marginTop: 16 }}>
+          <div style={{ fontSize: 12, fontWeight: 800, color: LAVENDER, letterSpacing: 0.4 }}>
+            CHECKPOINTS
+          </div>
+          <p style={{ margin: "4px 0 10px", color: MUTED, fontSize: 13 }}>
+            Short day beats — research → draft → share vibe. Not a planner.
+          </p>
+          <ol
+            style={{
+              listStyle: "none",
+              margin: 0,
+              padding: 0,
+              display: "flex",
+              flexDirection: "column",
+              gap: 8,
+            }}
+          >
+            {shell.checkpoints.map((cp, i) => (
+              <li
+                key={cp.id}
+                style={{
+                  display: "flex",
+                  gap: 12,
+                  alignItems: "flex-start",
+                  background: i % 2 === 0 ? SOFT_LAV : "#fff",
+                  border: `1px solid ${i % 2 === 0 ? "#D9CFFF" : LINE}`,
+                  borderRadius: 14,
+                  padding: "12px 14px",
+                }}
+              >
+                <div
+                  aria-hidden
+                  style={{
+                    width: 36,
+                    height: 36,
+                    borderRadius: 12,
+                    background: LAVENDER,
+                    color: "#fff",
+                    fontWeight: 800,
+                    fontSize: 13,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    flexShrink: 0,
+                  }}
+                >
+                  D{cp.dayNum}
+                </div>
+                <div style={{ minWidth: 0 }}>
+                  <div style={{ fontWeight: 800, color: INK, fontSize: 15 }}>
+                    {cp.title} · {cp.beat}
+                  </div>
+                  <div style={{ color: MUTED, fontSize: 13, marginTop: 2 }}>
+                    {cp.dayLabel} — {cp.detail}
+                  </div>
+                </div>
+              </li>
+            ))}
+          </ol>
+        </div>
+
+        {/* Evidence product */}
         <div
           style={{
             marginTop: 16,
@@ -174,7 +277,9 @@ export default function ProjectShellClient({ projectId }) {
           <div style={{ fontSize: 12, fontWeight: 800, color: LAVENDER, letterSpacing: 0.4 }}>
             EVIDENCE PRODUCT
           </div>
-          <div style={{ fontWeight: 700, color: INK, fontSize: 17, marginTop: 4 }}>{shell.evidence.title}</div>
+          <div style={{ fontWeight: 800, color: INK, fontSize: 18, marginTop: 4 }}>
+            {shell.evidence.label}
+          </div>
           <p style={{ margin: "8px 0 0", color: MUTED, fontSize: 14, lineHeight: 1.45 }}>
             {shell.evidence.body}
           </p>
@@ -182,6 +287,75 @@ export default function ProjectShellClient({ projectId }) {
             <p style={{ margin: "10px 0 0", color: INK, fontSize: 13 }}>
               From teach product · {shell.product}: {shell.productAbout}
             </p>
+          )}
+        </div>
+
+        {/* Who it's for */}
+        <div
+          style={{
+            marginTop: 16,
+            background: "#fff",
+            border: `1px solid ${LINE}`,
+            borderRadius: 16,
+            padding: "16px 18px",
+          }}
+        >
+          <div style={{ fontSize: 12, fontWeight: 800, color: LAVENDER, letterSpacing: 0.4 }}>
+            WHO IT’S FOR
+          </div>
+          <p style={{ margin: "4px 0 12px", color: MUTED, fontSize: 13 }}>
+            Whole class or a small group (reteach / Who needs me). Choice sticks with Assign.
+          </p>
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }} role="group" aria-label="Who it’s for">
+            {shell.audienceOptions.map((opt) => {
+              const on = audienceId === opt.id;
+              return (
+                <button
+                  key={opt.id}
+                  type="button"
+                  onClick={() => handleAudience(opt.id)}
+                  aria-pressed={on}
+                  style={{
+                    border: on ? `2px solid ${LAVENDER}` : `1px solid ${LINE}`,
+                    background: on ? SOFT_LAV : "#fff",
+                    color: INK,
+                    borderRadius: 999,
+                    padding: "10px 16px",
+                    fontWeight: 800,
+                    fontSize: 13,
+                    cursor: "pointer",
+                    fontFamily: "inherit",
+                  }}
+                >
+                  {opt.label}
+                </button>
+              );
+            })}
+          </div>
+          {isSmall && (
+            <div
+              style={{
+                marginTop: 12,
+                background: CREAM,
+                border: `1px solid #E8D9A8`,
+                borderRadius: 12,
+                padding: "12px 14px",
+                fontSize: 13,
+                color: INK,
+                lineHeight: 1.45,
+              }}
+            >
+              <strong>Small group stub</strong> — demo names{" "}
+              {(shell.smallGroupDemoNames || []).join(" · ") || "Pick after Who needs me"}.
+              No roster picker yet.{" "}
+              <Link
+                href={shell.whoNeedsMeHref || "/v2/teacher/who-needs-me"}
+                style={{ color: LAVENDER, fontWeight: 700 }}
+              >
+                From Who needs me →
+              </Link>
+              <span style={{ color: MUTED }}> or pick after Who needs me.</span>
+            </div>
           )}
         </div>
 
@@ -223,7 +397,7 @@ export default function ProjectShellClient({ projectId }) {
           </button>
           <span style={{ color: MUTED, fontSize: 13 }}>
             {assigned
-              ? "Student My Day will show a Later · Project card (same browser)."
+              ? `Student Later · Project will show “${shell.evidence.label}” (${audienceId === "small_group" ? "small group" : "whole class"}).`
               : "Writes localStorage only — calm stub, no LMS blast."}
           </span>
         </div>
@@ -243,7 +417,7 @@ export default function ProjectShellClient({ projectId }) {
             borderRadius: 14,
             fontSize: 14,
             fontWeight: 600,
-            maxWidth: 420,
+            maxWidth: 440,
             zIndex: 50,
             boxShadow: "0 12px 32px rgba(46,36,89,.35)",
           }}

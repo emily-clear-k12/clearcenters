@@ -149,9 +149,14 @@ export default function StudentMyDayClient() {
     }
     // Project cards are a cheap Later stub — no full student project player yet.
     if (mission.isProject) {
-      setSamMsg(`“${mission.title}” is a multi-day project stub. Evidence later — you're all set for now.`);
+      const product = mission.evidenceLabel || "your evidence product";
+      setSamMsg(
+        `“${mission.title}” is a multi-day project. When you're ready, turn in ${product.toLowerCase()} — after must-dos.`
+      );
       setToast({
-        text: "Project shell is teacher-side for now. Card stays on Later until the real player lands.",
+        text: mission.evidenceLabel
+          ? `Later · Project — evidence: ${mission.evidenceLabel}. Full player later.`
+          : "Project shell is teacher-side for now. Card stays on Later until the real player lands.",
         tone: "soft",
       });
       return;
@@ -348,6 +353,8 @@ function MissionCard({ mission, locked, onStart }) {
           </div>
           <div style={{ fontSize: 13, color: MUTED, marginTop: 4 }}>
             {mission.minutes} min
+            {mission.isProject && mission.evidenceLabel ? ` · ${mission.evidenceLabel}` : ""}
+            {mission.isProject && mission.audienceId === "small_group" ? " · small group" : ""}
             {locked ? " · unlock after must-dos" : ""}
             {mission.done ? " · finished" : ""}
           </div>
