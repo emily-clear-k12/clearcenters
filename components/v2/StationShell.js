@@ -207,6 +207,104 @@ export function SamGlance({ items, emptyLabel }) {
  * Period-as-rooms for departmentalized setups.
  * Bigger room cards replace tiny period chips.
  */
+
+/**
+ * SAM morning card — ~30-second warm open on Daily Focus.
+ * Agenda headline + one win (first) + one calm watch. Not Needs-you (that's SamGlance).
+ */
+export function MorningCard({ greeting, agendaLine, win, watch, onDismiss }) {
+  return (
+    <section
+      aria-label="SAM morning card"
+      style={{
+        margin: "0 0 16px",
+        background: "linear-gradient(135deg, rgba(243,238,255,.98), rgba(255,255,255,.94))",
+        border: `1px solid ${LINE}`,
+        borderRadius: 18,
+        padding: "14px 16px 12px",
+        boxShadow: "0 10px 28px rgba(139,108,255,.12)",
+      }}
+    >
+      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 10, flexWrap: "wrap", marginBottom: 10 }}>
+        <div>
+          <div style={{ display: "flex", alignItems: "baseline", gap: 8, flexWrap: "wrap" }}>
+            <span style={{ fontWeight: 800, color: INK, fontSize: 13, letterSpacing: 0.3 }}>SAM morning</span>
+            <span style={{ color: MUTED, fontSize: 12 }}>~30 seconds · honest + calm</span>
+          </div>
+          {greeting && (
+            <div style={{ marginTop: 4, color: INK, fontSize: 15, fontWeight: 600, lineHeight: 1.35 }}>{greeting}</div>
+          )}
+        </div>
+        {onDismiss && (
+          <button
+            type="button"
+            onClick={onDismiss}
+            aria-label="Dismiss morning card for today"
+            style={{
+              border: `1px solid ${LINE}`,
+              background: "#fff",
+              color: MUTED,
+              borderRadius: 999,
+              padding: "6px 12px",
+              fontSize: 12,
+              fontWeight: 700,
+              cursor: "pointer",
+              fontFamily: "inherit",
+              whiteSpace: "nowrap",
+            }}
+          >
+            Dismiss today
+          </button>
+        )}
+      </div>
+
+      {agendaLine && (
+        <div
+          style={{
+            background: SOFT_LAV,
+            border: `1px solid #D9CFFF`,
+            borderRadius: 12,
+            padding: "10px 12px",
+            marginBottom: 8,
+          }}
+        >
+          <div style={{ fontSize: 11, fontWeight: 800, color: LAVENDER, letterSpacing: 0.4, marginBottom: 2 }}>TODAY · NOW</div>
+          <div style={{ color: INK, fontSize: 15, fontWeight: 700, lineHeight: 1.35 }}>{agendaLine}</div>
+        </div>
+      )}
+
+      {win && (
+        <div
+          style={{
+            background: MINT,
+            border: `1px solid ${LINE}`,
+            borderRadius: 12,
+            padding: "10px 12px",
+            marginBottom: 8,
+          }}
+        >
+          <div style={{ fontSize: 11, fontWeight: 800, color: "#2FA36B", letterSpacing: 0.4, marginBottom: 2 }}>WIN · YESTERDAY</div>
+          <div style={{ color: INK, fontSize: 14, lineHeight: 1.4 }}>{win}</div>
+        </div>
+      )}
+
+      {watch && (
+        <div
+          style={{
+            background: CREAM,
+            border: `1px solid ${LINE}`,
+            borderRadius: 12,
+            padding: "10px 12px",
+          }}
+        >
+          <div style={{ fontSize: 11, fontWeight: 800, color: "#B8860B", letterSpacing: 0.4, marginBottom: 2 }}>WATCH · NOT YET</div>
+          <div style={{ color: INK, fontSize: 14, lineHeight: 1.4 }}>{watch}</div>
+        </div>
+      )}
+    </section>
+  );
+}
+
 export function RoomCards({ classes, selectedKey, onSelect, setup, needsByClass }) {
   if (!classes || classes.length <= 1) return null;
   const unit = setupUnitLabel(setup);

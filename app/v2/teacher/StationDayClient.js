@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { usePlanner } from "../../../lib/v2/usePlanner";
-import { SUBJECTS, DAYS, DAY_NAMES, DATES, KINDS, PRODUCT_INFO, DEMO_WEEK } from "../../../lib/v2/demoWeek";
+import { SUBJECTS, DAYS, DAY_NAMES, DATES, KINDS, PRODUCT_INFO, DEMO_WEEK, buildMorningCardDemo } from "../../../lib/v2/demoWeek";
 import { GRADING_INBOX_HREF, getPendingCount, loadConfirmedIds } from "../../../lib/v2/demoGrading";
 import {
   StationShell,
@@ -11,6 +11,7 @@ import {
   Pill,
   TeacherSubnav,
   SetupSwitcher,
+  MorningCard,
   SamGlance,
   RoomCards,
   SingleRoomLabel,
@@ -97,6 +98,37 @@ export default function StationDayClient() {
     return list.slice(0, 3);
   }, [daySuggestions, cls?.name, gradePending]);
 
+  const morningCard = useMemo(
+    () =>
+      buildMorningCardDemo({
+        subjects: p.setup.subjects,
+        classKey: selectedClass,
+        className: cls?.name,
+        subjectFilter: p.subjectFilter,
+        agendaNow: agenda[0] || null,
+      }),
+    [p.setup.subjects, selectedClass, cls?.name, p.subjectFilter, agenda]
+  );
+
+  const morningDismissKey = `ci2.morning.dismissed.${DATES[day] || day}`;
+  const [morningDismissed, setMorningDismissed] = useState(false);
+  useEffect(() => {
+    try {
+      setMorningDismissed(window.localStorage.getItem(morningDismissKey) === "1");
+    } catch {
+      setMorningDismissed(false);
+    }
+  }, [morningDismissKey]);
+
+  function dismissMorningCard() {
+    try {
+      window.localStorage.setItem(morningDismissKey, "1");
+    } catch {
+      /* ignore */
+    }
+    setMorningDismissed(true);
+  }
+
   function projectStub(title) {
     p.setToast({ text: `Would project "${title}" — skeleton` });
   }
@@ -141,6 +173,15 @@ export default function StationDayClient() {
         )}
 
         <div style={{ marginTop: 14 }}>
+          {!morningDismissed && (
+            <MorningCard
+              greeting={morningCard.greeting}
+              agendaLine={morningCard.agendaLine}
+              win={morningCard.win}
+              watch={morningCard.watch}
+              onDismiss={dismissMorningCard}
+            />
+          )}
           <SamGlance
             items={glanceItems}
             emptyLabel={`Nothing waiting for ${cls?.name || "this class"} today. Nice.`}
