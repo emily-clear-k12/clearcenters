@@ -12,7 +12,7 @@ const NAV = [
   { key: "plan", label: "Plan", href: "/v2/teacher/day?d=2" },
   { key: "teach", label: "Teach" },
   { key: "check", label: "Check", href: "/v2/teacher/grading" },
-  { key: "grow", label: "Grow" },
+  { key: "grow", label: "Grow", href: "/v2/teacher/reports" },
   { key: "library", label: "Library" },
 ];
 

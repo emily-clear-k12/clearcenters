@@ -46,6 +46,7 @@ export function TeacherSubnav({ active, gradeCount }) {
     { key: "day", label: "Daily Focus", href: "/v2/teacher/day?d=2", hint: "Teach today" },
     { key: "week", label: "This Week", href: "/v2/teacher", hint: "Plan & publish" },
     { key: "grading", label: "Grading", href: "/v2/teacher/grading", hint: "Confirm scores" },
+    { key: "reports", label: "Reports", href: "/v2/teacher/reports", hint: "By standard · stub" },
   ];
   const gradeTone = glanceToken("toGrade");
   return (
