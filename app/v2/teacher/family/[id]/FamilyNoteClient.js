@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -15,7 +15,12 @@ import {
   GLANCE,
   glanceChipStyle,
 } from "../../../../../components/v2/StationShell";
-import { getFamilyNoteStub } from "../../../../../lib/v2/demoFamilyNote";
+import {
+  getFamilyNoteStub,
+  isFamilyNoteSent,
+  markFamilyNoteSent,
+  FAMILY_SENT_KEY,
+} from "../../../../../lib/v2/demoFamilyNote";
 
 /**
  * CI2.0 Family note stub — teacher-facing one-pager (not a parent portal).
@@ -26,6 +31,33 @@ export default function FamilyNoteClient({ noteId }) {
   const router = useRouter();
   const note = useMemo(() => getFamilyNoteStub(noteId), [noteId]);
   const [copied, setCopied] = useState(false);
+  const [sent, setSent] = useState(false);
+  const [sendFlash, setSendFlash] = useState(false);
+
+  useEffect(() => {
+    if (!note?.id) return;
+    const refresh = () => setSent(isFamilyNoteSent(note.id));
+    refresh();
+    const onStorage = (e) => {
+      if (!e.key || e.key === FAMILY_SENT_KEY) refresh();
+    };
+    window.addEventListener("storage", onStorage);
+    window.addEventListener("focus", refresh);
+    window.addEventListener("ci2-family-sent", refresh);
+    return () => {
+      window.removeEventListener("storage", onStorage);
+      window.removeEventListener("focus", refresh);
+      window.removeEventListener("ci2-family-sent", refresh);
+    };
+  }, [note?.id]);
+
+  function handleSendToFamily() {
+    if (!note) return;
+    markFamilyNoteSent(note.id, { studentFirst: note.studentFirst });
+    setSent(true);
+    setSendFlash(true);
+    setTimeout(() => setSendFlash(false), 3200);
+  }
 
   async function copyMessage() {
     if (!note?.copyMessage) return;
@@ -247,6 +279,40 @@ export default function FamilyNoteClient({ noteId }) {
           >
             {copied ? "Copied ✓" : "Copy message"}
           </button>
+          <button
+            type="button"
+            onClick={handleSendToFamily}
+            style={{
+              marginTop: 12,
+              marginLeft: 8,
+              border: sent ? `1px solid ${GLANCE.ready.border}` : "none",
+              background: sent ? GLANCE.ready.bg : GLANCE.ready.fg,
+              color: sent ? GLANCE.ready.fg : "#fff",
+              borderRadius: 999,
+              padding: "10px 16px",
+              fontWeight: 800,
+              fontSize: 13,
+              cursor: "pointer",
+              fontFamily: "inherit",
+              boxShadow: sent ? "none" : "0 6px 16px rgba(46,160,140,.22)",
+            }}
+          >
+            {sent ? "Sent · demo ✓" : "Send to family"}
+          </button>
+          {sendFlash && (
+            <p
+              role="status"
+              style={{
+                margin: "10px 0 0",
+                color: GLANCE.ready.fg,
+                fontSize: 13,
+                fontWeight: 600,
+                lineHeight: 1.4,
+              }}
+            >
+              Queued for family · demo only — no SMS or email sent. Copy still works anytime.
+            </p>
+          )}
         </section>
 
         <div
@@ -309,7 +375,7 @@ export default function FamilyNoteClient({ noteId }) {
         </div>
 
         <p style={{ margin: "16px 0 0", color: MUTED, fontSize: 12, lineHeight: 1.45 }}>
-          Stub only — teacher share sheet, not a parent portal or login.
+          Teacher share sheet stub — Send queues a demo confirmation (no SMS/email, no parent login).
         </p>
       </Glass>
     </StationShell>
