@@ -1,7 +1,8 @@
 "use client";
 
+import Link from "next/link";
 import V2TopBar from "./V2TopBar";
-import { DEMO_TEACHER } from "../../lib/v2/demoWeek";
+import { DEMO_TEACHER, TEACHER_SETUPS } from "../../lib/v2/demoWeek";
 
 const BG = "/teacher/console/bg-platform-room.jpg";
 
@@ -28,6 +29,86 @@ export function StationShell({ children }) {
         </main>
       </div>
     </div>
+  );
+}
+
+/** Plan subnav: This Week | Daily Focus (Wed=2 is demo "today"). */
+export function TeacherSubnav({ active }) {
+  const links = [
+    { key: "week", label: "This Week", href: "/v2/teacher" },
+    { key: "day", label: "Daily Focus", href: "/v2/teacher/day?d=2" },
+  ];
+  return (
+    <nav
+      aria-label="Teacher plan"
+      style={{
+        display: "inline-flex",
+        gap: 4,
+        background: "rgba(255,255,255,.7)",
+        border: `1px solid ${LINE}`,
+        borderRadius: 999,
+        padding: 4,
+        marginBottom: 14,
+      }}
+    >
+      {links.map((l) => {
+        const on = l.key === active;
+        return (
+          <Link
+            key={l.key}
+            href={l.href}
+            aria-current={on ? "page" : undefined}
+            style={{
+              padding: "7px 16px",
+              borderRadius: 999,
+              fontSize: 14,
+              fontWeight: 700,
+              textDecoration: "none",
+              color: on ? "#fff" : INK,
+              background: on ? LAVENDER : "transparent",
+            }}
+          >
+            {l.label}
+          </Link>
+        );
+      })}
+    </nav>
+  );
+}
+
+/** Visible setup switcher: self-contained vs departmentalized. */
+export function SetupSwitcher({ setupKey, onChange }) {
+  return (
+    <label
+      style={{
+        display: "inline-flex",
+        alignItems: "center",
+        gap: 8,
+        background: "#fff",
+        border: `1px solid ${LINE}`,
+        borderRadius: 999,
+        padding: "6px 14px",
+        fontSize: 13,
+        fontWeight: 600,
+        color: INK,
+      }}
+    >
+      <span style={{ color: MUTED, fontWeight: 700, fontSize: 12, textTransform: "uppercase", letterSpacing: 0.4 }}>
+        Setup
+      </span>
+      <select
+        value={setupKey}
+        onChange={(e) => onChange(e.target.value)}
+        aria-label="Teacher setup"
+        style={{ border: "none", background: "transparent", font: "inherit", color: "inherit", cursor: "pointer", outline: "none", maxWidth: "min(420px, 70vw)" }}
+      >
+        {Object.entries(TEACHER_SETUPS).map(([key, s]) => (
+          <option key={key} value={key}>
+            {s.label}
+          </option>
+        ))}
+      </select>
+    </label>
   );
 }
 

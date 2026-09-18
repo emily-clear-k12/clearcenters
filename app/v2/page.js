@@ -1,9 +1,9 @@
 import Link from "next/link";
 
 const AREAS = [
-  { href: "/v2/teacher", title: "Teacher \u00b7 This Week", note: "Week at a glance \u00b7 publish and drag" },
-  { href: "/v2/teacher/day?d=2", title: "Teacher \u00b7 Daily Focus", note: "Wednesday \u00b7 already published" },
-  { href: "/v2/student", title: "Student \u00b7 Home", note: "Current ClearCenters student dashboard" },
+  { href: "/v2/teacher", title: "Teacher · This Week", note: "5-day calendar · setup switcher · publish and drag" },
+  { href: "/v2/teacher/day?d=2", title: "Teacher · Daily Focus", note: "Wednesday agenda · Teach together + Student work" },
+  { href: "/v2/student", title: "Student · Home", note: "Current ClearCenters student dashboard" },
 ];
 
 export default function CI2Home() {
@@ -12,6 +12,9 @@ export default function CI2Home() {
       <div style={{ maxWidth: 760, margin: "0 auto" }}>
         <h1 style={{ fontFamily: "'Poppins', sans-serif", color: "#2E2459", marginBottom: 4 }}>Crystal Instruction 2.0</h1>
         <p style={{ color: "#5C5480", marginTop: 0 }}>Sandbox preview. Pages appear here as they are built.</p>
+        <p style={{ color: "#5C5480", marginTop: 8, fontSize: 14, background: "#fff", border: "1px solid #E3DEFA", borderRadius: 12, padding: "10px 14px" }}>
+          Switch self-contained vs departmentalized on This Week (Setup control). Your choice sticks when you open Daily Focus.
+        </p>
         <div style={{ display: "grid", gap: 16, gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", marginTop: 24 }}>
           {AREAS.map((a) => (
             <Link
