@@ -3,7 +3,9 @@
 Branch: `ci2-sandbox` · Route: `/v2/student`
 
 ## Click path
-`/v2` → **Student · My Day** → Now / Next / Later → **Start** on Now (stub screen + toast).
+`/v2` → **Student · My Day** → Now / Next / Later → **Start** on Now → `/v2/student/activity/[id]` → Submit → My Day progress (checkmark + NOW advances).
+
+See also: [STUDENT-ACTIVITY-STUB.md](./STUDENT-ACTIVITY-STUB.md)
 
 ## Demo
 - Student: **Leo** (Room 12 · Ms. Rivera)
@@ -15,5 +17,5 @@ Branch: `ci2-sandbox` · Route: `/v2/student`
 - `usePlanner` persists Add / suggestion tiles; Student My Day surfaces today’s extras near Now
 - **Gap:** only works same browser/device; no publish, no Supabase, no cross-device
 - **Gap:** base demo tiles (non-Add) are not mirrored live from teacher board edits — curated `DEMO_STUDENT_DAY` only
-- **Gap:** must-do lock is client stub; no real progress sync
+- Progress key: `ci2.student.missionProgress` (activity Submit)
 - Out of scope: auth, full SAM chat, game worlds, merge to main

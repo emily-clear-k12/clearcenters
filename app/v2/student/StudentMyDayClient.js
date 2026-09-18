@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   DEMO_STUDENT,
   DEMO_STUDENT_DAY,
@@ -12,6 +13,10 @@ import {
   subjectName,
   ADDED_ACTIVITIES_KEY,
 } from "../../../lib/v2/demoStudentDay";
+import {
+  STUDENT_PROGRESS_KEY,
+  readStudentProgress,
+} from "../../../lib/v2/demoStudentActivity";
 
 const INK = "#2E2459";
 const MUTED = "#5E577F";
@@ -25,38 +30,80 @@ const SLOT_LABEL = { now: "NOW", next: "NEXT", later: "LATER" };
 
 /**
  * CI2.0 Student · My Day skeleton.
- * One simple day: greeting + SAM, Now / Next / Later cards, tools stub.
- * Optional: surfaces teacher Add tiles from localStorage (same browser).
+ * Start / Continue → /v2/student/activity/[id] (real activity stub).
+ * Progress: localStorage ci2.student.missionProgress (same browser).
  */
 export default function StudentMyDayClient() {
   const student = DEMO_STUDENT;
   const day = DEMO_STUDENT_DAY;
+  const router = useRouter();
+  const searchParams = useSearchParams();
 
   const [teacherAdded, setTeacherAdded] = useState([]);
-  const [startedId, setStartedId] = useState(null);
-  const [doneMustIds, setDoneMustIds] = useState(() => new Set());
+  const [doneIds, setDoneIds] = useState(() => new Set());
   const [toast, setToast] = useState(null);
-  const [activeMission, setActiveMission] = useState(null);
   const [samMsg, setSamMsg] = useState(day.samLine);
 
+  function refreshProgress() {
+    const { doneIds: ids } = readStudentProgress();
+    setDoneIds(new Set(ids));
+  }
+
   useEffect(() => {
-    const refresh = () => setTeacherAdded(readTeacherAddedForDay(day.dayIndex));
-    refresh();
+    const refreshTeacher = () => setTeacherAdded(readTeacherAddedForDay(day.dayIndex));
+    refreshTeacher();
+    refreshProgress();
     const onStorage = (e) => {
-      if (!e.key || e.key === ADDED_ACTIVITIES_KEY) refresh();
+      if (!e.key || e.key === ADDED_ACTIVITIES_KEY) refreshTeacher();
+      if (!e.key || e.key === STUDENT_PROGRESS_KEY) refreshProgress();
+    };
+    const onFocus = () => {
+      refreshTeacher();
+      refreshProgress();
     };
     window.addEventListener("storage", onStorage);
-    window.addEventListener("focus", refresh);
+    window.addEventListener("focus", onFocus);
     return () => {
       window.removeEventListener("storage", onStorage);
-      window.removeEventListener("focus", refresh);
+      window.removeEventListener("focus", onFocus);
     };
   }, [day.dayIndex]);
 
-  const missions = useMemo(
-    () => buildStudentDayMissions(day.missions, teacherAdded),
-    [day.missions, teacherAdded]
-  );
+  // Celebrate return from activity Submit (?done=missionId)
+  useEffect(() => {
+    const doneParam = searchParams?.get("done");
+    if (!doneParam) return;
+    refreshProgress();
+    const title =
+      day.missions.find((m) => m.id === doneParam)?.title ||
+      (doneParam.startsWith("from-teacher-") ? "that activity" : "your mission");
+    setSamMsg(`Check! “${title}” is done. Next card when you're ready.`);
+    setToast({ text: `Nice — “${title}” checked off. Keep going.`, tone: "ok" });
+    // Clear query so refresh doesn't re-toast
+    router.replace("/v2/student", { scroll: false });
+  }, [searchParams, day.missions, router]);
+
+  const missions = useMemo(() => {
+    const built = buildStudentDayMissions(day.missions, teacherAdded);
+    // Re-slot: first incomplete = NOW, then NEXT, then LATER. Done cards keep order but mark done.
+    const incomplete = built.filter((m) => !doneIds.has(m.id));
+    const complete = built.filter((m) => doneIds.has(m.id));
+    // Show incomplete first (so NOW advances), then completed strip at end of list
+    const ordered = [...incomplete, ...complete];
+    return ordered.map((m, i) => {
+      const done = doneIds.has(m.id);
+      let slot = "later";
+      if (!done) {
+        const incIdx = incomplete.findIndex((x) => x.id === m.id);
+        slot = incIdx === 0 ? "now" : incIdx === 1 ? "next" : "later";
+      } else {
+        slot = "later";
+      }
+      // If everything done, first card stays visual calm
+      if (incomplete.length === 0 && i === 0) slot = "now";
+      return { ...m, slot, done };
+    });
+  }, [day.missions, teacherAdded, doneIds]);
 
   useEffect(() => {
     if (!toast) return;
@@ -65,69 +112,27 @@ export default function StudentMyDayClient() {
   }, [toast]);
 
   function mustsRemaining(exceptId) {
-    return missions.filter((m) => m.must && m.id !== exceptId && !doneMustIds.has(m.id));
+    return missions.filter(
+      (m) => m.must && m.id !== exceptId && !doneIds.has(m.id)
+    );
   }
 
   function handleStart(mission) {
+    if (mission.done) {
+      setSamMsg("You already finished this one. Pick the Next card when you're ready.");
+      setToast({ text: "Already done — nice. Try the next open card.", tone: "soft" });
+      return;
+    }
     if (!mission.must && mustsRemaining(mission.id).length > 0) {
       setSamMsg(day.samMustFirst);
       setToast({ text: day.samMustFirst, tone: "soft" });
       return;
     }
-    setStartedId(mission.id);
-    setActiveMission(mission);
     setSamMsg(day.samStarted(mission.title));
-    setToast({ text: day.samStarted(mission.title), tone: "ok" });
+    router.push(`/v2/student/activity/${encodeURIComponent(mission.id)}`);
   }
 
-  function markContinueDone() {
-    if (!activeMission) return;
-    if (activeMission.must) {
-      setDoneMustIds((prev) => new Set([...prev, activeMission.id]));
-    }
-    setToast({ text: "Nice work — back to your day.", tone: "ok" });
-    setSamMsg("You're rolling. Next card when you're ready.");
-    setActiveMission(null);
-  }
-
-  // Stub "play" screen
-  if (activeMission) {
-    return (
-      <main style={pageStyle()}>
-        <div style={{ maxWidth: 520, margin: "0 auto", padding: "28px 16px 64px" }}>
-          <button type="button" onClick={() => setActiveMission(null)} style={ghostBtn()}>
-            ← My Day
-          </button>
-          <div
-            style={{
-              marginTop: 20,
-              background: "#fff",
-              border: `1px solid ${LINE}`,
-              borderRadius: 24,
-              padding: "28px 22px",
-              boxShadow: "0 12px 36px rgba(139,108,255,.14)",
-            }}
-          >
-            <div style={{ fontSize: 12, fontWeight: 800, color: subjectColor(activeMission.subject), letterSpacing: 0.4 }}>
-              {productKidLabel(activeMission.product)} · {subjectName(activeMission.subject)}
-            </div>
-            <h1 style={{ fontFamily: "'Poppins', sans-serif", color: INK, fontSize: 28, margin: "8px 0 6px" }}>
-              {activeMission.title}
-            </h1>
-            <p style={{ color: MUTED, marginTop: 0 }}>{activeMission.minutes} min · skeleton stub</p>
-            <SamBubble text={activeMission.samHint || day.samLine} />
-            <p style={{ color: MUTED, fontSize: 14, marginTop: 18 }}>
-              Real lesson / center / quest opens here later. For now this is a calm placeholder.
-            </p>
-            <button type="button" onClick={markContinueDone} style={primaryBtn({ big: true, marginTop: 20 })}>
-              I&apos;m done for now
-            </button>
-          </div>
-        </div>
-        <Toast toast={toast} />
-      </main>
-    );
-  }
+  const allDone = missions.length > 0 && missions.every((m) => m.done);
 
   return (
     <main style={pageStyle()}>
@@ -147,7 +152,7 @@ export default function StudentMyDayClient() {
           </Link>
         </header>
 
-        <SamBubble text={samMsg} />
+        <SamBubble text={allDone ? "All set for today — great work, Leo." : samMsg} />
 
         {day.doneYesterday?.length > 0 && (
           <section aria-label="Done yesterday" style={{ marginTop: 18 }}>
@@ -185,8 +190,7 @@ export default function StudentMyDayClient() {
               <MissionCard
                 key={m.id}
                 mission={m}
-                started={startedId === m.id}
-                locked={!m.must && mustsRemaining(m.id).length > 0}
+                locked={!m.done && !m.must && mustsRemaining(m.id).length > 0}
                 onStart={() => handleStart(m)}
               />
             ))}
@@ -197,8 +201,8 @@ export default function StudentMyDayClient() {
           <button
             type="button"
             onClick={() => {
-              setSamMsg("Tools come later — pencils, hints, and calm helpers.");
-              setToast({ text: "Tools — skeleton stub. Nothing to open yet.", tone: "soft" });
+              setSamMsg("Tools come later — pencils, hints, and calm helpers. Read-aloud lives on the activity page for now.");
+              setToast({ text: "Tools — open an activity for the read-aloud stub.", tone: "soft" });
             }}
             style={ghostBtn()}
           >
@@ -221,19 +225,21 @@ export default function StudentMyDayClient() {
   );
 }
 
-function MissionCard({ mission, started, locked, onStart }) {
-  const isNow = mission.slot === "now";
-  const label = SLOT_LABEL[mission.slot] || "LATER";
+function MissionCard({ mission, locked, onStart }) {
+  const isNow = mission.slot === "now" && !mission.done;
+  const label = mission.done ? "DONE" : SLOT_LABEL[mission.slot] || "LATER";
   const color = subjectColor(mission.subject);
-  const cta = started ? mission.continueAction || "Continue" : mission.kidAction || "Start";
+  const cta = mission.done
+    ? "Done ✓"
+    : mission.kidAction || "Start";
 
   return (
     <article
       style={{
         display: "flex",
         flexDirection: "column",
-        background: isNow ? SOFT_LAV : "#fff",
-        border: `1px solid ${isNow ? "#D9CFFF" : LINE}`,
+        background: mission.done ? CREAM : isNow ? SOFT_LAV : "#fff",
+        border: `1px solid ${mission.done ? "#E8D9A8" : isNow ? "#D9CFFF" : LINE}`,
         borderRadius: 22,
         overflow: "hidden",
         boxShadow: isNow ? "0 10px 28px rgba(139,108,255,.16)" : "0 2px 10px rgba(46,36,89,.04)",
@@ -248,10 +254,14 @@ function MissionCard({ mission, started, locked, onStart }) {
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            background: isNow ? "rgba(139,108,255,.16)" : "#F7F4FF",
+            background: mission.done
+              ? "rgba(232,201,106,.25)"
+              : isNow
+                ? "rgba(139,108,255,.16)"
+                : "#F7F4FF",
             fontWeight: 800,
             fontSize: isNow ? 13 : 11,
-            color: isNow ? LAVENDER : MUTED,
+            color: mission.done ? "#9A7B1A" : isNow ? LAVENDER : MUTED,
             letterSpacing: 0.4,
           }}
         >
@@ -288,11 +298,12 @@ function MissionCard({ mission, started, locked, onStart }) {
             )}
           </div>
           <div style={{ fontWeight: 800, color: INK, fontSize: isNow ? 20 : 16, lineHeight: 1.25 }}>
-            {mission.title}
+            {mission.done ? `✓ ${mission.title}` : mission.title}
           </div>
           <div style={{ fontSize: 13, color: MUTED, marginTop: 4 }}>
             {mission.minutes} min
             {locked ? " · unlock after must-dos" : ""}
+            {mission.done ? " · finished" : ""}
           </div>
         </div>
       </div>
@@ -300,10 +311,11 @@ function MissionCard({ mission, started, locked, onStart }) {
         <button
           type="button"
           onClick={onStart}
+          disabled={mission.done}
           style={primaryBtn({
             big: isNow,
-            quiet: !isNow,
-            locked,
+            quiet: !isNow || mission.done,
+            locked: locked || mission.done,
           })}
         >
           {locked ? "Not yet" : cta}
@@ -395,7 +407,7 @@ function primaryBtn({ big, quiet, locked, marginTop } = {}) {
     padding: big ? "12px 22px" : "9px 16px",
     fontWeight: 800,
     fontSize: big ? 15 : 13,
-    cursor: "pointer",
+    cursor: locked ? "default" : "pointer",
     fontFamily: "inherit",
     boxShadow: !quiet && !locked ? "0 6px 18px rgba(139,108,255,.28)" : "none",
     marginTop: marginTop || 0,

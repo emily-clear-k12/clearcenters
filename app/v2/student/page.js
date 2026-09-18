@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import StudentMyDayClient from "./StudentMyDayClient";
 
 // CI2.0 Student · My Day — replaces the old ClearCenters dashboard re-export.
@@ -6,5 +7,9 @@ export const metadata = {
 };
 
 export default function StudentMyDayPage() {
-  return <StudentMyDayClient />;
+  return (
+    <Suspense fallback={<main style={{ minHeight: "100vh", background: "#F6F0FF" }} />}>
+      <StudentMyDayClient />
+    </Suspense>
+  );
 }

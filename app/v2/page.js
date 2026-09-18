@@ -15,7 +15,7 @@ const AREAS = [
   {
     href: "/v2/student",
     title: "Student · My Day",
-    note: "Leo's day · Now / Next / Later · must-do before may-do · SAM",
+    note: "Leo's day · Start → activity stub → Submit · progress unlocks Next",
     student: true,
   },
 ];
@@ -28,7 +28,7 @@ export default function CI2Home() {
         <p style={{ color: "#5C5480", marginTop: 0 }}>Sandbox preview. Pages appear here as they are built.</p>
         <p style={{ color: "#5C5480", marginTop: 8, fontSize: 14, background: "#fff", border: "1px solid #E3DEFA", borderRadius: 12, padding: "10px 14px" }}>
           Start on <strong>Daily Focus</strong> (teach today). Switch Setup to Math · 3 periods, pick a room card, then jump to This Week — your period stays synced.
-          Kids land on <strong>Student · My Day</strong> — same Wednesday demo loop.
+          Kids land on <strong>Student · My Day</strong> — Start opens an activity stub; Submit checks off and advances Now.
         </p>
         <div style={{ display: "grid", gap: 16, gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", marginTop: 24 }}>
           {AREAS.map((a) => (
