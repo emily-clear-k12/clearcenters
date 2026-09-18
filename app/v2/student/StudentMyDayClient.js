@@ -20,6 +20,7 @@ import {
 import {
   PROJECT_ASSIGNED_KEY,
   readAssignedProjectsForDay,
+  STUDENT_PROJECT_HREF,
 } from "../../../lib/v2/demoProject";
 import { STUDENT_TOOLS_HREF } from "../../../lib/v2/demoStudentTools";
 
@@ -149,18 +150,11 @@ export default function StudentMyDayClient() {
       setToast({ text: day.samMustFirst, tone: "soft" });
       return;
     }
-    // Project cards are a cheap Later stub — no full student project player yet.
+    // Project cards → light student project shell (checkpoints + evidence + submit).
     if (mission.isProject) {
-      const product = mission.evidenceLabel || "your evidence product";
-      setSamMsg(
-        `“${mission.title}” is a multi-day project. When you're ready, turn in ${product.toLowerCase()} — after must-dos.`
-      );
-      setToast({
-        text: mission.evidenceLabel
-          ? `Later · Project — evidence: ${mission.evidenceLabel}. Full player later.`
-          : "Project shell is teacher-side for now. Card stays on Later until the real player lands.",
-        tone: "soft",
-      });
+      const pid = mission.projectActivityId || mission.id;
+      setSamMsg(`Opening “${mission.title}” — checkpoints and evidence when you're ready.`);
+      router.push(STUDENT_PROJECT_HREF(pid));
       return;
     }
     setSamMsg(day.samStarted(mission.title));

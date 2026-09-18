@@ -30,7 +30,8 @@ Small group → demo names + **Check-ins →** (not “Who needs me”).
 9. **Assign to My Day** → writes `ci2.project.assigned` + remembers audience in `ci2.project.audience`.
 10. **← Back** returns to the teach day.
 11. Optional: **This Week** teach tiles also show a compact **Project** (same shell).
-12. Optional student: `/v2/student` shows a **Later · Project** card when assigned — evidence product name (and “small group” if chosen). Open = calm toast; no full player yet.
+12. Student: `/v2/student` shows a **Later · Project** card when assigned — evidence product name (and “small group” if chosen).
+13. **Open** → `/v2/student/project/[id]` light shell: checkpoint chips · evidence product · Submit stub (queues grading like activity Submit).
 
 
 ## Tone
@@ -51,6 +52,8 @@ Demo teach examples (ids stable from `DEMO_ACTIVITIES` order): `act-8` Equivalen
 | `ci2.project.assigned` | Teacher “Assign to My Day” stubs → student Later · Project cards (includes `evidenceLabel`, `audienceId` / `audienceLabel`) |
 | `ci2.project.audience` | Last Who-it’s-for choice per activity id |
 | `ci2.teacher.addedActivities` | Existing Add tiles (shell can resolve by id if Project opened on an added teach) |
+| `ci2.student.missionProgress` | Student Submit project marks mission done |
+| `ci2.grading.inbox` | Project Submit enqueues like activity Submit (same browser) |
 
 ## Files
 - `lib/v2/demoProject.js` — resolve activity, span, checkpoints, SAM, evidence, materials/standard stubs, assign payload, stub hrefs (`?from=` + hash)
@@ -71,7 +74,7 @@ Demo teach examples (ids stable from `DEMO_ACTIVITIES` order): `act-8` Equivalen
 - Checkpoints + evidence + materials are stub copy (not live planner / grading)
 - Standard info / Unit teaching guide are **skeleton pages** (plain words / spine stubs) — not a TEKS DB or curriculum PDF import
 - Small group is stub only — demo names + Check-ins link; no roster sync
-- Student Open on Project does not launch a real activity player (toast only)
+- Student Open launches a **light project shell** (not a full multi-day player / rubric engine)
 - No SIS / multi-device sync; localStorage only
 - Assign does not create week tiles or publish to a roster
 - Family one-liner / SAM draft not in this pass

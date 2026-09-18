@@ -19,3 +19,9 @@ See also: [STUDENT-ACTIVITY-STUB.md](./STUDENT-ACTIVITY-STUB.md)
 - **Gap:** base demo tiles (non-Add) are not mirrored live from teacher board edits — curated `DEMO_STUDENT_DAY` only
 - Progress key: `ci2.student.missionProgress` (activity Submit)
 - Out of scope: auth, full SAM chat, game worlds, merge to main
+
+## Later · Project
+- Teacher **Assign to My Day** → Later · Project card (evidence label · optional small group)
+- **Open** → `/v2/student/project/[id]` — checkpoint chips, evidence product, Submit stub
+- Submit marks progress + queues teacher grading (`ci2.grading.inbox`) like activity Submit
+- See also: [PROJECT-ON-TEACH.md](./PROJECT-ON-TEACH.md) · [STUDENT-TOOLS.md](./STUDENT-TOOLS.md)
