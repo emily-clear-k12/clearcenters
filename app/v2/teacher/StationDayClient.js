@@ -23,6 +23,7 @@ import {
   WHO_NEEDS_ME_STORAGE_KEY,
 } from "../../../lib/v2/demoWhoNeedsMe";
 import { PROJECT_HREF } from "../../../lib/v2/demoProject";
+import { LESSON_PLAN_HREF } from "../../../lib/v2/demoLessonPlan";
 import {
   StationShell,
   Glass,
@@ -192,6 +193,10 @@ export default function StationDayClient() {
 
   function openProject(act) {
     router.push(PROJECT_HREF(act.id));
+  }
+
+  function openLessonPlan(act) {
+    router.push(LESSON_PLAN_HREF(act.id));
   }
 
   return (
@@ -408,30 +413,52 @@ export default function StationDayClient() {
                     </div>
                   </button>
                   {act.kind === "teach" && (
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        openProject(act);
-                      }}
-                      title="Open project shell"
-                      style={{
-                        alignSelf: "center",
-                        marginRight: 12,
-                        border: `1px solid ${GLANCE.project.border}`,
-                        background: isNow ? GLANCE.project.fg : GLANCE.project.bg,
-                        color: isNow ? "#fff" : GLANCE.project.fg,
-                        borderRadius: 999,
-                        padding: "8px 14px",
-                        fontSize: 13,
-                        fontWeight: 700,
-                        cursor: "pointer",
-                        fontFamily: "inherit",
-                        whiteSpace: "nowrap",
-                      }}
-                    >
-                      Project
-                    </button>
+                    <div style={{ alignSelf: "center", marginRight: 12, display: "flex", gap: 6, flexShrink: 0 }}>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          openLessonPlan(act);
+                        }}
+                        title="Open lesson plan stub"
+                        style={{
+                          border: `1px solid ${GLANCE.teach.border}`,
+                          background: isNow ? GLANCE.teach.fg : GLANCE.teach.bg,
+                          color: isNow ? "#fff" : GLANCE.teach.fg,
+                          borderRadius: 999,
+                          padding: "8px 12px",
+                          fontSize: 13,
+                          fontWeight: 700,
+                          cursor: "pointer",
+                          fontFamily: "inherit",
+                          whiteSpace: "nowrap",
+                        }}
+                      >
+                        Lesson plan
+                      </button>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          openProject(act);
+                        }}
+                        title="Open project shell"
+                        style={{
+                          border: `1px solid ${GLANCE.project.border}`,
+                          background: isNow ? GLANCE.project.fg : GLANCE.project.bg,
+                          color: isNow ? "#fff" : GLANCE.project.fg,
+                          borderRadius: 999,
+                          padding: "8px 14px",
+                          fontSize: 13,
+                          fontWeight: 700,
+                          cursor: "pointer",
+                          fontFamily: "inherit",
+                          whiteSpace: "nowrap",
+                        }}
+                      >
+                        Project
+                      </button>
+                    </div>
                   )}
                 </div>
               );
@@ -454,13 +481,22 @@ export default function StationDayClient() {
               </p>
               <p style={{ margin: "8px 0 0", color: INK, fontSize: 14 }}>This is the live assignment for {cls?.name || "this class"}.</p>
               {opened.kind === "teach" && (
-                <button
-                  type="button"
-                  onClick={() => openProject(opened)}
-                  style={{ marginTop: 12, background: GLANCE.project.fg, color: "#fff", border: "none", borderRadius: 999, padding: "8px 16px", fontWeight: 700, cursor: "pointer", fontFamily: "inherit", boxShadow: "0 6px 16px rgba(91,79,154,.22)" }}
-                >
-                  Project
-                </button>
+                <div style={{ marginTop: 12, display: "flex", gap: 8, flexWrap: "wrap" }}>
+                  <button
+                    type="button"
+                    onClick={() => openLessonPlan(opened)}
+                    style={{ background: GLANCE.teach.fg, color: "#fff", border: "none", borderRadius: 999, padding: "8px 16px", fontWeight: 700, cursor: "pointer", fontFamily: "inherit", boxShadow: "0 6px 16px rgba(123,107,184,.22)" }}
+                  >
+                    Lesson plan
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => openProject(opened)}
+                    style={{ background: GLANCE.project.fg, color: "#fff", border: "none", borderRadius: 999, padding: "8px 16px", fontWeight: 700, cursor: "pointer", fontFamily: "inherit", boxShadow: "0 6px 16px rgba(91,79,154,.22)" }}
+                  >
+                    Project
+                  </button>
+                </div>
               )}
             </div>
             <button type="button" onClick={() => setOpenId(null)} style={{ border: "none", background: "transparent", cursor: "pointer", color: MUTED, fontWeight: 700 }}>

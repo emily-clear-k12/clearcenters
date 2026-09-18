@@ -13,6 +13,7 @@ import {
   WHO_NEEDS_ME_STORAGE_KEY,
 } from "../../../lib/v2/demoWhoNeedsMe";
 import { PROJECT_HREF } from "../../../lib/v2/demoProject";
+import { LESSON_PLAN_HREF } from "../../../lib/v2/demoLessonPlan";
 import {
   StationShell,
   Glass,
@@ -24,6 +25,7 @@ import {
   SingleRoomLabel,
   HandsOffDial,
   WhoNeedsMeChip,
+  GLANCE,
   SundayPreviewModal,
   SundayPreviewBanner,
   INK,
@@ -455,31 +457,52 @@ export default function StationWeekClient() {
                           </div>
                         </button>
                         {act.kind === "teach" && (
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              router.push(PROJECT_HREF(act.id));
-                            }}
-                            title="Open project shell"
-                            style={{
-                              alignSelf: "center",
-                              marginRight: 4,
-                              border: `1px solid ${LINE}`,
-                              background: "#fff",
-                              color: LAVENDER,
-                              borderRadius: 999,
-                              padding: "4px 8px",
-                              fontSize: 11,
-                              fontWeight: 700,
-                              cursor: "pointer",
-                              fontFamily: "inherit",
-                              whiteSpace: "nowrap",
-                              flexShrink: 0,
-                            }}
-                          >
-                            Project
-                          </button>
+                          <div style={{ alignSelf: "center", marginRight: 4, display: "flex", gap: 4, flexShrink: 0 }}>
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                router.push(LESSON_PLAN_HREF(act.id));
+                              }}
+                              title="Open lesson plan stub"
+                              style={{
+                                border: `1px solid ${LINE}`,
+                                background: "#fff",
+                                color: GLANCE.teach.fg,
+                                borderRadius: 999,
+                                padding: "4px 8px",
+                                fontSize: 11,
+                                fontWeight: 700,
+                                cursor: "pointer",
+                                fontFamily: "inherit",
+                                whiteSpace: "nowrap",
+                              }}
+                            >
+                              Lesson
+                            </button>
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                router.push(PROJECT_HREF(act.id));
+                              }}
+                              title="Open project shell"
+                              style={{
+                                border: `1px solid ${LINE}`,
+                                background: "#fff",
+                                color: LAVENDER,
+                                borderRadius: 999,
+                                padding: "4px 8px",
+                                fontSize: 11,
+                                fontWeight: 700,
+                                cursor: "pointer",
+                                fontFamily: "inherit",
+                                whiteSpace: "nowrap",
+                              }}
+                            >
+                              Project
+                            </button>
+                          </div>
                         )}
                       </div>
                     );
