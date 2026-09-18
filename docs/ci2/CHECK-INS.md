@@ -20,9 +20,11 @@ Departmentalized teachers also need the **same period/class lens** as Daily Focu
    - Period 1 → Kai (demo)
    - Period 2 → Riley
    - Period 3 → Maya (or live Leo inheriting that room)
-5. Act: **Pull for small group**, **Reteach tomorrow**, or **Looks good / dismiss**
-6. Switch Setup back to **Self-contained** → filter hides; single room label only
-7. Optional: Grading inbox header → **Check-ins**
+5. Act: **Pull for small group** or **Reteach tomorrow** → writes an amber block onto **today’s Daily Focus** (kid names stub; merges same period)
+6. **Looks good / dismiss** → clears from list only (no Focus block)
+7. Open **← Daily Focus** → see **FROM CHECK-INS · TODAY** amber cards (period filter still applies)
+8. Switch Setup back to **Self-contained** → filter hides; single room label only
+9. Optional: Grading inbox header → **Check-ins**
 
 ## Tone
 - Calm **ready** / **needs you** language (lavender / cream / mint — never scary red)
@@ -43,17 +45,18 @@ Departmentalized teachers also need the **same period/class lens** as Daily Focu
 | Key | Role |
 |-----|------|
 | `ci2.whoNeedsMe.choices` | Per-kid action stubs (`small_group` / `reteach_tomorrow` / `dismiss`) |
+| `ci2.checkins.focusBlocks` | Small-group / reteach blocks pulled onto Daily Focus (day · periodId · names) |
 | `ci2.grading.inbox` | Live submits (optional “just submitted” card) |
 | `ci2.grading.confirmedIds` | Affects which inbox rows still count as pending |
 | `ci2.teacher.setupKey` | Self vs departmentalized (shared with planner) |
 | `ci2.teacher.classFilter` | Selected period/room (shared — Day ↔ Week ↔ Check-ins) |
 
 ## Files
-- `lib/v2/demoWhoNeedsMe.js` — demo kids + `periodId`, period filter helpers, merge with live inbox
+- `lib/v2/demoWhoNeedsMe.js` — demo kids + `periodId`, period filter, Check-ins → Daily Focus blocks
 - `app/v2/teacher/who-needs-me/` — page + client (SetupSwitcher / RoomCards / SingleRoomLabel)
 - `components/v2/StationShell.js` — `WhoNeedsMeChip`, `RoomCards`, `SetupSwitcher`
 - `lib/v2/usePlanner.js` — shared setup + `classFilter` persistence
-- `app/v2/teacher/StationDayClient.js` — chip + SAM glance (period-filtered count)
+- `app/v2/teacher/StationDayClient.js` — chip + SAM glance + amber From Check-ins blocks
 - `app/v2/teacher/StationWeekClient.js` — chip + SAM glance (period-filtered count)
 - `app/v2/teacher/grading/GradingInboxClient.js` — header link
 
@@ -61,6 +64,7 @@ Departmentalized teachers also need the **same period/class lens** as Daily Focu
 - No real standards analytics or AI grouping
 - No live roster sync / multi-device / real period membership from SIS
 - Live submits do not yet write `periodId` at enqueue time (inherit selected room on Check-ins / glance)
-- Actions are stubs (toast + localStorage only — do not create week tiles yet)
+- Small group / reteach write **Daily Focus** blocks (`ci2.checkins.focusBlocks`) — not week planner tiles
+- Focus blocks are stub only (no auto scheduling, no roster sync, no tomorrow-day jump yet)
 - 2-period setups (e.g. ELAR + SS): demo Maya is `periodId: C` so she won’t appear until a 3-period setup or live inherit
 - Do **not** merge to `main`

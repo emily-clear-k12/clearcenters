@@ -33,6 +33,7 @@ import {
   getWhoNeedsCountsByClass,
   getWhoNeedsMeCards,
   loadWhoNeedsChoices,
+  pushCheckInToDailyFocus,
   reasonLabel,
   recordWhoNeedsAction,
   WHO_NEEDS_ME_STORAGE_KEY,
@@ -121,14 +122,20 @@ export default function WhoNeedsMeClient() {
     const next = recordWhoNeedsAction(card.id, action);
     setChoices(next);
     const name = card.studentFirst;
-    if (action === "small_group") {
-      setToast({ text: `${name} · pulled for small group (stub).` });
-    } else if (action === "reteach_tomorrow") {
-      setToast({ text: `${name} · reteach tomorrow (stub).` });
+    if (action === "small_group" || action === "reteach_tomorrow") {
+      const block = pushCheckInToDailyFocus(card, action, {
+        periodId: card.periodId || selectedClass || "A",
+      });
+      const names = block?.studentNames?.join(" · ") || name;
+      if (action === "small_group") {
+        setToast({ text: `${names} · on Daily Focus · small group.` });
+      } else {
+        setToast({ text: `${names} · on Daily Focus · reteach.` });
+      }
     } else {
       setToast({ text: `${name} · looks good. Cleared for now.` });
     }
-  }, []);
+  }, [selectedClass]);
 
   return (
     <StationShell>

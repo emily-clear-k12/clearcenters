@@ -12,8 +12,12 @@ import {
   loadConfirmedIds,
 } from "../../../lib/v2/demoGrading";
 import {
+  FOCUS_BLOCKS_KEY,
+  focusBlockKindLabel,
+  focusBlockNamesLine,
   getWhoNeedsCountsByClass,
   getWhoNeedsMeCount,
+  readFocusBlocksForDay,
   whoNeedsGlanceText,
   WHO_NEEDS_ME_HREF,
   WHO_NEEDS_ME_STORAGE_KEY,
@@ -40,6 +44,7 @@ import {
   MINT,
   GLANCE,
   glanceChipStyle,
+  glanceCardStyle,
 } from "../../../components/v2/StationShell";
 import { HowMyWeeksRunDrawer, WeeksRunEntry } from "../../../components/v2/HowMyWeeksRun";
 import { AddActivityModal, AddActivityButton } from "../../../components/v2/AddActivityModal";
@@ -53,6 +58,7 @@ export default function StationDayClient() {
   const p = usePlanner();
   const [gradePending, setGradePending] = useState(DEMO_WEEK.gradingCount);
   const [whoNeedsCount, setWhoNeedsCount] = useState(0);
+  const [focusBlocks, setFocusBlocks] = useState([]);
   const day = Math.min(4, Math.max(0, Number(params.get("d") ?? 2)));
   const [openId, setOpenId] = useState(params.get("open"));
   const cls = p.setup.classes.find((c) => c.key === p.classFilter) || p.setup.classes[0];
@@ -66,6 +72,7 @@ export default function StationDayClient() {
           inheritPeriodId: selectedClass || "A",
         })
       );
+      setFocusBlocks(readFocusBlocksForDay(day, selectedClass || "all"));
     };
     refresh();
     const onStorage = (e) => {
@@ -73,6 +80,7 @@ export default function StationDayClient() {
         e.key === GRADING_STORAGE_KEY ||
         e.key === GRADING_INBOX_KEY ||
         e.key === WHO_NEEDS_ME_STORAGE_KEY ||
+        e.key === FOCUS_BLOCKS_KEY ||
         e.key === "ci2.teacher.classFilter"
       ) {
         refresh();
@@ -82,13 +90,15 @@ export default function StationDayClient() {
     window.addEventListener("focus", refresh);
     window.addEventListener("ci2-grading-updated", refresh);
     window.addEventListener("ci2-who-needs-updated", refresh);
+    window.addEventListener("ci2-focus-blocks-updated", refresh);
     return () => {
       window.removeEventListener("storage", onStorage);
       window.removeEventListener("focus", refresh);
       window.removeEventListener("ci2-grading-updated", refresh);
       window.removeEventListener("ci2-who-needs-updated", refresh);
+      window.removeEventListener("ci2-focus-blocks-updated", refresh);
     };
-  }, [selectedClass]);
+  }, [selectedClass, day]);
   const items = p.visible.filter((a) => a.day === day);
   // Agenda rise-to-top: teach first, then work/small — labeled Now → Next → Later
   const agenda = useMemo(() => {
@@ -279,6 +289,53 @@ export default function StationDayClient() {
             );
           })}
         </div>
+
+        {/* Check-ins → Daily Focus pulls (amber glance) */}
+        {focusBlocks.length > 0 && (
+          <section aria-label="Small group and reteach from Check-ins" style={{ marginBottom: 16 }}>
+            <div style={{ fontWeight: 800, color: GLANCE.needsYou.fg, marginBottom: 10, fontSize: 13, letterSpacing: 0.4 }}>
+              FROM CHECK-INS · TODAY
+            </div>
+            <div style={{ display: "grid", gap: 10 }}>
+              {focusBlocks.map((block) => (
+                <div
+                  key={block.id}
+                  style={{
+                    ...glanceCardStyle("needsYou"),
+                    borderRadius: 16,
+                    padding: "12px 14px",
+                    display: "flex",
+                    gap: 12,
+                    alignItems: "flex-start",
+                    boxShadow: "0 6px 18px rgba(166,124,61,.1)",
+                  }}
+                >
+                  <div
+                    style={{
+                      ...glanceChipStyle("needsYou"),
+                      borderRadius: 999,
+                      padding: "6px 10px",
+                      fontSize: 11,
+                      fontWeight: 800,
+                      flexShrink: 0,
+                      letterSpacing: 0.3,
+                    }}
+                  >
+                    {focusBlockKindLabel(block.kind).toUpperCase()}
+                  </div>
+                  <div style={{ minWidth: 0, flex: 1 }}>
+                    <div style={{ fontWeight: 800, color: INK, fontSize: 16 }}>{block.title}</div>
+                    <div style={{ fontSize: 13, color: MUTED, marginTop: 2 }}>
+                      {focusBlockNamesLine(block)}
+                      {block.standard ? ` · ${block.standard}` : ""}
+                      {" · stub from Check-ins"}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
 
         {/* Now → Next → Later agenda (day-of home) */}
         <section aria-label="Today's agenda">
