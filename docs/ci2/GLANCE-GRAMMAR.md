@@ -38,13 +38,13 @@ Icon name hints live on the token (`amber-soft`, `teal-check`, `soft-purple`, `i
 - `components/v2/StationShell.js` — CSS vars on shell; SamGlance / MorningCard / RoomCards / WhoNeedsMeChip (label **Check-ins**) / TeacherSubnav grade count
 - `app/v2/teacher/StationDayClient.js` — glance `meaning` keys; Project indigo; `gradeCount` on subnav
 - `app/v2/teacher/who-needs-me/WhoNeedsMeClient.js` — Check-ins title; amber cards; teal dismiss / clear
-- `app/v2/teacher/project/[id]/ProjectShellClient.js` — indigo header + evidence chip (audience toggle stays minimal)
+- `app/v2/teacher/project/[id]/ProjectShellClient.js` — two-column one-pager; indigo header + evidence chip; right notes fill the glass
 
 ## Click tour
 
 1. Daily Focus → SAM glance amber for Check-ins; coral for to-grade; Project indigo on teach row right
 2. Check-ins → amber cards; teal “Looks good / dismiss”; period filter unchanged
-3. Project → indigo “Project ·” + evidence chip; chips stay glance-first
+3. Project → **two-column one-pager** — left Assign · right teacher notes; indigo “Project ·” + evidence chip; Details only for rare extras
 
 ## Gaps (out of scope)
 

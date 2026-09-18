@@ -28,8 +28,10 @@ import {
 } from "../../../../../lib/v2/demoProject";
 
 /**
- * CI2.0 Project-on-teach shell — glance-first.
- * SAM one-liner · chips · checkpoints · who-for · Details on tap · Assign.
+ * CI2.0 Project-on-teach — teacher one-pager (two columns).
+ * LEFT: SAM · title · chips · who-for · Assign / Back
+ * RIGHT: condensed notes (TEKS, checkpoint beats, materials/time, stub links)
+ * Details only for rare extras. Default feels complete.
  */
 export default function ProjectShellClient({ projectId }) {
   const router = useRouter();
@@ -118,18 +120,19 @@ export default function ProjectShellClient({ projectId }) {
   return (
     <StationShell>
       <TeacherSubnav active="day" />
-      <Glass>
-        {/* Header: SAM one-liner + back */}
+      <Glass style={{ padding: "22px 22px 20px" }}>
+        {/* Two-column teacher one-pager */}
         <div
           style={{
-            display: "flex",
-            justifyContent: "space-between",
-            gap: 12,
-            flexWrap: "wrap",
-            alignItems: "flex-start",
+            display: "grid",
+            gridTemplateColumns: "minmax(240px, 0.92fr) minmax(280px, 1.35fr)",
+            gap: 22,
+            alignItems: "start",
           }}
+          className="ci2-project-onepager"
         >
-          <div style={{ minWidth: 0, flex: "1 1 220px" }}>
+          {/* LEFT — assign lane */}
+          <div style={{ minWidth: 0 }}>
             <div
               style={{
                 fontSize: 12,
@@ -156,7 +159,7 @@ export default function ProjectShellClient({ projectId }) {
             </div>
             <p
               style={{
-                margin: "6px 0 0",
+                margin: "8px 0 0",
                 fontFamily: "'Poppins', sans-serif",
                 fontSize: 18,
                 fontWeight: 600,
@@ -166,372 +169,393 @@ export default function ProjectShellClient({ projectId }) {
             >
               {shell.samLine}
             </p>
-          </div>
-          <Link
-            href={shell.backHref}
-            style={{
-              background: "#fff",
-              color: INK,
-              border: `1px solid ${LINE}`,
-              borderRadius: 999,
-              padding: "10px 16px",
-              fontWeight: 700,
-              textDecoration: "none",
-              fontFamily: "inherit",
-              flexShrink: 0,
-            }}
-          >
-            ← Daily Focus
-          </Link>
-        </div>
 
-        {/* Summary strip: title · evidence · days · audience */}
-        <div
-          style={{
-            marginTop: 14,
-            display: "flex",
-            flexWrap: "wrap",
-            gap: 8,
-            alignItems: "center",
-          }}
-        >
-          <span
-            style={{
-              fontWeight: 800,
-              color: INK,
-              fontSize: 16,
-              marginRight: 4,
-            }}
-          >
-            {shell.title}
-          </span>
-          <Chip label={shell.evidence.chip || shell.evidence.label} tone="project" />
-          <Chip label={shell.span.chip || shell.span.label} />
-          <Chip label={audienceChip} />
-        </div>
-
-        {/* Checkpoint strip — short chips only */}
-        <div style={{ marginTop: 14 }}>
-          <div
-            style={{
-              fontSize: 11,
-              fontWeight: 800,
-              color: MUTED,
-              letterSpacing: 0.4,
-              marginBottom: 8,
-            }}
-          >
-            CHECKPOINTS
-          </div>
-          <div
-            style={{ display: "flex", flexWrap: "wrap", gap: 8 }}
-            role="list"
-            aria-label="Checkpoints"
-          >
-            {shell.checkpoints.map((cp) => (
-              <div
-                key={cp.id}
-                role="listitem"
-                style={{
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: 6,
-                  background: SOFT_LAV,
-                  border: `1px solid #D9CFFF`,
-                  borderRadius: 999,
-                  padding: "8px 12px",
-                  fontSize: 13,
-                  fontWeight: 700,
-                  color: INK,
-                }}
-              >
-                <span
-                  style={{
-                    width: 22,
-                    height: 22,
-                    borderRadius: 8,
-                    background: LAVENDER,
-                    color: "#fff",
-                    fontSize: 11,
-                    fontWeight: 800,
-                    display: "inline-flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                  }}
-                  aria-hidden
-                >
-                  {cp.dayNum}
-                </span>
-                {cp.chip || cp.beat}
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Who it's for — toggle only */}
-        <div style={{ marginTop: 16 }}>
-          <div
-            style={{
-              fontSize: 11,
-              fontWeight: 800,
-              color: MUTED,
-              letterSpacing: 0.4,
-              marginBottom: 8,
-            }}
-          >
-            WHO IT’S FOR
-          </div>
-          <div
-            style={{ display: "flex", gap: 8, flexWrap: "wrap" }}
-            role="group"
-            aria-label="Who it’s for"
-          >
-            {shell.audienceOptions.map((opt) => {
-              const on = audienceId === opt.id;
-              return (
-                <button
-                  key={opt.id}
-                  type="button"
-                  onClick={() => handleAudience(opt.id)}
-                  aria-pressed={on}
-                  style={{
-                    border: on ? `2px solid ${LAVENDER}` : `1px solid ${LINE}`,
-                    background: on ? SOFT_LAV : "#fff",
-                    color: INK,
-                    borderRadius: 999,
-                    padding: "10px 16px",
-                    fontWeight: 800,
-                    fontSize: 13,
-                    cursor: "pointer",
-                    fontFamily: "inherit",
-                  }}
-                >
-                  {opt.label}
-                </button>
-              );
-            })}
-          </div>
-          {isSmall && (
-            <div
+            <h1
               style={{
-                marginTop: 8,
-                fontSize: 12,
-                color: MUTED,
-                display: "flex",
-                flexWrap: "wrap",
-                gap: 6,
-                alignItems: "center",
+                fontFamily: "'Poppins', sans-serif",
+                margin: "14px 0 0",
+                fontSize: 24,
+                fontWeight: 700,
+                color: INK,
+                lineHeight: 1.25,
               }}
             >
-              <span>{(shell.smallGroupDemoNames || []).join(" · ") || "Stub names"}</span>
-              <Link
-                href={shell.whoNeedsMeHref || "/v2/teacher/who-needs-me"}
-                style={{ color: LAVENDER, fontWeight: 700, fontSize: 12 }}
-              >
-                Check-ins →
-              </Link>
-            </div>
-          )}
-        </div>
+              {shell.title}
+            </h1>
 
-        {/* Details — collapsed by default */}
-        <div style={{ marginTop: 16 }}>
-          <button
-            type="button"
-            onClick={() => setDetailsOpen((v) => !v)}
-            aria-expanded={detailsOpen}
-            style={{
-              border: `1px solid ${LINE}`,
-              background: detailsOpen ? SOFT_LAV : "#fff",
-              color: INK,
-              borderRadius: 999,
-              padding: "8px 14px",
-              fontWeight: 700,
-              fontSize: 13,
-              cursor: "pointer",
-              fontFamily: "inherit",
-            }}
-          >
-            {detailsOpen ? "Hide details ▲" : "Details ▼"}
-          </button>
-
-          {detailsOpen && (
             <div
               style={{
                 marginTop: 12,
                 display: "flex",
-                flexDirection: "column",
-                gap: 12,
+                flexWrap: "wrap",
+                gap: 8,
+                alignItems: "center",
               }}
             >
-              {!shell.isTeach && (
-                <div
-                  style={{
-                    background: CREAM,
-                    border: `1px solid #E8D9A8`,
-                    borderRadius: 14,
-                    padding: "12px 14px",
-                    color: INK,
-                    fontSize: 13,
-                  }}
-                >
-                  Meant for <strong>teach</strong> blocks — this one is “{shell.kind}”.
-                </div>
-              )}
+              <Chip label={shell.evidence.chip || shell.evidence.label} tone="project" />
+              <Chip label={shell.span.chip || shell.span.label} />
+              <Chip label={audienceChip} />
+            </div>
 
+            <div style={{ marginTop: 18 }}>
               <div
                 style={{
-                  background: "#fff",
-                  border: `1px solid ${LINE}`,
-                  borderRadius: 16,
-                  padding: "14px 16px",
+                  fontSize: 11,
+                  fontWeight: 800,
+                  color: MUTED,
+                  letterSpacing: 0.4,
+                  marginBottom: 8,
                 }}
               >
-                <div style={{ fontSize: 11, fontWeight: 800, color: MUTED, letterSpacing: 0.4 }}>
-                  WHY · TEKS
-                </div>
-                <p style={{ margin: "6px 0 0", color: INK, fontSize: 14, lineHeight: 1.45 }}>
-                  {shell.why}
-                </p>
-                <div style={{ marginTop: 8, fontSize: 13, color: MUTED }}>
-                  <span style={{ fontWeight: 700, color: shell.subjectColor }}>{shell.teksLabel}</span>
-                  {shell.span.weekHint ? ` · ${shell.span.weekHint}` : ""}
-                  {shell.span.dateRange ? ` · ${shell.span.dateRange}` : ""}
-                  {` · ${shell.minutes} min`}
-                </div>
+                WHO IT’S FOR
               </div>
-
-              <div>
-                <div style={{ fontSize: 11, fontWeight: 800, color: MUTED, letterSpacing: 0.4, marginBottom: 8 }}>
-                  CHECKPOINT BEATS
-                </div>
-                <ol
-                  style={{
-                    listStyle: "none",
-                    margin: 0,
-                    padding: 0,
-                    display: "flex",
-                    flexDirection: "column",
-                    gap: 8,
-                  }}
-                >
-                  {shell.checkpoints.map((cp, i) => (
-                    <li
-                      key={cp.id}
+              <div
+                style={{ display: "flex", gap: 8, flexWrap: "wrap" }}
+                role="group"
+                aria-label="Who it’s for"
+              >
+                {shell.audienceOptions.map((opt) => {
+                  const on = audienceId === opt.id;
+                  return (
+                    <button
+                      key={opt.id}
+                      type="button"
+                      onClick={() => handleAudience(opt.id)}
+                      aria-pressed={on}
                       style={{
-                        display: "flex",
-                        gap: 12,
-                        alignItems: "flex-start",
-                        background: i % 2 === 0 ? SOFT_LAV : "#fff",
-                        border: `1px solid ${i % 2 === 0 ? "#D9CFFF" : LINE}`,
-                        borderRadius: 14,
-                        padding: "12px 14px",
+                        border: on ? `2px solid ${LAVENDER}` : `1px solid ${LINE}`,
+                        background: on ? SOFT_LAV : "#fff",
+                        color: INK,
+                        borderRadius: 999,
+                        padding: "10px 16px",
+                        fontWeight: 800,
+                        fontSize: 13,
+                        cursor: "pointer",
+                        fontFamily: "inherit",
                       }}
                     >
-                      <div
-                        aria-hidden
-                        style={{
-                          width: 36,
-                          height: 36,
-                          borderRadius: 12,
-                          background: LAVENDER,
-                          color: "#fff",
-                          fontWeight: 800,
-                          fontSize: 13,
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          flexShrink: 0,
-                        }}
-                      >
-                        D{cp.dayNum}
-                      </div>
-                      <div style={{ minWidth: 0 }}>
-                        <div style={{ fontWeight: 800, color: INK, fontSize: 15 }}>
-                          {cp.title} · {cp.beat}
-                        </div>
-                        <div style={{ color: MUTED, fontSize: 13, marginTop: 2 }}>
-                          {cp.dayLabel} — {cp.detail}
-                        </div>
-                      </div>
-                    </li>
-                  ))}
-                </ol>
+                      {opt.label}
+                    </button>
+                  );
+                })}
               </div>
+              {isSmall && (
+                <div
+                  style={{
+                    marginTop: 8,
+                    fontSize: 12,
+                    color: MUTED,
+                    display: "flex",
+                    flexWrap: "wrap",
+                    gap: 6,
+                    alignItems: "center",
+                  }}
+                >
+                  <span>{(shell.smallGroupDemoNames || []).join(" · ") || "Stub names"}</span>
+                  <Link
+                    href={shell.whoNeedsMeHref || "/v2/teacher/who-needs-me"}
+                    style={{ color: LAVENDER, fontWeight: 700, fontSize: 12 }}
+                  >
+                    Check-ins →
+                  </Link>
+                </div>
+              )}
+            </div>
 
-              <div
+            <div
+              style={{
+                display: "flex",
+                gap: 10,
+                flexWrap: "wrap",
+                marginTop: 22,
+                alignItems: "center",
+              }}
+            >
+              <button
+                type="button"
+                onClick={handleAssign}
                 style={{
-                  background: GLANCE.project.bg,
-                  border: `1px solid ${GLANCE.project.border}`,
-                  borderRadius: 16,
-                  padding: "14px 16px",
+                  border: "none",
+                  background: assigned ? MINT : LAVENDER,
+                  color: assigned ? INK : "#fff",
+                  borderRadius: 999,
+                  padding: "12px 20px",
+                  fontWeight: 800,
+                  fontSize: 14,
+                  cursor: "pointer",
+                  fontFamily: "inherit",
+                  boxShadow: assigned ? "none" : "0 6px 18px rgba(139,108,255,.28)",
                 }}
               >
-                <div style={{ fontSize: 11, fontWeight: 800, color: GLANCE.project.fg, letterSpacing: 0.4 }}>
-                  EVIDENCE PRODUCT
-                </div>
-                <div style={{ fontWeight: 800, color: INK, fontSize: 16, marginTop: 4 }}>
-                  {shell.evidence.label}
-                </div>
-                <p style={{ margin: "8px 0 0", color: MUTED, fontSize: 13, lineHeight: 1.45 }}>
-                  {shell.evidence.body}
-                </p>
-                {shell.productAbout && (
-                  <p style={{ margin: "8px 0 0", color: INK, fontSize: 12 }}>
-                    From teach · {shell.product}: {shell.productAbout}
-                  </p>
-                )}
-              </div>
+                {assigned ? "Assigned to My Day ✓" : "Assign to My Day"}
+              </button>
+              <button
+                type="button"
+                onClick={() => router.push(shell.backHref)}
+                style={{
+                  border: `1px solid ${LINE}`,
+                  background: "#fff",
+                  color: INK,
+                  borderRadius: 999,
+                  padding: "12px 18px",
+                  fontWeight: 700,
+                  fontSize: 14,
+                  cursor: "pointer",
+                  fontFamily: "inherit",
+                }}
+              >
+                ← Back
+              </button>
             </div>
-          )}
+          </div>
+
+          {/* RIGHT — condensed teacher notes (fills the page) */}
+          <div
+            style={{
+              minWidth: 0,
+              background: "rgba(248,246,255,.72)",
+              border: `1px solid ${GLANCE.project.border}`,
+              borderRadius: 20,
+              padding: "16px 18px 18px",
+            }}
+          >
+            <div
+              style={{
+                fontSize: 11,
+                fontWeight: 800,
+                color: GLANCE.project.fg,
+                letterSpacing: 0.45,
+                marginBottom: 10,
+              }}
+            >
+              TEACHER NOTES
+            </div>
+
+            <div style={{ marginBottom: 14 }}>
+              <div style={{ fontSize: 11, fontWeight: 800, color: MUTED, letterSpacing: 0.35 }}>
+                STANDARD · TEKS
+              </div>
+              <p style={{ margin: "4px 0 0", color: INK, fontSize: 14, lineHeight: 1.45, fontWeight: 600 }}>
+                <span style={{ color: shell.subjectColor }}>{shell.teksLabel}</span>
+                {shell.standardOneLiner ? ` — ${shell.standardOneLiner}` : ""}
+              </p>
+              {!shell.standardOneLiner && (
+                <p style={{ margin: "4px 0 0", color: MUTED, fontSize: 13, lineHeight: 1.4 }}>
+                  {shell.why}
+                </p>
+              )}
+            </div>
+
+            <div style={{ marginBottom: 14 }}>
+              <div
+                style={{
+                  fontSize: 11,
+                  fontWeight: 800,
+                  color: MUTED,
+                  letterSpacing: 0.35,
+                  marginBottom: 8,
+                }}
+              >
+                CHECKPOINT BEATS
+              </div>
+              <ol
+                style={{
+                  listStyle: "none",
+                  margin: 0,
+                  padding: 0,
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 8,
+                }}
+              >
+                {shell.checkpoints.map((cp) => (
+                  <li
+                    key={cp.id}
+                    style={{
+                      display: "flex",
+                      gap: 10,
+                      alignItems: "flex-start",
+                      background: "#fff",
+                      border: `1px solid ${LINE}`,
+                      borderRadius: 14,
+                      padding: "10px 12px",
+                    }}
+                  >
+                    <div
+                      aria-hidden
+                      style={{
+                        width: 32,
+                        height: 32,
+                        borderRadius: 10,
+                        background: GLANCE.project.fg,
+                        color: "#fff",
+                        fontWeight: 800,
+                        fontSize: 12,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        flexShrink: 0,
+                      }}
+                    >
+                      D{cp.dayNum}
+                    </div>
+                    <div style={{ minWidth: 0 }}>
+                      <div style={{ fontWeight: 800, color: INK, fontSize: 14, lineHeight: 1.3 }}>
+                        {cp.title} · {cp.beat}
+                      </div>
+                      <div style={{ color: MUTED, fontSize: 12, marginTop: 2, lineHeight: 1.4 }}>
+                        {cp.detail}
+                      </div>
+                    </div>
+                  </li>
+                ))}
+              </ol>
+            </div>
+
+            <div
+              style={{
+                marginBottom: 14,
+                background: "#fff",
+                border: `1px solid ${LINE}`,
+                borderRadius: 14,
+                padding: "10px 12px",
+                fontSize: 13,
+                color: INK,
+                lineHeight: 1.4,
+              }}
+            >
+              <span style={{ fontWeight: 800, color: MUTED, fontSize: 11, letterSpacing: 0.35 }}>
+                MATERIALS · TIME
+              </span>
+              <div style={{ marginTop: 4 }}>{shell.materialsStub}</div>
+            </div>
+
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 10, marginBottom: 12 }}>
+              <Link
+                href={shell.standardInfoHref || "#"}
+                style={{
+                  fontSize: 13,
+                  fontWeight: 700,
+                  color: LAVENDER,
+                  textDecoration: "none",
+                  borderBottom: `1px solid rgba(139,108,255,.35)`,
+                  paddingBottom: 1,
+                }}
+              >
+                Standard info
+              </Link>
+              <span style={{ color: LINE }} aria-hidden>
+                ·
+              </span>
+              <Link
+                href={shell.unitGuideHref || "#"}
+                style={{
+                  fontSize: 13,
+                  fontWeight: 700,
+                  color: LAVENDER,
+                  textDecoration: "none",
+                  borderBottom: `1px solid rgba(139,108,255,.35)`,
+                  paddingBottom: 1,
+                }}
+              >
+                Unit teaching guide
+              </Link>
+            </div>
+
+            {/* Details — rare extras only */}
+            <div>
+              <button
+                type="button"
+                onClick={() => setDetailsOpen((v) => !v)}
+                aria-expanded={detailsOpen}
+                style={{
+                  border: `1px solid ${LINE}`,
+                  background: detailsOpen ? SOFT_LAV : "#fff",
+                  color: MUTED,
+                  borderRadius: 999,
+                  padding: "6px 12px",
+                  fontWeight: 700,
+                  fontSize: 12,
+                  cursor: "pointer",
+                  fontFamily: "inherit",
+                }}
+              >
+                {detailsOpen ? "Hide extras ▲" : "Details · rare extras ▼"}
+              </button>
+
+              {detailsOpen && (
+                <div
+                  style={{
+                    marginTop: 10,
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: 10,
+                  }}
+                >
+                  {!shell.isTeach && (
+                    <div
+                      style={{
+                        background: CREAM,
+                        border: `1px solid #E8D9A8`,
+                        borderRadius: 14,
+                        padding: "10px 12px",
+                        color: INK,
+                        fontSize: 13,
+                      }}
+                    >
+                      Meant for <strong>teach</strong> blocks — this one is “{shell.kind}”.
+                    </div>
+                  )}
+                  <div
+                    style={{
+                      background: GLANCE.project.bg,
+                      border: `1px solid ${GLANCE.project.border}`,
+                      borderRadius: 14,
+                      padding: "12px 14px",
+                    }}
+                  >
+                    <div
+                      style={{
+                        fontSize: 11,
+                        fontWeight: 800,
+                        color: GLANCE.project.fg,
+                        letterSpacing: 0.4,
+                      }}
+                    >
+                      EVIDENCE PRODUCT
+                    </div>
+                    <div style={{ fontWeight: 800, color: INK, fontSize: 15, marginTop: 4 }}>
+                      {shell.evidence.label}
+                    </div>
+                    <p style={{ margin: "6px 0 0", color: MUTED, fontSize: 13, lineHeight: 1.45 }}>
+                      {shell.evidence.body}
+                    </p>
+                    {shell.productAbout && (
+                      <p style={{ margin: "8px 0 0", color: INK, fontSize: 12 }}>
+                        From teach · {shell.product}: {shell.productAbout}
+                      </p>
+                    )}
+                  </div>
+                  {(shell.span.weekHint || shell.span.dateRange) && (
+                    <div style={{ fontSize: 12, color: MUTED }}>
+                      Span{shell.span.weekHint ? ` · ${shell.span.weekHint}` : ""}
+                      {shell.span.dateRange ? ` · ${shell.span.dateRange}` : ""}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
         </div>
 
-        {/* Primary CTA — not buried */}
-        <div
-          style={{
-            display: "flex",
-            gap: 10,
-            flexWrap: "wrap",
-            marginTop: 18,
-            alignItems: "center",
-          }}
-        >
-          <button
-            type="button"
-            onClick={handleAssign}
-            style={{
-              border: "none",
-              background: assigned ? MINT : LAVENDER,
-              color: assigned ? INK : "#fff",
-              borderRadius: 999,
-              padding: "12px 20px",
-              fontWeight: 800,
-              fontSize: 14,
-              cursor: "pointer",
-              fontFamily: "inherit",
-              boxShadow: assigned ? "none" : "0 6px 18px rgba(139,108,255,.28)",
-            }}
-          >
-            {assigned ? "Assigned to My Day ✓" : "Assign to My Day"}
-          </button>
-          <button
-            type="button"
-            onClick={() => router.push(shell.backHref)}
-            style={{
-              border: `1px solid ${LINE}`,
-              background: "#fff",
-              color: INK,
-              borderRadius: 999,
-              padding: "12px 18px",
-              fontWeight: 700,
-              fontSize: 14,
-              cursor: "pointer",
-              fontFamily: "inherit",
-            }}
-          >
-            Back to Daily Focus
-          </button>
-        </div>
+        {/* Narrow screens: stack without fighting the grid */}
+        <style>{`
+          @media (max-width: 820px) {
+            .ci2-project-onepager {
+              grid-template-columns: 1fr !important;
+            }
+          }
+        `}</style>
       </Glass>
 
       {toast && (
@@ -578,14 +602,13 @@ function Chip({ label, tone }) {
       </span>
     );
   }
-  const lav = tone === "lav";
   return (
     <span
       style={{
         display: "inline-flex",
         alignItems: "center",
-        background: lav ? SOFT_LAV : "#fff",
-        border: lav ? `1px solid #D9CFFF` : `1px solid ${LINE}`,
+        background: "#fff",
+        border: `1px solid ${LINE}`,
         color: INK,
         borderRadius: 999,
         padding: "6px 12px",

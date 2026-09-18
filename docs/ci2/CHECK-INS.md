@@ -1,5 +1,7 @@
 # CI2.0 · Check-ins (reteach / small-group stub)
 
+**Doc rename:** was `WHO-NEEDS-ME.md` → **`CHECK-INS.md`** (calm display; no guilt).
+
 **Display name:** Check-ins · **Route (kept):** `/v2/teacher/who-needs-me`
 
 Branch: `ci2-sandbox`  
@@ -35,7 +37,7 @@ Departmentalized teachers also need the **same period/class lens** as Daily Focu
 - Demo kids carry `periodId` (`A` / `B` / `C` = class keys in `TEACHER_SETUPS`).
 - Live inbox rows (Leo) use `periodId` / `classKey` when present; otherwise **inherit the currently selected room**.
 - SAM glance + `WhoNeedsMeChip` on Day/Week use the **filtered** count for the selected period (assistant lens — not all-rooms).
-- RoomCards “needs you” badges include Who-needs counts **per period** (plus existing suggestion counts).
+- RoomCards “needs you” badges include Check-ins counts **per period** (plus existing suggestion counts).
 
 ## Storage (same browser only)
 | Key | Role |
