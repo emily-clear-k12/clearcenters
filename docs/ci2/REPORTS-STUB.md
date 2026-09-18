@@ -10,7 +10,7 @@ Teachers need a calm **glance** at a few standards — class ready % and who may
 - SAM one-liner + summary chips (standards count · avg class % · Check-ins needing)
 - 3–5 demo standard cards: TEKS · plain words · **class %** bar · **Check-ins · n / clear** chip
 - Soft ready (teal) / needs-you (amber) washes — 80% beauty / 20% grammar
-- Links: **Check-ins →** · **← Daily Focus**
+- Links: **Check-ins →** · **Family note** · **← Daily Focus**
 
 ## Nav
 | Spot | Behavior |
@@ -22,11 +22,13 @@ Teachers need a calm **glance** at a few standards — class ready % and who may
 1. `/v2` → top bar **Grow** (or Daily Focus → subnav **Reports**)
 2. See 5 demo standards with bars + Check-ins chips
 3. Tap **Check-ins →** → `/v2/teacher/check-ins`
-4. **← Daily Focus** returns to teach today
+4. Optional: **Family note** → teacher one-pager stub (demo Kai)
+5. **← Daily Focus** returns to teach today
 
 ## Files
 - `lib/v2/demoReports.js` — demo rows + `REPORTS_HREF`
-- `app/v2/teacher/reports/` — page + `ReportsClient`
+- `app/v2/teacher/reports/` — page + `ReportsClient` (Family note entry)
+- `docs/ci2/FAMILY-STUB.md` — Family note stub
 - `components/v2/V2TopBar.js` — Grow → reports
 - `components/v2/StationShell.js` — TeacherSubnav Reports
 - `docs/ci2/REPORTS-STUB.md` — this note

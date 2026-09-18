@@ -38,6 +38,7 @@ import {
   recordWhoNeedsAction,
   WHO_NEEDS_ME_STORAGE_KEY,
 } from "../../../../lib/v2/demoWhoNeedsMe";
+import { FAMILY_NOTE_HREF } from "../../../../lib/v2/demoFamilyNote";
 
 /**
  * CI2.0 Check-ins — reteach / small-group stub. Route: /v2/teacher/check-ins.
@@ -335,6 +336,24 @@ export default function CheckInsClient() {
                   >
                     Looks good / dismiss
                   </button>
+                  <Link
+                    href={FAMILY_NOTE_HREF(card.id)}
+                    title="Open Family note stub"
+                    style={{
+                      border: `1px solid ${LINE}`,
+                      background: "#fff",
+                      color: INK,
+                      borderRadius: 999,
+                      padding: "8px 14px",
+                      fontWeight: 700,
+                      fontSize: 13,
+                      textDecoration: "none",
+                      display: "inline-flex",
+                      alignItems: "center",
+                    }}
+                  >
+                    Family note
+                  </Link>
                 </div>
               </article>
             );

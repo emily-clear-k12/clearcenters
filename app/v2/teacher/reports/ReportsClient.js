@@ -15,6 +15,7 @@ import {
   glanceCardStyle,
 } from "../../../../components/v2/StationShell";
 import { getReportsStub } from "../../../../lib/v2/demoReports";
+import { FAMILY_NOTE_HREF, FAMILY_NOTE_DEFAULT_ID } from "../../../../lib/v2/demoFamilyNote";
 
 /**
  * CI2.0 Reports by standard — glance-first stub (not a spreadsheet).
@@ -226,6 +227,22 @@ export default function ReportsClient() {
             }}
           >
             Check-ins →
+          </Link>
+          <Link
+            href={FAMILY_NOTE_HREF(FAMILY_NOTE_DEFAULT_ID)}
+            title="Open Family note stub (demo kid)"
+            style={{
+              background: GLANCE.ready.bg,
+              color: GLANCE.ready.fg,
+              border: `1px solid ${GLANCE.ready.border}`,
+              borderRadius: 999,
+              padding: "11px 18px",
+              fontWeight: 800,
+              fontSize: 14,
+              textDecoration: "none",
+            }}
+          >
+            Family note
           </Link>
           <Link
             href={stub.dayHref}

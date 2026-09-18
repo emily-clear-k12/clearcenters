@@ -22,9 +22,10 @@ Departmentalized teachers also need the **same period/class lens** as Daily Focu
    - Period 3 → Maya (or live Leo inheriting that room)
 5. Act: **Pull for small group** or **Reteach tomorrow** → writes an amber block onto **today’s Daily Focus** (kid names stub; merges same period)
 6. **Looks good / dismiss** → clears from list only (no Focus block)
-7. Open **← Daily Focus** → see **FROM CHECK-INS · TODAY** amber cards (period filter still applies)
-8. Switch Setup back to **Self-contained** → filter hides; single room label only
-9. Optional: Grading inbox header → **Check-ins**
+7. Optional: **Family note** on a kid card → teacher one-pager stub (celebrate + ask-at-home · copy message)
+8. Open **← Daily Focus** → see **FROM CHECK-INS · TODAY** amber cards (period filter still applies)
+9. Switch Setup back to **Self-contained** → filter hides; single room label only
+10. Optional: Grading inbox header → **Check-ins**
 
 ## Tone
 - Calm **ready** / **needs you** language (lavender / cream / mint — never scary red)
@@ -53,7 +54,8 @@ Departmentalized teachers also need the **same period/class lens** as Daily Focu
 
 ## Files
 - `lib/v2/demoWhoNeedsMe.js` — demo kids + `periodId`, period filter, Check-ins → Daily Focus blocks
-- `app/v2/teacher/check-ins/` — page + `CheckInsClient` (SetupSwitcher / RoomCards / SingleRoomLabel)
+- `app/v2/teacher/check-ins/` — page + `CheckInsClient` (SetupSwitcher / RoomCards / SingleRoomLabel; Family note link)
+- `app/v2/teacher/family/[id]/` — Family note stub (see FAMILY-STUB.md)
 - `app/v2/teacher/who-needs-me/` — redirect → `/v2/teacher/check-ins`
 - `components/v2/StationShell.js` — `WhoNeedsMeChip`, `RoomCards`, `SetupSwitcher`
 - `lib/v2/usePlanner.js` — shared setup + `classFilter` persistence
