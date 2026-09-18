@@ -1,9 +1,16 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import V2TopBar from "./V2TopBar";
 import { DEMO_TEACHER, TEACHER_SETUPS, SUBJECTS, HANDS_OFF_LEVELS, DAYS, DAY_NAMES, DATES, setupUnitLabel, handsOffLevelMeta } from "../../lib/v2/demoWeek";
 import { GLANCE, GLANCE_CSS_VARS, glanceToken, glanceChipStyle, glanceCardStyle, GLANCE_LEGEND_HINT } from "../../lib/v2/glanceGrammar";
+import {
+  CHECK_INS_HREF,
+  getWhoNeedsMeCount,
+  WHO_NEEDS_ME_STORAGE_KEY,
+} from "../../lib/v2/demoWhoNeedsMe";
+import { GRADING_INBOX_KEY, GRADING_STORAGE_KEY } from "../../lib/v2/demoGrading";
 
 const BG = "/teacher/console/bg-platform-room.jpg";
 
@@ -39,17 +46,54 @@ export function StationShell({ children, active = "plan" }) {
   );
 }
 
-/** Plan subnav: Daily Focus (teach today) | This Week (plan/publish). Demo today = Wed=2. */
-export function TeacherSubnav({ active, gradeCount }) {
+/** Plan subnav: Daily Focus | This Week | Check-ins | Grading | Reports | Library. Demo today = Wed=2. */
+export function TeacherSubnav({ active, gradeCount, checkInsCount: checkInsCountProp }) {
   const n = typeof gradeCount === "number" ? gradeCount : 0;
+  const [checkInsLocal, setCheckInsLocal] = useState(0);
+
+  useEffect(() => {
+    if (typeof checkInsCountProp === "number") return undefined;
+    const refresh = () => {
+      try {
+        setCheckInsLocal(getWhoNeedsMeCount());
+      } catch (_) {
+        setCheckInsLocal(0);
+      }
+    };
+    refresh();
+    const onStorage = (e) => {
+      if (
+        !e.key ||
+        e.key === WHO_NEEDS_ME_STORAGE_KEY ||
+        e.key === GRADING_STORAGE_KEY ||
+        e.key === GRADING_INBOX_KEY
+      ) {
+        refresh();
+      }
+    };
+    window.addEventListener("storage", onStorage);
+    window.addEventListener("focus", refresh);
+    window.addEventListener("ci2-who-needs-updated", refresh);
+    window.addEventListener("ci2-grading-updated", refresh);
+    return () => {
+      window.removeEventListener("storage", onStorage);
+      window.removeEventListener("focus", refresh);
+      window.removeEventListener("ci2-who-needs-updated", refresh);
+      window.removeEventListener("ci2-grading-updated", refresh);
+    };
+  }, [checkInsCountProp]);
+
+  const checkInsN = typeof checkInsCountProp === "number" ? checkInsCountProp : checkInsLocal;
   const links = [
     { key: "day", label: "Daily Focus", href: "/v2/teacher/day?d=2", hint: "Teach today" },
     { key: "week", label: "This Week", href: "/v2/teacher", hint: "Plan & publish" },
+    { key: "checkins", label: "Check-ins", href: CHECK_INS_HREF, hint: "Kids who need you" },
     { key: "grading", label: "Grading", href: "/v2/teacher/grading", hint: "Confirm scores" },
     { key: "reports", label: "Reports", href: "/v2/teacher/reports", hint: "By standard · stub" },
     { key: "library", label: "Library", href: "/v2/teacher/library", hint: "Browse · add stub" },
   ];
   const gradeTone = glanceToken("toGrade");
+  const checkInsTone = glanceToken("needsYou");
   return (
     <nav
       aria-label="Teacher plan"
@@ -61,11 +105,13 @@ export function TeacherSubnav({ active, gradeCount }) {
         borderRadius: 999,
         padding: 4,
         marginBottom: 14,
+        flexWrap: "wrap",
       }}
     >
       {links.map((l) => {
         const on = l.key === active;
         const showGradeCount = l.key === "grading" && n > 0;
+        const showCheckInsCount = l.key === "checkins" && checkInsN > 0;
         return (
           <Link
             key={l.key}
@@ -86,6 +132,24 @@ export function TeacherSubnav({ active, gradeCount }) {
             }}
           >
             {l.label}
+            {showCheckInsCount && (
+              <span
+                aria-label={`${checkInsN} Check-ins waiting`}
+                style={{
+                  fontSize: 11,
+                  fontWeight: 800,
+                  color: on ? "#fff" : checkInsTone.fg,
+                  background: on ? "rgba(255,255,255,.22)" : checkInsTone.bg,
+                  border: on ? "1px solid rgba(255,255,255,.35)" : `1px solid ${checkInsTone.border}`,
+                  borderRadius: 999,
+                  padding: "1px 7px",
+                  minWidth: 18,
+                  textAlign: "center",
+                }}
+              >
+                {checkInsN}
+              </span>
+            )}
             {showGradeCount && (
               <span
                 aria-label={`${n} to grade`}

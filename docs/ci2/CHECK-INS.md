@@ -15,7 +15,7 @@ Departmentalized teachers also need the **same period/class lens** as Daily Focu
 ## Click tour
 1. `/v2` → **Teacher · Daily Focus** (`/v2/teacher/day?d=2`)
 2. **Setup** → departmentalized (e.g. Math only · 3 periods)
-3. See **Check-ins** chip (header) and SAM glance row — counts match the **selected period**
+3. See **Check-ins** chip (header) and SAM glance row — counts match the **selected period**; Plan subnav **Check-ins** shows soft amber count when who-needs > 0
 4. Open **Check-ins** (`/v2/teacher/check-ins`) → RoomCards (Period 1 / 2 / 3); switch period → list filters
    - Period 1 → Kai (demo)
    - Period 2 → Riley

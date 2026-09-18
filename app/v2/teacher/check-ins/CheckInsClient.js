@@ -165,7 +165,7 @@ export default function CheckInsClient() {
 
   return (
     <StationShell>
-      <TeacherSubnav active="day" />
+      <TeacherSubnav active="checkins" checkInsCount={cards.length} />
       <Glass>
         <div style={{ display: "flex", justifyContent: "space-between", gap: 12, flexWrap: "wrap", alignItems: "flex-start" }}>
           <div>
