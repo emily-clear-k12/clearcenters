@@ -250,24 +250,23 @@ export function AddActivityModal({
   );
 }
 
-/** Lavender glass + Add CTA used in headers and per-day columns. */
-export function AddActivityButton({ onClick, label = "+ Add", compact }) {
+/** Primary solid lavender Add CTA — headers, day columns, Daily Focus. */
+export function AddActivityButton({ onClick, label = "+ Add assignment", compact }) {
   return (
     <button
       type="button"
       onClick={onClick}
       style={{
-        border: `1px solid ${LAVENDER}`,
-        background: "rgba(139,108,255,.10)",
-        color: LAVENDER,
+        border: "none",
+        background: LAVENDER,
+        color: "#fff",
         borderRadius: 999,
-        padding: compact ? "5px 10px" : "10px 16px",
-        fontWeight: 700,
-        fontSize: compact ? 12 : 14,
+        padding: compact ? "7px 12px" : "12px 18px",
+        fontWeight: 800,
+        fontSize: compact ? 13 : 14,
         cursor: "pointer",
         fontFamily: "inherit",
-        backdropFilter: "blur(8px)",
-        boxShadow: "0 4px 14px rgba(139,108,255,.12)",
+        boxShadow: "0 6px 18px rgba(139,108,255,.28)",
       }}
     >
       {label}

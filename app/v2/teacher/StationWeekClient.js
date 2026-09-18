@@ -122,7 +122,7 @@ export default function StationWeekClient() {
             </div>
           </div>
           <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
-            <AddActivityButton onClick={() => p.openAddActivity({ day: 2 })} label="+ Add" />
+            <AddActivityButton onClick={() => p.openAddActivity({ day: 2 })} />
             <button
               type="button"
               onClick={() => p.setShowSundayPreview(true)}
@@ -332,27 +332,35 @@ export default function StationWeekClient() {
                   minHeight: 280,
                 }}
               >
-                <button
-                  type="button"
-                  onClick={() => router.push(`/v2/teacher/day?d=${i}`)}
-                  style={{
-                    width: "100%",
-                    background: "transparent",
-                    border: "none",
-                    textAlign: "left",
-                    cursor: "pointer",
-                    fontFamily: "inherit",
-                    padding: "6px 6px 10px",
-                  }}
-                >
-                  <div style={{ fontWeight: 800, color: INK, fontSize: 16 }}>
-                    {d} {DATES[i].split(" ")[1]}
-                    {isToday && <span style={{ marginLeft: 6, color: LAVENDER, fontSize: 11 }}>TODAY</span>}
-                  </div>
-                  <div style={{ fontSize: 12, color: MUTED, marginTop: 2 }}>
-                    {noSchool ? "No school (demo)" : "Daily Focus →"}
-                  </div>
-                </button>
+                <div style={{ display: "flex", alignItems: "flex-start", gap: 4, padding: "6px 2px 8px" }}>
+                  <button
+                    type="button"
+                    onClick={() => router.push(`/v2/teacher/day?d=${i}`)}
+                    style={{
+                      flex: 1,
+                      minWidth: 0,
+                      background: "transparent",
+                      border: "none",
+                      textAlign: "left",
+                      cursor: "pointer",
+                      fontFamily: "inherit",
+                      padding: "0 4px",
+                    }}
+                  >
+                    <div style={{ fontWeight: 800, color: INK, fontSize: 16 }}>
+                      {d} {DATES[i].split(" ")[1]}
+                      {isToday && <span style={{ marginLeft: 6, color: LAVENDER, fontSize: 11 }}>TODAY</span>}
+                    </div>
+                    <div style={{ fontSize: 12, color: MUTED, marginTop: 2 }}>
+                      {noSchool ? "No school (demo)" : "Daily Focus →"}
+                    </div>
+                  </button>
+                  <AddActivityButton
+                    compact
+                    label="+"
+                    onClick={() => p.openAddActivity({ day: i, subject: p.subjectFilter !== "all" ? p.subjectFilter : undefined })}
+                  />
+                </div>
                 <div style={{ display: "grid", gap: 8 }}>
                   {items.map((act) => {
                     const sub = SUBJECTS[act.subject];

@@ -105,7 +105,7 @@ export default function StationDayClient() {
     <StationShell>
       <TeacherSubnav active="day" />
       <Glass>
-        <div style={{ display: "flex", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", gap: 12, flexWrap: "wrap", alignItems: "flex-start" }}>
           <div>
             <h1 style={{ fontFamily: "'Poppins', sans-serif", margin: 0, fontSize: 34, color: INK }}>Daily Focus</h1>
             <div style={{ color: MUTED, marginTop: 2 }}>
@@ -116,16 +116,18 @@ export default function StationDayClient() {
               {!p.multiClass && <SingleRoomLabel cls={cls} setup={p.setup} />}
               <HandsOffChip level={p.level} onOpenPreview={() => p.setShowSundayPreview(true)} />
               <WeeksRunEntry onOpen={() => p.setShowWeeksRun(true)} routineCount={p.enabledRoutineCount} />
-              <AddActivityButton onClick={() => p.openAddActivity({ day })} label="+ Add" />
             </div>
           </div>
-          <button
-            type="button"
-            onClick={() => router.push("/v2/teacher")}
-            style={{ background: "#fff", color: INK, border: "1px solid " + LINE, borderRadius: 999, padding: "10px 16px", fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}
-          >
-            This Week · plan
-          </button>
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
+            <AddActivityButton onClick={() => p.openAddActivity({ day })} />
+            <button
+              type="button"
+              onClick={() => router.push("/v2/teacher")}
+              style={{ background: "#fff", color: INK, border: "1px solid " + LINE, borderRadius: 999, padding: "10px 16px", fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}
+            >
+              This Week · plan
+            </button>
+          </div>
         </div>
 
         {p.multiClass && (
