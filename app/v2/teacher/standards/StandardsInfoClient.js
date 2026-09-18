@@ -14,8 +14,8 @@ import {
   SOFT_LAV,
   GLANCE,
   glanceChipStyle,
-} from "../../../../../components/v2/StationShell";
-import { getStandardInfoStub } from "../../../../../lib/v2/demoStandardsUnit";
+} from "../../../../components/v2/StationShell";
+import { getStandardInfoStub } from "../../../../lib/v2/demoStandardsUnit";
 
 /**
  * CI2.0 Standard info — glance-first stub (not a TEKS DB).

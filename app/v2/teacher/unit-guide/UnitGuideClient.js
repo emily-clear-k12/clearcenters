@@ -14,8 +14,8 @@ import {
   SOFT_LAV,
   GLANCE,
   glanceChipStyle,
-} from "../../../../../components/v2/StationShell";
-import { getUnitGuideStub } from "../../../../../lib/v2/demoStandardsUnit";
+} from "../../../../components/v2/StationShell";
+import { getUnitGuideStub } from "../../../../lib/v2/demoStandardsUnit";
 
 /**
  * CI2.0 Unit teaching guide — glance-first stub (not a curriculum PDF).
