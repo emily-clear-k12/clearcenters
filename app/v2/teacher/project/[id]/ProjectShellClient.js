@@ -26,14 +26,15 @@ import {
 } from "../../../../../lib/v2/demoProject";
 
 /**
- * CI2.0 Project-on-teach shell (thickened stub).
- * Title · Why/TEKS · checkpoints · evidence product · Who it's for · Assign to My Day.
+ * CI2.0 Project-on-teach shell — glance-first.
+ * SAM one-liner · chips · checkpoints · who-for · Details on tap · Assign.
  */
 export default function ProjectShellClient({ projectId }) {
   const router = useRouter();
   const shell = useMemo(() => getProjectShell(projectId), [projectId]);
   const [assigned, setAssigned] = useState(false);
   const [audienceId, setAudienceId] = useState("whole_class");
+  const [detailsOpen, setDetailsOpen] = useState(false);
   const [toast, setToast] = useState(null);
 
   useEffect(() => {
@@ -102,30 +103,53 @@ export default function ProjectShellClient({ projectId }) {
   function handleAssign() {
     assignProjectToMyDay(shell, { audienceId });
     setAssigned(true);
-    const who =
-      audienceId === "small_group" ? "small group" : "whole class";
+    const who = audienceId === "small_group" ? "small group" : "whole class";
     setToast({
-      text: `Assigned to My Day (${who}) — Later · Project card shows “${shell.evidence.label}”.`,
+      text: `Assigned to My Day (${who}) — Later · Project shows “${shell.evidence.label}”.`,
     });
   }
 
   const isSmall = audienceId === "small_group";
+  const audienceChip =
+    audienceId === "small_group" ? "Small group" : "Whole class";
 
   return (
     <StationShell>
       <TeacherSubnav active="day" />
       <Glass>
-        <div style={{ display: "flex", justifyContent: "space-between", gap: 12, flexWrap: "wrap", alignItems: "flex-start" }}>
-          <div>
-            <div style={{ fontSize: 12, fontWeight: 800, color: shell.subjectColor, textTransform: "uppercase", letterSpacing: 0.3 }}>
-              Project shell · {shell.subjectName}
-              {shell.isTeach ? " · teach heart" : " · not a teach block"}
+        {/* Header: SAM one-liner + back */}
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            gap: 12,
+            flexWrap: "wrap",
+            alignItems: "flex-start",
+          }}
+        >
+          <div style={{ minWidth: 0, flex: "1 1 220px" }}>
+            <div
+              style={{
+                fontSize: 12,
+                fontWeight: 800,
+                color: shell.subjectColor,
+                textTransform: "uppercase",
+                letterSpacing: 0.3,
+              }}
+            >
+              Project · {shell.subjectName}
             </div>
-            <h1 style={{ fontFamily: "'Poppins', sans-serif", margin: "4px 0 0", fontSize: 32, color: INK }}>
-              {shell.title}
-            </h1>
-            <p style={{ margin: "6px 0 0", color: MUTED, fontSize: 14 }}>
-              Checkpoints · evidence product · who it’s for — still a skeleton, not a full builder.
+            <p
+              style={{
+                margin: "6px 0 0",
+                fontFamily: "'Poppins', sans-serif",
+                fontSize: 18,
+                fontWeight: 600,
+                color: INK,
+                lineHeight: 1.35,
+              }}
+            >
+              {shell.samLine}
             </p>
           </div>
           <Link
@@ -139,174 +163,114 @@ export default function ProjectShellClient({ projectId }) {
               fontWeight: 700,
               textDecoration: "none",
               fontFamily: "inherit",
+              flexShrink: 0,
             }}
           >
             ← Daily Focus
           </Link>
         </div>
 
-        {!shell.isTeach && (
+        {/* Summary strip: title · evidence · days · audience */}
+        <div
+          style={{
+            marginTop: 14,
+            display: "flex",
+            flexWrap: "wrap",
+            gap: 8,
+            alignItems: "center",
+          }}
+        >
+          <span
+            style={{
+              fontWeight: 800,
+              color: INK,
+              fontSize: 16,
+              marginRight: 4,
+            }}
+          >
+            {shell.title}
+          </span>
+          <Chip label={shell.evidence.chip || shell.evidence.label} tone="lav" />
+          <Chip label={shell.span.chip || shell.span.label} />
+          <Chip label={audienceChip} />
+        </div>
+
+        {/* Checkpoint strip — short chips only */}
+        <div style={{ marginTop: 14 }}>
           <div
             style={{
-              marginTop: 14,
-              background: CREAM,
-              border: `1px solid #E8D9A8`,
-              borderRadius: 14,
-              padding: "12px 14px",
-              color: INK,
-              fontSize: 14,
+              fontSize: 11,
+              fontWeight: 800,
+              color: MUTED,
+              letterSpacing: 0.4,
+              marginBottom: 8,
             }}
           >
-            Project is meant for <strong>teach</strong> blocks. This one is “{shell.kind}” — shell still opens so you can poke around.
-          </div>
-        )}
-
-        {/* Why + TEKS — light */}
-        <div
-          style={{
-            marginTop: 16,
-            background: "#fff",
-            border: `1px solid ${LINE}`,
-            borderRadius: 16,
-            padding: "14px 16px",
-          }}
-        >
-          <div style={{ fontSize: 11, fontWeight: 800, color: MUTED, letterSpacing: 0.4 }}>WHY · TEKS</div>
-          <p style={{ margin: "6px 0 0", color: INK, fontSize: 14, lineHeight: 1.45 }}>{shell.why}</p>
-          <div style={{ marginTop: 8, fontSize: 13, color: MUTED }}>
-            <span style={{ fontWeight: 700, color: shell.subjectColor }}>{shell.teksLabel}</span>
-            {" · "}
-            {shell.span.label}
-            {shell.productAbout ? ` · ${shell.product}` : ""}
-          </div>
-        </div>
-
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
-            gap: 12,
-            marginTop: 14,
-          }}
-        >
-          <MetaCard label="TEKS" value={shell.teksLabel} hint="Stub — wire real standards later" />
-          <MetaCard
-            label="Days"
-            value={shell.span.label}
-            hint={shell.span.dateRange || shell.dayLabel}
-          />
-          <MetaCard
-            label="Starts"
-            value={shell.dayLabel}
-            hint={`${shell.minutes} min · ${shell.who}`}
-          />
-        </div>
-
-        {/* Checkpoints */}
-        <div style={{ marginTop: 16 }}>
-          <div style={{ fontSize: 12, fontWeight: 800, color: LAVENDER, letterSpacing: 0.4 }}>
             CHECKPOINTS
           </div>
-          <p style={{ margin: "4px 0 10px", color: MUTED, fontSize: 13 }}>
-            Short day beats — research → draft → share vibe. Not a planner.
-          </p>
-          <ol
-            style={{
-              listStyle: "none",
-              margin: 0,
-              padding: 0,
-              display: "flex",
-              flexDirection: "column",
-              gap: 8,
-            }}
+          <div
+            style={{ display: "flex", flexWrap: "wrap", gap: 8 }}
+            role="list"
+            aria-label="Checkpoints"
           >
-            {shell.checkpoints.map((cp, i) => (
-              <li
+            {shell.checkpoints.map((cp) => (
+              <div
                 key={cp.id}
+                role="listitem"
                 style={{
-                  display: "flex",
-                  gap: 12,
-                  alignItems: "flex-start",
-                  background: i % 2 === 0 ? SOFT_LAV : "#fff",
-                  border: `1px solid ${i % 2 === 0 ? "#D9CFFF" : LINE}`,
-                  borderRadius: 14,
-                  padding: "12px 14px",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 6,
+                  background: SOFT_LAV,
+                  border: `1px solid #D9CFFF`,
+                  borderRadius: 999,
+                  padding: "8px 12px",
+                  fontSize: 13,
+                  fontWeight: 700,
+                  color: INK,
                 }}
               >
-                <div
-                  aria-hidden
+                <span
                   style={{
-                    width: 36,
-                    height: 36,
-                    borderRadius: 12,
+                    width: 22,
+                    height: 22,
+                    borderRadius: 8,
                     background: LAVENDER,
                     color: "#fff",
+                    fontSize: 11,
                     fontWeight: 800,
-                    fontSize: 13,
-                    display: "flex",
+                    display: "inline-flex",
                     alignItems: "center",
                     justifyContent: "center",
-                    flexShrink: 0,
                   }}
+                  aria-hidden
                 >
-                  D{cp.dayNum}
-                </div>
-                <div style={{ minWidth: 0 }}>
-                  <div style={{ fontWeight: 800, color: INK, fontSize: 15 }}>
-                    {cp.title} · {cp.beat}
-                  </div>
-                  <div style={{ color: MUTED, fontSize: 13, marginTop: 2 }}>
-                    {cp.dayLabel} — {cp.detail}
-                  </div>
-                </div>
-              </li>
+                  {cp.dayNum}
+                </span>
+                {cp.chip || cp.beat}
+              </div>
             ))}
-          </ol>
+          </div>
         </div>
 
-        {/* Evidence product */}
-        <div
-          style={{
-            marginTop: 16,
-            background: SOFT_LAV,
-            border: `1px solid #D9CFFF`,
-            borderRadius: 16,
-            padding: "16px 18px",
-          }}
-        >
-          <div style={{ fontSize: 12, fontWeight: 800, color: LAVENDER, letterSpacing: 0.4 }}>
-            EVIDENCE PRODUCT
-          </div>
-          <div style={{ fontWeight: 800, color: INK, fontSize: 18, marginTop: 4 }}>
-            {shell.evidence.label}
-          </div>
-          <p style={{ margin: "8px 0 0", color: MUTED, fontSize: 14, lineHeight: 1.45 }}>
-            {shell.evidence.body}
-          </p>
-          {shell.productAbout && (
-            <p style={{ margin: "10px 0 0", color: INK, fontSize: 13 }}>
-              From teach product · {shell.product}: {shell.productAbout}
-            </p>
-          )}
-        </div>
-
-        {/* Who it's for */}
-        <div
-          style={{
-            marginTop: 16,
-            background: "#fff",
-            border: `1px solid ${LINE}`,
-            borderRadius: 16,
-            padding: "16px 18px",
-          }}
-        >
-          <div style={{ fontSize: 12, fontWeight: 800, color: LAVENDER, letterSpacing: 0.4 }}>
+        {/* Who it's for — toggle only */}
+        <div style={{ marginTop: 16 }}>
+          <div
+            style={{
+              fontSize: 11,
+              fontWeight: 800,
+              color: MUTED,
+              letterSpacing: 0.4,
+              marginBottom: 8,
+            }}
+          >
             WHO IT’S FOR
           </div>
-          <p style={{ margin: "4px 0 12px", color: MUTED, fontSize: 13 }}>
-            Whole class or a small group (reteach / Who needs me). Choice sticks with Assign.
-          </p>
-          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }} role="group" aria-label="Who it’s for">
+          <div
+            style={{ display: "flex", gap: 8, flexWrap: "wrap" }}
+            role="group"
+            aria-label="Who it’s for"
+          >
             {shell.audienceOptions.map((opt) => {
               const on = audienceId === opt.id;
               return (
@@ -335,31 +299,188 @@ export default function ProjectShellClient({ projectId }) {
           {isSmall && (
             <div
               style={{
-                marginTop: 12,
-                background: CREAM,
-                border: `1px solid #E8D9A8`,
-                borderRadius: 12,
-                padding: "12px 14px",
-                fontSize: 13,
-                color: INK,
-                lineHeight: 1.45,
+                marginTop: 8,
+                fontSize: 12,
+                color: MUTED,
+                display: "flex",
+                flexWrap: "wrap",
+                gap: 6,
+                alignItems: "center",
               }}
             >
-              <strong>Small group stub</strong> — demo names{" "}
-              {(shell.smallGroupDemoNames || []).join(" · ") || "Pick after Who needs me"}.
-              No roster picker yet.{" "}
+              <span>{(shell.smallGroupDemoNames || []).join(" · ") || "Stub names"}</span>
               <Link
                 href={shell.whoNeedsMeHref || "/v2/teacher/who-needs-me"}
-                style={{ color: LAVENDER, fontWeight: 700 }}
+                style={{ color: LAVENDER, fontWeight: 700, fontSize: 12 }}
               >
-                From Who needs me →
+                Who needs me →
               </Link>
-              <span style={{ color: MUTED }}> or pick after Who needs me.</span>
             </div>
           )}
         </div>
 
-        <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginTop: 18, alignItems: "center" }}>
+        {/* Details — collapsed by default */}
+        <div style={{ marginTop: 16 }}>
+          <button
+            type="button"
+            onClick={() => setDetailsOpen((v) => !v)}
+            aria-expanded={detailsOpen}
+            style={{
+              border: `1px solid ${LINE}`,
+              background: detailsOpen ? SOFT_LAV : "#fff",
+              color: INK,
+              borderRadius: 999,
+              padding: "8px 14px",
+              fontWeight: 700,
+              fontSize: 13,
+              cursor: "pointer",
+              fontFamily: "inherit",
+            }}
+          >
+            {detailsOpen ? "Hide details ▲" : "Details ▼"}
+          </button>
+
+          {detailsOpen && (
+            <div
+              style={{
+                marginTop: 12,
+                display: "flex",
+                flexDirection: "column",
+                gap: 12,
+              }}
+            >
+              {!shell.isTeach && (
+                <div
+                  style={{
+                    background: CREAM,
+                    border: `1px solid #E8D9A8`,
+                    borderRadius: 14,
+                    padding: "12px 14px",
+                    color: INK,
+                    fontSize: 13,
+                  }}
+                >
+                  Meant for <strong>teach</strong> blocks — this one is “{shell.kind}”.
+                </div>
+              )}
+
+              <div
+                style={{
+                  background: "#fff",
+                  border: `1px solid ${LINE}`,
+                  borderRadius: 16,
+                  padding: "14px 16px",
+                }}
+              >
+                <div style={{ fontSize: 11, fontWeight: 800, color: MUTED, letterSpacing: 0.4 }}>
+                  WHY · TEKS
+                </div>
+                <p style={{ margin: "6px 0 0", color: INK, fontSize: 14, lineHeight: 1.45 }}>
+                  {shell.why}
+                </p>
+                <div style={{ marginTop: 8, fontSize: 13, color: MUTED }}>
+                  <span style={{ fontWeight: 700, color: shell.subjectColor }}>{shell.teksLabel}</span>
+                  {shell.span.weekHint ? ` · ${shell.span.weekHint}` : ""}
+                  {shell.span.dateRange ? ` · ${shell.span.dateRange}` : ""}
+                  {` · ${shell.minutes} min`}
+                </div>
+              </div>
+
+              <div>
+                <div style={{ fontSize: 11, fontWeight: 800, color: MUTED, letterSpacing: 0.4, marginBottom: 8 }}>
+                  CHECKPOINT BEATS
+                </div>
+                <ol
+                  style={{
+                    listStyle: "none",
+                    margin: 0,
+                    padding: 0,
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: 8,
+                  }}
+                >
+                  {shell.checkpoints.map((cp, i) => (
+                    <li
+                      key={cp.id}
+                      style={{
+                        display: "flex",
+                        gap: 12,
+                        alignItems: "flex-start",
+                        background: i % 2 === 0 ? SOFT_LAV : "#fff",
+                        border: `1px solid ${i % 2 === 0 ? "#D9CFFF" : LINE}`,
+                        borderRadius: 14,
+                        padding: "12px 14px",
+                      }}
+                    >
+                      <div
+                        aria-hidden
+                        style={{
+                          width: 36,
+                          height: 36,
+                          borderRadius: 12,
+                          background: LAVENDER,
+                          color: "#fff",
+                          fontWeight: 800,
+                          fontSize: 13,
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          flexShrink: 0,
+                        }}
+                      >
+                        D{cp.dayNum}
+                      </div>
+                      <div style={{ minWidth: 0 }}>
+                        <div style={{ fontWeight: 800, color: INK, fontSize: 15 }}>
+                          {cp.title} · {cp.beat}
+                        </div>
+                        <div style={{ color: MUTED, fontSize: 13, marginTop: 2 }}>
+                          {cp.dayLabel} — {cp.detail}
+                        </div>
+                      </div>
+                    </li>
+                  ))}
+                </ol>
+              </div>
+
+              <div
+                style={{
+                  background: SOFT_LAV,
+                  border: `1px solid #D9CFFF`,
+                  borderRadius: 16,
+                  padding: "14px 16px",
+                }}
+              >
+                <div style={{ fontSize: 11, fontWeight: 800, color: LAVENDER, letterSpacing: 0.4 }}>
+                  EVIDENCE PRODUCT
+                </div>
+                <div style={{ fontWeight: 800, color: INK, fontSize: 16, marginTop: 4 }}>
+                  {shell.evidence.label}
+                </div>
+                <p style={{ margin: "8px 0 0", color: MUTED, fontSize: 13, lineHeight: 1.45 }}>
+                  {shell.evidence.body}
+                </p>
+                {shell.productAbout && (
+                  <p style={{ margin: "8px 0 0", color: INK, fontSize: 12 }}>
+                    From teach · {shell.product}: {shell.productAbout}
+                  </p>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Primary CTA — not buried */}
+        <div
+          style={{
+            display: "flex",
+            gap: 10,
+            flexWrap: "wrap",
+            marginTop: 18,
+            alignItems: "center",
+          }}
+        >
           <button
             type="button"
             onClick={handleAssign}
@@ -395,11 +516,6 @@ export default function ProjectShellClient({ projectId }) {
           >
             Back to Daily Focus
           </button>
-          <span style={{ color: MUTED, fontSize: 13 }}>
-            {assigned
-              ? `Student Later · Project will show “${shell.evidence.label}” (${audienceId === "small_group" ? "small group" : "whole class"}).`
-              : "Writes localStorage only — calm stub, no LMS blast."}
-          </span>
         </div>
       </Glass>
 
@@ -429,19 +545,23 @@ export default function ProjectShellClient({ projectId }) {
   );
 }
 
-function MetaCard({ label, value, hint }) {
+function Chip({ label, tone }) {
+  const lav = tone === "lav";
   return (
-    <div
+    <span
       style={{
-        background: "#fff",
-        border: `1px solid ${LINE}`,
-        borderRadius: 14,
-        padding: "12px 14px",
+        display: "inline-flex",
+        alignItems: "center",
+        background: lav ? SOFT_LAV : "#fff",
+        border: lav ? `1px solid #D9CFFF` : `1px solid ${LINE}`,
+        color: INK,
+        borderRadius: 999,
+        padding: "6px 12px",
+        fontSize: 12,
+        fontWeight: 700,
       }}
     >
-      <div style={{ fontSize: 11, fontWeight: 800, color: MUTED, letterSpacing: 0.4 }}>{label}</div>
-      <div style={{ fontWeight: 700, color: INK, fontSize: 15, marginTop: 4 }}>{value}</div>
-      {hint && <div style={{ color: MUTED, fontSize: 12, marginTop: 4 }}>{hint}</div>}
-    </div>
+      {label}
+    </span>
   );
 }
