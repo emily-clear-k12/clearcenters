@@ -12,6 +12,7 @@ import {
   enqueueStudentSubmission,
 } from "../../../../../lib/v2/demoGrading";
 import { DEMO_STUDENT } from "../../../../../lib/v2/demoStudentDay";
+import StudentToolsPanel from "../../../../../components/v2/StudentToolsPanel";
 
 const INK = "#2E2459";
 const MUTED = "#5E577F";
@@ -23,7 +24,7 @@ const WARM_BG = "linear-gradient(165deg, #F6F0FF 0%, #FFF9EE 55%, #F3EEFF 100%)"
 
 /**
  * CI2.0 Student activity Start stub.
- * Skeleton shell: directions, 1–2 demo items, SAM 3-step hint, Submit → My Day progress.
+ * Skeleton shell: directions, 1–2 demo items, SAM 3-step hint, Tools panel, Submit → My Day.
  */
 export default function StudentActivityClient({ missionId }) {
   const router = useRouter();
@@ -123,20 +124,8 @@ export default function StudentActivityClient({ missionId }) {
         </div>
 
         {toolsOpen && (
-          <div
-            role="status"
-            style={{
-              marginTop: 12,
-              background: CREAM,
-              border: `1px solid ${LINE}`,
-              borderRadius: 16,
-              padding: "12px 14px",
-              fontSize: 14,
-              color: MUTED,
-            }}
-          >
-            <strong style={{ color: INK }}>Read aloud</strong> — placeholder. Voice helper comes later.
-            For now, ask a friend or tap slowly and read in your head.
+          <div style={{ marginTop: 12 }}>
+            <StudentToolsPanel compact onClose={() => setToolsOpen(false)} backHref={null} />
           </div>
         )}
 

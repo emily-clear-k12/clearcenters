@@ -21,6 +21,7 @@ import {
   PROJECT_ASSIGNED_KEY,
   readAssignedProjectsForDay,
 } from "../../../lib/v2/demoProject";
+import { STUDENT_TOOLS_HREF } from "../../../lib/v2/demoStudentTools";
 
 const INK = "#2E2459";
 const MUTED = "#5E577F";
@@ -36,6 +37,7 @@ const SLOT_LABEL = { now: "NOW", next: "NEXT", later: "LATER" };
  * CI2.0 Student · My Day skeleton.
  * Start / Continue → /v2/student/activity/[id] (real activity stub).
  * Progress: localStorage ci2.student.missionProgress (same browser).
+ * Tools → /v2/student/tools (read-aloud / word chips / highlight stub).
  */
 export default function StudentMyDayClient() {
   const student = DEMO_STUDENT;
@@ -231,16 +233,13 @@ export default function StudentMyDayClient() {
         </section>
 
         <div style={{ display: "flex", gap: 10, marginTop: 28, flexWrap: "wrap", alignItems: "center" }}>
-          <button
-            type="button"
-            onClick={() => {
-              setSamMsg("Tools come later — pencils, hints, and calm helpers. Read-aloud lives on the activity page for now.");
-              setToast({ text: "Tools — open an activity for the read-aloud stub.", tone: "soft" });
-            }}
-            style={ghostBtn()}
+          <Link
+            href={STUDENT_TOOLS_HREF}
+            style={{ ...ghostBtn(), textDecoration: "none", display: "inline-block" }}
+            onClick={() => setSamMsg("Tools are open — read aloud, word chips, soft highlight.")}
           >
             Tools
-          </button>
+          </Link>
           <span style={{ fontSize: 12, color: MUTED }}>
             Teacher preview · class code {student.classCodeStub}
           </span>
