@@ -554,7 +554,7 @@ export function GlanceLegendHint({ show = false }) {
  * Sunday preview / safety net — "Here's what goes out".
  * Lists outbound assigns by day / subject / period; Change + Looks good.
  */
-export function SundayPreviewModal({ open, onClose, rows, onChangeDay, onAcknowledge, weekLabel }) {
+export function SundayPreviewModal({ open, onClose, rows, onChangeDay, onAcknowledge, onApplyToWeek, applied, weekLabel }) {
   if (!open) return null;
 
   const byDay = {};
@@ -715,6 +715,27 @@ export function SundayPreviewModal({ open, onClose, rows, onChangeDay, onAcknowl
           >
             Keep editing
           </button>
+          {onApplyToWeek && (
+            <button
+              type="button"
+              onClick={onApplyToWeek}
+              title="Write demo routine blocks onto This Week"
+              style={{
+                border: applied ? `1px solid ${MINT}` : "none",
+                background: applied ? MINT : "#5B4F9A",
+                color: applied ? INK : "#fff",
+                borderRadius: 999,
+                padding: "10px 16px",
+                fontWeight: 700,
+                fontSize: 14,
+                cursor: "pointer",
+                fontFamily: "inherit",
+                boxShadow: applied ? "none" : "0 6px 16px rgba(91,79,154,.22)",
+              }}
+            >
+              {applied ? "Applied to This Week ✓" : "Apply to This Week"}
+            </button>
+          )}
           <button
             type="button"
             onClick={onAcknowledge}
@@ -739,7 +760,7 @@ export function SundayPreviewModal({ open, onClose, rows, onChangeDay, onAcknowl
 }
 
 /** Banner prompting Sunday preview when Plan for me / Run it is on. */
-export function SundayPreviewBanner({ onOpen, acked }) {
+export function SundayPreviewBanner({ onOpen, acked, onApplyToWeek, applied }) {
   if (acked) return null;
   return (
     <div
@@ -776,6 +797,26 @@ export function SundayPreviewBanner({ onOpen, acked }) {
       >
         Preview what goes out
       </button>
+      {onApplyToWeek && (
+        <button
+          type="button"
+          onClick={onApplyToWeek}
+          style={{
+            border: applied ? `1px solid ${LINE}` : "none",
+            background: applied ? MINT : "#5B4F9A",
+            color: applied ? INK : "#fff",
+            borderRadius: 999,
+            padding: "8px 14px",
+            fontWeight: 700,
+            fontSize: 13,
+            cursor: "pointer",
+            fontFamily: "inherit",
+            whiteSpace: "nowrap",
+          }}
+        >
+          {applied ? "Applied ✓" : "Apply to This Week"}
+        </button>
+      )}
     </div>
   );
 }

@@ -203,9 +203,29 @@ export default function StationWeekClient() {
             </button>
           </div>
         </div>
+
+        {p.sundayApplied && (
+          <div
+            style={{
+              margin: "0 0 14px",
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 8,
+              background: MINT,
+              border: `1px solid ${LINE}`,
+              borderRadius: 999,
+              padding: "6px 14px",
+              fontSize: 13,
+              fontWeight: 700,
+              color: INK,
+            }}
+          >
+            From Sunday · on This Week
+          </div>
+        )}
         {p.needsSundayPreview && (
           <div style={{ marginTop: 14 }}>
-            <SundayPreviewBanner onOpen={() => p.setShowSundayPreview(true)} acked={p.sundayAcked} />
+            <SundayPreviewBanner onOpen={() => p.setShowSundayPreview(true)} acked={p.sundayAcked} onApplyToWeek={p.applySundayToThisWeek} applied={p.sundayApplied} />
           </div>
         )}
 
@@ -560,6 +580,8 @@ export default function StationWeekClient() {
           router.push(`/v2/teacher/day?d=${day}`);
         }}
         onAcknowledge={p.acknowledgeSundayPreview}
+        onApplyToWeek={p.applySundayToThisWeek}
+        applied={p.sundayApplied}
       />
       <HowMyWeeksRunDrawer
         open={p.showWeeksRun}
@@ -574,6 +596,8 @@ export default function StationWeekClient() {
         onDismissOffer={p.dismissRoutineOffer}
         dismissedOffers={p.dismissedOffers}
         onOpenSundayPreview={() => p.setShowSundayPreview(true)}
+        onApplyToWeek={p.applySundayToThisWeek}
+        sundayApplied={p.sundayApplied}
         onOpenHandsOff={() => {
           p.setShowWeeksRun(false);
           p.setToast({ text: "Use the hands-off dial above to change how weeks run." });

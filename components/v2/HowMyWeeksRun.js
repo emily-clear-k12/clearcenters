@@ -28,6 +28,8 @@ export function HowMyWeeksRunDrawer({
   onDismissOffer,
   dismissedOffers,
   onOpenSundayPreview,
+  onApplyToWeek,
+  sundayApplied,
   onOpenHandsOff,
 }) {
   const [picker, setPicker] = useState(null);
@@ -241,6 +243,18 @@ export function HowMyWeeksRunDrawer({
                 style={primaryBtn()}
               >
                 Preview what goes out
+              </button>
+            )}
+            {onApplyToWeek && (
+              <button
+                type="button"
+                onClick={() => {
+                  onApplyToWeek();
+                  onClose();
+                }}
+                style={chipBtn()}
+              >
+                {sundayApplied ? "Applied to This Week ✓" : "Apply to This Week"}
               </button>
             )}
           </section>

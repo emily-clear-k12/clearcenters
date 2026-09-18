@@ -550,6 +550,11 @@ export default function StationDayClient() {
           router.push(`/v2/teacher/day?d=${d}`);
         }}
         onAcknowledge={p.acknowledgeSundayPreview}
+        onApplyToWeek={() => {
+          p.applySundayToThisWeek();
+          router.push("/v2/teacher");
+        }}
+        applied={p.sundayApplied}
       />
       <HowMyWeeksRunDrawer
         open={p.showWeeksRun}
@@ -564,6 +569,8 @@ export default function StationDayClient() {
         onDismissOffer={p.dismissRoutineOffer}
         dismissedOffers={p.dismissedOffers}
         onOpenSundayPreview={() => p.setShowSundayPreview(true)}
+        onApplyToWeek={p.applySundayToThisWeek}
+        sundayApplied={p.sundayApplied}
         onOpenHandsOff={() => { p.setShowWeeksRun(false); router.push('/v2/teacher'); }}
       />
       <AddActivityModal
