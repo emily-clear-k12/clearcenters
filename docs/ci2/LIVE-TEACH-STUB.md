@@ -18,26 +18,31 @@ Teachers need a **calm present mode** from Daily Focus teach blocks — big obje
 2. Find a **Teach** row (e.g. Wed · Equivalent fractions)
 3. Tap **Teach live** → `/v2/teacher/live-teach/act-8`
 4. Glance big objective · advance Beat 1 → 2 → 3
-5. **Assign practice** → “Practice on My Day ✓” (writes `ci2.practice.assigned`)
-6. Open `/v2/student` (same browser) → practice card under Now / Next / Later
-7. **Start** → `/v2/student/activity/practice-[id]` (activity stub) · Submit marks progress
-8. Optional: **Lesson plan** / **Project** · **← Daily Focus**
+5. **Assign practice** → “Practice on My Day ✓” (writes `ci2.practice.assigned`) **and** mints a planner tile (`added-live-*` · `fromLiveTeach`)
+6. Open **Daily Focus** / **This Week** → quiet **From live teach** provenance on the practice tile
+7. Open `/v2/student` (same browser) → practice card under Now / Next / Later
+8. **Start** → `/v2/student/activity/practice-[id]` (activity stub) · Submit marks progress
+9. Optional: **Lesson plan** / **Project** · **← Daily Focus**
 
 ## Tone
 - Calm glass present mode — 80% beauty / 20% teach purple grammar
 - Not PowerPoint, not a pacing guide, not an authoring tool
 
+## Provenance
+Assign practice also writes `ci2.teacher.addedActivities` (`added-live-*`, `fromLiveTeach: true`). Daily Focus / This Week show quiet **From live teach** via `plannerProvenanceLabel` (same helper as Library / Check-ins / Sunday).
+
 ## Files
-- `lib/v2/demoLiveTeach.js` — stub model + `LIVE_TEACH_HREF` + practice assign bridge
+- `lib/v2/demoLiveTeach.js` — stub model + `LIVE_TEACH_HREF` + practice assign + `mintLiveTeachPracticeToPlanner`
+- `lib/v2/demoLibrary.js` — `plannerProvenanceLabel` (“From live teach”)
 - `app/v2/teacher/live-teach/[id]/` — page + `LiveTeachClient`
 - `app/v2/student/StudentMyDayClient.js` — reads practice into Now/Next/Later
 - `lib/v2/demoStudentActivity.js` — resolves `practice-*` missions
-- `app/v2/teacher/StationDayClient.js` — Teach live on agenda + detail
-- `app/v2/teacher/StationWeekClient.js` — compact Live on teach tiles
+- `app/v2/teacher/StationDayClient.js` — Teach live on agenda + detail · provenance chips
+- `app/v2/teacher/StationWeekClient.js` — compact Live on teach tiles · provenance chips
 - `docs/ci2/LIVE-TEACH-STUB.md` — this note
 
 ## Gaps (out of scope)
 - No real slides / media / timers / roster display
-- Practice bridge is same-browser localStorage only (no roster push / Supabase)
+- Practice / planner bridges are same-browser localStorage only (no roster push / Supabase)
 - Spine copy shared with Lesson plan stub
 - Do **not** merge to `main`

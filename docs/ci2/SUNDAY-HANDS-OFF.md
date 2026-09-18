@@ -35,17 +35,22 @@ Persists: `ci2.teacher.handsOffLevels` (per subject). Routines: `ci2.teacher.rou
 2. Open **Sunday preview** (header or banner)
 3. Tap **Apply to This Week** → toast · modal closes
 4. See mint chip **From Sunday · on This Week** and new **Routine · …** / **From Sunday · …** tiles on the week grid
-5. Optional undo from toast · clears bridge tiles
-6. Daily Focus Hands-off chip → **Preview what goes out** → same Apply (then jumps to This Week)
-7. How my weeks run → **Apply to This Week** also available
+5. Open a minted tile on **This Week** / **Daily Focus** → quiet **From Sunday** provenance (`plannerProvenanceLabel`)
+6. Optional undo from toast · clears bridge tiles
+7. Daily Focus Hands-off chip → **Preview what goes out** → same Apply (then jumps to This Week)
+8. How my weeks run → **Apply to This Week** also available
+
+## Provenance
+Bridge tiles carry `fromSunday: true` + `added-sunday-*` ids. Daily Focus / This Week show quiet **From Sunday** via `plannerProvenanceLabel` (same helper as Library / Check-ins / live teach).
 
 ## Files
-- `lib/v2/demoSundayBridge.js` — build blocks + applied meta
+- `lib/v2/demoSundayBridge.js` — build blocks + applied meta (`fromSunday`)
+- `lib/v2/demoLibrary.js` — `plannerProvenanceLabel` (“From Sunday”)
 - `lib/v2/usePlanner.js` — `applySundayToThisWeek`
 - `components/v2/StationShell.js` — modal + banner Apply CTAs
 - `components/v2/HowMyWeeksRun.js` — Apply chip
-- `app/v2/teacher/StationWeekClient.js` — banner · chip · modal
-- `app/v2/teacher/StationDayClient.js` — modal Apply → This Week
+- `app/v2/teacher/StationWeekClient.js` — banner · chip · modal · provenance
+- `app/v2/teacher/StationDayClient.js` — modal Apply → This Week · provenance
 - `docs/ci2/SUNDAY-HANDS-OFF.md` — this note
 
 ## Gaps (out of scope)
