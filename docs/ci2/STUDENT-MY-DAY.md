@@ -37,3 +37,9 @@ See also: [STUDENT-ACTIVITY-STUB.md](./STUDENT-ACTIVITY-STUB.md)
 - Calm mint chip: **Teacher checked** — not a scary grade badge
 - Live submits use `missionId`; demo rows may match by title (pizza / equivalent / purpose)
 - Same-browser localStorage only
+
+## SAM celebrate on Teacher checked
+- When a **new** Teacher checked stamp appears (live event or on load), SAM glance line celebrates **once** (calm kid voice via `samTeacherChecked`)
+- Uses existing `SamBubble` / `setSamMsg` pattern — not a full SAM chat
+- Celebrated ids stored in `ci2.student.teacherCheckedCelebrated` so refresh doesn’t re-cheer
+- Same-browser only; clear site data to reset

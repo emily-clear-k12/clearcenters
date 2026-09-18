@@ -29,6 +29,8 @@ import {
 import {
   TEACHER_CHECKED_KEY,
   loadTeacherCheckedIds,
+  loadCelebratedTeacherCheckedIds,
+  markTeacherCheckedCelebrated,
 } from "../../../lib/v2/demoGrading";
 import { STUDENT_TOOLS_HREF } from "../../../lib/v2/demoStudentTools";
 
@@ -150,6 +152,20 @@ export default function StudentMyDayClient() {
       return { ...m, slot, done };
     });
   }, [day.missions, teacherAdded, projectAssigned, practiceAssigned, doneIds]);
+
+  // SAM celebrate once when a newly stamped Teacher checked appears (same browser).
+  useEffect(() => {
+    if (!teacherCheckedIds.length) return;
+    const celebrated = new Set(loadCelebratedTeacherCheckedIds());
+    const fresh = teacherCheckedIds.filter((id) => !celebrated.has(id));
+    if (!fresh.length) return;
+    const mission =
+      missions.find((m) => fresh.includes(m.id)) ||
+      day.missions.find((m) => fresh.includes(m.id));
+    const title = mission?.title || "your work";
+    setSamMsg(day.samTeacherChecked(title));
+    markTeacherCheckedCelebrated(fresh);
+  }, [teacherCheckedIds, missions, day]);
 
   useEffect(() => {
     if (!toast) return;
