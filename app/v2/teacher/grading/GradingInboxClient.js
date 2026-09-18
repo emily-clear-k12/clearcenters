@@ -15,21 +15,26 @@ import {
 } from "../../../../components/v2/StationShell";
 import {
   DEMO_GRADING_SUBMISSIONS,
-  formatSubmittedAgo,
+  formatSubmissionAgo,
   getPendingCount,
+  getPendingSubmissions,
+  GRADING_INBOX_KEY,
+  GRADING_STORAGE_KEY,
   loadConfirmedIds,
+  loadLiveInbox,
   productLabel,
   saveConfirmedIds,
-  sortSubmissions,
   subjectMeta,
 } from "../../../../lib/v2/demoGrading";
 
 /**
  * CI2.0 grading inbox stub.
  * SAM suggests; teacher confirms. Never auto-final without her.
+ * Demo items + same-browser live submits (ci2.grading.inbox).
  */
 export default function GradingInboxClient() {
   const [confirmedIds, setConfirmedIds] = useState([]);
+  const [liveInbox, setLiveInbox] = useState([]);
   const [hydrated, setHydrated] = useState(false);
   const [sortMode, setSortMode] = useState("oldest"); // oldest | standard
   const [focusId, setFocusId] = useState(null);
@@ -37,11 +42,28 @@ export default function GradingInboxClient() {
   const [draftScore, setDraftScore] = useState(null);
   const [toast, setToast] = useState(null);
 
-  useEffect(() => {
-    const ids = loadConfirmedIds();
-    setConfirmedIds(ids);
-    setHydrated(true);
+  const refreshFromStorage = useCallback(() => {
+    setConfirmedIds(loadConfirmedIds());
+    setLiveInbox(loadLiveInbox());
   }, []);
+
+  useEffect(() => {
+    refreshFromStorage();
+    setHydrated(true);
+    const onStorage = (e) => {
+      if (e.key === GRADING_STORAGE_KEY || e.key === GRADING_INBOX_KEY) {
+        refreshFromStorage();
+      }
+    };
+    window.addEventListener("storage", onStorage);
+    window.addEventListener("ci2-grading-updated", refreshFromStorage);
+    window.addEventListener("focus", refreshFromStorage);
+    return () => {
+      window.removeEventListener("storage", onStorage);
+      window.removeEventListener("ci2-grading-updated", refreshFromStorage);
+      window.removeEventListener("focus", refreshFromStorage);
+    };
+  }, [refreshFromStorage]);
 
   useEffect(() => {
     if (!toast) return;
@@ -51,14 +73,17 @@ export default function GradingInboxClient() {
 
   const confirmedSet = useMemo(() => new Set(confirmedIds), [confirmedIds]);
 
+  // liveInbox in deps so same-tab submit → inbox refresh works
   const pending = useMemo(() => {
-    const list = DEMO_GRADING_SUBMISSIONS.filter((s) => !confirmedSet.has(s.id));
-    return sortSubmissions(list, sortMode);
-  }, [confirmedSet, sortMode]);
+    void liveInbox;
+    return getPendingSubmissions(confirmedIds, sortMode);
+  }, [confirmedIds, sortMode, liveInbox]);
 
   const done = useMemo(() => {
-    return DEMO_GRADING_SUBMISSIONS.filter((s) => confirmedSet.has(s.id));
-  }, [confirmedSet]);
+    const live = liveInbox.filter((s) => confirmedSet.has(s.id));
+    const demo = DEMO_GRADING_SUBMISSIONS.filter((s) => confirmedSet.has(s.id));
+    return [...live, ...demo];
+  }, [confirmedSet, liveInbox]);
 
   const focused = useMemo(() => {
     if (!pending.length) return null;
@@ -139,6 +164,9 @@ export default function GradingInboxClient() {
             <h1 style={{ fontFamily: "'Poppins', sans-serif", margin: 0, fontSize: 34, color: INK }}>Grading</h1>
             <div style={{ color: MUTED, marginTop: 2 }}>
               SAM gives a first read · you confirm · never auto-final without you
+            </div>
+            <div style={{ color: MUTED, marginTop: 4, fontSize: 12 }}>
+              Demo queue + live student submits (same browser only)
             </div>
             <div style={{ marginTop: 10, display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
               <span
@@ -239,7 +267,7 @@ export default function GradingInboxClient() {
                     <div style={{ minWidth: 0, flex: 1 }}>
                       <div style={{ display: "flex", justifyContent: "space-between", gap: 8, flexWrap: "wrap" }}>
                         <span style={{ fontWeight: 800, fontSize: 14 }}>{s.studentFirst}</span>
-                        <span style={{ fontSize: 11, color: MUTED, fontWeight: 600 }}>{formatSubmittedAgo(s.submittedAt)}</span>
+                        <span style={{ fontSize: 11, color: MUTED, fontWeight: 600 }}>{formatSubmissionAgo(s)}</span>
                       </div>
                       <div style={{ fontSize: 13, color: MUTED, marginTop: 2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                         {s.assignment}
@@ -249,6 +277,11 @@ export default function GradingInboxClient() {
                         <span style={{ fontSize: 11, fontWeight: 700, color: MUTED, background: SOFT_LAV, borderRadius: 999, padding: "2px 8px" }}>
                           {productLabel(s.product)}
                         </span>
+                        {s.source === "live" && (
+                          <span style={{ fontSize: 11, fontWeight: 800, color: LAVENDER, background: "#fff", borderRadius: 999, padding: "2px 8px", border: `1px solid ${LINE}` }}>
+                            Just in
+                          </span>
+                        )}
                         {s.standard && (
                           <span style={{ fontSize: 11, fontWeight: 700, color: MUTED }}>{s.standard}</span>
                         )}
@@ -379,7 +412,7 @@ function FocusCard({ item, adjusting, draftScore, setDraftScore, onConfirm, onCh
             {item.studentFirst}
           </h2>
           <div style={{ color: MUTED, fontSize: 14, marginTop: 2 }}>
-            {item.assignment} · submitted {formatSubmittedAgo(item.submittedAt)}
+            {item.assignment} · submitted {formatSubmissionAgo(item)}
           </div>
         </div>
       </div>

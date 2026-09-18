@@ -4,7 +4,13 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { usePlanner } from "../../../lib/v2/usePlanner";
 import { SUBJECTS, DAYS, DAY_NAMES, DATES, KINDS, PRODUCT_INFO, DEMO_WEEK, buildMorningCardDemo } from "../../../lib/v2/demoWeek";
-import { GRADING_INBOX_HREF, getPendingCount, loadConfirmedIds } from "../../../lib/v2/demoGrading";
+import {
+  GRADING_INBOX_HREF,
+  GRADING_INBOX_KEY,
+  GRADING_STORAGE_KEY,
+  getPendingCount,
+  loadConfirmedIds,
+} from "../../../lib/v2/demoGrading";
 import {
   StationShell,
   Glass,
@@ -38,7 +44,9 @@ export default function StationDayClient() {
   useEffect(() => {
     setGradePending(getPendingCount(loadConfirmedIds()));
     const onStorage = (e) => {
-      if (e.key === "ci2.grading.confirmedIds") setGradePending(getPendingCount(loadConfirmedIds()));
+      if (e.key === GRADING_STORAGE_KEY || e.key === GRADING_INBOX_KEY) {
+        setGradePending(getPendingCount(loadConfirmedIds()));
+      }
     };
     const refresh = () => setGradePending(getPendingCount(loadConfirmedIds()));
     window.addEventListener("storage", onStorage);

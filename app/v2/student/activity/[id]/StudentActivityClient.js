@@ -7,6 +7,11 @@ import {
   getStudentActivity,
   markMissionDone,
 } from "../../../../../lib/v2/demoStudentActivity";
+import {
+  buildWorkSnippetFromAnswers,
+  enqueueStudentSubmission,
+} from "../../../../../lib/v2/demoGrading";
+import { DEMO_STUDENT } from "../../../../../lib/v2/demoStudentDay";
 
 const INK = "#2E2459";
 const MUTED = "#5E577F";
@@ -82,7 +87,19 @@ export default function StudentActivityClient({ missionId }) {
     }
     setSubmitting(true);
     markMissionDone(mission.id);
-    setToast({ text: "Nice work — back to your day.", tone: "ok" });
+    // Same-browser bridge → teacher /v2/teacher/grading
+    enqueueStudentSubmission({
+      missionId: mission.id,
+      title: mission.title,
+      subject: mission.subject,
+      product: mission.product,
+      studentFirst: DEMO_STUDENT.name,
+      workSnippet: buildWorkSnippetFromAnswers(items, answers),
+      samScore: 3,
+      samReason: "First read stub — confirm when you've looked.",
+      maxScore: 4,
+    });
+    setToast({ text: "Nice work — Ms. Rivera will see this in Grading.", tone: "ok" });
     setTimeout(() => {
       router.push(`/v2/student?done=${encodeURIComponent(mission.id)}`);
     }, 450);
@@ -274,7 +291,7 @@ export default function StudentActivityClient({ missionId }) {
             {submitting ? "Saving…" : "Submit"}
           </button>
           <p style={{ fontSize: 12, color: MUTED, marginTop: 10, textAlign: "center" }}>
-            Stub only — answers stay on this device. No AI grading yet.
+            Stub only — answers stay on this device. Submit also queues a grading item for your teacher (same browser).
           </p>
         </div>
       </div>
