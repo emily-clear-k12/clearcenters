@@ -32,8 +32,9 @@ import { TEACHER_SETUPS } from "../../../../lib/v2/demoWeek";
 
 /**
  * CI2.0 Reports by standard — Grow glance inside the same teacher home
- * (Daily Focus → Check-ins → Grading → Reports). Soft demo bars + one live
- * Check-ins waiting spark (same browser, same period lens).
+ * (Daily Focus → Check-ins → Grading → Reports). Compact Daily Focus–style
+ * layout: ~900px wrap, slim standard rows + side rail (no full-bleed tiles).
+ * Soft demo bars + one live Check-ins spark (same browser, same period lens).
  */
 export default function ReportsClient() {
   const stub = getReportsStub();
@@ -104,8 +105,8 @@ export default function ReportsClient() {
     liveCheckIns == null
       ? "Check-ins · …"
       : liveCheckIns === 0
-        ? "Check-ins waiting · 0 · live"
-        : `Check-ins waiting · ${liveCheckIns} · live`;
+        ? "Clear · 0 waiting"
+        : `${liveCheckIns} waiting · live`;
 
   const quietProvenance = {
     color: MUTED,
@@ -139,12 +140,17 @@ export default function ReportsClient() {
     border: `1px solid ${LINE}`,
   };
 
+
   const btnBase = {
     borderRadius: 999,
-    padding: "11px 18px",
+    padding: "10px 16px",
     fontWeight: 800,
-    fontSize: 14,
+    fontSize: 13,
     textDecoration: "none",
+    display: "inline-flex",
+    alignItems: "center",
+    justifyContent: "center",
+    width: "100%",
   };
 
   const checkInsCta = (
@@ -195,264 +201,342 @@ export default function ReportsClient() {
   );
 
   // Primary = Check-ins when waiting > 0; otherwise soft Daily Focus.
-  const ctaRow = waiting
+  const ctaStack = waiting
     ? [checkInsCta, dailyFocusCta, familyNoteCta]
     : [dailyFocusCta, checkInsCta, familyNoteCta];
 
+  const railCard = {
+    background: "rgba(255,255,255,.82)",
+    border: `1px solid ${LINE}`,
+    borderRadius: 14,
+  };
+
+  // glanceCardStyle kept imported for shell parity; rows use slim agenda chrome.
+  void glanceCardStyle;
+
   return (
     <StationShell active="grow">
+      <style>{`
+        .rep-wrap{max-width:900px;margin:0 auto;width:100%}
+        .rep-bento{display:grid;grid-template-columns:minmax(0,1fr) minmax(260px,300px);gap:14px;align-items:start;margin-top:14px}
+        .rep-rail{display:flex;flex-direction:column;gap:10px;position:sticky;top:12px}
+        .rep-rows{display:flex;flex-direction:column;gap:8px}
+        @media (max-width:720px){
+          .rep-bento{grid-template-columns:1fr}
+          .rep-rail{position:static}
+        }
+      `}</style>
       <TeacherSubnav active="reports" />
-      <Glass style={{ padding: "22px 22px 20px" }}>
-        <div
-          role="status"
-          style={{
-            marginBottom: 14,
-            display: "inline-flex",
-            alignItems: "center",
-            gap: 8,
-            borderRadius: 999,
-            padding: "7px 14px",
-            fontSize: 13,
-            fontWeight: 700,
-            ...quietProvenance,
-          }}
-        >
-          {stub.honesty || "Demo data · not live yet"}
-        </div>
-
-        <div
-          style={{
-            fontSize: 12,
-            fontWeight: 800,
-            color: GLANCE.ready.fg,
-            textTransform: "uppercase",
-            letterSpacing: 0.3,
-            display: "inline-flex",
-            alignItems: "center",
-            gap: 8,
-          }}
-        >
-          <span
-            aria-hidden
+      <div className="rep-wrap">
+        <Glass style={{ padding: "18px 18px 16px" }}>
+          <div
             style={{
-              width: 8,
-              height: 8,
-              borderRadius: 999,
-              background: GLANCE.ready.fg,
-              opacity: 0.85,
-            }}
-          />
-          Grow · Reports
-        </div>
-
-        <h1
-          style={{
-            fontFamily: "'Poppins', sans-serif",
-            margin: "10px 0 0",
-            fontSize: 30,
-            fontWeight: 700,
-            color: INK,
-            lineHeight: 1.2,
-          }}
-        >
-          {stub.title}
-        </h1>
-        <p
-          style={{
-            margin: "8px 0 0",
-            fontFamily: "'Poppins', sans-serif",
-            fontSize: 17,
-            fontWeight: 600,
-            color: INK,
-            lineHeight: 1.35,
-          }}
-        >
-          {stub.samLine}
-        </p>
-
-        <div
-          style={{
-            marginTop: 14,
-            display: "flex",
-            flexWrap: "wrap",
-            gap: 8,
-            alignItems: "center",
-          }}
-        >
-          <Chip label={`${stub.summary.standards} standards · demo`} />
-          <Chip label={`~${stub.summary.avgClassPct}% class ready · demo`} tone="ready" />
-          <Link
-            href={checkInsHref}
-            title="Open Check-ins (live waiting count · same period lens)"
-            style={{
-              textDecoration: "none",
-              display: "inline-flex",
-              alignItems: "center",
-              gap: 8,
-              fontSize: 12,
-              fontWeight: 800,
-              borderRadius: 999,
-              padding: "5px 11px",
-              ...glanceChipStyle(waiting ? "needsYou" : "ready"),
-              boxShadow: waiting ? "0 0 0 1px rgba(232, 168, 74, 0.35)" : "none",
+              display: "flex",
+              justifyContent: "space-between",
+              gap: 12,
+              flexWrap: "wrap",
+              alignItems: "flex-start",
             }}
           >
-            <span
-              aria-hidden
-              style={{
-                width: 7,
-                height: 7,
-                borderRadius: 999,
-                background: waiting ? GLANCE.needsYou.fg : GLANCE.ready.fg,
-                boxShadow: waiting ? `0 0 0 3px ${GLANCE.needsYou.bg}` : "none",
-              }}
-            />
-            {liveLabel}
-          </Link>
-        </div>
-
-        {periodLabel ? (
-          <p
-            style={{
-              margin: "8px 0 0",
-              fontSize: 12,
-              fontWeight: 600,
-              color: MUTED,
-              lineHeight: 1.4,
-            }}
-          >
-            Period lens · {periodLabel} — same filter as Check-ins & Daily Focus
-          </p>
-        ) : null}
-
-        <section
-          aria-label="Standards at a glance"
-          style={{ marginTop: 20, display: "grid", gap: 12 }}
-        >
-          {stub.rows.map((row) => {
-            // Demo rows stay calm — soft glass / ready wash; soft text only.
-            const card = glanceCardStyle("ready");
-            const barColor = GLANCE.ready.fg;
-            return (
-              <article
-                key={row.id}
+            <div style={{ minWidth: 0, flex: "1 1 220px" }}>
+              <div
                 style={{
-                  ...card,
-                  borderRadius: 18,
-                  padding: "14px 16px",
-                  display: "grid",
-                  gap: 10,
+                  fontSize: 11,
+                  fontWeight: 800,
+                  color: GLANCE.ready.fg,
+                  textTransform: "uppercase",
+                  letterSpacing: 0.35,
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 7,
                 }}
               >
-                <div
+                <span
+                  aria-hidden
+                  style={{
+                    width: 7,
+                    height: 7,
+                    borderRadius: 999,
+                    background: GLANCE.ready.fg,
+                    opacity: 0.85,
+                  }}
+                />
+                Grow · Reports
+              </div>
+              <h1
+                style={{
+                  fontFamily: "'Poppins', sans-serif",
+                  margin: "6px 0 0",
+                  fontSize: 23,
+                  fontWeight: 700,
+                  color: INK,
+                  lineHeight: 1.25,
+                  letterSpacing: -0.2,
+                }}
+              >
+                {stub.title}
+              </h1>
+              <p
+                style={{
+                  margin: "6px 0 0",
+                  fontFamily: "'Poppins', sans-serif",
+                  fontSize: 14,
+                  fontWeight: 500,
+                  color: MUTED,
+                  lineHeight: 1.4,
+                  maxWidth: 420,
+                }}
+              >
+                {stub.samLine}
+              </p>
+            </div>
+            <div
+              role="status"
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 8,
+                borderRadius: 999,
+                padding: "6px 12px",
+                fontSize: 12,
+                fontWeight: 700,
+                flexShrink: 0,
+                ...quietProvenance,
+              }}
+            >
+              {stub.honesty || "Demo data · not live yet"}
+            </div>
+          </div>
+
+          <div className="rep-bento">
+            <section aria-label="Standards at a glance" className="rep-rows">
+              {stub.rows.map((row) => (
+                <article
+                  key={row.id}
                   style={{
                     display: "flex",
-                    justifyContent: "space-between",
-                    gap: 12,
-                    flexWrap: "wrap",
-                    alignItems: "flex-start",
+                    gap: 0,
+                    alignItems: "stretch",
+                    background: "rgba(255,255,255,.92)",
+                    border: `1px solid ${LINE}`,
+                    borderRadius: 14,
+                    overflow: "hidden",
                   }}
                 >
-                  <div style={{ minWidth: 0 }}>
-                    <div
-                      style={{
-                        fontSize: 12,
-                        fontWeight: 800,
-                        color: row.subjectColor,
-                        textTransform: "uppercase",
-                        letterSpacing: 0.3,
-                      }}
-                    >
-                      {row.subjectName} · TEKS {row.code}
-                    </div>
-                    <div
-                      style={{
-                        marginTop: 4,
-                        fontWeight: 700,
-                        color: INK,
-                        fontSize: 16,
-                        lineHeight: 1.3,
-                      }}
-                    >
-                      {row.plain}
-                    </div>
-                  </div>
+                  <span
+                    aria-hidden
+                    style={{
+                      width: 5,
+                      flexShrink: 0,
+                      background: row.subjectColor,
+                      opacity: 0.9,
+                    }}
+                  />
                   <div
                     style={{
+                      flex: 1,
+                      minWidth: 0,
+                      padding: "10px 12px",
                       display: "flex",
-                      gap: 8,
-                      flexWrap: "wrap",
+                      gap: 10,
                       alignItems: "center",
+                      justifyContent: "space-between",
+                      flexWrap: "wrap",
                     }}
                   >
+                    <div style={{ minWidth: 0, flex: "1 1 160px" }}>
+                      <div
+                        style={{
+                          fontSize: 11,
+                          fontWeight: 800,
+                          color: MUTED,
+                          textTransform: "uppercase",
+                          letterSpacing: 0.2,
+                        }}
+                      >
+                        {row.subjectName} · TEKS {row.code}
+                      </div>
+                      <div
+                        style={{
+                          marginTop: 2,
+                          fontWeight: 700,
+                          color: INK,
+                          fontSize: 14,
+                          lineHeight: 1.3,
+                        }}
+                      >
+                        {row.plain}
+                      </div>
+                      <div
+                        style={{
+                          marginTop: 3,
+                          fontSize: 11,
+                          fontWeight: 600,
+                          color: MUTED,
+                          lineHeight: 1.3,
+                        }}
+                      >
+                        {softNeedsLabel(row.needsCheckIn)}
+                      </div>
+                      <div
+                        aria-hidden
+                        style={{
+                          marginTop: 7,
+                          height: 4,
+                          borderRadius: 999,
+                          background: "rgba(247,244,255,.9)",
+                          border: `1px solid ${LINE}`,
+                          overflow: "hidden",
+                          maxWidth: 220,
+                        }}
+                      >
+                        <div
+                          style={{
+                            width: `${Math.max(4, Math.min(100, row.classPct))}%`,
+                            height: "100%",
+                            borderRadius: 999,
+                            background: GLANCE.ready.fg,
+                            opacity: 0.7,
+                          }}
+                        />
+                      </div>
+                    </div>
                     <span
                       style={{
-                        fontSize: 13,
+                        fontSize: 12,
                         fontWeight: 700,
                         ...glanceChipStyle("ready"),
                         borderRadius: 999,
-                        padding: "6px 12px",
+                        padding: "5px 10px",
+                        flexShrink: 0,
                       }}
                     >
                       {softClassPctLabel(row.classPct)}
                     </span>
-                    <span
-                      style={{
-                        fontSize: 13,
-                        fontWeight: 700,
-                        ...quietProvenance,
-                        borderRadius: 999,
-                        padding: "6px 12px",
-                      }}
-                    >
-                      {softNeedsLabel(row.needsCheckIn)}
-                    </span>
                   </div>
-                </div>
+                </article>
+              ))}
+            </section>
 
+            <aside className="rep-rail" aria-label="Reports side rail">
+              <div style={{ ...railCard, padding: "12px 14px" }}>
                 <div
-                  aria-hidden
                   style={{
-                    height: 10,
-                    borderRadius: 999,
-                    background: "rgba(255,255,255,.72)",
-                    border: `1px solid ${LINE}`,
-                    overflow: "hidden",
+                    fontSize: 11,
+                    fontWeight: 800,
+                    letterSpacing: 0.35,
+                    color: MUTED,
+                    textTransform: "uppercase",
                   }}
                 >
-                  <div
-                    style={{
-                      width: `${Math.max(4, Math.min(100, row.classPct))}%`,
-                      height: "100%",
-                      borderRadius: 999,
-                      background: barColor,
-                      opacity: 0.72,
-                    }}
+                  At a glance
+                </div>
+                <div
+                  style={{
+                    marginTop: 10,
+                    display: "flex",
+                    flexWrap: "wrap",
+                    gap: 8,
+                  }}
+                >
+                  <Chip label={`${stub.summary.standards} standards`} />
+                  <Chip
+                    label={`~${stub.summary.avgClassPct}% ready`}
+                    tone="ready"
                   />
                 </div>
-              </article>
-            );
-          })}
-        </section>
+                {periodLabel ? (
+                  <p
+                    style={{
+                      margin: "10px 0 0",
+                      fontSize: 12,
+                      fontWeight: 600,
+                      color: MUTED,
+                      lineHeight: 1.4,
+                    }}
+                  >
+                    Period · {periodLabel}
+                  </p>
+                ) : null}
+              </div>
 
-        <div
-          style={{
-            marginTop: 20,
-            display: "flex",
-            gap: 10,
-            flexWrap: "wrap",
-            alignItems: "center",
-          }}
-        >
-          {ctaRow}
-        </div>
+              <Link
+                href={checkInsHref}
+                title="Open Check-ins (live waiting count · same period lens)"
+                style={{
+                  textDecoration: "none",
+                  display: "block",
+                  padding: "12px 14px",
+                  borderRadius: 14,
+                  border: waiting
+                    ? `1px solid ${GLANCE.needsYou.border}`
+                    : `1px solid ${LINE}`,
+                  background: waiting
+                    ? GLANCE.needsYou.bg
+                    : "rgba(255,255,255,.82)",
+                  color: INK,
+                }}
+              >
+                <div
+                  style={{
+                    fontSize: 11,
+                    fontWeight: 800,
+                    letterSpacing: 0.35,
+                    color: waiting ? GLANCE.needsYou.fg : MUTED,
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: 7,
+                  }}
+                >
+                  <span
+                    aria-hidden
+                    style={{
+                      width: 7,
+                      height: 7,
+                      borderRadius: 999,
+                      background: waiting
+                        ? GLANCE.needsYou.fg
+                        : GLANCE.ready.fg,
+                      boxShadow: waiting
+                        ? `0 0 0 3px ${GLANCE.needsYou.bg}`
+                        : "none",
+                    }}
+                  />
+                  CHECK-INS
+                </div>
+                <div style={{ fontWeight: 700, marginTop: 4, fontSize: 15 }}>
+                  {liveLabel}
+                </div>
+              </Link>
 
-        <p style={{ margin: "16px 0 0", color: MUTED, fontSize: 12, lineHeight: 1.45 }}>
-          Soft demo by standard (not a live gradebook). When someone needs you, the live{" "}
-          <strong>Check-ins</strong> spark opens the same period lens — then a kid, a family note,
-          or back to <strong>Daily Focus</strong> to teach today.
-        </p>
-      </Glass>
+              <div
+                style={{
+                  ...railCard,
+                  padding: "12px 14px",
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 8,
+                }}
+              >
+                {ctaStack}
+              </div>
+
+              <p
+                style={{
+                  margin: 0,
+                  color: MUTED,
+                  fontSize: 11,
+                  lineHeight: 1.45,
+                  padding: "0 2px",
+                }}
+              >
+                Soft demo by standard — not a live gradebook. Live spark opens
+                Check-ins with the same period lens.
+              </p>
+            </aside>
+          </div>
+        </Glass>
+      </div>
     </StationShell>
   );
 }
