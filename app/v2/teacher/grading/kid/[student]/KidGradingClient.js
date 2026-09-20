@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import {
@@ -53,6 +53,8 @@ export default function KidGradingClient() {
   const [hydrated, setHydrated] = useState(false);
   const [openSubject, setOpenSubject] = useState(null);
   const [checkInMotion, setCheckInMotion] = useState(null);
+  const [trendFocus, setTrendFocus] = useState(null); // { pointId, assignmentId, subject }
+  const assignmentRefs = useRef({});
 
   const refresh = useCallback(() => {
     const ids = loadConfirmedIds();
@@ -109,6 +111,36 @@ export default function KidGradingClient() {
       periodId,
     });
   }, [view.studentFirst, view.struggleSubjectKey, view.struggleSubjectName, checkInMotion]);
+
+
+  const onTrendPoint = useCallback((point) => {
+    if (!point) return;
+    setTrendFocus({
+      pointId: point.id,
+      assignmentId: point.assignmentId || null,
+      subject: point.subject || null,
+      assignment: point.assignment || "",
+      pct: point.pct,
+      anomaly: point.anomaly || null,
+      dateLabel: point.dateLabel || "",
+      subjectName: point.subjectName || "",
+    });
+    if (point.subject) {
+      setOpenSubject(point.subject);
+    }
+  }, []);
+
+  useEffect(() => {
+    const id = trendFocus?.assignmentId;
+    if (!id || !openSubject) return;
+    const t = window.setTimeout(() => {
+      const el = assignmentRefs.current[id];
+      if (el && typeof el.scrollIntoView === "function") {
+        el.scrollIntoView({ behavior: "smooth", block: "nearest" });
+      }
+    }, 80);
+    return () => window.clearTimeout(t);
+  }, [trendFocus, openSubject]);
 
   return (
     <StationShell active="check">
@@ -323,16 +355,28 @@ export default function KidGradingClient() {
                 open={open}
                 hydrated={hydrated}
                 onToggleMore={() => setOpenSubject(open ? null : sub.key)}
+                highlightAssignmentId={
+                  open && trendFocus?.subject === sub.key ? trendFocus.assignmentId : null
+                }
+                assignmentRefs={assignmentRefs}
               />
             );
           })}
         </div>
+
+        {/* School-year trend — soft line under subject donuts */}
+        <YearTrendPanel
+          trend={view.yearTrend}
+          studentFirst={view.studentFirst}
+          focus={trendFocus}
+          onSelectPoint={onTrendPoint}
+        />
       </Glass>
     </StationShell>
   );
 }
 
-function SubjectCard({ subject, open, onToggleMore, hydrated }) {
+function SubjectCard({ subject, open, onToggleMore, hydrated, highlightAssignmentId, assignmentRefs }) {
   const wash = subject.needsYou
     ? { background: "rgba(255,248,240,.92)", border: `1px solid rgba(212,168,98,.35)` }
     : { background: "rgba(255,255,255,.92)", border: `1px solid ${LINE}` };
@@ -442,7 +486,17 @@ function SubjectCard({ subject, open, onToggleMore, hydrated }) {
             </div>
           ) : (
             subject.assignments.map((a) => (
-              <AssignmentRow key={a.id} item={a} subjectColor={subject.color} />
+              <AssignmentRow
+                key={a.id}
+                item={a}
+                subjectColor={subject.color}
+                highlighted={highlightAssignmentId === a.id}
+                rowRef={(el) => {
+                  if (!assignmentRefs) return;
+                  if (el) assignmentRefs.current[a.id] = el;
+                  else delete assignmentRefs.current[a.id];
+                }}
+              />
             ))
           )}
         </div>
@@ -451,19 +505,25 @@ function SubjectCard({ subject, open, onToggleMore, hydrated }) {
   );
 }
 
-function AssignmentRow({ item, subjectColor }) {
+function AssignmentRow({ item, subjectColor, highlighted, rowRef }) {
   const ago = item.submittedAt ? formatSubmittedAgo(item.submittedAt, DEMO_GRADING_NOW) : "";
   const soft = item.pct != null && item.pct < 70;
   return (
     <div
+      ref={rowRef}
+      id={`kid-asn-${item.id}`}
       style={{
         display: "flex",
         gap: 10,
         alignItems: "flex-start",
         background: soft ? CREAM : MINT,
-        border: `1px solid ${LINE}`,
+        border: highlighted
+          ? `2px solid ${LAVENDER}`
+          : `1px solid ${LINE}`,
+        boxShadow: highlighted ? "0 0 0 3px rgba(139,108,255,.18)" : undefined,
         borderRadius: 12,
         padding: "10px 12px",
+        transition: "box-shadow 0.2s ease, border-color 0.2s ease",
       }}
     >
       <span
@@ -566,6 +626,333 @@ function SubjectDonut({ pct, color, label, size = 72 }) {
         }}
       >
         {pct != null ? `${pct}` : "—"}
+      </div>
+    </div>
+  );
+}
+
+/** Soft school-year trend under subject donuts — overall line + anomaly dots. */
+function YearTrendPanel({ trend, studentFirst, focus, onSelectPoint }) {
+  const points = trend?.points || [];
+  if (!points.length) return null;
+
+  return (
+    <section
+      aria-label={`School-year score trend for ${studentFirst}`}
+      style={{
+        marginTop: 20,
+        background: "rgba(255,255,255,.92)",
+        border: `1px solid ${LINE}`,
+        borderRadius: 18,
+        padding: "16px 16px 14px",
+        boxShadow: "0 10px 26px rgba(46,36,89,.06)",
+        maxWidth: 920,
+      }}
+    >
+      <div style={{ display: "flex", justifyContent: "space-between", gap: 10, flexWrap: "wrap", alignItems: "baseline" }}>
+        <div>
+          <div
+            style={{
+              fontSize: 12,
+              fontWeight: 800,
+              color: LAVENDER,
+              letterSpacing: 0.35,
+              textTransform: "uppercase",
+            }}
+          >
+            School-year trend
+          </div>
+          <div style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 700, fontSize: 17, color: INK, marginTop: 2 }}>
+            Overall · how scores moved
+          </div>
+        </div>
+        {trend.anomalyCount > 0 ? (
+          <span
+            style={{
+              fontSize: 12,
+              fontWeight: 800,
+              color: MUTED,
+              background: SOFT_LAV,
+              border: `1px solid ${LINE}`,
+              borderRadius: 999,
+              padding: "4px 11px",
+            }}
+          >
+            {trend.anomalyCount} pattern break{trend.anomalyCount === 1 ? "" : "s"}
+          </span>
+        ) : (
+          <span
+            style={{
+              fontSize: 12,
+              fontWeight: 800,
+              ...glanceChipStyle("ready"),
+              borderRadius: 999,
+              padding: "4px 11px",
+            }}
+          >
+            Steady line
+          </span>
+        )}
+      </div>
+
+      <YearTrendChart points={points} focusId={focus?.pointId} onSelectPoint={onSelectPoint} />
+
+      {focus ? (
+        <div
+          style={{
+            marginTop: 10,
+            ...glanceCardStyle(focus.anomaly === "drop" ? "needsYou" : "teach"),
+            borderRadius: 12,
+            padding: "10px 12px",
+            fontSize: 13,
+            color: INK,
+            lineHeight: 1.4,
+          }}
+        >
+          <strong style={{ fontWeight: 800 }}>
+            {focus.dateLabel ? `${focus.dateLabel} · ` : ""}
+            {focus.assignment}
+          </strong>
+          <span style={{ color: MUTED }}>
+            {" "}
+            · {focus.subjectName || focus.subject}
+            {focus.pct != null ? ` · ${focus.pct}%` : ""}
+            {focus.anomaly === "drop"
+              ? " · marked drop"
+              : focus.anomaly === "jump"
+                ? " · marked jump"
+                : ""}
+          </span>
+          {focus.assignmentId ? (
+            <span style={{ display: "block", marginTop: 4, fontSize: 12, color: MUTED }}>
+              Opened in More — scroll to that assignment.
+            </span>
+          ) : null}
+        </div>
+      ) : null}
+
+      {trend.caption ? (
+        <p style={{ margin: "12px 0 0", fontSize: 13, color: MUTED, lineHeight: 1.45, maxWidth: 640 }}>
+          <span style={{ fontWeight: 800, letterSpacing: 0.3, fontSize: 11, color: MUTED, marginRight: 8 }}>
+            SAM
+          </span>
+          {trend.caption}
+        </p>
+      ) : null}
+    </section>
+  );
+}
+
+/**
+ * Calm SVG area + line. Anomaly dots: subject-tinted fill;
+ * amber ring only on real concern drops.
+ */
+function YearTrendChart({ points, focusId, onSelectPoint }) {
+  const W = 640;
+  const H = 168;
+  const padL = 36;
+  const padR = 16;
+  const padT = 18;
+  const padB = 28;
+  const innerW = W - padL - padR;
+  const innerH = H - padT - padB;
+
+  const n = points.length;
+  const xs = points.map((_, i) => padL + (n === 1 ? innerW / 2 : (i / (n - 1)) * innerW));
+  const yFor = (pct) => padT + innerH * (1 - Math.max(0, Math.min(100, pct)) / 100);
+
+  const lineD = points
+    .map((p, i) => `${i === 0 ? "M" : "L"} ${xs[i].toFixed(1)} ${yFor(p.pct).toFixed(1)}`)
+    .join(" ");
+  const areaD =
+    n > 0
+      ? `${lineD} L ${xs[n - 1].toFixed(1)} ${(padT + innerH).toFixed(1)} L ${xs[0].toFixed(1)} ${(padT + innerH).toFixed(1)} Z`
+      : "";
+
+  const guidePcts = [70, 85];
+  const firstLabel = points[0]?.dateLabel || "";
+  const lastLabel = points[n - 1]?.dateLabel || "";
+
+  return (
+    <div style={{ marginTop: 12, width: "100%", overflow: "hidden" }}>
+      <svg
+        viewBox={`0 0 ${W} ${H}`}
+        width="100%"
+        height="auto"
+        role="img"
+        aria-label="Overall score trend across the school year"
+        style={{ display: "block", maxHeight: 200 }}
+      >
+        <defs>
+          <linearGradient id="kidYearArea" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor={LAVENDER} stopOpacity="0.28" />
+            <stop offset="100%" stopColor={LAVENDER} stopOpacity="0.02" />
+          </linearGradient>
+        </defs>
+
+        {/* Soft guides — not a corporate grid */}
+        {guidePcts.map((g) => (
+          <g key={g}>
+            <line
+              x1={padL}
+              x2={W - padR}
+              y1={yFor(g)}
+              y2={yFor(g)}
+              stroke="rgba(228,222,244,.9)"
+              strokeWidth="1"
+              strokeDasharray="4 6"
+            />
+            <text
+              x={padL - 8}
+              y={yFor(g) + 3}
+              textAnchor="end"
+              fontSize="10"
+              fill={MUTED}
+              fontFamily="inherit"
+            >
+              {g}
+            </text>
+          </g>
+        ))}
+
+        {areaD ? <path d={areaD} fill="url(#kidYearArea)" /> : null}
+        {lineD ? (
+          <path
+            d={lineD}
+            fill="none"
+            stroke={LAVENDER}
+            strokeWidth="2.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            opacity="0.9"
+          />
+        ) : null}
+
+        {points.map((p, i) => {
+          const cx = xs[i];
+          const cy = yFor(p.pct);
+          const isFocus = focusId === p.id;
+          const isAnomaly = !!p.anomaly;
+          const isDrop = p.anomaly === "drop";
+          const r = isAnomaly ? (isFocus ? 8 : 7) : isFocus ? 5.5 : 4;
+          const fill = isAnomaly ? p.subjectColor : LAVENDER;
+          const title = `${p.dateLabel || ""} · ${p.assignment} · ${p.pct}%${
+            p.anomaly === "drop" ? " · drop" : p.anomaly === "jump" ? " · jump" : ""
+          }`;
+
+          return (
+            <g key={p.id}>
+              {isDrop ? (
+                <circle
+                  cx={cx}
+                  cy={cy}
+                  r={r + 4}
+                  fill="none"
+                  stroke="#C4A056"
+                  strokeWidth="2"
+                  opacity="0.85"
+                />
+              ) : null}
+              {p.anomaly === "jump" ? (
+                <circle
+                  cx={cx}
+                  cy={cy}
+                  r={r + 3.5}
+                  fill="none"
+                  stroke={p.subjectColor}
+                  strokeWidth="1.5"
+                  opacity="0.45"
+                />
+              ) : null}
+              <circle
+                cx={cx}
+                cy={cy}
+                r={r}
+                fill={fill}
+                stroke="#fff"
+                strokeWidth={isAnomaly ? 2 : 1.5}
+                opacity={isAnomaly ? 0.95 : 0.75}
+                style={{ cursor: "pointer" }}
+              >
+                <title>{title}</title>
+              </circle>
+              {/* Larger hit target */}
+              <circle
+                cx={cx}
+                cy={cy}
+                r={14}
+                fill="transparent"
+                style={{ cursor: "pointer" }}
+                onClick={() => onSelectPoint && onSelectPoint(p)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    onSelectPoint && onSelectPoint(p);
+                  }
+                }}
+                role="button"
+                tabIndex={0}
+                aria-label={
+                  isAnomaly
+                    ? `${p.anomaly} · ${p.assignment}, ${p.pct} percent`
+                    : `${p.assignment}, ${p.pct} percent`
+                }
+              />
+            </g>
+          );
+        })}
+
+        {firstLabel ? (
+          <text x={padL} y={H - 8} fontSize="11" fill={MUTED} fontFamily="inherit">
+            {firstLabel}
+          </text>
+        ) : null}
+        {lastLabel ? (
+          <text
+            x={W - padR}
+            y={H - 8}
+            textAnchor="end"
+            fontSize="11"
+            fill={MUTED}
+            fontFamily="inherit"
+          >
+            {lastLabel}
+          </text>
+        ) : null}
+      </svg>
+
+      <div
+        style={{
+          marginTop: 4,
+          display: "flex",
+          gap: 14,
+          flexWrap: "wrap",
+          fontSize: 11,
+          color: MUTED,
+          fontWeight: 600,
+        }}
+      >
+        <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+          <span style={{ width: 8, height: 8, borderRadius: 99, background: LAVENDER, opacity: 0.8 }} />
+          Overall
+        </span>
+        <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+          <span
+            style={{
+              width: 10,
+              height: 10,
+              borderRadius: 99,
+              background: "#00A8D4",
+              boxShadow: "0 0 0 2px #C4A056",
+            }}
+          />
+          Drop (amber ring)
+        </span>
+        <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+          <span style={{ width: 10, height: 10, borderRadius: 99, background: "#C2185B" }} />
+          Jump · subject tint
+        </span>
+        <span style={{ color: MUTED, fontWeight: 500 }}>Tap a marked point to open it in More</span>
       </div>
     </div>
   );
