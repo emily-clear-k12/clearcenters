@@ -23,6 +23,7 @@ import {
   getPendingSubmissions,
   GRADING_INBOX_KEY,
   GRADING_STORAGE_KEY,
+  kidGradingHref,
   loadConfirmedIds,
   loadLiveInbox,
   productLabel,
@@ -413,7 +414,14 @@ export default function GradingInboxClient() {
                     <span style={{ width: 5, alignSelf: "stretch", borderRadius: 4, background: sub.color, flexShrink: 0 }} />
                     <div style={{ minWidth: 0, flex: 1 }}>
                       <div style={{ display: "flex", justifyContent: "space-between", gap: 8, flexWrap: "wrap" }}>
-                        <span style={{ fontWeight: 800, fontSize: 14 }}>{s.studentFirst}</span>
+                        <Link
+                          href={kidGradingHref({ studentFirst: s.studentFirst })}
+                          onClick={(e) => e.stopPropagation()}
+                          title={`Open ${s.studentFirst}'s grades across subjects`}
+                          style={{ fontWeight: 800, fontSize: 14, color: INK, textDecoration: "none", borderBottom: `1px dashed ${LINE}` }}
+                        >
+                          {s.studentFirst}
+                        </Link>
                         <span style={{ fontSize: 11, color: MUTED, fontWeight: 600 }}>{formatSubmissionAgo(s)}</span>
                       </div>
                       <div style={{ fontSize: 13, color: MUTED, marginTop: 2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
@@ -457,7 +465,13 @@ export default function GradingInboxClient() {
                         border: `1px solid ${LINE}`,
                       }}
                     >
-                      <strong style={{ color: INK }}>{s.studentFirst}</strong> · {s.assignment}
+                      <Link
+                        href={kidGradingHref({ studentFirst: s.studentFirst })}
+                        style={{ color: INK, fontWeight: 800, textDecoration: "none", borderBottom: `1px dashed ${LINE}` }}
+                        title={`Open ${s.studentFirst}'s grades across subjects`}
+                      >
+                        {s.studentFirst}
+                      </Link>{" "}· {s.assignment}
                     </div>
                   ))}
                 </div>
@@ -643,8 +657,31 @@ function FocusCard({ item, adjusting, draftScore, setDraftScore, onConfirm, onCh
             {item.standard ? ` · ${item.standard}` : ""}
           </div>
           <h2 style={{ fontFamily: "'Poppins', sans-serif", margin: "4px 0 0", fontSize: 22, color: INK }}>
-            {item.studentFirst}
+            <Link
+              href={kidGradingHref({ studentFirst: item.studentFirst })}
+              title={`Open ${item.studentFirst}'s grades across subjects`}
+              style={{ color: INK, textDecoration: "none", borderBottom: `1px dashed ${LINE}` }}
+            >
+              {item.studentFirst}
+            </Link>
           </h2>
+          <div style={{ marginTop: 6 }}>
+            <Link
+              href={kidGradingHref({ studentFirst: item.studentFirst })}
+              style={{
+                fontSize: 12,
+                fontWeight: 700,
+                color: LAVENDER,
+                textDecoration: "none",
+                border: `1px solid ${LINE}`,
+                background: SOFT_LAV,
+                borderRadius: 999,
+                padding: "4px 10px",
+              }}
+            >
+              All subjects for {item.studentFirst} →
+            </Link>
+          </div>
           <div style={{ color: MUTED, fontSize: 14, marginTop: 2 }}>
             {item.assignment} · submitted {formatSubmissionAgo(item)}
           </div>

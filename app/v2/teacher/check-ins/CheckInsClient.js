@@ -28,6 +28,7 @@ import {
   GRADING_STORAGE_KEY,
   findPendingForStudent,
   gradingInboxHref,
+  kidGradingHref,
   loadConfirmedIds,
   subjectMeta,
 } from "../../../../lib/v2/demoGrading";
@@ -308,9 +309,13 @@ export default function CheckInsClient() {
                 <div style={{ display: "flex", justifyContent: "space-between", gap: 10, flexWrap: "wrap", alignItems: "flex-start" }}>
                   <div style={{ minWidth: 0, flex: 1 }}>
                     <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center", marginBottom: 4 }}>
-                      <span style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 800, fontSize: 20, color: INK }}>
+                      <Link
+                        href={kidGradingHref({ studentFirst: card.studentFirst })}
+                        title={`Open ${card.studentFirst}'s grades across subjects`}
+                        style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 800, fontSize: 20, color: INK, textDecoration: "none", borderBottom: `1px dashed ${LINE}` }}
+                      >
                         {card.studentFirst}
-                      </span>
+                      </Link>
                       <span
                         style={{
                           fontSize: 12,
