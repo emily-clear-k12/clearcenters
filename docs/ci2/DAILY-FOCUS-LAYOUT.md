@@ -41,3 +41,6 @@ Decorative mint/teal “ready” chips stripped from Daily Focus chrome (loop Pl
 - No Cloud Agents · do **not** merge to `main`
 - Mobile is a single-column stack of the same blocks (not a separate mobile IA)
 - Subject filter pills still show a quiet color dot (identity, not glance grammar)
+
+## Loop seams
+SAM morning win/watch use `demoLoopSeams` story voice (Mostly clear / Needs a look) + soft who from Reports softest. Rail peeks Reports class story. Amber still only for live Check-ins waiting > 0.

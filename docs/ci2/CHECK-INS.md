@@ -81,3 +81,6 @@ Departmentalized teachers also need the **same period/class lens** as Daily Focu
 - Family note period sync is localStorage classFilter only (no SIS room names on the chip beyond Period A/B/C)
 - Open grading matches by `studentFirst` only (same-browser pending demo/live); no roster id join
 - Do **not** merge to `main`
+
+## Loop seams
+Demo cards for period A = Reports softest who (Sofia · Noah · Diego on 5.6B). Story band + Reports CTA keep the same cast. Chip voice: Needs a look / Mostly clear.

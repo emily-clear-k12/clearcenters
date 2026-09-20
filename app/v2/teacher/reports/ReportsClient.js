@@ -23,6 +23,7 @@ import {
   REPORTS_STANDARD_HREF,
   REPORTS_ASSIGNMENT_HREF,
 } from "../../../../lib/v2/demoReports";
+import { checkInsCtaLabel } from "../../../../lib/v2/demoLoopSeams";
 import { FAMILY_NOTE_HREF, FAMILY_NOTE_DEFAULT_ID } from "../../../../lib/v2/demoFamilyNote";
 import {
   getWhoNeedsMeCount,
@@ -162,7 +163,7 @@ export default function ReportsClient() {
           : "Open Check-ins — clear right now"
       }
     >
-      Check-ins →
+      {checkInsCtaLabel(liveCheckIns)} →
     </Link>
   );
 

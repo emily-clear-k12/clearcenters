@@ -36,6 +36,11 @@ import {
 } from "../../../lib/v2/demoLibrary";
 import { writeSundayPendingUndo } from "../../../lib/v2/demoSundayBridge";
 import {
+  getLoopHonesty,
+  getLoopSoftest,
+  REPORTS_HREF,
+} from "../../../lib/v2/demoLoopSeams";
+import {
   StationShell,
   Glass,
   Pill,
@@ -185,6 +190,8 @@ export default function StationDayClient() {
       }),
     [p.setup.subjects, selectedClass, cls?.name, p.subjectFilter, agenda]
   );
+  const loopSoftest = useMemo(() => getLoopSoftest(), []);
+  const loopHonesty = useMemo(() => getLoopHonesty(), []);
 
   const morningDismissKey = `ci2.morning.dismissed.${DATES[day] || day}`;
   const [morningDismissed, setMorningDismissed] = useState(false);
@@ -286,6 +293,11 @@ export default function StationDayClient() {
             <div style={{ color: MUTED, marginTop: 2, fontSize: 14 }}>
               Teach today · {DAY_NAMES[day]} · {DATES[day]} · {p.published ? "published" : "not published yet"} · {minutes} min
             </div>
+            {loopHonesty ? (
+              <div style={{ color: MUTED, marginTop: 4, fontSize: 11, fontWeight: 600 }}>
+                {loopHonesty}
+              </div>
+            ) : null}
             <div style={{ marginTop: 10, display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
               <SetupSwitcher setupKey={p.setupKey} onChange={p.setSetupKey} />
               {!p.multiClass && <SingleRoomLabel cls={cls} setup={p.setup} />}
@@ -311,6 +323,10 @@ export default function StationDayClient() {
                 onDismiss={dismissMorningCard}
                 checkInsCount={whoNeedsCount}
                 checkInsHref={WHO_NEEDS_ME_HREF}
+                softWho={morningCard.softWho}
+                softestHref={morningCard.softestHref}
+                softestCode={morningCard.softestCode}
+                readiness={morningCard.readiness}
               />
             )}
             <SamGlance
@@ -633,6 +649,26 @@ export default function StationDayClient() {
                 <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: 0.35, color: MUTED }}>GRADING</div>
                 <div style={{ fontWeight: 700, marginTop: 4, fontSize: 15 }}>
                   {gradePending > 0 ? `${gradePending} ready when you are` : "Inbox clear"}
+                </div>
+              </a>
+              <a
+                href={loopSoftest?.href || REPORTS_HREF}
+                style={{
+                  textDecoration: "none",
+                  display: "block",
+                  padding: "12px 14px",
+                  borderRadius: 14,
+                  border: `1px solid ${LINE}`,
+                  background: "rgba(255,255,255,.82)",
+                  color: INK,
+                }}
+                title="Class story · same soft who as Check-ins"
+              >
+                <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: 0.35, color: MUTED }}>REPORTS · CLASS STORY</div>
+                <div style={{ fontWeight: 700, marginTop: 4, fontSize: 15 }}>
+                  {loopSoftest
+                    ? `${loopSoftest.readiness}${loopSoftest.whoLine ? ` · ${loopSoftest.whoLine}` : ""}`
+                    : "Open class story"}
                 </div>
               </a>
             </div>

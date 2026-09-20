@@ -45,6 +45,11 @@ import {
 } from "../../../../lib/v2/demoWhoNeedsMe";
 import { removeAddedActivity } from "../../../../lib/v2/demoLibrary";
 import { FAMILY_NOTE_HREF } from "../../../../lib/v2/demoFamilyNote";
+import {
+  getCheckInsStoryBand,
+  getLoopHonesty,
+  REPORTS_HREF,
+} from "../../../../lib/v2/demoLoopSeams";
 
 /**
  * CI2.0 Check-ins — reteach / small-group stub. Route: /v2/teacher/check-ins.
@@ -121,11 +126,15 @@ export default function CheckInsClient() {
   const cards = useMemo(() => {
     void choices;
     void confirmedIds;
+    const focus = studentFocus.toLowerCase();
+    // Student deep-link (kid grading): include all periods so Kai/Riley still surface.
+    const opts = focus
+      ? { ...filterOpts, classFilter: "all", limit: null }
+      : filterOpts;
     const raw =
       !hydrated || !p.hydrated
-        ? getWhoNeedsMeCards({}, [], filterOpts)
-        : getWhoNeedsMeCards(choices, confirmedIds, filterOpts);
-    const focus = studentFocus.toLowerCase();
+        ? getWhoNeedsMeCards({}, [], opts)
+        : getWhoNeedsMeCards(choices, confirmedIds, opts);
     if (!focus) return raw;
     // Calm focus from kid grading: matching kid first (still show the rest)
     const hit = [];
@@ -134,7 +143,8 @@ export default function CheckInsClient() {
       if (String(c.studentFirst || "").trim().toLowerCase() === focus) hit.push(c);
       else rest.push(c);
     }
-    return [...hit, ...rest];
+    const ordered = [...hit, ...rest];
+    return focus ? ordered.slice(0, Math.max(3, hit.length || 0)) : ordered;
   }, [choices, confirmedIds, hydrated, p.hydrated, filterOpts, studentFocus]);
 
   const needsByClass = useMemo(() => {
@@ -149,6 +159,8 @@ export default function CheckInsClient() {
   }, [p.setup.classes, choices, confirmedIds, hydrated, p.hydrated]);
 
   const periodLabel = cls?.name || "this class";
+  const storyBand = useMemo(() => getCheckInsStoryBand(), []);
+  const loopHonesty = useMemo(() => getLoopHonesty(), []);
 
   const act = useCallback((card, action) => {
     const next = recordWhoNeedsAction(card.id, action);
@@ -232,7 +244,7 @@ export default function CheckInsClient() {
                   padding: "5px 12px",
                 }}
               >
-                {cards.length === 0 ? "All clear" : `${cards.length} worth a look`}
+                {cards.length === 0 ? "Mostly clear" : cards.length === 1 ? "Needs a look · 1" : `Needs a look · ${cards.length}`}
               </span>
               <Link
                 href="/v2/teacher/day?d=2"
@@ -252,9 +264,62 @@ export default function CheckInsClient() {
               >
                 Grading →
               </Link>
+              <Link
+                href={storyBand?.href || REPORTS_HREF}
+                style={{ fontSize: 13, fontWeight: 700, color: LAVENDER, textDecoration: "none" }}
+                title="Same soft cluster as Reports class story"
+              >
+                Reports · class story →
+              </Link>
             </div>
+            {loopHonesty ? (
+              <div style={{ marginTop: 6, fontSize: 11, color: MUTED, fontWeight: 600 }}>
+                {loopHonesty}
+              </div>
+            ) : null}
           </div>
         </div>
+
+        {storyBand ? (
+          <div
+            style={{
+              marginTop: 14,
+              ...glanceCardStyle("ready"),
+              borderRadius: 14,
+              padding: "10px 14px",
+              display: "flex",
+              gap: 12,
+              flexWrap: "wrap",
+              alignItems: "center",
+              justifyContent: "space-between",
+            }}
+          >
+            <div style={{ minWidth: 0, flex: 1 }}>
+              <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: 0.35, color: MUTED }}>
+                {storyBand.title.toUpperCase()}
+              </div>
+              <div style={{ fontSize: 14, color: INK, marginTop: 2, lineHeight: 1.4 }}>
+                {storyBand.line}
+              </div>
+            </div>
+            <Link
+              href={storyBand.href}
+              style={{
+                fontSize: 12,
+                fontWeight: 800,
+                color: LAVENDER,
+                textDecoration: "none",
+                whiteSpace: "nowrap",
+                border: `1px solid ${LINE}`,
+                background: "#fff",
+                borderRadius: 999,
+                padding: "6px 12px",
+              }}
+            >
+              Open {storyBand.code || "Reports"} →
+            </Link>
+          </div>
+        ) : null}
 
         {p.multiClass && (
           <RoomCards
@@ -285,14 +350,15 @@ export default function CheckInsClient() {
             >
               <div style={{ fontWeight: 800, fontSize: 17, lineHeight: 1.3 }}>
                 {p.multiClass
-                  ? `All clear for ${periodLabel}`
-                  : "All clear right now"}
+                  ? `Mostly clear for ${periodLabel}`
+                  : "Mostly clear right now"}
               </div>
               <div style={{ color: MUTED, fontSize: 14, lineHeight: 1.45, maxWidth: 380 }}>
                 {p.multiClass
-                  ? `Everyone's in good shape for ${periodLabel}. Nothing waiting — head back when you're ready.`
-                  : "Everyone's in good shape. Nothing waiting — head back when you're ready."}
+                  ? `Mostly clear for ${periodLabel}. Nothing waiting — soft cluster still lives on Reports if you want the skill story.`
+                  : "Mostly clear. Nothing waiting — soft cluster still lives on Reports if you want the skill story."}
               </div>
+              <div style={{ display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "center" }}>
               <Link
                 href="/v2/teacher/day?d=2"
                 style={{
@@ -311,6 +377,24 @@ export default function CheckInsClient() {
               >
                 Open Daily Focus
               </Link>
+              <Link
+                href={storyBand?.href || REPORTS_HREF}
+                style={{
+                  border: `1px solid ${LINE}`,
+                  background: "#fff",
+                  color: LAVENDER,
+                  borderRadius: 999,
+                  padding: "10px 18px",
+                  fontWeight: 800,
+                  fontSize: 14,
+                  textDecoration: "none",
+                  display: "inline-flex",
+                  alignItems: "center",
+                }}
+              >
+                Reports · soft cluster →
+              </Link>
+              </div>
             </div>
           )}
 
@@ -361,7 +445,7 @@ export default function CheckInsClient() {
                           padding: "3px 10px",
                         }}
                       >
-                        {needsYou ? "needs you" : "ready"}
+                        {needsYou ? "Needs a look" : "Looking clear"}
                       </span>
                       {roomName && (
                         <span

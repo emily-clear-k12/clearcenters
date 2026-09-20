@@ -457,6 +457,10 @@ export function MorningCard({
   onDismiss,
   checkInsCount = 0,
   checkInsHref = "/v2/teacher/check-ins",
+  softWho = null,
+  softestHref = null,
+  softestCode = null,
+  readiness = null,
   compact = false,
   style,
 }) {
@@ -583,8 +587,38 @@ export function MorningCard({
             padding: compact ? "7px 10px" : "10px 12px",
           }}
         >
-          <div style={{ fontSize: 10, fontWeight: 800, color: needs ? GLANCE.needsYou.fg : MUTED, letterSpacing: 0.4, marginBottom: 1 }}>WATCH · NOT YET</div>
+          <div style={{ fontSize: 10, fontWeight: 800, color: needs ? GLANCE.needsYou.fg : MUTED, letterSpacing: 0.4, marginBottom: 1 }}>
+            {readiness === "Needs a look"
+              ? "WATCH · NEEDS A LOOK"
+              : readiness === "Mixed"
+                ? "WATCH · MIXED"
+                : readiness === "Mostly clear"
+                  ? "WATCH · MOSTLY CLEAR"
+                  : "WATCH · NOT YET"}
+          </div>
           <div style={{ color: INK, fontSize: compact ? 12 : 14, lineHeight: 1.35 }}>{watch}</div>
+          {(softWho || softestHref) && (
+            <div style={{ marginTop: 6, display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
+              {softWho ? (
+                <span style={{ fontSize: 11, fontWeight: 700, color: MUTED }}>
+                  Soft cluster · {softWho}
+                </span>
+              ) : null}
+              {softestHref ? (
+                <a
+                  href={softestHref}
+                  style={{
+                    fontSize: 11,
+                    fontWeight: 800,
+                    color: LAVENDER,
+                    textDecoration: "none",
+                  }}
+                >
+                  {softestCode ? `${softestCode} report` : "Reports"} →
+                </a>
+              ) : null}
+            </div>
+          )}
         </div>
       )}
       </div>

@@ -37,3 +37,7 @@ Teachers need a **memorable class story** — who needs a look, on which skill, 
 - `app/v2/teacher/reports/ReportsClient.js` — glance MAP + SAM story card
 - `app/v2/teacher/reports/standard/[code]/` — standard report
 - `app/v2/teacher/reports/assignment/[id]/` — assignment report
+
+## Loop seams (Focus ↔ Check-ins ↔ Reports)
+Shared story labels + soft who live in `lib/v2/demoLoopSeams.js` (wraps `demoReports`).
+Daily Focus SAM watch/win and Check-ins story band use the same softest cluster (Sofia · Noah · Diego on 5.6B) so Reports is not an island.

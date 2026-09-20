@@ -33,6 +33,7 @@ import {
 } from "../../../../lib/v2/demoGrading";
 import { WHO_NEEDS_ME_HREF } from "../../../../lib/v2/demoWhoNeedsMe";
 import { REPORTS_HREF } from "../../../../lib/v2/demoReports";
+import { getLoopHonesty } from "../../../../lib/v2/demoLoopSeams";
 
 /**
  * CI2.0 grading inbox stub.
@@ -206,7 +207,7 @@ export default function GradingInboxClient() {
               SAM gives a first read · you confirm · never auto-final without you
             </div>
             <div style={{ color: MUTED, marginTop: 4, fontSize: 12 }}>
-              Demo queue + live student submits (same browser only)
+              {getLoopHonesty()} · live submits same browser only
             </div>
             <div style={{ marginTop: 10, display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
               <span
