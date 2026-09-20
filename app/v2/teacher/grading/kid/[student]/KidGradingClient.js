@@ -828,13 +828,15 @@ function YearTrendPanel({ trend, studentFirst, focus, onSelectPoint }) {
  */
 function YearTrendChart({ points, series, focusId, onSelectPoint, subjectFilter = "all" }) {
   const W = 640;
-  const H = 178;
-  const padL = 36;
+  const H = 196;
+  const padL = 42;
   const padR = 16;
-  const padT = 18;
-  const padB = 30;
+  const padT = 14;
+  const padB = 32;
   const innerW = W - padL - padR;
   const innerH = H - padT - padB;
+  // Fixed score scale — clear, readable, calm (always 0–100 by 10s)
+  const yTicks = [0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100];
 
   const times = points
     .map((p) => new Date(p.date).getTime())
@@ -869,7 +871,6 @@ function YearTrendChart({ points, series, focusId, onSelectPoint, subjectFilter 
     return { ...s, pts, lineD, strokeW: Math.max(1.8, strokeW), opacity: Math.max(0.62, opacity) };
   });
 
-  const guidePcts = [70, 85];
   const firstLabel = points[0]?.dateLabel || "";
   const lastLabel = points[points.length - 1]?.dateLabel || "";
   // Prefer chronological extremes for date labels
@@ -889,32 +890,46 @@ function YearTrendChart({ points, series, focusId, onSelectPoint, subjectFilter 
             ? "Score trend by subject across the school year"
             : `Score trend for ${series[0]?.name || "one subject"} across the school year`
         }
-        style={{ display: "block", maxHeight: 210 }}
+        style={{ display: "block", maxHeight: 230 }}
       >
-        {/* Soft guides — not a corporate grid */}
-        {guidePcts.map((g) => (
-          <g key={g}>
-            <line
-              x1={padL}
-              x2={W - padR}
-              y1={yFor(g)}
-              y2={yFor(g)}
-              stroke="rgba(228,222,244,.9)"
-              strokeWidth="1"
-              strokeDasharray="4 6"
-            />
-            <text
-              x={padL - 8}
-              y={yFor(g) + 3}
-              textAnchor="end"
-              fontSize="10"
-              fill={MUTED}
-              fontFamily="inherit"
-            >
-              {g}
-            </text>
-          </g>
-        ))}
+        {/* Y-axis 0–100 by 10s — soft guides, clear ticks */}
+        {yTicks.map((g) => {
+          const y = yFor(g);
+          const isEdge = g === 0 || g === 100;
+          const isMid = g === 50;
+          return (
+            <g key={`ytick-${g}`}>
+              <line
+                x1={padL}
+                x2={W - padR}
+                y1={y}
+                y2={y}
+                stroke={isEdge || isMid ? "rgba(228,222,244,.95)" : "rgba(228,222,244,.55)"}
+                strokeWidth={isEdge ? 1.15 : 1}
+                strokeDasharray={isEdge ? undefined : "3 7"}
+              />
+              <line
+                x1={padL - 4}
+                x2={padL}
+                y1={y}
+                y2={y}
+                stroke="rgba(107,98,128,.45)"
+                strokeWidth="1"
+              />
+              <text
+                x={padL - 8}
+                y={y + 3.5}
+                textAnchor="end"
+                fontSize="10"
+                fill={MUTED}
+                fontFamily="inherit"
+                fontWeight={isEdge || isMid ? 700 : 500}
+              >
+                {g}
+              </text>
+            </g>
+          );
+        })}
 
         {lines.map((s) =>
           s.lineD ? (
@@ -1070,6 +1085,18 @@ function YearTrendChart({ points, series, focusId, onSelectPoint, subjectFilter 
         </span>
         <span style={{ color: MUTED, fontWeight: 500 }}>Tap a marked point to open it in More</span>
       </div>
+      <p
+        style={{
+          margin: "8px 0 0",
+          fontSize: 11,
+          color: MUTED,
+          fontWeight: 500,
+          letterSpacing: 0.1,
+          lineHeight: 1.35,
+        }}
+      >
+        Grows as the year adds scores
+      </p>
     </div>
   );
 }
