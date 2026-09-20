@@ -26,22 +26,38 @@ import {
   readSelectedClassFilter,
   WHO_NEEDS_ME_STORAGE_KEY,
   CHECK_INS_HREF,
+  TEACHER_SETUP_KEY,
 } from "../../../../lib/v2/demoWhoNeedsMe";
+import { TEACHER_SETUPS } from "../../../../lib/v2/demoWeek";
 
 /**
- * CI2.0 Reports by standard — glance-first stub (not a spreadsheet).
- * Honesty first: demo bars + one real Check-ins waiting spark (same browser, period-aware).
+ * CI2.0 Reports by standard — Grow glance inside the same teacher home
+ * (Daily Focus → Check-ins → Grading → Reports). Soft demo bars + one live
+ * Check-ins waiting spark (same browser, same period lens).
  */
 export default function ReportsClient() {
   const stub = getReportsStub();
   const [liveCheckIns, setLiveCheckIns] = useState(null);
   const [periodId, setPeriodId] = useState(null);
+  const [periodLabel, setPeriodLabel] = useState(null);
 
   useEffect(() => {
     const refresh = () => {
       try {
         const period = readSelectedClassFilter();
-        setPeriodId(period && period !== "all" ? period : null);
+        const pid = period && period !== "all" ? period : null;
+        setPeriodId(pid);
+        if (pid) {
+          const setupKey =
+            (typeof window !== "undefined" &&
+              window.localStorage.getItem(TEACHER_SETUP_KEY)) ||
+            "self";
+          const setup = TEACHER_SETUPS[setupKey] || TEACHER_SETUPS.self;
+          const cls = setup.classes.find((c) => c.key === pid);
+          setPeriodLabel(cls?.name || `Period ${pid}`);
+        } else {
+          setPeriodLabel(null);
+        }
         setLiveCheckIns(
           getWhoNeedsMeCount(undefined, undefined, {
             classFilter: period,
@@ -51,6 +67,7 @@ export default function ReportsClient() {
       } catch {
         setLiveCheckIns(0);
         setPeriodId(null);
+        setPeriodLabel(null);
       }
     };
     refresh();
@@ -81,12 +98,106 @@ export default function ReportsClient() {
       ? `${CHECK_INS_HREF}?period=${encodeURIComponent(periodId)}`
       : stub.checkInsHref || CHECK_INS_HREF;
 
+  const waiting = typeof liveCheckIns === "number" && liveCheckIns > 0;
+
   const liveLabel =
     liveCheckIns == null
       ? "Check-ins · …"
       : liveCheckIns === 0
         ? "Check-ins waiting · 0 · live"
         : `Check-ins waiting · ${liveCheckIns} · live`;
+
+  const quietProvenance = {
+    color: MUTED,
+    background: SOFT_LAV,
+    border: `1px solid ${LINE}`,
+  };
+
+  const softPrimary = {
+    background: "rgba(243,238,255,.88)",
+    color: LAVENDER,
+    border: `1px solid ${LINE}`,
+    boxShadow: "none",
+  };
+
+  const amberPrimary = {
+    background: GLANCE.needsYou.bg,
+    color: GLANCE.needsYou.fg,
+    border: `1px solid ${GLANCE.needsYou.border}`,
+    boxShadow: "none",
+  };
+
+  const calmSecondary = {
+    background: GLANCE.ready.bg,
+    color: GLANCE.ready.fg,
+    border: `1px solid ${GLANCE.ready.border}`,
+  };
+
+  const tertiary = {
+    color: MUTED,
+    background: "rgba(255,255,255,.88)",
+    border: `1px solid ${LINE}`,
+  };
+
+  const btnBase = {
+    borderRadius: 999,
+    padding: "11px 18px",
+    fontWeight: 800,
+    fontSize: 14,
+    textDecoration: "none",
+  };
+
+  const checkInsCta = (
+    <Link
+      key="check-ins"
+      href={checkInsHref}
+      style={{
+        ...btnBase,
+        ...(waiting ? amberPrimary : calmSecondary),
+      }}
+      title={
+        waiting
+          ? "Open Check-ins — live waiting count needs you"
+          : "Open Check-ins — clear right now"
+      }
+    >
+      Check-ins →
+    </Link>
+  );
+
+  const dailyFocusCta = (
+    <Link
+      key="daily-focus"
+      href={stub.dayHref}
+      style={{
+        ...btnBase,
+        ...(waiting ? calmSecondary : softPrimary),
+      }}
+      title="Back to teach today · Daily Focus"
+    >
+      ← Daily Focus
+    </Link>
+  );
+
+  const familyNoteCta = (
+    <Link
+      key="family-note"
+      href={FAMILY_NOTE_HREF(FAMILY_NOTE_DEFAULT_ID)}
+      title="Family note stub — after a kid needs a quiet word home"
+      style={{
+        ...btnBase,
+        ...tertiary,
+        fontWeight: 700,
+      }}
+    >
+      Family note
+    </Link>
+  );
+
+  // Primary = Check-ins when waiting > 0; otherwise soft Daily Focus.
+  const ctaRow = waiting
+    ? [checkInsCta, dailyFocusCta, familyNoteCta]
+    : [dailyFocusCta, checkInsCta, familyNoteCta];
 
   return (
     <StationShell active="grow">
@@ -102,8 +213,8 @@ export default function ReportsClient() {
             borderRadius: 999,
             padding: "7px 14px",
             fontSize: 13,
-            fontWeight: 800,
-            ...glanceChipStyle("needsYou"),
+            fontWeight: 700,
+            ...quietProvenance,
           }}
         >
           {stub.honesty || "Demo data · not live yet"}
@@ -172,7 +283,7 @@ export default function ReportsClient() {
           <Chip label={`~${stub.summary.avgClassPct}% class ready · demo`} tone="ready" />
           <Link
             href={checkInsHref}
-            title="Open Check-ins (live waiting count · this browser)"
+            title="Open Check-ins (live waiting count · same period lens)"
             style={{
               textDecoration: "none",
               display: "inline-flex",
@@ -182,13 +293,8 @@ export default function ReportsClient() {
               fontWeight: 800,
               borderRadius: 999,
               padding: "5px 11px",
-              ...glanceChipStyle(
-                liveCheckIns && liveCheckIns > 0 ? "needsYou" : "ready"
-              ),
-              boxShadow:
-                liveCheckIns && liveCheckIns > 0
-                  ? "0 0 0 1px rgba(232, 168, 74, 0.35)"
-                  : "none",
+              ...glanceChipStyle(waiting ? "needsYou" : "ready"),
+              boxShadow: waiting ? "0 0 0 1px rgba(232, 168, 74, 0.35)" : "none",
             }}
           >
             <span
@@ -197,28 +303,36 @@ export default function ReportsClient() {
                 width: 7,
                 height: 7,
                 borderRadius: 999,
-                background:
-                  liveCheckIns && liveCheckIns > 0
-                    ? GLANCE.needsYou.fg
-                    : GLANCE.ready.fg,
-                boxShadow:
-                  liveCheckIns && liveCheckIns > 0
-                    ? `0 0 0 3px ${GLANCE.needsYou.bg}`
-                    : "none",
+                background: waiting ? GLANCE.needsYou.fg : GLANCE.ready.fg,
+                boxShadow: waiting ? `0 0 0 3px ${GLANCE.needsYou.bg}` : "none",
               }}
             />
             {liveLabel}
           </Link>
         </div>
 
+        {periodLabel ? (
+          <p
+            style={{
+              margin: "8px 0 0",
+              fontSize: 12,
+              fontWeight: 600,
+              color: MUTED,
+              lineHeight: 1.4,
+            }}
+          >
+            Period lens · {periodLabel} — same filter as Check-ins & Daily Focus
+          </p>
+        ) : null}
+
         <section
           aria-label="Standards at a glance"
           style={{ marginTop: 20, display: "grid", gap: 12 }}
         >
           {stub.rows.map((row) => {
-            const needs = row.needsCheckIn > 0;
-            const barColor = needs ? GLANCE.needsYou.fg : GLANCE.ready.fg;
-            const card = glanceCardStyle(needs ? "needsYou" : "ready");
+            // Demo rows stay calm — soft glass / ready wash; soft text only.
+            const card = glanceCardStyle("ready");
+            const barColor = GLANCE.ready.fg;
             return (
               <article
                 key={row.id}
@@ -263,12 +377,19 @@ export default function ReportsClient() {
                       {row.plain}
                     </div>
                   </div>
-                  <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
+                  <div
+                    style={{
+                      display: "flex",
+                      gap: 8,
+                      flexWrap: "wrap",
+                      alignItems: "center",
+                    }}
+                  >
                     <span
                       style={{
                         fontSize: 13,
-                        fontWeight: 800,
-                        ...glanceChipStyle(needs ? "needsYou" : "ready"),
+                        fontWeight: 700,
+                        ...glanceChipStyle("ready"),
                         borderRadius: 999,
                         padding: "6px 12px",
                       }}
@@ -278,8 +399,8 @@ export default function ReportsClient() {
                     <span
                       style={{
                         fontSize: 13,
-                        fontWeight: 800,
-                        ...glanceChipStyle(needs ? "needsYou" : "ready"),
+                        fontWeight: 700,
+                        ...quietProvenance,
                         borderRadius: 999,
                         padding: "6px 12px",
                       }}
@@ -323,58 +444,13 @@ export default function ReportsClient() {
             alignItems: "center",
           }}
         >
-          <Link
-            href={checkInsHref}
-            style={{
-              background: GLANCE.needsYou.bg,
-              color: GLANCE.needsYou.fg,
-              border: `1px solid ${GLANCE.needsYou.border}`,
-              borderRadius: 999,
-              padding: "11px 18px",
-              fontWeight: 800,
-              fontSize: 14,
-              textDecoration: "none",
-            }}
-          >
-            Check-ins →
-          </Link>
-          <Link
-            href={FAMILY_NOTE_HREF(FAMILY_NOTE_DEFAULT_ID)}
-            title="Open Family note stub (demo kid)"
-            style={{
-              background: GLANCE.ready.bg,
-              color: GLANCE.ready.fg,
-              border: `1px solid ${GLANCE.ready.border}`,
-              borderRadius: 999,
-              padding: "11px 18px",
-              fontWeight: 800,
-              fontSize: 14,
-              textDecoration: "none",
-            }}
-          >
-            Family note
-          </Link>
-          <Link
-            href={stub.dayHref}
-            style={{
-              background: LAVENDER,
-              color: "#fff",
-              borderRadius: 999,
-              padding: "11px 18px",
-              fontWeight: 800,
-              fontSize: 14,
-              textDecoration: "none",
-              boxShadow: "0 6px 18px rgba(139,108,255,.28)",
-            }}
-          >
-            ← Daily Focus
-          </Link>
+          {ctaRow}
         </div>
 
         <p style={{ margin: "16px 0 0", color: MUTED, fontSize: 12, lineHeight: 1.45 }}>
-          Honesty pass — bars and per-standard cues are soft demo stubs (no fake kid counts). The{" "}
-          <strong>Check-ins waiting · live</strong> spark is a real same-browser count (period lens when
-          set) — tap it to open Check-ins.
+          Soft demo by standard (not a live gradebook). When someone needs you, the live{" "}
+          <strong>Check-ins</strong> spark opens the same period lens — then a kid, a family note,
+          or back to <strong>Daily Focus</strong> to teach today.
         </p>
       </Glass>
     </StationShell>
