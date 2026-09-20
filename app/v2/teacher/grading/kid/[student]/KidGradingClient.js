@@ -114,7 +114,10 @@ export default function KidGradingClient() {
 
 
   const onTrendPoint = useCallback((point) => {
-    if (!point) return;
+    if (!point) {
+      setTrendFocus(null);
+      return;
+    }
     setTrendFocus({
       pointId: point.id,
       assignmentId: point.assignmentId || null,
@@ -635,7 +638,29 @@ function SubjectDonut({ pct, color, label, size = 72 }) {
 function YearTrendPanel({ trend, studentFirst, focus, onSelectPoint }) {
   const points = trend?.points || [];
   const series = trend?.series || [];
+  const [subjectFilter, setSubjectFilter] = useState("all");
   if (!points.length) return null;
+
+  const visibleSeries =
+    subjectFilter === "all" ? series : series.filter((s) => s.key === subjectFilter);
+  const visiblePoints =
+    subjectFilter === "all"
+      ? points
+      : points.filter((p) => p.subject === subjectFilter);
+  const visibleAnomalyCount = visiblePoints.filter((p) => p.anomaly).length;
+  const activeSeriesName =
+    subjectFilter === "all"
+      ? null
+      : visibleSeries[0]?.name || series.find((s) => s.key === subjectFilter)?.name || null;
+  const showFocus =
+    focus && (subjectFilter === "all" || focus.subject === subjectFilter);
+
+  const onFilterChange = (next) => {
+    setSubjectFilter(next);
+    if (focus && next !== "all" && focus.subject && focus.subject !== next) {
+      onSelectPoint && onSelectPoint(null);
+    }
+  };
 
   return (
     <section
@@ -650,7 +675,7 @@ function YearTrendPanel({ trend, studentFirst, focus, onSelectPoint }) {
         maxWidth: 920,
       }}
     >
-      <div style={{ display: "flex", justifyContent: "space-between", gap: 10, flexWrap: "wrap", alignItems: "baseline" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
         <div>
           <div
             style={{
@@ -664,46 +689,94 @@ function YearTrendPanel({ trend, studentFirst, focus, onSelectPoint }) {
             School-year trend
           </div>
           <div style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 700, fontSize: 17, color: INK, marginTop: 2 }}>
-            By subject · how scores moved
+            {activeSeriesName ? `${activeSeriesName} · how scores moved` : "By subject · how scores moved"}
           </div>
         </div>
-        {trend.anomalyCount > 0 ? (
-          <span
+        <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+          <label
             style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 6,
               fontSize: 12,
-              fontWeight: 800,
+              fontWeight: 700,
               color: MUTED,
-              background: SOFT_LAV,
-              border: `1px solid ${LINE}`,
-              borderRadius: 999,
-              padding: "4px 11px",
             }}
           >
-            {trend.anomalyCount} pattern break{trend.anomalyCount === 1 ? "" : "s"}
-          </span>
-        ) : (
-          <span
-            style={{
-              fontSize: 12,
-              fontWeight: 800,
-              ...glanceChipStyle("ready"),
-              borderRadius: 999,
-              padding: "4px 11px",
-            }}
-          >
-            Steady lines
-          </span>
-        )}
+            <span className="sr-only" style={{ position: "absolute", width: 1, height: 1, overflow: "hidden", clip: "rect(0 0 0 0)" }}>
+              Trend subject
+            </span>
+            <select
+              value={subjectFilter}
+              onChange={(e) => onFilterChange(e.target.value)}
+              aria-label="Filter trend by subject"
+              style={{
+                appearance: "none",
+                WebkitAppearance: "none",
+                MozAppearance: "none",
+                border: `1px solid ${LINE}`,
+                borderRadius: 999,
+                padding: "6px 28px 6px 12px",
+                fontWeight: 700,
+                fontSize: 12,
+                fontFamily: "inherit",
+                color: INK,
+                boxShadow: "0 4px 12px rgba(46,36,89,.05)",
+                cursor: "pointer",
+                backgroundImage:
+                  `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%236B6280' d='M1 1l5 5 5-5'/%3E%3C/svg%3E"), linear-gradient(180deg, rgba(255,255,255,.95), rgba(248,245,255,.9))`,
+                backgroundRepeat: "no-repeat, no-repeat",
+                backgroundPosition: "right 10px center, 0 0",
+                backgroundSize: "10px 6px, auto",
+              }}
+            >
+              <option value="all">All subjects</option>
+              {series.map((s) => (
+                <option key={s.key} value={s.key}>
+                  {s.name}
+                </option>
+              ))}
+            </select>
+          </label>
+          {visibleAnomalyCount > 0 ? (
+            <span
+              style={{
+                fontSize: 12,
+                fontWeight: 800,
+                color: MUTED,
+                background: SOFT_LAV,
+                border: `1px solid ${LINE}`,
+                borderRadius: 999,
+                padding: "4px 11px",
+              }}
+            >
+              {visibleAnomalyCount} pattern break{visibleAnomalyCount === 1 ? "" : "s"}
+            </span>
+          ) : (
+            <span
+              style={{
+                fontSize: 12,
+                fontWeight: 800,
+                ...glanceChipStyle("ready"),
+                borderRadius: 999,
+                padding: "4px 11px",
+              }}
+            >
+              Steady lines
+            </span>
+          )}
+        </div>
       </div>
 
       <YearTrendChart
         points={points}
-        series={series}
-        focusId={focus?.pointId}
+        series={visibleSeries}
+        focusId={showFocus ? focus?.pointId : null}
         onSelectPoint={onSelectPoint}
+        subjectFilter={subjectFilter}
       />
 
-      {focus ? (
+      {showFocus ? (
         <div
           style={{
             marginTop: 10,
@@ -753,7 +826,7 @@ function YearTrendPanel({ trend, studentFirst, focus, onSelectPoint }) {
  * Calm multi-line SVG — one soft line per subject (donut colors).
  * Anomaly dots stay per-subject; amber ring only on real concern drops.
  */
-function YearTrendChart({ points, series, focusId, onSelectPoint }) {
+function YearTrendChart({ points, series, focusId, onSelectPoint, subjectFilter = "all" }) {
   const W = 640;
   const H = 178;
   const padL = 36;
@@ -811,7 +884,11 @@ function YearTrendChart({ points, series, focusId, onSelectPoint }) {
         width="100%"
         height="auto"
         role="img"
-        aria-label="Score trend by subject across the school year"
+        aria-label={
+          subjectFilter === "all"
+            ? "Score trend by subject across the school year"
+            : `Score trend for ${series[0]?.name || "one subject"} across the school year`
+        }
         style={{ display: "block", maxHeight: 210 }}
       >
         {/* Soft guides — not a corporate grid */}
