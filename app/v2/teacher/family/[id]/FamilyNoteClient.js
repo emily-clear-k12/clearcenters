@@ -31,12 +31,26 @@ import {
 export default function FamilyNoteClient({ noteId }) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const note = useMemo(() => getFamilyNoteStub(noteId), [noteId]);
+  const subjectFromQuery = (searchParams?.get("subject") || "").trim();
+  const topicFromQuery = (searchParams?.get("topic") || "").trim();
+  const periodFromQuery = (searchParams?.get("period") || "").trim();
+
+  const note = useMemo(
+    () =>
+      getFamilyNoteStub(noteId, {
+        subject: subjectFromQuery || undefined,
+        topic: topicFromQuery || undefined,
+        periodId:
+          periodFromQuery && periodFromQuery !== "all"
+            ? periodFromQuery
+            : undefined,
+      }),
+    [noteId, subjectFromQuery, topicFromQuery, periodFromQuery]
+  );
   const [copied, setCopied] = useState(false);
   const [sent, setSent] = useState(false);
   const [toast, setToast] = useState(null);
 
-  const periodFromQuery = (searchParams?.get("period") || "").trim();
   const periodId =
     periodFromQuery && periodFromQuery !== "all"
       ? periodFromQuery

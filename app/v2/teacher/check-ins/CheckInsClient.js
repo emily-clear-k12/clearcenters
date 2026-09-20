@@ -54,6 +54,7 @@ import { FAMILY_NOTE_HREF } from "../../../../lib/v2/demoFamilyNote";
 export default function CheckInsClient() {
   const p = usePlanner();
   const searchParams = useSearchParams();
+  const studentFocus = (searchParams?.get("student") || "").trim();
   const [choices, setChoices] = useState({});
   const [confirmedIds, setConfirmedIds] = useState([]);
   const [hydrated, setHydrated] = useState(false);
@@ -120,11 +121,21 @@ export default function CheckInsClient() {
   const cards = useMemo(() => {
     void choices;
     void confirmedIds;
-    if (!hydrated || !p.hydrated) {
-      return getWhoNeedsMeCards({}, [], filterOpts);
+    const raw =
+      !hydrated || !p.hydrated
+        ? getWhoNeedsMeCards({}, [], filterOpts)
+        : getWhoNeedsMeCards(choices, confirmedIds, filterOpts);
+    const focus = studentFocus.toLowerCase();
+    if (!focus) return raw;
+    // Calm focus from kid grading: matching kid first (still show the rest)
+    const hit = [];
+    const rest = [];
+    for (const c of raw) {
+      if (String(c.studentFirst || "").trim().toLowerCase() === focus) hit.push(c);
+      else rest.push(c);
     }
-    return getWhoNeedsMeCards(choices, confirmedIds, filterOpts);
-  }, [choices, confirmedIds, hydrated, p.hydrated, filterOpts]);
+    return [...hit, ...rest];
+  }, [choices, confirmedIds, hydrated, p.hydrated, filterOpts, studentFocus]);
 
   const needsByClass = useMemo(() => {
     const keys = p.setup.classes.map((c) => c.key);
@@ -196,6 +207,22 @@ export default function CheckInsClient() {
             <div style={{ marginTop: 10, display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
               <SetupSwitcher setupKey={p.setupKey} onChange={p.setSetupKey} />
               {!p.multiClass && <SingleRoomLabel cls={cls} setup={p.setup} />}
+              {studentFocus ? (
+                <span
+                  style={{
+                    fontSize: 12,
+                    fontWeight: 800,
+                    color: LAVENDER,
+                    background: SOFT_LAV,
+                    border: `1px solid ${LINE}`,
+                    borderRadius: 999,
+                    padding: "4px 12px",
+                  }}
+                  title="Focused from kid grading"
+                >
+                  Focus · {studentFocus}
+                </span>
+              ) : null}
               <span
                 style={{
                   fontSize: 13,
@@ -290,6 +317,10 @@ export default function CheckInsClient() {
           {cards.map((card) => {
             const sub = subjectMeta(card.subject);
             const needsYou = card.tone === "needs_you";
+            const isFocused =
+              Boolean(studentFocus) &&
+              String(card.studentFirst || "").trim().toLowerCase() ===
+                studentFocus.toLowerCase();
             const roomName =
               p.multiClass && card.periodId
                 ? p.setup.classes.find((c) => c.key === card.periodId)?.name
@@ -303,7 +334,11 @@ export default function CheckInsClient() {
                   ...glanceCardStyle(needsYou ? "needsYou" : "ready"),
                   borderRadius: 18,
                   padding: "14px 16px",
-                  boxShadow: "0 8px 22px rgba(46,36,89,.08)",
+                  boxShadow: isFocused
+                    ? "0 10px 28px rgba(139,108,255,.18)"
+                    : "0 8px 22px rgba(46,36,89,.08)",
+                  outline: isFocused ? `2px solid ${LAVENDER}` : undefined,
+                  outlineOffset: isFocused ? 2 : undefined,
                 }}
               >
                 <div style={{ display: "flex", justifyContent: "space-between", gap: 10, flexWrap: "wrap", alignItems: "flex-start" }}>

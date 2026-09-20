@@ -31,6 +31,12 @@ import {
   productLabel,
   gradingInboxHref,
 } from "../../../../../../lib/v2/demoGrading";
+import {
+  getKidCheckInMotion,
+  WHO_NEEDS_ME_STORAGE_KEY,
+  FOCUS_BLOCKS_KEY,
+} from "../../../../../../lib/v2/demoWhoNeedsMe";
+import { FAMILY_NOTE_HREF } from "../../../../../../lib/v2/demoFamilyNote";
 
 /**
  * Kid-first grading — one tap → all subjects for that student.
@@ -46,23 +52,37 @@ export default function KidGradingClient() {
   const [confirmedIds, setConfirmedIds] = useState([]);
   const [hydrated, setHydrated] = useState(false);
   const [openSubject, setOpenSubject] = useState(null);
+  const [checkInMotion, setCheckInMotion] = useState(null);
 
   const refresh = useCallback(() => {
-    setConfirmedIds(loadConfirmedIds());
-  }, []);
+    const ids = loadConfirmedIds();
+    setConfirmedIds(ids);
+    setCheckInMotion(getKidCheckInMotion(studentFirst || "Student", ids));
+  }, [studentFirst]);
 
   useEffect(() => {
     refresh();
     setHydrated(true);
     const onStorage = (e) => {
-      if (e.key === GRADING_STORAGE_KEY || e.key === GRADING_INBOX_KEY) refresh();
+      if (
+        e.key === GRADING_STORAGE_KEY ||
+        e.key === GRADING_INBOX_KEY ||
+        e.key === WHO_NEEDS_ME_STORAGE_KEY ||
+        e.key === FOCUS_BLOCKS_KEY
+      ) {
+        refresh();
+      }
     };
     window.addEventListener("storage", onStorage);
     window.addEventListener("ci2-grading-updated", refresh);
+    window.addEventListener("ci2-who-needs-updated", refresh);
+    window.addEventListener("ci2-focus-blocks-updated", refresh);
     window.addEventListener("focus", refresh);
     return () => {
       window.removeEventListener("storage", onStorage);
       window.removeEventListener("ci2-grading-updated", refresh);
+      window.removeEventListener("ci2-who-needs-updated", refresh);
+      window.removeEventListener("ci2-focus-blocks-updated", refresh);
       window.removeEventListener("focus", refresh);
     };
   }, [refresh]);
@@ -73,6 +93,22 @@ export default function KidGradingClient() {
   );
 
   const inboxFilterHref = gradingInboxHref({ studentFirst: view.studentFirst });
+
+  const familyHref = useMemo(() => {
+    const subjectKey = view.struggleSubjectKey || "math";
+    const topic =
+      subjectKey === "math"
+        ? "Equivalent fractions — a short note home"
+        : view.struggleSubjectName
+          ? `${view.struggleSubjectName} — a short note home`
+          : undefined;
+    const periodId = checkInMotion?.periodId || null;
+    return FAMILY_NOTE_HREF(view.studentFirst, {
+      subject: subjectKey,
+      topic,
+      periodId,
+    });
+  }, [view.studentFirst, view.struggleSubjectKey, view.struggleSubjectName, checkInMotion]);
 
   return (
     <StationShell active="check">
@@ -167,14 +203,15 @@ export default function KidGradingClient() {
           </div>
         </div>
 
-        {/* SAM tip — optional one-liner */}
+        {/* 1 · Whole-kid calm line (above donuts) */}
         <div
           style={{
             marginTop: 14,
             ...glanceCardStyle(view.needsCount ? "needsYou" : "teach"),
             borderRadius: 14,
             padding: "10px 14px",
-            fontSize: 13,
+            fontSize: 14,
+            fontWeight: 600,
             color: INK,
             lineHeight: 1.4,
             maxWidth: 640,
@@ -183,9 +220,89 @@ export default function KidGradingClient() {
           <span style={{ fontWeight: 800, letterSpacing: 0.3, fontSize: 11, color: MUTED, marginRight: 8 }}>
             SAM
           </span>
-          {view.needsCount
-            ? `Start with the amber subject${view.needsCount === 1 ? "" : "s"} — ${view.studentFirst} may need a quick check-in there.`
-            : `${view.studentFirst} looks steady across subjects. Open More only if you want the assignment trail.`}
+          {view.wholeKidLine ||
+            (view.needsCount
+              ? `Mostly steady — a subject needs a short look.`
+              : `Mostly steady across subjects.`)}
+        </div>
+
+        {/* 2–4 · Check-ins in motion · supports · Note home */}
+        <div
+          style={{
+            marginTop: 12,
+            display: "flex",
+            gap: 8,
+            flexWrap: "wrap",
+            alignItems: "center",
+            maxWidth: 720,
+          }}
+        >
+          {hydrated && checkInMotion ? (
+            <Link
+              href={checkInMotion.href}
+              title={checkInMotion.samLine}
+              style={{
+                fontSize: 12,
+                fontWeight: 800,
+                textDecoration: "none",
+                borderRadius: 999,
+                padding: "6px 12px",
+                ...glanceChipStyle(
+                  checkInMotion.status === "open" && checkInMotion.kind === "check_in"
+                    ? "needsYou"
+                    : "ready"
+                ),
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 6,
+              }}
+            >
+              {checkInMotion.label}
+              <span style={{ fontWeight: 700, opacity: 0.85 }}>→ Check-ins</span>
+            </Link>
+          ) : null}
+          {hydrated && checkInMotion?.samLine ? (
+            <span style={{ fontSize: 12, color: MUTED, lineHeight: 1.35, maxWidth: 280 }}>
+              {checkInMotion.samLine}
+            </span>
+          ) : null}
+          {view.supports ? (
+            <span
+              title={view.supports.detail}
+              style={{
+                fontSize: 12,
+                fontWeight: 800,
+                color: LAVENDER,
+                background: SOFT_LAV,
+                border: `1px solid ${LINE}`,
+                borderRadius: 999,
+                padding: "6px 12px",
+              }}
+            >
+              {view.supports.chip}
+            </span>
+          ) : null}
+          <Link
+            href={familyHref}
+            style={{
+              fontSize: 13,
+              fontWeight: 800,
+              color: "#fff",
+              background: LAVENDER,
+              borderRadius: 999,
+              padding: "7px 14px",
+              textDecoration: "none",
+              boxShadow: "0 6px 16px rgba(139,108,255,.25)",
+              marginLeft: view.supports || checkInMotion ? 0 : undefined,
+            }}
+            title={
+              view.struggleSubjectName
+                ? `Note home · prefill ${view.struggleSubjectName}`
+                : "Note home · family one-pager"
+            }
+          >
+            Note home
+          </Link>
         </div>
 
         <div
