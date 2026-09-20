@@ -4,15 +4,12 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import {
   StationShell,
-  Glass,
   TeacherSubnav,
   INK,
   MUTED,
   LINE,
   LAVENDER,
-  SOFT_LAV,
   GLANCE,
-  glanceChipStyle,
 } from "../../../../../../components/v2/StationShell";
 
 import {
@@ -101,6 +98,11 @@ const btnBase = {
   justifyContent: "center",
 };
 
+/**
+ * Standard report — DISTINCT from glance MAP.
+ * Paper report layout: SAM story lead → named who → numbered evidence trail → one calm next.
+ * Not another glass list of the same rows.
+ */
 export default function StandardReportClient({ code }) {
   const detail = getStandardDetail(code);
   const { liveCheckIns, periodLabel, checkInsHref, waiting } = usePeriodLens();
@@ -122,79 +124,383 @@ export default function StandardReportClient({ code }) {
     color: GLANCE.ready.fg,
     border: `1px solid ${GLANCE.ready.border}`,
   };
-  const quietChip = {
-    color: MUTED,
-    background: SOFT_LAV,
-    border: `1px solid ${LINE}`,
-  };
 
   if (!detail) {
     return (
       <StationShell active="grow">
         <TeacherSubnav active="reports" />
-        <div style={{ maxWidth: 900, margin: "0 auto", width: "100%" }}>
-          <Glass style={{ padding: 24 }}>
-            <p style={{ color: MUTED, margin: 0 }}>That standard isn&apos;t in the demo MAP.</p>
-            <Link href={REPORTS_HREF} style={{ ...btnBase, ...softPrimary, marginTop: 16 }}>← Back to Reports</Link>
-          </Glass>
+        <div style={{ maxWidth: 720, margin: "0 auto", width: "100%", padding: "0 12px" }}>
+          <div
+            style={{
+              background: "#fff",
+              border: `1px solid ${LINE}`,
+              borderRadius: 20,
+              padding: 28,
+            }}
+          >
+            <p style={{ color: MUTED, margin: 0 }}>That standard isn&apos;t in this class story yet.</p>
+            <Link href={REPORTS_HREF} style={{ ...btnBase, ...softPrimary, marginTop: 16 }}>
+              ← Back to Reports
+            </Link>
+          </div>
         </div>
       </StationShell>
     );
   }
 
-  const { standard, contributing, softHint, calmNext, honesty, classPctLabel, dayHref } = detail;
+  const {
+    standard,
+    contributing,
+    softHint,
+    whoLine,
+    clusterHint,
+    samStory,
+    calmNext,
+    honesty,
+    classPctLabel,
+    dayHref,
+  } = detail;
 
   return (
     <StationShell active="grow">
+      <style>{`
+        .std-wrap{max-width:720px;margin:0 auto;width:100%;padding:0 12px}
+        .std-paper{
+          background:#fffefb;
+          border:1px solid ${LINE};
+          border-radius:22px;
+          overflow:hidden;
+          box-shadow:0 14px 40px rgba(40,30,70,.07);
+        }
+        .std-accent{width:8px;background:${standard.subjectColor};flex-shrink:0}
+        .std-body{flex:1;padding:22px 24px 24px}
+        .std-sam{
+          background:linear-gradient(160deg,rgba(243,238,255,.7),rgba(255,255,255,.4));
+          border:1px solid ${LINE};
+          border-radius:16px;
+          padding:16px 18px;
+          margin-top:14px;
+        }
+        .std-who{
+          margin-top:16px;
+          padding:14px 16px;
+          border-radius:14px;
+          background:rgba(255,248,240,.95);
+          border:1px solid ${GLANCE.needsYou.border};
+        }
+        .std-trail{margin-top:22px;display:flex;flex-direction:column;gap:0}
+        .std-step{display:flex;gap:14px;padding:14px 0;border-bottom:1px solid ${LINE}}
+        .std-step:last-child{border-bottom:none}
+        .std-num{
+          width:28px;height:28px;border-radius:999;flex-shrink:0;
+          display:inline-flex;align-items:center;justify-content:center;
+          font-size:12;font-weight:800;color:${LAVENDER};
+          background:rgba(243,238,255,.9);border:1px solid ${LINE};
+        }
+        .std-next{
+          margin-top:20px;padding:16px 18px;border-radius:16px;
+          background:rgba(243,238,255,.55);border:1px solid ${LINE};
+        }
+      `}</style>
       <TeacherSubnav active="reports" />
-      <div style={{ maxWidth: 900, margin: "0 auto", width: "100%" }}>
-        <Glass style={{ padding: "18px 18px 16px" }}>
-          <Link href={REPORTS_HREF} style={{ fontSize: 12, fontWeight: 700, color: MUTED, textDecoration: "none" }}>← Reports glance</Link>
-          <div style={{ display: "flex", justifyContent: "space-between", gap: 12, flexWrap: "wrap", alignItems: "flex-start", marginTop: 10 }}>
-            <div style={{ minWidth: 0, flex: "1 1 220px" }}>
-              <div style={{ fontSize: 11, fontWeight: 800, color: GLANCE.ready.fg, textTransform: "uppercase", letterSpacing: 0.35 }}>
+      <div className="std-wrap">
+        <div className="std-paper" style={{ display: "flex", alignItems: "stretch" }}>
+          <div className="std-accent" aria-hidden />
+          <div className="std-body">
+            <Link
+              href={REPORTS_HREF}
+              style={{ fontSize: 12, fontWeight: 700, color: MUTED, textDecoration: "none" }}
+            >
+              ← Class story
+            </Link>
+
+            <div style={{ marginTop: 12 }}>
+              <div
+                style={{
+                  fontSize: 11,
+                  fontWeight: 800,
+                  color: standard.subjectColor,
+                  textTransform: "uppercase",
+                  letterSpacing: 0.4,
+                }}
+              >
                 Standard report · {standard.subjectName}
               </div>
-              <h1 style={{ fontFamily: "'Poppins', sans-serif", margin: "6px 0 0", fontSize: 22, fontWeight: 700, color: INK, lineHeight: 1.25 }}>
+              <h1
+                style={{
+                  fontFamily: "'Poppins', sans-serif",
+                  margin: "6px 0 0",
+                  fontSize: 26,
+                  fontWeight: 700,
+                  color: INK,
+                  lineHeight: 1.2,
+                  letterSpacing: -0.3,
+                }}
+              >
                 TEKS {standard.code}
               </h1>
-              <p style={{ margin: "6px 0 0", fontSize: 14, fontWeight: 500, color: MUTED, lineHeight: 1.4, maxWidth: 480 }}>{standard.plain}</p>
+              <p
+                style={{
+                  margin: "6px 0 0",
+                  fontSize: 15,
+                  fontWeight: 500,
+                  color: MUTED,
+                  lineHeight: 1.4,
+                }}
+              >
+                {standard.plain}
+              </p>
+              <p
+                style={{
+                  margin: "8px 0 0",
+                  fontSize: 11,
+                  fontWeight: 600,
+                  color: MUTED,
+                }}
+              >
+                {honesty}
+                {periodLabel ? ` · ${periodLabel}` : ""}
+                {" · "}
+                {classPctLabel}
+                {" · "}
+                {softHint}
+              </p>
             </div>
-            <div role="status" style={{ borderRadius: 999, padding: "6px 12px", fontSize: 12, fontWeight: 700, ...quietChip }}>{honesty}</div>
-          </div>
-          <div style={{ marginTop: 16, display: "flex", flexWrap: "wrap", gap: 8, alignItems: "center" }}>
-            <span style={{ ...glanceChipStyle("ready"), borderRadius: 999, padding: "5px 11px", fontSize: 12, fontWeight: 700 }}>{classPctLabel}</span>
-            <span style={{ ...quietChip, borderRadius: 999, padding: "5px 11px", fontSize: 12, fontWeight: 700 }}>{softHint}</span>
-            {periodLabel ? <span style={{ ...quietChip, borderRadius: 999, padding: "5px 11px", fontSize: 12, fontWeight: 700 }}>Period · {periodLabel}</span> : null}
-          </div>
-          <div aria-hidden style={{ marginTop: 14, height: 8, borderRadius: 999, background: "rgba(247,244,255,.9)", border: `1px solid ${LINE}`, overflow: "hidden", maxWidth: 360 }}>
-            <div style={{ width: `${Math.max(4, Math.min(100, standard.classPct))}%`, height: "100%", borderRadius: 999, background: GLANCE.ready.fg, opacity: 0.7 }} />
-          </div>
-          <p style={{ margin: "14px 0 0", fontSize: 14, fontWeight: 600, color: INK, lineHeight: 1.45, maxWidth: 520 }}>{calmNext}</p>
-          <section style={{ marginTop: 20 }} aria-label="Contributing work">
-            <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: 0.35, color: MUTED, textTransform: "uppercase", marginBottom: 8 }}>Work that fed this glance</div>
-            {contributing.length === 0 ? (
-              <p style={{ margin: 0, color: MUTED, fontSize: 13 }}>No demo assignments linked yet.</p>
-            ) : (
-              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                {contributing.map((asg) => (
-                  <Link key={asg.id} href={REPORTS_ASSIGNMENT_HREF(asg.id)} style={{ display: "block", textDecoration: "none", color: "inherit", background: "rgba(255,255,255,.92)", border: `1px solid ${LINE}`, borderRadius: 14, padding: "12px 14px" }}>
-                    <div style={{ fontSize: 11, fontWeight: 800, color: MUTED, textTransform: "uppercase" }}>{asg.subjectName}{asg.when ? ` · ${asg.when}` : ""}</div>
-                    <div style={{ marginTop: 2, fontWeight: 700, fontSize: 14, color: INK }}>{asg.title}</div>
-                    <div style={{ marginTop: 3, fontSize: 12, fontWeight: 600, color: MUTED }}>{softAssignmentGlanceLine(asg)} · See breakdown →</div>
-                  </Link>
-                ))}
+
+            {/* SAM story — signature lead */}
+            <section className="std-sam" aria-label="SAM story">
+              <div
+                style={{
+                  fontSize: 11,
+                  fontWeight: 800,
+                  letterSpacing: 0.4,
+                  color: LAVENDER,
+                  textTransform: "uppercase",
+                }}
+              >
+                SAM · story
               </div>
+              <p
+                style={{
+                  margin: "10px 0 0",
+                  fontFamily: "'Poppins', sans-serif",
+                  fontSize: 15,
+                  fontWeight: 500,
+                  color: INK,
+                  lineHeight: 1.55,
+                }}
+              >
+                {samStory}
+              </p>
+            </section>
+
+            {/* Named who cluster */}
+            {whoLine ? (
+              <section className="std-who" aria-label="Soft cluster">
+                <div
+                  style={{
+                    fontSize: 11,
+                    fontWeight: 800,
+                    letterSpacing: 0.35,
+                    color: GLANCE.needsYou.fg,
+                    textTransform: "uppercase",
+                  }}
+                >
+                  Soft cluster · who
+                </div>
+                <p
+                  style={{
+                    margin: "8px 0 0",
+                    fontSize: 18,
+                    fontWeight: 700,
+                    color: INK,
+                    fontFamily: "'Poppins', sans-serif",
+                    letterSpacing: -0.2,
+                  }}
+                >
+                  {whoLine}
+                </p>
+                {clusterHint ? (
+                  <p style={{ margin: "6px 0 0", fontSize: 13, fontWeight: 600, color: MUTED }}>
+                    {clusterHint}
+                  </p>
+                ) : null}
+              </section>
+            ) : (
+              <section
+                style={{
+                  marginTop: 16,
+                  padding: "14px 16px",
+                  borderRadius: 14,
+                  background: GLANCE.ready.bg,
+                  border: `1px solid ${GLANCE.ready.border}`,
+                }}
+                aria-label="Looking clear"
+              >
+                <div
+                  style={{
+                    fontSize: 11,
+                    fontWeight: 800,
+                    letterSpacing: 0.35,
+                    color: GLANCE.ready.fg,
+                    textTransform: "uppercase",
+                  }}
+                >
+                  Soft cluster
+                </div>
+                <p style={{ margin: "6px 0 0", fontSize: 14, fontWeight: 600, color: INK }}>
+                  Looking clear — no named soft cluster right now.
+                </p>
+              </section>
             )}
-          </section>
-          <div style={{ marginTop: 20, display: "flex", flexDirection: "column", gap: 8, maxWidth: 320 }}>
-            <Link href={checkInsHref} style={{ ...btnBase, ...(waiting ? amberPrimary : calmSecondary), width: "100%" }} title={waiting ? "Open Check-ins — live waiting needs you" : "Open Check-ins (secondary)"}>
-              Check-ins{waiting ? ` · ${liveCheckIns} waiting` : ""} →
-            </Link>
-            <Link href={dayHref} style={{ ...btnBase, ...softPrimary, width: "100%" }}>← Daily Focus</Link>
-            <Link href={REPORTS_HREF} style={{ ...btnBase, color: MUTED, background: "rgba(255,255,255,.88)", border: `1px solid ${LINE}`, width: "100%", fontWeight: 700 }}>Back to Reports MAP</Link>
+
+            {/* Evidence trail — numbered, not a duplicate glance list */}
+            <section className="std-trail" aria-label="Evidence trail">
+              <div
+                style={{
+                  fontSize: 11,
+                  fontWeight: 800,
+                  letterSpacing: 0.35,
+                  color: MUTED,
+                  textTransform: "uppercase",
+                  marginBottom: 4,
+                }}
+              >
+                Evidence trail
+              </div>
+              {contributing.length === 0 ? (
+                <p style={{ margin: "8px 0 0", color: MUTED, fontSize: 13 }}>
+                  No linked assignments yet.
+                </p>
+              ) : (
+                contributing.map((asg, i) => (
+                  <Link
+                    key={asg.id}
+                    href={REPORTS_ASSIGNMENT_HREF(asg.id)}
+                    className="std-step"
+                    style={{ textDecoration: "none", color: "inherit" }}
+                  >
+                    <span className="std-num" aria-hidden>
+                      {i + 1}
+                    </span>
+                    <div style={{ minWidth: 0, flex: 1 }}>
+                      <div
+                        style={{
+                          fontSize: 11,
+                          fontWeight: 700,
+                          color: MUTED,
+                          textTransform: "uppercase",
+                        }}
+                      >
+                        {asg.when || "Recent"} · {asg.subjectName}
+                      </div>
+                      <div
+                        style={{
+                          marginTop: 2,
+                          fontWeight: 700,
+                          fontSize: 15,
+                          color: INK,
+                        }}
+                      >
+                        {asg.title}
+                      </div>
+                      <div
+                        style={{
+                          marginTop: 3,
+                          fontSize: 12,
+                          fontWeight: 600,
+                          color: MUTED,
+                          lineHeight: 1.4,
+                        }}
+                      >
+                        {asg.softSummary}
+                      </div>
+                      <div
+                        style={{
+                          marginTop: 4,
+                          fontSize: 12,
+                          fontWeight: 700,
+                          color: LAVENDER,
+                        }}
+                      >
+                        {softAssignmentGlanceLine(asg)} · Open work →
+                      </div>
+                    </div>
+                  </Link>
+                ))
+              )}
+            </section>
+
+            {/* One calm next */}
+            <section className="std-next" aria-label="Calm next">
+              <div
+                style={{
+                  fontSize: 11,
+                  fontWeight: 800,
+                  letterSpacing: 0.35,
+                  color: LAVENDER,
+                  textTransform: "uppercase",
+                }}
+              >
+                Calm next
+              </div>
+              <p
+                style={{
+                  margin: "8px 0 0",
+                  fontSize: 14,
+                  fontWeight: 600,
+                  color: INK,
+                  lineHeight: 1.5,
+                }}
+              >
+                {calmNext}
+              </p>
+            </section>
+
+            {/* Check-ins secondary */}
+            <div
+              style={{
+                marginTop: 20,
+                display: "flex",
+                flexDirection: "column",
+                gap: 8,
+                maxWidth: 340,
+              }}
+            >
+              <Link
+                href={checkInsHref}
+                style={{
+                  ...btnBase,
+                  ...(waiting ? amberPrimary : calmSecondary),
+                  width: "100%",
+                }}
+                title={
+                  waiting
+                    ? "Open Check-ins — live waiting needs you"
+                    : "Open Check-ins (secondary)"
+                }
+              >
+                Check-ins{waiting ? ` · ${liveCheckIns} waiting` : ""} →
+              </Link>
+              <Link href={dayHref} style={{ ...btnBase, ...softPrimary, width: "100%" }}>
+                ← Daily Focus
+              </Link>
+              <Link
+                href={REPORTS_HREF}
+                style={{
+                  ...btnBase,
+                  color: MUTED,
+                  background: "rgba(255,255,255,.88)",
+                  border: `1px solid ${LINE}`,
+                  width: "100%",
+                  fontWeight: 700,
+                }}
+              >
+                Back to class story
+              </Link>
+            </div>
           </div>
-        </Glass>
+        </div>
       </div>
     </StationShell>
   );

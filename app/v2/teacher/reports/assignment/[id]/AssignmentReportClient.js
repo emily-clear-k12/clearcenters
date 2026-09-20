@@ -4,19 +4,17 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import {
   StationShell,
-  Glass,
   TeacherSubnav,
   INK,
   MUTED,
   LINE,
   LAVENDER,
-  SOFT_LAV,
   GLANCE,
-  glanceChipStyle,
 } from "../../../../../../components/v2/StationShell";
 
 import {
   getAssignmentDetail,
+  softClassPctLabel,
   REPORTS_HREF,
   REPORTS_STANDARD_HREF,
 } from "../../../../../../lib/v2/demoReports";
@@ -100,6 +98,10 @@ const btnBase = {
   justifyContent: "center",
 };
 
+/**
+ * Assignment report — DISTINCT from glance MAP.
+ * What-happened lead → soft clusters with names (not 12/8/5 chrome) → skill trail → calm next.
+ */
 export default function AssignmentReportClient({ assignmentId }) {
   const detail = getAssignmentDetail(assignmentId);
   const { liveCheckIns, periodLabel, checkInsHref, waiting } = usePeriodLens();
@@ -121,91 +123,421 @@ export default function AssignmentReportClient({ assignmentId }) {
     color: GLANCE.ready.fg,
     border: `1px solid ${GLANCE.ready.border}`,
   };
-  const quietChip = {
-    color: MUTED,
-    background: SOFT_LAV,
-    border: `1px solid ${LINE}`,
-  };
 
   if (!detail) {
     return (
       <StationShell active="grow">
         <TeacherSubnav active="reports" />
-        <div style={{ maxWidth: 900, margin: "0 auto", width: "100%" }}>
-          <Glass style={{ padding: 24 }}>
-            <p style={{ color: MUTED, margin: 0 }}>That assignment isn&apos;t in the demo MAP.</p>
-            <Link href={REPORTS_HREF} style={{ ...btnBase, ...softPrimary, marginTop: 16 }}>← Back to Reports</Link>
-          </Glass>
+        <div style={{ maxWidth: 720, margin: "0 auto", width: "100%", padding: "0 12px" }}>
+          <div
+            style={{
+              background: "#fff",
+              border: `1px solid ${LINE}`,
+              borderRadius: 20,
+              padding: 28,
+            }}
+          >
+            <p style={{ color: MUTED, margin: 0 }}>That assignment isn&apos;t in this class story yet.</p>
+            <Link href={REPORTS_HREF} style={{ ...btnBase, ...softPrimary, marginTop: 16 }}>
+              ← Back to Reports
+            </Link>
+          </div>
         </div>
       </StationShell>
     );
   }
 
-  const { assignment, standards, total, honesty, glanceLine, dayHref } = detail;
-  const maxCount = Math.max(1, ...(assignment.bands || []).map((b) => Number(b.count) || 0));
+  const {
+    assignment,
+    standards,
+    softCluster,
+    bandStory,
+    honesty,
+    dayHref,
+  } = detail;
+
+  const needsNames = softCluster?.names || [];
+  const almostBand = (assignment.bands || []).find((b) => b.key === "almost");
+  const clearBand = (assignment.bands || []).find((b) => b.key === "clear");
 
   return (
     <StationShell active="grow">
+      <style>{`
+        .asg-wrap{max-width:720px;margin:0 auto;width:100%;padding:0 12px}
+        .asg-paper{
+          background:#fbfcff;
+          border:1px solid ${LINE};
+          border-radius:22px;
+          overflow:hidden;
+          box-shadow:0 14px 40px rgba(40,30,70,.07);
+        }
+        .asg-hero{
+          padding:22px 24px 18px;
+          background:linear-gradient(180deg,rgba(243,238,255,.55),rgba(251,252,255,0));
+          border-bottom:1px solid ${LINE};
+        }
+        .asg-body{padding:18px 24px 24px}
+        .asg-cluster{
+          margin-top:14px;padding:14px 16px;border-radius:14px;
+          border:1px solid ${LINE};background:#fff;
+        }
+        .asg-cluster.needs{
+          background:rgba(255,248,240,.95);
+          border-color:${GLANCE.needsYou.border};
+        }
+        .asg-skill{
+          display:flex;flex-direction:column;gap:8px;margin-top:10px;
+        }
+        .asg-skill a{
+          display:block;text-decoration:none;color:inherit;
+          padding:12px 14px;border-radius:14px;
+          background:#fff;border:1px solid ${LINE};
+        }
+        .asg-next{
+          margin-top:18px;padding:16px 18px;border-radius:16px;
+          background:rgba(243,238,255,.55);border:1px solid ${LINE};
+        }
+      `}</style>
       <TeacherSubnav active="reports" />
-      <div style={{ maxWidth: 900, margin: "0 auto", width: "100%" }}>
-        <Glass style={{ padding: "18px 18px 16px" }}>
-          <Link href={REPORTS_HREF} style={{ fontSize: 12, fontWeight: 700, color: MUTED, textDecoration: "none" }}>← Reports glance</Link>
-          <div style={{ display: "flex", justifyContent: "space-between", gap: 12, flexWrap: "wrap", alignItems: "flex-start", marginTop: 10 }}>
-            <div style={{ minWidth: 0, flex: "1 1 220px" }}>
-              <div style={{ fontSize: 11, fontWeight: 800, color: GLANCE.ready.fg, textTransform: "uppercase", letterSpacing: 0.35 }}>
-                Assignment breakdown · {assignment.subjectName}{assignment.when ? ` · ${assignment.when}` : ""}
-              </div>
-              <h1 style={{ fontFamily: "'Poppins', sans-serif", margin: "6px 0 0", fontSize: 22, fontWeight: 700, color: INK, lineHeight: 1.25 }}>{assignment.title}</h1>
-              <p style={{ margin: "6px 0 0", fontSize: 14, fontWeight: 500, color: MUTED, lineHeight: 1.4, maxWidth: 480 }}>{assignment.softSummary}</p>
-            </div>
-            <div role="status" style={{ borderRadius: 999, padding: "6px 12px", fontSize: 12, fontWeight: 700, ...quietChip }}>{honesty}</div>
-          </div>
-          <div style={{ marginTop: 14, display: "flex", flexWrap: "wrap", gap: 8 }}>
-            <span style={{ ...quietChip, borderRadius: 999, padding: "5px 11px", fontSize: 12, fontWeight: 700 }}>{glanceLine}</span>
-            <span style={{ ...quietChip, borderRadius: 999, padding: "5px 11px", fontSize: 12, fontWeight: 700 }}>Soft total · ~{total}</span>
-            {periodLabel ? <span style={{ ...quietChip, borderRadius: 999, padding: "5px 11px", fontSize: 12, fontWeight: 700 }}>Period · {periodLabel}</span> : null}
-          </div>
-          <section style={{ marginTop: 20 }} aria-label="Soft bands">
-            <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: 0.35, color: MUTED, textTransform: "uppercase", marginBottom: 8 }}>Soft look (demo bands)</div>
-            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-              {(assignment.bands || []).map((band) => {
-                const count = Number(band.count) || 0;
-                const tone = band.tone === "needsYou" ? "needsYou" : "ready";
-                return (
-                  <div key={band.key}>
-                    <div style={{ display: "flex", justifyContent: "space-between", gap: 8, marginBottom: 4 }}>
-                      <span style={{ fontSize: 13, fontWeight: 700, color: INK }}>{band.label}</span>
-                      <span style={{ ...glanceChipStyle(tone), borderRadius: 999, padding: "3px 10px", fontSize: 12, fontWeight: 700 }}>~{count}</span>
-                    </div>
-                    <div aria-hidden style={{ height: 6, borderRadius: 999, background: "rgba(247,244,255,.9)", border: `1px solid ${LINE}`, overflow: "hidden" }}>
-                      <div style={{ width: `${Math.max(4, Math.round((count / maxCount) * 100))}%`, height: "100%", borderRadius: 999, background: tone === "needsYou" ? GLANCE.needsYou.fg : GLANCE.ready.fg, opacity: 0.7 }} />
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </section>
-          {standards.length > 0 ? (
-            <section style={{ marginTop: 20 }} aria-label="Linked standards">
-              <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: 0.35, color: MUTED, textTransform: "uppercase", marginBottom: 8 }}>Linked standards</div>
-              <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
-                {standards.map((std) => (
-                  <Link key={std.code} href={REPORTS_STANDARD_HREF(std.code)} style={{ ...glanceChipStyle("ready"), borderRadius: 999, padding: "6px 12px", fontSize: 12, fontWeight: 700, textDecoration: "none" }}>
-                    TEKS {std.code} →
-                  </Link>
-                ))}
-              </div>
-            </section>
-          ) : null}
-          <p style={{ margin: "16px 0 0", fontSize: 14, fontWeight: 600, color: INK, lineHeight: 1.45, maxWidth: 520 }}>{assignment.calmNext}</p>
-          <div style={{ marginTop: 20, display: "flex", flexDirection: "column", gap: 8, maxWidth: 320 }}>
-            <Link href={checkInsHref} style={{ ...btnBase, ...(waiting ? amberPrimary : calmSecondary), width: "100%" }} title={waiting ? "Open Check-ins — live waiting needs you" : "Open Check-ins (secondary)"}>
-              Check-ins{waiting ? ` · ${liveCheckIns} waiting` : ""} →
+      <div className="asg-wrap">
+        <div className="asg-paper">
+          <header className="asg-hero">
+            <Link
+              href={REPORTS_HREF}
+              style={{ fontSize: 12, fontWeight: 700, color: MUTED, textDecoration: "none" }}
+            >
+              ← Class story
             </Link>
-            <Link href={dayHref} style={{ ...btnBase, ...softPrimary, width: "100%" }}>← Daily Focus</Link>
-            <Link href={REPORTS_HREF} style={{ ...btnBase, color: MUTED, background: "rgba(255,255,255,.88)", border: `1px solid ${LINE}`, width: "100%", fontWeight: 700 }}>Back to Reports MAP</Link>
+            <div
+              style={{
+                marginTop: 12,
+                fontSize: 11,
+                fontWeight: 800,
+                color: assignment.subjectColor,
+                textTransform: "uppercase",
+                letterSpacing: 0.4,
+              }}
+            >
+              Work report · {assignment.subjectName}
+              {assignment.when ? ` · ${assignment.when}` : ""}
+            </div>
+            <h1
+              style={{
+                fontFamily: "'Poppins', sans-serif",
+                margin: "6px 0 0",
+                fontSize: 24,
+                fontWeight: 700,
+                color: INK,
+                lineHeight: 1.25,
+                letterSpacing: -0.25,
+              }}
+            >
+              {assignment.title}
+            </h1>
+            <p
+              style={{
+                margin: "8px 0 0",
+                fontSize: 11,
+                fontWeight: 600,
+                color: MUTED,
+              }}
+            >
+              {honesty}
+              {periodLabel ? ` · ${periodLabel}` : ""}
+            </p>
+          </header>
+
+          <div className="asg-body">
+            {/* What happened — plain language lead */}
+            <section aria-label="What happened">
+              <div
+                style={{
+                  fontSize: 11,
+                  fontWeight: 800,
+                  letterSpacing: 0.35,
+                  color: LAVENDER,
+                  textTransform: "uppercase",
+                }}
+              >
+                What happened
+              </div>
+              <p
+                style={{
+                  margin: "10px 0 0",
+                  fontFamily: "'Poppins', sans-serif",
+                  fontSize: 16,
+                  fontWeight: 500,
+                  color: INK,
+                  lineHeight: 1.55,
+                  maxWidth: 560,
+                }}
+              >
+                {assignment.softSummary}
+              </p>
+              <p
+                style={{
+                  margin: "10px 0 0",
+                  fontSize: 13,
+                  fontWeight: 600,
+                  color: MUTED,
+                }}
+              >
+                {bandStory}
+              </p>
+            </section>
+
+            {/* Soft clusters with WHO — not count chrome as hero */}
+            <section style={{ marginTop: 20 }} aria-label="Soft clusters">
+              <div
+                style={{
+                  fontSize: 11,
+                  fontWeight: 800,
+                  letterSpacing: 0.35,
+                  color: MUTED,
+                  textTransform: "uppercase",
+                  marginBottom: 4,
+                }}
+              >
+                Soft clusters · who
+              </div>
+
+              {needsNames.length > 0 ? (
+                <div className="asg-cluster needs">
+                  <div
+                    style={{
+                      fontSize: 11,
+                      fontWeight: 800,
+                      color: GLANCE.needsYou.fg,
+                      textTransform: "uppercase",
+                      letterSpacing: 0.3,
+                    }}
+                  >
+                    May need a look
+                  </div>
+                  <p
+                    style={{
+                      margin: "8px 0 0",
+                      fontSize: 18,
+                      fontWeight: 700,
+                      color: INK,
+                      fontFamily: "'Poppins', sans-serif",
+                    }}
+                  >
+                    {softCluster.whoLine}
+                  </p>
+                </div>
+              ) : (
+                <div className="asg-cluster" style={{ background: GLANCE.ready.bg }}>
+                  <div
+                    style={{
+                      fontSize: 11,
+                      fontWeight: 800,
+                      color: GLANCE.ready.fg,
+                      textTransform: "uppercase",
+                    }}
+                  >
+                    May need a look
+                  </div>
+                  <p style={{ margin: "6px 0 0", fontSize: 14, fontWeight: 600, color: INK }}>
+                    No named soft cluster — looking clear.
+                  </p>
+                </div>
+              )}
+
+              {almostBand?.names?.length ? (
+                <div className="asg-cluster" style={{ marginTop: 10 }}>
+                  <div
+                    style={{
+                      fontSize: 11,
+                      fontWeight: 800,
+                      color: MUTED,
+                      textTransform: "uppercase",
+                    }}
+                  >
+                    Almost there
+                  </div>
+                  <p
+                    style={{
+                      margin: "6px 0 0",
+                      fontSize: 14,
+                      fontWeight: 700,
+                      color: INK,
+                    }}
+                  >
+                    {almostBand.names.slice(0, 5).join(" · ")}
+                  </p>
+                </div>
+              ) : null}
+
+              {clearBand?.names?.length ? (
+                <div className="asg-cluster" style={{ marginTop: 10, opacity: 0.92 }}>
+                  <div
+                    style={{
+                      fontSize: 11,
+                      fontWeight: 800,
+                      color: MUTED,
+                      textTransform: "uppercase",
+                    }}
+                  >
+                    Looking clear (sample)
+                  </div>
+                  <p
+                    style={{
+                      margin: "6px 0 0",
+                      fontSize: 13,
+                      fontWeight: 600,
+                      color: MUTED,
+                    }}
+                  >
+                    {clearBand.names.slice(0, 6).join(" · ")}
+                    {clearBand.names.length > 6 ? " · …" : ""}
+                  </p>
+                </div>
+              ) : null}
+            </section>
+
+            {/* Skill trail — cross-link to standards */}
+            {standards.length > 0 ? (
+              <section style={{ marginTop: 22 }} aria-label="Skill trail">
+                <div
+                  style={{
+                    fontSize: 11,
+                    fontWeight: 800,
+                    letterSpacing: 0.35,
+                    color: MUTED,
+                    textTransform: "uppercase",
+                  }}
+                >
+                  Skill trail
+                </div>
+                <div className="asg-skill">
+                  {standards.map((std) => (
+                    <Link key={std.code} href={REPORTS_STANDARD_HREF(std.code)}>
+                      <div
+                        style={{
+                          display: "flex",
+                          gap: 10,
+                          alignItems: "center",
+                        }}
+                      >
+                        <span
+                          aria-hidden
+                          style={{
+                            width: 5,
+                            alignSelf: "stretch",
+                            minHeight: 36,
+                            borderRadius: 999,
+                            background: std.subjectColor,
+                          }}
+                        />
+                        <div style={{ minWidth: 0 }}>
+                          <div
+                            style={{
+                              fontSize: 11,
+                              fontWeight: 800,
+                              color: MUTED,
+                              textTransform: "uppercase",
+                            }}
+                          >
+                            TEKS {std.code} · {softClassPctLabel(std.classPct)}
+                          </div>
+                          <div
+                            style={{
+                              marginTop: 2,
+                              fontSize: 14,
+                              fontWeight: 700,
+                              color: INK,
+                            }}
+                          >
+                            {std.plain}
+                          </div>
+                          <div
+                            style={{
+                              marginTop: 2,
+                              fontSize: 12,
+                              fontWeight: 700,
+                              color: LAVENDER,
+                            }}
+                          >
+                            Open skill report →
+                          </div>
+                        </div>
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              </section>
+            ) : null}
+
+            {/* Calm next */}
+            <section className="asg-next" aria-label="Calm next">
+              <div
+                style={{
+                  fontSize: 11,
+                  fontWeight: 800,
+                  letterSpacing: 0.35,
+                  color: LAVENDER,
+                  textTransform: "uppercase",
+                }}
+              >
+                Calm next
+              </div>
+              <p
+                style={{
+                  margin: "8px 0 0",
+                  fontSize: 14,
+                  fontWeight: 600,
+                  color: INK,
+                  lineHeight: 1.5,
+                }}
+              >
+                {assignment.calmNext}
+              </p>
+            </section>
+
+            <div
+              style={{
+                marginTop: 20,
+                display: "flex",
+                flexDirection: "column",
+                gap: 8,
+                maxWidth: 340,
+              }}
+            >
+              <Link
+                href={checkInsHref}
+                style={{
+                  ...btnBase,
+                  ...(waiting ? amberPrimary : calmSecondary),
+                  width: "100%",
+                }}
+                title={
+                  waiting
+                    ? "Open Check-ins — live waiting needs you"
+                    : "Open Check-ins (secondary)"
+                }
+              >
+                Check-ins{waiting ? ` · ${liveCheckIns} waiting` : ""} →
+              </Link>
+              <Link href={dayHref} style={{ ...btnBase, ...softPrimary, width: "100%" }}>
+                ← Daily Focus
+              </Link>
+              <Link
+                href={REPORTS_HREF}
+                style={{
+                  ...btnBase,
+                  color: MUTED,
+                  background: "rgba(255,255,255,.88)",
+                  border: `1px solid ${LINE}`,
+                  width: "100%",
+                  fontWeight: 700,
+                }}
+              >
+                Back to class story
+              </Link>
+            </div>
           </div>
-        </Glass>
+        </div>
       </div>
     </StationShell>
   );
