@@ -631,9 +631,10 @@ function SubjectDonut({ pct, color, label, size = 72 }) {
   );
 }
 
-/** Soft school-year trend under subject donuts — overall line + anomaly dots. */
+/** Soft school-year trend under subject donuts — per-subject color lines + anomaly marks. */
 function YearTrendPanel({ trend, studentFirst, focus, onSelectPoint }) {
   const points = trend?.points || [];
+  const series = trend?.series || [];
   if (!points.length) return null;
 
   return (
@@ -663,7 +664,7 @@ function YearTrendPanel({ trend, studentFirst, focus, onSelectPoint }) {
             School-year trend
           </div>
           <div style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 700, fontSize: 17, color: INK, marginTop: 2 }}>
-            Overall · how scores moved
+            By subject · how scores moved
           </div>
         </div>
         {trend.anomalyCount > 0 ? (
@@ -690,12 +691,17 @@ function YearTrendPanel({ trend, studentFirst, focus, onSelectPoint }) {
               padding: "4px 11px",
             }}
           >
-            Steady line
+            Steady lines
           </span>
         )}
       </div>
 
-      <YearTrendChart points={points} focusId={focus?.pointId} onSelectPoint={onSelectPoint} />
+      <YearTrendChart
+        points={points}
+        series={series}
+        focusId={focus?.pointId}
+        onSelectPoint={onSelectPoint}
+      />
 
       {focus ? (
         <div
@@ -744,34 +750,59 @@ function YearTrendPanel({ trend, studentFirst, focus, onSelectPoint }) {
 }
 
 /**
- * Calm SVG area + line. Anomaly dots: subject-tinted fill;
- * amber ring only on real concern drops.
+ * Calm multi-line SVG — one soft line per subject (donut colors).
+ * Anomaly dots stay per-subject; amber ring only on real concern drops.
  */
-function YearTrendChart({ points, focusId, onSelectPoint }) {
+function YearTrendChart({ points, series, focusId, onSelectPoint }) {
   const W = 640;
-  const H = 168;
+  const H = 178;
   const padL = 36;
   const padR = 16;
   const padT = 18;
-  const padB = 28;
+  const padB = 30;
   const innerW = W - padL - padR;
   const innerH = H - padT - padB;
 
-  const n = points.length;
-  const xs = points.map((_, i) => padL + (n === 1 ? innerW / 2 : (i / (n - 1)) * innerW));
+  const times = points
+    .map((p) => new Date(p.date).getTime())
+    .filter((t) => !Number.isNaN(t));
+  const tMin = times.length ? Math.min(...times) : 0;
+  const tMax = times.length ? Math.max(...times) : 1;
+  const xFor = (date) => {
+    const t = new Date(date).getTime();
+    if (Number.isNaN(t) || tMax === tMin) return padL + innerW / 2;
+    return padL + ((t - tMin) / (tMax - tMin)) * innerW;
+  };
   const yFor = (pct) => padT + innerH * (1 - Math.max(0, Math.min(100, pct)) / 100);
 
-  const lineD = points
-    .map((p, i) => `${i === 0 ? "M" : "L"} ${xs[i].toFixed(1)} ${yFor(p.pct).toFixed(1)}`)
-    .join(" ");
-  const areaD =
-    n > 0
-      ? `${lineD} L ${xs[n - 1].toFixed(1)} ${(padT + innerH).toFixed(1)} L ${xs[0].toFixed(1)} ${(padT + innerH).toFixed(1)} Z`
-      : "";
+  const lines = (Array.isArray(series) && series.length
+    ? series
+    : [
+        {
+          key: "all",
+          name: "Overall",
+          color: LAVENDER,
+          points,
+        },
+      ]
+  ).map((s, idx) => {
+    const pts = (s.points || []).filter((p) => typeof p.pct === "number");
+    const lineD = pts
+      .map((p, i) => `${i === 0 ? "M" : "L"} ${xFor(p.date).toFixed(1)} ${yFor(p.pct).toFixed(1)}`)
+      .join(" ");
+    // Slight stroke contrast so soft overlaps stay readable
+    const strokeW = 2.4 - idx * 0.15;
+    const opacity = 0.88 - idx * 0.06;
+    return { ...s, pts, lineD, strokeW: Math.max(1.8, strokeW), opacity: Math.max(0.62, opacity) };
+  });
 
   const guidePcts = [70, 85];
   const firstLabel = points[0]?.dateLabel || "";
-  const lastLabel = points[n - 1]?.dateLabel || "";
+  const lastLabel = points[points.length - 1]?.dateLabel || "";
+  // Prefer chronological extremes for date labels
+  const byDate = [...points].sort((a, b) => new Date(a.date) - new Date(b.date));
+  const startLabel = byDate[0]?.dateLabel || firstLabel;
+  const endLabel = byDate[byDate.length - 1]?.dateLabel || lastLabel;
 
   return (
     <div style={{ marginTop: 12, width: "100%", overflow: "hidden" }}>
@@ -780,16 +811,9 @@ function YearTrendChart({ points, focusId, onSelectPoint }) {
         width="100%"
         height="auto"
         role="img"
-        aria-label="Overall score trend across the school year"
-        style={{ display: "block", maxHeight: 200 }}
+        aria-label="Score trend by subject across the school year"
+        style={{ display: "block", maxHeight: 210 }}
       >
-        <defs>
-          <linearGradient id="kidYearArea" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor={LAVENDER} stopOpacity="0.28" />
-            <stop offset="100%" stopColor={LAVENDER} stopOpacity="0.02" />
-          </linearGradient>
-        </defs>
-
         {/* Soft guides — not a corporate grid */}
         {guidePcts.map((g) => (
           <g key={g}>
@@ -815,99 +839,103 @@ function YearTrendChart({ points, focusId, onSelectPoint }) {
           </g>
         ))}
 
-        {areaD ? <path d={areaD} fill="url(#kidYearArea)" /> : null}
-        {lineD ? (
-          <path
-            d={lineD}
-            fill="none"
-            stroke={LAVENDER}
-            strokeWidth="2.5"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            opacity="0.9"
-          />
-        ) : null}
+        {lines.map((s) =>
+          s.lineD ? (
+            <path
+              key={`line-${s.key}`}
+              d={s.lineD}
+              fill="none"
+              stroke={s.color}
+              strokeWidth={s.strokeW}
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              opacity={s.opacity}
+            />
+          ) : null
+        )}
 
-        {points.map((p, i) => {
-          const cx = xs[i];
-          const cy = yFor(p.pct);
-          const isFocus = focusId === p.id;
-          const isAnomaly = !!p.anomaly;
-          const isDrop = p.anomaly === "drop";
-          const r = isAnomaly ? (isFocus ? 8 : 7) : isFocus ? 5.5 : 4;
-          const fill = isAnomaly ? p.subjectColor : LAVENDER;
-          const title = `${p.dateLabel || ""} · ${p.assignment} · ${p.pct}%${
-            p.anomaly === "drop" ? " · drop" : p.anomaly === "jump" ? " · jump" : ""
-          }`;
+        {lines.flatMap((s) =>
+          s.pts.map((p) => {
+            const cx = xFor(p.date);
+            const cy = yFor(p.pct);
+            const isFocus = focusId === p.id;
+            const isAnomaly = !!p.anomaly;
+            const isDrop = p.anomaly === "drop";
+            const r = isAnomaly ? (isFocus ? 8 : 7) : isFocus ? 4.5 : 3.2;
+            const fill = p.subjectColor || s.color;
+            const title = `${p.subjectName || s.name} · ${p.dateLabel || ""} · ${p.assignment} · ${p.pct}%${
+              p.anomaly === "drop" ? " · drop" : p.anomaly === "jump" ? " · jump" : ""
+            }`;
 
-          return (
-            <g key={p.id}>
-              {isDrop ? (
+            return (
+              <g key={p.id}>
+                {isDrop ? (
+                  <circle
+                    cx={cx}
+                    cy={cy}
+                    r={r + 4}
+                    fill="none"
+                    stroke="#C4A056"
+                    strokeWidth="2"
+                    opacity="0.85"
+                  />
+                ) : null}
+                {p.anomaly === "jump" ? (
+                  <circle
+                    cx={cx}
+                    cy={cy}
+                    r={r + 3.5}
+                    fill="none"
+                    stroke={fill}
+                    strokeWidth="1.5"
+                    opacity="0.45"
+                  />
+                ) : null}
                 <circle
                   cx={cx}
                   cy={cy}
-                  r={r + 4}
-                  fill="none"
-                  stroke="#C4A056"
-                  strokeWidth="2"
-                  opacity="0.85"
-                />
-              ) : null}
-              {p.anomaly === "jump" ? (
+                  r={r}
+                  fill={fill}
+                  stroke="#fff"
+                  strokeWidth={isAnomaly ? 2 : 1.25}
+                  opacity={isAnomaly ? 0.95 : 0.55}
+                  style={{ cursor: "pointer" }}
+                >
+                  <title>{title}</title>
+                </circle>
+                {/* Larger hit target */}
                 <circle
                   cx={cx}
                   cy={cy}
-                  r={r + 3.5}
-                  fill="none"
-                  stroke={p.subjectColor}
-                  strokeWidth="1.5"
-                  opacity="0.45"
-                />
-              ) : null}
-              <circle
-                cx={cx}
-                cy={cy}
-                r={r}
-                fill={fill}
-                stroke="#fff"
-                strokeWidth={isAnomaly ? 2 : 1.5}
-                opacity={isAnomaly ? 0.95 : 0.75}
-                style={{ cursor: "pointer" }}
-              >
-                <title>{title}</title>
-              </circle>
-              {/* Larger hit target */}
-              <circle
-                cx={cx}
-                cy={cy}
-                r={14}
-                fill="transparent"
-                style={{ cursor: "pointer" }}
-                onClick={() => onSelectPoint && onSelectPoint(p)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" || e.key === " ") {
-                    e.preventDefault();
-                    onSelectPoint && onSelectPoint(p);
+                  r={14}
+                  fill="transparent"
+                  style={{ cursor: "pointer" }}
+                  onClick={() => onSelectPoint && onSelectPoint(p)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      onSelectPoint && onSelectPoint(p);
+                    }
+                  }}
+                  role="button"
+                  tabIndex={0}
+                  aria-label={
+                    isAnomaly
+                      ? `${p.subjectName || s.name} · ${p.anomaly} · ${p.assignment}, ${p.pct} percent`
+                      : `${p.subjectName || s.name} · ${p.assignment}, ${p.pct} percent`
                   }
-                }}
-                role="button"
-                tabIndex={0}
-                aria-label={
-                  isAnomaly
-                    ? `${p.anomaly} · ${p.assignment}, ${p.pct} percent`
-                    : `${p.assignment}, ${p.pct} percent`
-                }
-              />
-            </g>
-          );
-        })}
+                />
+              </g>
+            );
+          })
+        )}
 
-        {firstLabel ? (
+        {startLabel ? (
           <text x={padL} y={H - 8} fontSize="11" fill={MUTED} fontFamily="inherit">
-            {firstLabel}
+            {startLabel}
           </text>
         ) : null}
-        {lastLabel ? (
+        {endLabel ? (
           <text
             x={W - padR}
             y={H - 8}
@@ -916,27 +944,38 @@ function YearTrendChart({ points, focusId, onSelectPoint }) {
             fill={MUTED}
             fontFamily="inherit"
           >
-            {lastLabel}
+            {endLabel}
           </text>
         ) : null}
       </svg>
 
       <div
         style={{
-          marginTop: 4,
+          marginTop: 8,
           display: "flex",
-          gap: 14,
+          gap: 12,
           flexWrap: "wrap",
           fontSize: 11,
           color: MUTED,
           fontWeight: 600,
+          alignItems: "center",
         }}
       >
-        <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
-          <span style={{ width: 8, height: 8, borderRadius: 99, background: LAVENDER, opacity: 0.8 }} />
-          Overall
-        </span>
-        <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+        {lines.map((s) => (
+          <span key={`leg-${s.key}`} style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+            <span
+              style={{
+                width: 16,
+                height: 3,
+                borderRadius: 99,
+                background: s.color,
+                opacity: 0.9,
+              }}
+            />
+            {s.name}
+          </span>
+        ))}
+        <span style={{ display: "inline-flex", alignItems: "center", gap: 6, marginLeft: 4 }}>
           <span
             style={{
               width: 10,
@@ -946,11 +985,11 @@ function YearTrendChart({ points, focusId, onSelectPoint }) {
               boxShadow: "0 0 0 2px #C4A056",
             }}
           />
-          Drop (amber ring)
+          Drop
         </span>
         <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
           <span style={{ width: 10, height: 10, borderRadius: 99, background: "#C2185B" }} />
-          Jump · subject tint
+          Jump
         </span>
         <span style={{ color: MUTED, fontWeight: 500 }}>Tap a marked point to open it in More</span>
       </div>
