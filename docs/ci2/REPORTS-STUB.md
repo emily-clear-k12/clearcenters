@@ -8,10 +8,12 @@ Teachers need a calm **glance** at a few standards — soft class ready cues and
 
 ## Layout
 - Honesty chip / banner: **Demo data · not live yet** (stub looks live — call it out)
-- SAM one-liner + summary chips (standards count · soft avg class % · **live Check-ins waiting spark**)
-- 3–5 demo standard cards: TEKS · plain words · soft **~n% · demo** bar · **Demo · may need a look / looking clear** (no fake kid counts)
-- Soft ready (teal) / needs-you (amber) washes — 80% beauty / 20% grammar
-- Links: **Check-ins →** · **Family note** · **← Daily Focus**
+- SAM one-liner names the **softest demo standard** (lowest classPct / needsYou, e.g. **5.6B**) + soft needs hint — not generic copy
+- Summary chips (standards count · soft avg class % · softest code) + **live Check-ins waiting spark**
+- 3–5 demo standard rows: TEKS · plain words · soft **~n% · demo** bar · **Demo · may need a look / looking clear** (no fake kid counts)
+- Soft rows (needsYou / may need a look) are **clickable → Check-ins** (same period lens)
+- Primary next-move CTA: **Open Check-ins for {softest code}** · secondary: Daily Focus / Check-ins / Family note
+- Amber **only** when live Check-ins waiting > 0; honesty chip stays quiet lavender
 
 ## Honesty
 | Surface | Real? |

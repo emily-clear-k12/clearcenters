@@ -13,12 +13,12 @@ import {
   SOFT_LAV,
   GLANCE,
   glanceChipStyle,
-  glanceCardStyle,
 } from "../../../../components/v2/StationShell";
 import {
   getReportsStub,
   softClassPctLabel,
   softNeedsLabel,
+  isSoftStandardRow,
 } from "../../../../lib/v2/demoReports";
 import { FAMILY_NOTE_HREF, FAMILY_NOTE_DEFAULT_ID } from "../../../../lib/v2/demoFamilyNote";
 import {
@@ -31,10 +31,12 @@ import {
 import { TEACHER_SETUPS } from "../../../../lib/v2/demoWeek";
 
 /**
- * CI2.0 Reports by standard — Grow glance inside the same teacher home
- * (Daily Focus → Check-ins → Grading → Reports). Compact Daily Focus–style
- * layout: ~900px wrap, slim standard rows + side rail (no full-bleed tiles).
- * Soft demo bars + one live Check-ins spark (same browser, same period lens).
+ * CI2.0 Reports by standard — same calm home as Daily Focus
+ * (Daily Focus → Check-ins → Grading → Reports).
+ * Compact teach-spine + side rail; slim agenda-like rows (no full-bleed tiles).
+ * Soft demo bars + one live Check-ins waiting spark (same browser, same period lens).
+ * One specific SAM takeaway on the softest demo standard + next-move CTA;
+ * soft rows open Check-ins (same period lens) -- not a gradebook.
  */
 export default function ReportsClient() {
   const stub = getReportsStub();
@@ -140,7 +142,6 @@ export default function ReportsClient() {
     border: `1px solid ${LINE}`,
   };
 
-
   const btnBase = {
     borderRadius: 999,
     padding: "10px 16px",
@@ -150,7 +151,6 @@ export default function ReportsClient() {
     display: "inline-flex",
     alignItems: "center",
     justifyContent: "center",
-    width: "100%",
   };
 
   const checkInsCta = (
@@ -160,6 +160,7 @@ export default function ReportsClient() {
       style={{
         ...btnBase,
         ...(waiting ? amberPrimary : calmSecondary),
+        width: "100%",
       }}
       title={
         waiting
@@ -178,6 +179,7 @@ export default function ReportsClient() {
       style={{
         ...btnBase,
         ...(waiting ? calmSecondary : softPrimary),
+        width: "100%",
       }}
       title="Back to teach today · Daily Focus"
     >
@@ -194,32 +196,50 @@ export default function ReportsClient() {
         ...btnBase,
         ...tertiary,
         fontWeight: 700,
+        width: "100%",
       }}
     >
       Family note
     </Link>
   );
 
-  // Primary = Check-ins when waiting > 0; otherwise soft Daily Focus.
-  const ctaStack = waiting
+  const softest = stub.softest;
+  const softestNextMoveCta = softest ? (
+    <Link
+      key="softest-next"
+      href={checkInsHref}
+      style={{
+        ...btnBase,
+        ...softPrimary,
+        width: "100%",
+      }}
+      title={`Next move on softest demo standard · TEKS ${softest.code}`}
+    >
+      {stub.softestNextMoveLabel} →
+    </Link>
+  ) : null;
+
+  // Primary = next move on softest demo standard; secondary stay hub links.
+  // Amber still only on live Check-ins waiting > 0 (checkInsCta / spark).
+  const secondaryStack = waiting
     ? [checkInsCta, dailyFocusCta, familyNoteCta]
     : [dailyFocusCta, checkInsCta, familyNoteCta];
+  const ctaStack = softestNextMoveCta
+    ? [softestNextMoveCta, ...secondaryStack]
+    : secondaryStack;
 
-  const railCard = {
+  const glassQuiet = {
     background: "rgba(255,255,255,.82)",
     border: `1px solid ${LINE}`,
-    borderRadius: 14,
+    borderRadius: 16,
   };
-
-  // glanceCardStyle kept imported for shell parity; rows use slim agenda chrome.
-  void glanceCardStyle;
 
   return (
     <StationShell active="grow">
       <style>{`
         .rep-wrap{max-width:900px;margin:0 auto;width:100%}
-        .rep-bento{display:grid;grid-template-columns:minmax(0,1fr) minmax(260px,300px);gap:14px;align-items:start;margin-top:14px}
-        .rep-rail{display:flex;flex-direction:column;gap:10px;position:sticky;top:12px}
+        .rep-bento{display:grid;grid-template-columns:minmax(0,1fr) minmax(280px,320px);gap:16px;align-items:start}
+        .rep-rail{display:flex;flex-direction:column;gap:12px;position:sticky;top:12px}
         .rep-rows{display:flex;flex-direction:column;gap:8px}
         @media (max-width:720px){
           .rep-bento{grid-template-columns:1fr}
@@ -236,6 +256,7 @@ export default function ReportsClient() {
               gap: 12,
               flexWrap: "wrap",
               alignItems: "flex-start",
+              marginBottom: 14,
             }}
           >
             <div style={{ minWidth: 0, flex: "1 1 220px" }}>
@@ -309,117 +330,139 @@ export default function ReportsClient() {
           </div>
 
           <div className="rep-bento">
+            {/* Left: compact standards list */}
             <section aria-label="Standards at a glance" className="rep-rows">
-              {stub.rows.map((row) => (
-                <article
-                  key={row.id}
-                  style={{
-                    display: "flex",
-                    gap: 0,
-                    alignItems: "stretch",
-                    background: "rgba(255,255,255,.92)",
-                    border: `1px solid ${LINE}`,
-                    borderRadius: 14,
-                    overflow: "hidden",
-                  }}
-                >
-                  <span
-                    aria-hidden
-                    style={{
-                      width: 5,
-                      flexShrink: 0,
-                      background: row.subjectColor,
-                      opacity: 0.9,
-                    }}
-                  />
-                  <div
-                    style={{
-                      flex: 1,
-                      minWidth: 0,
-                      padding: "10px 12px",
-                      display: "flex",
-                      gap: 10,
-                      alignItems: "center",
-                      justifyContent: "space-between",
-                      flexWrap: "wrap",
-                    }}
-                  >
-                    <div style={{ minWidth: 0, flex: "1 1 160px" }}>
-                      <div
-                        style={{
-                          fontSize: 11,
-                          fontWeight: 800,
-                          color: MUTED,
-                          textTransform: "uppercase",
-                          letterSpacing: 0.2,
-                        }}
-                      >
-                        {row.subjectName} · TEKS {row.code}
-                      </div>
-                      <div
-                        style={{
-                          marginTop: 2,
-                          fontWeight: 700,
-                          color: INK,
-                          fontSize: 14,
-                          lineHeight: 1.3,
-                        }}
-                      >
-                        {row.plain}
-                      </div>
-                      <div
-                        style={{
-                          marginTop: 3,
-                          fontSize: 11,
-                          fontWeight: 600,
-                          color: MUTED,
-                          lineHeight: 1.3,
-                        }}
-                      >
-                        {softNeedsLabel(row.needsCheckIn)}
-                      </div>
-                      <div
-                        aria-hidden
-                        style={{
-                          marginTop: 7,
-                          height: 4,
-                          borderRadius: 999,
-                          background: "rgba(247,244,255,.9)",
-                          border: `1px solid ${LINE}`,
-                          overflow: "hidden",
-                          maxWidth: 220,
-                        }}
-                      >
-                        <div
-                          style={{
-                            width: `${Math.max(4, Math.min(100, row.classPct))}%`,
-                            height: "100%",
-                            borderRadius: 999,
-                            background: GLANCE.ready.fg,
-                            opacity: 0.7,
-                          }}
-                        />
-                      </div>
-                    </div>
+              {stub.rows.map((row) => {
+                const soft = isSoftStandardRow(row);
+                const rowInner = (
+                  <>
                     <span
+                      aria-hidden
                       style={{
-                        fontSize: 12,
-                        fontWeight: 700,
-                        ...glanceChipStyle("ready"),
-                        borderRadius: 999,
-                        padding: "5px 10px",
+                        width: 5,
                         flexShrink: 0,
+                        background: row.subjectColor,
+                        opacity: 0.9,
+                      }}
+                    />
+                    <div
+                      style={{
+                        flex: 1,
+                        minWidth: 0,
+                        padding: "10px 12px",
+                        display: "flex",
+                        gap: 10,
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        flexWrap: "wrap",
                       }}
                     >
-                      {softClassPctLabel(row.classPct)}
-                    </span>
-                  </div>
-                </article>
-              ))}
+                      <div style={{ minWidth: 0, flex: "1 1 160px" }}>
+                        <div
+                          style={{
+                            fontSize: 11,
+                            fontWeight: 800,
+                            color: MUTED,
+                            textTransform: "uppercase",
+                            letterSpacing: 0.2,
+                          }}
+                        >
+                          {row.subjectName} · TEKS {row.code}
+                        </div>
+                        <div
+                          style={{
+                            marginTop: 2,
+                            fontWeight: 700,
+                            color: INK,
+                            fontSize: 14,
+                            lineHeight: 1.3,
+                          }}
+                        >
+                          {row.plain}
+                        </div>
+                        <div
+                          style={{
+                            marginTop: 3,
+                            fontSize: 11,
+                            fontWeight: 600,
+                            color: MUTED,
+                            lineHeight: 1.3,
+                          }}
+                        >
+                          {softNeedsLabel(row.needsCheckIn)}
+                          {soft ? " · Open Check-ins →" : ""}
+                        </div>
+                        {/* Thin glance bar — not a fat card fill */}
+                        <div
+                          aria-hidden
+                          style={{
+                            marginTop: 7,
+                            height: 4,
+                            borderRadius: 999,
+                            background: "rgba(247,244,255,.9)",
+                            border: `1px solid ${LINE}`,
+                            overflow: "hidden",
+                            maxWidth: 220,
+                          }}
+                        >
+                          <div
+                            style={{
+                              width: `${Math.max(4, Math.min(100, row.classPct))}%`,
+                              height: "100%",
+                              borderRadius: 999,
+                              background: GLANCE.ready.fg,
+                              opacity: 0.7,
+                            }}
+                          />
+                        </div>
+                      </div>
+                      <span
+                        style={{
+                          fontSize: 12,
+                          fontWeight: 700,
+                          ...glanceChipStyle("ready"),
+                          borderRadius: 999,
+                          padding: "5px 10px",
+                          flexShrink: 0,
+                        }}
+                      >
+                        {softClassPctLabel(row.classPct)}
+                      </span>
+                    </div>
+                  </>
+                );
+                const rowStyle = {
+                  display: "flex",
+                  gap: 0,
+                  alignItems: "stretch",
+                  background: "rgba(255,255,255,.92)",
+                  border: `1px solid ${LINE}`,
+                  borderRadius: 14,
+                  overflow: "hidden",
+                  textDecoration: "none",
+                  color: "inherit",
+                  cursor: soft ? "pointer" : "default",
+                };
+                return soft ? (
+                  <Link
+                    key={row.id}
+                    href={checkInsHref}
+                    title={`Open Check-ins for TEKS ${row.code} (same period lens)`}
+                    style={rowStyle}
+                  >
+                    {rowInner}
+                  </Link>
+                ) : (
+                  <article key={row.id} style={rowStyle}>
+                    {rowInner}
+                  </article>
+                );
+              })}
             </section>
 
+            {/* Right rail: summary · live Check-ins · CTAs */}
             <aside className="rep-rail" aria-label="Reports side rail">
-              <div style={{ ...railCard, padding: "12px 14px" }}>
+              <div style={{ ...glassQuiet, padding: "12px 14px" }}>
                 <div
                   style={{
                     fontSize: 11,
@@ -444,7 +487,23 @@ export default function ReportsClient() {
                     label={`~${stub.summary.avgClassPct}% ready`}
                     tone="ready"
                   />
+                  {softest ? (
+                    <Chip label={`Softest · ${softest.code}`} />
+                  ) : null}
                 </div>
+                {softest ? (
+                  <p
+                    style={{
+                      margin: "10px 0 0",
+                      fontSize: 12,
+                      fontWeight: 600,
+                      color: MUTED,
+                      lineHeight: 1.4,
+                    }}
+                  >
+                    Next · {softest.code} — {softNeedsLabel(softest.needsCheckIn)}
+                  </p>
+                ) : null}
                 {periodLabel ? (
                   <p
                     style={{
@@ -511,7 +570,7 @@ export default function ReportsClient() {
 
               <div
                 style={{
-                  ...railCard,
+                  ...glassQuiet,
                   padding: "12px 14px",
                   display: "flex",
                   flexDirection: "column",
