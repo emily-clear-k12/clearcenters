@@ -11,8 +11,8 @@ Teachers need a calm **glance** at a few standards — soft class ready cues and
 - SAM one-liner names the **softest demo standard** (lowest classPct / needsYou, e.g. **5.6B**) + soft needs hint — not generic copy
 - Summary chips (standards count · soft avg class % · softest code) + **live Check-ins waiting spark**
 - 3–5 demo standard rows: TEKS · plain words · soft **~n% · demo** bar · **Demo · may need a look / looking clear** (no fake kid counts)
-- Soft rows (needsYou / may need a look) are **clickable → Check-ins** (same period lens)
-- Primary next-move CTA: **Open Check-ins for {softest code}** · secondary: Daily Focus / Check-ins / Family note
+- Soft rows (needsYou / may need a look) are **clickable → standard report** (Check-ins stays secondary on the detail)
+- Primary next-move CTA: **Open {softest code} report** · secondary: Daily Focus / Check-ins / Family note
 - Amber **only** when live Check-ins waiting > 0; honesty chip stays quiet lavender
 
 ## Honesty
@@ -54,3 +54,17 @@ Teachers need a calm **glance** at a few standards — soft class ready cues and
 - Per-standard needs stay soft demo (only the summary Check-ins waiting spark is live)
 - No filters / print / share
 - Do **not** merge to `main`
+
+## Drill-ins (MAP)
+
+Reports glance is a **MAP** with two soft paths:
+
+1. **Tap a standard** → `/v2/teacher/reports/standard/[code]` — class look on that TEKS, contributing demo assignments, calm next move. Check-ins is a **secondary** CTA (period lens).
+2. **Tap an assignment** → `/v2/teacher/reports/assignment/[id]` — soft band counts (not a gradebook), linked standards, calm next.
+
+Soft rows open the **standard** drill-in (not Check-ins). Softest next-move CTA opens the softest **standard** report; Check-ins stays secondary. Amber only when live Check-ins waiting > 0.
+
+### Extra files
+- `lib/v2/demoReports.js` — `DEMO_ASSIGNMENTS`, `getStandardDetail`, `getAssignmentDetail`, href helpers
+- `app/v2/teacher/reports/standard/[code]/` — standard detail
+- `app/v2/teacher/reports/assignment/[id]/` — assignment breakdown

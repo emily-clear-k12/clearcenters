@@ -19,6 +19,9 @@ import {
   softClassPctLabel,
   softNeedsLabel,
   isSoftStandardRow,
+  softAssignmentGlanceLine,
+  REPORTS_STANDARD_HREF,
+  REPORTS_ASSIGNMENT_HREF,
 } from "../../../../lib/v2/demoReports";
 import { FAMILY_NOTE_HREF, FAMILY_NOTE_DEFAULT_ID } from "../../../../lib/v2/demoFamilyNote";
 import {
@@ -35,8 +38,9 @@ import { TEACHER_SETUPS } from "../../../../lib/v2/demoWeek";
  * (Daily Focus → Check-ins → Grading → Reports).
  * Compact teach-spine + side rail; slim agenda-like rows (no full-bleed tiles).
  * Soft demo bars + one live Check-ins waiting spark (same browser, same period lens).
- * One specific SAM takeaway on the softest demo standard + next-move CTA;
- * soft rows open Check-ins (same period lens) -- not a gradebook.
+ * One specific SAM takeaway on the softest demo standard + next-move CTA.
+ * Glance MAP: tap a standard → standard report; tap an assignment → soft breakdown.
+ * Soft rows open the standard drill-in (Check-ins stays secondary) — not a gradebook.
  */
 export default function ReportsClient() {
   const stub = getReportsStub();
@@ -207,19 +211,19 @@ export default function ReportsClient() {
   const softestNextMoveCta = softest ? (
     <Link
       key="softest-next"
-      href={checkInsHref}
+      href={stub.softestHref || REPORTS_STANDARD_HREF(softest.code)}
       style={{
         ...btnBase,
         ...softPrimary,
         width: "100%",
       }}
-      title={`Next move on softest demo standard · TEKS ${softest.code}`}
+      title={`Next move · open softest standard report · TEKS ${softest.code}`}
     >
       {stub.softestNextMoveLabel} →
     </Link>
   ) : null;
 
-  // Primary = next move on softest demo standard; secondary stay hub links.
+  // Primary = softest standard drill-in; Check-ins stays secondary.
   // Amber still only on live Check-ins waiting > 0 (checkInsCta / spark).
   const secondaryStack = waiting
     ? [checkInsCta, dailyFocusCta, familyNoteCta]
@@ -330,7 +334,8 @@ export default function ReportsClient() {
           </div>
 
           <div className="rep-bento">
-            {/* Left: compact standards list */}
+            {/* Left: standards MAP + recent assignments */}
+            <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
             <section aria-label="Standards at a glance" className="rep-rows">
               {stub.rows.map((row) => {
                 const soft = isSoftStandardRow(row);
@@ -390,7 +395,7 @@ export default function ReportsClient() {
                           }}
                         >
                           {softNeedsLabel(row.needsCheckIn)}
-                          {soft ? " · Open Check-ins →" : ""}
+                          {soft ? " · Open report →" : " · See report →"}
                         </div>
                         {/* Thin glance bar — not a fat card fill */}
                         <div
@@ -443,22 +448,131 @@ export default function ReportsClient() {
                   color: "inherit",
                   cursor: soft ? "pointer" : "default",
                 };
-                return soft ? (
+                return (
                   <Link
                     key={row.id}
-                    href={checkInsHref}
-                    title={`Open Check-ins for TEKS ${row.code} (same period lens)`}
-                    style={rowStyle}
+                    href={REPORTS_STANDARD_HREF(row.code)}
+                    title={`Open standard report · TEKS ${row.code}`}
+                    style={{ ...rowStyle, cursor: "pointer" }}
                   >
                     {rowInner}
                   </Link>
-                ) : (
-                  <article key={row.id} style={rowStyle}>
-                    {rowInner}
-                  </article>
                 );
               })}
             </section>
+
+            {(stub.recentAssignments || []).length > 0 ? (
+              <section aria-label="Recent assignments" style={{ marginTop: 16 }}>
+                <div
+                  style={{
+                    fontSize: 11,
+                    fontWeight: 800,
+                    letterSpacing: 0.35,
+                    color: MUTED,
+                    textTransform: "uppercase",
+                    marginBottom: 8,
+                    paddingLeft: 2,
+                  }}
+                >
+                  Recent assignments
+                </div>
+                <div className="rep-rows">
+                  {stub.recentAssignments.map((asg) => (
+                    <Link
+                      key={asg.id}
+                      href={REPORTS_ASSIGNMENT_HREF(asg.id)}
+                      title={`Open assignment breakdown · ${asg.title}`}
+                      style={{
+                        display: "flex",
+                        gap: 0,
+                        alignItems: "stretch",
+                        background: "rgba(255,255,255,.92)",
+                        border: `1px solid ${LINE}`,
+                        borderRadius: 14,
+                        overflow: "hidden",
+                        textDecoration: "none",
+                        color: "inherit",
+                        cursor: "pointer",
+                      }}
+                    >
+                      <span
+                        aria-hidden
+                        style={{
+                          width: 5,
+                          flexShrink: 0,
+                          background: asg.subjectColor,
+                          opacity: 0.9,
+                        }}
+                      />
+                      <div
+                        style={{
+                          flex: 1,
+                          minWidth: 0,
+                          padding: "10px 12px",
+                          display: "flex",
+                          gap: 10,
+                          alignItems: "center",
+                          justifyContent: "space-between",
+                          flexWrap: "wrap",
+                        }}
+                      >
+                        <div style={{ minWidth: 0, flex: "1 1 160px" }}>
+                          <div
+                            style={{
+                              fontSize: 11,
+                              fontWeight: 800,
+                              color: MUTED,
+                              textTransform: "uppercase",
+                              letterSpacing: 0.2,
+                            }}
+                          >
+                            {asg.subjectName}
+                            {asg.when ? ` · ${asg.when}` : ""}
+                          </div>
+                          <div
+                            style={{
+                              marginTop: 2,
+                              fontWeight: 700,
+                              color: INK,
+                              fontSize: 14,
+                              lineHeight: 1.3,
+                            }}
+                          >
+                            {asg.title}
+                          </div>
+                          <div
+                            style={{
+                              marginTop: 3,
+                              fontSize: 11,
+                              fontWeight: 600,
+                              color: MUTED,
+                              lineHeight: 1.3,
+                            }}
+                          >
+                            {softAssignmentGlanceLine(asg)} · See breakdown →
+                          </div>
+                        </div>
+                        <span
+                          style={{
+                            fontSize: 11,
+                            fontWeight: 700,
+                            color: MUTED,
+                            background: SOFT_LAV,
+                            border: `1px solid ${LINE}`,
+                            borderRadius: 999,
+                            padding: "5px 10px",
+                            flexShrink: 0,
+                          }}
+                        >
+                          {(asg.standardCodes || []).join(" · ") || "Demo"}
+                        </span>
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              </section>
+            ) : null}
+            </div>
 
             {/* Right rail: summary · live Check-ins · CTAs */}
             <aside className="rep-rail" aria-label="Reports side rail">
@@ -589,8 +703,8 @@ export default function ReportsClient() {
                   padding: "0 2px",
                 }}
               >
-                Soft demo by standard — not a live gradebook. Live spark opens
-                Check-ins with the same period lens.
+                Soft MAP — tap a standard or assignment for a calm drill-in.
+                Live spark opens Check-ins with the same period lens.
               </p>
             </aside>
           </div>
