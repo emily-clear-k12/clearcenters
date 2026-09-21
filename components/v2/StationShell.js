@@ -963,10 +963,31 @@ export function GlanceLegendHint({ show = false }) {
 }
 
 /**
- * Sunday preview / safety net — "Here's what goes out".
- * Lists outbound assigns by day / subject / period; Change + Looks good.
+ * Sunday preview — same calm loop voice as Focus / This Week.
+ * Glance first: week/class story · who · next moves into existing doors.
+ * Outbound day list + dial + Apply / Looks good stay secondary (plan depth).
+ * Amber only when live Check-ins waiting > 0. No Demo shout.
+ *
+ * loopGlance (optional): {
+ *   story, softOpen, waiting, whoNeedsCount,
+ *   softest: { code, plain, subject, subjectName, softCluster },
+ *   readiness, whoLine, softDoors: [{ name, href }],
+ *   checkInsHref, checkInsLabel, dayHref, weekHref,
+ *   reportHref, reportLabel, familyNoteHref, gradingHref, gradingLabel
+ * }
  */
-export function SundayPreviewModal({ open, onClose, rows, onChangeDay, onAcknowledge, onApplyToWeek, applied, weekLabel, dialLevel }) {
+export function SundayPreviewModal({
+  open,
+  onClose,
+  rows,
+  onChangeDay,
+  onAcknowledge,
+  onApplyToWeek,
+  applied,
+  weekLabel,
+  dialLevel,
+  loopGlance,
+}) {
   if (!open) return null;
 
   const meta = handsOffLevelMeta(dialLevel);
@@ -976,12 +997,65 @@ export function SundayPreviewModal({ open, onClose, rows, onChangeDay, onAcknowl
     byDay[r.day].push(r);
   }
   const assignCount = (rows || []).filter((r) => r.type === "assign").length;
+  const g = loopGlance || null;
+  const softOpen = !!(g && g.softOpen);
+  const waiting = !!(g && g.waiting);
+  const softDoors = Array.isArray(g?.softDoors) ? g.softDoors.filter((d) => d && d.name) : [];
+  const softest = g?.softest || null;
+
+  const btnBase = {
+    borderRadius: 999,
+    padding: "8px 12px",
+    fontWeight: 800,
+    fontSize: 12,
+    textDecoration: "none",
+    display: "inline-flex",
+    alignItems: "center",
+    justifyContent: "center",
+    fontFamily: "inherit",
+    cursor: "pointer",
+    border: "none",
+    whiteSpace: "nowrap",
+  };
+  const amberPrimary = {
+    background: GLANCE.needsYou.bg,
+    color: GLANCE.needsYou.fg,
+    border: `1px solid ${GLANCE.needsYou.border}`,
+  };
+  const softPrimary = {
+    background: "rgba(243,238,255,.88)",
+    color: LAVENDER,
+    border: `1px solid ${LINE}`,
+  };
+  const calmSecondary = {
+    background: GLANCE.ready.bg,
+    color: GLANCE.ready.fg,
+    border: `1px solid ${GLANCE.ready.border}`,
+  };
+  const quietTertiary = {
+    color: MUTED,
+    background: "rgba(255,255,255,.88)",
+    border: `1px solid ${LINE}`,
+    fontWeight: 700,
+  };
+
+  function doorClick() {
+    if (typeof onClose === "function") onClose();
+  }
+
+  const checkInsLabel =
+    g?.checkInsLabel ||
+    (waiting
+      ? `Check-ins · ${g?.whoNeedsCount || 0} waiting`
+      : softOpen && g?.whoLine
+        ? `Sit · ${String(g.whoLine).split(" · ").slice(0, 2).join(" · ")}`
+        : "Check-ins");
 
   return (
     <div
       role="dialog"
       aria-modal="true"
-      aria-label="Sunday preview"
+      aria-label="Sunday"
       style={{
         position: "fixed",
         inset: 0,
@@ -999,10 +1073,10 @@ export function SundayPreviewModal({ open, onClose, rows, onChangeDay, onAcknowl
         style={{
           background: "rgba(255,255,255,.97)",
           borderRadius: 22,
-          padding: "22px 22px 18px",
+          padding: "20px 20px 16px",
           maxWidth: 640,
           width: "100%",
-          maxHeight: "min(86vh, 720px)",
+          maxHeight: "min(86vh, 760px)",
           overflow: "auto",
           boxShadow: "0 24px 60px rgba(46,36,89,.28)",
           border: `1px solid ${LINE}`,
@@ -1011,10 +1085,10 @@ export function SundayPreviewModal({ open, onClose, rows, onChangeDay, onAcknowl
         <div style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "flex-start" }}>
           <div>
             <h2 style={{ fontFamily: "'Poppins', sans-serif", margin: 0, fontSize: 22, color: INK }}>
-              Here&apos;s what goes out
+              Sunday
             </h2>
-            <p style={{ margin: "4px 0 0", color: MUTED, fontSize: 14 }}>
-              {weekLabel || "This week"} · Sunday preview · change anything before it assigns
+            <p style={{ margin: "4px 0 0", color: MUTED, fontSize: 13 }}>
+              {weekLabel || "This week"} · week prep · same story as Focus / This Week
             </p>
           </div>
           <button
@@ -1027,126 +1101,345 @@ export function SundayPreviewModal({ open, onClose, rows, onChangeDay, onAcknowl
           </button>
         </div>
 
-        {/* Live with Hands-off dial — refreshes when dial changes (no stale copy). */}
-        <div
-          role="status"
-          key={`dial-${dialLevel || "default"}-${assignCount}`}
-          style={{
-            marginTop: 12,
-            background: SOFT_LAV,
-            border: `1px solid ${LINE}`,
-            borderRadius: 14,
-            padding: "10px 12px",
-            fontSize: 13,
-            color: INK,
-            lineHeight: 1.4,
-          }}
-        >
-          <strong style={{ color: LAVENDER }}>Hands-off · {meta?.short || "Plan for me"}</strong>
-          {meta?.dialHint ? <span style={{ color: MUTED }}> · {meta.dialHint}</span> : null}
-          <span style={{ color: MUTED }}>
-            {" "}
-            · {assignCount} outbound block{assignCount === 1 ? "" : "s"} (updates with the dial)
-          </span>
-        </div>
+        {/* Glance — story / who / next (INTUITIVE · fewer clicks) */}
+        {g ? (
+          <div style={{ marginTop: 12, display: "grid", gap: 10 }} aria-label="Sunday glance">
+            <p
+              style={{
+                margin: 0,
+                fontFamily: "'Poppins', sans-serif",
+                fontSize: 13,
+                fontWeight: 500,
+                color: INK,
+                lineHeight: 1.45,
+              }}
+            >
+              {g.story || "Steady week — plan when ready."}
+            </p>
 
-        <div style={{ marginTop: 16, display: "grid", gap: 14 }} key={`rows-${dialLevel || "default"}-${assignCount}`}>
-          {DAYS.map((d, i) => {
-            const items = byDay[i] || [];
-            if (items.length === 0) {
-              // Lean dial / filtered days — show quiet empty so preview never looks stuck.
-              return (
-                <section key={d} style={{ background: "#fff", borderRadius: 14, padding: "12px 12px 10px", border: `1px dashed ${LINE}` }}>
-                  <div style={{ fontWeight: 800, color: INK, fontSize: 14 }}>
-                    {DAY_NAMES[i]} · {DATES[i]}
-                  </div>
-                  <div style={{ marginTop: 6, fontSize: 13, color: MUTED }}>
-                    Nothing outbound this day for the current dial.
-                  </div>
-                </section>
-              );
-            }
-            return (
-              <section key={d} style={{ background: SOFT_LAV, borderRadius: 14, padding: "12px 12px 10px", border: `1px solid ${LINE}` }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8, gap: 8, flexWrap: "wrap" }}>
-                  <div style={{ fontWeight: 800, color: INK, fontSize: 14 }}>
-                    {DAY_NAMES[i]} · {DATES[i]}
-                  </div>
-                  {onChangeDay && !items.every((x) => x.type === "calendar") && (
-                    <button
-                      type="button"
-                      onClick={() => onChangeDay(i)}
+            <div
+              style={{ display: "flex", flexWrap: "wrap", gap: 8, alignItems: "center" }}
+              aria-label="Next move"
+            >
+              {g.checkInsHref ? (
+                <Link
+                  href={g.checkInsHref}
+                  onClick={doorClick}
+                  style={{
+                    ...btnBase,
+                    ...(waiting ? amberPrimary : softOpen ? softPrimary : calmSecondary),
+                  }}
+                  title={
+                    waiting
+                      ? "Open Check-ins — live waiting needs you"
+                      : softOpen
+                        ? `Sit Check-ins · ${g.whoLine || "soft cluster"}`
+                        : "Open Check-ins"
+                  }
+                >
+                  {checkInsLabel} →
+                </Link>
+              ) : null}
+              {g.dayHref ? (
+                <Link
+                  href={g.dayHref}
+                  onClick={doorClick}
+                  style={{ ...btnBase, ...(softOpen || waiting ? quietTertiary : softPrimary) }}
+                  title="Open Daily Focus — teach today"
+                >
+                  Daily Focus →
+                </Link>
+              ) : null}
+              {!waiting && softOpen && g.reportHref ? (
+                <Link
+                  href={g.reportHref}
+                  onClick={doorClick}
+                  style={{ ...btnBase, ...quietTertiary }}
+                  title={`Softest report · TEKS ${softest?.code || ""}`}
+                >
+                  {g.reportLabel || "Reports"} →
+                </Link>
+              ) : null}
+              {!waiting && softOpen && g.familyNoteHref ? (
+                <Link
+                  href={g.familyNoteHref}
+                  onClick={doorClick}
+                  style={{ ...btnBase, ...quietTertiary }}
+                  title="Family note · soft story · already knows who + why"
+                >
+                  Family note
+                </Link>
+              ) : null}
+              {g.gradingHref ? (
+                <Link
+                  href={g.gradingHref}
+                  onClick={doorClick}
+                  style={{ ...btnBase, ...quietTertiary }}
+                  title="Open Grading inbox"
+                >
+                  {g.gradingLabel || "Grading"}
+                </Link>
+              ) : null}
+              {g.weekHref ? (
+                <Link
+                  href={g.weekHref}
+                  onClick={doorClick}
+                  style={{ ...btnBase, ...quietTertiary }}
+                  title="Back to This Week board"
+                >
+                  This Week →
+                </Link>
+              ) : (
+                <button
+                  type="button"
+                  onClick={onClose}
+                  style={{ ...btnBase, ...quietTertiary }}
+                  title="Back to This Week board"
+                >
+                  This Week →
+                </button>
+              )}
+              {!softOpen && g.reportHref ? (
+                <Link
+                  href={g.reportHref}
+                  onClick={doorClick}
+                  style={{ ...btnBase, ...quietTertiary }}
+                  title="Open Reports glance"
+                >
+                  Reports
+                </Link>
+              ) : null}
+            </div>
+
+            {softOpen && softest ? (
+              <article
+                style={{
+                  display: "flex",
+                  gap: 0,
+                  alignItems: "stretch",
+                  background: "rgba(255,248,240,.92)",
+                  border: `1px solid ${GLANCE.needsYou.border}`,
+                  borderRadius: 14,
+                  overflow: "hidden",
+                  minHeight: 72,
+                }}
+                aria-label="Needs you · who"
+              >
+                <span
+                  aria-hidden
+                  style={{
+                    width: 5,
+                    flexShrink: 0,
+                    background: SUBJECTS[softest.subject]?.color || LAVENDER,
+                    opacity: 0.9,
+                  }}
+                />
+                <div style={{ flex: 1, minWidth: 0, padding: "10px 12px", display: "grid", gap: 5 }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", gap: 8, alignItems: "flex-start" }}>
+                    <div style={{ minWidth: 0 }}>
+                      <div
+                        style={{
+                          fontSize: 10,
+                          fontWeight: 800,
+                          color: MUTED,
+                          textTransform: "uppercase",
+                          letterSpacing: 0.2,
+                        }}
+                      >
+                        Soft cluster · {softest.subjectName || SUBJECTS[softest.subject]?.name || "Science"} ·{" "}
+                        {softest.code}
+                      </div>
+                      <div style={{ marginTop: 2, fontWeight: 700, color: INK, fontSize: 13, lineHeight: 1.3 }}>
+                        {softest.plain || "Needs a look"}
+                      </div>
+                    </div>
+                    <span
                       style={{
-                        border: `1px solid ${LAVENDER}`,
-                        background: "#fff",
-                        color: LAVENDER,
-                        borderRadius: 999,
-                        padding: "4px 12px",
+                        fontSize: 11,
                         fontWeight: 700,
-                        fontSize: 12,
-                        cursor: "pointer",
-                        fontFamily: "inherit",
+                        ...glanceChipStyle(g.readiness === "Mostly clear" ? "ready" : "needsYou"),
+                        borderRadius: 999,
+                        padding: "4px 8px",
+                        flexShrink: 0,
+                        whiteSpace: "nowrap",
                       }}
                     >
-                      Change
-                    </button>
-                  )}
+                      {g.readiness || "Needs a look"}
+                    </span>
+                  </div>
+                  <div style={{ fontSize: 12, fontWeight: 600, color: MUTED, lineHeight: 1.35 }}>
+                    {softDoors.length ? (
+                      softDoors.map((d, i) => (
+                        <span key={d.name}>
+                          {i > 0 ? " · " : ""}
+                          <Link
+                            href={d.href}
+                            onClick={doorClick}
+                            title={`Open ${d.name}`}
+                            style={{
+                              color: LAVENDER,
+                              fontWeight: 800,
+                              textDecoration: "none",
+                              borderBottom: `1px dashed ${LINE}`,
+                            }}
+                          >
+                            {d.name}
+                          </Link>
+                        </span>
+                      ))
+                    ) : (
+                      g.whoLine || "Soft cluster"
+                    )}
+                  </div>
                 </div>
-                <div style={{ display: "grid", gap: 6 }}>
-                  {items.map((r) => {
-                    if (r.type === "calendar") {
+              </article>
+            ) : (
+              <p style={{ margin: 0, fontSize: 12, color: MUTED, lineHeight: 1.4 }}>
+                Soft story covered — preview what goes out, then teach from Daily Focus.
+              </p>
+            )}
+          </div>
+        ) : null}
+
+        {/* Secondary — outbound depth (dial + day rows) */}
+        <div
+          style={{
+            marginTop: g ? 16 : 12,
+            paddingTop: g ? 14 : 0,
+            borderTop: g ? `1px solid ${LINE}` : "none",
+          }}
+        >
+          <div
+            style={{
+              fontSize: 11,
+              fontWeight: 800,
+              letterSpacing: 0.35,
+              color: MUTED,
+              textTransform: "uppercase",
+              marginBottom: 8,
+            }}
+          >
+            What goes out · preview
+          </div>
+
+          <div
+            role="status"
+            key={`dial-${dialLevel || "default"}-${assignCount}`}
+            style={{
+              background: SOFT_LAV,
+              border: `1px solid ${LINE}`,
+              borderRadius: 14,
+              padding: "10px 12px",
+              fontSize: 13,
+              color: INK,
+              lineHeight: 1.4,
+            }}
+          >
+            <strong style={{ color: LAVENDER }}>Hands-off · {meta?.short || "Plan for me"}</strong>
+            {meta?.dialHint ? <span style={{ color: MUTED }}> · {meta.dialHint}</span> : null}
+            <span style={{ color: MUTED }}>
+              {" "}
+              · {assignCount} outbound block{assignCount === 1 ? "" : "s"} (updates with the dial)
+            </span>
+          </div>
+
+          <div style={{ marginTop: 12, display: "grid", gap: 12 }} key={`rows-${dialLevel || "default"}-${assignCount}`}>
+            {DAYS.map((d, i) => {
+              const items = byDay[i] || [];
+              if (items.length === 0) {
+                return (
+                  <section key={d} style={{ background: "#fff", borderRadius: 14, padding: "10px 12px 8px", border: `1px dashed ${LINE}` }}>
+                    <div style={{ fontWeight: 800, color: INK, fontSize: 13 }}>
+                      {DAY_NAMES[i]} · {DATES[i]}
+                    </div>
+                    <div style={{ marginTop: 4, fontSize: 12, color: MUTED }}>
+                      Nothing outbound this day for the current dial.
+                    </div>
+                  </section>
+                );
+              }
+              return (
+                <section key={d} style={{ background: SOFT_LAV, borderRadius: 14, padding: "10px 12px 8px", border: `1px solid ${LINE}` }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6, gap: 8, flexWrap: "wrap" }}>
+                    <div style={{ fontWeight: 800, color: INK, fontSize: 13 }}>
+                      {DAY_NAMES[i]} · {DATES[i]}
+                    </div>
+                    {onChangeDay && !items.every((x) => x.type === "calendar") && (
+                      <button
+                        type="button"
+                        onClick={() => onChangeDay(i)}
+                        style={{
+                          border: `1px solid ${LAVENDER}`,
+                          background: "#fff",
+                          color: LAVENDER,
+                          borderRadius: 999,
+                          padding: "4px 12px",
+                          fontWeight: 700,
+                          fontSize: 12,
+                          cursor: "pointer",
+                          fontFamily: "inherit",
+                        }}
+                      >
+                        Change
+                      </button>
+                    )}
+                  </div>
+                  <div style={{ display: "grid", gap: 6 }}>
+                    {items.map((r) => {
+                      if (r.type === "calendar") {
+                        return (
+                          <div
+                            key={r.id}
+                            style={{
+                              background: CREAM,
+                              border: `1px solid ${LINE}`,
+                              borderRadius: 10,
+                              padding: "8px 10px",
+                              color: "#8A6A20",
+                              fontWeight: 700,
+                              fontSize: 13,
+                            }}
+                          >
+                            {r.text}
+                          </div>
+                        );
+                      }
+                      const sub = SUBJECTS[r.subject];
                       return (
                         <div
                           key={r.id}
                           style={{
-                            background: CREAM,
+                            display: "flex",
+                            gap: 10,
+                            alignItems: "flex-start",
+                            background: "#fff",
                             border: `1px solid ${LINE}`,
                             borderRadius: 10,
-                            padding: "10px 12px",
-                            color: "#8A6A20",
-                            fontWeight: 700,
-                            fontSize: 13,
+                            padding: "8px 10px",
                           }}
                         >
-                          {r.text}
+                          <span style={{ width: 5, alignSelf: "stretch", background: sub?.color || LAVENDER, borderRadius: 4 }} />
+                          <div style={{ minWidth: 0, flex: 1 }}>
+                            <div style={{ fontSize: 11, fontWeight: 800, color: sub?.color || MUTED, textTransform: "uppercase" }}>
+                              {sub?.name || r.subject} · {r.periodLabel}
+                              {r.auto ? " · auto" : ""}
+                            </div>
+                            <div style={{ fontSize: 14, fontWeight: 650, color: INK }}>{r.title}</div>
+                            {r.minutes != null && (
+                              <div style={{ fontSize: 12, color: MUTED }}>{r.minutes} min</div>
+                            )}
+                          </div>
                         </div>
                       );
-                    }
-                    const sub = SUBJECTS[r.subject];
-                    return (
-                      <div
-                        key={r.id}
-                        style={{
-                          display: "flex",
-                          gap: 10,
-                          alignItems: "flex-start",
-                          background: "#fff",
-                          border: `1px solid ${LINE}`,
-                          borderRadius: 10,
-                          padding: "8px 10px",
-                        }}
-                      >
-                        <span style={{ width: 5, alignSelf: "stretch", background: sub?.color || LAVENDER, borderRadius: 4 }} />
-                        <div style={{ minWidth: 0, flex: 1 }}>
-                          <div style={{ fontSize: 11, fontWeight: 800, color: sub?.color || MUTED, textTransform: "uppercase" }}>
-                            {sub?.name || r.subject} · {r.periodLabel}
-                            {r.auto ? " · auto" : ""}
-                          </div>
-                          <div style={{ fontSize: 14, fontWeight: 650, color: INK }}>{r.title}</div>
-                          {r.minutes != null && (
-                            <div style={{ fontSize: 12, color: MUTED }}>{r.minutes} min</div>
-                          )}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </section>
-            );
-          })}
+                    })}
+                  </div>
+                </section>
+              );
+            })}
+          </div>
         </div>
 
-        <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginTop: 18, flexWrap: "wrap" }}>
+        <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginTop: 16, flexWrap: "wrap" }}>
           <button
             type="button"
             onClick={onClose}
@@ -1208,8 +1501,8 @@ export function SundayPreviewModal({ open, onClose, rows, onChangeDay, onAcknowl
   );
 }
 
-/** Banner prompting Sunday preview when Plan for me / Run it is on. */
-export function SundayPreviewBanner({ onOpen, acked, onApplyToWeek, applied }) {
+/** Banner prompting Sunday when Plan for me / Run it is on — loop voice, not a publish island. */
+export function SundayPreviewBanner({ onOpen, acked, onApplyToWeek, applied, softWhoLine }) {
   if (acked) return null;
   return (
     <div
@@ -1226,7 +1519,10 @@ export function SundayPreviewBanner({ onOpen, acked, onApplyToWeek, applied }) {
       }}
     >
       <div style={{ flex: 1, minWidth: 200, color: INK, fontSize: 14, lineHeight: 1.35 }}>
-        <strong>Sunday preview:</strong> peek at what goes out this week before anything assigns.
+        <strong>Sunday:</strong>{" "}
+        {softWhoLine
+          ? `same week story · ${softWhoLine} · then what goes out.`
+          : "same week story as Focus · who · next · then what goes out."}
       </div>
       <button
         type="button"
@@ -1244,7 +1540,7 @@ export function SundayPreviewBanner({ onOpen, acked, onApplyToWeek, applied }) {
           whiteSpace: "nowrap",
         }}
       >
-        Preview what goes out
+        Open Sunday
       </button>
       {onApplyToWeek && (
         <button

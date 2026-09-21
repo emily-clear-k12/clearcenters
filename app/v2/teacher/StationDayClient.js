@@ -39,18 +39,19 @@ import {
   getAllClearMorningLine,
   getLoopSoftest,
   REPORTS_HREF,
+  DAY_HREF,
   checkInsHrefForPeriod,
   checkInsHrefForStandard,
   checkInsCtaLabel,
   focusBlocksSectionLabel,
   focusBlockProvenanceLine,
-  softStoryStudentDoorHref,
   softClusterDoors,
   isLoopAllClear,
   isStandardResolved,
   hasReteachOnToday,
   LOOP_REMEMBER_KEY,
   familyNoteSoftStoryHref,
+  softStoryStudentDoorHref,
 } from "../../../lib/v2/demoLoopSeams";
 import {
   StationShell,
@@ -1113,6 +1114,43 @@ export default function StationDayClient() {
           router.push("/v2/teacher");
         }}
         applied={p.sundayApplied}
+        loopGlance={{
+          story: classStory,
+          softOpen,
+          waiting,
+          whoNeedsCount,
+          softest: loopSoftest?.softest
+            ? {
+                code: loopSoftest.softest.code,
+                plain: loopSoftest.softest.plain,
+                subject: loopSoftest.softest.subject,
+                subjectName: loopSoftest.softest.subjectName,
+                softCluster: loopSoftest.softest.softCluster,
+              }
+            : null,
+          readiness: loopSoftest?.readiness,
+          whoLine: loopSoftest?.whoLine,
+          softDoors,
+          checkInsHref: checkInsDoor,
+          checkInsLabel: waiting
+            ? checkInsCtaLabel(whoNeedsCount)
+            : softOpen && loopSoftest?.whoLine
+              ? `Sit · ${loopSoftest.whoLine.split(" · ").slice(0, 2).join(" · ")}`
+              : checkInsCtaLabel(whoNeedsCount),
+          dayHref: DAY_HREF,
+          weekHref: "/v2/teacher",
+          reportHref: softOpen ? softReportHref : REPORTS_HREF,
+          reportLabel: softReportLabel,
+          familyNoteHref: softOpen
+            ? familyNoteSoftStoryHref({
+                standard: loopSoftest?.softest?.code || "5.6B",
+                periodId: selectedClass,
+                subject: loopSoftest?.softest?.subject || "science",
+              })
+            : null,
+          gradingHref: gradingDoor,
+          gradingLabel: gradePending > 0 ? `Grading · ${gradePending}` : "Grading",
+        }}
       />
       <HowMyWeeksRunDrawer
         open={p.showWeeksRun}

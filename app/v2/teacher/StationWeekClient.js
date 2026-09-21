@@ -27,12 +27,12 @@ import {
   checkInsHrefForPeriod,
   checkInsHrefForStandard,
   checkInsCtaLabel,
-  softStoryStudentDoorHref,
   softClusterDoors,
   isLoopAllClear,
   isStandardResolved,
   LOOP_REMEMBER_KEY,
   familyNoteSoftStoryHref,
+  softStoryStudentDoorHref,
 } from "../../../lib/v2/demoLoopSeams";
 import {
   StationShell,
@@ -62,7 +62,7 @@ import { Toast } from "../../../components/v2/weekKit";
  * CI2.0 This Week glance — INTUITIVE · fewer clicks.
  * Same calm loop voice as Daily Focus / Check-ins / Reports / Family note.
  * Top: quiet week/class story · who · next moves into existing doors.
- * Day columns + Publish / Sunday / dial stay secondary (plan depth).
+ * Day columns + Publish / dial stay secondary; Sunday opens with same glance story.
  * Amber only when live Check-ins waiting > 0. No Demo shout.
  */
 export default function StationWeekClient() {
@@ -392,6 +392,19 @@ export default function StationWeekClient() {
             </Link>
           ) : null}
 
+          {!waiting && softOpen ? (
+            <Link
+              href={softStoryStudentDoorHref({
+                standard: loopSoftest?.softest?.code || "5.6B",
+                names: loopSoftest?.softest?.softCluster,
+              })}
+              style={{ ...btnBase, ...quietTertiary }}
+              title="Student My Day · soft cast · TEKS context"
+            >
+              My Day
+            </Link>
+          ) : null}
+
           {gradePending > 0 ? (
             <Link
               href={gradingDoor}
@@ -682,7 +695,13 @@ export default function StationWeekClient() {
         )}
         {p.needsSundayPreview && (
           <div className="ci2-no-print" style={{ marginTop: 14 }}>
-            <SundayPreviewBanner onOpen={() => p.setShowSundayPreview(true)} acked={p.sundayAcked} onApplyToWeek={p.applySundayToThisWeek} applied={p.sundayApplied} />
+            <SundayPreviewBanner
+              onOpen={() => p.setShowSundayPreview(true)}
+              acked={p.sundayAcked}
+              onApplyToWeek={p.applySundayToThisWeek}
+              applied={p.sundayApplied}
+              softWhoLine={softOpen ? loopSoftest?.whoLine : null}
+            />
           </div>
         )}
 
@@ -739,7 +758,7 @@ export default function StationWeekClient() {
                 fontFamily: "inherit",
               }}
             >
-              Sunday preview
+              Sunday
             </button>
             <button
               type="button"
@@ -1111,6 +1130,43 @@ export default function StationWeekClient() {
         onAcknowledge={p.acknowledgeSundayPreview}
         onApplyToWeek={p.applySundayToThisWeek}
         applied={p.sundayApplied}
+        loopGlance={{
+          story: classStory,
+          softOpen,
+          waiting,
+          whoNeedsCount,
+          softest: loopSoftest?.softest
+            ? {
+                code: loopSoftest.softest.code,
+                plain: loopSoftest.softest.plain,
+                subject: loopSoftest.softest.subject,
+                subjectName: loopSoftest.softest.subjectName,
+                softCluster: loopSoftest.softest.softCluster,
+              }
+            : null,
+          readiness: loopSoftest?.readiness,
+          whoLine: loopSoftest?.whoLine,
+          softDoors,
+          checkInsHref: checkInsDoor,
+          checkInsLabel: waiting
+            ? checkInsCtaLabel(whoNeedsCount)
+            : softOpen && loopSoftest?.whoLine
+              ? `Sit · ${loopSoftest.whoLine.split(" · ").slice(0, 2).join(" · ")}`
+              : checkInsCtaLabel(whoNeedsCount),
+          dayHref: DAY_HREF,
+          weekHref: "/v2/teacher",
+          reportHref: softOpen ? softReportHref : REPORTS_HREF,
+          reportLabel: softReportLabel,
+          familyNoteHref: softOpen
+            ? familyNoteSoftStoryHref({
+                standard: loopSoftest?.softest?.code || "5.6B",
+                periodId: selectedClass,
+                subject: loopSoftest?.softest?.subject || "science",
+              })
+            : null,
+          gradingHref: gradingDoor,
+          gradingLabel: gradePending > 0 ? `Grading · ${gradePending}` : "Grading",
+        }}
       />
       <HowMyWeeksRunDrawer
         open={p.showWeeksRun}
