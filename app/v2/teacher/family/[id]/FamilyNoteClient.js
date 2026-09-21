@@ -262,7 +262,7 @@ export default function FamilyNoteClient({ noteId }) {
           />
           {note.assignment ? <Chip label={note.assignment} /> : null}
           {periodId ? <Chip label={`Period ${periodId}`} /> : null}
-          {isSoftStory ? <Chip label="Class story · care" /> : null}
+          {isSoftStory ? <Chip label="Reports · care" /> : null}
         </div>
 
         {isSoftStory && note.whyLine ? (

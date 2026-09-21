@@ -105,7 +105,7 @@ export function TeacherSubnav({ active, gradeCount, checkInsCount: checkInsCount
   const links = [
     { key: "day", label: "Today", href: "/v2/teacher/day?d=2", hint: "What needs you today" },
     { key: "week", label: "Week", href: "/v2/teacher", hint: "Plan & publish" },
-    { key: "reports", label: "Class story", href: "/v2/teacher/reports", hint: "Standards · who · next" },
+    { key: "reports", label: "Reports", href: "/v2/teacher/reports", hint: "Standards · who · next" },
     {
       key: "inbox",
       label: "Inbox",

@@ -147,7 +147,7 @@ export default function AssignmentReportClient({ assignmentId }) {
               padding: 28,
             }}
           >
-            <p style={{ color: MUTED, margin: 0 }}>That assignment isn&apos;t in this class story yet.</p>
+            <p style={{ color: MUTED, margin: 0 }}>That assignment isn&apos;t in Reports yet.</p>
             <Link href={REPORTS_HREF} style={{ ...btnBase, ...softPrimary, marginTop: 16 }}>
               ← Back to Reports
             </Link>
@@ -248,7 +248,7 @@ export default function AssignmentReportClient({ assignmentId }) {
               href={REPORTS_HREF}
               style={{ fontSize: 12, fontWeight: 700, color: MUTED, textDecoration: "none" }}
             >
-              ← Class story
+              ← Reports
             </Link>
             <div
               style={{
@@ -624,7 +624,7 @@ export default function AssignmentReportClient({ assignmentId }) {
                   fontWeight: 700,
                 }}
               >
-                Back to class story
+                Back to Reports
               </Link>
             </div>
           </div>

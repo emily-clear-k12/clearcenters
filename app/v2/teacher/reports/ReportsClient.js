@@ -297,7 +297,7 @@ export default function ReportsClient() {
           </div>
 
           {/* Compact class story — not a hero essay */}
-          <section className="rep-story" aria-label="Class story">
+          <section className="rep-story" aria-label="Reports">
             <p
               style={{
                 margin: 0,

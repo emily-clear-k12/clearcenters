@@ -525,7 +525,7 @@ export default function CheckInsClient() {
           </div>
 
           {/* Compact class story — not a hero essay / CTA twin */}
-          <section className="ci-story" aria-label="Class story">
+          <section className="ci-story" aria-label="Reports">
             <p
               style={{
                 margin: 0,
@@ -567,7 +567,7 @@ export default function CheckInsClient() {
               <Link
                 href={softReportHref}
                 style={{ ...btnBase, ...calmSecondary }}
-                title="Clear for now — still findable on Class story"
+                title="Clear for now — still findable on Reports"
               >
                 {softReportLabel} →
               </Link>

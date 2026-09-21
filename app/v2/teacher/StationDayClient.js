@@ -348,7 +348,7 @@ export default function StationDayClient() {
           </div>
 
           {/* Compact class / day story — not a hero essay */}
-          <section className="df-story" aria-label="Class story">
+          <section className="df-story" aria-label="Reports">
             <p
               style={{
                 margin: 0,

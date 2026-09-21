@@ -523,7 +523,7 @@ export default function GradingInboxClient() {
           </div>
 
           {/* Compact class story — not a hero essay / CTA twin */}
-          <section className="gi-story" aria-label="Class story">
+          <section className="gi-story" aria-label="Reports">
             <p
               style={{
                 margin: 0,
@@ -560,7 +560,7 @@ export default function GradingInboxClient() {
               <Link
                 href={softReportHref}
                 style={{ ...btnBase, ...calmSecondary }}
-                title="Clear for now — still findable on Class story"
+                title="Clear for now — still findable on Reports"
               >
                 {softReportLabel} →
               </Link>

@@ -153,7 +153,7 @@ export default function StandardReportClient({ code }) {
               padding: 28,
             }}
           >
-            <p style={{ color: MUTED, margin: 0 }}>That standard isn&apos;t in this class story yet.</p>
+            <p style={{ color: MUTED, margin: 0 }}>That standard isn&apos;t in Reports yet.</p>
             <Link href={REPORTS_HREF} style={{ ...btnBase, ...softPrimary, marginTop: 16 }}>
               ← Back to Reports
             </Link>
