@@ -48,6 +48,7 @@ import {
   isStandardResolved,
   hasReteachOnToday,
   LOOP_REMEMBER_KEY,
+  familyNoteSoftStoryHref,
 } from "../../../lib/v2/demoLoopSeams";
 import {
   StationShell,
@@ -627,19 +628,44 @@ export default function StationDayClient() {
                         loopSoftest.whoLine || "Soft cluster"
                       )}
                     </div>
-                    <Link
-                      href={softReportHref}
+                    <div
                       style={{
-                        fontSize: 11,
-                        fontWeight: 700,
-                        color: LAVENDER,
-                        textDecoration: "none",
+                        display: "flex",
+                        flexWrap: "wrap",
+                        gap: 10,
+                        alignItems: "center",
                         alignSelf: "flex-start",
                       }}
-                      title={`Depth · report · ${loopSoftest.softest.code}`}
                     >
-                      Open report →
-                    </Link>
+                      <Link
+                        href={softReportHref}
+                        style={{
+                          fontSize: 11,
+                          fontWeight: 700,
+                          color: LAVENDER,
+                          textDecoration: "none",
+                        }}
+                        title="Depth · softest report"
+                      >
+                        Open report →
+                      </Link>
+                      <Link
+                        href={familyNoteSoftStoryHref({
+                          standard: loopSoftest?.softest?.code || "5.6B",
+                          periodId: selectedClass,
+                          subject: loopSoftest?.softest?.subject || "science",
+                        })}
+                        style={{
+                          fontSize: 11,
+                          fontWeight: 700,
+                          color: MUTED,
+                          textDecoration: "none",
+                        }}
+                        title="Family note · soft story · already knows who + why"
+                      >
+                        Family note →
+                      </Link>
+                    </div>
                   </div>
                 </article>
               ) : null}

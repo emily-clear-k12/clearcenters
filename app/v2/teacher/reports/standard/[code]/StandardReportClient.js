@@ -36,6 +36,7 @@ import {
   DAY_HREF,
   rememberAwareSamStory,
   isStandardResolved,
+  familyNoteSoftStoryHref,
 } from "../../../../../../lib/v2/demoLoopSeams";
 
 function usePeriodLens() {
@@ -605,6 +606,33 @@ export default function StandardReportClient({ code }) {
                   Put reteach on today
                 </button>
               ) : null}
+              {(standard.softCluster || []).length > 0 ? (
+                <Link
+                  href={familyNoteSoftStoryHref({
+                    standard: standard.code,
+                    periodId,
+                    subject: standard.subject,
+                  })}
+                  style={{
+                    marginTop: 10,
+                    marginLeft: 8,
+                    display: "inline-flex",
+                    alignItems: "center",
+                    border: `1px solid ${LINE}`,
+                    background: "#fff",
+                    color: INK,
+                    borderRadius: 999,
+                    padding: "10px 16px",
+                    fontWeight: 800,
+                    fontSize: 13,
+                    textDecoration: "none",
+                    fontFamily: "inherit",
+                  }}
+                  title={`Family note · ${standard.code} soft story · who + why filled`}
+                >
+                  Family note · {whoLine || "soft cluster"}
+                </Link>
+              ) : null
               {reteachToast ? (
                 <div style={{ marginTop: 8, fontSize: 12, fontWeight: 700, color: MUTED }}>
                   {reteachToast}

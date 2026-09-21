@@ -28,6 +28,7 @@ import {
   isStandardResolved,
   isLoopAllClear,
   getAllClearSurfaceLine,
+  familyNoteSoftStoryHref,
 } from "../../../../lib/v2/demoLoopSeams";
 import { GRADING_INBOX_HREF } from "../../../../lib/v2/demoGrading";
 import {
@@ -350,6 +351,19 @@ export default function ReportsClient() {
             >
               Grading
             </Link>
+            {!allClear && nextMove ? (
+              <Link
+                href={familyNoteSoftStoryHref({
+                  standard: nextMove.code,
+                  periodId,
+                  subject: nextMove.subject,
+                })}
+                style={{ ...btnBase, ...quietTertiary }}
+                title={`Family note · ${nextMove.code} soft story · already knows who + why`}
+              >
+                Family note
+              </Link>
+            ) : null}
             <Link
               href={stub.dayHref}
               style={{ ...btnBase, ...quietTertiary }}
@@ -514,19 +528,46 @@ export default function ReportsClient() {
                         )}
                       </div>
 
-                      <Link
-                        href={REPORTS_STANDARD_HREF(row.code)}
+                      <div
                         style={{
-                          fontSize: 11,
-                          fontWeight: 700,
-                          color: LAVENDER,
-                          textDecoration: "none",
-                          alignSelf: "flex-start",
+                          display: "flex",
+                          flexWrap: "wrap",
+                          gap: 10,
+                          alignItems: "center",
+                          marginTop: 2,
                         }}
-                        title={`Depth · report, evidence, class shape · ${row.code}`}
                       >
-                        Open report →
-                      </Link>
+                        <Link
+                          href={REPORTS_STANDARD_HREF(row.code)}
+                          style={{
+                            fontSize: 11,
+                            fontWeight: 700,
+                            color: LAVENDER,
+                            textDecoration: "none",
+                          }}
+                          title={`Depth · report, evidence, class shape · ${row.code}`}
+                        >
+                          Open report →
+                        </Link>
+                        {softOpen ? (
+                          <Link
+                            href={familyNoteSoftStoryHref({
+                              standard: row.code,
+                              periodId,
+                              subject: row.subject,
+                            })}
+                            style={{
+                              fontSize: 11,
+                              fontWeight: 700,
+                              color: MUTED,
+                              textDecoration: "none",
+                            }}
+                            title={`Family note · ${row.code} soft story · who + why filled`}
+                          >
+                            Family note →
+                          </Link>
+                        ) : null}
+                      </div>
                     </div>
                   </article>
                 );

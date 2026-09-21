@@ -51,6 +51,7 @@ import {
   softClusterDoors,
   isLoopAllClear,
   isStandardResolved,
+  familyNoteSoftStoryHref,
 } from "../../../../lib/v2/demoLoopSeams";
 
 /**
@@ -750,19 +751,44 @@ export default function CheckInsClient() {
                         whoLine || "Soft cluster"
                       )}
                     </div>
-                    <Link
-                      href={softReportHref}
+                    <div
                       style={{
-                        fontSize: 11,
-                        fontWeight: 700,
-                        color: LAVENDER,
-                        textDecoration: "none",
+                        display: "flex",
+                        flexWrap: "wrap",
+                        gap: 10,
+                        alignItems: "center",
                         alignSelf: "flex-start",
                       }}
-                      title={`Depth · report · ${softCode}`}
                     >
-                      Open report →
-                    </Link>
+                      <Link
+                        href={softReportHref}
+                        style={{
+                          fontSize: 11,
+                          fontWeight: 700,
+                          color: LAVENDER,
+                          textDecoration: "none",
+                        }}
+                        title={`Depth · report · ${softCode}`}
+                      >
+                        Open report →
+                      </Link>
+                      <Link
+                        href={familyNoteSoftStoryHref({
+                          standard: softCode,
+                          periodId: selectedClass,
+                          subject: "science",
+                        })}
+                        style={{
+                          fontSize: 11,
+                          fontWeight: 700,
+                          color: MUTED,
+                          textDecoration: "none",
+                        }}
+                        title={`Family note · ${softCode} soft story · Sofia · Noah · Diego`}
+                      >
+                        Family note →
+                      </Link>
+                    </div>
                   </div>
                 </article>
               ) : null}

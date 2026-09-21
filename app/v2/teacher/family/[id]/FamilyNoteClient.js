@@ -22,6 +22,7 @@ import {
   clearFamilyNoteSent,
   FAMILY_SENT_KEY,
 } from "../../../../../lib/v2/demoFamilyNote";
+import { rememberFamilyCare } from "../../../../../lib/v2/demoLoopSeams";
 
 /**
  * CI2.0 Family note stub — teacher-facing one-pager (not a parent portal).
@@ -34,6 +35,7 @@ export default function FamilyNoteClient({ noteId }) {
   const subjectFromQuery = (searchParams?.get("subject") || "").trim();
   const topicFromQuery = (searchParams?.get("topic") || "").trim();
   const periodFromQuery = (searchParams?.get("period") || "").trim();
+  const standardFromQuery = (searchParams?.get("standard") || "").trim();
 
   const note = useMemo(
     () =>
@@ -44,12 +46,18 @@ export default function FamilyNoteClient({ noteId }) {
           periodFromQuery && periodFromQuery !== "all"
             ? periodFromQuery
             : undefined,
+        standard: standardFromQuery || undefined,
       }),
-    [noteId, subjectFromQuery, topicFromQuery, periodFromQuery]
+    [noteId, subjectFromQuery, topicFromQuery, periodFromQuery, standardFromQuery]
   );
   const [copied, setCopied] = useState(false);
   const [sent, setSent] = useState(false);
   const [toast, setToast] = useState(null);
+  const isSoftStory = note?.kind === "soft-story";
+  const [draft, setDraft] = useState("");
+  useEffect(() => {
+    if (note?.copyMessage) setDraft(note.copyMessage);
+  }, [note?.id, note?.copyMessage]);
 
   const periodId =
     periodFromQuery && periodFromQuery !== "all"
@@ -92,10 +100,27 @@ export default function FamilyNoteClient({ noteId }) {
 
   function handleSendToFamily() {
     if (!note) return;
-    markFamilyNoteSent(note.id, { studentFirst: note.studentFirst });
+    markFamilyNoteSent(note.id, {
+      studentFirst: note.studentFirst,
+      draft: draft || note.copyMessage,
+      kind: note.kind || "kid",
+    });
+    if (note.standard) {
+      try {
+        rememberFamilyCare(note.standard, {
+          source: "family-note",
+          whoLine: note.whoLine || note.studentFirst,
+          names: note.studentNames || undefined,
+        });
+      } catch {
+        /* ignore */
+      }
+    }
     setSent(true);
     setToast({
-      text: `Note queued for ${note.studentFirst}'s family · demo only — no SMS.`,
+      text: isSoftStory
+        ? `Note queued for ${note.whoLine || note.studentFirst} · demo only — no SMS.`
+        : `Note queued for ${note.studentFirst}'s family · demo only — no SMS.`,
       undo: true,
     });
   }
@@ -108,13 +133,14 @@ export default function FamilyNoteClient({ noteId }) {
   }
 
   async function copyMessage() {
-    if (!note?.copyMessage) return;
+    const text = draft || note?.copyMessage;
+    if (!text) return;
     try {
       if (navigator?.clipboard?.writeText) {
-        await navigator.clipboard.writeText(note.copyMessage);
+        await navigator.clipboard.writeText(text);
       } else {
         const ta = document.createElement("textarea");
-        ta.value = note.copyMessage;
+        ta.value = text;
         ta.setAttribute("readonly", "");
         ta.style.position = "absolute";
         ta.style.left = "-9999px";
@@ -187,7 +213,7 @@ export default function FamilyNoteClient({ noteId }) {
               opacity: 0.85,
             }}
           />
-          Family note · teacher one-pager
+          {isSoftStory ? "Family note · from the soft story" : "Family note · teacher one-pager"}
         </div>
 
         <p
@@ -236,10 +262,25 @@ export default function FamilyNoteClient({ noteId }) {
           />
           {note.assignment ? <Chip label={note.assignment} /> : null}
           {periodId ? <Chip label={`Period ${periodId}`} /> : null}
+          {isSoftStory ? <Chip label="Soft story · care" /> : null}
         </div>
 
+        {isSoftStory && note.whyLine ? (
+          <p
+            style={{
+              margin: "12px 0 0",
+              fontSize: 14,
+              fontWeight: 600,
+              color: MUTED,
+              lineHeight: 1.4,
+            }}
+          >
+            Why · {note.whyLine}
+          </p>
+        ) : null}
+
         <section style={{ marginTop: 22 }}>
-          <Label>TODAY&apos;S FOCUS</Label>
+          <Label>{isSoftStory ? "WHAT WE'RE PRACTICING" : "TODAY'S FOCUS"}</Label>
           <p style={{ margin: 0, color: INK, fontSize: 17, lineHeight: 1.45, fontWeight: 600 }}>
             {note.focusPlain}
           </p>
@@ -296,19 +337,28 @@ export default function FamilyNoteClient({ noteId }) {
             padding: "14px 14px 12px",
           }}
         >
-          <Label>MESSAGE STUB · COPY</Label>
-          <pre
+          <Label>{isSoftStory ? "MESSAGE · EDIT & SEND" : "MESSAGE STUB · COPY"}</Label>
+          <textarea
+            value={draft}
+            onChange={(e) => setDraft(e.target.value)}
+            rows={8}
+            aria-label="Family note message"
             style={{
-              margin: "6px 0 0",
+              marginTop: 6,
+              width: "100%",
+              boxSizing: "border-box",
               whiteSpace: "pre-wrap",
               fontFamily: "inherit",
               fontSize: 13,
               lineHeight: 1.45,
               color: INK,
+              background: "#fff",
+              border: `1px solid ${LINE}`,
+              borderRadius: 12,
+              padding: "12px 12px",
+              resize: "vertical",
             }}
-          >
-            {note.copyMessage}
-          </pre>
+          />
           <button
             type="button"
             onClick={copyMessage}
@@ -411,7 +461,9 @@ export default function FamilyNoteClient({ noteId }) {
         </div>
 
         <p style={{ margin: "16px 0 0", color: MUTED, fontSize: 12, lineHeight: 1.45 }}>
-          Teacher share sheet stub — Send queues a demo confirmation (no SMS/email, no parent login). Undo clears the Sent · demo flag in this browser.
+          {isSoftStory
+            ? "Soft-story care door — who + why already filled. Send queues a demo confirmation (no SMS). The loop quietly remembers you reached home."
+            : "Teacher share sheet stub — Send queues a demo confirmation (no SMS/email, no parent login). Undo clears the Sent · demo flag in this browser."}
         </p>
       </Glass>
 
