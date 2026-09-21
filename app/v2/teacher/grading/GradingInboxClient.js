@@ -33,7 +33,7 @@ import {
 } from "../../../../lib/v2/demoGrading";
 import { WHO_NEEDS_ME_HREF } from "../../../../lib/v2/demoWhoNeedsMe";
 import { REPORTS_HREF } from "../../../../lib/v2/demoReports";
-import { getLoopHonesty } from "../../../../lib/v2/demoLoopSeams";
+import { getLoopHonesty, noteEvidenceFromGradeConfirm } from "../../../../lib/v2/demoLoopSeams";
 
 /**
  * CI2.0 grading inbox stub.
@@ -142,6 +142,13 @@ export default function GradingInboxClient() {
       if (!focused) return;
       const next = [...confirmedIds, focused.id];
       persist(next);
+      // Soft-story evidence — confirming soft-cluster work on a standard
+      // quietly cools that story when the whole cluster is on the books.
+      try {
+        noteEvidenceFromGradeConfirm(focused);
+      } catch {
+        /* ignore */
+      }
       const stamped = stampTeacherCheckedFromSubmission(focused);
       const score = scoreOverride != null ? scoreOverride : focused.samScore;
       const stampNote = stamped.length ? " · stamped on My Day." : ".";

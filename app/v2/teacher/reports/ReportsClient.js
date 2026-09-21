@@ -23,7 +23,7 @@ import {
   REPORTS_STANDARD_HREF,
   REPORTS_ASSIGNMENT_HREF,
 } from "../../../../lib/v2/demoReports";
-import { checkInsCtaLabel, FAMILY_NOTE_STORY_ID, checkInsHrefForStandard, softClusterDoors, rememberAwareSamStory, getLoopSoftest, isStandardResolved } from "../../../../lib/v2/demoLoopSeams";
+import { checkInsCtaLabel, FAMILY_NOTE_STORY_ID, checkInsHrefForStandard, softClusterDoors, rememberAwareSamStory, getLoopSoftest, isStandardResolved, resolveKind, clearerNamesFromGrades } from "../../../../lib/v2/demoLoopSeams";
 import { FAMILY_NOTE_HREF } from "../../../../lib/v2/demoFamilyNote";
 import {
   getWhoNeedsMeCount,
@@ -685,7 +685,9 @@ export default function ReportsClient() {
                     )}
                     {" — "}
                     {isStandardResolved(softest.code)
-                      ? "you're covered · still findable"
+                      ? resolveKind(softest.code) === "evidence"
+                        ? `${(clearerNamesFromGrades(softest.code) || []).join(" · ") || "class"} look clearer · still findable`
+                        : "you're covered · still findable"
                       : softNeedsLabel(softest.needsCheckIn).toLowerCase()}
                   </p>
                 ) : (

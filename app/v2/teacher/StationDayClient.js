@@ -81,6 +81,7 @@ export default function StationDayClient() {
   const params = useSearchParams();
   const p = usePlanner();
   const [gradePending, setGradePending] = useState(DEMO_WEEK.gradingCount);
+  const [loopTick, setLoopTick] = useState(0);
   const [whoNeedsCount, setWhoNeedsCount] = useState(0);
   const [focusBlocks, setFocusBlocks] = useState([]);
   const day = Math.min(4, Math.max(0, Number(params.get("d") ?? 2)));
@@ -103,6 +104,7 @@ export default function StationDayClient() {
         })
       );
       setFocusBlocks(readFocusBlocksForDay(day, selectedClass || "all"));
+      setLoopTick((t) => t + 1);
     };
     refresh();
     const onStorage = (e) => {
@@ -201,9 +203,9 @@ export default function StationDayClient() {
         subjectFilter: p.subjectFilter,
         agendaNow: agenda[0] || null,
       }),
-    [p.setup.subjects, selectedClass, cls?.name, p.subjectFilter, agenda]
+    [p.setup.subjects, selectedClass, cls?.name, p.subjectFilter, agenda, loopTick]
   );
-  const loopSoftest = useMemo(() => getLoopSoftest(), []);
+  const loopSoftest = useMemo(() => getLoopSoftest(), [loopTick]);
   const loopHonesty = useMemo(() => getLoopHonesty(), []);
 
   const morningDismissKey = `ci2.morning.dismissed.${DATES[day] || day}`;
