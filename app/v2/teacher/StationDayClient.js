@@ -21,7 +21,6 @@ import {
   getWhoNeedsMeCount,
   readFocusBlocksForDay,
   whoNeedsGlanceText,
-  WHO_NEEDS_ME_HREF,
   WHO_NEEDS_ME_STORAGE_KEY,
 } from "../../../lib/v2/demoWhoNeedsMe";
 import { PROJECT_HREF } from "../../../lib/v2/demoProject";
@@ -39,6 +38,7 @@ import {
   getLoopHonesty,
   getLoopSoftest,
   REPORTS_HREF,
+  checkInsHrefForPeriod,
 } from "../../../lib/v2/demoLoopSeams";
 import {
   StationShell,
@@ -83,6 +83,7 @@ export default function StationDayClient() {
   const [openId, setOpenId] = useState(params.get("open"));
   const cls = p.setup.classes.find((c) => c.key === p.classFilter) || p.setup.classes[0];
   const selectedClass = p.classFilter === "all" ? p.setup.classes[0]?.key : p.classFilter;
+  const checkInsDoor = checkInsHrefForPeriod(selectedClass);
   useEffect(() => {
     const refresh = () => {
       setGradePending(getPendingCount(loadConfirmedIds()));
@@ -152,7 +153,7 @@ export default function StationDayClient() {
         actionLabel: "Check-ins",
         meaning: "needsYou",
         tone: "cream",
-        href: WHO_NEEDS_ME_HREF,
+        href: checkInsDoor,
       });
     }
     const suggestionSlots = Math.max(0, 2 - list.length);
@@ -177,7 +178,7 @@ export default function StationDayClient() {
       });
     }
     return list.slice(0, 3);
-  }, [daySuggestions, cls?.name, gradePending, whoNeedsCount]);
+  }, [daySuggestions, cls?.name, gradePending, whoNeedsCount, checkInsDoor]);
 
   const morningCard = useMemo(
     () =>
@@ -322,7 +323,7 @@ export default function StationDayClient() {
                 watch={morningCard.watch}
                 onDismiss={dismissMorningCard}
                 checkInsCount={whoNeedsCount}
-                checkInsHref={WHO_NEEDS_ME_HREF}
+                checkInsHref={checkInsDoor}
                 softWho={morningCard.softWho}
                 softestHref={morningCard.softestHref}
                 softestCode={morningCard.softestCode}
@@ -610,13 +611,13 @@ export default function StationDayClient() {
                 checkNeeds={whoNeedsCount > 0}
                 planHref="/v2/teacher"
                 teachHref={teachHref}
-                checkHref={whoNeedsCount > 0 ? WHO_NEEDS_ME_HREF : GRADING_INBOX_HREF}
+                checkHref={whoNeedsCount > 0 ? checkInsDoor : GRADING_INBOX_HREF}
               />
             </div>
 
             <div className="df-peek">
               <a
-                href={WHO_NEEDS_ME_HREF}
+                href={checkInsDoor}
                 style={{
                   textDecoration: "none",
                   display: "block",
@@ -686,7 +687,7 @@ export default function StationDayClient() {
                 </button>
               </div>
               <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
-                <WhoNeedsMeChip count={whoNeedsCount} href={WHO_NEEDS_ME_HREF} />
+                <WhoNeedsMeChip count={whoNeedsCount} href={checkInsDoor} />
                 <button
                   type="button"
                   onClick={() => p.setShowSundayPreview(true)}

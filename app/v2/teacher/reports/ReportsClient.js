@@ -23,8 +23,8 @@ import {
   REPORTS_STANDARD_HREF,
   REPORTS_ASSIGNMENT_HREF,
 } from "../../../../lib/v2/demoReports";
-import { checkInsCtaLabel } from "../../../../lib/v2/demoLoopSeams";
-import { FAMILY_NOTE_HREF, FAMILY_NOTE_DEFAULT_ID } from "../../../../lib/v2/demoFamilyNote";
+import { checkInsCtaLabel, FAMILY_NOTE_STORY_ID } from "../../../../lib/v2/demoLoopSeams";
+import { FAMILY_NOTE_HREF } from "../../../../lib/v2/demoFamilyNote";
 import {
   getWhoNeedsMeCount,
   readSelectedClassFilter,
@@ -185,8 +185,8 @@ export default function ReportsClient() {
   const familyNoteCta = (
     <Link
       key="family-note"
-      href={FAMILY_NOTE_HREF(FAMILY_NOTE_DEFAULT_ID)}
-      title="Family note stub — after a kid needs a quiet word home"
+      href={FAMILY_NOTE_HREF(FAMILY_NOTE_STORY_ID)}
+      title="Family note for Sofia — same 5.6B cluster as Check-ins"
       style={{
         ...btnBase,
         ...tertiary,
