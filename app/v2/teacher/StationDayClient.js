@@ -11,6 +11,7 @@ import {
   GRADING_STORAGE_KEY,
   getPendingCount,
   loadConfirmedIds,
+  gradingInboxHref,
 } from "../../../lib/v2/demoGrading";
 import {
   FOCUS_BLOCKS_KEY,
@@ -204,6 +205,11 @@ export default function StationDayClient() {
   const softReportLabel = loopSoftest?.softest?.code
     ? `${loopSoftest.softest.code} report`
     : "Reports";
+
+  const gradingDoor =
+    softOpen && loopSoftest?.softest?.code
+      ? gradingInboxHref({ standard: loopSoftest.softest.code })
+      : GRADING_INBOX_HREF;
 
   // One-time provenance helper (quiet; localStorage dismiss)
   const [showProvenanceHelper, setShowProvenanceHelper] = useState(false);
@@ -412,7 +418,7 @@ export default function StationDayClient() {
 
             {gradePending > 0 ? (
               <Link
-                href={GRADING_INBOX_HREF}
+                href={gradingDoor}
                 style={{ ...btnBase, ...quietTertiary }}
                 title="Open Grading inbox"
               >
@@ -420,7 +426,7 @@ export default function StationDayClient() {
               </Link>
             ) : (
               <Link
-                href={GRADING_INBOX_HREF}
+                href={gradingDoor}
                 style={{ ...btnBase, ...quietTertiary }}
                 title="Open Grading inbox"
               >

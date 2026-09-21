@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { usePlanner } from "../../../lib/v2/usePlanner";
 import { SUBJECTS, DAYS, DATES, DEMO_WEEK, HANDS_OFF_LEVELS } from "../../../lib/v2/demoWeek";
-import { GRADING_INBOX_HREF, GRADING_INBOX_KEY, GRADING_STORAGE_KEY, getPendingCount, loadConfirmedIds } from "../../../lib/v2/demoGrading";
+import { GRADING_INBOX_HREF, GRADING_INBOX_KEY, GRADING_STORAGE_KEY, getPendingCount, loadConfirmedIds, gradingInboxHref } from "../../../lib/v2/demoGrading";
 import {
   getWhoNeedsCountsByClass,
   getWhoNeedsMeCount,
@@ -170,6 +170,11 @@ export default function StationWeekClient() {
   const softReportLabel = loopSoftest?.softest?.code
     ? `${loopSoftest.softest.code} report`
     : "Reports";
+
+  const gradingDoor =
+    softOpen && loopSoftest?.softest?.code
+      ? gradingInboxHref({ standard: loopSoftest.softest.code })
+      : GRADING_INBOX_HREF;
 
   const dialSubjectLabel =
     p.subjectFilter === "all"
@@ -388,7 +393,7 @@ export default function StationWeekClient() {
 
           {gradePending > 0 ? (
             <Link
-              href={GRADING_INBOX_HREF}
+              href={gradingDoor}
               style={{ ...btnBase, ...quietTertiary }}
               title="Open Grading inbox"
             >
@@ -396,7 +401,7 @@ export default function StationWeekClient() {
             </Link>
           ) : (
             <Link
-              href={GRADING_INBOX_HREF}
+              href={gradingDoor}
               style={{ ...btnBase, ...quietTertiary }}
               title="Open Grading inbox"
             >

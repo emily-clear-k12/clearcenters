@@ -251,9 +251,15 @@ export default function CheckInsClient() {
           ? loopSoftest.softest.softCluster || []
           : [];
     if (!names.length) return [];
+    // Soft cast not in this period lens → omit period so kid doors don't
+    // sync the room away; ?student=&standard= still surfaces the cast.
+    const doorPeriod =
+      clusterCards.length > 0
+        ? clusterCards[0]?.periodId || selectedClass
+        : undefined;
     return softClusterDoors(names, {
       standard: softCode || undefined,
-      periodId: selectedClass,
+      periodId: doorPeriod,
       via: "checkins",
     });
   }, [clusterCards, softOpen, loopSoftest, softCode, selectedClass]);
@@ -310,16 +316,37 @@ export default function CheckInsClient() {
 
   /** Sit with the soft cluster — one click covers the glance next-move. */
   const sitWithCluster = useCallback(() => {
-    const targets =
-      clusterCards.length > 0
-        ? clusterCards
-        : cards.filter((c) => c.tone === "needs_you").slice(0, 3);
+    // Prefer soft cast (same who as Focus / Reports), even when this period
+    // lens hides them — never fall back to a different room's waiting kids.
+    let targets = clusterCards.length > 0 ? clusterCards : [];
+    if (!targets.length && softOpen && softCode) {
+      const cast = new Set(
+        (loopSoftest?.softest?.softCluster || []).map((n) =>
+          String(n).trim().toLowerCase()
+        )
+      );
+      const all = getWhoNeedsMeCards(choices, confirmedIds, {
+        classFilter: "all",
+        limit: null,
+      });
+      targets = all.filter(
+        (c) =>
+          String(c.standard || "").trim().toLowerCase() ===
+            String(softCode).toLowerCase() &&
+          (!cast.size ||
+            cast.has(String(c.studentFirst || "").trim().toLowerCase()))
+      );
+    }
+    if (!targets.length) {
+      targets = cards.filter((c) => c.tone === "needs_you").slice(0, 3);
+    }
     if (!targets.length) return;
     const lead = targets[0];
     let block = null;
     for (const card of targets) {
       recordWhoNeedsAction(card.id, "small_group");
       // Merge each name into the same Focus block (day+period+kind).
+      // Keep each kid's home period (Diego → A) so Focus stays period-true.
       block = pushCheckInToDailyFocus(card, "small_group", {
         periodId: card.periodId || selectedClass || "A",
       });
@@ -344,7 +371,16 @@ export default function CheckInsClient() {
       lead.studentFirst;
     setToast({ text: `${names} · on Daily Focus · today · small group.` });
     setOpenKidId(null);
-  }, [clusterCards, cards, softCode, selectedClass]);
+  }, [
+    clusterCards,
+    cards,
+    softCode,
+    softOpen,
+    loopSoftest,
+    choices,
+    confirmedIds,
+    selectedClass,
+  ]);
 
   const addToThisWeek = useCallback(
     (card) => {

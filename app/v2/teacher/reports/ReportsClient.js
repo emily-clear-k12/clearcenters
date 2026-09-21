@@ -30,7 +30,7 @@ import {
   getAllClearSurfaceLine,
   familyNoteSoftStoryHref,
 } from "../../../../lib/v2/demoLoopSeams";
-import { GRADING_INBOX_HREF } from "../../../../lib/v2/demoGrading";
+import { GRADING_INBOX_HREF, gradingInboxHref } from "../../../../lib/v2/demoGrading";
 import {
   getWhoNeedsMeCount,
   readSelectedClassFilter,
@@ -116,6 +116,9 @@ export default function ReportsClient() {
     : periodId && periodId !== "all"
       ? `${CHECK_INS_HREF}?period=${encodeURIComponent(periodId)}`
       : stub.checkInsHref || CHECK_INS_HREF;
+  const gradingDoor = softestCode
+    ? gradingInboxHref({ standard: softestCode })
+    : GRADING_INBOX_HREF;
 
   const waiting = typeof liveCheckIns === "number" && liveCheckIns > 0;
   // loopTick keeps all-clear / Landed voice in sync after resolve.
@@ -345,7 +348,7 @@ export default function ReportsClient() {
               </Link>
             ) : null}
             <Link
-              href={GRADING_INBOX_HREF}
+              href={gradingDoor}
               style={{ ...btnBase, ...quietTertiary }}
               title="Open Grading inbox"
             >
