@@ -34,7 +34,6 @@ import {
 import { WHO_NEEDS_ME_HREF } from "../../../../lib/v2/demoWhoNeedsMe";
 import { REPORTS_HREF } from "../../../../lib/v2/demoReports";
 import {
-  getLoopHonesty,
   noteEvidenceFromGradeConfirm,
   getGradingStoryBand,
   floatSoftClusterPending,
@@ -265,11 +264,8 @@ export default function GradingInboxClient() {
         <div style={{ display: "flex", justifyContent: "space-between", gap: 12, flexWrap: "wrap", alignItems: "flex-start" }}>
           <div>
             <h1 style={{ fontFamily: "'Poppins', sans-serif", margin: 0, fontSize: 34, color: INK }}>Grading</h1>
-            <div style={{ color: MUTED, marginTop: 2 }}>
-              SAM gives a first read · you confirm · never auto-final without you
-            </div>
-            <div style={{ color: MUTED, marginTop: 4, fontSize: 12 }}>
-              {getLoopHonesty()} · same soft story as Check-ins · live submits same browser only
+            <div style={{ color: MUTED, marginTop: 2, fontSize: 14 }}>
+              SAM gives a first read · you confirm
             </div>
             <div style={{ marginTop: 10, display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
               <span
@@ -399,39 +395,24 @@ export default function GradingInboxClient() {
                 <span style={{ fontSize: 12, fontWeight: 700, color: MUTED, whiteSpace: "nowrap" }}>
                   {softPendingCount} soft confirm{softPendingCount === 1 ? "" : "s"} up first
                 </span>
-              ) : null}
-              <Link
-                href={storyBand.checkInsHref || WHO_NEEDS_ME_HREF}
-                style={{
-                  fontSize: 12,
-                  fontWeight: 800,
-                  color: LAVENDER,
-                  textDecoration: "none",
-                  whiteSpace: "nowrap",
-                  border: `1px solid ${LINE}`,
-                  background: "#fff",
-                  borderRadius: 999,
-                  padding: "6px 12px",
-                }}
-              >
-                Check-ins · {storyBand.code}
-              </Link>
-              <Link
-                href={storyBand.href || REPORTS_HREF}
-                style={{
-                  fontSize: 12,
-                  fontWeight: 800,
-                  color: LAVENDER,
-                  textDecoration: "none",
-                  whiteSpace: "nowrap",
-                  border: `1px solid ${LINE}`,
-                  background: "#fff",
-                  borderRadius: 999,
-                  padding: "6px 12px",
-                }}
-              >
-                Report · {storyBand.code} →
-              </Link>
+              ) : (
+                <Link
+                  href={storyBand.href || REPORTS_HREF}
+                  style={{
+                    fontSize: 12,
+                    fontWeight: 800,
+                    color: LAVENDER,
+                    textDecoration: "none",
+                    whiteSpace: "nowrap",
+                    border: `1px solid ${LINE}`,
+                    background: "#fff",
+                    borderRadius: 999,
+                    padding: "6px 12px",
+                  }}
+                >
+                  {storyBand.soft ? "Report →" : `Report · ${storyBand.code} →`}
+                </Link>
+              )}
             </div>
           </div>
         ) : null}

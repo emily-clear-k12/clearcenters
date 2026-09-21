@@ -588,7 +588,9 @@ export function MorningCard({
           }}
         >
           <div style={{ fontSize: 10, fontWeight: 800, color: needs ? GLANCE.needsYou.fg : MUTED, letterSpacing: 0.4, marginBottom: 1 }}>
-            {readiness === "Needs a look"
+            {readiness === "You're covered" || readiness === "Covered"
+              ? "COVERED · CLEAR FOR NOW"
+              : readiness === "Needs a look"
               ? "WATCH · NEEDS A LOOK"
               : readiness === "Mixed"
                 ? "WATCH · MIXED"

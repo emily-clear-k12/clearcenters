@@ -34,6 +34,7 @@ import {
   softClusterDoors,
   DAY_HREF,
   rememberAwareSamStory,
+  isStandardResolved,
 } from "../../../../../../lib/v2/demoLoopSeams";
 
 function usePeriodLens() {
@@ -172,6 +173,7 @@ export default function StandardReportClient({ code }) {
     dayHref,
   } = detail;
   const samStory = rememberAwareSamStory(standard) || samStoryRaw;
+  const landed = isStandardResolved(standard.code);
 
   const checkInsHref = checkInsHrefForStandard(standard.code, { periodId });
   const clusterDoors = softClusterDoors(standard.softCluster || [], {
@@ -296,9 +298,8 @@ export default function StandardReportClient({ code }) {
                 {honesty}
                 {periodLabel ? ` · ${periodLabel}` : ""}
                 {" · "}
-                {classPctLabel}
-                {" · "}
-                {softHint}
+                {landed ? "Landed" : classPctLabel}
+                {landed ? "" : ` · ${softHint}`}
               </p>
             </div>
 
@@ -337,11 +338,11 @@ export default function StandardReportClient({ code }) {
                     fontSize: 11,
                     fontWeight: 800,
                     letterSpacing: 0.35,
-                    color: GLANCE.needsYou.fg,
+                    color: landed ? MUTED : GLANCE.needsYou.fg,
                     textTransform: "uppercase",
                   }}
                 >
-                  Soft cluster · who
+                  {landed ? "Soft cluster · landed" : "Soft cluster · who"}
                 </div>
                 <p
                   style={{

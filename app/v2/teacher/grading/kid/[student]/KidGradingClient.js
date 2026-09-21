@@ -293,7 +293,7 @@ export default function KidGradingClient() {
                 </span>
               )}
               <span style={{ fontSize: 12, color: MUTED }}>
-                {DEMO_TEACHER.name} · same soft story as Reports
+                {DEMO_TEACHER.name}
               </span>
             </div>
           </div>

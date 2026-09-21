@@ -47,7 +47,6 @@ import { removeAddedActivity } from "../../../../lib/v2/demoLibrary";
 import { FAMILY_NOTE_HREF } from "../../../../lib/v2/demoFamilyNote";
 import {
   getCheckInsStoryBand,
-  getLoopHonesty,
   REPORTS_HREF,
   checkInsStandardBanner,
   checkInsClusterHighlightActive,
@@ -189,7 +188,6 @@ useEffect(() => {
 
   const periodLabel = cls?.name || "this class";
   const storyBand = useMemo(() => getCheckInsStoryBand(), []);
-  const loopHonesty = useMemo(() => getLoopHonesty(), []);
 
   const standardBanner = useMemo(
     () => checkInsStandardBanner(standardFocus),
@@ -315,7 +313,11 @@ useEffect(() => {
                   padding: "5px 12px",
                 }}
               >
-                {cards.length === 0 ? "Mostly clear" : cards.length === 1 ? "Needs a look · 1" : `Needs a look · ${cards.length}`}
+                {cards.length === 0
+                  ? (storyBand?.allClear ? "Clear for now" : "Mostly clear")
+                  : cards.length === 1
+                    ? "Needs a look · 1"
+                    : `Needs a look · ${cards.length}`}
               </span>
               <Link
                 href="/v2/teacher/day?d=2"
@@ -338,19 +340,7 @@ useEffect(() => {
               >
                 Grading →
               </Link>
-              <Link
-                href={storyBand?.href || REPORTS_HREF}
-                style={{ fontSize: 13, fontWeight: 700, color: LAVENDER, textDecoration: "none" }}
-                title="Same soft cluster as Reports class story"
-              >
-                Reports · class story →
-              </Link>
             </div>
-            {loopHonesty ? (
-              <div style={{ marginTop: 6, fontSize: 11, color: MUTED, fontWeight: 600 }}>
-                {loopHonesty}
-              </div>
-            ) : null}
           </div>
         </div>
 
@@ -390,7 +380,7 @@ useEffect(() => {
                 padding: "6px 12px",
               }}
             >
-              Open {storyBand.code || "Reports"} →
+              {storyBand.allClear ? "Reports →" : `Open ${storyBand.code || "Reports"} →`}
             </Link>
           </div>
         ) : null}
@@ -428,9 +418,11 @@ useEffect(() => {
                   : "Mostly clear right now"}
               </div>
               <div style={{ color: MUTED, fontSize: 14, lineHeight: 1.45, maxWidth: 380 }}>
-                {p.multiClass
-                  ? `Mostly clear for ${periodLabel}. Nothing waiting — soft cluster still lives on Reports if you want the skill story.`
-                  : "Mostly clear. Nothing waiting — soft cluster still lives on Reports if you want the skill story."}
+                {storyBand?.allClear
+                  ? "Clear for now — soft stories landed. Soft cluster still findable on Reports."
+                  : p.multiClass
+                  ? `Nothing waiting for ${periodLabel}. Soft cluster still findable on Reports.`
+                  : "Nothing waiting. Soft cluster still findable on Reports."}
               </div>
               <div style={{ display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "center" }}>
               <Link

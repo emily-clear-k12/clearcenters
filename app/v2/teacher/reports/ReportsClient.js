@@ -23,7 +23,7 @@ import {
   REPORTS_STANDARD_HREF,
   REPORTS_ASSIGNMENT_HREF,
 } from "../../../../lib/v2/demoReports";
-import { checkInsCtaLabel, FAMILY_NOTE_STORY_ID, checkInsHrefForStandard, softClusterDoors, rememberAwareSamStory, getLoopSoftest, isStandardResolved, resolveKind, clearerNamesFromGrades } from "../../../../lib/v2/demoLoopSeams";
+import { checkInsCtaLabel, FAMILY_NOTE_STORY_ID, checkInsHrefForStandard, softClusterDoors, rememberAwareSamStory, getLoopSoftest, isStandardResolved, resolveKind, clearerNamesFromGrades, isLoopAllClear, getAllClearSurfaceLine, getAllClearRailPeek } from "../../../../lib/v2/demoLoopSeams";
 import { FAMILY_NOTE_HREF } from "../../../../lib/v2/demoFamilyNote";
 import {
   getWhoNeedsMeCount,
@@ -41,12 +41,10 @@ import { TEACHER_SETUPS } from "../../../../lib/v2/demoWeek";
  */
 export default function ReportsClient() {
   const stub = getReportsStub();
-  const samStory = stub.softest
-    ? rememberAwareSamStory(stub.softest, null)
-    : stub.samStory;
   const [liveCheckIns, setLiveCheckIns] = useState(null);
   const [periodId, setPeriodId] = useState(null);
   const [periodLabel, setPeriodLabel] = useState(null);
+  const [loopTick, setLoopTick] = useState(0);
 
   useEffect(() => {
     const refresh = () => {
@@ -93,10 +91,15 @@ export default function ReportsClient() {
     window.addEventListener("storage", onStorage);
     window.addEventListener("focus", refresh);
     window.addEventListener("ci2-who-needs-updated", refresh);
+    const bumpLoop = () => setLoopTick((n) => n + 1);
+    window.addEventListener("ci2-loop-remember-updated", bumpLoop);
+    window.addEventListener("ci2-grading-updated", bumpLoop);
     return () => {
       window.removeEventListener("storage", onStorage);
       window.removeEventListener("focus", refresh);
       window.removeEventListener("ci2-who-needs-updated", refresh);
+      window.removeEventListener("ci2-loop-remember-updated", bumpLoop);
+      window.removeEventListener("ci2-grading-updated", bumpLoop);
     };
   }, []);
 
@@ -112,6 +115,14 @@ export default function ReportsClient() {
   });
 
   const waiting = typeof liveCheckIns === "number" && liveCheckIns > 0;
+  // loopTick keeps all-clear / Landed voice in sync after resolve.
+  void loopTick;
+  const allClear = typeof window !== "undefined" ? isLoopAllClear() : false;
+  const samStory = allClear
+    ? getAllClearSurfaceLine("reports")
+    : stub.softest
+      ? rememberAwareSamStory(stub.softest, null)
+      : stub.samStory;
 
   const liveLabel =
     liveCheckIns == null
@@ -222,7 +233,8 @@ export default function ReportsClient() {
     nextMove && softest && nextMove.code !== softest.code
       ? `Open ${nextMove.code} report`
       : stub.softestNextMoveLabel;
-  const softestNextMoveCta = nextMove ? (
+  const softestNextMoveCta =
+    nextMove && !allClear ? (
     <Link
       key="softest-next"
       href={nextMoveHref}
@@ -376,7 +388,7 @@ export default function ReportsClient() {
             >
               {samStory}
             </p>
-            {softest ? (
+            {softest && !allClear ? (
               <div
                 style={{
                   marginTop: 12,
@@ -454,7 +466,8 @@ export default function ReportsClient() {
               </div>
               {storyTrail.map((item) => {
                 const row = item.standard;
-                const soft = isSoftStandardRow(row);
+                const soft =
+                  isSoftStandardRow(row) && !isStandardResolved(row.code);
                 return (
                   <article
                     key={row.id}
@@ -571,7 +584,9 @@ export default function ReportsClient() {
                               flexShrink: 0,
                             }}
                           >
-                            {softClassPctLabel(row.classPct)}
+                            {isStandardResolved(row.code)
+                              ? "Landed"
+                              : softClassPctLabel(row.classPct)}
                           </span>
                         </div>
                       </Link>
@@ -644,7 +659,19 @@ export default function ReportsClient() {
                 >
                   Next move
                 </div>
-                {softest ? (
+                {allClear ? (
+                  <p
+                    style={{
+                      margin: "8px 0 0",
+                      fontSize: 13,
+                      fontWeight: 600,
+                      color: INK,
+                      lineHeight: 1.45,
+                    }}
+                  >
+                    {getAllClearRailPeek()}
+                  </p>
+                ) : softest ? (
                   <p
                     style={{
                       margin: "8px 0 0",
@@ -657,36 +684,11 @@ export default function ReportsClient() {
                     {isStandardResolved(softest.code)
                       ? `Landed · ${softest.code}`
                       : `Softest · ${softest.code}`}
-                    {softestDoors.length ? (
-                      <>
-                        {" · "}
-                        {softestDoors.map((d, i) => (
-                          <span key={d.name}>
-                            {i > 0 ? " · " : ""}
-                            <Link
-                              href={d.href}
-                              title={`Open ${d.name}`}
-                              style={{
-                                color: LAVENDER,
-                                fontWeight: 800,
-                                textDecoration: "none",
-                                borderBottom: `1px dashed ${LINE}`,
-                              }}
-                            >
-                              {d.name}
-                            </Link>
-                          </span>
-                        ))}
-                      </>
-                    ) : stub.softestWho ? (
-                      ` · ${stub.softestWho}`
-                    ) : (
-                      ""
-                    )}
+                    {stub.softestWho ? ` · ${stub.softestWho}` : ""}
                     {" — "}
                     {isStandardResolved(softest.code)
                       ? resolveKind(softest.code) === "evidence"
-                        ? `${(clearerNamesFromGrades(softest.code) || []).join(" · ") || "class"} look clearer · still findable`
+                        ? "look clearer · still findable"
                         : "you're covered · still findable"
                       : softNeedsLabel(softest.needsCheckIn).toLowerCase()}
                   </p>

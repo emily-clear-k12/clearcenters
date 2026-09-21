@@ -35,7 +35,7 @@ import {
 } from "../../../lib/v2/demoLibrary";
 import { writeSundayPendingUndo } from "../../../lib/v2/demoSundayBridge";
 import {
-  getLoopHonesty,
+  getAllClearRailPeek,
   getLoopSoftest,
   REPORTS_HREF,
   checkInsHrefForPeriod,
@@ -206,7 +206,6 @@ export default function StationDayClient() {
     [p.setup.subjects, selectedClass, cls?.name, p.subjectFilter, agenda, loopTick]
   );
   const loopSoftest = useMemo(() => getLoopSoftest(), [loopTick]);
-  const loopHonesty = useMemo(() => getLoopHonesty(), []);
 
   const morningDismissKey = `ci2.morning.dismissed.${DATES[day] || day}`;
   const [morningDismissed, setMorningDismissed] = useState(false);
@@ -308,11 +307,6 @@ export default function StationDayClient() {
             <div style={{ color: MUTED, marginTop: 2, fontSize: 14 }}>
               Teach today · {DAY_NAMES[day]} · {DATES[day]} · {p.published ? "published" : "not published yet"} · {minutes} min
             </div>
-            {loopHonesty ? (
-              <div style={{ color: MUTED, marginTop: 4, fontSize: 11, fontWeight: 600 }}>
-                {loopHonesty}
-              </div>
-            ) : null}
             <div style={{ marginTop: 10, display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
               <SetupSwitcher setupKey={p.setupKey} onChange={p.setSetupKey} />
               {!p.multiClass && <SingleRoomLabel cls={cls} setup={p.setup} />}
@@ -338,9 +332,9 @@ export default function StationDayClient() {
                 onDismiss={dismissMorningCard}
                 checkInsCount={whoNeedsCount}
                 checkInsHref={checkInsDoor}
-                softWho={morningCard.softWho}
+                softWho={null}
                 softestHref={morningCard.softestHref}
-                softestCode={morningCard.softestCode}
+                softestCode={morningCard.readiness === "You're covered" ? null : morningCard.softestCode}
                 readiness={morningCard.readiness}
               />
             )}
@@ -681,7 +675,9 @@ export default function StationDayClient() {
               >
                 <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: 0.35, color: MUTED }}>REPORTS · CLASS STORY</div>
                 <div style={{ fontWeight: 700, marginTop: 4, fontSize: 15 }}>
-                  {loopSoftest
+                  {loopSoftest?.urgency === "cooled"
+                    ? getAllClearRailPeek()
+                    : loopSoftest
                     ? `${loopSoftest.readiness}${loopSoftest.whoLine ? ` · ${loopSoftest.whoLine}` : ""}`
                     : "Open class story"}
                 </div>
