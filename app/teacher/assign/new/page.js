@@ -381,26 +381,37 @@ function NewAssignmentContent() {
                     </div>
 
                     <div style={{ fontSize: 11, fontWeight: 700, color: COLORS.textMuted, textTransform: "uppercase", letterSpacing: .4, marginBottom: 8 }}>Subject</div>
-                    <div style={{ display: "flex", gap: 14, marginBottom: 14 }}>
+                    {/* Sept 21, 2026 — Math and ELAR tiles added alongside Science and
+                        Social Studies (2x2 grid, so each tile keeps the size it had in the
+                        old two-across row). `v` must match cases.subject exactly.
+                        Tile colors are the four subject frame colors. Until
+                        subject_math.jpg / subject_elar.jpg exist in public/teacher/,
+                        the image hides itself on error and the colored label
+                        underneath shows instead — no broken-image icon. */}
+                    <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 14, marginBottom: 14 }}>
                       {[
-                        { v: "Science", img: "/teacher/subject_science.jpg" },
-                        { v: "Social Studies", img: "/teacher/subject_social_studies.jpg" },
+                        { v: "Science", img: "/teacher/subject_science.jpg", color: "#39D97A" },
+                        { v: "Social Studies", img: "/teacher/subject_social_studies.jpg", color: "#FFDD40" },
+                        { v: "Math", img: "/teacher/subject_math.jpg", color: "#22C3F0" },
+                        { v: "ELAR", img: "/teacher/subject_elar.jpg", color: "#E0338E" },
                       ].map((s) => (
                         <button
                           key={s.v}
                           className="gc-btn"
                           onClick={() => setBrowseSubject(s.v)}
                           style={{
-                            flex: 1,
+                            position: "relative",
                             height: 130,
                             borderRadius: 16,
                             border: browseSubject === s.v ? `3px solid ${ACCENT}` : "3px solid transparent",
                             padding: 0,
                             overflow: "hidden",
+                            background: `linear-gradient(135deg, ${s.color}40, #F4F1FF 70%)`,
                             boxShadow: browseSubject === s.v ? `0 6px 18px ${ACCENT}47` : "0 2px 8px rgba(13,27,42,.06)",
                           }}
                         >
-                          <img src={s.img} alt={s.v} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+                          <span style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 26, fontWeight: 800, color: "#3B2A7A", letterSpacing: .3 }}>{s.v}</span>
+                          <img src={s.img} alt={s.v} onError={(e) => { e.currentTarget.style.display = "none"; }} style={{ position: "relative", width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
                         </button>
                       ))}
                     </div>
