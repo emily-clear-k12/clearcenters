@@ -33,16 +33,24 @@ import {
 } from "../../../../lib/v2/demoGrading";
 import { WHO_NEEDS_ME_HREF } from "../../../../lib/v2/demoWhoNeedsMe";
 import { REPORTS_HREF } from "../../../../lib/v2/demoReports";
-import { getLoopHonesty, noteEvidenceFromGradeConfirm } from "../../../../lib/v2/demoLoopSeams";
+import {
+  getLoopHonesty,
+  noteEvidenceFromGradeConfirm,
+  getGradingStoryBand,
+  floatSoftClusterPending,
+  resolveGradingStoryCode,
+  kidDoorHref,
+} from "../../../../lib/v2/demoLoopSeams";
 
 /**
- * CI2.0 grading inbox stub.
- * SAM suggests; teacher confirms. Never auto-final without her.
+ * CI2.0 grading inbox — same soft-story voice as Focus / Check-ins / Reports.
+ * SAM suggests; teacher confirms. Soft-cluster rows float when a story is active.
  * Demo items + same-browser live submits (ci2.grading.inbox).
  */
 export default function GradingInboxClient() {
   const searchParams = useSearchParams();
   const studentParam = (searchParams.get("student") || "").trim();
+  const standardParam = (searchParams.get("standard") || "").trim();
   const [confirmedIds, setConfirmedIds] = useState([]);
   const [liveInbox, setLiveInbox] = useState([]);
   const [hydrated, setHydrated] = useState(false);
@@ -52,6 +60,7 @@ export default function GradingInboxClient() {
   const [adjusting, setAdjusting] = useState(false);
   const [draftScore, setDraftScore] = useState(null);
   const [toast, setToast] = useState(null);
+  const [rememberTick, setRememberTick] = useState(0);
 
   const refreshFromStorage = useCallback(() => {
     setConfirmedIds(loadConfirmedIds());
@@ -65,13 +74,19 @@ export default function GradingInboxClient() {
       if (e.key === GRADING_STORAGE_KEY || e.key === GRADING_INBOX_KEY) {
         refreshFromStorage();
       }
+      if (e.key === "ci2.loop.remember") {
+        setRememberTick((n) => n + 1);
+      }
     };
+    const onRemember = () => setRememberTick((n) => n + 1);
     window.addEventListener("storage", onStorage);
     window.addEventListener("ci2-grading-updated", refreshFromStorage);
+    window.addEventListener("ci2-loop-remember-updated", onRemember);
     window.addEventListener("focus", refreshFromStorage);
     return () => {
       window.removeEventListener("storage", onStorage);
       window.removeEventListener("ci2-grading-updated", refreshFromStorage);
+      window.removeEventListener("ci2-loop-remember-updated", onRemember);
       window.removeEventListener("focus", refreshFromStorage);
     };
   }, [refreshFromStorage]);
@@ -85,11 +100,22 @@ export default function GradingInboxClient() {
 
   const confirmedSet = useMemo(() => new Set(confirmedIds), [confirmedIds]);
 
+  // Soft story — ?standard= or loop softest. Tick refreshes after evidence confirm.
+  const storyBand = useMemo(() => {
+    void rememberTick;
+    void confirmedIds;
+    if (!hydrated) return null;
+    return getGradingStoryBand({ standard: standardParam });
+  }, [hydrated, standardParam, rememberTick, confirmedIds]);
+
+  const storyCode = storyBand?.code || resolveGradingStoryCode(standardParam);
+
   // liveInbox in deps so same-tab submit → inbox refresh works
   const pendingAll = useMemo(() => {
     void liveInbox;
-    return getPendingSubmissions(confirmedIds, sortMode);
-  }, [confirmedIds, sortMode, liveInbox]);
+    const raw = getPendingSubmissions(confirmedIds, sortMode);
+    return storyCode ? floatSoftClusterPending(raw, storyCode) : raw;
+  }, [confirmedIds, sortMode, liveInbox, storyCode]);
 
   const pending = useMemo(() => {
     const name = String(studentFilter || "").trim().toLowerCase();
@@ -98,6 +124,19 @@ export default function GradingInboxClient() {
       (s) => String(s.studentFirst || "").trim().toLowerCase() === name
     );
   }, [pendingAll, studentFilter]);
+
+  const softPendingCount = useMemo(() => {
+    if (!storyCode || !storyBand?.cluster?.length) return 0;
+    const cluster = new Set(
+      storyBand.cluster.map((n) => String(n).trim().toLowerCase())
+    );
+    const key = String(storyCode).trim().toUpperCase();
+    return pendingAll.filter(
+      (s) =>
+        String(s.standard || "").trim().toUpperCase() === key &&
+        cluster.has(String(s.studentFirst || "").trim().toLowerCase())
+    ).length;
+  }, [pendingAll, storyCode, storyBand]);
 
   const done = useMemo(() => {
     const live = liveInbox.filter((s) => confirmedSet.has(s.id));
@@ -124,6 +163,22 @@ export default function GradingInboxClient() {
     );
     if (hit) setFocusId(hit.id);
   }, [hydrated, studentParam, pendingAll]);
+
+  // Soft story arrive: focus first floated soft-cluster confirm (unless student= set)
+  useEffect(() => {
+    if (!hydrated || studentParam || !storyCode || !softPendingCount) return;
+    if (focusId) return;
+    const key = String(storyCode).trim().toUpperCase();
+    const cluster = new Set(
+      (storyBand?.cluster || []).map((n) => String(n).trim().toLowerCase())
+    );
+    const hit = pendingAll.find(
+      (s) =>
+        String(s.standard || "").trim().toUpperCase() === key &&
+        cluster.has(String(s.studentFirst || "").trim().toLowerCase())
+    );
+    if (hit) setFocusId(hit.id);
+  }, [hydrated, studentParam, storyCode, softPendingCount, pendingAll, storyBand, focusId]);
 
   useEffect(() => {
     if (focused && focusId !== focused.id) setFocusId(focused.id);
@@ -214,7 +269,7 @@ export default function GradingInboxClient() {
               SAM gives a first read · you confirm · never auto-final without you
             </div>
             <div style={{ color: MUTED, marginTop: 4, fontSize: 12 }}>
-              {getLoopHonesty()} · live submits same browser only
+              {getLoopHonesty()} · same soft story as Check-ins · live submits same browser only
             </div>
             <div style={{ marginTop: 10, display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
               <span
@@ -228,7 +283,7 @@ export default function GradingInboxClient() {
                   border: `1px solid ${LINE}`,
                 }}
               >
-                {pendingCount === 0 ? "Caught up" : `${pendingCount} to grade`}
+                {pendingCount === 0 ? "Caught up" : pendingCount === 1 ? "Needs a look · 1 waiting" : `Needs a look · ${pendingCount} waiting`}
               </span>
               <Link
                 href={WHO_NEEDS_ME_HREF}
@@ -316,6 +371,71 @@ export default function GradingInboxClient() {
           </div>
         </div>
 
+        {storyBand ? (
+          <div
+            style={{
+              marginTop: 14,
+              ...glanceCardStyle(storyBand.soft ? "ready" : "teach"),
+              borderRadius: 14,
+              padding: "10px 14px",
+              display: "flex",
+              gap: 12,
+              flexWrap: "wrap",
+              alignItems: "center",
+              justifyContent: "space-between",
+            }}
+          >
+            <div style={{ minWidth: 0, flex: 1 }}>
+              <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: 0.35, color: MUTED }}>
+                {storyBand.title.toUpperCase()}
+                {storyBand.readiness ? ` · ${storyBand.readiness}` : ""}
+              </div>
+              <div style={{ fontSize: 14, color: INK, marginTop: 2, lineHeight: 1.4 }}>
+                {storyBand.line}
+              </div>
+            </div>
+            <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
+              {softPendingCount > 0 ? (
+                <span style={{ fontSize: 12, fontWeight: 700, color: MUTED, whiteSpace: "nowrap" }}>
+                  {softPendingCount} soft confirm{softPendingCount === 1 ? "" : "s"} up first
+                </span>
+              ) : null}
+              <Link
+                href={storyBand.checkInsHref || WHO_NEEDS_ME_HREF}
+                style={{
+                  fontSize: 12,
+                  fontWeight: 800,
+                  color: LAVENDER,
+                  textDecoration: "none",
+                  whiteSpace: "nowrap",
+                  border: `1px solid ${LINE}`,
+                  background: "#fff",
+                  borderRadius: 999,
+                  padding: "6px 12px",
+                }}
+              >
+                Check-ins · {storyBand.code}
+              </Link>
+              <Link
+                href={storyBand.href || REPORTS_HREF}
+                style={{
+                  fontSize: 12,
+                  fontWeight: 800,
+                  color: LAVENDER,
+                  textDecoration: "none",
+                  whiteSpace: "nowrap",
+                  border: `1px solid ${LINE}`,
+                  background: "#fff",
+                  borderRadius: 999,
+                  padding: "6px 12px",
+                }}
+              >
+                Report · {storyBand.code} →
+              </Link>
+            </div>
+          </div>
+        ) : null}
+
         <div
           style={{
             display: "grid",
@@ -327,9 +447,9 @@ export default function GradingInboxClient() {
           className="grading-inbox-grid"
         >
           {/* Inbox list */}
-          <section aria-label="Needs you inbox" style={{ background: SOFT_LAV, border: `1px solid ${LINE}`, borderRadius: 18, padding: 10 }}>
+          <section aria-label="Needs a look" style={{ background: SOFT_LAV, border: `1px solid ${LINE}`, borderRadius: 18, padding: 10 }}>
             <div style={{ fontWeight: 800, color: INK, fontSize: 13, letterSpacing: 0.3, padding: "4px 6px 10px" }}>
-              Needs you · {pending.length}
+              Needs a look · {pending.length}
             </div>
             <div style={{ display: "grid", gap: 8, maxHeight: "min(62vh, 560px)", overflow: "auto" }}>
               {pending.length === 0 && (
@@ -398,6 +518,13 @@ export default function GradingInboxClient() {
               {pending.map((s) => {
                 const sub = subjectMeta(s.subject);
                 const on = focused?.id === s.id;
+                const isSoftRow =
+                  Boolean(storyCode) &&
+                  String(s.standard || "").trim().toUpperCase() ===
+                    String(storyCode).trim().toUpperCase() &&
+                  (storyBand?.cluster || [])
+                    .map((n) => String(n).trim().toLowerCase())
+                    .includes(String(s.studentFirst || "").trim().toLowerCase());
                 return (
                   <button
                     key={s.id}
@@ -412,8 +539,12 @@ export default function GradingInboxClient() {
                       fontFamily: "inherit",
                       borderRadius: 14,
                       padding: "10px 12px",
-                      border: `2px solid ${on ? LAVENDER : LINE}`,
-                      background: on ? "rgba(139,108,255,.10)" : "#fff",
+                      border: `2px solid ${on ? LAVENDER : isSoftRow ? "rgba(139,108,255,.45)" : LINE}`,
+                      background: on
+                        ? "rgba(139,108,255,.10)"
+                        : isSoftRow
+                          ? "rgba(139,108,255,.05)"
+                          : "#fff",
                       color: INK,
                       display: "flex",
                       gap: 10,
@@ -423,9 +554,17 @@ export default function GradingInboxClient() {
                     <div style={{ minWidth: 0, flex: 1 }}>
                       <div style={{ display: "flex", justifyContent: "space-between", gap: 8, flexWrap: "wrap" }}>
                         <Link
-                          href={kidGradingHref({ studentFirst: s.studentFirst })}
+                          href={
+                            storyCode
+                              ? kidDoorHref(s.studentFirst, { standard: storyCode })
+                              : kidGradingHref({ studentFirst: s.studentFirst })
+                          }
                           onClick={(e) => e.stopPropagation()}
-                          title={`Open ${s.studentFirst}'s grades across subjects`}
+                          title={
+                            storyCode
+                              ? `Open ${s.studentFirst} · soft story TEKS ${storyCode}`
+                              : `Open ${s.studentFirst}'s grades across subjects`
+                          }
                           style={{ fontWeight: 800, fontSize: 14, color: INK, textDecoration: "none", borderBottom: `1px dashed ${LINE}` }}
                         >
                           {s.studentFirst}
@@ -446,7 +585,9 @@ export default function GradingInboxClient() {
                           </span>
                         )}
                         {s.standard && (
-                          <span style={{ fontSize: 11, fontWeight: 700, color: MUTED }}>{s.standard}</span>
+                          <span style={{ fontSize: 11, fontWeight: 700, color: isSoftRow ? LAVENDER : MUTED }}>
+                            {isSoftRow ? `Soft · ${s.standard}` : s.standard}
+                          </span>
                         )}
                       </div>
                     </div>
@@ -507,7 +648,7 @@ export default function GradingInboxClient() {
               >
                 <div style={{ fontWeight: 800, fontSize: 17, lineHeight: 1.3 }}>You&apos;re clear</div>
                 <div style={{ color: MUTED, fontSize: 14, lineHeight: 1.45, maxWidth: 420 }}>
-                  No submissions need a look right now. When kids turn work in, SAM will queue a first read here — you still confirm every score.
+                  Nothing needs a look right now. When kids turn work in, SAM offers a first read — you still confirm every score.
                 </div>
                 <div style={{ display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "center" }}>
                   <Link
@@ -626,7 +767,7 @@ export default function GradingInboxClient() {
                   border: `1px solid ${LINE}`,
                   whiteSpace: "nowrap",
                 }}
-                title="Calm glance by standard — demo bars, not live analytics"
+                title="Calm glance by standard — same soft story as Reports"
               >
                 {toast.growthLabel || "See growth →"}
               </Link>

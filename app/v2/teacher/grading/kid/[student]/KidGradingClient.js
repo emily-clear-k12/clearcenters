@@ -38,7 +38,10 @@ import {
 } from "../../../../../../lib/v2/demoWhoNeedsMe";
 import { FAMILY_NOTE_HREF } from "../../../../../../lib/v2/demoFamilyNote";
 import { REPORTS_STANDARD_HREF } from "../../../../../../lib/v2/demoReports";
-import { rememberSitWithCluster } from "../../../../../../lib/v2/demoLoopSeams";
+import {
+  rememberSitWithCluster,
+  kidDoorWhyLine,
+} from "../../../../../../lib/v2/demoLoopSeams";
 
 /**
  * Kid-first grading — one tap → all subjects for that student.
@@ -113,7 +116,11 @@ export default function KidGradingClient() {
     [studentFirst, confirmedIds]
   );
 
-  const inboxFilterHref = gradingInboxHref({ studentFirst: view.studentFirst });
+  const inboxFilterHref = gradingInboxHref({
+    studentFirst: view.studentFirst,
+    ...(fromCode ? { standard: fromCode } : {}),
+  });
+  const whyLine = fromReport && fromCode ? kidDoorWhyLine(fromCode, view.studentFirst) : null;
 
   const familyHref = useMemo(() => {
     const subjectKey = view.struggleSubjectKey || "math";
@@ -227,6 +234,23 @@ export default function KidGradingClient() {
             <div style={{ color: MUTED, marginTop: 4, fontSize: 14, lineHeight: 1.45, maxWidth: 520 }}>
               Everything for {view.studentFirst} in one place — tap <strong style={{ color: INK, fontWeight: 700 }}>More</strong> on a subject for the full list.
             </div>
+            {whyLine ? (
+              <div
+                style={{
+                  marginTop: 8,
+                  fontSize: 13,
+                  fontWeight: 600,
+                  color: INK,
+                  lineHeight: 1.4,
+                  maxWidth: 520,
+                  ...glanceCardStyle("teach"),
+                  borderRadius: 12,
+                  padding: "8px 12px",
+                }}
+              >
+                {whyLine}
+              </div>
+            ) : null}
             <div style={{ marginTop: 10, display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
               {view.overallPct != null && (
                 <span
@@ -240,7 +264,7 @@ export default function KidGradingClient() {
                     border: `1px solid ${LINE}`,
                   }}
                 >
-                  Overall · {view.overallPct}%
+                  {fromReport && fromCode ? `Glance · ${view.overallPct}%` : `Overall · ${view.overallPct}%`}
                 </span>
               )}
               {view.needsCount > 0 ? (
@@ -269,7 +293,7 @@ export default function KidGradingClient() {
                 </span>
               )}
               <span style={{ fontSize: 12, color: MUTED }}>
-                {DEMO_TEACHER.name} · demo gradebook
+                {DEMO_TEACHER.name} · same soft story as Reports
               </span>
             </div>
           </div>

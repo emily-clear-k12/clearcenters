@@ -330,8 +330,11 @@ useEffect(() => {
                 This Week →
               </Link>
               <Link
-                href={GRADING_INBOX_HREF}
+                href={gradingInboxHref({
+                  standard: standardFocus || storyBand?.code || undefined,
+                })}
                 style={{ fontSize: 13, fontWeight: 700, color: LAVENDER, textDecoration: "none" }}
+                title="Same soft story — confirm when you've looked"
               >
                 Grading →
               </Link>
