@@ -15,17 +15,13 @@ import {
   LINE,
   LAVENDER,
   SOFT_LAV,
-  MINT,
-  CREAM,
   GLANCE,
   glanceChipStyle,
-  glanceCardStyle,
 } from "../../../../components/v2/StationShell";
 import { usePlanner } from "../../../../lib/v2/usePlanner";
 import {
-  GRADING_INBOX_HREF,
-  GRADING_INBOX_KEY,
   GRADING_STORAGE_KEY,
+  GRADING_INBOX_KEY,
   findPendingForStudent,
   gradingInboxHref,
   kidGradingHref,
@@ -51,12 +47,18 @@ import {
   checkInsStandardBanner,
   checkInsClusterHighlightActive,
   rememberSitWithCluster,
+  getLoopSoftest,
+  softClusterDoors,
+  isLoopAllClear,
+  isStandardResolved,
 } from "../../../../lib/v2/demoLoopSeams";
 
 /**
- * CI2.0 Check-ins — reteach / small-group stub. Route: /v2/teacher/check-ins.
- * 1–3 calm cards. Actions persist in localStorage; dismissed leave the list.
- * Departmentalized: same RoomCards / classFilter as Daily Focus (synced via usePlanner).
+ * CI2.0 Check-ins glance — INTUITIVE · fewer clicks.
+ * Top: quiet class story. Slim next-move row. Main: who waiting + soft cluster
+ * with named kid doors. Depth (actions / evidence) on kid expand only.
+ * Amber only when live waiting > 0. No Demo shout.
+ * Preserves: ?standard= / ?period= / ?student=, soft resolve, remember, kid doors.
  */
 export default function CheckInsClient() {
   const p = usePlanner();
@@ -68,9 +70,8 @@ export default function CheckInsClient() {
   const [confirmedIds, setConfirmedIds] = useState([]);
   const [hydrated, setHydrated] = useState(false);
   const [toast, setToast] = useState(null);
+  const [openKidId, setOpenKidId] = useState(null);
 
-  // Quiet period sync — Reports spark / Family note deep links may pass ?period=.
-  
   useEffect(() => {
     const bump = () => setRememberTick((n) => n + 1);
     window.addEventListener("ci2-loop-remember-updated", bump);
@@ -81,7 +82,7 @@ export default function CheckInsClient() {
     };
   }, []);
 
-useEffect(() => {
+  useEffect(() => {
     const period = (searchParams?.get("period") || "").trim();
     if (!period || period === "all") return;
     try {
@@ -174,6 +175,16 @@ useEffect(() => {
     return ordered.slice(0, keep);
   }, [choices, confirmedIds, hydrated, p.hydrated, filterOpts, studentFocus, standardFocus]);
 
+  // Deep-link / focus opens the matching kid for actions (depth only).
+  useEffect(() => {
+    if (!studentFocus || !cards.length) return;
+    const hit = cards.find(
+      (c) =>
+        String(c.studentFirst || "").trim().toLowerCase() ===
+        studentFocus.toLowerCase()
+    );
+    if (hit) setOpenKidId(hit.id);
+  }, [studentFocus, cards]);
 
   const needsByClass = useMemo(() => {
     const keys = p.setup.classes.map((c) => c.key);
@@ -187,11 +198,15 @@ useEffect(() => {
   }, [p.setup.classes, choices, confirmedIds, hydrated, p.hydrated]);
 
   const periodLabel = cls?.name || "this class";
-  const storyBand = useMemo(() => getCheckInsStoryBand(), []);
-
+  // rememberTick re-reads localStorage after sit/reteach / resolve
+  void rememberTick;
+  const storyBand = useMemo(
+    () => getCheckInsStoryBand(),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [rememberTick]
+  );
   const standardBanner = useMemo(
     () => checkInsStandardBanner(standardFocus),
-    // rememberTick re-reads localStorage after sit/reteach
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [standardFocus, rememberTick]
   );
@@ -201,54 +216,152 @@ useEffect(() => {
     [standardFocus, rememberTick]
   );
 
+  const loopSoftest =
+    typeof window !== "undefined" ? getLoopSoftest() : null;
+  const allClear =
+    typeof window !== "undefined" ? isLoopAllClear() : false;
+  const waiting = cards.length > 0;
+  const softOpen =
+    !allClear &&
+    loopSoftest?.softest &&
+    loopSoftest.urgency !== "cooled" &&
+    !isStandardResolved(loopSoftest.softest.code);
 
-  const act = useCallback((card, action) => {
-    const next = recordWhoNeedsAction(card.id, action);
-    setChoices(next);
-    // Loop remember — sitting with soft cluster quiets the ?standard= banner on return.
+  const softCode =
+    standardFocus ||
+    (softOpen && loopSoftest?.softest?.code) ||
+    storyBand?.code ||
+    null;
+
+  const clusterCards = useMemo(() => {
+    if (!softCode) return [];
+    return cards.filter(
+      (c) =>
+        String(c.standard || "").trim().toLowerCase() ===
+        String(softCode).toLowerCase()
+    );
+  }, [cards, softCode]);
+
+  const softDoors = useMemo(() => {
+    const names =
+      clusterCards.length > 0
+        ? clusterCards.map((c) => c.studentFirst).filter(Boolean)
+        : softOpen && loopSoftest?.softest
+          ? loopSoftest.softest.softCluster || []
+          : [];
+    if (!names.length) return [];
+    return softClusterDoors(names, {
+      standard: softCode || undefined,
+      periodId: selectedClass,
+      via: "checkins",
+    });
+  }, [clusterCards, softOpen, loopSoftest, softCode, selectedClass]);
+
+  const whoLine =
+    softDoors.length > 0
+      ? softDoors.map((d) => d.name).join(" · ")
+      : storyBand?.whoLine || null;
+
+  const classStory = allClear
+    ? storyBand?.line || "Clear for now — nothing soft nagging."
+    : storyBand?.line ||
+      (whoLine && softCode
+        ? `${storyBand?.readiness || "Needs a look"} · ${whoLine} on TEKS ${softCode}.`
+        : `Steady look for ${periodLabel}.`);
+
+  const softReportHref = storyBand?.href || REPORTS_HREF;
+  const softReportLabel = softCode ? `${softCode} report` : "Reports";
+
+  const act = useCallback(
+    (card, action) => {
+      const next = recordWhoNeedsAction(card.id, action);
+      setChoices(next);
+      // Loop remember — sitting with soft cluster quiets the ?standard= banner on return.
+      try {
+        const code = String(card.standard || standardFocus || "").trim();
+        if (code) {
+          rememberSitWithCluster(code, {
+            kidOpened: card.studentFirst,
+            source: "check-ins",
+          });
+          setRememberTick((n) => n + 1);
+        }
+      } catch {
+        /* ignore */
+      }
+      const name = card.studentFirst;
+      if (action === "small_group" || action === "reteach_tomorrow") {
+        const block = pushCheckInToDailyFocus(card, action, {
+          periodId: card.periodId || selectedClass || "A",
+        });
+        const names = block?.studentNames?.join(" · ") || name;
+        if (action === "small_group") {
+          setToast({ text: `${names} · on Daily Focus · today · small group.` });
+        } else {
+          setToast({ text: `${names} · on Daily Focus · tomorrow · reteach.` });
+        }
+      } else {
+        setToast({ text: `${name} · looks good. Cleared for now.` });
+      }
+    },
+    [selectedClass, standardFocus]
+  );
+
+  /** Sit with the soft cluster — one click covers the glance next-move. */
+  const sitWithCluster = useCallback(() => {
+    const targets =
+      clusterCards.length > 0
+        ? clusterCards
+        : cards.filter((c) => c.tone === "needs_you").slice(0, 3);
+    if (!targets.length) return;
+    const lead = targets[0];
+    let block = null;
+    for (const card of targets) {
+      recordWhoNeedsAction(card.id, "small_group");
+      // Merge each name into the same Focus block (day+period+kind).
+      block = pushCheckInToDailyFocus(card, "small_group", {
+        periodId: card.periodId || selectedClass || "A",
+      });
+    }
+    setChoices(loadWhoNeedsChoices());
     try {
-      const code = String(card.standard || standardFocus || "").trim();
+      const code = String(lead.standard || softCode || "").trim();
       if (code) {
         rememberSitWithCluster(code, {
-          kidOpened: card.studentFirst,
+          kidOpened: lead.studentFirst,
           source: "check-ins",
+          names: targets.map((c) => c.studentFirst).filter(Boolean),
         });
         setRememberTick((n) => n + 1);
       }
     } catch {
       /* ignore */
     }
-    const name = card.studentFirst;
-    if (action === "small_group" || action === "reteach_tomorrow") {
-      const block = pushCheckInToDailyFocus(card, action, {
+    const names =
+      block?.studentNames?.join(" · ") ||
+      targets.map((c) => c.studentFirst).filter(Boolean).join(" · ") ||
+      lead.studentFirst;
+    setToast({ text: `${names} · on Daily Focus · today · small group.` });
+    setOpenKidId(null);
+  }, [clusterCards, cards, softCode, selectedClass]);
+
+  const addToThisWeek = useCallback(
+    (card) => {
+      const entry = pushCheckInToThisWeek(card, {
         periodId: card.periodId || selectedClass || "A",
       });
-      const names = block?.studentNames?.join(" · ") || name;
-      if (action === "small_group") {
-        setToast({ text: `${names} · on Daily Focus · today · small group.` });
-      } else {
-        setToast({ text: `${names} · on Daily Focus · tomorrow · reteach.` });
-      }
-    } else {
-      setToast({ text: `${name} · looks good. Cleared for now.` });
-    }
-  }, [selectedClass, standardFocus]);
-
-  /** Mint a This Week tile via ci2.teacher.addedActivities (same as Library / Sunday). */
-  const addToThisWeek = useCallback((card) => {
-    const entry = pushCheckInToThisWeek(card, {
-      periodId: card.periodId || selectedClass || "A",
-    });
-    if (!entry) return;
-    const room =
-      entry.classes !== "all" && Array.isArray(entry.classes)
-        ? ` · period ${entry.classes[0]}`
-        : "";
-    setToast({
-      text: `${card.studentFirst} · added to This Week${room}.`,
-      undoId: entry.id,
-    });
-  }, [selectedClass]);
+      if (!entry) return;
+      const room =
+        entry.classes !== "all" && Array.isArray(entry.classes)
+          ? ` · period ${entry.classes[0]}`
+          : "";
+      setToast({
+        text: `${card.studentFirst} · added to This Week${room}.`,
+        undoId: entry.id,
+      });
+    },
+    [selectedClass]
+  );
 
   const undoAddToWeek = useCallback(() => {
     if (!toast?.undoId) return;
@@ -256,461 +369,734 @@ useEffect(() => {
     setToast({ text: ok ? "Undone — removed from This Week." : "Nothing to undo." });
   }, [toast]);
 
+  const btnBase = {
+    borderRadius: 999,
+    padding: "9px 14px",
+    fontWeight: 800,
+    fontSize: 13,
+    textDecoration: "none",
+    display: "inline-flex",
+    alignItems: "center",
+    justifyContent: "center",
+    fontFamily: "inherit",
+    cursor: "pointer",
+    border: "none",
+  };
+  const amberPrimary = {
+    background: GLANCE.needsYou.bg,
+    color: GLANCE.needsYou.fg,
+    border: `1px solid ${GLANCE.needsYou.border}`,
+  };
+  const softPrimary = {
+    background: "rgba(243,238,255,.88)",
+    color: LAVENDER,
+    border: `1px solid ${LINE}`,
+  };
+  const calmSecondary = {
+    background: GLANCE.ready.bg,
+    color: GLANCE.ready.fg,
+    border: `1px solid ${GLANCE.ready.border}`,
+  };
+  const quietTertiary = {
+    color: MUTED,
+    background: "rgba(255,255,255,.88)",
+    border: `1px solid ${LINE}`,
+    fontWeight: 700,
+  };
+
+  const sitLabel = whoLine
+    ? `Sit · ${whoLine.split(" · ").slice(0, 2).join(" · ")}`
+    : waiting
+      ? `Sit · ${cards.length} waiting`
+      : "Sit · clear";
+
   return (
     <StationShell>
+      <style>{`
+        .ci-wrap{max-width:960px;margin:0 auto;width:100%}
+        .ci-story{
+          margin-top:10px;padding:10px 12px;border-radius:12px;
+          background:rgba(243,238,255,.45);border:1px solid ${LINE};
+        }
+        .ci-actions{
+          margin-top:12px;display:flex;flex-wrap:wrap;gap:8px;align-items:center;
+        }
+        .ci-who{display:grid;gap:10px;margin-top:10px}
+      `}</style>
       <TeacherSubnav active="checkins" checkInsCount={cards.length} />
-      <Glass>
-        <div style={{ display: "flex", justifyContent: "space-between", gap: 12, flexWrap: "wrap", alignItems: "flex-start" }}>
-          <div>
-            <h1 style={{ fontFamily: "'Poppins', sans-serif", margin: 0, fontSize: 34, color: INK }}>
-              Check-ins
-            </h1>
-            <div style={{ color: MUTED, marginTop: 2 }}>
-              1–3 kids · calm look · not a spreadsheet
-              {p.multiClass ? ` · ${periodLabel}` : ""}
-            </div>
-            <div style={{ marginTop: 10, display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
-              <SetupSwitcher setupKey={p.setupKey} onChange={p.setSetupKey} />
-              {!p.multiClass && <SingleRoomLabel cls={cls} setup={p.setup} />}
-              {studentFocus ? (
-                <span
-                  style={{
-                    fontSize: 12,
-                    fontWeight: 800,
-                    color: LAVENDER,
-                    background: SOFT_LAV,
-                    border: `1px solid ${LINE}`,
-                    borderRadius: 999,
-                    padding: "4px 12px",
-                  }}
-                  title="Focused from kid grading"
-                >
-                  Focus · {studentFocus}
-                </span>
-              ) : null}
-              {standardBanner ? (
-                <span
-                  style={{
-                    fontSize: 12,
-                    fontWeight: 800,
-                    color: standardBanner.soft ? MUTED : LAVENDER,
-                    background: standardBanner.soft ? "#fff" : SOFT_LAV,
-                    border: `1px solid ${LINE}`,
-                    borderRadius: 999,
-                    padding: "4px 12px",
-                  }}
-                  title={standardBanner.title}
-                >
-                  {standardBanner.text}
-                </span>
-              ) : null}
-              <span
-                style={{
-                  fontSize: 13,
-                  fontWeight: 800,
-                  ...glanceChipStyle(cards.length ? "needsYou" : "ready"),
-                  borderRadius: 999,
-                  padding: "5px 12px",
-                }}
-              >
-                {cards.length === 0
-                  ? (storyBand?.allClear ? "Clear for now" : "Mostly clear")
-                  : cards.length === 1
-                    ? "Needs a look · 1"
-                    : `Needs a look · ${cards.length}`}
-              </span>
-              <Link
-                href="/v2/teacher/day?d=2"
-                style={{ fontSize: 13, fontWeight: 700, color: LAVENDER, textDecoration: "none" }}
-              >
-                ← Daily Focus
-              </Link>
-              <Link
-                href="/v2/teacher"
-                style={{ fontSize: 13, fontWeight: 700, color: LAVENDER, textDecoration: "none" }}
-              >
-                This Week →
-              </Link>
-              <Link
-                href={gradingInboxHref({
-                  standard: standardFocus || storyBand?.code || undefined,
-                })}
-                style={{ fontSize: 13, fontWeight: 700, color: LAVENDER, textDecoration: "none" }}
-                title="Same soft story — confirm when you've looked"
-              >
-                Grading →
-              </Link>
-            </div>
-          </div>
-        </div>
-
-        {storyBand ? (
+      <div className="ci-wrap">
+        <Glass style={{ padding: "16px 16px 14px" }}>
+          {/* Title · setup — short hierarchy */}
           <div
             style={{
-              marginTop: 14,
-              ...glanceCardStyle("ready"),
-              borderRadius: 14,
-              padding: "10px 14px",
               display: "flex",
+              justifyContent: "space-between",
               gap: 12,
               flexWrap: "wrap",
-              alignItems: "center",
-              justifyContent: "space-between",
+              alignItems: "flex-start",
             }}
           >
-            <div style={{ minWidth: 0, flex: 1 }}>
-              <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: 0.35, color: MUTED }}>
-                {storyBand.title.toUpperCase()}
-              </div>
-              <div style={{ fontSize: 14, color: INK, marginTop: 2, lineHeight: 1.4 }}>
-                {storyBand.line}
+            <div style={{ minWidth: 0, flex: "1 1 220px" }}>
+              <h1
+                style={{
+                  fontFamily: "'Poppins', sans-serif",
+                  margin: 0,
+                  fontSize: 22,
+                  fontWeight: 700,
+                  color: INK,
+                  letterSpacing: -0.2,
+                  lineHeight: 1.25,
+                }}
+              >
+                Check-ins
+              </h1>
+              <p
+                style={{
+                  margin: "4px 0 0",
+                  fontSize: 11,
+                  fontWeight: 600,
+                  color: MUTED,
+                  letterSpacing: 0.1,
+                }}
+              >
+                1–3 kids · calm look
+                {p.multiClass ? ` · ${periodLabel}` : ""}
+                {" · "}
+                {waiting
+                  ? cards.length === 1
+                    ? "Needs a look · 1"
+                    : `Needs a look · ${cards.length}`
+                  : allClear || storyBand?.allClear
+                    ? "Clear for now"
+                    : "Mostly clear"}
+                {standardBanner ? ` · ${standardBanner.text}` : ""}
+              </p>
+              <div
+                style={{
+                  marginTop: 8,
+                  display: "flex",
+                  gap: 8,
+                  flexWrap: "wrap",
+                  alignItems: "center",
+                }}
+              >
+                <SetupSwitcher setupKey={p.setupKey} onChange={p.setSetupKey} />
+                {!p.multiClass && <SingleRoomLabel cls={cls} setup={p.setup} />}
               </div>
             </div>
-            <Link
-              href={storyBand.href}
+          </div>
+
+          {/* Compact class story — not a hero essay / CTA twin */}
+          <section className="ci-story" aria-label="Class story">
+            <p
               style={{
-                fontSize: 12,
-                fontWeight: 800,
-                color: LAVENDER,
-                textDecoration: "none",
-                whiteSpace: "nowrap",
-                border: `1px solid ${LINE}`,
-                background: "#fff",
-                borderRadius: 999,
-                padding: "6px 12px",
+                margin: 0,
+                fontFamily: "'Poppins', sans-serif",
+                fontSize: 13,
+                fontWeight: 500,
+                color: INK,
+                lineHeight: 1.45,
               }}
             >
-              {storyBand.allClear ? "Reports →" : `Open ${storyBand.code || "Reports"} →`}
+              {classStory}
+            </p>
+          </section>
+
+          {/* One clear next-move row — no stacked CTA chrome */}
+          <div className="ci-actions" aria-label="Next move">
+            {waiting && (softOpen || clusterCards.length > 0) ? (
+              <button
+                type="button"
+                onClick={sitWithCluster}
+                style={{ ...btnBase, ...(waiting ? amberPrimary : softPrimary) }}
+                title={
+                  whoLine
+                    ? `Sit with soft cluster · ${whoLine}`
+                    : "Sit with soft cluster · pull for small group today"
+                }
+              >
+                {sitLabel} →
+              </button>
+            ) : waiting ? (
+              <a
+                href="#ci-who"
+                style={{ ...btnBase, ...amberPrimary }}
+                title="Who is waiting — sit below"
+              >
+                {sitLabel} →
+              </a>
+            ) : (
+              <Link
+                href={softReportHref}
+                style={{ ...btnBase, ...calmSecondary }}
+                title="Clear for now — soft cluster still findable on Reports"
+              >
+                {softReportLabel} →
+              </Link>
+            )}
+
+            {waiting && softOpen ? (
+              <Link
+                href={softReportHref}
+                style={{ ...btnBase, ...quietTertiary }}
+                title={`Softest report · TEKS ${softCode || ""}`}
+              >
+                {softReportLabel} →
+              </Link>
+            ) : null}
+
+            <Link
+              href={gradingInboxHref({
+                standard: softCode || storyBand?.code || undefined,
+              })}
+              style={{ ...btnBase, ...quietTertiary }}
+              title="Same soft story — confirm when you've looked"
+            >
+              Grading
+            </Link>
+
+            <Link
+              href="/v2/teacher/day?d=2"
+              style={{ ...btnBase, ...quietTertiary }}
+              title="Back to Daily Focus"
+            >
+              ← Daily Focus
             </Link>
           </div>
-        ) : null}
 
-        {p.multiClass && (
-          <RoomCards
-            classes={p.setup.classes}
-            selectedKey={selectedClass}
-            onSelect={p.setClassFilter}
-            setup={p.setup}
-            needsByClass={needsByClass}
-          />
-        )}
-
-        <section aria-label="Check-ins cards" style={{ marginTop: 18, display: "grid", gap: 12 }}>
-          {cards.length === 0 && (
-            <div
-              role="status"
-              style={{
-                ...glanceCardStyle("ready"),
-                borderRadius: 20,
-                padding: "28px 22px",
-                color: INK,
-                textAlign: "center",
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                gap: 12,
-                boxShadow: "0 8px 22px rgba(46,36,89,.06)",
-              }}
-            >
-              <div style={{ fontWeight: 800, fontSize: 17, lineHeight: 1.3 }}>
-                {p.multiClass
-                  ? `Mostly clear for ${periodLabel}`
-                  : "Mostly clear right now"}
-              </div>
-              <div style={{ color: MUTED, fontSize: 14, lineHeight: 1.45, maxWidth: 380 }}>
-                {storyBand?.allClear
-                  ? "Clear for now — soft stories landed. Soft cluster still findable on Reports."
-                  : p.multiClass
-                  ? `Nothing waiting for ${periodLabel}. Soft cluster still findable on Reports.`
-                  : "Nothing waiting. Soft cluster still findable on Reports."}
-              </div>
-              <div style={{ display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "center" }}>
-              <Link
-                href="/v2/teacher/day?d=2"
-                style={{
-                  border: "none",
-                  background: LAVENDER,
-                  color: "#fff",
-                  borderRadius: 999,
-                  padding: "10px 18px",
-                  fontWeight: 800,
-                  fontSize: 14,
-                  textDecoration: "none",
-                  display: "inline-flex",
-                  alignItems: "center",
-                  boxShadow: "0 6px 18px rgba(139,108,255,.28)",
-                }}
-              >
-                Open Daily Focus
-              </Link>
-              <Link
-                href={storyBand?.href || REPORTS_HREF}
-                style={{
-                  border: `1px solid ${LINE}`,
-                  background: "#fff",
-                  color: LAVENDER,
-                  borderRadius: 999,
-                  padding: "10px 18px",
-                  fontWeight: 800,
-                  fontSize: 14,
-                  textDecoration: "none",
-                  display: "inline-flex",
-                  alignItems: "center",
-                }}
-              >
-                Reports · soft cluster →
-              </Link>
-              </div>
+          {p.multiClass && (
+            <div style={{ marginTop: 12 }}>
+              <RoomCards
+                classes={p.setup.classes}
+                selectedKey={selectedClass}
+                onSelect={p.setClassFilter}
+                setup={p.setup}
+                needsByClass={needsByClass}
+              />
             </div>
           )}
 
-          {cards.map((card) => {
-            const sub = subjectMeta(card.subject);
-            const needsYou = card.tone === "needs_you";
-            const isFocused =
-              Boolean(studentFocus) &&
-              String(card.studentFirst || "").trim().toLowerCase() ===
-                studentFocus.toLowerCase();
-            const isStandardCluster =
-              Boolean(standardFocus) &&
-              String(card.standard || "").trim().toLowerCase() ===
-                standardFocus.toLowerCase();
-            const isReasonHere = isFocused || isStandardCluster;
-            const roomName =
-              p.multiClass && card.periodId
-                ? p.setup.classes.find((c) => c.key === card.periodId)?.name
-                : null;
-            const pendingGrade =
-              hydrated ? findPendingForStudent(card.studentFirst, confirmedIds) : null;
-            return (
-              <article
-                key={card.id}
-                style={{
-                  ...glanceCardStyle(needsYou ? "needsYou" : "ready"),
-                  borderRadius: 18,
-                  padding: "14px 16px",
-                  boxShadow: isReasonHere
-                    ? "0 10px 28px rgba(139,108,255,.18)"
-                    : "0 8px 22px rgba(46,36,89,.08)",
-                  outline:
-                    isReasonHere && clusterHighlightOn
-                      ? `2px solid ${LAVENDER}`
-                      : isReasonHere
-                        ? `1px dashed ${LINE}`
-                        : undefined,
-                  outlineOffset: isReasonHere && clusterHighlightOn ? 2 : undefined,
-                }}
-              >
-                <div style={{ display: "flex", justifyContent: "space-between", gap: 10, flexWrap: "wrap", alignItems: "flex-start" }}>
-                  <div style={{ minWidth: 0, flex: 1 }}>
-                    <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center", marginBottom: 4 }}>
-                      <Link
-                        href={kidGradingHref({ studentFirst: card.studentFirst })}
-                        title={`Open ${card.studentFirst}'s grades across subjects`}
-                        style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 800, fontSize: 20, color: INK, textDecoration: "none", borderBottom: `1px dashed ${LINE}` }}
-                      >
-                        {card.studentFirst}
-                      </Link>
-                      <span
-                        style={{
-                          fontSize: 12,
-                          fontWeight: 800,
-                          ...glanceChipStyle(needsYou ? "needsYou" : "ready"),
-                          background: needsYou ? "rgba(255,255,255,.75)" : GLANCE.ready.bg,
-                          borderRadius: 999,
-                          padding: "3px 10px",
-                        }}
-                      >
-                        {needsYou ? "Needs a look" : "Looking clear"}
-                      </span>
-                      {roomName && (
-                        <span
+          {/* Main scan — who is waiting, named without hunting */}
+          <section id="ci-who" aria-label="Who is waiting" style={{ marginTop: 16 }}>
+            <div
+              style={{
+                fontSize: 11,
+                fontWeight: 800,
+                letterSpacing: 0.35,
+                color: MUTED,
+                textTransform: "uppercase",
+                paddingLeft: 2,
+              }}
+            >
+              Who is waiting · soft cluster
+            </div>
+            <div className="ci-who">
+              {/* Soft cluster glance card — who + code without a click */}
+              {(softOpen || clusterCards.length > 0) && softCode ? (
+                <article
+                  style={{
+                    display: "flex",
+                    gap: 0,
+                    alignItems: "stretch",
+                    background:
+                      clusterHighlightOn || softOpen
+                        ? "rgba(255,248,240,.92)"
+                        : "rgba(255,255,255,.94)",
+                    border:
+                      clusterHighlightOn || softOpen
+                        ? `1px solid ${GLANCE.needsYou.border}`
+                        : `1px solid ${LINE}`,
+                    borderRadius: 14,
+                    overflow: "hidden",
+                    minHeight: 80,
+                  }}
+                >
+                  <span
+                    aria-hidden
+                    style={{
+                      width: 5,
+                      flexShrink: 0,
+                      background:
+                        subjectMeta(
+                          clusterCards[0]?.subject ||
+                            loopSoftest?.softest?.subject ||
+                            "science"
+                        ).color || LAVENDER,
+                      opacity: 0.9,
+                    }}
+                  />
+                  <div
+                    style={{
+                      flex: 1,
+                      minWidth: 0,
+                      padding: "11px 12px 12px",
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: 6,
+                    }}
+                  >
+                    <div
+                      style={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        gap: 8,
+                        alignItems: "flex-start",
+                      }}
+                    >
+                      <div style={{ minWidth: 0 }}>
+                        <div
                           style={{
-                            fontSize: 11,
-                            fontWeight: 700,
+                            fontSize: 10,
+                            fontWeight: 800,
                             color: MUTED,
-                            background: "#fff",
-                            border: `1px solid ${LINE}`,
-                            borderRadius: 999,
-                            padding: "3px 10px",
+                            textTransform: "uppercase",
+                            letterSpacing: 0.2,
                           }}
                         >
-                          {roomName}
-                        </span>
-                      )}
+                          Soft cluster ·{" "}
+                          {subjectMeta(
+                            clusterCards[0]?.subject ||
+                              loopSoftest?.softest?.subject ||
+                              "science"
+                          ).name}{" "}
+                          · {softCode}
+                        </div>
+                        <div
+                          style={{
+                            marginTop: 3,
+                            fontWeight: 700,
+                            color: INK,
+                            fontSize: 14,
+                            lineHeight: 1.3,
+                          }}
+                        >
+                          {loopSoftest?.softest?.plain ||
+                            clusterCards[0]?.assignment ||
+                            "Needs a look"}
+                        </div>
+                      </div>
                       <span
                         style={{
                           fontSize: 11,
-                          fontWeight: 800,
-                          color: sub.color,
-                          textTransform: "uppercase",
-                          letterSpacing: 0.3,
+                          fontWeight: 700,
+                          ...glanceChipStyle(
+                            waiting || softOpen ? "needsYou" : "ready"
+                          ),
+                          borderRadius: 999,
+                          padding: "4px 8px",
+                          flexShrink: 0,
+                          whiteSpace: "nowrap",
                         }}
                       >
-                        {sub.name}
-                        {card.standard ? ` · ${card.standard}` : ""}
+                        {standardBanner?.soft
+                          ? "Landed"
+                          : storyBand?.readiness ||
+                            loopSoftest?.readiness ||
+                            "Needs a look"}
                       </span>
-                      {isStandardCluster && !isFocused ? (
-                        <span
-                          style={{
-                            fontSize: 11,
-                            fontWeight: 800,
-                            color: LAVENDER,
-                            background: SOFT_LAV,
-                            border: `1px solid ${LINE}`,
-                            borderRadius: 999,
-                            padding: "3px 10px",
-                          }}
-                        >
-                          Why you're here
-                        </span>
-                      ) : null}
                     </div>
-                    <div style={{ fontSize: 13, fontWeight: 700, color: MUTED, marginBottom: 4 }}>
-                      {reasonLabel(card.reason)} · {card.assignment}
-                    </div>
-                    <div style={{ fontSize: 14, color: INK, lineHeight: 1.4 }}>{card.blurb}</div>
-                    {card.nextHint && (
-                      <div style={{ fontSize: 13, color: MUTED, marginTop: 6, lineHeight: 1.35 }}>
-                        {card.nextHint}
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 14 }}>
-                  <button
-                    type="button"
-                    onClick={() => act(card, "small_group")}
-                    style={{
-                      border: "none",
-                      background: LAVENDER,
-                      color: "#fff",
-                      borderRadius: 999,
-                      padding: "8px 14px",
-                      fontWeight: 700,
-                      fontSize: 13,
-                      cursor: "pointer",
-                      fontFamily: "inherit",
-                    }}
-                  >
-                    Pull for small group
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => act(card, "reteach_tomorrow")}
-                    style={{
-                      border: `1px solid ${LAVENDER}`,
-                      background: "#fff",
-                      color: LAVENDER,
-                      borderRadius: 999,
-                      padding: "8px 14px",
-                      fontWeight: 700,
-                      fontSize: 13,
-                      cursor: "pointer",
-                      fontFamily: "inherit",
-                    }}
-                  >
-                    Reteach tomorrow
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => addToThisWeek(card)}
-                    style={{
-                      border: `1px solid ${LINE}`,
-                      background: "rgba(255,255,255,.9)",
-                      color: INK,
-                      borderRadius: 999,
-                      padding: "8px 14px",
-                      fontWeight: 700,
-                      fontSize: 13,
-                      cursor: "pointer",
-                      fontFamily: "inherit",
-                    }}
-                  >
-                    Add to This Week
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => act(card, "dismiss")}
-                    style={{
-                      border: `1px solid ${GLANCE.ready.border}`,
-                      background: GLANCE.ready.bg,
-                      color: GLANCE.ready.fg,
-                      borderRadius: 999,
-                      padding: "8px 14px",
-                      fontWeight: 700,
-                      fontSize: 13,
-                      cursor: "pointer",
-                      fontFamily: "inherit",
-                    }}
-                  >
-                    Looks good / dismiss
-                  </button>
-                  <Link
-                    href={FAMILY_NOTE_HREF(card.id, {
-                      periodId: card.periodId || selectedClass,
-                    })}
-                    title="Family note for this kid"
-                    onClick={() => {
-                      const pid = card.periodId || selectedClass;
-                      if (pid && pid !== "all") p.setClassFilter(pid);
-                    }}
-                    style={{
-                      border: `1px solid ${GLANCE.ready.border}`,
-                      background: GLANCE.ready.bg,
-                      color: GLANCE.ready.fg,
-                      borderRadius: 999,
-                      padding: "8px 14px",
-                      fontWeight: 800,
-                      fontSize: 13,
-                      textDecoration: "none",
-                      display: "inline-flex",
-                      alignItems: "center",
-                    }}
-                  >
-                    Family note
-                  </Link>
-                  {pendingGrade && (
-                    <Link
-                      href={gradingInboxHref({ studentFirst: card.studentFirst })}
-                      title={`Open grading · ${pendingGrade.assignment}`}
+                    <div
                       style={{
-                        border: `1px solid ${LINE}`,
-                        background: "rgba(255,255,255,.9)",
-                        color: INK,
-                        borderRadius: 999,
-                        padding: "8px 14px",
-                        fontWeight: 700,
-                        fontSize: 13,
-                        textDecoration: "none",
-                        display: "inline-flex",
-                        alignItems: "center",
+                        fontSize: 12,
+                        fontWeight: 600,
+                        color: MUTED,
+                        lineHeight: 1.35,
                       }}
                     >
-                      Open grading
+                      {softDoors.length ? (
+                        <>
+                          {softDoors.map((d, i) => (
+                            <span key={d.name}>
+                              {i > 0 ? " · " : ""}
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const card = cards.find(
+                                    (c) =>
+                                      String(c.studentFirst || "")
+                                        .trim()
+                                        .toLowerCase() ===
+                                      String(d.name).trim().toLowerCase()
+                                  );
+                                  if (card) {
+                                    setOpenKidId(
+                                      openKidId === card.id ? null : card.id
+                                    );
+                                  }
+                                }}
+                                title={`Open ${d.name} · sit`}
+                                style={{
+                                  color: LAVENDER,
+                                  fontWeight: 800,
+                                  textDecoration: "none",
+                                  borderBottom: `1px dashed ${LINE}`,
+                                  background: "none",
+                                  border: "none",
+                                  borderBottomStyle: "dashed",
+                                  borderBottomWidth: 1,
+                                  borderBottomColor: LINE,
+                                  padding: 0,
+                                  cursor: "pointer",
+                                  fontFamily: "inherit",
+                                  fontSize: 12,
+                                }}
+                              >
+                                {d.name}
+                              </button>
+                            </span>
+                          ))}
+                        </>
+                      ) : (
+                        whoLine || "Soft cluster"
+                      )}
+                    </div>
+                    <Link
+                      href={softReportHref}
+                      style={{
+                        fontSize: 11,
+                        fontWeight: 700,
+                        color: LAVENDER,
+                        textDecoration: "none",
+                        alignSelf: "flex-start",
+                      }}
+                      title={`Depth · report · ${softCode}`}
+                    >
+                      Open report →
                     </Link>
-                  )}
-                </div>
-              </article>
-            );
-          })}
-        </section>
+                  </div>
+                </article>
+              ) : null}
 
-        {Object.keys(choices).length > 0 && (
-          <div style={{ marginTop: 16, fontSize: 12, color: MUTED }}>
-            Stub choices saved in this browser
-            {Object.keys(choices)
-              .slice(0, 5)
-              .map((id) => {
-                const c = choices[id];
-                return ` · ${actionLabel(c.action)}`;
-              })
-              .join("")}
-            . Clear site data to reset.
-          </div>
-        )}
-      </Glass>
+              {cards.length === 0 && (
+                <div
+                  role="status"
+                  style={{
+                    borderRadius: 14,
+                    padding: "18px 16px",
+                    color: INK,
+                    background: GLANCE.ready.bg,
+                    border: `1px solid ${GLANCE.ready.border}`,
+                    textAlign: "left",
+                  }}
+                >
+                  <div style={{ fontWeight: 800, fontSize: 14, lineHeight: 1.3 }}>
+                    {p.multiClass
+                      ? `Mostly clear for ${periodLabel}`
+                      : "Mostly clear right now"}
+                  </div>
+                  <div
+                    style={{
+                      color: MUTED,
+                      fontSize: 13,
+                      lineHeight: 1.45,
+                      marginTop: 4,
+                    }}
+                  >
+                    {storyBand?.allClear || allClear
+                      ? "Clear for now — soft stories landed. Soft cluster still findable on Reports."
+                      : p.multiClass
+                        ? `Nothing waiting for ${periodLabel}. Soft cluster still findable on Reports.`
+                        : "Nothing waiting. Soft cluster still findable on Reports."}
+                  </div>
+                </div>
+              )}
+
+              {/* Compact kid rows — name + why on glance; actions on expand */}
+              {cards.map((card) => {
+                const sub = subjectMeta(card.subject);
+                const needsYou = card.tone === "needs_you";
+                const isFocused =
+                  Boolean(studentFocus) &&
+                  String(card.studentFirst || "").trim().toLowerCase() ===
+                    studentFocus.toLowerCase();
+                const isStandardCluster =
+                  Boolean(standardFocus) &&
+                  String(card.standard || "").trim().toLowerCase() ===
+                    standardFocus.toLowerCase();
+                const isReasonHere = isFocused || isStandardCluster;
+                const isOpen = openKidId === card.id;
+                const roomName =
+                  p.multiClass && card.periodId
+                    ? p.setup.classes.find((c) => c.key === card.periodId)?.name
+                    : null;
+                const pendingGrade =
+                  hydrated
+                    ? findPendingForStudent(card.studentFirst, confirmedIds)
+                    : null;
+
+                return (
+                  <article
+                    key={card.id}
+                    style={{
+                      borderRadius: 14,
+                      padding: "12px 14px",
+                      background: isReasonHere && clusterHighlightOn
+                        ? "rgba(255,248,240,.92)"
+                        : "rgba(255,255,255,.94)",
+                      border:
+                        isReasonHere && clusterHighlightOn
+                          ? `1px solid ${GLANCE.needsYou.border}`
+                          : `1px solid ${LINE}`,
+                      outline:
+                        isReasonHere && clusterHighlightOn
+                          ? `2px solid ${LAVENDER}`
+                          : isReasonHere
+                            ? `1px dashed ${LINE}`
+                            : undefined,
+                      outlineOffset:
+                        isReasonHere && clusterHighlightOn ? 2 : undefined,
+                      boxShadow: isOpen
+                        ? "0 8px 22px rgba(46,36,89,.10)"
+                        : "none",
+                    }}
+                  >
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setOpenKidId(isOpen ? null : card.id)
+                      }
+                      aria-expanded={isOpen}
+                      style={{
+                        display: "flex",
+                        width: "100%",
+                        justifyContent: "space-between",
+                        gap: 10,
+                        flexWrap: "wrap",
+                        alignItems: "flex-start",
+                        background: "none",
+                        border: "none",
+                        padding: 0,
+                        cursor: "pointer",
+                        textAlign: "left",
+                        fontFamily: "inherit",
+                      }}
+                    >
+                      <div style={{ minWidth: 0, flex: 1 }}>
+                        <div
+                          style={{
+                            display: "flex",
+                            gap: 8,
+                            flexWrap: "wrap",
+                            alignItems: "center",
+                            marginBottom: 2,
+                          }}
+                        >
+                          <span
+                            style={{
+                              fontFamily: "'Poppins', sans-serif",
+                              fontWeight: 800,
+                              fontSize: 16,
+                              color: INK,
+                              borderBottom: `1px dashed ${LINE}`,
+                            }}
+                          >
+                            {card.studentFirst}
+                          </span>
+                          <span
+                            style={{
+                              fontSize: 11,
+                              fontWeight: 800,
+                              ...glanceChipStyle(
+                                needsYou ? "needsYou" : "ready"
+                              ),
+                              borderRadius: 999,
+                              padding: "3px 9px",
+                            }}
+                          >
+                            {needsYou ? "Needs a look" : "Looking clear"}
+                          </span>
+                          {roomName ? (
+                            <span
+                              style={{
+                                fontSize: 11,
+                                fontWeight: 700,
+                                color: MUTED,
+                                background: "#fff",
+                                border: `1px solid ${LINE}`,
+                                borderRadius: 999,
+                                padding: "3px 9px",
+                              }}
+                            >
+                              {roomName}
+                            </span>
+                          ) : null}
+                          <span
+                            style={{
+                              fontSize: 11,
+                              fontWeight: 800,
+                              color: sub.color,
+                              textTransform: "uppercase",
+                              letterSpacing: 0.3,
+                            }}
+                          >
+                            {sub.name}
+                            {card.standard ? ` · ${card.standard}` : ""}
+                          </span>
+                          {isStandardCluster && !isFocused ? (
+                            <span
+                              style={{
+                                fontSize: 11,
+                                fontWeight: 800,
+                                color: LAVENDER,
+                                background: SOFT_LAV,
+                                border: `1px solid ${LINE}`,
+                                borderRadius: 999,
+                                padding: "3px 9px",
+                              }}
+                            >
+                              Why you're here
+                            </span>
+                          ) : null}
+                        </div>
+                        <div
+                          style={{
+                            fontSize: 13,
+                            fontWeight: 600,
+                            color: MUTED,
+                            lineHeight: 1.35,
+                          }}
+                        >
+                          {reasonLabel(card.reason)} · {card.assignment}
+                        </div>
+                      </div>
+                      <span
+                        style={{
+                          fontSize: 11,
+                          fontWeight: 700,
+                          color: MUTED,
+                          flexShrink: 0,
+                          paddingTop: 4,
+                        }}
+                      >
+                        {isOpen ? "Close" : "Sit →"}
+                      </span>
+                    </button>
+
+                    {/* Depth panel — actions + blurb only when opened */}
+                    {isOpen ? (
+                      <div
+                        style={{
+                          marginTop: 12,
+                          paddingTop: 12,
+                          borderTop: `1px solid ${LINE}`,
+                        }}
+                      >
+                        <div
+                          style={{
+                            fontSize: 14,
+                            color: INK,
+                            lineHeight: 1.4,
+                          }}
+                        >
+                          {card.blurb}
+                        </div>
+                        {card.nextHint ? (
+                          <div
+                            style={{
+                              fontSize: 13,
+                              color: MUTED,
+                              marginTop: 6,
+                              lineHeight: 1.35,
+                            }}
+                          >
+                            {card.nextHint}
+                          </div>
+                        ) : null}
+
+                        <div
+                          style={{
+                            display: "flex",
+                            gap: 8,
+                            flexWrap: "wrap",
+                            marginTop: 12,
+                            alignItems: "center",
+                          }}
+                        >
+                          <Link
+                            href={kidGradingHref({
+                              studentFirst: card.studentFirst,
+                            })}
+                            title={`Open ${card.studentFirst}'s grades`}
+                            style={{ ...btnBase, ...quietTertiary }}
+                          >
+                            Open kid →
+                          </Link>
+                          <button
+                            type="button"
+                            onClick={() => act(card, "small_group")}
+                            style={{ ...btnBase, ...softPrimary }}
+                          >
+                            Pull for small group
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => act(card, "reteach_tomorrow")}
+                            style={{ ...btnBase, ...calmSecondary }}
+                          >
+                            Reteach tomorrow
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => addToThisWeek(card)}
+                            style={{ ...btnBase, ...quietTertiary }}
+                          >
+                            Add to This Week
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => act(card, "dismiss")}
+                            style={{ ...btnBase, ...calmSecondary }}
+                          >
+                            Looks good / dismiss
+                          </button>
+                          <Link
+                            href={FAMILY_NOTE_HREF(card.id, {
+                              periodId: card.periodId || selectedClass,
+                            })}
+                            title="Family note for this kid"
+                            onClick={() => {
+                              const pid = card.periodId || selectedClass;
+                              if (pid && pid !== "all") p.setClassFilter(pid);
+                            }}
+                            style={{ ...btnBase, ...quietTertiary }}
+                          >
+                            Family note
+                          </Link>
+                          {pendingGrade ? (
+                            <Link
+                              href={gradingInboxHref({
+                                studentFirst: card.studentFirst,
+                              })}
+                              title={`Open grading · ${pendingGrade.assignment}`}
+                              style={{ ...btnBase, ...quietTertiary }}
+                            >
+                              Open grading
+                            </Link>
+                          ) : null}
+                        </div>
+                      </div>
+                    ) : null}
+                  </article>
+                );
+              })}
+            </div>
+          </section>
+
+          {Object.keys(choices).length > 0 && (
+            <div style={{ marginTop: 14, fontSize: 11, color: MUTED }}>
+              Stub choices saved in this browser
+              {Object.keys(choices)
+                .slice(0, 5)
+                .map((id) => {
+                  const c = choices[id];
+                  return ` · ${actionLabel(c.action)}`;
+                })
+                .join("")}
+              . Clear site data to reset.
+            </div>
+          )}
+        </Glass>
+      </div>
 
       {toast && (
         <div
