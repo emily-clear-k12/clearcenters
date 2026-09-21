@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import { callClaude } from "../../../lib/anthropic";
 import { getServerCase } from "../../../lib/cases/index.server";
 import { MAX_DISCUSS_TURNS } from "../../../lib/constants";
+import { gradeWords } from "../../../lib/gradeFromStandard";
 
 export async function POST(request) {
   // Only a logged-in student can reach the AI characters — this route used
@@ -32,8 +33,9 @@ export async function POST(request) {
   }
 
   const castList = Object.values(caseData.castNames).join(", ");
+  const gw = gradeWords(caseData.standard);
 
-  const systemPrompt = `You are running an in-character educational role-play for a 5th grade student, based on this case:
+  const systemPrompt = `You are running an in-character educational role-play for a ${gw.label} student, based on this case:
 
 Standard: ${caseData.standard} — ${caseData.title}
 Big question: ${caseData.bigQuestion}
@@ -49,7 +51,7 @@ ${caseData.distractors}
 Rules:
 - Reply as ONE character at a time. Start your reply with "CharacterName:" so the student knows who's talking.
 - Never write the student's answer for them.
-- Keep replies short (2-4 sentences), age-appropriate for a 10-11 year old, in character.
+- Keep replies short (2-4 sentences), age-appropriate for a ${gw.ages} year old, in character.
 - Only have the mistaken character fully concede once the student has surfaced at least two pieces of real evidence AND reasoned through at least one distractor.
 - If the student asks for the answer directly, gently redirect in character.`;
 

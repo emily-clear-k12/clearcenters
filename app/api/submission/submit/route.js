@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import { supabaseAdmin } from "../../../../lib/supabaseAdmin";
 import { callClaude, extractJSON } from "../../../../lib/anthropic";
 import { getServerCase } from "../../../../lib/cases/index.server";
+import { gradeWords } from "../../../../lib/gradeFromStandard";
 
 export async function POST(request) {
   const cookieStore = cookies();
@@ -21,7 +22,7 @@ export async function POST(request) {
   let aiRationale = null;
 
   if (caseData) {
-    const scoringPrompt = `Score this 5th grade student's response on a 0/1/2 scale against this rubric. Respond with ONLY a JSON object like {"score": 0, "rationale": "..."} — no other text.
+    const scoringPrompt = `Score this ${gradeWords(caseData.standard).label} student's response on a 0/1/2 scale against this rubric. Respond with ONLY a JSON object like {"score": 0, "rationale": "..."} — no other text.
 
 Standard: ${caseData.standard} — ${caseData.title}
 Big question: ${caseData.bigQuestion}
