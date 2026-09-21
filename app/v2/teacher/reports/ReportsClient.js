@@ -23,7 +23,7 @@ import {
   REPORTS_STANDARD_HREF,
   REPORTS_ASSIGNMENT_HREF,
 } from "../../../../lib/v2/demoReports";
-import { checkInsCtaLabel, FAMILY_NOTE_STORY_ID, checkInsHrefForStandard, softClusterDoors , rememberAwareSamStory } from "../../../../lib/v2/demoLoopSeams";
+import { checkInsCtaLabel, FAMILY_NOTE_STORY_ID, checkInsHrefForStandard, softClusterDoors, rememberAwareSamStory, getLoopSoftest, isStandardResolved } from "../../../../lib/v2/demoLoopSeams";
 import { FAMILY_NOTE_HREF } from "../../../../lib/v2/demoFamilyNote";
 import {
   getWhoNeedsMeCount,
@@ -208,18 +208,32 @@ export default function ReportsClient() {
   );
 
   const softest = stub.softest;
-  const softestNextMoveCta = softest ? (
+  // Needs-you CTA advances past a resolved softest; drill-in / SAM still see raw softest.
+  const needsYouLoop =
+    typeof window !== "undefined" ? getLoopSoftest() : null;
+  const nextMove =
+    softest && isStandardResolved(softest.code) && needsYouLoop?.softest
+      ? needsYouLoop.softest
+      : softest;
+  const nextMoveHref = nextMove
+    ? REPORTS_STANDARD_HREF(nextMove.code)
+    : stub.softestHref;
+  const nextMoveLabel =
+    nextMove && softest && nextMove.code !== softest.code
+      ? `Open ${nextMove.code} report`
+      : stub.softestNextMoveLabel;
+  const softestNextMoveCta = nextMove ? (
     <Link
       key="softest-next"
-      href={stub.softestHref || REPORTS_STANDARD_HREF(softest.code)}
+      href={nextMoveHref}
       style={{
         ...btnBase,
         ...softPrimary,
         width: "100%",
       }}
-      title={`Next move · open softest standard report · TEKS ${softest.code}`}
+      title={`Next move · open softest standard report · TEKS ${nextMove.code}`}
     >
-      {stub.softestNextMoveLabel} →
+      {nextMoveLabel} →
     </Link>
   ) : null;
 
@@ -640,7 +654,9 @@ export default function ReportsClient() {
                       lineHeight: 1.45,
                     }}
                   >
-                    Softest · {softest.code}
+                    {isStandardResolved(softest.code)
+                      ? `Landed · ${softest.code}`
+                      : `Softest · ${softest.code}`}
                     {softestDoors.length ? (
                       <>
                         {" · "}
@@ -668,7 +684,9 @@ export default function ReportsClient() {
                       ""
                     )}
                     {" — "}
-                    {softNeedsLabel(softest.needsCheckIn).toLowerCase()}
+                    {isStandardResolved(softest.code)
+                      ? "you're covered · still findable"
+                      : softNeedsLabel(softest.needsCheckIn).toLowerCase()}
                   </p>
                 ) : (
                   <p
