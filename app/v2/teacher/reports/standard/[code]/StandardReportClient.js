@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   StationShell,
   TeacherSubnav,
@@ -24,8 +25,15 @@ import {
   WHO_NEEDS_ME_STORAGE_KEY,
   CHECK_INS_HREF,
   TEACHER_SETUP_KEY,
+  pushStandardClusterToToday,
+  FOCUS_TODAY_DAY,
 } from "../../../../../../lib/v2/demoWhoNeedsMe";
 import { TEACHER_SETUPS } from "../../../../../../lib/v2/demoWeek";
+import {
+  checkInsHrefForStandard,
+  softClusterDoors,
+  DAY_HREF,
+} from "../../../../../../lib/v2/demoLoopSeams";
 
 function usePeriodLens() {
   const [liveCheckIns, setLiveCheckIns] = useState(null);
@@ -84,7 +92,7 @@ function usePeriodLens() {
       ? `${CHECK_INS_HREF}?period=${encodeURIComponent(periodId)}`
       : CHECK_INS_HREF;
   const waiting = typeof liveCheckIns === "number" && liveCheckIns > 0;
-  return { liveCheckIns, periodLabel, checkInsHref, waiting };
+  return { liveCheckIns, periodLabel, periodId, checkInsHref, waiting };
 }
 
 const btnBase = {
@@ -105,7 +113,9 @@ const btnBase = {
  */
 export default function StandardReportClient({ code }) {
   const detail = getStandardDetail(code);
-  const { liveCheckIns, periodLabel, checkInsHref, waiting } = usePeriodLens();
+  const { liveCheckIns, periodLabel, periodId, waiting } = usePeriodLens();
+  const router = useRouter();
+  const [reteachToast, setReteachToast] = useState(null);
 
   const softPrimary = {
     background: "rgba(243,238,255,.88)",
@@ -160,6 +170,29 @@ export default function StandardReportClient({ code }) {
     classPctLabel,
     dayHref,
   } = detail;
+
+  const checkInsHref = checkInsHrefForStandard(standard.code, { periodId });
+  const clusterDoors = softClusterDoors(standard.softCluster || [], {
+    standard: standard.code,
+    periodId,
+  });
+
+  const putReteachOnToday = useCallback(() => {
+    const block = pushStandardClusterToToday(standard.code, {
+      periodId: periodId || "A",
+      subject: standard.subject,
+      assignment: contributing[0]?.title || `TEKS ${standard.code} reteach`,
+      names: standard.softCluster || [],
+    });
+    if (!block) {
+      setReteachToast("Nothing to add — soft cluster is empty.");
+      return;
+    }
+    setReteachToast(`Reteach · ${standard.code} · on Daily Focus today`);
+    window.setTimeout(() => {
+      router.push(dayHref || DAY_HREF || `/v2/teacher/day?d=${FOCUS_TODAY_DAY}`);
+    }, 450);
+  }, [standard, periodId, contributing, router, dayHref]);
 
   return (
     <StationShell active="grow">
@@ -316,9 +349,30 @@ export default function StandardReportClient({ code }) {
                     color: INK,
                     fontFamily: "'Poppins', sans-serif",
                     letterSpacing: -0.2,
+                    display: "flex",
+                    flexWrap: "wrap",
+                    gap: 8,
+                    alignItems: "center",
                   }}
                 >
-                  {whoLine}
+                  {clusterDoors.length
+                    ? clusterDoors.map((d, i) => (
+                        <span key={d.name} style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
+                          {i > 0 ? <span style={{ color: MUTED, fontWeight: 600 }}>·</span> : null}
+                          <Link
+                            href={d.href}
+                            title={`Open ${d.name}'s grades`}
+                            style={{
+                              color: INK,
+                              textDecoration: "none",
+                              borderBottom: `1px dashed ${LINE}`,
+                            }}
+                          >
+                            {d.name}
+                          </Link>
+                        </span>
+                      ))
+                    : whoLine}
                 </p>
                 {clusterHint ? (
                   <p style={{ margin: "6px 0 0", fontSize: 13, fontWeight: 600, color: MUTED }}>
@@ -455,6 +509,33 @@ export default function StandardReportClient({ code }) {
               >
                 {calmNext}
               </p>
+              {(standard.softCluster || []).length > 0 ? (
+                <button
+                  type="button"
+                  onClick={putReteachOnToday}
+                  style={{
+                    marginTop: 12,
+                    border: "none",
+                    background: LAVENDER,
+                    color: "#fff",
+                    borderRadius: 999,
+                    padding: "10px 16px",
+                    fontWeight: 800,
+                    fontSize: 13,
+                    cursor: "pointer",
+                    fontFamily: "inherit",
+                    boxShadow: "0 6px 18px rgba(139,108,255,.25)",
+                  }}
+                  title="Add an 8-min reteach for this cluster onto Daily Focus today"
+                >
+                  Put reteach on today
+                </button>
+              ) : null}
+              {reteachToast ? (
+                <div style={{ marginTop: 8, fontSize: 12, fontWeight: 700, color: MUTED }}>
+                  {reteachToast}
+                </div>
+              ) : null}
             </section>
 
             {/* Check-ins secondary */}

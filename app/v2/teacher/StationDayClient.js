@@ -39,6 +39,7 @@ import {
   getLoopSoftest,
   REPORTS_HREF,
   checkInsHrefForPeriod,
+  checkInsHrefForStandard,
 } from "../../../lib/v2/demoLoopSeams";
 import {
   StationShell,
@@ -83,7 +84,12 @@ export default function StationDayClient() {
   const [openId, setOpenId] = useState(params.get("open"));
   const cls = p.setup.classes.find((c) => c.key === p.classFilter) || p.setup.classes[0];
   const selectedClass = p.classFilter === "all" ? p.setup.classes[0]?.key : p.classFilter;
-  const checkInsDoor = checkInsHrefForPeriod(selectedClass);
+  const loopSoftestEarly = getLoopSoftest();
+  const checkInsDoor = (() => {
+    const code = loopSoftestEarly?.softest?.code || null;
+    if (code) return checkInsHrefForStandard(code, { periodId: selectedClass });
+    return checkInsHrefForPeriod(selectedClass);
+  })();
   useEffect(() => {
     const refresh = () => {
       setGradePending(getPendingCount(loadConfirmedIds()));

@@ -23,7 +23,7 @@ import {
   REPORTS_STANDARD_HREF,
   REPORTS_ASSIGNMENT_HREF,
 } from "../../../../lib/v2/demoReports";
-import { checkInsCtaLabel, FAMILY_NOTE_STORY_ID } from "../../../../lib/v2/demoLoopSeams";
+import { checkInsCtaLabel, FAMILY_NOTE_STORY_ID, checkInsHrefForStandard, softClusterDoors } from "../../../../lib/v2/demoLoopSeams";
 import { FAMILY_NOTE_HREF } from "../../../../lib/v2/demoFamilyNote";
 import {
   getWhoNeedsMeCount,
@@ -97,10 +97,16 @@ export default function ReportsClient() {
     };
   }, []);
 
-  const checkInsHref =
-    periodId && periodId !== "all"
+  const softestCode = stub.softest?.code || null;
+  const checkInsHref = softestCode
+    ? checkInsHrefForStandard(softestCode, { periodId })
+    : periodId && periodId !== "all"
       ? `${CHECK_INS_HREF}?period=${encodeURIComponent(periodId)}`
       : stub.checkInsHref || CHECK_INS_HREF;
+  const softestDoors = softClusterDoors(stub.softest?.softCluster || [], {
+    standard: softestCode,
+    periodId,
+  });
 
   const waiting = typeof liveCheckIns === "number" && liveCheckIns > 0;
 
@@ -374,14 +380,39 @@ export default function ReportsClient() {
                 >
                   {stub.softestNextMoveLabel} →
                 </Link>
-                {stub.softestWho ? (
+                {softestDoors.length ? (
                   <span
                     style={{
                       fontSize: 12,
                       fontWeight: 600,
                       color: MUTED,
+                      display: "inline-flex",
+                      flexWrap: "wrap",
+                      gap: 6,
+                      alignItems: "center",
                     }}
                   >
+                    Soft cluster ·{" "}
+                    {softestDoors.map((d, i) => (
+                      <span key={d.name} style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+                        {i > 0 ? <span aria-hidden>·</span> : null}
+                        <Link
+                          href={d.href}
+                          title={`Open ${d.name}'s grades`}
+                          style={{
+                            color: LAVENDER,
+                            fontWeight: 800,
+                            textDecoration: "none",
+                            borderBottom: `1px dashed ${LINE}`,
+                          }}
+                        >
+                          {d.name}
+                        </Link>
+                      </span>
+                    ))}
+                  </span>
+                ) : stub.softestWho ? (
+                  <span style={{ fontSize: 12, fontWeight: 600, color: MUTED }}>
                     Soft cluster · {stub.softestWho}
                   </span>
                 ) : null}
@@ -481,7 +512,34 @@ export default function ReportsClient() {
                               }}
                             >
                               {item.readiness}
-                              {item.whoLine ? ` · ${item.whoLine}` : ` · ${item.needsHint}`}
+                              {" · "}
+                              {(item.standard?.softCluster || []).length ? (
+                                softClusterDoors(item.standard.softCluster, {
+                                  standard: item.standard.code,
+                                  periodId,
+                                }).map((d, i) => (
+                                  <span key={d.name}>
+                                    {i > 0 ? " · " : ""}
+                                    <Link
+                                      href={d.href}
+                                      onClick={(e) => e.stopPropagation()}
+                                      title={`Open ${d.name}`}
+                                      style={{
+                                        color: LAVENDER,
+                                        fontWeight: 800,
+                                        textDecoration: "none",
+                                        borderBottom: `1px dashed ${LINE}`,
+                                      }}
+                                    >
+                                      {d.name}
+                                    </Link>
+                                  </span>
+                                ))
+                              ) : item.whoLine ? (
+                                item.whoLine
+                              ) : (
+                                item.needsHint
+                              )}
                               {" · "}
                               <span style={{ color: LAVENDER }}>Open report →</span>
                             </div>
@@ -580,7 +638,32 @@ export default function ReportsClient() {
                     }}
                   >
                     Softest · {softest.code}
-                    {stub.softestWho ? ` · ${stub.softestWho}` : ""}
+                    {softestDoors.length ? (
+                      <>
+                        {" · "}
+                        {softestDoors.map((d, i) => (
+                          <span key={d.name}>
+                            {i > 0 ? " · " : ""}
+                            <Link
+                              href={d.href}
+                              title={`Open ${d.name}`}
+                              style={{
+                                color: LAVENDER,
+                                fontWeight: 800,
+                                textDecoration: "none",
+                                borderBottom: `1px dashed ${LINE}`,
+                              }}
+                            >
+                              {d.name}
+                            </Link>
+                          </span>
+                        ))}
+                      </>
+                    ) : stub.softestWho ? (
+                      ` · ${stub.softestWho}`
+                    ) : (
+                      ""
+                    )}
                     {" — "}
                     {softNeedsLabel(softest.needsCheckIn).toLowerCase()}
                   </p>

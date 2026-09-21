@@ -60,6 +60,7 @@ export default function CheckInsClient() {
   const p = usePlanner();
   const searchParams = useSearchParams();
   const studentFocus = (searchParams?.get("student") || "").trim();
+  const standardFocus = (searchParams?.get("standard") || "").trim();
   const [choices, setChoices] = useState({});
   const [confirmedIds, setConfirmedIds] = useState([]);
   const [hydrated, setHydrated] = useState(false);
@@ -127,25 +128,38 @@ export default function CheckInsClient() {
     void choices;
     void confirmedIds;
     const focus = studentFocus.toLowerCase();
-    // Student deep-link (kid grading): include all periods so Kai/Riley still surface.
-    const opts = focus
-      ? { ...filterOpts, classFilter: "all", limit: null }
-      : filterOpts;
+    const stdFocus = standardFocus.trim();
+    // Student or standard deep-link: include all periods so cluster kids still surface.
+    const opts =
+      focus || stdFocus
+        ? { ...filterOpts, classFilter: "all", limit: null }
+        : filterOpts;
     const raw =
       !hydrated || !p.hydrated
         ? getWhoNeedsMeCards({}, [], opts)
         : getWhoNeedsMeCards(choices, confirmedIds, opts);
-    if (!focus) return raw;
-    // Calm focus from kid grading: matching kid first (still show the rest)
-    const hit = [];
+    if (!focus && !stdFocus) return raw;
+
+    const stdHit = [];
+    const nameHit = [];
     const rest = [];
     for (const c of raw) {
-      if (String(c.studentFirst || "").trim().toLowerCase() === focus) hit.push(c);
+      const nameMatch =
+        focus &&
+        String(c.studentFirst || "").trim().toLowerCase() === focus;
+      const stdMatch =
+        stdFocus &&
+        String(c.standard || "").trim().toLowerCase() === stdFocus.toLowerCase();
+      if (nameMatch) nameHit.push(c);
+      else if (stdMatch) stdHit.push(c);
       else rest.push(c);
     }
-    const ordered = [...hit, ...rest];
-    return focus ? ordered.slice(0, Math.max(3, hit.length || 0)) : ordered;
-  }, [choices, confirmedIds, hydrated, p.hydrated, filterOpts, studentFocus]);
+    // Reason-you're-here first: named kid, then matching standard cluster, then others.
+    const ordered = [...nameHit, ...stdHit, ...rest];
+    const keep = Math.max(3, nameHit.length + stdHit.length || 0);
+    return ordered.slice(0, keep);
+  }, [choices, confirmedIds, hydrated, p.hydrated, filterOpts, studentFocus, standardFocus]);
+
 
   const needsByClass = useMemo(() => {
     const keys = p.setup.classes.map((c) => c.key);
@@ -233,6 +247,22 @@ export default function CheckInsClient() {
                   title="Focused from kid grading"
                 >
                   Focus · {studentFocus}
+                </span>
+              ) : null}
+              {standardFocus ? (
+                <span
+                  style={{
+                    fontSize: 12,
+                    fontWeight: 800,
+                    color: LAVENDER,
+                    background: SOFT_LAV,
+                    border: `1px solid ${LINE}`,
+                    borderRadius: 999,
+                    padding: "4px 12px",
+                  }}
+                  title="You are here because of this skill"
+                >
+                  Because of · TEKS {standardFocus}
                 </span>
               ) : null}
               <span
@@ -405,6 +435,11 @@ export default function CheckInsClient() {
               Boolean(studentFocus) &&
               String(card.studentFirst || "").trim().toLowerCase() ===
                 studentFocus.toLowerCase();
+            const isStandardCluster =
+              Boolean(standardFocus) &&
+              String(card.standard || "").trim().toLowerCase() ===
+                standardFocus.toLowerCase();
+            const isReasonHere = isFocused || isStandardCluster;
             const roomName =
               p.multiClass && card.periodId
                 ? p.setup.classes.find((c) => c.key === card.periodId)?.name
@@ -418,11 +453,11 @@ export default function CheckInsClient() {
                   ...glanceCardStyle(needsYou ? "needsYou" : "ready"),
                   borderRadius: 18,
                   padding: "14px 16px",
-                  boxShadow: isFocused
+                  boxShadow: isReasonHere
                     ? "0 10px 28px rgba(139,108,255,.18)"
                     : "0 8px 22px rgba(46,36,89,.08)",
-                  outline: isFocused ? `2px solid ${LAVENDER}` : undefined,
-                  outlineOffset: isFocused ? 2 : undefined,
+                  outline: isReasonHere ? `2px solid ${LAVENDER}` : undefined,
+                  outlineOffset: isReasonHere ? 2 : undefined,
                 }}
               >
                 <div style={{ display: "flex", justifyContent: "space-between", gap: 10, flexWrap: "wrap", alignItems: "flex-start" }}>
@@ -474,6 +509,21 @@ export default function CheckInsClient() {
                         {sub.name}
                         {card.standard ? ` · ${card.standard}` : ""}
                       </span>
+                      {isStandardCluster && !isFocused ? (
+                        <span
+                          style={{
+                            fontSize: 11,
+                            fontWeight: 800,
+                            color: LAVENDER,
+                            background: SOFT_LAV,
+                            border: `1px solid ${LINE}`,
+                            borderRadius: 999,
+                            padding: "3px 10px",
+                          }}
+                        >
+                          Why you're here
+                        </span>
+                      ) : null}
                     </div>
                     <div style={{ fontSize: 13, fontWeight: 700, color: MUTED, marginBottom: 4 }}>
                       {reasonLabel(card.reason)} · {card.assignment}

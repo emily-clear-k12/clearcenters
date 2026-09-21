@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   StationShell,
   TeacherSubnav,
@@ -24,8 +25,15 @@ import {
   WHO_NEEDS_ME_STORAGE_KEY,
   CHECK_INS_HREF,
   TEACHER_SETUP_KEY,
+  pushStandardClusterToToday,
+  FOCUS_TODAY_DAY,
 } from "../../../../../../lib/v2/demoWhoNeedsMe";
 import { TEACHER_SETUPS } from "../../../../../../lib/v2/demoWeek";
+import {
+  checkInsHrefForStandard,
+  softClusterDoors,
+  DAY_HREF,
+} from "../../../../../../lib/v2/demoLoopSeams";
 
 function usePeriodLens() {
   const [liveCheckIns, setLiveCheckIns] = useState(null);
@@ -84,7 +92,7 @@ function usePeriodLens() {
       ? `${CHECK_INS_HREF}?period=${encodeURIComponent(periodId)}`
       : CHECK_INS_HREF;
   const waiting = typeof liveCheckIns === "number" && liveCheckIns > 0;
-  return { liveCheckIns, periodLabel, checkInsHref, waiting };
+  return { liveCheckIns, periodLabel, periodId, checkInsHref, waiting };
 }
 
 const btnBase = {
@@ -104,7 +112,9 @@ const btnBase = {
  */
 export default function AssignmentReportClient({ assignmentId }) {
   const detail = getAssignmentDetail(assignmentId);
-  const { liveCheckIns, periodLabel, checkInsHref, waiting } = usePeriodLens();
+  const { liveCheckIns, periodLabel, periodId, waiting } = usePeriodLens();
+  const router = useRouter();
+  const [reteachToast, setReteachToast] = useState(null);
 
   const softPrimary = {
     background: "rgba(243,238,255,.88)",
@@ -155,6 +165,38 @@ export default function AssignmentReportClient({ assignmentId }) {
     honesty,
     dayHref,
   } = detail;
+
+  const leadStandard = (standards && standards[0]) || null;
+  const leadCode = leadStandard?.code || assignment.standardCodes?.[0] || null;
+  const checkInsHref = leadCode
+    ? checkInsHrefForStandard(leadCode, { periodId })
+    : periodId && periodId !== "all"
+      ? `${CHECK_INS_HREF}?period=${encodeURIComponent(periodId)}`
+      : CHECK_INS_HREF;
+  const clusterDoors = softClusterDoors(softCluster?.names || [], {
+    standard: leadCode,
+    periodId,
+  });
+  const putReteachOnToday = useCallback(() => {
+    if (!leadCode) {
+      setReteachToast("No linked standard to reteach yet.");
+      return;
+    }
+    const block = pushStandardClusterToToday(leadCode, {
+      periodId: periodId || "A",
+      subject: assignment.subject,
+      assignment: assignment.title,
+      names: softCluster?.names || [],
+    });
+    if (!block) {
+      setReteachToast("Nothing to add — soft cluster is empty.");
+      return;
+    }
+    setReteachToast(`Reteach · ${leadCode} · on Daily Focus today`);
+    window.setTimeout(() => {
+      router.push(dayHref || DAY_HREF || `/v2/teacher/day?d=${FOCUS_TODAY_DAY}`);
+    }, 450);
+  }, [leadCode, periodId, assignment, softCluster, router, dayHref]);
 
   const needsNames = softCluster?.names || [];
   const almostBand = (assignment.bands || []).find((b) => b.key === "almost");
@@ -321,9 +363,30 @@ export default function AssignmentReportClient({ assignmentId }) {
                       fontWeight: 700,
                       color: INK,
                       fontFamily: "'Poppins', sans-serif",
+                      display: "flex",
+                      flexWrap: "wrap",
+                      gap: 8,
+                      alignItems: "center",
                     }}
                   >
-                    {softCluster.whoLine}
+                    {clusterDoors.length
+                      ? clusterDoors.map((d, i) => (
+                          <span key={d.name} style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
+                            {i > 0 ? <span style={{ color: MUTED, fontWeight: 600 }}>·</span> : null}
+                            <Link
+                              href={d.href}
+                              title={`Open ${d.name}'s grades`}
+                              style={{
+                                color: INK,
+                                textDecoration: "none",
+                                borderBottom: `1px dashed ${LINE}`,
+                              }}
+                            >
+                              {d.name}
+                            </Link>
+                          </span>
+                        ))
+                      : softCluster.whoLine}
                   </p>
                 </div>
               ) : (
@@ -493,6 +556,34 @@ export default function AssignmentReportClient({ assignmentId }) {
               >
                 {assignment.calmNext}
               </p>
+            
+              {(softCluster?.names || []).length > 0 && leadCode ? (
+                <button
+                  type="button"
+                  onClick={putReteachOnToday}
+                  style={{
+                    marginTop: 12,
+                    border: "none",
+                    background: LAVENDER,
+                    color: "#fff",
+                    borderRadius: 999,
+                    padding: "10px 16px",
+                    fontWeight: 800,
+                    fontSize: 13,
+                    cursor: "pointer",
+                    fontFamily: "inherit",
+                    boxShadow: "0 6px 18px rgba(139,108,255,.25)",
+                  }}
+                  title="Add an 8-min reteach for this cluster onto Daily Focus today"
+                >
+                  Put reteach on today
+                </button>
+              ) : null}
+              {reteachToast ? (
+                <div style={{ marginTop: 8, fontSize: 12, fontWeight: 700, color: MUTED }}>
+                  {reteachToast}
+                </div>
+              ) : null}
             </section>
 
             <div

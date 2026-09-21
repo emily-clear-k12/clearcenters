@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { useParams } from "next/navigation";
+import { useParams, useSearchParams } from "next/navigation";
 import {
   StationShell,
   Glass,
@@ -37,6 +37,7 @@ import {
   FOCUS_BLOCKS_KEY,
 } from "../../../../../../lib/v2/demoWhoNeedsMe";
 import { FAMILY_NOTE_HREF } from "../../../../../../lib/v2/demoFamilyNote";
+import { REPORTS_STANDARD_HREF } from "../../../../../../lib/v2/demoReports";
 
 /**
  * Kid-first grading — one tap → all subjects for that student.
@@ -48,6 +49,9 @@ export default function KidGradingClient() {
   const studentFirst = decodeURIComponent(
     Array.isArray(raw) ? raw[0] || "" : String(raw || "")
   ).trim();
+  const searchParams = useSearchParams();
+  const fromReport = (searchParams?.get("from") || "").trim() === "standard";
+  const fromCode = (searchParams?.get("code") || "").trim();
 
   const [confirmedIds, setConfirmedIds] = useState([]);
   const [hydrated, setHydrated] = useState(false);
@@ -167,6 +171,24 @@ export default function KidGradingClient() {
               >
                 ← Grading inbox
               </Link>
+              {fromReport && fromCode ? (
+                <Link
+                  href={REPORTS_STANDARD_HREF(fromCode)}
+                  style={{
+                    fontSize: 12,
+                    fontWeight: 700,
+                    color: MUTED,
+                    textDecoration: "none",
+                    border: `1px solid ${LINE}`,
+                    background: "#fff",
+                    borderRadius: 999,
+                    padding: "5px 12px",
+                  }}
+                  title={`Back to TEKS ${fromCode} report`}
+                >
+                  ← {fromCode} report
+                </Link>
+              ) : null}
               <Link
                 href={inboxFilterHref}
                 style={{
