@@ -2,8 +2,9 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import Link from "next/link";
 import { usePlanner } from "../../../lib/v2/usePlanner";
-import { SUBJECTS, DAYS, DAY_NAMES, DATES, KINDS, PRODUCT_INFO, DEMO_WEEK, buildMorningCardDemo } from "../../../lib/v2/demoWeek";
+import { SUBJECTS, DAYS, DAY_NAMES, DATES, KINDS, PRODUCT_INFO, DEMO_WEEK } from "../../../lib/v2/demoWeek";
 import {
   GRADING_INBOX_HREF,
   GRADING_INBOX_KEY,
@@ -20,7 +21,6 @@ import {
   getWhoNeedsCountsByClass,
   getWhoNeedsMeCount,
   readFocusBlocksForDay,
-  whoNeedsGlanceText,
   WHO_NEEDS_ME_STORAGE_KEY,
 } from "../../../lib/v2/demoWhoNeedsMe";
 import { PROJECT_HREF } from "../../../lib/v2/demoProject";
@@ -35,13 +35,18 @@ import {
 } from "../../../lib/v2/demoLibrary";
 import { writeSundayPendingUndo } from "../../../lib/v2/demoSundayBridge";
 import {
-  getAllClearRailPeek,
+  getAllClearMorningLine,
   getLoopSoftest,
   REPORTS_HREF,
   checkInsHrefForPeriod,
   checkInsHrefForStandard,
+  checkInsCtaLabel,
   focusBlocksSectionLabel,
   focusBlockProvenanceLine,
+  softClusterDoors,
+  isLoopAllClear,
+  isStandardResolved,
+  hasReteachOnToday,
   LOOP_REMEMBER_KEY,
 } from "../../../lib/v2/demoLoopSeams";
 import {
@@ -50,16 +55,10 @@ import {
   Pill,
   TeacherSubnav,
   SetupSwitcher,
-  MorningCard,
-  SamGlance,
-  SamMorningGlanceRow,
-  SamBubble,
   ProvenanceHelperLine,
   RoomCards,
   SingleRoomLabel,
   HandsOffChip,
-  WhoNeedsMeChip,
-  TodayLoopStrip,
   SundayPreviewModal,
   INK,
   MUTED,
@@ -76,6 +75,12 @@ import { Toast } from "../../../components/v2/weekKit";
 
 const AGENDA_LABELS = ["Now", "Next", "Later"];
 
+/**
+ * CI2.0 Daily Focus glance — INTUITIVE · fewer clicks.
+ * Top: quiet class/day story. Main: needs-you (soft cluster + focus blocks) with who named.
+ * Slim next-move row. Agenda / teach depth secondary. No MorningCard + SamGlance + CTA rail stack.
+ * Amber only when live Check-ins waiting > 0. No Demo shout.
+ */
 export default function StationDayClient() {
   const router = useRouter();
   const params = useSearchParams();
@@ -88,12 +93,7 @@ export default function StationDayClient() {
   const [openId, setOpenId] = useState(params.get("open"));
   const cls = p.setup.classes.find((c) => c.key === p.classFilter) || p.setup.classes[0];
   const selectedClass = p.classFilter === "all" ? p.setup.classes[0]?.key : p.classFilter;
-  const loopSoftestEarly = getLoopSoftest();
-  const checkInsDoor = (() => {
-    const code = loopSoftestEarly?.softest?.code || null;
-    if (code) return checkInsHrefForStandard(code, { periodId: selectedClass });
-    return checkInsHrefForPeriod(selectedClass);
-  })();
+
   useEffect(() => {
     const refresh = () => {
       setGradePending(getPendingCount(loadConfirmedIds()));
@@ -134,8 +134,8 @@ export default function StationDayClient() {
       window.removeEventListener("ci2-loop-remember-updated", refresh);
     };
   }, [selectedClass, day]);
+
   const items = p.visible.filter((a) => a.day === day);
-  // Agenda rise-to-top: teach first, then work/small — labeled Now → Next → Later
   const agenda = useMemo(() => {
     const teach = items.filter((a) => a.kind === "teach");
     const rest = items.filter((a) => a.kind !== "teach");
@@ -143,7 +143,6 @@ export default function StationDayClient() {
   }, [items]);
   const minutes = items.reduce((s, a) => s + (a.minutes || 0), 0);
   const opened = items.find((a) => a.id === openId) || p.activities.find((a) => a.id === openId);
-  const daySuggestions = p.openSuggestions.filter((s) => s.day === day || s.day == null);
 
   const needsByClass = useMemo(() => {
     const map = {};
@@ -156,75 +155,54 @@ export default function StationDayClient() {
     return map;
   }, [p.setup.classes, p.openSuggestions]);
 
-  const glanceItems = useMemo(() => {
-    const list = [];
-    const className = cls?.name;
-    // Check-ins first when kids are waiting (Emily max-3 glance rule)
-    if (whoNeedsCount > 0) {
-      list.push({
-        id: "glance-who-needs",
-        text: whoNeedsGlanceText(whoNeedsCount),
-        actionLabel: "Check-ins",
-        meaning: "needsYou",
-        tone: "cream",
-        href: checkInsDoor,
-      });
-    }
-    const suggestionSlots = Math.max(0, 2 - list.length);
-    for (const s of daySuggestions.slice(0, suggestionSlots)) {
-      list.push({
-        id: s.id,
-        text: s.text(className),
-        actionLabel: s.action,
-        meaning: "needsYou",
-        tone: "cream",
-        onAction: () => p.acceptSuggestion(s),
-      });
-    }
-    if (gradePending > 0 && list.length < 3) {
-      list.push({
-        id: "glance-grade",
-        text: `${gradePending} to grade — ready when you are, no rush.`,
-        actionLabel: "Open grading",
-        meaning: "toGrade",
-        tone: "coral",
-        href: GRADING_INBOX_HREF,
-      });
-    }
-    return list.slice(0, 3);
-  }, [daySuggestions, cls?.name, gradePending, whoNeedsCount, checkInsDoor]);
-
-  const morningCard = useMemo(
-    () =>
-      buildMorningCardDemo({
-        subjects: p.setup.subjects,
-        classKey: selectedClass,
-        className: cls?.name,
-        subjectFilter: p.subjectFilter,
-        agendaNow: agenda[0] || null,
-      }),
-    [p.setup.subjects, selectedClass, cls?.name, p.subjectFilter, agenda, loopTick]
-  );
+  // loopTick keeps remember / resolve / all-clear voice in sync.
+  void loopTick;
   const loopSoftest = useMemo(() => getLoopSoftest(), [loopTick]);
+  const allClear = typeof window !== "undefined" ? isLoopAllClear() : false;
+  const waiting = whoNeedsCount > 0;
+  const softOpen =
+    !allClear &&
+    loopSoftest?.softest &&
+    loopSoftest.urgency !== "cooled" &&
+    !isStandardResolved(loopSoftest.softest.code);
 
-  const morningDismissKey = `ci2.morning.dismissed.${DATES[day] || day}`;
-  const [morningDismissed, setMorningDismissed] = useState(false);
-  useEffect(() => {
-    try {
-      setMorningDismissed(window.localStorage.getItem(morningDismissKey) === "1");
-    } catch {
-      setMorningDismissed(false);
-    }
-  }, [morningDismissKey]);
+  const checkInsDoor = (() => {
+    const code = loopSoftest?.softest?.code || null;
+    if (code) return checkInsHrefForStandard(code, { periodId: selectedClass });
+    return checkInsHrefForPeriod(selectedClass);
+  })();
 
-  function dismissMorningCard() {
-    try {
-      window.localStorage.setItem(morningDismissKey, "1");
-    } catch {
-      /* ignore */
-    }
-    setMorningDismissed(true);
-  }
+  const classStory = allClear
+    ? getAllClearMorningLine({ className: cls?.name })
+    : loopSoftest?.samStory ||
+      (loopSoftest?.whoLine
+        ? `${loopSoftest.readiness} · ${loopSoftest.whoLine} on TEKS ${loopSoftest.softest.code}.`
+        : `Steady day for ${cls?.name || "this class"}.`);
+
+  const softDoors =
+    softOpen && loopSoftest?.softest
+      ? softClusterDoors(loopSoftest.softest.softCluster || [], {
+          standard: loopSoftest.softest.code,
+          periodId: selectedClass,
+        })
+      : [];
+
+  const reteachOnToday =
+    softOpen && loopSoftest?.softest?.code
+      ? hasReteachOnToday(loopSoftest.softest.code) ||
+        focusBlocks.some(
+          (b) =>
+            b &&
+            (b.fromReports || b.source === "reports") &&
+            String(b.standard || "").toUpperCase() ===
+              String(loopSoftest.softest.code).toUpperCase()
+        )
+      : focusBlocks.some((b) => b && (b.fromReports || b.source === "reports" || b.kind === "reteach"));
+
+  const softReportHref = loopSoftest?.href || REPORTS_HREF;
+  const softReportLabel = loopSoftest?.softest?.code
+    ? `${loopSoftest.softest.code} report`
+    : "Reports";
 
   // One-time provenance helper (quiet; localStorage dismiss)
   const [showProvenanceHelper, setShowProvenanceHelper] = useState(false);
@@ -238,116 +216,228 @@ export default function StationDayClient() {
     setShowProvenanceHelper(false);
   }
 
-  // SAM morning tip when Check-ins wait — once per day (no spam every render)
-  const samMorningTipKey = `ci2.morning.samCheckInsTip.${DATES[day] || day}`;
-  const [samMorningTip, setSamMorningTip] = useState(null);
-  useEffect(() => {
-    if (whoNeedsCount <= 0) {
-      setSamMorningTip(null);
-      return;
-    }
-    try {
-      if (window.sessionStorage.getItem(samMorningTipKey) === "1") {
-        setSamMorningTip(null);
-        return;
-      }
-      window.sessionStorage.setItem(samMorningTipKey, "1");
-    } catch {
-      /* still show once this mount */
-    }
-    const line =
-      whoNeedsCount === 1
-        ? "1 Check-in ready when you are"
-        : `${whoNeedsCount} Check-ins ready when you are`;
-    setSamMorningTip(line);
-  }, [whoNeedsCount, samMorningTipKey]);
-
   function openProject(act) {
     router.push(PROJECT_HREF(act.id));
   }
-
   function openLessonPlan(act) {
     router.push(LESSON_PLAN_HREF(act.id));
   }
-
   function openLiveTeach(act) {
     router.push(LIVE_TEACH_HREF(act.id));
   }
 
-  // Today strip · Teach → live teach for primary teach block; else scroll to agenda.
-  const primaryTeach = agenda.find((a) => a.kind === "teach") || null;
-  const teachHref = primaryTeach
-    ? LIVE_TEACH_HREF(primaryTeach.id)
-    : "#today-teach";
-
-  const glassQuiet = {
-    background: "rgba(255,255,255,.82)",
-    border: `1px solid ${LINE}`,
-    borderRadius: 16,
+  const btnBase = {
+    borderRadius: 999,
+    padding: "9px 14px",
+    fontWeight: 800,
+    fontSize: 13,
+    textDecoration: "none",
+    display: "inline-flex",
+    alignItems: "center",
+    justifyContent: "center",
+    fontFamily: "inherit",
+    cursor: "pointer",
+    border: "none",
   };
+  const amberPrimary = {
+    background: GLANCE.needsYou.bg,
+    color: GLANCE.needsYou.fg,
+    border: `1px solid ${GLANCE.needsYou.border}`,
+  };
+  const softPrimary = {
+    background: "rgba(243,238,255,.88)",
+    color: LAVENDER,
+    border: `1px solid ${LINE}`,
+  };
+  const calmSecondary = {
+    background: GLANCE.ready.bg,
+    color: GLANCE.ready.fg,
+    border: `1px solid ${GLANCE.ready.border}`,
+  };
+  const quietTertiary = {
+    color: MUTED,
+    background: "rgba(255,255,255,.88)",
+    border: `1px solid ${LINE}`,
+    fontWeight: 700,
+  };
+
+  const needsScanEmpty = !softOpen && focusBlocks.length === 0;
 
   return (
     <StationShell>
       <style>{`
-        .df-bento{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(260px,1fr);gap:16px;align-items:start}
-        .df-top{display:grid;gap:10px;margin:0 0 14px}
-        .df-rail{display:flex;flex-direction:column;gap:12px;position:sticky;top:12px}
-        .df-peek{display:flex;flex-direction:column;gap:8px}
-        @media (max-width:960px){
-          .df-bento{grid-template-columns:1fr}
-          .df-rail{position:static}
+        .df-wrap{max-width:960px;margin:0 auto;width:100%}
+        .df-story{
+          margin-top:10px;padding:10px 12px;border-radius:12px;
+          background:rgba(243,238,255,.45);border:1px solid ${LINE};
+        }
+        .df-actions{
+          margin-top:12px;display:flex;flex-wrap:wrap;gap:8px;align-items:center;
+        }
+        .df-needs{
+          display:grid;gap:10px;margin-top:10px;
+        }
+        .df-agenda{
+          display:grid;gap:10px;margin-top:10px;
+        }
+        .df-filters{
+          display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:12px;
         }
       `}</style>
       <TeacherSubnav active="day" gradeCount={gradePending} checkInsCount={whoNeedsCount} />
-      <Glass>
-        {/* Title · setup — short hierarchy */}
-        <div style={{ display: "flex", justifyContent: "space-between", gap: 12, flexWrap: "wrap", alignItems: "flex-start", marginBottom: 12 }}>
-          <div>
-            <h1 style={{ fontFamily: "'Poppins', sans-serif", margin: 0, fontSize: 30, color: INK, letterSpacing: -0.3 }}>Daily Focus</h1>
-            <div style={{ color: MUTED, marginTop: 2, fontSize: 14 }}>
-              Teach today · {DAY_NAMES[day]} · {DATES[day]} · {p.published ? "published" : "not published yet"} · {minutes} min
+      <div className="df-wrap">
+        <Glass style={{ padding: "16px 16px 14px" }}>
+          {/* Title · setup — short hierarchy */}
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              gap: 12,
+              flexWrap: "wrap",
+              alignItems: "flex-start",
+            }}
+          >
+            <div style={{ minWidth: 0, flex: "1 1 220px" }}>
+              <h1
+                style={{
+                  fontFamily: "'Poppins', sans-serif",
+                  margin: 0,
+                  fontSize: 22,
+                  fontWeight: 700,
+                  color: INK,
+                  letterSpacing: -0.2,
+                  lineHeight: 1.25,
+                }}
+              >
+                Daily Focus
+              </h1>
+              <p
+                style={{
+                  margin: "4px 0 0",
+                  fontSize: 11,
+                  fontWeight: 600,
+                  color: MUTED,
+                  letterSpacing: 0.1,
+                }}
+              >
+                {DAY_NAMES[day]} · {DATES[day]}
+                {cls?.name ? ` · ${cls.name}` : ""}
+                {" · "}
+                {p.published ? "published" : "not published yet"}
+                {" · "}
+                {minutes} min
+              </p>
+              <div style={{ marginTop: 8, display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
+                <SetupSwitcher setupKey={p.setupKey} onChange={p.setSetupKey} />
+                {!p.multiClass && <SingleRoomLabel cls={cls} setup={p.setup} />}
+              </div>
             </div>
-            <div style={{ marginTop: 10, display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
-              <SetupSwitcher setupKey={p.setupKey} onChange={p.setSetupKey} />
-              {!p.multiClass && <SingleRoomLabel cls={cls} setup={p.setup} />}
+            <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
+              <HandsOffChip level={p.level} onOpenPreview={() => p.setShowSundayPreview(true)} />
+              <WeeksRunEntry onOpen={() => p.setShowWeeksRun(true)} routineCount={p.enabledRoutineCount} />
             </div>
           </div>
-          {/* Compact chips — not giant colored tiles */}
-          <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
-            <HandsOffChip level={p.level} onOpenPreview={() => p.setShowSundayPreview(true)} />
-            <WeeksRunEntry onOpen={() => p.setShowWeeksRun(true)} routineCount={p.enabledRoutineCount} />
-          </div>
-        </div>
 
-        {/* TOP full width: SAM morning | glance side-by-side (stack on narrow) + period switcher */}
-        <section className="df-top" aria-label="Morning glance band">
-          <SamMorningGlanceRow style={!morningDismissed ? undefined : { gridTemplateColumns: "1fr" }}>
-            {!morningDismissed && (
-              <MorningCard
-                compact
-                greeting={morningCard.greeting}
-                agendaLine={morningCard.agendaLine}
-                win={morningCard.win}
-                watch={morningCard.watch}
-                onDismiss={dismissMorningCard}
-                checkInsCount={whoNeedsCount}
-                checkInsHref={checkInsDoor}
-                softWho={null}
-                softestHref={morningCard.softestHref}
-                softestCode={morningCard.readiness === "You're covered" ? null : morningCard.softestCode}
-                readiness={morningCard.readiness}
-              />
+          {/* Compact class / day story — not a hero essay */}
+          <section className="df-story" aria-label="Class story">
+            <p
+              style={{
+                margin: 0,
+                fontFamily: "'Poppins', sans-serif",
+                fontSize: 13,
+                fontWeight: 500,
+                color: INK,
+                lineHeight: 1.45,
+              }}
+            >
+              {classStory}
+            </p>
+          </section>
+
+          {/* One clear next-move row — no stacked CTA chrome */}
+          <div className="df-actions" aria-label="Next move">
+            {waiting ? (
+              <Link
+                href={checkInsDoor}
+                style={{ ...btnBase, ...amberPrimary }}
+                title="Open Check-ins — live waiting needs you"
+              >
+                {checkInsCtaLabel(whoNeedsCount)} →
+              </Link>
+            ) : softOpen ? (
+              <Link
+                href={checkInsDoor}
+                style={{ ...btnBase, ...softPrimary }}
+                title={
+                  loopSoftest?.whoLine
+                    ? `Sit Check-ins · ${loopSoftest.whoLine}`
+                    : "Sit Check-ins with soft cluster"
+                }
+              >
+                {loopSoftest?.whoLine
+                  ? `Sit · ${loopSoftest.whoLine.split(" · ").slice(0, 2).join(" · ")}`
+                  : checkInsCtaLabel(whoNeedsCount)}{" "}
+                →
+              </Link>
+            ) : (
+              <Link
+                href={checkInsDoor}
+                style={{ ...btnBase, ...calmSecondary }}
+                title="Open Check-ins — clear right now"
+              >
+                {checkInsCtaLabel(whoNeedsCount)} →
+              </Link>
             )}
-            <SamGlance
-              compact
-              items={glanceItems}
-              emptyLabel={`Nothing waiting for ${cls?.name || "this class"} today. Nice.`}
-              style={!morningDismissed ? undefined : { gridColumn: "1 / -1" }}
-            />
-          </SamMorningGlanceRow>
-          {samMorningTip && (
-            <SamBubble text={samMorningTip} style={{ margin: 0 }} />
-          )}
+
+            {reteachOnToday ? (
+              <a
+                href="#df-needs"
+                style={{ ...btnBase, ...calmSecondary }}
+                title="Reteach / small group already on today's Focus"
+              >
+                Reteach on today
+              </a>
+            ) : null}
+
+            {!waiting && softOpen ? (
+              <Link
+                href={softReportHref}
+                style={{ ...btnBase, ...quietTertiary }}
+                title={`Softest report · TEKS ${loopSoftest?.softest?.code || ""}`}
+              >
+                {softReportLabel} →
+              </Link>
+            ) : null}
+
+            {gradePending > 0 ? (
+              <Link
+                href={GRADING_INBOX_HREF}
+                style={{ ...btnBase, ...quietTertiary }}
+                title="Open Grading inbox"
+              >
+                Grading · {gradePending}
+              </Link>
+            ) : (
+              <Link
+                href={GRADING_INBOX_HREF}
+                style={{ ...btnBase, ...quietTertiary }}
+                title="Open Grading inbox"
+              >
+                Grading
+              </Link>
+            )}
+
+            {!softOpen ? (
+              <Link
+                href={REPORTS_HREF}
+                style={{ ...btnBase, ...quietTertiary }}
+                title="Open Reports glance"
+              >
+                Reports
+              </Link>
+            ) : null}
+          </div>
+
           <ProvenanceHelperLine
             show={showProvenanceHelper}
             onDismiss={onDismissProvenanceHelper}
@@ -355,23 +445,30 @@ export default function StationDayClient() {
           />
 
           {p.multiClass && (
-            <RoomCards
-              classes={p.setup.classes}
-              selectedKey={selectedClass}
-              onSelect={p.setClassFilter}
-              setup={p.setup}
-              needsByClass={needsByClass}
-            />
+            <div style={{ marginTop: 12 }}>
+              <RoomCards
+                classes={p.setup.classes}
+                selectedKey={selectedClass}
+                onSelect={p.setClassFilter}
+                setup={p.setup}
+                needsByClass={needsByClass}
+              />
+            </div>
           )}
 
-          <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
+          <div className="df-filters" aria-label="Day and subject filters">
             {p.multiSubject && (
               <Pill active={p.subjectFilter === "all"} onClick={() => p.setSubjectFilter("all")}>
                 All subjects
               </Pill>
             )}
             {p.setup.subjects.map((key) => (
-              <Pill key={key} active={p.subjectFilter === key || (!p.multiSubject && p.subjectFilter === "all")} onClick={() => p.setSubjectFilter(key)} color={SUBJECTS[key].color}>
+              <Pill
+                key={key}
+                active={p.subjectFilter === key || (!p.multiSubject && p.subjectFilter === "all")}
+                onClick={() => p.setSubjectFilter(key)}
+                color={SUBJECTS[key].color}
+              >
                 {SUBJECTS[key].name}
               </Pill>
             ))}
@@ -401,371 +498,553 @@ export default function StationDayClient() {
               );
             })}
           </div>
-        </section>
 
-        {/* Connected bento: left ~60% teach spine · right ~40% loop + peeks */}
-        <div className="df-bento">
-          <div aria-label="Teach spine">
-            {/* Check-ins → Daily Focus pulls (amber only for real needs) */}
-            {focusBlocks.length > 0 && (
-              <section aria-label="Small group and reteach from Check-ins" style={{ marginBottom: 14 }}>
-                <div style={{ fontWeight: 800, color: GLANCE.needsYou.fg, marginBottom: 8, fontSize: 12, letterSpacing: 0.4 }}>
-                  {focusBlocksSectionLabel(focusBlocks, day, {
-                    todayDay: FOCUS_TODAY_DAY,
-                    tomorrowDay: FOCUS_TOMORROW_DAY,
-                  })}
-                </div>
-                <div style={{ display: "grid", gap: 8 }}>
-                  {focusBlocks.map((block) => (
+          {/* Main scan — what needs her + who, without a click */}
+          <section id="df-needs" aria-label="Needs you" style={{ marginTop: 16 }}>
+            <div
+              style={{
+                fontSize: 11,
+                fontWeight: 800,
+                letterSpacing: 0.35,
+                color: MUTED,
+                textTransform: "uppercase",
+                paddingLeft: 2,
+              }}
+            >
+              Needs you · who
+            </div>
+            <div className="df-needs">
+              {softOpen && loopSoftest?.softest ? (
+                <article
+                  style={{
+                    display: "flex",
+                    gap: 0,
+                    alignItems: "stretch",
+                    background: "rgba(255,248,240,.92)",
+                    border: `1px solid ${GLANCE.needsYou.border}`,
+                    borderRadius: 14,
+                    overflow: "hidden",
+                    minHeight: 88,
+                  }}
+                >
+                  <span
+                    aria-hidden
+                    style={{
+                      width: 5,
+                      flexShrink: 0,
+                      background: SUBJECTS[loopSoftest.softest.subject]?.color || LAVENDER,
+                      opacity: 0.9,
+                    }}
+                  />
+                  <div
+                    style={{
+                      flex: 1,
+                      minWidth: 0,
+                      padding: "11px 12px 12px",
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: 6,
+                    }}
+                  >
                     <div
-                      key={block.id}
                       style={{
-                        ...glanceCardStyle("needsYou"),
-                        borderRadius: 14,
-                        padding: "10px 12px",
                         display: "flex",
-                        gap: 10,
+                        justifyContent: "space-between",
+                        gap: 8,
                         alignItems: "flex-start",
-                        boxShadow: "0 4px 14px rgba(166,124,61,.08)",
                       }}
                     >
-                      <div
+                      <div style={{ minWidth: 0 }}>
+                        <div
+                          style={{
+                            fontSize: 10,
+                            fontWeight: 800,
+                            color: MUTED,
+                            textTransform: "uppercase",
+                            letterSpacing: 0.2,
+                          }}
+                        >
+                          Soft cluster · {loopSoftest.softest.subjectName || SUBJECTS[loopSoftest.softest.subject]?.name} ·{" "}
+                          {loopSoftest.softest.code}
+                        </div>
+                        <div
+                          style={{
+                            marginTop: 3,
+                            fontWeight: 700,
+                            color: INK,
+                            fontSize: 14,
+                            lineHeight: 1.3,
+                          }}
+                        >
+                          {loopSoftest.softest.plain || "Needs a look"}
+                        </div>
+                      </div>
+                      <span
                         style={{
-                          ...glanceChipStyle("needsYou"),
+                          fontSize: 11,
+                          fontWeight: 700,
+                          ...glanceChipStyle(
+                            loopSoftest.readiness === "Mostly clear" ? "ready" : "needsYou"
+                          ),
                           borderRadius: 999,
-                          padding: "5px 9px",
-                          fontSize: 10,
-                          fontWeight: 800,
+                          padding: "4px 8px",
                           flexShrink: 0,
-                          letterSpacing: 0.3,
+                          whiteSpace: "nowrap",
                         }}
                       >
-                        {focusBlockKindLabel(block.kind).toUpperCase()}
-                      </div>
-                      <div style={{ minWidth: 0, flex: 1 }}>
-                        <div style={{ fontWeight: 800, color: INK, fontSize: 15 }}>{block.title}</div>
-                        <div style={{ fontSize: 12, color: MUTED, marginTop: 2 }}>
-                          {focusBlockNamesLine(block)}
-                          {block.standard ? ` · ${block.standard}` : ""}
-                          {" · "}
-                          {focusBlockProvenanceLine(block)}
-                        </div>
-                      </div>
+                        {loopSoftest.readiness || "Needs a look"}
+                      </span>
                     </div>
-                  ))}
-                </div>
-              </section>
-            )}
-
-            {/* Now → Next → Later agenda hero */}
-            <section id="today-teach" aria-label="Today's agenda">
-              <div style={{ fontWeight: 800, color: INK, marginBottom: 10, fontSize: 12, letterSpacing: 0.4 }}>
-                NOW → NEXT → LATER
-              </div>
-              <div style={{ display: "grid", gap: 10 }}>
-                {agenda.length === 0 && (
-                  <div style={{ color: MUTED, fontSize: 14, padding: "12px 4px" }}>Nothing on the agenda for this room today.</div>
-                )}
-                {agenda.map((act, idx) => {
-                  const sub = SUBJECTS[act.subject];
-                  const label = idx < 3 ? AGENDA_LABELS[idx] : "Later";
-                  const isNow = idx === 0;
-                  return (
                     <div
-                      key={act.id}
                       style={{
-                        display: "flex",
-                        gap: 0,
-                        alignItems: "stretch",
-                        background: isNow ? SOFT_LAV : "rgba(255,255,255,.92)",
-                        border: `1px solid ${isNow ? "#D9CFFF" : LINE}`,
-                        borderRadius: 16,
-                        overflow: "hidden",
-                        boxShadow: isNow ? "0 8px 22px rgba(139,108,255,.12)" : "none",
+                        fontSize: 12,
+                        fontWeight: 600,
+                        color: MUTED,
+                        lineHeight: 1.35,
                       }}
                     >
-                      <div
-                        style={{
-                          width: 72,
-                          flexShrink: 0,
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          background: isNow ? "rgba(139,108,255,.14)" : "rgba(247,244,255,.65)",
-                          fontWeight: 800,
-                          fontSize: 12,
-                          color: isNow ? LAVENDER : MUTED,
-                          letterSpacing: 0.3,
-                        }}
-                      >
-                        {label}
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => setOpenId(act.id)}
-                        style={{
-                          flex: 1,
-                          display: "flex",
-                          gap: 10,
-                          textAlign: "left",
-                          background: "transparent",
-                          border: "none",
-                          padding: "12px 10px",
-                          cursor: "pointer",
-                          fontFamily: "inherit",
-                        }}
-                      >
-                        <span style={{ width: 5, alignSelf: "stretch", background: sub.color, borderRadius: 4, opacity: 0.85 }} />
-                        <div style={{ minWidth: 0 }}>
-                          <div style={{ fontSize: 11, fontWeight: 800, color: MUTED, textTransform: "uppercase", letterSpacing: 0.2 }}>
-                            {sub.name} · {KINDS[act.kind]?.short || act.kind}
-                            {act.auto ? " · auto" : ""}
-                          </div>
-                          <div style={{ fontWeight: 700, color: INK, fontSize: isNow ? 17 : 15 }}>{act.title}</div>
-                          <div style={{ fontSize: 13, color: MUTED }}>
-                            {act.minutes} min · {act.who}
-                            {(() => {
-                              const prov = plannerProvenanceLabel(act);
-                              return prov ? ` · ${prov}` : "";
-                            })()}
-                          </div>
-                        </div>
-                      </button>
-                      {act.kind === "teach" && (
-                        <div style={{ alignSelf: "center", marginRight: 12, display: "flex", gap: 6, flexShrink: 0, flexWrap: "wrap", justifyContent: "flex-end" }}>
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              openLiveTeach(act);
-                            }}
-                            title="Open teach live present mode"
-                            style={{
-                              border: isNow ? "none" : `1px solid ${GLANCE.teach.border}`,
-                              background: isNow ? GLANCE.teach.fg : GLANCE.teach.bg,
-                              color: isNow ? "#fff" : GLANCE.teach.fg,
-                              borderRadius: 999,
-                              padding: "8px 12px",
-                              fontSize: 13,
-                              fontWeight: 700,
-                              cursor: "pointer",
-                              fontFamily: "inherit",
-                              whiteSpace: "nowrap",
-                              boxShadow: isNow ? "0 6px 16px rgba(123,107,184,.22)" : "none",
-                            }}
-                          >
-                            Teach live
-                          </button>
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              openLessonPlan(act);
-                            }}
-                            title="Open lesson plan stub"
-                            style={{
-                              border: `1px solid ${LINE}`,
-                              background: "rgba(255,255,255,.9)",
-                              color: GLANCE.teach.fg,
-                              borderRadius: 999,
-                              padding: "8px 12px",
-                              fontSize: 13,
-                              fontWeight: 700,
-                              cursor: "pointer",
-                              fontFamily: "inherit",
-                              whiteSpace: "nowrap",
-                            }}
-                          >
-                            Lesson plan
-                          </button>
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              openProject(act);
-                            }}
-                            title="Open project shell"
-                            style={{
-                              border: `1px solid ${GLANCE.project.border}`,
-                              background: isNow ? GLANCE.project.fg : "rgba(255,255,255,.9)",
-                              color: isNow ? "#fff" : GLANCE.project.fg,
-                              borderRadius: 999,
-                              padding: "8px 14px",
-                              fontSize: 13,
-                              fontWeight: 700,
-                              cursor: "pointer",
-                              fontFamily: "inherit",
-                              whiteSpace: "nowrap",
-                            }}
-                          >
-                            Project
-                          </button>
-                        </div>
+                      {softDoors.length ? (
+                        <>
+                          {softDoors.map((d, i) => (
+                            <span key={d.name}>
+                              {i > 0 ? " · " : ""}
+                              <Link
+                                href={d.href}
+                                title={`Open ${d.name}`}
+                                style={{
+                                  color: LAVENDER,
+                                  fontWeight: 800,
+                                  textDecoration: "none",
+                                  borderBottom: `1px dashed ${LINE}`,
+                                }}
+                              >
+                                {d.name}
+                              </Link>
+                            </span>
+                          ))}
+                        </>
+                      ) : (
+                        loopSoftest.whoLine || "Soft cluster"
                       )}
                     </div>
-                  );
-                })}
-              </div>
-            </section>
-          </div>
+                    <Link
+                      href={softReportHref}
+                      style={{
+                        fontSize: 11,
+                        fontWeight: 700,
+                        color: LAVENDER,
+                        textDecoration: "none",
+                        alignSelf: "flex-start",
+                      }}
+                      title={`Depth · report · ${loopSoftest.softest.code}`}
+                    >
+                      Open report →
+                    </Link>
+                  </div>
+                </article>
+              ) : null}
 
-          {/* Right ~40%: loop · peeks · add / light routines */}
-          <aside className="df-rail" aria-label="Today side rail">
-            <div style={{ ...glassQuiet, padding: "12px 14px" }}>
-              <TodayLoopStrip
-                planCount={items.length}
-                teachCount={items.filter((a) => a.kind === "teach").length}
-                checkCount={whoNeedsCount > 0 ? whoNeedsCount : gradePending}
-                checkNeeds={whoNeedsCount > 0}
-                planHref="/v2/teacher"
-                teachHref={teachHref}
-                checkHref={whoNeedsCount > 0 ? checkInsDoor : GRADING_INBOX_HREF}
-              />
-            </div>
+              {focusBlocks.length > 0 && (
+                <div>
+                  <div
+                    style={{
+                      fontWeight: 800,
+                      color: GLANCE.needsYou.fg,
+                      marginBottom: 8,
+                      fontSize: 11,
+                      letterSpacing: 0.35,
+                    }}
+                  >
+                    {focusBlocksSectionLabel(focusBlocks, day, {
+                      todayDay: FOCUS_TODAY_DAY,
+                      tomorrowDay: FOCUS_TOMORROW_DAY,
+                    })}
+                  </div>
+                  <div style={{ display: "grid", gap: 8 }}>
+                    {focusBlocks.map((block) => {
+                      const blockDoors = softClusterDoors(block.studentNames || [], {
+                        standard: block.standard || undefined,
+                        periodId: selectedClass,
+                      });
+                      const covered =
+                        block.standard && isStandardResolved(block.standard);
+                      return (
+                        <div
+                          key={block.id}
+                          style={{
+                            ...glanceCardStyle(covered ? "ready" : "needsYou"),
+                            borderRadius: 14,
+                            padding: "10px 12px",
+                            display: "flex",
+                            gap: 10,
+                            alignItems: "flex-start",
+                            boxShadow: covered
+                              ? "none"
+                              : "0 4px 14px rgba(166,124,61,.08)",
+                          }}
+                        >
+                          <div
+                            style={{
+                              ...glanceChipStyle(covered ? "ready" : "needsYou"),
+                              borderRadius: 999,
+                              padding: "5px 9px",
+                              fontSize: 10,
+                              fontWeight: 800,
+                              flexShrink: 0,
+                              letterSpacing: 0.3,
+                            }}
+                          >
+                            {focusBlockKindLabel(block.kind).toUpperCase()}
+                          </div>
+                          <div style={{ minWidth: 0, flex: 1 }}>
+                            <div style={{ fontWeight: 800, color: INK, fontSize: 15 }}>
+                              {block.title}
+                            </div>
+                            <div style={{ fontSize: 12, color: MUTED, marginTop: 2, lineHeight: 1.4 }}>
+                              {blockDoors.length ? (
+                                <>
+                                  {blockDoors.map((d, i) => (
+                                    <span key={d.name}>
+                                      {i > 0 ? " · " : ""}
+                                      <Link
+                                        href={d.href}
+                                        title={`Open ${d.name}`}
+                                        style={{
+                                          color: LAVENDER,
+                                          fontWeight: 800,
+                                          textDecoration: "none",
+                                          borderBottom: `1px dashed ${LINE}`,
+                                        }}
+                                      >
+                                        {d.name}
+                                      </Link>
+                                    </span>
+                                  ))}
+                                </>
+                              ) : (
+                                focusBlockNamesLine(block)
+                              )}
+                              {block.standard ? ` · ${block.standard}` : ""}
+                              {" · "}
+                              {focusBlockProvenanceLine(block)}
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
 
-            <div className="df-peek">
-              <a
-                href={checkInsDoor}
-                style={{
-                  textDecoration: "none",
-                  display: "block",
-                  padding: "12px 14px",
-                  borderRadius: 14,
-                  border: whoNeedsCount > 0 ? `1px solid ${GLANCE.needsYou.border}` : `1px solid ${LINE}`,
-                  background: whoNeedsCount > 0 ? GLANCE.needsYou.bg : "rgba(255,255,255,.82)",
-                  color: INK,
-                }}
-              >
-                <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: 0.35, color: whoNeedsCount > 0 ? GLANCE.needsYou.fg : MUTED }}>
-                  CHECK-INS
-                </div>
-                <div style={{ fontWeight: 700, marginTop: 4, fontSize: 15 }}>
-                  {whoNeedsCount > 0 ? `${whoNeedsCount} waiting` : "Clear · open anytime"}
-                </div>
-              </a>
-              <a
-                href={GRADING_INBOX_HREF}
-                style={{
-                  textDecoration: "none",
-                  display: "block",
-                  padding: "12px 14px",
-                  borderRadius: 14,
-                  border: `1px solid ${LINE}`,
-                  background: "rgba(255,255,255,.82)",
-                  color: INK,
-                }}
-              >
-                <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: 0.35, color: MUTED }}>GRADING</div>
-                <div style={{ fontWeight: 700, marginTop: 4, fontSize: 15 }}>
-                  {gradePending > 0 ? `${gradePending} ready when you are` : "Inbox clear"}
-                </div>
-              </a>
-              <a
-                href={loopSoftest?.href || REPORTS_HREF}
-                style={{
-                  textDecoration: "none",
-                  display: "block",
-                  padding: "12px 14px",
-                  borderRadius: 14,
-                  border: `1px solid ${LINE}`,
-                  background: "rgba(255,255,255,.82)",
-                  color: INK,
-                }}
-                title="Class story · same soft who as Check-ins"
-              >
-                <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: 0.35, color: MUTED }}>REPORTS · CLASS STORY</div>
-                <div style={{ fontWeight: 700, marginTop: 4, fontSize: 15 }}>
-                  {loopSoftest?.urgency === "cooled"
-                    ? getAllClearRailPeek()
-                    : loopSoftest
-                    ? `${loopSoftest.readiness}${loopSoftest.whoLine ? ` · ${loopSoftest.whoLine}` : ""}`
-                    : "Open class story"}
-                </div>
-              </a>
-            </div>
-
-            <div style={{ ...glassQuiet, padding: "12px 14px", display: "flex", flexDirection: "column", gap: 10 }}>
-              <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: 0.35, color: MUTED }}>ADD · ROUTINES</div>
-              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-                <AddActivityButton onClick={() => p.openAddActivity({ day })} />
-                <button
-                  type="button"
-                  onClick={() => router.push("/v2/teacher")}
-                  style={{ background: "#fff", color: INK, border: "1px solid " + LINE, borderRadius: 999, padding: "10px 16px", fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}
-                >
-                  This Week · plan
-                </button>
-              </div>
-              <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
-                <WhoNeedsMeChip count={whoNeedsCount} href={checkInsDoor} />
-                <button
-                  type="button"
-                  onClick={() => p.setShowSundayPreview(true)}
+              {needsScanEmpty ? (
+                <div
                   style={{
+                    padding: "12px 14px",
+                    borderRadius: 14,
                     border: `1px solid ${LINE}`,
                     background: "rgba(255,255,255,.9)",
                     color: MUTED,
-                    borderRadius: 999,
-                    padding: "6px 12px",
-                    fontSize: 12,
-                    fontWeight: 700,
-                    cursor: "pointer",
-                    fontFamily: "inherit",
+                    fontSize: 13,
+                    lineHeight: 1.4,
                   }}
                 >
-                  Sunday preview
-                </button>
-              </div>
+                  {allClear
+                    ? "Nothing soft waiting — covered for now. Teach spine below when you are ready."
+                    : `Nothing waiting for ${cls?.name || "this class"} right now.`}
+                </div>
+              ) : null}
             </div>
-          </aside>
-        </div>
-      </Glass>
+          </section>
 
-      {opened && (
-        <Glass style={{ marginTop: 14 }}>
-          <div style={{ display: "flex", justifyContent: "space-between", gap: 12 }}>
-            <div>
-              <div style={{ fontSize: 12, fontWeight: 800, color: SUBJECTS[opened.subject].color, textTransform: "uppercase" }}>
-                {SUBJECTS[opened.subject].name} · {KINDS[opened.kind]?.label || opened.kind}
-                {opened.auto ? " · auto" : ""}
-              </div>
-              <h2 style={{ margin: "4px 0", fontFamily: "'Poppins', sans-serif", color: INK }}>{opened.title}</h2>
-              <p style={{ margin: 0, color: MUTED, fontSize: 14 }}>
-                {opened.minutes} min · {opened.who} · {PRODUCT_INFO[opened.product]?.about || opened.product}
-              </p>
-              <p style={{ margin: "8px 0 0", color: INK, fontSize: 14 }}>This is the live assignment for {cls?.name || "this class"}.</p>
-              {opened.kind === "teach" && (
-                <div style={{ marginTop: 12, display: "flex", gap: 8, flexWrap: "wrap" }}>
-                  <button
-                    type="button"
-                    onClick={() => openLiveTeach(opened)}
-                    style={{ background: GLANCE.teach.fg, color: "#fff", border: "none", borderRadius: 999, padding: "8px 16px", fontWeight: 700, cursor: "pointer", fontFamily: "inherit", boxShadow: "0 6px 16px rgba(123,107,184,.22)" }}
-                  >
-                    Teach live
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => openLessonPlan(opened)}
-                    style={{ background: GLANCE.teach.bg, color: GLANCE.teach.fg, border: `1px solid ${GLANCE.teach.border}`, borderRadius: 999, padding: "8px 16px", fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}
-                  >
-                    Lesson plan
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => openProject(opened)}
-                    style={{ background: GLANCE.project.fg, color: "#fff", border: "none", borderRadius: 999, padding: "8px 16px", fontWeight: 700, cursor: "pointer", fontFamily: "inherit", boxShadow: "0 6px 16px rgba(91,79,154,.22)" }}
-                  >
-                    Project
-                  </button>
+          {/* Secondary — teach spine (depth via click / Teach live) */}
+          <section id="today-teach" aria-label="Today's agenda" style={{ marginTop: 18 }}>
+            <div
+              style={{
+                fontSize: 11,
+                fontWeight: 800,
+                letterSpacing: 0.35,
+                color: MUTED,
+                textTransform: "uppercase",
+                paddingLeft: 2,
+              }}
+            >
+              Today · teach
+            </div>
+            <div className="df-agenda">
+              {agenda.length === 0 && (
+                <div style={{ color: MUTED, fontSize: 14, padding: "8px 2px" }}>
+                  Nothing on the agenda for this room today.
                 </div>
               )}
+              {agenda.map((act, idx) => {
+                const sub = SUBJECTS[act.subject];
+                const label = idx < 3 ? AGENDA_LABELS[idx] : "Later";
+                const isNow = idx === 0;
+                return (
+                  <div
+                    key={act.id}
+                    style={{
+                      display: "flex",
+                      gap: 0,
+                      alignItems: "stretch",
+                      background: isNow ? SOFT_LAV : "rgba(255,255,255,.92)",
+                      border: `1px solid ${isNow ? "#D9CFFF" : LINE}`,
+                      borderRadius: 14,
+                      overflow: "hidden",
+                      boxShadow: isNow ? "0 6px 18px rgba(139,108,255,.10)" : "none",
+                    }}
+                  >
+                    <div
+                      style={{
+                        width: 64,
+                        flexShrink: 0,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        background: isNow ? "rgba(139,108,255,.14)" : "rgba(247,244,255,.65)",
+                        fontWeight: 800,
+                        fontSize: 11,
+                        color: isNow ? LAVENDER : MUTED,
+                        letterSpacing: 0.3,
+                      }}
+                    >
+                      {label}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setOpenId(act.id)}
+                      style={{
+                        flex: 1,
+                        display: "flex",
+                        gap: 10,
+                        textAlign: "left",
+                        background: "transparent",
+                        border: "none",
+                        padding: "11px 10px",
+                        cursor: "pointer",
+                        fontFamily: "inherit",
+                      }}
+                    >
+                      <span
+                        style={{
+                          width: 5,
+                          alignSelf: "stretch",
+                          background: sub.color,
+                          borderRadius: 4,
+                          opacity: 0.85,
+                        }}
+                      />
+                      <div style={{ minWidth: 0 }}>
+                        <div
+                          style={{
+                            fontSize: 11,
+                            fontWeight: 800,
+                            color: MUTED,
+                            textTransform: "uppercase",
+                            letterSpacing: 0.2,
+                          }}
+                        >
+                          {sub.name} · {KINDS[act.kind]?.short || act.kind}
+                          {act.auto ? " · auto" : ""}
+                        </div>
+                        <div style={{ fontWeight: 700, color: INK, fontSize: isNow ? 16 : 14 }}>
+                          {act.title}
+                        </div>
+                        <div style={{ fontSize: 12, color: MUTED }}>
+                          {act.minutes} min · {act.who}
+                          {(() => {
+                            const prov = plannerProvenanceLabel(act);
+                            return prov ? ` · ${prov}` : "";
+                          })()}
+                        </div>
+                      </div>
+                    </button>
+                    {act.kind === "teach" && (
+                      <div
+                        style={{
+                          alignSelf: "center",
+                          marginRight: 10,
+                          display: "flex",
+                          gap: 6,
+                          flexShrink: 0,
+                        }}
+                      >
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            openLiveTeach(act);
+                          }}
+                          title="Open teach live present mode"
+                          style={{
+                            border: isNow ? "none" : `1px solid ${GLANCE.teach.border}`,
+                            background: isNow ? GLANCE.teach.fg : GLANCE.teach.bg,
+                            color: isNow ? "#fff" : GLANCE.teach.fg,
+                            borderRadius: 999,
+                            padding: "7px 12px",
+                            fontSize: 12,
+                            fontWeight: 700,
+                            cursor: "pointer",
+                            fontFamily: "inherit",
+                            whiteSpace: "nowrap",
+                          }}
+                        >
+                          Teach live
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
             </div>
-            <button type="button" onClick={() => setOpenId(null)} style={{ border: "none", background: "transparent", cursor: "pointer", color: MUTED, fontWeight: 700 }}>
-              Close
+          </section>
+
+          {/* Quiet add / plan — not a hunting rail */}
+          <div
+            style={{
+              marginTop: 14,
+              display: "flex",
+              gap: 8,
+              flexWrap: "wrap",
+              alignItems: "center",
+              paddingTop: 10,
+              borderTop: `1px solid ${LINE}`,
+            }}
+          >
+            <AddActivityButton onClick={() => p.openAddActivity({ day })} />
+            <button
+              type="button"
+              onClick={() => router.push("/v2/teacher")}
+              style={{
+                background: "#fff",
+                color: MUTED,
+                border: "1px solid " + LINE,
+                borderRadius: 999,
+                padding: "8px 14px",
+                fontWeight: 700,
+                fontSize: 12,
+                cursor: "pointer",
+                fontFamily: "inherit",
+              }}
+            >
+              This Week · plan
+            </button>
+            <button
+              type="button"
+              onClick={() => p.setShowSundayPreview(true)}
+              style={{
+                border: `1px solid ${LINE}`,
+                background: "rgba(255,255,255,.9)",
+                color: MUTED,
+                borderRadius: 999,
+                padding: "8px 12px",
+                fontSize: 12,
+                fontWeight: 700,
+                cursor: "pointer",
+                fontFamily: "inherit",
+              }}
+            >
+              Sunday preview
             </button>
           </div>
         </Glass>
-      )}
+
+        {opened && (
+          <Glass style={{ marginTop: 14, padding: "16px" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", gap: 12 }}>
+              <div>
+                <div
+                  style={{
+                    fontSize: 12,
+                    fontWeight: 800,
+                    color: SUBJECTS[opened.subject].color,
+                    textTransform: "uppercase",
+                  }}
+                >
+                  {SUBJECTS[opened.subject].name} · {KINDS[opened.kind]?.label || opened.kind}
+                  {opened.auto ? " · auto" : ""}
+                </div>
+                <h2 style={{ margin: "4px 0", fontFamily: "'Poppins', sans-serif", color: INK }}>
+                  {opened.title}
+                </h2>
+                <p style={{ margin: 0, color: MUTED, fontSize: 14 }}>
+                  {opened.minutes} min · {opened.who} ·{" "}
+                  {PRODUCT_INFO[opened.product]?.about || opened.product}
+                </p>
+                <p style={{ margin: "8px 0 0", color: INK, fontSize: 14 }}>
+                  This is the live assignment for {cls?.name || "this class"}.
+                </p>
+                {opened.kind === "teach" && (
+                  <div style={{ marginTop: 12, display: "flex", gap: 8, flexWrap: "wrap" }}>
+                    <button
+                      type="button"
+                      onClick={() => openLiveTeach(opened)}
+                      style={{
+                        background: GLANCE.teach.fg,
+                        color: "#fff",
+                        border: "none",
+                        borderRadius: 999,
+                        padding: "8px 16px",
+                        fontWeight: 700,
+                        cursor: "pointer",
+                        fontFamily: "inherit",
+                      }}
+                    >
+                      Teach live
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => openLessonPlan(opened)}
+                      style={{
+                        background: GLANCE.teach.bg,
+                        color: GLANCE.teach.fg,
+                        border: `1px solid ${GLANCE.teach.border}`,
+                        borderRadius: 999,
+                        padding: "8px 16px",
+                        fontWeight: 700,
+                        cursor: "pointer",
+                        fontFamily: "inherit",
+                      }}
+                    >
+                      Lesson plan
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => openProject(opened)}
+                      style={{
+                        background: GLANCE.project.fg,
+                        color: "#fff",
+                        border: "none",
+                        borderRadius: 999,
+                        padding: "8px 16px",
+                        fontWeight: 700,
+                        cursor: "pointer",
+                        fontFamily: "inherit",
+                      }}
+                    >
+                      Project
+                    </button>
+                  </div>
+                )}
+              </div>
+              <button
+                type="button"
+                onClick={() => setOpenId(null)}
+                style={{
+                  border: "none",
+                  background: "transparent",
+                  cursor: "pointer",
+                  color: MUTED,
+                  fontWeight: 700,
+                }}
+              >
+                Close
+              </button>
+            </div>
+          </Glass>
+        )}
+      </div>
+
       <SundayPreviewModal
         open={p.showSundayPreview}
         onClose={() => p.setShowSundayPreview(false)}
@@ -802,7 +1081,10 @@ export default function StationDayClient() {
         onOpenSundayPreview={() => p.setShowSundayPreview(true)}
         onApplyToWeek={p.applySundayToThisWeek}
         sundayApplied={p.sundayApplied}
-        onOpenHandsOff={() => { p.setShowWeeksRun(false); router.push('/v2/teacher'); }}
+        onOpenHandsOff={() => {
+          p.setShowWeeksRun(false);
+          router.push("/v2/teacher");
+        }}
       />
       <AddActivityModal
         open={p.showAddActivity}
