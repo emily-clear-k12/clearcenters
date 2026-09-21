@@ -2,14 +2,13 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { usePlanner } from "../../../lib/v2/usePlanner";
-import { SUBJECTS, DAYS, DATES, DEMO_WEEK, HANDS_OFF_LEVELS, buildMorningCardDemo } from "../../../lib/v2/demoWeek";
+import { SUBJECTS, DAYS, DATES, DEMO_WEEK, HANDS_OFF_LEVELS } from "../../../lib/v2/demoWeek";
 import { GRADING_INBOX_HREF, GRADING_INBOX_KEY, GRADING_STORAGE_KEY, getPendingCount, loadConfirmedIds } from "../../../lib/v2/demoGrading";
 import {
   getWhoNeedsCountsByClass,
   getWhoNeedsMeCount,
-  whoNeedsGlanceText,
-  WHO_NEEDS_ME_HREF,
   WHO_NEEDS_ME_STORAGE_KEY,
 } from "../../../lib/v2/demoWhoNeedsMe";
 import { LIVE_TEACH_HREF } from "../../../lib/v2/demoLiveTeach";
@@ -21,20 +20,31 @@ import {
   PROVENANCE_HELPER_TEXT,
 } from "../../../lib/v2/demoLibrary";
 import {
+  getAllClearMorningLine,
+  getLoopSoftest,
+  REPORTS_HREF,
+  DAY_HREF,
+  checkInsHrefForPeriod,
+  checkInsHrefForStandard,
+  checkInsCtaLabel,
+  softClusterDoors,
+  isLoopAllClear,
+  isStandardResolved,
+  LOOP_REMEMBER_KEY,
+  familyNoteSoftStoryHref,
+} from "../../../lib/v2/demoLoopSeams";
+import {
   StationShell,
   Glass,
   Pill,
   TeacherSubnav,
   SetupSwitcher,
-  MorningCard,
-  SamGlance,
-  SamMorningGlanceRow,
   ProvenanceHelperLine,
   RoomCards,
   SingleRoomLabel,
   HandsOffDial,
-  WhoNeedsMeChip,
   GLANCE,
+  glanceChipStyle,
   SundayPreviewModal,
   SundayPreviewBanner,
   INK,
@@ -47,14 +57,23 @@ import { HowMyWeeksRunDrawer, WeeksRunEntry } from "../../../components/v2/HowMy
 import { AddActivityModal, AddActivityButton } from "../../../components/v2/AddActivityModal";
 import { Toast } from "../../../components/v2/weekKit";
 
+/**
+ * CI2.0 This Week glance — INTUITIVE · fewer clicks.
+ * Same calm loop voice as Daily Focus / Check-ins / Reports / Family note.
+ * Top: quiet week/class story · who · next moves into existing doors.
+ * Day columns + Publish / Sunday / dial stay secondary (plan depth).
+ * Amber only when live Check-ins waiting > 0. No Demo shout.
+ */
 export default function StationWeekClient() {
   const router = useRouter();
   const p = usePlanner();
   const [gradePending, setGradePending] = useState(DEMO_WEEK.gradingCount);
   const [whoNeedsCount, setWhoNeedsCount] = useState(0);
+  const [loopTick, setLoopTick] = useState(0);
   const [showProvenanceHelper, setShowProvenanceHelper] = useState(false);
   const cls = p.setup.classes.find((c) => c.key === p.classFilter) || p.setup.classes[0];
   const selectedClass = p.classFilter === "all" ? p.setup.classes[0]?.key : p.classFilter;
+
   useEffect(() => {
     const refresh = () => {
       setGradePending(getPendingCount(loadConfirmedIds()));
@@ -64,13 +83,16 @@ export default function StationWeekClient() {
           inheritPeriodId: selectedClass || "A",
         })
       );
+      setLoopTick((t) => t + 1);
     };
     refresh();
     const onStorage = (e) => {
       if (
+        !e.key ||
         e.key === GRADING_STORAGE_KEY ||
         e.key === GRADING_INBOX_KEY ||
         e.key === WHO_NEEDS_ME_STORAGE_KEY ||
+        e.key === LOOP_REMEMBER_KEY ||
         e.key === "ci2.grading.confirmedIds" ||
         e.key === "ci2.teacher.classFilter"
       ) {
@@ -81,11 +103,13 @@ export default function StationWeekClient() {
     window.addEventListener("focus", refresh);
     window.addEventListener("ci2-grading-updated", refresh);
     window.addEventListener("ci2-who-needs-updated", refresh);
+    window.addEventListener("ci2-loop-remember-updated", refresh);
     return () => {
       window.removeEventListener("storage", onStorage);
       window.removeEventListener("focus", refresh);
       window.removeEventListener("ci2-grading-updated", refresh);
       window.removeEventListener("ci2-who-needs-updated", refresh);
+      window.removeEventListener("ci2-loop-remember-updated", refresh);
     };
   }, [selectedClass]);
 
@@ -99,52 +123,6 @@ export default function StationWeekClient() {
     setShowProvenanceHelper(false);
   }
 
-  // SAM morning (same dismiss key as Daily Focus for today)
-  const todayDay = 2;
-  const morningDismissKey = `ci2.morning.dismissed.${DATES[todayDay] || todayDay}`;
-  const [morningDismissed, setMorningDismissed] = useState(false);
-  useEffect(() => {
-    try {
-      setMorningDismissed(window.localStorage.getItem(morningDismissKey) === "1");
-    } catch {
-      setMorningDismissed(false);
-    }
-  }, [morningDismissKey]);
-
-  function dismissMorningCard() {
-    try {
-      window.localStorage.setItem(morningDismissKey, "1");
-    } catch {
-      /* ignore */
-    }
-    setMorningDismissed(true);
-  }
-
-  const todayAgenda = useMemo(() => {
-    const items = (p.visible || []).filter((a) => a.day === todayDay);
-    const teach = items.find((a) => a.kind === "teach");
-    return teach || items[0] || null;
-  }, [p.visible]);
-
-  const morningCard = useMemo(
-    () =>
-      buildMorningCardDemo({
-        subjects: p.setup.subjects,
-        classKey: selectedClass,
-        className: cls?.name,
-        subjectFilter: p.subjectFilter,
-        agendaNow: todayAgenda,
-      }),
-    [p.setup.subjects, selectedClass, cls?.name, p.subjectFilter, todayAgenda]
-  );
-
-  const dialSubjectLabel =
-    p.subjectFilter === "all"
-      ? p.multiSubject
-        ? "All subjects here"
-        : SUBJECTS[p.dialSubject]?.name || "Subject"
-      : SUBJECTS[p.subjectFilter]?.name || "Subject";
-
   const needsByClass = useMemo(() => {
     const map = {};
     for (const c of p.setup.classes) map[c.key] = 0;
@@ -156,39 +134,49 @@ export default function StationWeekClient() {
     return map;
   }, [p.setup.classes, p.openSuggestions]);
 
-  const glanceItems = useMemo(() => {
-    const items = [];
-    const className = cls?.name;
-    if (whoNeedsCount > 0) {
-      items.push({
-        id: "glance-who-needs",
-        text: whoNeedsGlanceText(whoNeedsCount),
-        actionLabel: "Check-ins",
-        tone: "cream",
-        href: WHO_NEEDS_ME_HREF,
-      });
-    }
-    const suggestionSlots = Math.max(0, 2 - items.length);
-    for (const s of p.openSuggestions.slice(0, suggestionSlots)) {
-      items.push({
-        id: s.id,
-        text: s.text(className),
-        actionLabel: s.action,
-        tone: "cream",
-        onAction: () => p.acceptSuggestion(s),
-      });
-    }
-    if (gradePending > 0 && items.length < 3) {
-      items.push({
-        id: "glance-grade",
-        text: `${gradePending} to grade — ready when you are, no rush.`,
-        actionLabel: "Open grading",
-        tone: "mint",
-        href: GRADING_INBOX_HREF,
-      });
-    }
-    return items.slice(0, 3);
-  }, [p.openSuggestions, cls?.name, gradePending, whoNeedsCount]);
+  // loopTick keeps remember / resolve / all-clear voice in sync.
+  void loopTick;
+  const loopSoftest = useMemo(() => getLoopSoftest(), [loopTick]);
+  const allClear = typeof window !== "undefined" ? isLoopAllClear() : false;
+  const waiting = whoNeedsCount > 0;
+  const softOpen =
+    !allClear &&
+    loopSoftest?.softest &&
+    loopSoftest.urgency !== "cooled" &&
+    !isStandardResolved(loopSoftest.softest.code);
+
+  const checkInsDoor = (() => {
+    const code = loopSoftest?.softest?.code || null;
+    if (code) return checkInsHrefForStandard(code, { periodId: selectedClass });
+    return checkInsHrefForPeriod(selectedClass);
+  })();
+
+  const classStory = allClear
+    ? getAllClearMorningLine({ className: cls?.name })
+    : loopSoftest?.samStory ||
+      (loopSoftest?.whoLine
+        ? `${loopSoftest.readiness} · ${loopSoftest.whoLine} on TEKS ${loopSoftest.softest.code}.`
+        : `Steady week for ${cls?.name || "this class"}.`);
+
+  const softDoors =
+    softOpen && loopSoftest?.softest
+      ? softClusterDoors(loopSoftest.softest.softCluster || [], {
+          standard: loopSoftest.softest.code,
+          periodId: selectedClass,
+        })
+      : [];
+
+  const softReportHref = loopSoftest?.href || REPORTS_HREF;
+  const softReportLabel = loopSoftest?.softest?.code
+    ? `${loopSoftest.softest.code} report`
+    : "Reports";
+
+  const dialSubjectLabel =
+    p.subjectFilter === "all"
+      ? p.multiSubject
+        ? "All subjects here"
+        : SUBJECTS[p.dialSubject]?.name || "Subject"
+      : SUBJECTS[p.subjectFilter]?.name || "Subject";
 
   function onDrop(day, e) {
     e.preventDefault();
@@ -207,30 +195,495 @@ export default function StationWeekClient() {
     if (typeof window !== "undefined") window.print();
   }
 
+  const btnBase = {
+    borderRadius: 999,
+    padding: "9px 14px",
+    fontWeight: 800,
+    fontSize: 13,
+    textDecoration: "none",
+    display: "inline-flex",
+    alignItems: "center",
+    justifyContent: "center",
+    fontFamily: "inherit",
+    cursor: "pointer",
+    border: "none",
+  };
+  const amberPrimary = {
+    background: GLANCE.needsYou.bg,
+    color: GLANCE.needsYou.fg,
+    border: `1px solid ${GLANCE.needsYou.border}`,
+  };
+  const softPrimary = {
+    background: "rgba(243,238,255,.88)",
+    color: LAVENDER,
+    border: `1px solid ${LINE}`,
+  };
+  const calmSecondary = {
+    background: GLANCE.ready.bg,
+    color: GLANCE.ready.fg,
+    border: `1px solid ${GLANCE.ready.border}`,
+  };
+  const quietTertiary = {
+    color: MUTED,
+    background: "rgba(255,255,255,.88)",
+    border: `1px solid ${LINE}`,
+    fontWeight: 700,
+  };
+
   return (
     <StationShell>
+      <style>{`
+        .tw-wrap{max-width:1100px;margin:0 auto;width:100%}
+        .tw-story{
+          margin-top:10px;padding:10px 12px;border-radius:12px;
+          background:rgba(243,238,255,.45);border:1px solid ${LINE};
+        }
+        .tw-actions{
+          margin-top:12px;display:flex;flex-wrap:wrap;gap:8px;align-items:center;
+        }
+        .tw-needs{display:grid;gap:10px;margin-top:10px}
+        .tw-plan{
+          margin-top:14px;display:flex;flex-wrap:wrap;gap:10px;align-items:flex-start;
+          justify-content:space-between;
+        }
+        @media print {
+          body * { visibility: hidden !important; }
+          .ci2-week-print, .ci2-week-print * { visibility: visible !important; }
+          .ci2-week-print {
+            position: absolute !important;
+            left: 0 !important;
+            top: 0 !important;
+            width: 100% !important;
+            max-width: none !important;
+            background: #fff !important;
+            box-shadow: none !important;
+            padding: 12px 16px !important;
+          }
+          .ci2-no-print { display: none !important; }
+        }
+      `}</style>
       <div className="ci2-no-print">
         <TeacherSubnav active="week" checkInsCount={whoNeedsCount} />
       </div>
+      <div className="tw-wrap">
       <Glass>
         <div className="ci2-week-print">
         <div style={{ display: "flex", justifyContent: "space-between", gap: 12, flexWrap: "wrap", alignItems: "flex-start" }}>
-          <div>
-            <h1 style={{ fontFamily: "'Poppins', sans-serif", margin: 0, fontSize: 34, color: INK }}>This Week</h1>
-            <div style={{ color: MUTED, marginTop: 2 }}>
-              {DEMO_WEEK.label} · Plan & publish · then teach from Daily Focus
-            </div>
-            <div style={{ marginTop: 10, display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
+          <div style={{ minWidth: 0, flex: "1 1 220px" }}>
+            <h1
+              style={{
+                fontFamily: "'Poppins', sans-serif",
+                margin: 0,
+                fontSize: 22,
+                fontWeight: 700,
+                color: INK,
+                letterSpacing: -0.2,
+                lineHeight: 1.25,
+              }}
+            >
+              This Week
+            </h1>
+            <p
+              style={{
+                margin: "4px 0 0",
+                fontSize: 11,
+                fontWeight: 600,
+                color: MUTED,
+                letterSpacing: 0.1,
+              }}
+            >
+              {DEMO_WEEK.label}
+              {cls?.name ? ` · ${cls.name}` : ""}
+              {" · Plan & publish · teach from Daily Focus"}
+            </p>
+            <div style={{ marginTop: 8, display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
               <SetupSwitcher setupKey={p.setupKey} onChange={p.setSetupKey} />
               {!p.multiClass && <SingleRoomLabel cls={cls} setup={p.setup} />}
             </div>
-            <div className="ci2-no-print" style={{ marginTop: 12, display: "flex", gap: 10, flexWrap: "wrap", alignItems: "flex-start" }}>
-              <HandsOffDial level={p.level} onChange={onHandsOff} subjectLabel={dialSubjectLabel} />
-              <WhoNeedsMeChip count={whoNeedsCount} href={WHO_NEEDS_ME_HREF} />
-              <WeeksRunEntry onOpen={() => p.setShowWeeksRun(true)} routineCount={p.enabledRoutineCount} />
-            </div>
           </div>
-          <div className="ci2-no-print" style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
+        </div>
+
+        {/* Compact week / class story — same loop voice as Focus */}
+        <section className="tw-story ci2-no-print" aria-label="Week story">
+          <p
+            style={{
+              margin: 0,
+              fontFamily: "'Poppins', sans-serif",
+              fontSize: 13,
+              fontWeight: 500,
+              color: INK,
+              lineHeight: 1.45,
+            }}
+          >
+            {classStory}
+          </p>
+        </section>
+
+        {/* One clear next-move row — routes into existing loop doors */}
+        <div className="tw-actions ci2-no-print" aria-label="Next move">
+          {waiting ? (
+            <Link
+              href={checkInsDoor}
+              style={{ ...btnBase, ...amberPrimary }}
+              title="Open Check-ins — live waiting needs you"
+            >
+              {checkInsCtaLabel(whoNeedsCount)} →
+            </Link>
+          ) : softOpen ? (
+            <Link
+              href={checkInsDoor}
+              style={{ ...btnBase, ...softPrimary }}
+              title={
+                loopSoftest?.whoLine
+                  ? `Sit Check-ins · ${loopSoftest.whoLine}`
+                  : "Sit Check-ins with soft cluster"
+              }
+            >
+              {loopSoftest?.whoLine
+                ? `Sit · ${loopSoftest.whoLine.split(" · ").slice(0, 2).join(" · ")}`
+                : checkInsCtaLabel(whoNeedsCount)}{" "}
+              →
+            </Link>
+          ) : (
+            <Link
+              href={checkInsDoor}
+              style={{ ...btnBase, ...calmSecondary }}
+              title="Open Check-ins — clear right now"
+            >
+              {checkInsCtaLabel(whoNeedsCount)} →
+            </Link>
+          )}
+
+          <Link
+            href={DAY_HREF}
+            style={{ ...btnBase, ...(softOpen || waiting ? quietTertiary : softPrimary) }}
+            title="Open Daily Focus — teach today"
+          >
+            Daily Focus →
+          </Link>
+
+          {!waiting && softOpen ? (
+            <Link
+              href={softReportHref}
+              style={{ ...btnBase, ...quietTertiary }}
+              title={`Softest report · TEKS ${loopSoftest?.softest?.code || ""}`}
+            >
+              {softReportLabel} →
+            </Link>
+          ) : null}
+
+          {!waiting && softOpen ? (
+            <Link
+              href={familyNoteSoftStoryHref({
+                standard: loopSoftest?.softest?.code || "5.6B",
+                periodId: selectedClass,
+                subject: loopSoftest?.softest?.subject || "science",
+              })}
+              style={{ ...btnBase, ...quietTertiary }}
+              title="Family note · soft story · already knows who + why"
+            >
+              Family note
+            </Link>
+          ) : null}
+
+          {gradePending > 0 ? (
+            <Link
+              href={GRADING_INBOX_HREF}
+              style={{ ...btnBase, ...quietTertiary }}
+              title="Open Grading inbox"
+            >
+              Grading · {gradePending}
+            </Link>
+          ) : (
+            <Link
+              href={GRADING_INBOX_HREF}
+              style={{ ...btnBase, ...quietTertiary }}
+              title="Open Grading inbox"
+            >
+              Grading
+            </Link>
+          )}
+
+          {!softOpen ? (
+            <Link
+              href={REPORTS_HREF}
+              style={{ ...btnBase, ...quietTertiary }}
+              title="Open Reports glance"
+            >
+              Reports
+            </Link>
+          ) : null}
+        </div>
+
+        {/* Soft cluster — who visible without hunting */}
+        <section className="tw-needs ci2-no-print" aria-label="Needs you · who">
+          {softOpen && loopSoftest?.softest ? (
+            <>
+              <div
+                style={{
+                  fontSize: 11,
+                  fontWeight: 800,
+                  letterSpacing: 0.35,
+                  color: MUTED,
+                  textTransform: "uppercase",
+                  paddingLeft: 2,
+                }}
+              >
+                Needs you · who
+              </div>
+              <article
+                style={{
+                  display: "flex",
+                  gap: 0,
+                  alignItems: "stretch",
+                  background: "rgba(255,248,240,.92)",
+                  border: `1px solid ${GLANCE.needsYou.border}`,
+                  borderRadius: 14,
+                  overflow: "hidden",
+                  minHeight: 88,
+                }}
+              >
+                <span
+                  aria-hidden
+                  style={{
+                    width: 5,
+                    flexShrink: 0,
+                    background: SUBJECTS[loopSoftest.softest.subject]?.color || LAVENDER,
+                    opacity: 0.9,
+                  }}
+                />
+                <div
+                  style={{
+                    flex: 1,
+                    minWidth: 0,
+                    padding: "11px 12px 12px",
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: 6,
+                  }}
+                >
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      gap: 8,
+                      alignItems: "flex-start",
+                    }}
+                  >
+                    <div style={{ minWidth: 0 }}>
+                      <div
+                        style={{
+                          fontSize: 10,
+                          fontWeight: 800,
+                          color: MUTED,
+                          textTransform: "uppercase",
+                          letterSpacing: 0.2,
+                        }}
+                      >
+                        Soft cluster ·{" "}
+                        {loopSoftest.softest.subjectName ||
+                          SUBJECTS[loopSoftest.softest.subject]?.name}{" "}
+                        · {loopSoftest.softest.code}
+                      </div>
+                      <div
+                        style={{
+                          marginTop: 3,
+                          fontWeight: 700,
+                          color: INK,
+                          fontSize: 14,
+                          lineHeight: 1.3,
+                        }}
+                      >
+                        {loopSoftest.softest.plain || "Needs a look"}
+                      </div>
+                    </div>
+                    <span
+                      style={{
+                        fontSize: 11,
+                        fontWeight: 700,
+                        ...glanceChipStyle(
+                          loopSoftest.readiness === "Mostly clear" ? "ready" : "needsYou"
+                        ),
+                        borderRadius: 999,
+                        padding: "4px 8px",
+                        flexShrink: 0,
+                        whiteSpace: "nowrap",
+                      }}
+                    >
+                      {loopSoftest.readiness || "Needs a look"}
+                    </span>
+                  </div>
+                  <div
+                    style={{
+                      fontSize: 12,
+                      fontWeight: 600,
+                      color: MUTED,
+                      lineHeight: 1.35,
+                    }}
+                  >
+                    {softDoors.length ? (
+                      <>
+                        {softDoors.map((d, i) => (
+                          <span key={d.name}>
+                            {i > 0 ? " · " : ""}
+                            <Link
+                              href={d.href}
+                              title={`Open ${d.name}`}
+                              style={{
+                                color: LAVENDER,
+                                fontWeight: 800,
+                                textDecoration: "none",
+                                borderBottom: `1px dashed ${LINE}`,
+                              }}
+                            >
+                              {d.name}
+                            </Link>
+                          </span>
+                        ))}
+                      </>
+                    ) : (
+                      loopSoftest.whoLine || "Soft cluster"
+                    )}
+                  </div>
+                  <div
+                    style={{
+                      display: "flex",
+                      flexWrap: "wrap",
+                      gap: 10,
+                      alignItems: "center",
+                      alignSelf: "flex-start",
+                    }}
+                  >
+                    <Link
+                      href={softReportHref}
+                      style={{
+                        fontSize: 11,
+                        fontWeight: 700,
+                        color: LAVENDER,
+                        textDecoration: "none",
+                      }}
+                      title="Depth · softest report"
+                    >
+                      Open report →
+                    </Link>
+                    <Link
+                      href={familyNoteSoftStoryHref({
+                        standard: loopSoftest?.softest?.code || "5.6B",
+                        periodId: selectedClass,
+                        subject: loopSoftest?.softest?.subject || "science",
+                      })}
+                      style={{
+                        fontSize: 11,
+                        fontWeight: 700,
+                        color: MUTED,
+                        textDecoration: "none",
+                      }}
+                      title="Family note · soft story · already knows who + why"
+                    >
+                      Family note →
+                    </Link>
+                    <Link
+                      href={DAY_HREF}
+                      style={{
+                        fontSize: 11,
+                        fontWeight: 700,
+                        color: MUTED,
+                        textDecoration: "none",
+                      }}
+                      title="Teach from Daily Focus"
+                    >
+                      Daily Focus →
+                    </Link>
+                  </div>
+                </div>
+              </article>
+            </>
+          ) : (
+            <p
+              style={{
+                margin: 0,
+                fontSize: 12,
+                fontWeight: 600,
+                color: MUTED,
+                paddingLeft: 2,
+              }}
+            >
+              {allClear
+                ? "Covered for now — soft stories landed. Plan the week when you are ready."
+                : "Nothing soft waiting on the glance — use the board below to plan."}
+            </p>
+          )}
+        </section>
+
+        <ProvenanceHelperLine
+          show={showProvenanceHelper}
+          onDismiss={onDismissProvenanceHelper}
+          text={PROVENANCE_HELPER_TEXT}
+        />
+
+        {p.sundayApplied && (
+          <div
+            className="ci2-no-print"
+            style={{
+              margin: "12px 0 0",
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 10,
+              background: MINT,
+              border: `1px solid ${LINE}`,
+              borderRadius: 999,
+              padding: "6px 8px 6px 14px",
+              fontSize: 13,
+              fontWeight: 700,
+              color: INK,
+            }}
+          >
+            <span>From Sunday · on This Week</span>
+            <button
+              type="button"
+              onClick={() => p.undoSundayToThisWeek()}
+              title="Remove Sunday bridge tiles"
+              style={{
+                border: `1px solid ${LINE}`,
+                background: "rgba(255,255,255,.9)",
+                color: INK,
+                borderRadius: 999,
+                padding: "4px 12px",
+                fontWeight: 800,
+                fontSize: 12,
+                cursor: "pointer",
+                fontFamily: "inherit",
+              }}
+            >
+              Undo
+            </button>
+          </div>
+        )}
+        {p.needsSundayPreview && (
+          <div className="ci2-no-print" style={{ marginTop: 14 }}>
+            <SundayPreviewBanner onOpen={() => p.setShowSundayPreview(true)} acked={p.sundayAcked} onApplyToWeek={p.applySundayToThisWeek} applied={p.sundayApplied} />
+          </div>
+        )}
+
+        {p.multiClass && (
+          <div style={{ marginTop: 12 }}>
+            <RoomCards
+              classes={p.setup.classes}
+              selectedKey={selectedClass}
+              onSelect={p.setClassFilter}
+              setup={p.setup}
+              needsByClass={needsByClass}
+            />
+          </div>
+        )}
+
+        {/* Plan tools — secondary to loop glance */}
+        <div className="tw-plan ci2-no-print" aria-label="Plan tools">
+          <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "flex-start" }}>
+            <HandsOffDial level={p.level} onChange={onHandsOff} subjectLabel={dialSubjectLabel} />
+            <WeeksRunEntry onOpen={() => p.setShowWeeksRun(true)} routineCount={p.enabledRoutineCount} />
+          </div>
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
             <button
               type="button"
               onClick={handlePrint}
@@ -287,89 +740,19 @@ export default function StationWeekClient() {
           </div>
         </div>
 
-        {p.sundayApplied && (
-          <div
-            style={{
-              margin: "0 0 14px",
-              display: "inline-flex",
-              alignItems: "center",
-              gap: 10,
-              background: MINT,
-              border: `1px solid ${LINE}`,
-              borderRadius: 999,
-              padding: "6px 8px 6px 14px",
-              fontSize: 13,
-              fontWeight: 700,
-              color: INK,
-            }}
-          >
-            <span>From Sunday · on This Week</span>
-            <button
-              type="button"
-              onClick={() => p.undoSundayToThisWeek()}
-              title="Remove Sunday bridge tiles"
-              style={{
-                border: `1px solid ${LINE}`,
-                background: "rgba(255,255,255,.9)",
-                color: INK,
-                borderRadius: 999,
-                padding: "4px 12px",
-                fontWeight: 800,
-                fontSize: 12,
-                cursor: "pointer",
-                fontFamily: "inherit",
-              }}
-            >
-              Undo
-            </button>
-          </div>
-        )}
-        {p.needsSundayPreview && (
-          <div style={{ marginTop: 14 }}>
-            <SundayPreviewBanner onOpen={() => p.setShowSundayPreview(true)} acked={p.sundayAcked} onApplyToWeek={p.applySundayToThisWeek} applied={p.sundayApplied} />
-          </div>
-        )}
-
-        {p.multiClass && (
-          <RoomCards
-            classes={p.setup.classes}
-            selectedKey={selectedClass}
-            onSelect={p.setClassFilter}
-            setup={p.setup}
-            needsByClass={needsByClass}
-          />
-        )}
-
-        <div style={{ marginTop: 14 }}>
-          <ProvenanceHelperLine
-            show={showProvenanceHelper}
-            onDismiss={onDismissProvenanceHelper}
-            text={PROVENANCE_HELPER_TEXT}
-          />
-          <SamMorningGlanceRow style={!morningDismissed ? undefined : { gridTemplateColumns: "1fr" }}>
-            {!morningDismissed && (
-              <MorningCard
-                compact
-                greeting={morningCard.greeting}
-                agendaLine={morningCard.agendaLine}
-                win={morningCard.win}
-                watch={morningCard.watch}
-                onDismiss={dismissMorningCard}
-                checkInsCount={whoNeedsCount}
-                checkInsHref={WHO_NEEDS_ME_HREF}
-              />
-            )}
-            <SamGlance
-              compact
-              items={glanceItems}
-              emptyLabel={
-                p.level === "i_plan"
-                  ? `Suggestions are ready for ${cls?.name || "this class"} — build from here.`
-                  : `Nothing waiting for ${cls?.name || "this class"} this week. Nice.`
-              }
-              style={!morningDismissed ? undefined : { gridColumn: "1 / -1" }}
-            />
-          </SamMorningGlanceRow>
+        <div
+          className="ci2-no-print"
+          style={{
+            marginTop: 16,
+            fontSize: 11,
+            fontWeight: 800,
+            letterSpacing: 0.35,
+            color: MUTED,
+            textTransform: "uppercase",
+            paddingLeft: 2,
+          }}
+        >
+          Week board · plan
         </div>
 
         {p.openRoutineOffers?.[0] && (
@@ -692,23 +1075,7 @@ export default function StationWeekClient() {
         </p>
         </div>
       </Glass>
-      <style>{`
-        @media print {
-          body * { visibility: hidden !important; }
-          .ci2-week-print, .ci2-week-print * { visibility: visible !important; }
-          .ci2-week-print {
-            position: absolute !important;
-            left: 0 !important;
-            top: 0 !important;
-            width: 100% !important;
-            max-width: none !important;
-            background: #fff !important;
-            box-shadow: none !important;
-            padding: 12px 16px !important;
-          }
-          .ci2-no-print { display: none !important; }
-        }
-      `}</style>
+      </div>
       <div className="ci2-no-print">
       <SundayPreviewModal
         open={p.showSundayPreview}
