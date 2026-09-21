@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import {
   DEMO_STUDENT_DAY,
   DEMO_STUDENT_KIDS,
+  DEMO_PITCH_KIDS,
   DEMO_KID_STORAGE_KEY,
   buildStudentDayMissions,
   getActiveDemoStudent,
@@ -88,7 +89,7 @@ export default function StudentMyDayClient() {
   const [toast, setToast] = useState(null);
   const [samMsg, setSamMsg] = useState(day.samLine);
   const [prefs, setPrefs] = useState(() => ({
-    displayName: "Leo",
+    displayName: "Sofia",
     textSize: "M",
     soundOn: false,
   }));
@@ -394,12 +395,12 @@ export default function StudentMyDayClient() {
 
         <div
           role="group"
-          aria-label="Demo student"
+          aria-label="Class · Sofia · Noah · Diego"
           className="ci2-no-print"
           style={{ marginTop: 14, display: "flex", flexWrap: "wrap", gap: 8, alignItems: "center" }}
         >
-          <span style={{ fontSize: 12, fontWeight: 700, color: MUTED }}>Demo</span>
-          {DEMO_STUDENT_KIDS.map((kid) => {
+          <span style={{ fontSize: 12, fontWeight: 700, color: MUTED }}>Class</span>
+          {DEMO_PITCH_KIDS.map((kid) => {
             const active = kid.id === student.id;
             return (
               <button
