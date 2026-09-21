@@ -33,6 +33,7 @@ import {
   checkInsHrefForStandard,
   softClusterDoors,
   DAY_HREF,
+  rememberAwareSamStory,
 } from "../../../../../../lib/v2/demoLoopSeams";
 
 function usePeriodLens() {
@@ -164,12 +165,13 @@ export default function StandardReportClient({ code }) {
     softHint,
     whoLine,
     clusterHint,
-    samStory,
+    samStory: samStoryRaw,
     calmNext,
     honesty,
     classPctLabel,
     dayHref,
   } = detail;
+  const samStory = rememberAwareSamStory(standard) || samStoryRaw;
 
   const checkInsHref = checkInsHrefForStandard(standard.code, { periodId });
   const clusterDoors = softClusterDoors(standard.softCluster || [], {

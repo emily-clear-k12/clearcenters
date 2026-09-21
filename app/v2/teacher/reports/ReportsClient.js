@@ -23,7 +23,7 @@ import {
   REPORTS_STANDARD_HREF,
   REPORTS_ASSIGNMENT_HREF,
 } from "../../../../lib/v2/demoReports";
-import { checkInsCtaLabel, FAMILY_NOTE_STORY_ID, checkInsHrefForStandard, softClusterDoors } from "../../../../lib/v2/demoLoopSeams";
+import { checkInsCtaLabel, FAMILY_NOTE_STORY_ID, checkInsHrefForStandard, softClusterDoors , rememberAwareSamStory } from "../../../../lib/v2/demoLoopSeams";
 import { FAMILY_NOTE_HREF } from "../../../../lib/v2/demoFamilyNote";
 import {
   getWhoNeedsMeCount,
@@ -41,6 +41,9 @@ import { TEACHER_SETUPS } from "../../../../lib/v2/demoWeek";
  */
 export default function ReportsClient() {
   const stub = getReportsStub();
+  const samStory = stub.softest
+    ? rememberAwareSamStory(stub.softest, null)
+    : stub.samStory;
   const [liveCheckIns, setLiveCheckIns] = useState(null);
   const [periodId, setPeriodId] = useState(null);
   const [periodLabel, setPeriodLabel] = useState(null);
@@ -357,7 +360,7 @@ export default function ReportsClient() {
                 maxWidth: 640,
               }}
             >
-              {stub.samStory}
+              {samStory}
             </p>
             {softest ? (
               <div

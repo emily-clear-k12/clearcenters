@@ -40,6 +40,9 @@ import {
   REPORTS_HREF,
   checkInsHrefForPeriod,
   checkInsHrefForStandard,
+  focusBlocksSectionLabel,
+  focusBlockProvenanceLine,
+  LOOP_REMEMBER_KEY,
 } from "../../../lib/v2/demoLoopSeams";
 import {
   StationShell,
@@ -108,6 +111,7 @@ export default function StationDayClient() {
         e.key === GRADING_INBOX_KEY ||
         e.key === WHO_NEEDS_ME_STORAGE_KEY ||
         e.key === FOCUS_BLOCKS_KEY ||
+        e.key === LOOP_REMEMBER_KEY ||
         e.key === "ci2.teacher.classFilter"
       ) {
         refresh();
@@ -118,12 +122,14 @@ export default function StationDayClient() {
     window.addEventListener("ci2-grading-updated", refresh);
     window.addEventListener("ci2-who-needs-updated", refresh);
     window.addEventListener("ci2-focus-blocks-updated", refresh);
+    window.addEventListener("ci2-loop-remember-updated", refresh);
     return () => {
       window.removeEventListener("storage", onStorage);
       window.removeEventListener("focus", refresh);
       window.removeEventListener("ci2-grading-updated", refresh);
       window.removeEventListener("ci2-who-needs-updated", refresh);
       window.removeEventListener("ci2-focus-blocks-updated", refresh);
+      window.removeEventListener("ci2-loop-remember-updated", refresh);
     };
   }, [selectedClass, day]);
   const items = p.visible.filter((a) => a.day === day);
@@ -408,11 +414,10 @@ export default function StationDayClient() {
             {focusBlocks.length > 0 && (
               <section aria-label="Small group and reteach from Check-ins" style={{ marginBottom: 14 }}>
                 <div style={{ fontWeight: 800, color: GLANCE.needsYou.fg, marginBottom: 8, fontSize: 12, letterSpacing: 0.4 }}>
-                  {day === FOCUS_TODAY_DAY
-                    ? "FROM CHECK-INS · TODAY"
-                    : day === FOCUS_TOMORROW_DAY
-                      ? "FROM CHECK-INS · TOMORROW"
-                      : "FROM CHECK-INS"}
+                  {focusBlocksSectionLabel(focusBlocks, day, {
+                    todayDay: FOCUS_TODAY_DAY,
+                    tomorrowDay: FOCUS_TOMORROW_DAY,
+                  })}
                 </div>
                 <div style={{ display: "grid", gap: 8 }}>
                   {focusBlocks.map((block) => (
@@ -446,7 +451,8 @@ export default function StationDayClient() {
                         <div style={{ fontSize: 12, color: MUTED, marginTop: 2 }}>
                           {focusBlockNamesLine(block)}
                           {block.standard ? ` · ${block.standard}` : ""}
-                          {" · stub from Check-ins"}
+                          {" · "}
+                          {focusBlockProvenanceLine(block)}
                         </div>
                       </div>
                     </div>

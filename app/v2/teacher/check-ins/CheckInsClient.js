@@ -49,6 +49,9 @@ import {
   getCheckInsStoryBand,
   getLoopHonesty,
   REPORTS_HREF,
+  checkInsStandardBanner,
+  checkInsClusterHighlightActive,
+  rememberSitWithCluster,
 } from "../../../../lib/v2/demoLoopSeams";
 
 /**
@@ -61,13 +64,25 @@ export default function CheckInsClient() {
   const searchParams = useSearchParams();
   const studentFocus = (searchParams?.get("student") || "").trim();
   const standardFocus = (searchParams?.get("standard") || "").trim();
+  const [rememberTick, setRememberTick] = useState(0);
   const [choices, setChoices] = useState({});
   const [confirmedIds, setConfirmedIds] = useState([]);
   const [hydrated, setHydrated] = useState(false);
   const [toast, setToast] = useState(null);
 
   // Quiet period sync — Reports spark / Family note deep links may pass ?period=.
+  
   useEffect(() => {
+    const bump = () => setRememberTick((n) => n + 1);
+    window.addEventListener("ci2-loop-remember-updated", bump);
+    window.addEventListener("storage", bump);
+    return () => {
+      window.removeEventListener("ci2-loop-remember-updated", bump);
+      window.removeEventListener("storage", bump);
+    };
+  }, []);
+
+useEffect(() => {
     const period = (searchParams?.get("period") || "").trim();
     if (!period || period === "all") return;
     try {
@@ -176,9 +191,35 @@ export default function CheckInsClient() {
   const storyBand = useMemo(() => getCheckInsStoryBand(), []);
   const loopHonesty = useMemo(() => getLoopHonesty(), []);
 
+  const standardBanner = useMemo(
+    () => checkInsStandardBanner(standardFocus),
+    // rememberTick re-reads localStorage after sit/reteach
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [standardFocus, rememberTick]
+  );
+  const clusterHighlightOn = useMemo(
+    () => checkInsClusterHighlightActive(standardFocus),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [standardFocus, rememberTick]
+  );
+
+
   const act = useCallback((card, action) => {
     const next = recordWhoNeedsAction(card.id, action);
     setChoices(next);
+    // Loop remember — sitting with soft cluster quiets the ?standard= banner on return.
+    try {
+      const code = String(card.standard || standardFocus || "").trim();
+      if (code) {
+        rememberSitWithCluster(code, {
+          kidOpened: card.studentFirst,
+          source: "check-ins",
+        });
+        setRememberTick((n) => n + 1);
+      }
+    } catch {
+      /* ignore */
+    }
     const name = card.studentFirst;
     if (action === "small_group" || action === "reteach_tomorrow") {
       const block = pushCheckInToDailyFocus(card, action, {
@@ -193,7 +234,7 @@ export default function CheckInsClient() {
     } else {
       setToast({ text: `${name} · looks good. Cleared for now.` });
     }
-  }, [selectedClass]);
+  }, [selectedClass, standardFocus]);
 
   /** Mint a This Week tile via ci2.teacher.addedActivities (same as Library / Sunday). */
   const addToThisWeek = useCallback((card) => {
@@ -249,20 +290,20 @@ export default function CheckInsClient() {
                   Focus · {studentFocus}
                 </span>
               ) : null}
-              {standardFocus ? (
+              {standardBanner ? (
                 <span
                   style={{
                     fontSize: 12,
                     fontWeight: 800,
-                    color: LAVENDER,
-                    background: SOFT_LAV,
+                    color: standardBanner.soft ? MUTED : LAVENDER,
+                    background: standardBanner.soft ? "#fff" : SOFT_LAV,
                     border: `1px solid ${LINE}`,
                     borderRadius: 999,
                     padding: "4px 12px",
                   }}
-                  title="You are here because of this skill"
+                  title={standardBanner.title}
                 >
-                  Because of · TEKS {standardFocus}
+                  {standardBanner.text}
                 </span>
               ) : null}
               <span
@@ -456,8 +497,13 @@ export default function CheckInsClient() {
                   boxShadow: isReasonHere
                     ? "0 10px 28px rgba(139,108,255,.18)"
                     : "0 8px 22px rgba(46,36,89,.08)",
-                  outline: isReasonHere ? `2px solid ${LAVENDER}` : undefined,
-                  outlineOffset: isReasonHere ? 2 : undefined,
+                  outline:
+                    isReasonHere && clusterHighlightOn
+                      ? `2px solid ${LAVENDER}`
+                      : isReasonHere
+                        ? `1px dashed ${LINE}`
+                        : undefined,
+                  outlineOffset: isReasonHere && clusterHighlightOn ? 2 : undefined,
                 }}
               >
                 <div style={{ display: "flex", justifyContent: "space-between", gap: 10, flexWrap: "wrap", alignItems: "flex-start" }}>

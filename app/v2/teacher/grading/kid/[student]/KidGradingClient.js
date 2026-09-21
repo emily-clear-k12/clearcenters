@@ -38,6 +38,7 @@ import {
 } from "../../../../../../lib/v2/demoWhoNeedsMe";
 import { FAMILY_NOTE_HREF } from "../../../../../../lib/v2/demoFamilyNote";
 import { REPORTS_STANDARD_HREF } from "../../../../../../lib/v2/demoReports";
+import { rememberSitWithCluster } from "../../../../../../lib/v2/demoLoopSeams";
 
 /**
  * Kid-first grading — one tap → all subjects for that student.
@@ -92,6 +93,20 @@ export default function KidGradingClient() {
       window.removeEventListener("focus", refresh);
     };
   }, [refresh]);
+
+  // Loop remember — opening a kid from a standard report = sitting with that cluster.
+  useEffect(() => {
+    if (!fromReport || !fromCode) return;
+    try {
+      rememberSitWithCluster(fromCode, {
+        kidOpened: studentFirst,
+        source: "kid-grading",
+      });
+    } catch {
+      /* ignore */
+    }
+  }, [fromReport, fromCode, studentFirst]);
+
 
   const view = useMemo(
     () => getKidGradingView(studentFirst || "Student", confirmedIds),
