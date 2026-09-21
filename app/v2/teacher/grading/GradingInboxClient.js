@@ -391,7 +391,7 @@ export default function GradingInboxClient() {
       ? `Confirm · ${whoLine.split(" · ").slice(0, 2).join(" · ")}`
       : `Confirm · ${whoLine.split(" · ")[0]}`
     : softPendingCount > 0
-      ? "Confirm soft cluster"
+      ? "Confirm these kids"
       : pendingCount > 0
         ? "Confirm next"
         : null;
@@ -523,7 +523,7 @@ export default function GradingInboxClient() {
           </div>
 
           {/* Compact class story — not a hero essay / CTA twin */}
-          <section className="gi-story" aria-label="Soft story">
+          <section className="gi-story" aria-label="Class story">
             <p
               style={{
                 margin: 0,
@@ -550,7 +550,7 @@ export default function GradingInboxClient() {
                 }}
                 title={
                   softPendingCount > 0
-                    ? `Open soft cluster confirm · ${whoLine || "soft"}`
+                    ? `Confirm · ${whoLine || "these kids"}`
                     : "Open next confirm"
                 }
               >
@@ -560,7 +560,7 @@ export default function GradingInboxClient() {
               <Link
                 href={softReportHref}
                 style={{ ...btnBase, ...calmSecondary }}
-                title="Clear for now — soft cluster still findable on Reports"
+                title="Clear for now — still findable on Class story"
               >
                 {softReportLabel} →
               </Link>
@@ -624,7 +624,7 @@ export default function GradingInboxClient() {
                   paddingLeft: 2,
                 }}
               >
-                Who needs a confirm · soft cluster
+                Who needs a confirm
               </div>
               <div style={{ display: "inline-flex", gap: 6, alignItems: "center" }}>
                 {[

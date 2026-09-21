@@ -549,8 +549,8 @@ export default function CheckInsClient() {
                 style={{ ...btnBase, ...(waiting ? amberPrimary : softPrimary) }}
                 title={
                   whoLine
-                    ? `Sit with soft cluster · ${whoLine}`
-                    : "Sit with soft cluster · pull for small group today"
+                    ? `Sit with ${whoLine}`
+                    : "Sit with these kids · pull for small group today"
                 }
               >
                 {sitLabel} →
@@ -567,7 +567,7 @@ export default function CheckInsClient() {
               <Link
                 href={softReportHref}
                 style={{ ...btnBase, ...calmSecondary }}
-                title="Clear for now — soft cluster still findable on Reports"
+                title="Clear for now — still findable on Class story"
               >
                 {softReportLabel} →
               </Link>
@@ -626,7 +626,7 @@ export default function CheckInsClient() {
                 paddingLeft: 2,
               }}
             >
-              Who is waiting · soft cluster
+              Who is waiting
             </div>
             <div className="ci-who">
               {/* Soft cluster glance card — who + code without a click */}

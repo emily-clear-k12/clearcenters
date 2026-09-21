@@ -189,7 +189,7 @@ export default function AssignmentReportClient({ assignmentId }) {
       names: softCluster?.names || [],
     });
     if (!block) {
-      setReteachToast("Nothing to add — soft cluster is empty.");
+      setReteachToast("Nothing to add — no kids named here.");
       return;
     }
     setReteachToast(`Reteach · ${leadCode} · on Daily Focus today`);
@@ -402,7 +402,7 @@ export default function AssignmentReportClient({ assignmentId }) {
                     May need a look
                   </div>
                   <p style={{ margin: "6px 0 0", fontSize: 14, fontWeight: 600, color: INK }}>
-                    No named soft cluster — looking clear.
+                    No named kids — looking clear.
                   </p>
                 </div>
               )}

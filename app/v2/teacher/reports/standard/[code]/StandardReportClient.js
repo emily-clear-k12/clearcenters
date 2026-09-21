@@ -194,7 +194,7 @@ export default function StandardReportClient({ code }) {
       names: standard.softCluster || [],
     });
     if (!block) {
-      setReteachToast("Nothing to add — soft cluster is empty.");
+      setReteachToast("Nothing to add — no kids named here.");
       return;
     }
     setReteachToast(`Reteach · ${standard.code} · on Daily Focus today`);
@@ -415,7 +415,7 @@ export default function StandardReportClient({ code }) {
                   Soft cluster
                 </div>
                 <p style={{ margin: "6px 0 0", fontSize: 14, fontWeight: 600, color: INK }}>
-                  Looking clear — no named soft cluster right now.
+                  Looking clear — no named kids right now.
                 </p>
               </section>
             )}
@@ -631,7 +631,7 @@ export default function StandardReportClient({ code }) {
                   }}
                   title={`Family note · ${standard.code} soft story · who + why filled`}
                 >
-                  Family note · {whoLine || "soft cluster"}
+                  Family note · {whoLine || "these kids"}
                 </Link>
               ) : null}
               {(standard.softCluster || []).length > 0 ? (
@@ -657,7 +657,7 @@ export default function StandardReportClient({ code }) {
                   }}
                   title={`Student My Day · ${standard.code} soft cast`}
                 >
-                  My Day · {whoLine || "soft cluster"}
+                  My Day · {whoLine || "these kids"}
                 </Link>
               ) : null}
               {reteachToast ? (

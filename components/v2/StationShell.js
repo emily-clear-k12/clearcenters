@@ -706,7 +706,7 @@ export function MorningCard({
             <div style={{ marginTop: 6, display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
               {softWho ? (
                 <span style={{ fontSize: 11, fontWeight: 700, color: MUTED }}>
-                  Soft cluster · {softWho}
+                  Needs a look · {softWho}
                 </span>
               ) : null}
               {softestHref ? (
@@ -1236,7 +1236,7 @@ export function SundayPreviewModal({
                     waiting
                       ? "Open Check-ins — live waiting needs you"
                       : softOpen
-                        ? `Sit Check-ins · ${g.whoLine || "soft cluster"}`
+                        ? `Open Check-ins · ${g.whoLine || "those kids"}`
                         : "Open Check-ins"
                   }
                 >
@@ -1258,7 +1258,7 @@ export function SundayPreviewModal({
                   href={g.reportHref}
                   onClick={doorClick}
                   style={{ ...btnBase, ...quietTertiary }}
-                  title={`Softest report · TEKS ${softest?.code || ""}`}
+                  title={softest?.plain ? `Open report · ${String(softest.plain).split(/[—–]/)[0].trim()}` : "Open class report"}
                 >
                   {g.reportLabel || "Reports"} →
                 </Link>
@@ -1268,7 +1268,7 @@ export function SundayPreviewModal({
                   href={g.familyNoteHref}
                   onClick={doorClick}
                   style={{ ...btnBase, ...quietTertiary }}
-                  title="Family note · soft story · already knows who + why"
+                  title="Family note · already knows who and why"
                 >
                   Family note
                 </Link>
@@ -1349,7 +1349,7 @@ export function SundayPreviewModal({
                           letterSpacing: 0.2,
                         }}
                       >
-                        Soft cluster · {softest.subjectName || SUBJECTS[softest.subject]?.name || "Science"} ·{" "}
+                        Needs a look · {softest.subjectName || SUBJECTS[softest.subject]?.name || "Science"} ·{" "}
                         {softest.code}
                       </div>
                       <div style={{ marginTop: 2, fontWeight: 700, color: INK, fontSize: 13, lineHeight: 1.3 }}>
@@ -1391,14 +1391,14 @@ export function SundayPreviewModal({
                         </span>
                       ))
                     ) : (
-                      g.whoLine || "Soft cluster"
+                      g.whoLine || "Sofia · Noah · Diego"
                     )}
                   </div>
                 </div>
               </article>
             ) : (
               <p style={{ margin: 0, fontSize: 12, color: MUTED, lineHeight: 1.4 }}>
-                Soft story covered — preview what goes out, then teach from Daily Focus.
+                You’re covered — preview what goes out, then teach from Today.
               </p>
             )}
           </div>

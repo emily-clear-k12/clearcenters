@@ -540,7 +540,7 @@ export default function ReportsClient() {
                         ) : word === "Landed" || word === "Mostly clear" ? (
                           "Looking clear"
                         ) : (
-                          "No named soft cluster"
+                          "No named kids yet"
                         )}
                       </div>
 

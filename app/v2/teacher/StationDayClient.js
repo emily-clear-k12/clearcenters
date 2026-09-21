@@ -379,8 +379,8 @@ export default function StationDayClient() {
                 style={{ ...btnBase, ...softPrimary }}
                 title={
                   loopSoftest?.whoLine
-                    ? `Sit Check-ins · ${loopSoftest.whoLine}`
-                    : "Sit Check-ins with soft cluster"
+                    ? `Open Check-ins · ${loopSoftest.whoLine}`
+                    : "Open Check-ins for kids who need you"
                 }
               >
                 {loopSoftest?.whoLine

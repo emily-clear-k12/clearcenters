@@ -181,8 +181,8 @@ export default function StudentMyDayClient() {
     if (arrived.standard) {
       setSamMsg(
         isSoftCastKidId(s.id)
-          ? `${s.name} · TEKS ${arrived.standard} — start with mixtures when you're ready.`
-          : `${s.name}'s day · TEKS ${arrived.standard} is on your teacher's soft story.`
+          ? `${s.name} — start with mixtures when you're ready.`
+          : `${s.name}'s day — your teacher left mixtures on your list.`
       );
     } else {
       setSamMsg(`${s.name}'s day — progress stays with each kid.`);
@@ -450,7 +450,7 @@ export default function StudentMyDayClient() {
               lineHeight: 1.4,
             }}
           >
-            Soft story · TEKS {softStandard}
+            From your teacher · mixtures
             {isSoftCastKidId(student.id)
               ? " — mixtures claim + evidence when you're ready."
               : " — your teacher is watching this skill for the class."}
@@ -911,7 +911,7 @@ function MissionCard({ mission, locked, teacherChecked, onStart, toolsOpen = fal
                   letterSpacing: 0.2,
                   boxShadow: "0 2px 8px rgba(47,122,91,.16)",
                 }}
-                title="Mrs. Barrons checked this — calm teacher look, not a grade scare."
+                title="Your teacher checked this — a calm look, not a grade scare."
               >
                 ✓ Teacher checked
               </span>
