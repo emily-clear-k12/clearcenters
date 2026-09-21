@@ -48,6 +48,7 @@ import {
   checkInsClusterHighlightActive,
   rememberSitWithCluster,
   getLoopSoftest,
+  softStoryStudentDoorHref,
   softClusterDoors,
   isLoopAllClear,
   isStandardResolved,
@@ -823,6 +824,21 @@ export default function CheckInsClient() {
                         title={`Family note · ${softCode} soft story · Sofia · Noah · Diego`}
                       >
                         Family note →
+                      </Link>
+                      <Link
+                        href={softStoryStudentDoorHref({
+                          standard: softCode,
+                          names: ["Sofia", "Noah", "Diego"],
+                        })}
+                        style={{
+                          fontSize: 11,
+                          fontWeight: 700,
+                          color: MUTED,
+                          textDecoration: "none",
+                        }}
+                        title={`Student My Day · ${softCode} soft cast`}
+                      >
+                        My Day →
                       </Link>
                     </div>
                   </div>

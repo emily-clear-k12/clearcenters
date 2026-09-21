@@ -27,6 +27,7 @@ import {
   checkInsHrefForPeriod,
   checkInsHrefForStandard,
   checkInsCtaLabel,
+  softStoryStudentDoorHref,
   softClusterDoors,
   isLoopAllClear,
   isStandardResolved,
@@ -586,6 +587,21 @@ export default function StationWeekClient() {
                       title="Family note · soft story · already knows who + why"
                     >
                       Family note →
+                    </Link>
+                    <Link
+                      href={softStoryStudentDoorHref({
+                        standard: loopSoftest?.softest?.code || "5.6B",
+                        names: loopSoftest?.softest?.softCluster,
+                      })}
+                      style={{
+                        fontSize: 11,
+                        fontWeight: 700,
+                        color: MUTED,
+                        textDecoration: "none",
+                      }}
+                      title="Student My Day · soft cast · TEKS context"
+                    >
+                      My Day →
                     </Link>
                     <Link
                       href={DAY_HREF}

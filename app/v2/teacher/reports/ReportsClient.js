@@ -22,6 +22,7 @@ import {
 import {
   checkInsCtaLabel,
   checkInsHrefForStandard,
+  softStoryStudentDoorHref,
   softClusterDoors,
   rememberAwareSamStory,
   getLoopSoftest,
@@ -367,6 +368,18 @@ export default function ReportsClient() {
                 Family note
               </Link>
             ) : null}
+            {!allClear && nextMove ? (
+              <Link
+                href={softStoryStudentDoorHref({
+                  standard: nextMove.code,
+                  names: nextMove.softCluster,
+                })}
+                style={{ ...btnBase, ...quietTertiary }}
+                title={`Student My Day · ${nextMove.code} soft cast`}
+              >
+                My Day
+              </Link>
+            ) : null}
             <Link
               href={stub.dayHref}
               style={{ ...btnBase, ...quietTertiary }}
@@ -568,6 +581,23 @@ export default function ReportsClient() {
                             title={`Family note · ${row.code} soft story · who + why filled`}
                           >
                             Family note →
+                          </Link>
+                        ) : null}
+                        {softOpen ? (
+                          <Link
+                            href={softStoryStudentDoorHref({
+                              standard: row.code,
+                              names: row.softCluster,
+                            })}
+                            style={{
+                              fontSize: 11,
+                              fontWeight: 700,
+                              color: MUTED,
+                              textDecoration: "none",
+                            }}
+                            title={`Student My Day · ${row.code} soft cast`}
+                          >
+                            My Day →
                           </Link>
                         ) : null}
                       </div>

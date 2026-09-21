@@ -37,6 +37,7 @@ import {
   WHO_NEEDS_ME_STORAGE_KEY,
 } from "../../../../lib/v2/demoWhoNeedsMe";
 import {
+  studentMyDayHref,
   noteEvidenceFromGradeConfirm,
   getGradingStoryBand,
   floatSoftClusterPending,
@@ -256,7 +257,12 @@ export default function GradingInboxClient() {
         text: `Confirmed ${item.studentFirst} · ${score}/${item.maxScore}. You're the scorer of record${stampNote}`,
         growthHref: REPORTS_HREF,
         growthLabel: "See growth →",
-        myDayHref: stamped.length ? "/v2/student" : null,
+        myDayHref: stamped.length
+          ? studentMyDayHref({
+              student: item.studentFirst,
+              standard: item.standard,
+            })
+          : null,
         myDayLabel: "See My Day",
       });
       setAdjusting(false);

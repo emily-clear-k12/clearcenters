@@ -9,6 +9,9 @@ import {
   DEMO_KID_STORAGE_KEY,
   buildStudentDayMissions,
   getActiveDemoStudent,
+  missionsForDemoKid,
+  applyStudentArrivalQuery,
+  isSoftCastKidId,
   productKidLabel,
   readTeacherAddedForDay,
   setActiveDemoKidId,
@@ -16,6 +19,15 @@ import {
   subjectName,
   ADDED_ACTIVITIES_KEY,
 } from "../../../lib/v2/demoStudentDay";
+import {
+  hasFamilyCare,
+  LOOP_REMEMBER_KEY,
+} from "../../../lib/v2/demoLoopSeams";
+import {
+  FAMILY_SENT_KEY,
+  isFamilyNoteSent,
+  softStoryFamilyNoteId,
+} from "../../../lib/v2/demoFamilyNote";
 import {
   STUDENT_PROGRESS_KEY,
   readStudentProgress,
@@ -82,6 +94,8 @@ export default function StudentMyDayClient() {
   }));
   const [prefsOpen, setPrefsOpen] = useState(false);
   const [toolsMissionId, setToolsMissionId] = useState(null);
+  const [softStandard, setSoftStandard] = useState(null);
+  const [familyCareLine, setFamilyCareLine] = useState(null);
 
   function refreshProgress() {
     const { doneIds: ids } = readStudentProgress();
@@ -148,12 +162,98 @@ export default function StudentMyDayClient() {
     };
   }, [day.dayIndex]);
 
+  // Teacher→student doors: ?student=&standard= land on the right soft-cast kid.
+  useEffect(() => {
+    if (!searchParams) return;
+    const doneParam = searchParams.get("done");
+    if (doneParam) return; // submit return handled below
+    const studentQ = (searchParams.get("student") || "").trim();
+    const standardQ = (searchParams.get("standard") || "").trim();
+    if (!studentQ && !standardQ) return;
+    const arrived = applyStudentArrivalQuery(searchParams);
+    const s = getActiveDemoStudent();
+    setStudent(s);
+    setSoftStandard(arrived.standard);
+    setPrefs(loadStudentPrefs(s.id));
+    setTeacherCheckedIds(loadTeacherCheckedIds());
+    refreshProgress();
+    if (arrived.standard) {
+      setSamMsg(
+        isSoftCastKidId(s.id)
+          ? `${s.name} · TEKS ${arrived.standard} — start with mixtures when you're ready.`
+          : `${s.name}'s day · TEKS ${arrived.standard} is on your teacher's soft story.`
+      );
+    } else {
+      setSamMsg(`${s.name}'s day — progress stays with each kid.`);
+    }
+    // Soft family-care receipt (same browser) — quiet, no parent portal.
+    try {
+      const code = arrived.standard || "5.6B";
+      const softSent = isFamilyNoteSent(softStoryFamilyNoteId(code));
+      const cared = hasFamilyCare(code);
+      if ((softSent || cared) && isSoftCastKidId(s.id)) {
+        setFamilyCareLine(
+          `${s.teacher}'s note went home about mixtures — nice follow-through when you're ready.`
+        );
+      } else {
+        setFamilyCareLine(null);
+      }
+    } catch {
+      setFamilyCareLine(null);
+    }
+  }, [searchParams]);
+
+  // Quiet listen if teacher sends Family note while My Day is open (same browser).
+  useEffect(() => {
+    const refreshCare = () => {
+      try {
+        const code = softStandard || "5.6B";
+        if (!isSoftCastKidId(student.id)) {
+          setFamilyCareLine(null);
+          return;
+        }
+        const softSent = isFamilyNoteSent(softStoryFamilyNoteId(code));
+        const cared = hasFamilyCare(code);
+        setFamilyCareLine(
+          softSent || cared
+            ? `A note went home about mixtures — your teacher cares how you're doing.`
+            : null
+        );
+      } catch {
+        setFamilyCareLine(null);
+      }
+    };
+    const onStorage = (e) => {
+      if (
+        !e.key ||
+        e.key === FAMILY_SENT_KEY ||
+        e.key === LOOP_REMEMBER_KEY
+      ) {
+        refreshCare();
+      }
+    };
+    window.addEventListener("storage", onStorage);
+    window.addEventListener("ci2-family-sent", refreshCare);
+    window.addEventListener("ci2-loop-remember-updated", refreshCare);
+    return () => {
+      window.removeEventListener("storage", onStorage);
+      window.removeEventListener("ci2-family-sent", refreshCare);
+      window.removeEventListener("ci2-loop-remember-updated", refreshCare);
+    };
+  }, [softStandard, student.id]);
+
+  const dayMissions = useMemo(
+    () => missionsForDemoKid(student.id, { standard: softStandard }),
+    [student.id, softStandard]
+  );
+
   // Celebrate return from activity/project Submit (?done=missionId) — Next becomes Now.
   useEffect(() => {
     const doneParam = searchParams?.get("done");
     if (!doneParam) return;
     refreshProgress();
     const title =
+      dayMissions.find((m) => m.id === doneParam)?.title ||
       day.missions.find((m) => m.id === doneParam)?.title ||
       (doneParam.startsWith("from-teacher-")
         ? "that activity"
@@ -166,11 +266,14 @@ export default function StudentMyDayClient() {
       tone: "ok",
     });
     // Clear query so refresh doesn't re-toast
-    router.replace("/v2/student", { scroll: false });
-  }, [searchParams, day.missions, router]);
+    const keepStudent = student?.id ? `student=${encodeURIComponent(student.id)}` : "";
+    const keepStd = softStandard ? `standard=${encodeURIComponent(softStandard)}` : "";
+    const keepQ = [keepStudent, keepStd].filter(Boolean).join("&");
+    router.replace(keepQ ? `/v2/student?${keepQ}` : "/v2/student", { scroll: false });
+  }, [searchParams, day.missions, dayMissions, softStandard, student?.id, router]);
 
   const missions = useMemo(() => {
-    const built = buildStudentDayMissions(day.missions, teacherAdded);
+    const built = buildStudentDayMissions(dayMissions, teacherAdded);
     // Practice from Teach live — may-do cards that can land in Now/Next/Later.
     const practiceIds = new Set(practiceAssigned.map((m) => m.id));
     const withoutPracticeDup = built.filter((m) => !practiceIds.has(m.id));
@@ -199,7 +302,7 @@ export default function StudentMyDayClient() {
       if (incomplete.length === 0 && i === 0) slot = "now";
       return { ...m, slot, done };
     });
-  }, [day.missions, teacherAdded, projectAssigned, practiceAssigned, doneIds]);
+  }, [dayMissions, teacherAdded, projectAssigned, practiceAssigned, doneIds]);
 
   // SAM celebrate once when a newly stamped Teacher checked appears (same browser).
   useEffect(() => {
@@ -209,6 +312,7 @@ export default function StudentMyDayClient() {
     if (!fresh.length) return;
     const mission =
       missions.find((m) => fresh.includes(m.id)) ||
+      dayMissions.find((m) => fresh.includes(m.id)) ||
       day.missions.find((m) => fresh.includes(m.id));
     const title = mission?.title || "your work";
     setSamMsg(day.samTeacherChecked(title));
@@ -329,6 +433,47 @@ export default function StudentMyDayClient() {
             );
           })}
         </div>
+
+        {softStandard ? (
+          <div
+            role="status"
+            style={{
+              marginTop: 12,
+              padding: "10px 14px",
+              borderRadius: 12,
+              background: SOFT_LAV,
+              border: `1px solid ${LINE}`,
+              fontSize: 13,
+              fontWeight: 600,
+              color: INK,
+              lineHeight: 1.4,
+            }}
+          >
+            Soft story · TEKS {softStandard}
+            {isSoftCastKidId(student.id)
+              ? " — mixtures claim + evidence when you're ready."
+              : " — your teacher is watching this skill for the class."}
+          </div>
+        ) : null}
+
+        {familyCareLine ? (
+          <div
+            role="status"
+            style={{
+              marginTop: 10,
+              padding: "10px 14px",
+              borderRadius: 12,
+              background: CREAM,
+              border: `1px solid ${LINE}`,
+              fontSize: 13,
+              fontWeight: 600,
+              color: MUTED,
+              lineHeight: 1.4,
+            }}
+          >
+            {familyCareLine}
+          </div>
+        ) : null}
 
         <SamBubble text={allDone ? `All set for today — great work, ${shownName}.` : samMsg} />
 

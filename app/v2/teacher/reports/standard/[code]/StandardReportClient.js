@@ -32,6 +32,7 @@ import {
 import { TEACHER_SETUPS } from "../../../../../../lib/v2/demoWeek";
 import {
   checkInsHrefForStandard,
+  softStoryStudentDoorHref,
   softClusterDoors,
   DAY_HREF,
   rememberAwareSamStory,
@@ -631,6 +632,32 @@ export default function StandardReportClient({ code }) {
                   title={`Family note · ${standard.code} soft story · who + why filled`}
                 >
                   Family note · {whoLine || "soft cluster"}
+                </Link>
+              ) : null}
+              {(standard.softCluster || []).length > 0 ? (
+                <Link
+                  href={softStoryStudentDoorHref({
+                    standard: standard.code,
+                    names: standard.softCluster,
+                  })}
+                  style={{
+                    marginTop: 10,
+                    marginLeft: 8,
+                    display: "inline-flex",
+                    alignItems: "center",
+                    border: `1px solid ${LINE}`,
+                    background: "#fff",
+                    color: MUTED,
+                    borderRadius: 999,
+                    padding: "10px 16px",
+                    fontWeight: 800,
+                    fontSize: 13,
+                    textDecoration: "none",
+                    fontFamily: "inherit",
+                  }}
+                  title={`Student My Day · ${standard.code} soft cast`}
+                >
+                  My Day · {whoLine || "soft cluster"}
                 </Link>
               ) : null}
               {reteachToast ? (
