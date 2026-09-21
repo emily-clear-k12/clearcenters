@@ -632,7 +632,7 @@ export default function StandardReportClient({ code }) {
                 >
                   Family note · {whoLine || "soft cluster"}
                 </Link>
-              ) : null
+              ) : null}
               {reteachToast ? (
                 <div style={{ marginTop: 8, fontSize: 12, fontWeight: 700, color: MUTED }}>
                   {reteachToast}
