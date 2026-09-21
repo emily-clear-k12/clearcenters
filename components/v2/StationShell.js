@@ -48,11 +48,12 @@ export function StationShell({ children, active = "plan" }) {
   );
 }
 
-/** Plan subnav: Daily Focus | This Week | Check-ins | Grading | Reports | Library. Demo today = Wed=2.
- * Check-ins amber count self-loads with current period/room filter (same lens as Daily Focus / Check-ins). */
+/** Teacher home nav: Today · Week · Class story · Inbox (+ More). Demo today = Wed=2.
+ * Inbox → Check-ins when waiting, else Grading. Amber/coral count self-loads with period filter. */
 export function TeacherSubnav({ active, gradeCount, checkInsCount: checkInsCountProp }) {
   const n = typeof gradeCount === "number" ? gradeCount : 0;
   const [checkInsLocal, setCheckInsLocal] = useState(0);
+  const [moreOpen, setMoreOpen] = useState(false);
 
   useEffect(() => {
     if (typeof checkInsCountProp === "number") return undefined;
@@ -96,19 +97,48 @@ export function TeacherSubnav({ active, gradeCount, checkInsCount: checkInsCount
   }, [checkInsCountProp]);
 
   const checkInsN = typeof checkInsCountProp === "number" ? checkInsCountProp : checkInsLocal;
+  // One home: fewer peer tabs. Inbox opens Check-ins when kids wait, else Grading.
+  const inboxHref = checkInsN > 0 ? CHECK_INS_HREF : "/v2/teacher/grading";
+  const inboxActive = active === "checkins" || active === "grading" || active === "inbox";
+  const inboxCount = checkInsN > 0 ? checkInsN : n;
+  const inboxNeedsYou = checkInsN > 0;
   const links = [
-    { key: "day", label: "Daily Focus", href: "/v2/teacher/day?d=2", hint: "Teach today" },
-    { key: "week", label: "This Week", href: "/v2/teacher", hint: "Plan & publish" },
+    { key: "day", label: "Today", href: "/v2/teacher/day?d=2", hint: "What needs you today" },
+    { key: "week", label: "Week", href: "/v2/teacher", hint: "Plan & publish" },
+    { key: "reports", label: "Class story", href: "/v2/teacher/reports", hint: "Standards · who · next" },
+    {
+      key: "inbox",
+      label: "Inbox",
+      href: inboxHref,
+      hint: checkInsN > 0 ? "Check-ins waiting" : n > 0 ? "Grading waiting" : "Check-ins & grading",
+    },
+  ];
+  const moreLinks = [
     { key: "checkins", label: "Check-ins", href: CHECK_INS_HREF, hint: "Kids who need you" },
     { key: "grading", label: "Grading", href: "/v2/teacher/grading", hint: "Confirm scores" },
-    { key: "reports", label: "Reports", href: "/v2/teacher/reports", hint: "By standard · glance" },
-    { key: "library", label: "Library", href: "/v2/teacher/library", hint: "Browse · add stub" },
+    { key: "library", label: "Library", href: "/v2/teacher/library", hint: "Browse · add" },
   ];
   const gradeTone = glanceToken("toGrade");
   const checkInsTone = glanceToken("needsYou");
+  const moreActive = moreLinks.some((l) => l.key === active);
+  const pill = (on) => ({
+    padding: "7px 16px",
+    borderRadius: 999,
+    fontSize: 14,
+    fontWeight: 700,
+    textDecoration: "none",
+    color: on ? "#fff" : INK,
+    background: on ? LAVENDER : "transparent",
+    display: "inline-flex",
+    alignItems: "center",
+    gap: 6,
+    border: "none",
+    cursor: "pointer",
+    fontFamily: "inherit",
+  });
   return (
     <nav
-      aria-label="Teacher plan"
+      aria-label="Teacher home"
       style={{
         display: "inline-flex",
         gap: 4,
@@ -118,71 +148,144 @@ export function TeacherSubnav({ active, gradeCount, checkInsCount: checkInsCount
         padding: 4,
         marginBottom: 14,
         flexWrap: "wrap",
+        alignItems: "center",
+        position: "relative",
       }}
     >
       {links.map((l) => {
-        const on = l.key === active;
-        const showGradeCount = l.key === "grading" && n > 0;
-        const showCheckInsCount = l.key === "checkins" && checkInsN > 0;
+        const on = l.key === "inbox" ? inboxActive : l.key === active;
+        const showInboxCount = l.key === "inbox" && inboxCount > 0;
+        const tone = inboxNeedsYou ? checkInsTone : gradeTone;
         return (
           <Link
             key={l.key}
             href={l.href}
             title={l.hint}
             aria-current={on ? "page" : undefined}
-            style={{
-              padding: "7px 16px",
-              borderRadius: 999,
-              fontSize: 14,
-              fontWeight: 700,
-              textDecoration: "none",
-              color: on ? "#fff" : INK,
-              background: on ? LAVENDER : "transparent",
-              display: "inline-flex",
-              alignItems: "center",
-              gap: 6,
-            }}
+            style={pill(on)}
           >
             {l.label}
-            {showCheckInsCount && (
+            {showInboxCount && (
               <span
-                aria-label={`${checkInsN} Check-ins waiting`}
+                aria-label={
+                  inboxNeedsYou
+                    ? `${checkInsN} Check-ins waiting`
+                    : `${n} to grade`
+                }
                 style={{
                   fontSize: 11,
                   fontWeight: 800,
-                  color: on ? "#fff" : checkInsTone.fg,
-                  background: on ? "rgba(255,255,255,.22)" : checkInsTone.bg,
-                  border: on ? "1px solid rgba(255,255,255,.35)" : `1px solid ${checkInsTone.border}`,
+                  color: on ? "#fff" : tone.fg,
+                  background: on ? "rgba(255,255,255,.22)" : tone.bg,
+                  border: on ? "1px solid rgba(255,255,255,.35)" : `1px solid ${tone.border}`,
                   borderRadius: 999,
                   padding: "1px 7px",
                   minWidth: 18,
                   textAlign: "center",
                 }}
               >
-                {checkInsN}
-              </span>
-            )}
-            {showGradeCount && (
-              <span
-                aria-label={`${n} to grade`}
-                style={{
-                  fontSize: 11,
-                  fontWeight: 800,
-                  color: on ? "#fff" : gradeTone.fg,
-                  background: on ? "rgba(255,255,255,.22)" : gradeTone.bg,
-                  border: on ? "1px solid rgba(255,255,255,.35)" : `1px solid ${gradeTone.border}`,
-                  borderRadius: 999,
-                  padding: "1px 7px",
-                  minWidth: 18,
-                  textAlign: "center",
-                }}
-              >
-                {n}
+                {inboxCount}
               </span>
             )}
           </Link>
         );
       })}
+      <div style={{ position: "relative" }}>
+        <button
+          type="button"
+          aria-expanded={moreOpen}
+          aria-haspopup="menu"
+          title="More teacher tools"
+          onClick={() => setMoreOpen((v) => !v)}
+          style={pill(moreActive && !inboxActive)}
+        >
+          More
+          <span aria-hidden style={{ fontSize: 10, opacity: 0.85 }}>
+            ▾
+          </span>
+        </button>
+        {moreOpen && (
+          <div
+            role="menu"
+            aria-label="More"
+            style={{
+              position: "absolute",
+              top: "calc(100% + 6px)",
+              right: 0,
+              minWidth: 168,
+              background: "rgba(255,255,255,.98)",
+              border: `1px solid ${LINE}`,
+              borderRadius: 14,
+              padding: 6,
+              boxShadow: "0 10px 28px rgba(46,36,89,.14)",
+              zIndex: 30,
+              display: "grid",
+              gap: 2,
+            }}
+          >
+            {moreLinks.map((l) => {
+              const on = l.key === active;
+              const showGradeCount = l.key === "grading" && n > 0;
+              const showCheckInsCount = l.key === "checkins" && checkInsN > 0;
+              return (
+                <Link
+                  key={l.key}
+                  role="menuitem"
+                  href={l.href}
+                  title={l.hint}
+                  aria-current={on ? "page" : undefined}
+                  onClick={() => setMoreOpen(false)}
+                  style={{
+                    padding: "8px 12px",
+                    borderRadius: 10,
+                    fontSize: 13,
+                    fontWeight: 700,
+                    textDecoration: "none",
+                    color: on ? LAVENDER : INK,
+                    background: on ? "rgba(139,108,255,.12)" : "transparent",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    gap: 8,
+                  }}
+                >
+                  <span>{l.label}</span>
+                  {showCheckInsCount && (
+                    <span
+                      style={{
+                        fontSize: 11,
+                        fontWeight: 800,
+                        color: checkInsTone.fg,
+                        background: checkInsTone.bg,
+                        border: `1px solid ${checkInsTone.border}`,
+                        borderRadius: 999,
+                        padding: "1px 7px",
+                      }}
+                    >
+                      {checkInsN}
+                    </span>
+                  )}
+                  {showGradeCount && (
+                    <span
+                      style={{
+                        fontSize: 11,
+                        fontWeight: 800,
+                        color: gradeTone.fg,
+                        background: gradeTone.bg,
+                        border: `1px solid ${gradeTone.border}`,
+                        borderRadius: 999,
+                        padding: "1px 7px",
+                      }}
+                    >
+                      {n}
+                    </span>
+                  )}
+                </Link>
+              );
+            })}
+          </div>
+        )}
+      </div>
     </nav>
   );
 }
