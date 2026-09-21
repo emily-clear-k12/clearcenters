@@ -16,6 +16,7 @@ import {
 import {
   getStandardDetail,
   softAssignmentGlanceLine,
+  softBandTotal,
   REPORTS_HREF,
   REPORTS_ASSIGNMENT_HREF,
 } from "../../../../../../lib/v2/demoReports";
@@ -109,9 +110,9 @@ const btnBase = {
 };
 
 /**
- * Standard report — DISTINCT from glance MAP.
- * Paper report layout: SAM story lead → named who → numbered evidence trail → one calm next.
- * Not another glass list of the same rows.
+ * Standard report — depth off the glance.
+ * Paper layout: SAM story → who → class shape (soft bands) → contributing work → calm next.
+ * Glance stays scannable; evidence + graph live here.
  */
 export default function StandardReportClient({ code }) {
   const detail = getStandardDetail(code);
@@ -180,6 +181,8 @@ export default function StandardReportClient({ code }) {
     standard: standard.code,
     periodId,
   });
+  const leadAsg = contributing[0] || null;
+  const bandTotal = leadAsg ? softBandTotal(leadAsg.bands) : 0;
 
   const putReteachOnToday = useCallback(() => {
     const block = pushStandardClusterToToday(standard.code, {
@@ -225,6 +228,10 @@ export default function StandardReportClient({ code }) {
           background:rgba(255,248,240,.95);
           border:1px solid ${GLANCE.needsYou.border};
         }
+        .std-shape{margin-top:18px;padding:14px 16px;border-radius:14px;background:rgba(247,244,255,.65);border:1px solid ${LINE}}
+        .std-bar-row{display:flex;align-items:center;gap:10px;margin-top:8px}
+        .std-bar-track{flex:1;height:8px;border-radius:999;background:rgba(255,255,255,.9);border:1px solid ${LINE};overflow:hidden}
+        .std-bar-fill{height:100%;border-radius:999}
         .std-trail{margin-top:22px;display:flex;flex-direction:column;gap:0}
         .std-step{display:flex;gap:14px;padding:14px 0;border-bottom:1px solid ${LINE}}
         .std-step:last-child{border-bottom:none}
@@ -248,7 +255,7 @@ export default function StandardReportClient({ code }) {
               href={REPORTS_HREF}
               style={{ fontSize: 12, fontWeight: 700, color: MUTED, textDecoration: "none" }}
             >
-              ← Class story
+              ← Reports glance
             </Link>
 
             <div style={{ marginTop: 12 }}>
@@ -411,7 +418,71 @@ export default function StandardReportClient({ code }) {
               </section>
             )}
 
-            {/* Evidence trail — numbered, not a duplicate glance list */}
+            {/* Class shape — soft band graph from lead evidence (depth only) */}
+            {leadAsg && bandTotal > 0 ? (
+              <section className="std-shape" aria-label="Class shape">
+                <div
+                  style={{
+                    fontSize: 11,
+                    fontWeight: 800,
+                    letterSpacing: 0.35,
+                    color: MUTED,
+                    textTransform: "uppercase",
+                  }}
+                >
+                  Class shape · {leadAsg.title}
+                </div>
+                <p
+                  style={{
+                    margin: "6px 0 0",
+                    fontSize: 12,
+                    fontWeight: 600,
+                    color: MUTED,
+                  }}
+                >
+                  {leadAsg.when || "Recent"} · soft bands from contributing work
+                </p>
+                {(leadAsg.bands || []).map((b) => {
+                  const pct = Math.max(
+                    4,
+                    Math.round(((Number(b.count) || 0) / bandTotal) * 100)
+                  );
+                  const fill =
+                    b.tone === "needsYou" || b.key === "needsLook"
+                      ? GLANCE.needsYou.fg
+                      : b.key === "clear"
+                        ? GLANCE.ready.fg
+                        : LAVENDER;
+                  return (
+                    <div key={b.key || b.label} className="std-bar-row">
+                      <span
+                        style={{
+                          width: 108,
+                          flexShrink: 0,
+                          fontSize: 11,
+                          fontWeight: 700,
+                          color: MUTED,
+                        }}
+                      >
+                        {b.label}
+                      </span>
+                      <div className="std-bar-track" aria-hidden>
+                        <div
+                          className="std-bar-fill"
+                          style={{
+                            width: `${pct}%`,
+                            background: fill,
+                            opacity: 0.85,
+                          }}
+                        />
+                      </div>
+                    </div>
+                  );
+                })}
+              </section>
+            ) : null}
+
+            {/* Evidence trail — numbered contributing work (depth, not glance) */}
             <section className="std-trail" aria-label="Evidence trail">
               <div
                 style={{
@@ -580,7 +651,7 @@ export default function StandardReportClient({ code }) {
                   fontWeight: 700,
                 }}
               >
-                Back to class story
+                Back to Reports glance
               </Link>
             </div>
           </div>
