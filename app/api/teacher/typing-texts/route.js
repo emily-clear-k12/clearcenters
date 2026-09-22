@@ -37,7 +37,7 @@ export async function POST(request) {
   if (action === "list") {
     const { data: texts, error } = await supabaseAdmin
       .from("relay_station_custom_texts")
-      .select("standard, title, grade, subject, kind, text, created_at")
+      .select("standard, title, grade, subject, kind, text, mode, compose_prompt, created_at")
       .eq("teacher_id", teacherId)
       .order("created_at", { ascending: false });
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
@@ -56,6 +56,10 @@ export async function POST(request) {
     const subject = SUBJECTS.includes(body.subject) ? body.subject : "ELAR";
     const kind = KINDS.includes(body.kind) ? body.kind : "paragraph";
     const intro = String(body.intro || "").trim().slice(0, 300) || null;
+    // Wave 2: how students type it (copy / dictation / student's choice) and
+    // an optional "Your Turn" writing prompt afterward.
+    const mode = ["copy", "dictation", "choice"].includes(body.mode) ? body.mode : "choice";
+    const composePrompt = String(body.composePrompt || "").trim().slice(0, 400) || null;
     const { text } = sanitizeTypingText(body.text);
     if (!title) return NextResponse.json({ error: "Give the text a title." }, { status: 400 });
     if (!grade) return NextResponse.json({ error: "Pick grade 3, 4, or 5." }, { status: 400 });
@@ -69,7 +73,7 @@ export async function POST(request) {
 
     const { error: textError } = await supabaseAdmin
       .from("relay_station_custom_texts")
-      .insert({ standard, teacher_id: teacherId, title, grade, subject, kind, intro, text });
+      .insert({ standard, teacher_id: teacherId, title, grade, subject, kind, intro, text, mode, compose_prompt: composePrompt });
     if (textError) {
       await supabaseAdmin.from("cases").delete().eq("standard", standard);
       return NextResponse.json({ error: "Couldn't save: " + textError.message }, { status: 500 });

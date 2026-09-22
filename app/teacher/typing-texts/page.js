@@ -35,7 +35,7 @@ export default function TypingTextsPage() {
   const [error, setError] = useState(null);
   const [notice, setNotice] = useState(null);
   const [saving, setSaving] = useState(false);
-  const [form, setForm] = useState({ title: "", grade: "4", subject: "ELAR", kind: "paragraph", intro: "", text: "" });
+  const [form, setForm] = useState({ title: "", grade: "4", subject: "ELAR", kind: "paragraph", mode: "choice", intro: "", composePrompt: "", text: "" });
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data, error: authError }) => {
@@ -77,7 +77,7 @@ export default function TypingTextsPage() {
     try {
       await callApi({ action: "create", ...form, grade: Number(form.grade) });
       setNotice(`Saved "${form.title}". Find it in Challenge Library → Relay Station → ${form.grade === "3" ? "3rd" : form.grade + "th"} Grade → ${form.subject}.`);
-      setForm((f) => ({ ...f, title: "", intro: "", text: "" }));
+      setForm((f) => ({ ...f, title: "", intro: "", composePrompt: "", text: "" }));
       await load();
     } catch (err) {
       setError(err.message);
@@ -131,14 +131,26 @@ export default function TypingTextsPage() {
                 </select>
               </label>
               <label><span style={label}>Type</span>
-                <select value={form.kind} onChange={(e) => setForm({ ...form, kind: e.target.value })} style={input}>
+                <select value={form.kind} onChange={(e) => setForm({ ...form, kind: e.target.value, mode: e.target.value === "spelling" ? "dictation" : form.mode })} style={input}>
                   {KIND_OPTIONS.map((k) => <option key={k.v} value={k.v}>{k.label}</option>)}
                 </select>
               </label>
             </div>
             <div style={{ marginBottom: 10 }}>
+              <span style={label}>How students type it</span>
+              <select value={form.mode} onChange={(e) => setForm({ ...form, mode: e.target.value })} style={input}>
+                <option value="choice">Student's choice (Copy, Dictation, or Corrupted Transmission)</option>
+                <option value="copy">Copy only — they see the text</option>
+                <option value="dictation">Dictation only — they hear it, can't see it (great for spelling tests)</option>
+              </select>
+            </div>
+            <div style={{ marginBottom: 10 }}>
               <span style={label}>Directions for students (optional)</span>
               <input value={form.intro} onChange={(e) => setForm({ ...form, intro: e.target.value })} placeholder="e.g. Type each spelling word, then use it in the sentence." style={input} maxLength={300} />
+            </div>
+            <div style={{ marginBottom: 10 }}>
+              <span style={label}>"Your Turn" writing prompt afterward (optional)</span>
+              <input value={form.composePrompt} onChange={(e) => setForm({ ...form, composePrompt: e.target.value })} placeholder="e.g. Now write 3 sentences using at least 3 of these spelling words." style={input} maxLength={400} />
             </div>
             <div style={{ marginBottom: 10 }}>
               <span style={label}>Text to type</span>
@@ -189,7 +201,7 @@ export default function TypingTextsPage() {
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontWeight: 700, fontSize: 13.5 }}>{t.title}</div>
                     <div style={{ fontSize: 12, color: COLORS.textMuted, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                      Grade {t.grade} · {t.subject} · {t.text.length} chars · {t.text.replace(/\s+/g, " ").slice(0, 80)}
+                      Grade {t.grade} · {t.subject} · {t.mode === "dictation" ? "🎧 Dictation · " : t.mode === "copy" ? "Copy only · " : ""}{t.compose_prompt ? "✍️ Your Turn · " : ""}{t.text.length} chars · {t.text.replace(/\s+/g, " ").slice(0, 80)}
                     </div>
                   </div>
                   {t.assigned && <span style={{ fontSize: 11, fontWeight: 700, color: COLORS.success, background: `${COLORS.success}1F`, borderRadius: 999, padding: "2px 10px" }}>Assigned</span>}

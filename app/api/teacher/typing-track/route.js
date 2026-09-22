@@ -45,7 +45,7 @@ export async function POST(request) {
     if (ids.length) {
       const { data, error } = await supabaseAdmin
         .from("relay_station_progress")
-        .select("student_id, current_level, level_results, completed_at, updated_at, placement, accommodations")
+        .select("student_id, current_level, level_results, completed_at, updated_at, placement, accommodations, daily")
         .in("student_id", ids);
       if (error) return NextResponse.json({ error: error.message }, { status: 500 });
       progressRows = data || [];

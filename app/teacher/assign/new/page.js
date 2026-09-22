@@ -109,9 +109,19 @@ function isRetiredSignalCheckCase(standard) {
 // Emily: "a 5th tile underneath that says Foundations Track". Picking it
 // selects that grade's track directly and jumps to the assign step.
 const FOUNDATIONS = "Foundations";
+const DAILY = "Daily";
 function isTypingTrackCase(standard) {
   return /^RS\.[345]\.TRACK$/.test(String(standard || ""));
 }
+// Sept 22, 2026 (Wave 2) — Daily Transmission gets the same treatment: its
+// own tile, assign once, a new short text every day with streaks.
+function isTypingDailyCase(standard) {
+  return /^RS\.[345]\.DAILY$/.test(String(standard || ""));
+}
+const RELAY_SPECIAL_TILES = [
+  { key: FOUNDATIONS, match: isTypingTrackCase, icon: "⌨️", title: "Foundations Track", blurb: "Assign once — every student climbs 20 levels at their own pace and moves up automatically. Works for any grade 3–5 class.", bg: "linear-gradient(120deg, #0D1B2A 0%, #16243F 55%, #7B5DFF 140%)" },
+  { key: DAILY, match: isTypingDailyCase, icon: "📅", title: "Daily Transmission", blurb: "Assign once — a short new warm-up every school day, the same for the whole class, with streaks and crystals.", bg: "linear-gradient(120deg, #0D1B2A 0%, #16243F 55%, #00C2C7 140%)" },
+];
 
 function NewAssignmentContent() {
   const router = useRouter();
@@ -191,15 +201,16 @@ function NewAssignmentContent() {
   const searchQ = caseSearch.trim().toLowerCase();
   const filteredCases = cases.filter((c) => {
     if (c.grade !== parseInt(browseGrade)) return false;
-    if (browseSubject !== FOUNDATIONS && c.subject !== browseSubject) return false;
+    const specialTile = RELAY_SPECIAL_TILES.find((t) => t.key === browseSubject);
+    if (!specialTile && c.subject !== browseSubject) return false;
     if (!matchesChallenge(c.engine, selectedChallenge?.key)) return false;
     if (isRetiredSignalCheckCase(c.standard)) return false;
     // Relay Station's Foundations Track has its own 5th tile (FOUNDATIONS
     // below) instead of hiding among the ELAR readings.
     // Relay Station custom texts are private to the teacher who made them.
     if (isCustomCode(c.standard) && customCodeOwnerPrefix(c.standard) !== String(teacherId || "").replace(/-/g, "").slice(0, 8).toLowerCase()) return false;
-    if (browseSubject === FOUNDATIONS) return isTypingTrackCase(c.standard);
-    if (isTypingTrackCase(c.standard)) return false;
+    if (specialTile) return specialTile.match(c.standard);
+    if (RELAY_SPECIAL_TILES.some((t) => t.match(c.standard))) return false;
     if (!searchQ) return true;
     return (
       (c.title || "").toLowerCase().includes(searchQ) ||
@@ -441,13 +452,14 @@ function NewAssignmentContent() {
                       ))}
                     </div>
 
-                    {selectedChallenge?.key === "relay_station" && (
+                    {selectedChallenge?.key === "relay_station" && RELAY_SPECIAL_TILES.map((tile) => (
                       <button
+                        key={tile.key}
                         className="gc-btn"
                         onClick={() => {
-                          setBrowseSubject(FOUNDATIONS);
-                          const track = cases.find((c) => isTypingTrackCase(c.standard) && c.grade === parseInt(browseGrade));
-                          if (track) setSelectedCase(track);
+                          setBrowseSubject(tile.key);
+                          const pick = cases.find((c) => tile.match(c.standard) && c.grade === parseInt(browseGrade));
+                          if (pick) setSelectedCase(pick);
                           setChallengeStep("caseList");
                         }}
                         style={{
@@ -455,7 +467,7 @@ function NewAssignmentContent() {
                           width: "100%",
                           height: 110,
                           borderRadius: 16,
-                          border: browseSubject === FOUNDATIONS ? `3px solid ${ACCENT}` : "3px solid transparent",
+                          border: browseSubject === tile.key ? `3px solid ${ACCENT}` : "3px solid transparent",
                           padding: "0 22px",
                           marginBottom: 14,
                           overflow: "hidden",
@@ -463,23 +475,21 @@ function NewAssignmentContent() {
                           alignItems: "center",
                           gap: 18,
                           textAlign: "left",
-                          background: "linear-gradient(120deg, #0D1B2A 0%, #16243F 55%, #7B5DFF 140%)",
-                          boxShadow: browseSubject === FOUNDATIONS ? `0 6px 18px ${ACCENT}47` : "0 2px 8px rgba(13,27,42,.12)",
+                          background: tile.bg,
+                          boxShadow: browseSubject === tile.key ? `0 6px 18px ${ACCENT}47` : "0 2px 8px rgba(13,27,42,.12)",
                         }}
                       >
-                        <span style={{ fontSize: 40 }}>⌨️</span>
+                        <span style={{ fontSize: 40 }}>{tile.icon}</span>
                         <span style={{ flex: 1 }}>
-                          <span style={{ display: "block", fontSize: 24, fontWeight: 800, color: "#FFFFFF", letterSpacing: .3 }}>Foundations Track</span>
-                          <span style={{ display: "block", fontSize: 12.5, color: "rgba(255,255,255,.75)", marginTop: 3 }}>
-                            Assign once — every student climbs 20 levels at their own pace and moves up automatically. Works for any grade 3–5 class.
-                          </span>
+                          <span style={{ display: "block", fontSize: 24, fontWeight: 800, color: "#FFFFFF", letterSpacing: .3 }}>{tile.title}</span>
+                          <span style={{ display: "block", fontSize: 12.5, color: "rgba(255,255,255,.75)", marginTop: 3 }}>{tile.blurb}</span>
                         </span>
                         <span style={{ fontSize: 13, fontWeight: 800, color: "#FFC44D", whiteSpace: "nowrap" }}>Assign →</span>
                       </button>
-                    )}
+                    ))}
 
-                    <button onClick={() => { if (browseSubject === FOUNDATIONS) setBrowseSubject("ELAR"); setChallengeStep("caseList"); }} className="gc-btn" style={{ width: "100%", background: ACCENT, color: COLORS.white, borderRadius: 999, padding: "11px 20px", fontWeight: 700, fontSize: 14 }}>
-                      Browse {browseGrade === "3" ? "3rd" : `${browseGrade}th`} Grade {browseSubject === FOUNDATIONS ? "ELAR" : browseSubject} {selectedChallenge?.key === "relay_station" ? "Readings" : "Cases"} →
+                    <button onClick={() => { if (RELAY_SPECIAL_TILES.some((t) => t.key === browseSubject)) setBrowseSubject("ELAR"); setChallengeStep("caseList"); }} className="gc-btn" style={{ width: "100%", background: ACCENT, color: COLORS.white, borderRadius: 999, padding: "11px 20px", fontWeight: 700, fontSize: 14 }}>
+                      Browse {browseGrade === "3" ? "3rd" : `${browseGrade}th`} Grade {RELAY_SPECIAL_TILES.some((t) => t.key === browseSubject) ? "ELAR" : browseSubject} {selectedChallenge?.key === "relay_station" ? "Readings" : "Cases"} →
                     </button>
                   </>
                 )}

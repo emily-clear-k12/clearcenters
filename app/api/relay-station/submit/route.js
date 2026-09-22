@@ -12,6 +12,12 @@ import {
   CRYSTALS,
   applyAccommodations,
   cleanTimeline,
+  MODES,
+  MODE_BONUS_CRYSTALS,
+  DAILY_CRYSTALS,
+  centralDateKey,
+  dailyTextFor,
+  continuesStreak,
 } from "../../../../lib/cases/relay-station";
 
 // Relay Station (typing center) submit — added Sept 22, 2026.
@@ -41,7 +47,7 @@ export async function POST(request) {
   }
 
   const body = await request.json().catch(() => null);
-  const { assignmentId, result, level } = body || {};
+  const { assignmentId, result, level, dailyKey } = body || {};
   if (!assignmentId || !result || typeof result !== "object") {
     return NextResponse.json({ error: "Missing assignment or result." }, { status: 400 });
   }
@@ -73,6 +79,9 @@ export async function POST(request) {
   if (lesson.isTrack) {
     return handleTrackRun({ studentId, assignmentId, track: lesson, level, result });
   }
+  if (lesson.isDaily) {
+    return handleDailyRun({ studentId, assignmentId, lesson, result, dailyKey });
+  }
   return handleReadingRun({ studentId, assignmentId, lesson, result });
 }
 
@@ -91,9 +100,10 @@ function scoreRun(passage, result) {
         .map((t) => ({ key: t.key, count: Math.max(0, Math.floor(Number(t.count) || 0)) }))
     : [];
   const bestCombo = Math.max(0, Math.min(chars, Math.floor(Number(result.bestCombo) || 0)));
+  const mode = MODES[result.mode] ? result.mode : "copy";
   // Ghost racer: per-character timeline, kept only if it's well-formed.
   const timeline = cleanTimeline(result.timeline, chars);
-  return { wpm, accuracy, accuracyExact, stars, errors, keystrokes, chars, ms, troubleKeys, bestCombo, timeline, finishedAt: new Date().toISOString() };
+  return { wpm, accuracy, accuracyExact, stars, errors, keystrokes, chars, ms, troubleKeys, bestCombo, timeline, mode, finishedAt: new Date().toISOString() };
 }
 
 function isBetter(run, prev) {
@@ -141,11 +151,18 @@ async function handleReadingRun({ studentId, assignmentId, lesson, result }) {
   const best = isNewBest ? run : prevData.best;
   const attempts = (prevData.attempts || 0) + 1;
 
+  // Wave 2: first finish in each challenge mode (dictation / corrupted) earns a bonus.
+  const modesDone = { ...(prevData.modes || {}) };
+  const firstInMode = run.mode !== "copy" && !modesDone[run.mode];
+  modesDone[run.mode] = true;
+
   const summary =
     `Relay Station (${lesson.code}, ${lesson.title}): best run ${"★".repeat(best.stars)} — ` +
     `${best.wpm} WPM, ${best.accuracy}% accuracy, ${best.errors} errors` +
     (best.troubleKeys.length ? `; trouble keys: ${best.troubleKeys.map((t) => keyLabel(t.key)).join(" ")}` : "") +
-    `. ${attempts} attempt${attempts === 1 ? "" : "s"}.`;
+    `. ${attempts} attempt${attempts === 1 ? "" : "s"}.` +
+    (Object.keys(modesDone).filter((m) => m !== "copy").length ? ` Challenge modes finished: ${Object.keys(modesDone).filter((m) => m !== "copy").map((m) => MODES[m].label).join(", ")}.` : "") +
+    (prevData.compose ? `\n\nYour Turn (${prevData.compose.type}):\n${prevData.compose.text}` : "");
 
   const { error } = await writeSubmission({
     assignmentId,
@@ -153,7 +170,7 @@ async function handleReadingRun({ studentId, assignmentId, lesson, result }) {
     fields: {
       attempt2: summary,
       // The ghost timeline lives only on `best` (it's what students race).
-      relay_station_data: { best, last: { ...run, timeline: undefined }, attempts },
+      relay_station_data: { ...prevData, best, last: { ...run, timeline: undefined }, attempts, modes: modesDone },
       submitted_at: new Date().toISOString(),
       revision_requested: false,
     },
@@ -162,7 +179,9 @@ async function handleReadingRun({ studentId, assignmentId, lesson, result }) {
 
   await bumpStreak(studentId);
   // Gamification: 1 crystal for every star earned for the first time.
-  const crystalsEarned = isNewBest ? Math.max(0, best.stars - ((prevData.best && prevData.best.stars) || 0)) * CRYSTALS.perNewStar : 0;
+  const crystalsEarned =
+    (isNewBest ? Math.max(0, best.stars - ((prevData.best && prevData.best.stars) || 0)) * CRYSTALS.perNewStar : 0) +
+    (firstInMode ? MODE_BONUS_CRYSTALS : 0);
   await awardCrystals(studentId, crystalsEarned);
   return NextResponse.json({ success: true, run, best, isNewBest, crystalsEarned });
 }
@@ -272,6 +291,66 @@ async function handleTrackRun({ studentId, assignmentId, track, level, result })
     progress: { current_level: newCurrent, level_results: results, completed_at: completedAt },
     crystalsEarned,
     promotedTo: checkpointCleared ? rankFor(newCurrent) : null,
+  });
+}
+
+// ------------------------------------------------------------------ DAILY
+// Daily Transmission (Wave 2). The server picks the date (Central time) and
+// the text, so everyone in the class types the same thing that day. A run
+// that started just before midnight may report yesterday's key — accepted.
+async function handleDailyRun({ studentId, assignmentId, lesson, result, dailyKey }) {
+  const today = centralDateKey();
+  const yesterday = centralDateKey(new Date(Date.now() - 86400000));
+  const key = dailyKey === yesterday ? yesterday : today;
+  const passage = { text: dailyTextFor(key), goals: lesson.goals };
+
+  const { data: row } = await supabaseAdmin
+    .from("relay_station_progress")
+    .select("student_id, daily, accommodations")
+    .eq("student_id", studentId)
+    .maybeSingle();
+  passage.goals = applyAccommodations(passage.goals, row && row.accommodations);
+  const run = scoreRun(passage, result);
+
+  const prev = (row && row.daily) || {};
+  const firstToday = prev.lastDate !== key;
+  let streak = prev.streak || 0;
+  if (firstToday) streak = continuesStreak(prev.lastDate, key) ? streak + 1 : 1;
+  const daily = {
+    lastDate: firstToday ? key : prev.lastDate,
+    streak,
+    bestStreak: Math.max(prev.bestStreak || 0, streak),
+    totalDays: (prev.totalDays || 0) + (firstToday ? 1 : 0),
+    history: firstToday
+      ? [...(prev.history || []), { date: key, wpm: run.wpm, accuracy: run.accuracy }].slice(-60)
+      : prev.history || [],
+  };
+
+  const { error } = row
+    ? await supabaseAdmin.from("relay_station_progress").update({ daily }).eq("student_id", studentId)
+    : await supabaseAdmin.from("relay_station_progress").insert({ student_id: studentId, current_level: 1, level_results: {}, daily });
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+
+  const summary = `Daily Transmission: ${daily.totalDays} day${daily.totalDays === 1 ? "" : "s"} completed, current streak ${daily.streak} (best ${daily.bestStreak}). Last run ${run.wpm} WPM, ${run.accuracy}% accuracy on ${key}.`;
+  await writeSubmission({
+    assignmentId,
+    studentId,
+    fields: { attempt2: summary, relay_station_data: { dailyMirror: true, totalDays: daily.totalDays, streak: daily.streak, bestStreak: daily.bestStreak }, submitted_at: null, revision_requested: false },
+  });
+
+  let crystalsEarned = 0;
+  if (firstToday) {
+    crystalsEarned = DAILY_CRYSTALS.perDay + (streak % DAILY_CRYSTALS.streakBonusEvery === 0 ? DAILY_CRYSTALS.streakBonus : 0);
+    await awardCrystals(studentId, crystalsEarned);
+    await bumpStreak(studentId);
+  }
+  return NextResponse.json({
+    success: true,
+    run,
+    best: null,
+    isNewBest: false,
+    crystalsEarned,
+    daily: { ...daily, dateKey: key, doneToday: true, text: passage.text },
   });
 }
 

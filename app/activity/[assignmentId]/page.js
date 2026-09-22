@@ -7,6 +7,7 @@ import { getMissionMapPublicCase } from "../../../lib/cases/mission-map/index.pu
 import { getSimulationLabPublicCase } from "../../../lib/cases/simulation-lab/index.public";
 import { getSignalDefensePublicCase } from "../../../lib/cases/signal-defense/index.public";
 import { resolveRelayStationLesson } from "../../../lib/relayStationServer";
+import { centralDateKey, dailyTextFor, continuesStreak } from "../../../lib/cases/relay-station";
 import ActivityClient from "./ActivityClient";
 import SignalCheckClient from "./SignalCheckClient";
 import MissionMapClient from "./MissionMapClient";
@@ -149,6 +150,32 @@ export default async function ActivityPage({ params }) {
         />
       );
     }
+    // Daily Transmission: today's text (Central time) and this student's streak.
+    if (lesson && lesson.isDaily) {
+      const { data: rsProgress } = await supabaseAdmin
+        .from("relay_station_progress")
+        .select("daily, accommodations")
+        .eq("student_id", studentId)
+        .maybeSingle();
+      const dateKey = centralDateKey();
+      const d = (rsProgress && rsProgress.daily) || {};
+      const alive = d.lastDate === dateKey || continuesStreak(d.lastDate, dateKey);
+      return (
+        <RelayStationClient
+          assignmentId={assignmentId}
+          lesson={lesson}
+          accommodations={rsProgress ? rsProgress.accommodations : null}
+          daily={{
+            dateKey,
+            text: dailyTextFor(dateKey),
+            doneToday: d.lastDate === dateKey,
+            streak: alive ? d.streak || 0 : 0,
+            bestStreak: d.bestStreak || 0,
+            totalDays: d.totalDays || 0,
+          }}
+        />
+      );
+    }
     if (lesson) {
       const { data: rsSubmission } = await supabaseAdmin
         .from("submissions")
@@ -168,6 +195,7 @@ export default async function ActivityPage({ params }) {
           assignmentId={assignmentId}
           lesson={lesson}
           existingBest={rsSubmission?.relay_station_data?.best || null}
+          existingCompose={rsSubmission?.relay_station_data?.compose || null}
           accommodations={rsSupports ? rsSupports.accommodations : null}
         />
       );

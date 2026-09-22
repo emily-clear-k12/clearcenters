@@ -183,7 +183,12 @@ function TypingTrackContent() {
                     return (
                       <React.Fragment key={s.id}>
                       <tr style={{ borderTop: `1px solid ${COLORS.border}` }}>
-                        <td style={{ padding: "10px 12px", fontWeight: 700 }}>{s.firstName}</td>
+                        <td style={{ padding: "10px 12px", fontWeight: 700 }}>
+                          {s.firstName}
+                          {p && p.daily && p.daily.totalDays > 0 && (
+                            <div style={{ fontSize: 11.5, fontWeight: 600, color: COLORS.textMuted }}>🔥 {p.daily.streak || 0}-day streak · {p.daily.totalDays} daily</div>
+                          )}
+                        </td>
                         <td style={{ padding: "10px 12px" }}><Chip color={st.color} label={st.label} /></td>
                         <td style={{ padding: "10px 12px" }}>
                           {st.key === "done" ? "All 20 passed" : (

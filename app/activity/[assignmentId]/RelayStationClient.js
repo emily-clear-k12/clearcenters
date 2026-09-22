@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo, useContext, createContext } from "react";
 import BackToHubButton from "../../../components/BackToHubButton";
 import DistressCallBadge from "../../../components/DistressCallBadge";
-import { applyAccommodations, normalizeAccommodations, ACCOMMODATION_DEFAULTS, cleanTimeline, buildRepairDrill, trackAllowedChars, TIERS, PLACEMENT_STAGES, PLACEMENT_MIN_WPM, placementResult, computeStars, meetsAccuracy, passAccuracyForLevel, getTrackLevelLesson, rankFor, RANKS, isCheckpointLevel, unitsCleared, comboTier, CRYSTALS } from "../../../lib/cases/relay-station";
+import { MODES, MODE_BONUS_CRYSTALS, DICTATION_REVEAL_AFTER, CORRUPT_REVEAL_AFTER, corruptRanges, dictationChunks, speakableText, getComposePrompt, COMPOSE_CRYSTALS, DAILY_CRYSTALS, applyAccommodations, normalizeAccommodations, ACCOMMODATION_DEFAULTS, cleanTimeline, buildRepairDrill, trackAllowedChars, TIERS, PLACEMENT_STAGES, PLACEMENT_MIN_WPM, placementResult, computeStars, meetsAccuracy, passAccuracyForLevel, getTrackLevelLesson, rankFor, RANKS, isCheckpointLevel, unitsCleared, comboTier, CRYSTALS } from "../../../lib/cases/relay-station";
 
 // Relay Station — the typing center. Added Sept 22, 2026.
 // Design doc: claude/RelayStation_Digital_Design_v1.md.
@@ -105,7 +105,7 @@ const AccContext = createContext(ACCOMMODATION_DEFAULTS);
 
 const SEGMENT_COLORS = ["#FFC44D", "#67E8F9", "#39D97A", "#F9A8D4", "#A5B4FC", "#FDBA74"];
 
-export default function RelayStationClient({ assignmentId, lesson, existingBest, trackProgress, accommodations }) {
+export default function RelayStationClient({ assignmentId, lesson, existingBest, existingCompose, trackProgress, accommodations, daily }) {
   const acc = useMemo(() => normalizeAccommodations(accommodations), [accommodations]);
   // DistressCallBadge renders nothing unless the teacher flagged this
   // assignment as a Distress Call (class goal: levels passed / stars).
@@ -117,13 +117,74 @@ export default function RelayStationClient({ assignmentId, lesson, existingBest,
       </AccContext.Provider>
     );
   }
+  if (lesson.isDaily) {
+    return (
+      <AccContext.Provider value={acc}>
+        <Shell>
+          <DistressCallBadge assignmentId={assignmentId} />
+          <DailyView assignmentId={assignmentId} lesson={lesson} daily={daily} />
+        </Shell>
+      </AccContext.Provider>
+    );
+  }
   return (
     <AccContext.Provider value={acc}>
       <Shell>
         <DistressCallBadge assignmentId={assignmentId} />
-        <PassageRun assignmentId={assignmentId} lesson={lesson} initialBest={existingBest} />
+        <PassageRun assignmentId={assignmentId} lesson={lesson} initialBest={existingBest} initialCompose={existingCompose} />
       </Shell>
     </AccContext.Provider>
+  );
+}
+
+// ======================================================================
+// DAILY TRANSMISSION (Wave 2, design doc §14). Same short text for the
+// whole class each day; weekday streaks; +1 crystal a day and a bonus every
+// 5-day streak. The server decides the date and the text.
+// ======================================================================
+function DailyView({ assignmentId, lesson, daily }) {
+  const [info, setInfo] = useState(daily || {});
+  const [runKey, setRunKey] = useState(0);
+  const dateLabel = info.dateKey
+    ? new Date(`${info.dateKey}T12:00:00`).toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" })
+    : "";
+  const passage = {
+    code: `${lesson.code}#${info.dateKey}`,
+    dailyKey: info.dateKey,
+    isTrack: false,
+    kind: "daily",
+    title: "Daily Transmission",
+    intro: info.doneToday
+      ? "You already relayed today's transmission — nice! You can practice it again, but the streak and crystals only count once a day."
+      : "Your daily warm-up, Cadet. The whole class gets the same transmission today. Finish it to keep your streak alive!",
+    newKeys: [],
+    text: info.text || "",
+    segments: null,
+    goals: lesson.goals,
+  };
+  return (
+    <div style={{ width: "100%", maxWidth: 960, display: "flex", flexDirection: "column", alignItems: "center" }}>
+      <Panel style={{ maxWidth: 640, marginBottom: 14, padding: "16px 20px", display: "flex", gap: 16, alignItems: "center", flexWrap: "wrap" }}>
+        <div style={{ fontSize: 40 }}>{(info.streak || 0) > 0 ? "🔥" : "📅"}</div>
+        <div style={{ flex: 1, minWidth: 200 }}>
+          <div style={{ fontSize: 12, letterSpacing: 2, color: THEME.teal, fontWeight: 700 }}>DAILY TRANSMISSION · {dateLabel.toUpperCase()}</div>
+          <div style={{ fontSize: 20, fontWeight: 800, color: THEME.text }}>
+            {(info.streak || 0) > 0 ? `${info.streak}-day streak` : "Start your streak today!"}
+          </div>
+          <div style={{ fontSize: 12.5, color: THEME.muted }}>
+            Best streak: {info.bestStreak || 0} · Days completed: {info.totalDays || 0} · Weekends never break a streak.
+            {" "}+{DAILY_CRYSTALS.perDay} 💎 a day, +{DAILY_CRYSTALS.streakBonus} bonus every {DAILY_CRYSTALS.streakBonusEvery} days in a row.
+          </div>
+        </div>
+        {info.doneToday && <span style={{ background: "rgba(57,217,122,0.15)", color: THEME.done, border: `1px solid ${THEME.done}`, borderRadius: 999, padding: "4px 12px", fontWeight: 800, fontSize: 13 }}>✓ Done today</span>}
+      </Panel>
+      <PassageRun
+        key={runKey}
+        assignmentId={assignmentId}
+        lesson={passage}
+        onServerResult={(data) => { if (data.daily) setInfo((x) => ({ ...x, ...data.daily })); }}
+      />
+    </div>
   );
 }
 
@@ -327,7 +388,7 @@ function normalizeProgress(p, total) {
 // ONE PASSAGE: intro → typing → done. Used for grade-level readings AND for
 // each track level (trackLevel set).
 // ======================================================================
-function PassageRun({ assignmentId, lesson, initialBest, trackLevel, trackTotal, autoStart, onServerResult, onNextLevel, onBackToMap, onFinishOverride }) {
+function PassageRun({ assignmentId, lesson, initialBest, initialCompose, trackLevel, trackTotal, autoStart, onServerResult, onNextLevel, onBackToMap, onFinishOverride }) {
   const text = lesson.text;
   const isTrackLevel = !!trackLevel;
   const acc = useContext(AccContext);
@@ -359,6 +420,31 @@ function PassageRun({ assignmentId, lesson, initialBest, trackLevel, trackTotal,
   const [ghostOn, setGhostOn] = useState(true);
   const [drill, setDrill] = useState(null); // lesson object while a drill runs
   const [drillResult, setDrillResult] = useState(null);
+  // Wave 2: challenge modes (copy / dictation / corrupted) + Your Turn compose.
+  const corrupt = useMemo(() => corruptRanges(lesson.code, text), [lesson.code, text]);
+  const canChallenge = !isTrackLevel && !onFinishOverride && lesson.kind !== "daily" && lesson.kind !== "drill";
+  const allowedModes = lesson.lockedMode && lesson.lockedMode !== "choice"
+    ? [lesson.lockedMode]
+    : canChallenge ? ["copy", "dictation", ...(corrupt.length >= 2 ? ["corrupted"] : [])] : ["copy"];
+  const [mode, setMode] = useState(allowedModes[0]);
+  const [revealed, setRevealed] = useState(() => new Set());
+  const [slowVoice, setSlowVoice] = useState(false);
+  const [composeOpen, setComposeOpen] = useState(false);
+  const composePrompt = !isTrackLevel && !onFinishOverride ? (lesson.compose || getComposePrompt(lesson.code)) : null;
+  // Which characters are hidden in this mode, and what shows in their place.
+  const mask = useMemo(() => {
+    const hidden = new Set();
+    const display = new Map();
+    if (mode === "dictation") {
+      for (let i = 0; i < text.length; i += 1) if (/[A-Za-z0-9]/.test(text[i])) { hidden.add(i); display.set(i, "_"); }
+    } else if (mode === "corrupted") {
+      corrupt.forEach((r) => { for (let i = r.start; i < r.end; i += 1) { hidden.add(i); display.set(i, r.scrambled[i - r.start]); } });
+    }
+    return { hidden, display };
+  }, [mode, text, corrupt]);
+  const maskRef = useRef({ mask, mode, revealed: new Set(), missAt: {} });
+  maskRef.current.mask = mask;
+  maskRef.current.mode = mode;
 
   // Refs mirror state so the keydown handler never reads stale values
   // (fast typists can fire several keys before React re-renders).
@@ -369,6 +455,10 @@ function PassageRun({ assignmentId, lesson, initialBest, trackLevel, trackTotal,
     setPos(0); setErrors(0); setKeystrokes(0); setStartedAt(null); setEndedAt(null);
     setMisses({}); setLastWrong(null); setSaveState("idle"); setNewBest(false);
     setCombo(0); setBestCombo(0); setReward(null); setDrillResult(null);
+    maskRef.current.revealed = new Set();
+    maskRef.current.missAt = {};
+    setRevealed(new Set());
+    setComposeOpen(false);
   }, []);
 
   const submitRun = useCallback(async (run) => {
@@ -377,7 +467,7 @@ function PassageRun({ assignmentId, lesson, initialBest, trackLevel, trackTotal,
       const res = await fetch("/api/relay-station/submit", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ assignmentId, level: trackLevel || null, result: run }),
+        body: JSON.stringify({ assignmentId, level: trackLevel || null, result: run, dailyKey: lesson.dailyKey || null }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Couldn't save.");
@@ -408,7 +498,7 @@ function PassageRun({ assignmentId, lesson, initialBest, trackLevel, trackTotal,
       .sort((a, b) => b[1] - a[1])
       .slice(0, 5)
       .map(([ch, count]) => ({ key: ch, count }));
-    submitRun({ wpm, accuracy, errors: s.errors, keystrokes: s.keystrokes, chars: text.length, ms, troubleKeys, bestCombo: s.bestCombo, timeline: s.timeline });
+    submitRun({ wpm, accuracy, errors: s.errors, keystrokes: s.keystrokes, chars: text.length, ms, troubleKeys, bestCombo: s.bestCombo, timeline: s.timeline, mode: maskRef.current.mode });
   }, [text, goals, submitRun, onFinishOverride]);
 
   const handleKey = useCallback((e) => {
@@ -433,7 +523,10 @@ function PassageRun({ assignmentId, lesson, initialBest, trackLevel, trackTotal,
     if (!s.startedAt) { s.startedAt = t; setStartedAt(t); }
     s.keystrokes += 1;
 
-    if (typed === expected) {
+    const m = maskRef.current;
+    // Dictation forgives capitals: you can't hear whether a letter is a capital.
+    const caseForgiven = m.mode === "dictation" && /[A-Za-z]/.test(expected) && typed.length === 1 && typed.toLowerCase() === expected.toLowerCase();
+    if (typed === expected || caseForgiven) {
       s.timeline.push(t - s.startedAt); // ghost racer: when each char landed
       s.pos += 1;
       s.combo += 1;
@@ -448,6 +541,15 @@ function PassageRun({ assignmentId, lesson, initialBest, trackLevel, trackTotal,
       s.errors += 1;
       s.combo = 0;
       setCombo(0);
+      // Hidden character (dictation / corrupted word): after a few misses at
+      // the same spot, reveal it so no one gets stuck.
+      if (m.mask.hidden.has(s.pos) && !m.revealed.has(s.pos)) {
+        m.missAt[s.pos] = (m.missAt[s.pos] || 0) + 1;
+        if (m.missAt[s.pos] >= (m.mode === "dictation" ? DICTATION_REVEAL_AFTER : CORRUPT_REVEAL_AFTER)) {
+          m.revealed = new Set(m.revealed).add(s.pos);
+          setRevealed(m.revealed);
+        }
+      }
       s.misses = { ...s.misses, [expected]: (s.misses[expected] || 0) + 1 };
       setErrors(s.errors);
       setKeystrokes(s.keystrokes);
@@ -462,6 +564,30 @@ function PassageRun({ assignmentId, lesson, initialBest, trackLevel, trackTotal,
     window.addEventListener("keydown", handleKey);
     return () => window.removeEventListener("keydown", handleKey);
   }, [phase, handleKey]);
+
+  // Dictation voice: the browser's built-in speech (no audio files). Speaks
+  // the sentence the cursor is in, and again whenever the cursor moves into
+  // the next one.
+  const chunks = useMemo(() => dictationChunks(text), [text]);
+  const chunkIdx = Math.max(0, chunks.findIndex(([a, b]) => pos >= a && pos < b));
+  const speechOk = typeof window !== "undefined" && "speechSynthesis" in window;
+  const speakChunk = useCallback((i) => {
+    if (!speechOk || !chunks[i]) return;
+    try {
+      window.speechSynthesis.cancel();
+      const u = new window.SpeechSynthesisUtterance(speakableText(text.slice(chunks[i][0], chunks[i][1])));
+      u.lang = "en-US";
+      u.rate = slowVoice ? 0.6 : 0.85;
+      window.speechSynthesis.speak(u);
+    } catch (err) {
+      // speech is a nice-to-have; the student can still switch to Copy
+    }
+  }, [speechOk, chunks, text, slowVoice]);
+  useEffect(() => {
+    if (phase === "typing" && mode === "dictation") speakChunk(chunkIdx);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [phase, mode, chunkIdx]);
+  useEffect(() => () => { if (speechOk) try { window.speechSynthesis.cancel(); } catch (err) { /* ignore */ } }, [speechOk]);
 
   // The ghost: the best run's per-character timeline (if one was saved).
   const ghostTimeline = useMemo(() => (best ? cleanTimeline(best.timeline, text.length) : null), [best, text]);
@@ -483,7 +609,8 @@ function PassageRun({ assignmentId, lesson, initialBest, trackLevel, trackTotal,
     ghostPos = lo;
   }
   const expected = text[pos];
-  const nextKey = keyFor(expected);
+  const concealed = mask.hidden.has(pos) && !revealed.has(pos);
+  const nextKey = concealed ? { base: null, shift: false } : keyFor(expected);
 
   function start() {
     reset();
@@ -536,6 +663,31 @@ function PassageRun({ assignmentId, lesson, initialBest, trackLevel, trackTotal,
             <div style={{ marginTop: 8, color: THEME.cursor }}>Your best so far: {"★".repeat(best.stars)} · {best.wpm} WPM · {best.accuracy}%</div>
           )}
         </div>
+        {allowedModes.length > 1 && (
+          <div style={{ marginBottom: 16 }}>
+            <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: 1, color: THEME.muted, marginBottom: 6 }}>CHOOSE YOUR MODE</div>
+            <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+              {allowedModes.map((m) => (
+                <button key={m} onClick={() => setMode(m)} style={{ flex: "1 1 150px", textAlign: "left", background: mode === m ? "rgba(123,93,255,0.25)" : "rgba(255,255,255,0.05)", border: `1px solid ${mode === m ? THEME.violet : "transparent"}`, borderRadius: 12, padding: "8px 10px", color: THEME.text, cursor: "pointer", fontFamily: "inherit" }}>
+                  <div style={{ fontWeight: 800, fontSize: 14 }}>{MODES[m].icon} {MODES[m].label}</div>
+                  <div style={{ fontSize: 12, color: THEME.muted }}>{MODES[m].blurb}{m !== "copy" ? ` First finish: +${MODE_BONUS_CRYSTALS} 💎` : ""}</div>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+        {allowedModes.length === 1 && mode === "dictation" && (
+          <div style={{ fontSize: 14, color: THEME.cursor, marginBottom: 14 }}>🎧 Dictation: your teacher set this one to be heard, not seen. Listen and type what you hear!</div>
+        )}
+        {mode === "dictation" && !speechOk && (
+          <div style={{ fontSize: 13, color: THEME.error, marginBottom: 14 }}>This browser can't read aloud. Ask your teacher, or pick Copy mode.</div>
+        )}
+        {mode === "dictation" && speechOk && (
+          <div style={{ fontSize: 13, color: THEME.muted, marginBottom: 14 }}>🔈 Turn your sound on (or put on headphones). Capital letters don't count against you in dictation, and a letter appears if you miss the same spot {DICTATION_REVEAL_AFTER} times.</div>
+        )}
+        {mode === "corrupted" && (
+          <div style={{ fontSize: 13, color: THEME.muted, marginBottom: 14 }}>📡 {corrupt.length} words arrived scrambled (in pink). Unscramble them as you type. Miss the same letter {CORRUPT_REVEAL_AFTER} times and it appears.</div>
+        )}
         <div style={{ fontSize: 13, color: THEME.teal, marginBottom: 14 }}>🪑 Ready position: sit tall · feet flat · wrists floating · fingers on home row · eyes on the screen</div>
         {ghostTimeline && (
           <label style={{ display: "flex", gap: 8, alignItems: "center", fontSize: 14, color: THEME.text, marginBottom: 14, cursor: "pointer" }}>
@@ -567,6 +719,19 @@ function PassageRun({ assignmentId, lesson, initialBest, trackLevel, trackTotal,
           }}
         />
       </div>
+    );
+  }
+
+  // ---------- YOUR TURN (compose, opened from the results screen) ----------
+  if (phase === "done" && composeOpen && composePrompt) {
+    return (
+      <ComposeView
+        assignmentId={assignmentId}
+        prompt={composePrompt}
+        modelTitle={lesson.title}
+        existing={initialCompose}
+        onBack={() => setComposeOpen(false)}
+      />
     );
   }
 
@@ -663,6 +828,20 @@ function PassageRun({ assignmentId, lesson, initialBest, trackLevel, trackTotal,
 
         {lesson.segments && <LabelReveal segments={lesson.segments} />}
 
+        {mode !== "copy" && (
+          <div style={{ fontSize: 13.5, color: THEME.teal, marginTop: 10 }}>{MODES[mode].icon} Finished in {MODES[mode].label} mode{revealed.size ? ` (${revealed.size} letter${revealed.size === 1 ? "" : "s"} revealed)` : " with no letters revealed!"}</div>
+        )}
+
+        {composePrompt && (
+          <div style={{ background: "rgba(255,196,77,0.10)", border: `1px solid ${THEME.cursor}`, borderRadius: 12, padding: "12px 14px", marginTop: 16, display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap" }}>
+            <span style={{ fontSize: 24 }}>✍️</span>
+            <span style={{ flex: 1, minWidth: 220, fontSize: 14.5, color: THEME.text }}>
+              <b>Your Turn:</b> {composePrompt.prompt} <span style={{ color: THEME.muted }}>(+{COMPOSE_CRYSTALS} 💎 the first time)</span>
+            </span>
+            <button onClick={() => setComposeOpen(true)} style={btn(THEME.cursor, "#0D1B2A")}>{initialCompose ? "See My Writing" : "Start Writing"}</button>
+          </div>
+        )}
+
         <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center", marginTop: 18 }}>
           {isTrackLevel && passed && trackLevel < trackTotal && saveState === "saved" && (
             <button onClick={() => onNextLevel(nextLevel)} style={btn(THEME.done, "#0D1B2A")}>Next: Level {nextLevel} →</button>
@@ -701,13 +880,23 @@ function PassageRun({ assignmentId, lesson, initialBest, trackLevel, trackTotal,
         <div style={{ width: `${progress}%`, height: "100%", background: THEME.done, transition: "width .15s" }} />
       </div>
 
+      {mode === "dictation" && (
+        <div style={{ display: "flex", gap: 8, justifyContent: "center", marginBottom: 10 }}>
+          <button onClick={(e) => { e.currentTarget.blur(); speakChunk(chunkIdx); }} style={btn(THEME.teal, "#0D1B2A")}>🔊 Repeat</button>
+          <button onClick={(e) => { e.currentTarget.blur(); setSlowVoice((v) => !v); }} style={btn(slowVoice ? THEME.violet : "rgba(255,255,255,0.12)")}>🐢 Slower voice: {slowVoice ? "on" : "off"}</button>
+        </div>
+      )}
       <Panel style={{ padding: "22px 24px" }}>
-        <TextView text={text} pos={pos} flashKey={flashKey} hasError={lastWrong !== null} ghostPos={ghostPos} />
+        <TextView text={text} pos={pos} flashKey={flashKey} hasError={lastWrong !== null} ghostPos={ghostPos} mask={mask} revealed={revealed} mode={mode} />
       </Panel>
 
       <div style={{ textAlign: "center", color: THEME.muted, fontSize: 14, margin: "12px 0 10px", minHeight: 22 }}>
         {!startedAt
-          ? "Fingers on home base — start typing when you're ready."
+          ? (mode === "dictation" ? "Listen, then start typing. Press 🔊 Repeat any time." : "Fingers on home base — start typing when you're ready.")
+          : concealed
+            ? (lastWrong !== null
+                ? <span style={{ color: THEME.error }}>{mode === "dictation" ? "Not quite — listen again (🔊 Repeat)." : "Not quite — unscramble the pink word."}</span>
+                : <span>{mode === "dictation" ? "Type what you hear." : "Unscramble the pink word — type the real word."}</span>)
           : lastWrong !== null
             ? <span style={{ color: THEME.error }}>Oops — press <b>{charName(expected)}</b>{nextKey.shift ? " (hold Shift)" : ""} with your {FINGER_NAMES[FINGER_OF[nextKey.base]] || "finger"}.</span>
             : expected !== undefined && <span>Next: <b style={{ color: THEME.text }}>{charName(expected)}</b> — {FINGER_NAMES[FINGER_OF[nextKey.base]] || ""}{nextKey.shift ? " + Shift" : ""}</span>}
@@ -827,6 +1016,90 @@ function PlacementCheck({ assignmentId, track, onDone, onCancel }) {
   );
 }
 
+// ======================================================================
+// YOUR TURN — Copy -> Compose (Wave 2). After relaying a model text, the
+// student writes their own. Normal typing here (backspace works). The
+// server gets AI feedback on the 0/1/2 scale every engine uses; the teacher
+// can still grade it in Submissions.
+// ======================================================================
+function ComposeView({ assignmentId, prompt, modelTitle, existing, onBack }) {
+  const [text, setText] = useState(existing ? existing.text : "");
+  const [state, setState] = useState(existing && existing.feedback ? "feedback" : "writing"); // writing | sending | feedback | error
+  const [feedback, setFeedback] = useState(existing ? existing.feedback : null);
+  const [crystals, setCrystals] = useState(0);
+  const [err, setErr] = useState(null);
+  const words = (text.trim().match(/\S+/g) || []).length;
+  const enough = words >= Math.max(5, Math.round(prompt.minWords * 0.6));
+
+  async function send() {
+    setState("sending"); setErr(null);
+    try {
+      const res = await fetch("/api/relay-station/compose", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ assignmentId, text }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Couldn't send your writing.");
+      setFeedback(data.feedback || null);
+      setCrystals(data.crystalsEarned || 0);
+      setState("feedback");
+    } catch (e) {
+      setErr(e.message);
+      setState("error");
+    }
+  }
+
+  return (
+    <Panel style={{ maxWidth: 820 }}>
+      <button onClick={onBack} style={linkBtn()}>← Back to results</button>
+      <div style={{ fontSize: 12, letterSpacing: 2, color: THEME.cursor, fontWeight: 700 }}>✍️ YOUR TURN · {prompt.type.toUpperCase()}</div>
+      <h1 style={{ fontSize: 22, margin: "6px 0 8px", color: THEME.text }}>{prompt.prompt}</h1>
+      <div style={{ fontSize: 13, color: THEME.muted, marginBottom: 10 }}>Use "{modelTitle}" as your model. Check off each part as you write:</div>
+      <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 12 }}>
+        {prompt.checklist.map((c, i) => {
+          const met = feedback && feedback.checklist && feedback.checklist[i] ? feedback.checklist[i].met : null;
+          return (
+            <span key={i} style={{ fontSize: 12.5, borderRadius: 999, padding: "3px 10px", color: THEME.text, background: met === true ? "rgba(57,217,122,0.18)" : met === false ? "rgba(255,196,77,0.15)" : "rgba(255,255,255,0.07)", border: `1px solid ${met === true ? THEME.done : met === false ? THEME.cursor : "transparent"}` }}>
+              {met === true ? "✓ " : met === false ? "○ " : ""}{c}
+            </span>
+          );
+        })}
+      </div>
+      <textarea
+        value={text}
+        onChange={(e) => { setText(e.target.value); if (state === "feedback") setState("writing"); }}
+        rows={12}
+        spellCheck={false}
+        placeholder="Start writing here…"
+        style={{ width: "100%", boxSizing: "border-box", background: "#FFFDF7", color: "#1F2937", borderRadius: 12, border: "none", padding: 14, fontSize: 16, lineHeight: 1.6, fontFamily: "Georgia, serif", resize: "vertical" }}
+      />
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 8, flexWrap: "wrap", gap: 8 }}>
+        <span style={{ fontSize: 12.5, color: enough ? THEME.done : THEME.muted }}>{words} words{prompt.minWords ? ` · aim for ${prompt.minWords}+` : ""}</span>
+        <button disabled={!enough || state === "sending"} onClick={send} style={{ ...btn(enough ? THEME.cursor : "rgba(255,255,255,0.12)", "#0D1B2A"), cursor: enough ? "pointer" : "default" }}>
+          {state === "sending" ? "Sending to S.A.M…" : feedback ? "Send My Revision" : "Send My Writing"}
+        </button>
+      </div>
+      {state === "error" && <div style={{ color: THEME.error, marginTop: 10, fontSize: 13.5 }}>{err}</div>}
+      {state === "feedback" && (
+        <div style={{ marginTop: 16, background: "rgba(255,255,255,0.06)", borderRadius: 12, padding: "12px 14px" }}>
+          {crystals > 0 && <div style={{ color: "#67E8F9", fontWeight: 800, marginBottom: 8 }}>+{crystals} 💎 crystals for your writing!</div>}
+          {feedback ? (
+            <>
+              <div style={{ fontWeight: 800, color: THEME.text, marginBottom: 6 }}>🤖 S.A.M.'s feedback</div>
+              {(feedback.glows || []).map((g, i) => <div key={i} style={{ color: THEME.done, fontSize: 14, marginBottom: 4 }}>🌟 {g}</div>)}
+              {feedback.grow && <div style={{ color: THEME.cursor, fontSize: 14, marginTop: 6 }}>🌱 Next step: {feedback.grow}</div>}
+              <div style={{ color: THEME.muted, fontSize: 12.5, marginTop: 8 }}>Your teacher can see your writing too. Want to make it even better? Edit it above and send your revision.</div>
+            </>
+          ) : (
+            <div style={{ color: THEME.text, fontSize: 14 }}>Your writing is saved! Your teacher will read it.</div>
+          )}
+        </div>
+      )}
+    </Panel>
+  );
+}
+
 // Ready Position checklist — students tap each item to confirm before they
 // start. Art for this screen (a posture diagram) is on Emily's image batch;
 // until then it's emoji + words.
@@ -927,7 +1200,7 @@ function StarBurst() {
 
 // Shows a window of lines around the cursor: done text dims, current line is
 // bright, current char gets the cursor. Enter shows as ↵, Tab as →.
-function TextView({ text, pos, flashKey, hasError, ghostPos }) {
+function TextView({ text, pos, flashKey, hasError, ghostPos, mask, revealed, mode }) {
   const acc = useContext(AccContext);
   const lines = useMemo(() => {
     const out = [];
@@ -963,8 +1236,13 @@ function TextView({ text, pos, flashKey, hasError, ghostPos }) {
           let display = ch;
           if (ch === "\n") display = "↵";
           else if (ch === "\t") display = "→   ";
+          // Wave 2: hidden characters (dictation blanks / scrambled corrupted words)
+          const hiddenHere = !isDone && mask && mask.hidden.has(i) && !(revealed && revealed.has(i));
+          if (hiddenHere) display = mask.display.get(i);
           let style = { color: isDone ? THEME.done : isCur ? THEME.text : THEME.dim, opacity: isDone && !isCur ? 0.55 : 1 };
           if (ch === "\n" || ch === "\t") style = { ...style, color: isDone ? "rgba(57,217,122,0.5)" : isCur ? THEME.teal : THEME.dim, fontSize: "0.8em" };
+          if (hiddenHere && mode === "corrupted") style = { ...style, color: "#F472B6", textShadow: "1px 0 #67E8F9, -1px 0 #F472B6", fontStyle: "italic" };
+          if (hiddenHere && mode === "dictation") style = { ...style, color: isCur ? THEME.teal : THEME.dim };
           // Ghost marker: a purple underline where your best run was at this moment.
           if (ghostPos !== null && ghostPos !== undefined && i === ghostPos && !isCursor) {
             style = { ...style, boxShadow: "inset 0 -4px 0 #A78BFA", background: "rgba(167,139,250,0.18)", borderRadius: 3 };
