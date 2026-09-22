@@ -72,6 +72,8 @@ export const NAV_GROUPS = [
   { label: "Signal Ops Board", icon: "/teacher/nav_live_ops.png", href: "/teacher/signal-ops-board" },
       // Sept 22 2026 — Relay Station custom texts (teacher-pasted passages).
       { label: "Typing Texts", icon: "/teacher/nav_assignments.png", href: "/teacher/typing-texts" },
+      // Sept 22 2026 (Wave 3) — Class Relay Race projector board.
+      { label: "Relay Race Board", icon: "/teacher/nav_live_ops.png", href: "/teacher/relay-race" },
     ],
   },
   {

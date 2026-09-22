@@ -133,70 +133,63 @@ export default async function ActivityPage({ params }) {
   const isRelayStation = engine === "relay_station";
   if (isRelayStation) {
     const lesson = await resolveRelayStationLesson(assignment.case_standard);
-    // Foundations Track: progress belongs to the STUDENT (one row in
-    // relay_station_progress), so it carries across re-assignments/classes.
-    if (lesson && lesson.isTrack) {
-      const { data: trackProgress } = await supabaseAdmin
-        .from("relay_station_progress")
-        .select("current_level, level_results, completed_at, placement, accommodations")
-        .eq("student_id", studentId)
-        .maybeSingle();
-      return (
-        <RelayStationClient
-          assignmentId={assignmentId}
-          lesson={lesson}
-          trackProgress={trackProgress || null}
-          accommodations={trackProgress ? trackProgress.accommodations : null}
-        />
-      );
-    }
-    // Daily Transmission: today's text (Central time) and this student's streak.
-    if (lesson && lesson.isDaily) {
+    if (lesson) {
+      // One progress row per STUDENT (not per assignment): track level,
+      // placement, supports, daily streak, keyboard skin. Read once here and
+      // handed to whichever Relay Station mode this assignment is.
       const { data: rsProgress } = await supabaseAdmin
         .from("relay_station_progress")
-        .select("daily, accommodations")
+        .select("current_level, level_results, completed_at, placement, accommodations, daily, keyboard_skin")
         .eq("student_id", studentId)
         .maybeSingle();
-      const dateKey = centralDateKey();
-      const d = (rsProgress && rsProgress.daily) || {};
-      const alive = d.lastDate === dateKey || continuesStreak(d.lastDate, dateKey);
-      return (
-        <RelayStationClient
-          assignmentId={assignmentId}
-          lesson={lesson}
-          accommodations={rsProgress ? rsProgress.accommodations : null}
-          daily={{
-            dateKey,
-            text: dailyTextFor(dateKey),
-            doneToday: d.lastDate === dateKey,
-            streak: alive ? d.streak || 0 : 0,
-            bestStreak: d.bestStreak || 0,
-            totalDays: d.totalDays || 0,
-          }}
-        />
-      );
-    }
-    if (lesson) {
+      const common = {
+        assignmentId,
+        lesson,
+        accommodations: rsProgress ? rsProgress.accommodations : null,
+        // Wave 3: S.A.M. follows the student through Relay Station, and
+        // keyboard skins unlock with track rank.
+        samSkin: student.equipped_sam_skin || null,
+        samNickname: student.sam_nickname || null,
+        keyboardSkin: rsProgress ? rsProgress.keyboard_skin : null,
+        currentLevel: rsProgress ? rsProgress.current_level : 1,
+      };
+      if (lesson.isTrack) {
+        return <RelayStationClient {...common} trackProgress={rsProgress || null} />;
+      }
+      if (lesson.isDaily) {
+        // Daily Transmission: today's text (Central time) and this student's streak.
+        const dateKey = centralDateKey();
+        const d = (rsProgress && rsProgress.daily) || {};
+        const alive = d.lastDate === dateKey || continuesStreak(d.lastDate, dateKey);
+        return (
+          <RelayStationClient
+            {...common}
+            daily={{
+              dateKey,
+              text: dailyTextFor(dateKey),
+              doneToday: d.lastDate === dateKey,
+              streak: alive ? d.streak || 0 : 0,
+              bestStreak: d.bestStreak || 0,
+              totalDays: d.totalDays || 0,
+            }}
+          />
+        );
+      }
+      if (lesson.isRace) {
+        // Class Relay Race: the client polls /api/relay-station/race for the live race.
+        return <RelayStationClient {...common} />;
+      }
       const { data: rsSubmission } = await supabaseAdmin
         .from("submissions")
         .select("relay_station_data")
         .eq("assignment_id", assignmentId)
         .eq("student_id", studentId)
         .maybeSingle();
-      // Teacher-set supports (large text, lower pass bar...) follow the
-      // student into readings too.
-      const { data: rsSupports } = await supabaseAdmin
-        .from("relay_station_progress")
-        .select("accommodations")
-        .eq("student_id", studentId)
-        .maybeSingle();
       return (
         <RelayStationClient
-          assignmentId={assignmentId}
-          lesson={lesson}
+          {...common}
           existingBest={rsSubmission?.relay_station_data?.best || null}
           existingCompose={rsSubmission?.relay_station_data?.compose || null}
-          accommodations={rsSupports ? rsSupports.accommodations : null}
         />
       );
     }

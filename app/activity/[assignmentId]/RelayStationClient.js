@@ -3,7 +3,8 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo, useContext, createContext } from "react";
 import BackToHubButton from "../../../components/BackToHubButton";
 import DistressCallBadge from "../../../components/DistressCallBadge";
-import { MODES, MODE_BONUS_CRYSTALS, DICTATION_REVEAL_AFTER, CORRUPT_REVEAL_AFTER, corruptRanges, dictationChunks, speakableText, getComposePrompt, COMPOSE_CRYSTALS, DAILY_CRYSTALS, applyAccommodations, normalizeAccommodations, ACCOMMODATION_DEFAULTS, cleanTimeline, buildRepairDrill, trackAllowedChars, TIERS, PLACEMENT_STAGES, PLACEMENT_MIN_WPM, placementResult, computeStars, meetsAccuracy, passAccuracyForLevel, getTrackLevelLesson, rankFor, RANKS, isCheckpointLevel, unitsCleared, comboTier, CRYSTALS } from "../../../lib/cases/relay-station";
+import SamGuide from "../../../components/SamGuide";
+import { KEYBOARD_SKINS, getKeyboardSkin, skinUnlocked, skinForRankIndex, RACE_CRYSTALS, MODES, MODE_BONUS_CRYSTALS, DICTATION_REVEAL_AFTER, CORRUPT_REVEAL_AFTER, corruptRanges, dictationChunks, speakableText, getComposePrompt, COMPOSE_CRYSTALS, DAILY_CRYSTALS, applyAccommodations, normalizeAccommodations, ACCOMMODATION_DEFAULTS, cleanTimeline, buildRepairDrill, trackAllowedChars, TIERS, PLACEMENT_STAGES, PLACEMENT_MIN_WPM, placementResult, computeStars, meetsAccuracy, passAccuracyForLevel, getTrackLevelLesson, rankFor, RANKS, isCheckpointLevel, unitsCleared, comboTier, CRYSTALS } from "../../../lib/cases/relay-station";
 
 // Relay Station — the typing center. Added Sept 22, 2026.
 // Design doc: claude/RelayStation_Digital_Design_v1.md.
@@ -102,37 +103,82 @@ function calcStats({ correctChars, keystrokes, errors, startedAt, endedAt }) {
 // Typing Track board — large text, dyslexia-friendly font, reduced motion,
 // hidden live speed, lower pass bar. Read anywhere below via useContext.
 const AccContext = createContext(ACCOMMODATION_DEFAULTS);
+// Wave 3: S.A.M. follows the student through every Relay Station screen.
+// Any screen calls say("line", "state", ms) — one floating SamGuide (the
+// student's own skin + nickname) lives at the root of RelayStationClient.
+const SamContext = createContext({ say: () => {} });
+function useSay() {
+  return useContext(SamContext).say;
+}
+// Wave 3: keyboard skins (rank rewards).
+const SkinContext = createContext({ skin: KEYBOARD_SKINS[0], skinKey: "classic", setSkinKey: () => {}, currentLevel: 1 });
 
 const SEGMENT_COLORS = ["#FFC44D", "#67E8F9", "#39D97A", "#F9A8D4", "#A5B4FC", "#FDBA74"];
 
-export default function RelayStationClient({ assignmentId, lesson, existingBest, existingCompose, trackProgress, accommodations, daily }) {
+export default function RelayStationClient({ assignmentId, lesson, existingBest, existingCompose, trackProgress, accommodations, daily, samSkin, samNickname, keyboardSkin, currentLevel }) {
   const acc = useMemo(() => normalizeAccommodations(accommodations), [accommodations]);
+  // S.A.M.: one companion for the whole activity. Lines can auto-clear.
+  const [sam, setSam] = useState({ line: "", state: "idle" });
+  const samTimer = useRef(null);
+  const say = useCallback((line, state = "helping", ms = 0) => {
+    if (samTimer.current) clearTimeout(samTimer.current);
+    setSam({ line: line || "", state });
+    if (ms && line) samTimer.current = setTimeout(() => setSam({ line: "", state: "idle" }), ms);
+  }, []);
+  useEffect(() => () => { if (samTimer.current) clearTimeout(samTimer.current); }, []);
+  const samApi = useMemo(() => ({ say }), [say]);
+  // Keyboard skin: the student's equipped skin, as long as their rank allows it.
+  const [skinKey, setSkinKey] = useState(keyboardSkin && skinUnlocked(keyboardSkin, currentLevel || 1) ? keyboardSkin : "classic");
+  const skinApi = useMemo(() => ({ skin: getKeyboardSkin(skinKey), skinKey, setSkinKey, currentLevel: currentLevel || 1 }), [skinKey, currentLevel]);
+
+  let body;
   // DistressCallBadge renders nothing unless the teacher flagged this
-  // assignment as a Distress Call (class goal: levels passed / stars).
+  // assignment as a Distress Call (class goal).
   if (lesson.isTrack) {
-    return (
-      <AccContext.Provider value={acc}>
+    body = (
+      <>
         <DistressCallBadge assignmentId={assignmentId} />
         <TrackView assignmentId={assignmentId} track={lesson} initialProgress={trackProgress} />
-      </AccContext.Provider>
+      </>
     );
-  }
-  if (lesson.isDaily) {
-    return (
-      <AccContext.Provider value={acc}>
-        <Shell>
-          <DistressCallBadge assignmentId={assignmentId} />
-          <DailyView assignmentId={assignmentId} lesson={lesson} daily={daily} />
-        </Shell>
-      </AccContext.Provider>
+  } else if (lesson.isDaily) {
+    body = (
+      <Shell>
+        <DistressCallBadge assignmentId={assignmentId} />
+        <DailyView assignmentId={assignmentId} lesson={lesson} daily={daily} />
+      </Shell>
     );
-  }
-  return (
-    <AccContext.Provider value={acc}>
+  } else if (lesson.isRace) {
+    body = (
+      <Shell>
+        <RaceView assignmentId={assignmentId} lesson={lesson} />
+      </Shell>
+    );
+  } else {
+    body = (
       <Shell>
         <DistressCallBadge assignmentId={assignmentId} />
         <PassageRun assignmentId={assignmentId} lesson={lesson} initialBest={existingBest} initialCompose={existingCompose} />
       </Shell>
+    );
+  }
+  return (
+    <AccContext.Provider value={acc}>
+      <SamContext.Provider value={samApi}>
+        <SkinContext.Provider value={skinApi}>
+          {body}
+          <SamGuide
+            skinKey={samSkin}
+            alt={samNickname || "S.A.M."}
+            size={96}
+            anchors={{ home: { right: 14, bottom: 14 } }}
+            line={sam.line}
+            state={acc.reducedMotion && sam.state !== "idle" ? "helping" : sam.state}
+            tipOnTap="Need a tip? Keep your eyes on the screen and let the glowing key guide your finger."
+            zIndex={40}
+          />
+        </SkinContext.Provider>
+      </SamContext.Provider>
     </AccContext.Provider>
   );
 }
@@ -144,6 +190,13 @@ export default function RelayStationClient({ assignmentId, lesson, existingBest,
 // ======================================================================
 function DailyView({ assignmentId, lesson, daily }) {
   const [info, setInfo] = useState(daily || {});
+  const say = useSay();
+  useEffect(() => {
+    if (info.doneToday) say(`Done for today — ${info.streak || 1}-day streak! See you tomorrow, Cadet.`, "celebrating");
+    else if ((info.streak || 0) > 0) say(`${info.streak}-day streak! Finish today's transmission to keep it going.`, "helping");
+    else say("Today's transmission is ready. Let's start a streak!", "helping");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [info.doneToday, info.streak]);
   const [runKey, setRunKey] = useState(0);
   const dateLabel = info.dateKey
     ? new Date(`${info.dateKey}T12:00:00`).toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" })
@@ -195,6 +248,8 @@ function DailyView({ assignmentId, lesson, daily }) {
 // ======================================================================
 function TrackView({ assignmentId, track, initialProgress }) {
   const acc = useContext(AccContext);
+  const say = useSay();
+  const [showSkins, setShowSkins] = useState(false);
   const total = track.levels.length;
   const [progress, setProgress] = useState(() => normalizeProgress(initialProgress, total));
   const [view, setView] = useState("map"); // map | run
@@ -217,6 +272,18 @@ function TrackView({ assignmentId, track, initialProgress }) {
   }
 
   const canPlace = progress.currentLevel === 1 && Object.keys(progress.results).length === 0 && !progress.placement;
+
+  // S.A.M. on the track map.
+  useEffect(() => {
+    if (view !== "map" || showReady) return;
+    if (complete) say("You're Foundations Certified, Cadet! Replay any level to collect every last star.", "celebrating");
+    else if (canPlace) say("New here? Try the 1-minute Placement Check, or start at Level 1. Either way, I've got your back!", "helping");
+    else {
+      const lv = Math.min(progress.currentLevel, total);
+      say(`Next up: Level ${lv}, ${track.levels[lv - 1].title}. ${applyAccommodations({ accuracy: passAccuracyForLevel(lv) }, acc).accuracy}% accuracy moves you up!`, "helping");
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [view, showReady, progress.currentLevel, complete, canPlace]);
 
   if (view === "placement") {
     return (
@@ -295,6 +362,7 @@ function TrackView({ assignmentId, track, initialProgress }) {
             </div>
             <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
               <button onClick={() => setShowReady(true)} style={btn("rgba(255,255,255,0.12)")}>🪑 Ready Position</button>
+              <button onClick={() => setShowSkins((v) => !v)} style={btn(showSkins ? THEME.violet : "rgba(255,255,255,0.12)")}>⌨️ Keyboard Skins</button>
               {!complete && <button onClick={() => play(current, false)} style={btn(THEME.violet)}>{passedCount === 0 ? "Start Level 1" : `Continue: Level ${current}`} →</button>}
             </div>
           </div>
@@ -305,6 +373,8 @@ function TrackView({ assignmentId, track, initialProgress }) {
             {passedCount} of {total} levels passed{!complete && rank !== nextRank ? ` · clear this unit's ⚡ checkpoint to be promoted to ${nextRank}` : ""}
           </div>
         </Panel>
+
+        {showSkins && <SkinPicker currentLevel={progress.currentLevel} />}
 
         {canPlace && (
           <Panel style={{ marginBottom: 16, border: `2px solid ${THEME.teal}`, display: "flex", gap: 16, alignItems: "center", flexWrap: "wrap" }}>
@@ -392,6 +462,7 @@ function PassageRun({ assignmentId, lesson, initialBest, initialCompose, trackLe
   const text = lesson.text;
   const isTrackLevel = !!trackLevel;
   const acc = useContext(AccContext);
+  const say = useSay();
   // Accommodations lower the accuracy goal for real lessons (never for the
   // Placement Check or a Repair Drill). The server applies the same rule.
   const goals = useMemo(
@@ -612,6 +683,46 @@ function PassageRun({ assignmentId, lesson, initialBest, initialCompose, trackLe
   const concealed = mask.hidden.has(pos) && !revealed.has(pos);
   const nextKey = concealed ? { base: null, shift: false } : keyFor(expected);
 
+  // ---- S.A.M. lines for this passage ----
+  useEffect(() => {
+    if (phase !== "intro" || lesson.kind === "drill") return;
+    if (lesson.kind === "placement") return; // PlacementCheck speaks for itself
+    if (mode === "dictation") say("Turn your sound on — I'll read it to you one sentence at a time. Press Repeat anytime!", "helping");
+    else if (mode === "corrupted") say("Uh-oh, some words got scrambled in transmission. Can you fix them as you type?", "thinking");
+    else if (isTrackLevel && isCheckpointLevel(trackLevel)) say("Checkpoint ahead! Pass this one and you get promoted.", "helping");
+    else if (goals.accuracy >= 100) say("This level needs 100%. Slow and steady wins it — no rush!", "helping");
+    else if (lesson.newKeys && lesson.newKeys.length) say(`New keys today: ${lesson.newKeys.join(" ").toUpperCase()}. Reach, press, and slide back home.`, "helping");
+    else say("Eyes on the screen, fingers on home row. You've got this!", "helping");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [phase, mode]);
+  useEffect(() => {
+    if (phase === "typing" && lesson.kind !== "drill" && lesson.kind !== "placement") say("", "idle");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [phase]);
+  const comboTierLabel = comboTier(combo) ? comboTier(combo).label : null;
+  useEffect(() => {
+    if (phase === "typing" && comboTierLabel) say(`${comboTierLabel}! ${combo} in a row!`, "celebrating", 2200);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [comboTierLabel]);
+  useEffect(() => {
+    if (phase === "typing" && errors > 0 && errors % 5 === 0) {
+      say(concealed ? "Take your time — listen again or look closely." : "Slow down a little and follow the glowing key. Accuracy first!", "helping", 3500);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [errors]);
+  useEffect(() => {
+    if (phase !== "done" || drill || composeOpen || lesson.kind === "drill") return;
+    const r = calcStats({ correctChars: text.length, keystrokes, errors, startedAt, endedAt });
+    const ok = meetsAccuracy(goals, r.accuracyExact);
+    if (reward && reward.promotedTo) {
+      const sk = skinForRankIndex(RANKS.indexOf(reward.promotedTo));
+      say(`PROMOTED to ${reward.promotedTo}!${sk ? ` You unlocked the ${sk.name} keyboard skin!` : ""}`, "celebrating");
+    } else if (newBest) say("New personal best! I knew you could do it!", "celebrating");
+    else if (ok) say(isTrackLevel ? "Level passed! On to the next one when you're ready." : "Transmission relayed! Great work, Cadet.", "celebrating");
+    else say(`So close! You need ${goals.accuracy}%. Slow down a little — I'll be right here.`, "helping");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [phase, reward, newBest, drill, composeOpen]);
+
   function start() {
     reset();
     setPhase("typing");
@@ -762,6 +873,7 @@ function PassageRun({ assignmentId, lesson, initialBest, initialCompose, trackLe
         {reward && reward.promotedTo && (
           <div style={{ background: "linear-gradient(90deg, #FFC44D33, #7B5DFF33)", border: `1px solid ${THEME.cursor}`, borderRadius: 12, padding: "10px 14px", margin: "8px 0", color: THEME.text, fontWeight: 800, fontSize: 16, animation: "rsPop .5s both" }}>
             🎖️ PROMOTED! You are now a <span style={{ color: THEME.cursor }}>{reward.promotedTo}</span>.
+            {skinForRankIndex(RANKS.indexOf(reward.promotedTo)) && <> ⌨️ New keyboard skin unlocked: <span style={{ color: THEME.cursor }}>{skinForRankIndex(RANKS.indexOf(reward.promotedTo)).name}</span> (pick it from Keyboard Skins on the track map).</>}
           </div>
         )}
         <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center", marginBottom: 6 }}>
@@ -910,6 +1022,7 @@ function PassageRun({ assignmentId, lesson, initialBest, initialCompose, trackLe
 // Placement Check (design doc §12): 3 short stages, stops at the first miss,
 // then the server re-scores and places the student on the track.
 function PlacementCheck({ assignmentId, track, onDone, onCancel }) {
+  const say = useSay();
   const [phase, setPhase] = useState("intro"); // intro | stage | saving | result | error
   const [idx, setIdx] = useState(0);
   const [runs, setRuns] = useState([]);
@@ -935,6 +1048,13 @@ function PlacementCheck({ assignmentId, track, onDone, onCancel }) {
       setPhase("error");
     }
   }
+
+  useEffect(() => {
+    if (phase === "intro") say("Show me what you can do! Take your time — accuracy matters more than speed.", "helping");
+    if (phase === "stage") say("", "idle");
+    if (phase === "result") say("Placement complete! Your track is ready.", "celebrating");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [phase]);
 
   function onStageDone(raw) {
     const stage = PLACEMENT_STAGES[idx];
@@ -1023,6 +1143,7 @@ function PlacementCheck({ assignmentId, track, onDone, onCancel }) {
 // can still grade it in Submissions.
 // ======================================================================
 function ComposeView({ assignmentId, prompt, modelTitle, existing, onBack }) {
+  const say = useSay();
   const [text, setText] = useState(existing ? existing.text : "");
   const [state, setState] = useState(existing && existing.feedback ? "feedback" : "writing"); // writing | sending | feedback | error
   const [feedback, setFeedback] = useState(existing ? existing.feedback : null);
@@ -1030,6 +1151,11 @@ function ComposeView({ assignmentId, prompt, modelTitle, existing, onBack }) {
   const [err, setErr] = useState(null);
   const words = (text.trim().match(/\S+/g) || []).length;
   const enough = words >= Math.max(5, Math.round(prompt.minWords * 0.6));
+  useEffect(() => { say("Use the model as your guide. Check off each part of the list as you write!", "thinking"); }, [say]);
+  useEffect(() => {
+    if (state === "feedback" && feedback) say("I read your writing — look at what you did well, then try the next step!", "celebrating");
+    if (state === "sending") say("Reading your writing now…", "thinking");
+  }, [state, feedback, say]);
 
   async function send() {
     setState("sending"); setErr(null);
@@ -1100,6 +1226,163 @@ function ComposeView({ assignmentId, prompt, modelTitle, existing, onBack }) {
   );
 }
 
+// Keyboard skins (Wave 3): each rank unlocks one. Locked skins show which
+// rank they need. Saved server-side (validated against the student's rank).
+function SkinPicker({ currentLevel }) {
+  const { skinKey, setSkinKey } = useContext(SkinContext);
+  const say = useSay();
+  const [saving, setSaving] = useState(null);
+  async function choose(key) {
+    setSaving(key);
+    try {
+      const res = await fetch("/api/relay-station/skin", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ skin: key }) });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Couldn't equip that skin.");
+      setSkinKey(key);
+      say(`${getKeyboardSkin(key).name} skin equipped. Looking sharp, Cadet!`, "celebrating", 3000);
+    } catch (e) {
+      say(e.message, "helping", 3500);
+    }
+    setSaving(null);
+  }
+  return (
+    <Panel style={{ marginBottom: 16, padding: 16 }}>
+      <div style={{ fontSize: 12, fontWeight: 800, letterSpacing: 1.2, color: THEME.cursor, marginBottom: 10 }}>⌨️ KEYBOARD SKINS — EARN ONE WITH EVERY PROMOTION</div>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(150px, 1fr))", gap: 10 }}>
+        {KEYBOARD_SKINS.map((sk) => {
+          const unlocked = skinUnlocked(sk.key, currentLevel);
+          const on = sk.key === skinKey;
+          return (
+            <button key={sk.key} disabled={!unlocked || saving} onClick={() => choose(sk.key)} style={{ textAlign: "left", background: on ? "rgba(123,93,255,0.25)" : "rgba(255,255,255,0.05)", border: `1px solid ${on ? THEME.violet : "transparent"}`, borderRadius: 12, padding: 10, cursor: unlocked ? "pointer" : "default", opacity: unlocked ? 1 : 0.55, fontFamily: "inherit", color: THEME.text }}>
+              <div style={{ display: "flex", gap: 4, marginBottom: 6 }}>
+                {["A", "S", "D", "F"].map((k, i) => (
+                  <span key={k} style={{ width: 24, height: 24, borderRadius: sk.radius / 2 + 2, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 800, fontFamily: sk.font, background: i === 3 ? FINGER_COLORS.li : sk.keyBg, color: i === 3 ? "#0D1B2A" : sk.keyText, border: `1.5px ${sk.dashed ? "dashed" : "solid"} ${sk.border === "finger" ? "rgba(255,255,255,0.3)" : sk.border}` }}>{k}</span>
+                ))}
+              </div>
+              <div style={{ fontWeight: 800, fontSize: 13.5 }}>{on ? "✓ " : ""}{sk.name}</div>
+              <div style={{ fontSize: 11.5, color: THEME.muted }}>{unlocked ? (on ? "Equipped" : "Tap to equip") : `🔒 Reach ${RANKS[sk.rank]}`}</div>
+            </button>
+          );
+        })}
+      </div>
+    </Panel>
+  );
+}
+
+// ======================================================================
+// CLASS RELAY RACE (Wave 3, design doc §15). The teacher starts a race on
+// the Relay Race board; every student grabs a "leg" (one sentence of a
+// secret message), types it, and grabs another. The message assembles on
+// the projector as legs finish. The whole class wins together.
+// ======================================================================
+function RaceView({ assignmentId, lesson }) {
+  const say = useSay();
+  const [data, setData] = useState(null); // server state
+  const [typing, setTyping] = useState(null); // { index, text } while typing a leg
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState(null);
+  const [myLegs, setMyLegs] = useState(0);
+
+  const call = useCallback(async (payload) => {
+    const res = await fetch("/api/relay-station/race", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ assignmentId, ...payload }) });
+    const d = await res.json();
+    if (!res.ok) throw new Error(d.error || "Race connection lost.");
+    return d;
+  }, [assignmentId]);
+
+  const refresh = useCallback(async () => {
+    try { const d = await call({ action: "state" }); setData(d); setErr(null); } catch (e) { setErr(e.message); }
+  }, [call]);
+
+  useEffect(() => {
+    refresh();
+    const id = setInterval(() => { if (!typing) refresh(); }, 2500);
+    return () => clearInterval(id);
+  }, [refresh, typing]);
+
+  const race = data && data.race;
+  const status = !race ? "waiting" : race.status;
+  useEffect(() => {
+    if (typing) { say("", "idle"); return; }
+    if (status === "waiting") say("Waiting for your teacher to start the Relay Race. Stretch those fingers!", "sleeping");
+    else if (status === "live") say(myLegs ? "Nice leg! Grab another one — the crew is counting on you." : "The race is ON! Grab a leg — every line of the message matters.", "helping");
+    else say("Message delivered! The whole crew did it together!", "celebrating");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [status, typing, myLegs]);
+
+  async function grab() {
+    setBusy(true);
+    try {
+      const d = await call({ action: "claim" });
+      setData(d);
+      if (d.myLeg) setTyping(d.myLeg);
+      else say(d.note || "Every leg is being typed right now — cheer your crew on!", "helping", 3500);
+    } catch (e) { setErr(e.message); }
+    setBusy(false);
+  }
+
+  async function finished(raw) {
+    const leg = typing;
+    setTyping(null);
+    try {
+      const d = await call({ action: "finish", legIndex: leg.index, result: raw });
+      setData(d);
+      setMyLegs((n) => n + 1);
+    } catch (e) { setErr(e.message); }
+  }
+
+  if (typing) {
+    return (
+      <PassageRun
+        key={`leg-${typing.index}`}
+        assignmentId={assignmentId}
+        lesson={{ code: `race-leg-${typing.index}`, isTrack: false, kind: "race", title: `🏁 Leg ${typing.index + 1} of ${race ? race.total : "?"}`, intro: "", newKeys: [], text: typing.text, segments: null, goals: lesson.goals }}
+        autoStart
+        onFinishOverride={finished}
+      />
+    );
+  }
+
+  const legs = (race && race.legs) || [];
+  const done = legs.filter((l) => l.status === "done").length;
+  return (
+    <Panel style={{ maxWidth: 860 }}>
+      <div style={{ fontSize: 12, letterSpacing: 2, color: THEME.teal, fontWeight: 700 }}>🏁 CLASS RELAY RACE</div>
+      {status === "waiting" && (
+        <>
+          <h1 style={{ fontSize: 26, color: THEME.text, margin: "6px 0" }}>Waiting for the starting signal…</h1>
+          <p style={{ color: THEME.muted, fontSize: 15 }}>When your teacher starts a race, a secret message will be split into pieces. Everyone types a piece, and the whole class decodes it together. Keep this screen open!</p>
+        </>
+      )}
+      {race && (
+        <>
+          <h1 style={{ fontSize: 24, color: THEME.text, margin: "6px 0 4px" }}>{race.title}</h1>
+          <div style={{ color: THEME.muted, fontSize: 13.5, marginBottom: 10 }}>{done} of {race.total} legs relayed{myLegs ? ` · you've carried ${myLegs}` : ""}</div>
+          <div style={{ height: 10, background: "rgba(255,255,255,0.1)", borderRadius: 99, overflow: "hidden", marginBottom: 16 }}>
+            <div style={{ width: `${(done / Math.max(1, race.total)) * 100}%`, height: "100%", background: THEME.done, transition: "width .4s" }} />
+          </div>
+          <div style={{ background: "rgba(255,255,255,0.05)", borderRadius: 12, padding: "12px 14px", fontSize: 15.5, lineHeight: 1.8, marginBottom: 16 }}>
+            {legs.map((l) => (
+              <span key={l.index} style={{ marginRight: 6, color: l.status === "done" ? THEME.done : l.status === "claimed" ? THEME.cursor : THEME.dim }}>
+                {l.status === "done" ? l.text : l.status === "claimed" ? "▓▓▓▓▓▓" : "▒▒▒▒▒▒"}
+              </span>
+            ))}
+          </div>
+          {status === "live" && (
+            <button disabled={busy} onClick={grab} style={btn(THEME.violet)}>{busy ? "Grabbing…" : myLegs ? "Grab Another Leg →" : "Grab a Leg →"}</button>
+          )}
+          {status !== "live" && (
+            <div style={{ fontSize: 16, color: THEME.cursor, fontWeight: 800 }}>
+              {status === "done" ? `🎉 Message delivered${race.seconds ? ` in ${formatTime(race.seconds * 1000)}` : ""}! ${myLegs || data.iFinishedALeg ? `+${RACE_CRYSTALS} 💎 for everyone who carried a leg.` : ""}` : "This race has ended. Wait for the next one!"}
+            </div>
+          )}
+        </>
+      )}
+      {err && <div style={{ color: THEME.error, marginTop: 10, fontSize: 13 }}>{err}</div>}
+    </Panel>
+  );
+}
+
 // Ready Position checklist — students tap each item to confirm before they
 // start. Art for this screen (a posture diagram) is on Emily's image batch;
 // until then it's emoji + words.
@@ -1113,6 +1396,8 @@ const READY_ITEMS = [
 
 function ReadyPosition({ onReady }) {
   const [checked, setChecked] = useState({});
+  const say = useSay();
+  useEffect(() => { say("Pilots check their seats before every flight. Tap each one when you've done it, Cadet!", "helping"); }, [say]);
   const allChecked = READY_ITEMS.every((_, i) => checked[i]);
   return (
     <Panel style={{ maxWidth: 640 }}>
@@ -1270,7 +1555,9 @@ function TextView({ text, pos, flashKey, hasError, ghostPos, mask, revealed, mod
   );
 }
 
-function Keyboard({ nextBase, needShift }) {
+function Keyboard({ nextBase, needShift, skinOverride }) {
+  const ctxSkin = useContext(SkinContext).skin;
+  const skin = skinOverride || ctxSkin;
   const nextFinger = FINGER_OF[nextBase];
   // Shift goes on the OPPOSITE hand from the letter.
   const shiftSide = needShift ? (isLeftHand(nextFinger) ? "ShiftR" : "ShiftL") : null;
@@ -1287,16 +1574,17 @@ function Keyboard({ nextBase, needShift }) {
               <div key={base} style={{
                 width: unit * w + (w - 1) * 5,
                 height: unit,
-                borderRadius: 8,
+                borderRadius: skin.radius,
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
                 fontSize: label.length > 1 ? 11 : 15,
                 fontWeight: 700,
-                color: active ? "#0D1B2A" : "rgba(255,255,255,0.75)",
-                background: active ? color : "rgba(255,255,255,0.06)",
-                border: `2px solid ${active ? "#fff" : color + "66"}`,
-                boxShadow: active ? `0 0 14px ${color}` : "none",
+                fontFamily: skin.font,
+                color: active ? "#0D1B2A" : skin.keyText,
+                background: active ? color : skin.keyBg,
+                border: `2px ${skin.dashed && !active ? "dashed" : "solid"} ${active ? "#fff" : skin.border === "finger" ? color + "66" : skin.border + "99"}`,
+                boxShadow: active ? `0 0 ${skin.glow}px ${color}` : skin.border !== "finger" ? `0 0 6px ${skin.border}33` : "none",
                 transform: active ? "translateY(-2px)" : "none",
                 transition: "all .08s",
                 position: "relative",

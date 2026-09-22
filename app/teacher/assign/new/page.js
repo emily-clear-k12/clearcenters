@@ -118,8 +118,13 @@ function isTypingTrackCase(standard) {
 function isTypingDailyCase(standard) {
   return /^RS\.[345]\.DAILY$/.test(String(standard || ""));
 }
+// Wave 3 — Class Relay Race: assign once; start races from the Relay Race board.
+function isTypingRaceCase(standard) {
+  return /^RS\.[345]\.RACE$/.test(String(standard || ""));
+}
 const RELAY_SPECIAL_TILES = [
   { key: FOUNDATIONS, match: isTypingTrackCase, icon: "⌨️", title: "Foundations Track", blurb: "Assign once — every student climbs 20 levels at their own pace and moves up automatically. Works for any grade 3–5 class.", bg: "linear-gradient(120deg, #0D1B2A 0%, #16243F 55%, #7B5DFF 140%)" },
+  { key: "Race", match: isTypingRaceCase, icon: "🏁", title: "Class Relay Race", blurb: "Assign once — then start a live race any time from the Relay Race Board. Every student types a piece of a secret message and the class decodes it together.", bg: "linear-gradient(120deg, #0D1B2A 0%, #16243F 55%, #FFC44D 150%)" },
   { key: DAILY, match: isTypingDailyCase, icon: "📅", title: "Daily Transmission", blurb: "Assign once — a short new warm-up every school day, the same for the whole class, with streaks and crystals.", bg: "linear-gradient(120deg, #0D1B2A 0%, #16243F 55%, #00C2C7 140%)" },
 ];
 
@@ -369,6 +374,9 @@ function NewAssignmentContent() {
               <div style={{ display: "flex", gap: 10, justifyContent: "center", flexWrap: "wrap" }}>
                 {distressCallEnabled && newAssignmentId && (
                   <button onClick={() => router.push(`/teacher/live-ops-board?assignmentId=${newAssignmentId}`)} className="gc-btn" style={{ background: "#0D1B2A", color: COLORS.white, borderRadius: 999, padding: "11px 20px", fontWeight: 700, fontSize: 13.5 }}>📡 Project on Live Ops Board</button>
+                )}
+                {selectedCase?.engine === "relay_station" && /\.RACE$/.test(selectedCase.standard || "") && (
+                  <button onClick={() => router.push(`/teacher/relay-race?classId=${assignClassId}`)} className="gc-btn" style={{ background: "#0D1B2A", color: COLORS.white, borderRadius: 999, padding: "11px 20px", fontWeight: 700, fontSize: 13.5 }}>🏁 Open Relay Race Board</button>
                 )}
                 {selectedCase?.engine === "relay_station" && /\.TRACK$/.test(selectedCase.standard || "") && (
                   <button onClick={() => router.push(`/teacher/typing-track?classId=${assignClassId}`)} className="gc-btn" style={{ background: "#0D1B2A", color: COLORS.white, borderRadius: 999, padding: "11px 20px", fontWeight: 700, fontSize: 13.5 }}>⌨️ Open Typing Track Board</button>
