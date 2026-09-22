@@ -1,0 +1,9 @@
+ClearCenters Mission Map boards v1 — MOCKUP / pending approval
+25 map images → public/mission-map/*-mm-map.jpg
+Size: 1536×1024 (16:10, matches MissionMapClient aspectRatio)
+
+8 bright ship holomap styles rotated (terrain variety on floor tiles):
+  classic islands, garden, mountain hex, ocean, desert, forest, city park, volcanic
+
+Checkpoint pins are % positions — open floor ring supports overlay pins.
+Does NOT change evidence/ folder or window.jpg.
