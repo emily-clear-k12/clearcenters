@@ -155,7 +155,21 @@ S.A.M.'s written feedback takes its reading level from the case's `grade` field,
 | Standards reports | engine rows already keyed by `cases.standard` |
 | S.A.M. | `SamGuide` on every screen, the Relay Station pattern (brief, deck, check, rejects, explain, payoff) |
 | Teacher assign | one new tile in `CHALLENGE_TYPES`; Territory Builder's tile is removed in the same change |
+| Sentence Sort board | `/teacher/assembly-deck` — the one report only this engine can produce (§7.1) |
 | Submissions | `attempt1` / `attempt2` / `ai_score` / `ai_rationale`, plus one new `assembly_deck_data` jsonb column for the board state |
+
+---
+
+### 7.1 · The Sentence Sort board (built Sept 22, 2026)
+
+Every other board in ClearCenters answers *how far did they get*. This one answers *what kind of bad sentence gets past this class*, which is the thing the engine uniquely measures.
+
+- **What to teach tomorrow** — the decoy category this class names correctly least often, and the label they reach for instead. "Weakest on *opinion* — named correctly 38% of the time; when they miss it they call it *off topic*." A student who calls an opinion "off topic" is making a different mistake than one who calls it "not in the notes," and that difference is a lesson.
+- **A confusion matrix, not a score.** For each category: how often it was named right, and what the wrong answers actually were. Leaving a leftover blank is tracked separately from naming it wrong.
+- **Slot accuracy, hardest first.** Where sentences land across every case. A low bar on Reasoning means the class can find evidence but can't say why it matters.
+- **Per student**, expandable: placement, paragraph order, traps caught, challenge runs, and the categories that student keeps missing. Plus who hasn't started.
+
+Everything is recomputed from `submissions.assembly_deck_data` against the case keys at request time — the stored scores are never trusted, so a tampered payload can't move the class numbers. No new table, no SQL. Covered by `sim/deckboard.cjs` (access control, both empty states, the matrix arithmetic, per-student attribution, and the tamper case).
 
 ---
 

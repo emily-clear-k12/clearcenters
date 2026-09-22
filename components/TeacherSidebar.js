@@ -74,6 +74,9 @@ export const NAV_GROUPS = [
       { label: "Typing Texts", icon: "/teacher/nav_assignments.png", href: "/teacher/typing-texts" },
       // Sept 22 2026 (Wave 3) — Class Relay Race projector board.
       { label: "Relay Race Board", icon: "/teacher/nav_live_ops.png", href: "/teacher/relay-race" },
+      // Sept 22 2026 — Assembly Deck's Sentence Sort board: which kinds of
+      // bad sentence get past a class (opinion, contradiction, unsupported).
+      { label: "Sentence Sort", icon: "/teacher/nav_student_progress.png", href: "/teacher/assembly-deck" },
     ],
   },
   {

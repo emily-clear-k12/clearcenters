@@ -58,9 +58,10 @@ const CHALLENGE_TYPES = [
   { key: "signal_defense", label: "Signal Ops", image: "/teacher/challenges/signal_defense.jpg", real: true,
     description: "The whole class defends one shared base together — answering review questions to keep power, health, and salvage up before the next wave hits." },
   // Sept 22, 2026 — Relay Station, the typing center (design doc:
-  // claude/RelayStation_Digital_Design_v1.md). Tile art is an SVG
-  // placeholder until Emily's batched image upload replaces it with a .jpg.
-  { key: "relay_station", label: "Relay Station", image: "/teacher/challenges/relay_station.svg", real: true,
+  // claude/RelayStation_Digital_Design_v1.md). Real tile art applied later
+  // the same day, from Emily's CC_DROP_ALL_ship_slim drop; the SVG
+  // placeholder it replaced is still in public/ and can be deleted.
+  { key: "relay_station", label: "Relay Station", image: "/teacher/challenges/relay_station.jpg", real: true,
     description: "Typing practice with a purpose. Assign the Foundations Track once and every student climbs 20 levels at their own pace — home row to capitals, numbers, and layout — moving up automatically. Then assign grade-level readings: conversations, paragraphs, and letters to relay letter for letter." },
   // Sept 22, 2026 — Assembly Deck, the build-it center (design doc:
   // claude/AssemblyDeck_Digital_Design_v1.md). Wave 1 ships the paragraph
