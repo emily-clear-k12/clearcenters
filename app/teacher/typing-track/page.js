@@ -125,7 +125,7 @@ function TypingTrackContent() {
             </div>
           </div>
           <p style={{ fontSize: 12.5, color: COLORS.textMuted, margin: "10px 0 0" }}>
-            Students move up automatically when they pass a level with 90% accuracy. Assign <b>Relay Station → Typing Foundations Track</b> once (Challenge Library, ELAR) and every student works at their own level.
+            Students move up automatically when they pass a level. The bar rises: <b>90%</b> accuracy for levels 1–10, <b>95%</b> for 11–15, <b>100%</b> for 16–20. Assign it once (Challenge Library → Relay Station → <b>Foundations Track</b> tile) and every student works at their own level.
             Use <b>Place at</b> to skip a strong typist ahead (Level 13 = all letters known, Level 14 = capitals) or send someone back for review. <b>Needs help</b> = {STUCK_ATTEMPTS}+ tries on the same level without passing.
           </p>
         </div>
@@ -165,7 +165,7 @@ function TypingTrackContent() {
                           {st.key === "done" ? "All 20 passed" : (
                             <>
                               <b>{cur}.</b> {levelInfo.title}
-                              <div style={{ fontSize: 11.5, color: COLORS.textMuted }}>{unit ? unit.name : ""}</div>
+                              <div style={{ fontSize: 11.5, color: COLORS.textMuted }}>{unit ? unit.name : ""}{p && p.placement ? ` · placement check → Level ${p.placement.level}` : ""}</div>
                             </>
                           )}
                         </td>

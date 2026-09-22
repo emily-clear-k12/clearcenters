@@ -2,7 +2,8 @@
 
 import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import BackToHubButton from "../../../components/BackToHubButton";
-import { computeStars, getTrackLevelLesson } from "../../../lib/cases/relay-station";
+import DistressCallBadge from "../../../components/DistressCallBadge";
+import { PLACEMENT_STAGES, PLACEMENT_MIN_WPM, placementResult, computeStars, meetsAccuracy, passAccuracyForLevel, getTrackLevelLesson, rankFor, RANKS, isCheckpointLevel, unitsCleared, comboTier, CRYSTALS } from "../../../lib/cases/relay-station";
 
 // Relay Station — the typing center. Added Sept 22, 2026.
 // Design doc: claude/RelayStation_Digital_Design_v1.md.
@@ -91,18 +92,28 @@ function calcStats({ correctChars, keystrokes, errors, startedAt, endedAt }) {
   const ms = startedAt ? (endedAt || Date.now()) - startedAt : 0;
   const minutes = ms / 60000;
   const wpm = minutes > 0 ? Math.round((correctChars / 5) / minutes) : 0;
-  const accuracy = keystrokes > 0 ? Math.round(((keystrokes - errors) / keystrokes) * 100) : 100;
-  return { ms, wpm, accuracy };
+  const accuracyExact = keystrokes > 0 ? ((keystrokes - errors) / keystrokes) * 100 : 100;
+  // Never show 100% when there was a mistake (matters for the 100% levels).
+  const accuracy = errors > 0 ? Math.min(99, Math.round(accuracyExact)) : 100;
+  return { ms, wpm, accuracy, accuracyExact };
 }
 
 const SEGMENT_COLORS = ["#FFC44D", "#67E8F9", "#39D97A", "#F9A8D4", "#A5B4FC", "#FDBA74"];
 
 export default function RelayStationClient({ assignmentId, lesson, existingBest, trackProgress }) {
+  // DistressCallBadge renders nothing unless the teacher flagged this
+  // assignment as a Distress Call (class goal: levels passed / stars).
   if (lesson.isTrack) {
-    return <TrackView assignmentId={assignmentId} track={lesson} initialProgress={trackProgress} />;
+    return (
+      <>
+        <DistressCallBadge assignmentId={assignmentId} />
+        <TrackView assignmentId={assignmentId} track={lesson} initialProgress={trackProgress} />
+      </>
+    );
   }
   return (
     <Shell>
+      <DistressCallBadge assignmentId={assignmentId} />
       <PassageRun assignmentId={assignmentId} lesson={lesson} initialBest={existingBest} />
     </Shell>
   );
@@ -119,6 +130,13 @@ function TrackView({ assignmentId, track, initialProgress }) {
   const [view, setView] = useState("map"); // map | run
   const [runLevel, setRunLevel] = useState(null);
   const [runKey, setRunKey] = useState(0);
+  // Ready Position (Tech Apps (c)(12)(C) "ergonomic strategies such as correct
+  // hand and body positions"): the full checklist opens automatically for a
+  // brand-new student, and any time from the map's Ready Position button.
+  const [showReady, setShowReady] = useState(() => {
+    const p = normalizeProgress(initialProgress, total);
+    return p.currentLevel === 1 && Object.keys(p.results).length === 0;
+  });
 
   const complete = progress.currentLevel > total;
 
@@ -126,6 +144,29 @@ function TrackView({ assignmentId, track, initialProgress }) {
     setRunLevel({ level, autoStart });
     setRunKey((k) => k + 1);
     setView("run");
+  }
+
+  const canPlace = progress.currentLevel === 1 && Object.keys(progress.results).length === 0 && !progress.placement;
+
+  if (view === "placement") {
+    return (
+      <Shell>
+        <PlacementCheck
+          assignmentId={assignmentId}
+          track={track}
+          onDone={(serverProgress) => { if (serverProgress) setProgress(normalizeProgress(serverProgress, total)); setView("map"); }}
+          onCancel={() => setView("map")}
+        />
+      </Shell>
+    );
+  }
+
+  if (showReady) {
+    return (
+      <Shell>
+        <ReadyPosition onReady={() => setShowReady(false)} />
+      </Shell>
+    );
   }
 
   if (view === "run" && runLevel) {
@@ -156,6 +197,9 @@ function TrackView({ assignmentId, track, initialProgress }) {
   }));
   const current = Math.min(progress.currentLevel, total);
   const passedCount = Math.min(progress.currentLevel - 1, total);
+  const rank = rankFor(progress.currentLevel);
+  const nextRank = RANKS[Math.min(unitsCleared(progress.currentLevel) + 1, RANKS.length - 1)];
+  const starsEarned = Object.values(progress.results).reduce((n, r) => n + (r && r.passed ? r.stars : 0), 0);
 
   return (
     <Shell>
@@ -163,23 +207,47 @@ function TrackView({ assignmentId, track, initialProgress }) {
         <Panel style={{ padding: "22px 26px", marginBottom: 16 }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 16, flexWrap: "wrap" }}>
             <div>
-              <div style={{ fontSize: 12, letterSpacing: 2, color: THEME.teal, fontWeight: 700 }}>📡 RELAY STATION · FOUNDATIONS TRACK</div>
+              <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
+                <span style={{ fontSize: 12, letterSpacing: 2, color: THEME.teal, fontWeight: 700 }}>📡 RELAY STATION · FOUNDATIONS TRACK</span>
+                <span style={{ fontSize: 12, fontWeight: 800, color: "#0D1B2A", background: THEME.cursor, borderRadius: 999, padding: "2px 10px" }}>🎖️ {rank}</span>
+                <span style={{ fontSize: 12, fontWeight: 700, color: THEME.cursor }}>⭐ {starsEarned} / {total * 3} stars</span>
+              </div>
               <h1 style={{ fontSize: 26, margin: "4px 0 2px", color: THEME.text }}>
                 {complete ? "Foundations Certified!" : `Level ${current} of ${total}: ${track.levels[current - 1].title}`}
               </h1>
               <div style={{ fontSize: 13.5, color: THEME.muted }}>
                 {complete
                   ? "You passed every level. You can replay any level to earn more stars."
-                  : `Pass a level with ${track.goals.accuracy}% accuracy and you move up automatically. Speed earns extra stars.`}
+                  : `Pass this level with ${passAccuracyForLevel(current)}% accuracy and you move up automatically. The bar rises: 90% for levels 1-10, 95% for 11-15, 100% for 16-20.`}
               </div>
             </div>
-            {!complete && <button onClick={() => play(current, false)} style={btn(THEME.violet)}>{passedCount === 0 ? "Start Level 1" : `Continue: Level ${current}`} →</button>}
+            <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+              <button onClick={() => setShowReady(true)} style={btn("rgba(255,255,255,0.12)")}>🪑 Ready Position</button>
+              {!complete && <button onClick={() => play(current, false)} style={btn(THEME.violet)}>{passedCount === 0 ? "Start Level 1" : `Continue: Level ${current}`} →</button>}
+            </div>
           </div>
           <div style={{ height: 8, background: "rgba(255,255,255,0.1)", borderRadius: 99, marginTop: 16, overflow: "hidden" }}>
             <div style={{ width: `${(passedCount / total) * 100}%`, height: "100%", background: THEME.done, transition: "width .3s" }} />
           </div>
-          <div style={{ fontSize: 12, color: THEME.muted, marginTop: 6 }}>{passedCount} of {total} levels passed</div>
+          <div style={{ fontSize: 12, color: THEME.muted, marginTop: 6 }}>
+            {passedCount} of {total} levels passed{!complete && rank !== nextRank ? ` · clear this unit's ⚡ checkpoint to be promoted to ${nextRank}` : ""}
+          </div>
         </Panel>
+
+        {canPlace && (
+          <Panel style={{ marginBottom: 16, border: `2px solid ${THEME.teal}`, display: "flex", gap: 16, alignItems: "center", flexWrap: "wrap" }}>
+            <div style={{ fontSize: 40 }}>🎯</div>
+            <div style={{ flex: 1, minWidth: 220 }}>
+              <div style={{ fontWeight: 800, fontSize: 17, color: THEME.text }}>Already know how to type?</div>
+              <div style={{ fontSize: 13.5, color: THEME.muted }}>Take the 1-minute Placement Check — 3 short sentences. Type them well and you'll skip ahead. You only get one try, so do your best!</div>
+            </div>
+            <button onClick={() => setView("placement")} style={btn(THEME.teal, "#0D1B2A")}>Take Placement Check</button>
+          </Panel>
+        )}
+
+        {progress.placement && progress.placement.level > 1 && passedCount < 20 && progress.currentLevel === progress.placement.level && (
+          <div style={{ color: THEME.teal, fontSize: 13.5, marginBottom: 12 }}>🎯 Placement Check put you at Level {progress.placement.level}. Earlier levels are marked ✓ — replay any of them to earn stars and crystals.</div>
+        )}
 
         {complete && (
           <Panel style={{ textAlign: "center", marginBottom: 16, border: `2px solid ${THEME.cursor}` }}>
@@ -219,9 +287,12 @@ function TrackView({ assignmentId, track, initialProgress }) {
                         background: passed ? u.color : isCurrent ? THEME.violet : "rgba(255,255,255,0.08)",
                         color: passed ? "#0D1B2A" : "#fff",
                       }}>{locked ? "🔒" : l.number}</span>
-                      <span style={{ flex: 1, fontSize: 13.5, fontWeight: 600 }}>{l.title}</span>
+                      <span style={{ flex: 1, fontSize: 13.5, fontWeight: 600 }}>
+                        {l.title}
+                        {isCheckpointLevel(l.number) && <span style={{ marginLeft: 6, fontSize: 10.5, fontWeight: 800, color: THEME.cursor, letterSpacing: 1 }}>⚡ CHECKPOINT</span>}
+                      </span>
                       <span style={{ fontSize: 13, color: THEME.cursor, letterSpacing: 1 }}>
-                        {passed && r ? "★".repeat(r.stars) : isCurrent ? <span style={{ color: THEME.teal, fontSize: 11.5, fontWeight: 700 }}>UP NEXT</span> : ""}
+                        {passed && r ? (r.stars > 0 ? "★".repeat(r.stars) : <span style={{ color: THEME.teal, fontSize: 11.5, fontWeight: 700 }}>✓ PLACED</span>) : isCurrent ? <span style={{ color: THEME.teal, fontSize: 11.5, fontWeight: 700 }}>UP NEXT</span> : ""}
                       </span>
                     </button>
                   );
@@ -238,14 +309,14 @@ function TrackView({ assignmentId, track, initialProgress }) {
 function normalizeProgress(p, total) {
   const currentLevel = Math.max(1, Math.min(total + 1, Number(p && p.current_level) || Number(p && p.currentLevel) || 1));
   const results = (p && (p.level_results || p.results)) || {};
-  return { currentLevel, results };
+  return { currentLevel, results, placement: (p && p.placement) || null };
 }
 
 // ======================================================================
 // ONE PASSAGE: intro → typing → done. Used for grade-level readings AND for
 // each track level (trackLevel set).
 // ======================================================================
-function PassageRun({ assignmentId, lesson, initialBest, trackLevel, trackTotal, autoStart, onServerResult, onNextLevel, onBackToMap }) {
+function PassageRun({ assignmentId, lesson, initialBest, trackLevel, trackTotal, autoStart, onServerResult, onNextLevel, onBackToMap, onFinishOverride }) {
   const text = lesson.text;
   const isTrackLevel = !!trackLevel;
   const [phase, setPhase] = useState(autoStart ? "typing" : "intro"); // intro | typing | done
@@ -262,15 +333,20 @@ function PassageRun({ assignmentId, lesson, initialBest, trackLevel, trackTotal,
   const [best, setBest] = useState(initialBest || null);
   const [newBest, setNewBest] = useState(false);
   const [failStreak, setFailStreak] = useState(0); // misses on this level THIS visit — for gentler coaching
+  // Gamification (v3): combo meter while typing + rewards from the server.
+  const [combo, setCombo] = useState(0);
+  const [bestCombo, setBestCombo] = useState(0);
+  const [reward, setReward] = useState(null); // { crystals, promotedTo }
 
   // Refs mirror state so the keydown handler never reads stale values
   // (fast typists can fire several keys before React re-renders).
-  const stateRef = useRef({ pos: 0, errors: 0, keystrokes: 0, startedAt: null, misses: {} });
+  const stateRef = useRef({ pos: 0, errors: 0, keystrokes: 0, startedAt: null, misses: {}, combo: 0, bestCombo: 0 });
 
   const reset = useCallback(() => {
-    stateRef.current = { pos: 0, errors: 0, keystrokes: 0, startedAt: null, misses: {} };
+    stateRef.current = { pos: 0, errors: 0, keystrokes: 0, startedAt: null, misses: {}, combo: 0, bestCombo: 0 };
     setPos(0); setErrors(0); setKeystrokes(0); setStartedAt(null); setEndedAt(null);
     setMisses({}); setLastWrong(null); setSaveState("idle"); setNewBest(false);
+    setCombo(0); setBestCombo(0); setReward(null);
   }, []);
 
   const submitRun = useCallback(async (run) => {
@@ -286,6 +362,7 @@ function PassageRun({ assignmentId, lesson, initialBest, trackLevel, trackTotal,
       setSaveState("saved");
       if (data.best) setBest(data.best);
       setNewBest(!!data.isNewBest);
+      setReward({ crystals: data.crystalsEarned || 0, promotedTo: data.promotedTo || null });
       if (onServerResult) onServerResult(data);
     } catch (err) {
       console.error("Relay Station submit failed:", err);
@@ -295,17 +372,22 @@ function PassageRun({ assignmentId, lesson, initialBest, trackLevel, trackTotal,
 
   const finish = useCallback((s, finishedAt) => {
     setEndedAt(finishedAt);
+    if (onFinishOverride) {
+      // Placement Check: hand the raw counts to the parent instead of saving.
+      onFinishOverride({ keystrokes: s.keystrokes, errors: s.errors, ms: finishedAt - s.startedAt, chars: text.length });
+      return;
+    }
     setPhase("done");
-    const { ms, wpm, accuracy } = calcStats({
+    const { ms, wpm, accuracy, accuracyExact } = calcStats({
       correctChars: text.length, keystrokes: s.keystrokes, errors: s.errors, startedAt: s.startedAt, endedAt: finishedAt,
     });
-    if (accuracy < lesson.goals.accuracy) setFailStreak((n) => n + 1);
+    if (!meetsAccuracy(lesson.goals, accuracyExact)) setFailStreak((n) => n + 1);
     const troubleKeys = Object.entries(s.misses)
       .sort((a, b) => b[1] - a[1])
       .slice(0, 5)
       .map(([ch, count]) => ({ key: ch, count }));
-    submitRun({ wpm, accuracy, errors: s.errors, keystrokes: s.keystrokes, chars: text.length, ms, troubleKeys });
-  }, [text, lesson.goals.accuracy, submitRun]);
+    submitRun({ wpm, accuracy, errors: s.errors, keystrokes: s.keystrokes, chars: text.length, ms, troubleKeys, bestCombo: s.bestCombo });
+  }, [text, lesson.goals, submitRun, onFinishOverride]);
 
   const handleKey = useCallback((e) => {
     if (e.ctrlKey || e.metaKey || e.altKey) return;
@@ -331,12 +413,18 @@ function PassageRun({ assignmentId, lesson, initialBest, trackLevel, trackTotal,
 
     if (typed === expected) {
       s.pos += 1;
+      s.combo += 1;
+      if (s.combo > s.bestCombo) s.bestCombo = s.combo;
+      setCombo(s.combo);
+      setBestCombo(s.bestCombo);
       setPos(s.pos);
       setKeystrokes(s.keystrokes);
       setLastWrong(null);
       if (s.pos >= text.length) finish({ ...s }, t);
     } else {
       s.errors += 1;
+      s.combo = 0;
+      setCombo(0);
       s.misses = { ...s.misses, [expected]: (s.misses[expected] || 0) + 1 };
       setErrors(s.errors);
       setKeystrokes(s.keystrokes);
@@ -392,8 +480,9 @@ function PassageRun({ assignmentId, lesson, initialBest, trackLevel, trackTotal,
         <div style={{ background: "rgba(255,255,255,0.06)", borderRadius: 12, padding: "10px 14px", fontSize: 13.5, color: THEME.muted, marginBottom: 20, lineHeight: 1.6 }}>
           {isTrackLevel ? (
             <>
-              <b style={{ color: THEME.text }}>To pass: {lesson.goals.accuracy}% accuracy</b> — then you move up automatically.<br />
-              ★★★ Pass it with {lesson.goals.wpm}+ words per minute for three stars.
+              <b style={{ color: THEME.text }}>To pass: {lesson.goals.accuracy}% accuracy</b>{lesson.goals.accuracy >= 100 ? " — zero wrong keys! Go slow and steady." : " — then you move up automatically."}<br />
+              ★★★ Pass it with {lesson.goals.wpm}+ words per minute for three stars.<br />
+              💎 {CRYSTALS.perNewStar} crystal for every new star{isCheckpointLevel(trackLevel) ? <> · <b style={{ color: THEME.cursor }}>⚡ CHECKPOINT: pass it for +{CRYSTALS.checkpoint} bonus crystals and a promotion!</b></> : ""}
             </>
           ) : (
             <>
@@ -406,6 +495,7 @@ function PassageRun({ assignmentId, lesson, initialBest, trackLevel, trackTotal,
             <div style={{ marginTop: 8, color: THEME.cursor }}>Your best so far: {"★".repeat(best.stars)} · {best.wpm} WPM · {best.accuracy}%</div>
           )}
         </div>
+        <div style={{ fontSize: 13, color: THEME.teal, marginBottom: 14 }}>🪑 Ready position: sit tall · feet flat · wrists floating · fingers on home row · eyes on the screen</div>
         <button onClick={start} style={btn(THEME.violet)}>Start Relay</button>
         <div style={{ fontSize: 12, color: THEME.dim, marginTop: 12 }}>Eyes on the screen, not your hands. If you press a wrong key, just press the right one — no backspace needed.</div>
       </Panel>
@@ -415,8 +505,8 @@ function PassageRun({ assignmentId, lesson, initialBest, trackLevel, trackTotal,
   // ---------- DONE ----------
   if (phase === "done") {
     const run = calcStats({ correctChars: text.length, keystrokes, errors, startedAt, endedAt });
-    const stars = computeStars(lesson.goals, run.wpm, run.accuracy);
-    const passed = run.accuracy >= lesson.goals.accuracy;
+    const stars = computeStars(lesson.goals, run.wpm, run.accuracyExact);
+    const passed = meetsAccuracy(lesson.goals, run.accuracyExact);
     const trouble = Object.entries(misses).sort((a, b) => b[1] - a[1]).slice(0, 5);
     const nextLevel = (trackLevel || 0) + 1;
     return (
@@ -435,10 +525,24 @@ function PassageRun({ assignmentId, lesson, initialBest, trackLevel, trackTotal,
         <div style={{ fontSize: 44, color: THEME.cursor, margin: "6px 0 4px", letterSpacing: 6 }}>
           {"★".repeat(stars)}<span style={{ color: THEME.dim }}>{"★".repeat(3 - stars)}</span>
         </div>
-        {newBest && <div style={{ color: THEME.cursor, fontWeight: 700, marginBottom: 6 }}>🏅 New personal best!</div>}
+        {passed && <StarBurst />}
+        {reward && reward.promotedTo && (
+          <div style={{ background: "linear-gradient(90deg, #FFC44D33, #7B5DFF33)", border: `1px solid ${THEME.cursor}`, borderRadius: 12, padding: "10px 14px", margin: "8px 0", color: THEME.text, fontWeight: 800, fontSize: 16, animation: "rsPop .5s both" }}>
+            🎖️ PROMOTED! You are now a <span style={{ color: THEME.cursor }}>{reward.promotedTo}</span>.
+          </div>
+        )}
+        <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center", marginBottom: 6 }}>
+          {newBest && <span style={{ color: THEME.cursor, fontWeight: 700 }}>🏅 New personal best!</span>}
+          {reward && reward.crystals > 0 && (
+            <span style={{ background: "rgba(103,232,249,0.15)", border: "1px solid #67E8F9", color: "#67E8F9", borderRadius: 999, padding: "3px 12px", fontWeight: 800, animation: "rsPop .5s .2s both" }}>+{reward.crystals} 💎 crystals</span>
+          )}
+          {bestCombo >= 10 && (
+            <span style={{ color: THEME.muted, fontSize: 13 }}>🔥 Best combo: <b style={{ color: THEME.text }}>{bestCombo}</b> keys in a row</span>
+          )}
+        </div>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(120px, 1fr))", gap: 10, margin: "12px 0 18px" }}>
           <Stat label="Words per minute" value={run.wpm} good={run.wpm >= lesson.goals.wpm} />
-          <Stat label="Accuracy" value={`${run.accuracy}%`} good={run.accuracy >= lesson.goals.accuracy} />
+          <Stat label="Accuracy" value={`${run.accuracy}%`} good={passed} />
           <Stat label="Time" value={formatTime(run.ms)} />
           <Stat label="Errors" value={errors} />
         </div>
@@ -500,6 +604,7 @@ function PassageRun({ assignmentId, lesson, initialBest, trackLevel, trackTotal,
           <b style={{ color: THEME.text }}>{live.wpm}</b> WPM · <b style={{ color: THEME.text }}>{live.accuracy}%</b> accuracy · {formatTime(live.ms)}
         </span>
       </div>
+      <ComboMeter combo={combo} />
       <div style={{ height: 6, background: "rgba(255,255,255,0.1)", borderRadius: 99, marginBottom: 12, overflow: "hidden" }}>
         <div style={{ width: `${progress}%`, height: "100%", background: THEME.done, transition: "width .15s" }} />
       </div>
@@ -521,6 +626,200 @@ function PassageRun({ assignmentId, lesson, initialBest, trackLevel, trackTotal,
   );
 }
 
+// Placement Check (design doc §12): 3 short stages, stops at the first miss,
+// then the server re-scores and places the student on the track.
+function PlacementCheck({ assignmentId, track, onDone, onCancel }) {
+  const [phase, setPhase] = useState("intro"); // intro | stage | saving | result | error
+  const [idx, setIdx] = useState(0);
+  const [runs, setRuns] = useState([]);
+  const [result, setResult] = useState(null);
+  const [serverProgress, setServerProgress] = useState(null);
+  const [errMsg, setErrMsg] = useState(null);
+
+  async function submit(allRuns) {
+    setPhase("saving");
+    try {
+      const res = await fetch("/api/relay-station/placement", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ assignmentId, stages: allRuns }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Couldn't save your placement.");
+      setResult(data.placement);
+      setServerProgress(data.progress);
+      setPhase("result");
+    } catch (err) {
+      setErrMsg(err.message);
+      setPhase("error");
+    }
+  }
+
+  function onStageDone(raw) {
+    const stage = PLACEMENT_STAGES[idx];
+    const allRuns = [...runs, { id: stage.id, ...raw }];
+    setRuns(allRuns);
+    const local = placementResult(allRuns);
+    const last = local.stages[local.stages.length - 1];
+    if (!last || !last.cleared || idx === PLACEMENT_STAGES.length - 1) submit(allRuns);
+    else setIdx(idx + 1);
+  }
+
+  if (phase === "intro") {
+    return (
+      <Panel style={{ maxWidth: 640 }}>
+        <button onClick={onCancel} style={linkBtn()}>← Track map</button>
+        <div style={{ fontSize: 12, letterSpacing: 2, color: THEME.teal, fontWeight: 700, marginBottom: 6 }}>🎯 PLACEMENT CHECK</div>
+        <h1 style={{ fontSize: 26, margin: "0 0 10px", color: THEME.text }}>Show what you can do</h1>
+        <p style={{ fontSize: 15, lineHeight: 1.55, color: THEME.text, margin: "0 0 12px" }}>
+          You'll type up to 3 short sentences. Each one you type accurately and at {PLACEMENT_MIN_WPM}+ words per minute lets you skip a part of the track. If one is hard, that's fine — the check stops and you start at the right level.
+        </p>
+        <div style={{ fontSize: 13.5, color: THEME.muted, marginBottom: 18, lineHeight: 1.7 }}>
+          {PLACEMENT_STAGES.map((st) => <div key={st.id}>• {st.title} — clear it to start at Level {st.placesAt}</div>)}
+        </div>
+        <div style={{ fontSize: 13, color: THEME.cursor, marginBottom: 16 }}>You only get one Placement Check, so sit in your ready position and take your time.</div>
+        <button onClick={() => setPhase("stage")} style={btn(THEME.teal, "#0D1B2A")}>Begin →</button>
+      </Panel>
+    );
+  }
+
+  if (phase === "stage") {
+    const stage = PLACEMENT_STAGES[idx];
+    const lesson = {
+      code: `placement-${stage.id}`,
+      isTrack: false,
+      kind: "placement",
+      title: `${stage.title} (${idx + 1} of ${PLACEMENT_STAGES.length})`,
+      intro: "",
+      newKeys: [],
+      text: stage.text,
+      segments: null,
+      goals: { accuracy: stage.accuracy, wpm: PLACEMENT_MIN_WPM },
+    };
+    return <PassageRun key={stage.id} assignmentId={assignmentId} lesson={lesson} autoStart onFinishOverride={onStageDone} />;
+  }
+
+  if (phase === "saving") {
+    return <Panel style={{ maxWidth: 520, textAlign: "center" }}><div style={{ color: THEME.text }}>Scoring your Placement Check…</div></Panel>;
+  }
+
+  if (phase === "error") {
+    return (
+      <Panel style={{ maxWidth: 520 }}>
+        <div style={{ color: THEME.error, marginBottom: 14 }}>{errMsg}</div>
+        <button onClick={() => onDone(null)} style={btn(THEME.violet)}>Back to Track Map</button>
+      </Panel>
+    );
+  }
+
+  const level = result ? result.level : 1;
+  const levelInfo = track.levels[level - 1];
+  return (
+    <Panel style={{ maxWidth: 640, textAlign: "center" }}>
+      <StarBurst />
+      <div style={{ fontSize: 12, letterSpacing: 2, color: THEME.teal, fontWeight: 700 }}>🎯 PLACEMENT COMPLETE</div>
+      <h1 style={{ fontSize: 28, margin: "8px 0", color: THEME.text }}>You start at Level {level}</h1>
+      <div style={{ fontSize: 16, color: THEME.cursor, marginBottom: 14 }}>{levelInfo ? levelInfo.title : ""}</div>
+      <div style={{ display: "flex", gap: 8, justifyContent: "center", flexWrap: "wrap", marginBottom: 16 }}>
+        {(result ? result.stages : []).map((st) => (
+          <span key={st.id} style={{ background: st.cleared ? "rgba(57,217,122,0.15)" : "rgba(255,196,77,0.12)", border: `1px solid ${st.cleared ? THEME.done : THEME.cursor}`, borderRadius: 10, padding: "6px 10px", color: THEME.text, fontSize: 13 }}>
+            Stage {st.id}: {st.accuracy}% · {st.wpm} WPM {st.cleared ? "✓" : ""}
+          </span>
+        ))}
+      </div>
+      <div style={{ fontSize: 13.5, color: THEME.muted, marginBottom: 18 }}>
+        {level > 1 ? "Nice typing! The levels you skipped are marked ✓ — replay them any time for stars and crystals." : "Great start, Cadet. Level 1 builds the home-row habits everything else depends on."}
+      </div>
+      <button onClick={() => onDone(serverProgress)} style={btn(THEME.violet)}>Go to My Track →</button>
+    </Panel>
+  );
+}
+
+// Ready Position checklist — students tap each item to confirm before they
+// start. Art for this screen (a posture diagram) is on Emily's image batch;
+// until then it's emoji + words.
+const READY_ITEMS = [
+  { icon: "🪑", title: "Sit tall", body: "Back against the chair, shoulders relaxed. Don't slouch toward the screen." },
+  { icon: "🦶", title: "Feet flat", body: "Both feet flat on the floor (or on a box if they don't reach)." },
+  { icon: "🖐️", title: "Wrists floating", body: "Keep your wrists up off the desk and your fingers curved, like holding a ball." },
+  { icon: "⌨️", title: "Home row", body: "Left fingers on A S D F, right fingers on J K L ;. Thumbs on the space bar. Feel the bumps on F and J." },
+  { icon: "👀", title: "Eyes on the screen", body: "Look at the screen, not your hands. The glowing keyboard shows you where to go." },
+];
+
+function ReadyPosition({ onReady }) {
+  const [checked, setChecked] = useState({});
+  const allChecked = READY_ITEMS.every((_, i) => checked[i]);
+  return (
+    <Panel style={{ maxWidth: 640 }}>
+      <div style={{ fontSize: 12, letterSpacing: 2, color: THEME.teal, fontWeight: 700, marginBottom: 6 }}>📡 PRE-FLIGHT CHECK, CADET</div>
+      <h1 style={{ fontSize: 26, margin: "0 0 6px", color: THEME.text }}>Ready Position</h1>
+      <p style={{ fontSize: 14.5, color: THEME.muted, margin: "0 0 16px" }}>Pilots check their seat before every flight. Typists do too. Tap each one when you've done it.</p>
+      <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 18 }}>
+        {READY_ITEMS.map((item, i) => (
+          <button
+            key={i}
+            onClick={() => setChecked((c) => ({ ...c, [i]: !c[i] }))}
+            style={{
+              display: "flex", gap: 12, alignItems: "center", textAlign: "left", width: "100%",
+              background: checked[i] ? "rgba(57,217,122,0.15)" : "rgba(255,255,255,0.05)",
+              border: `1px solid ${checked[i] ? THEME.done : "transparent"}`,
+              borderRadius: 12, padding: "10px 12px", color: THEME.text, cursor: "pointer", fontFamily: "inherit",
+            }}
+          >
+            <span style={{ fontSize: 26 }}>{item.icon}</span>
+            <span style={{ flex: 1 }}>
+              <span style={{ display: "block", fontWeight: 800, fontSize: 15 }}>{item.title}</span>
+              <span style={{ display: "block", fontSize: 13, color: THEME.muted }}>{item.body}</span>
+            </span>
+            <span style={{ fontSize: 20, color: checked[i] ? THEME.done : THEME.dim }}>{checked[i] ? "✓" : "○"}</span>
+          </button>
+        ))}
+      </div>
+      <button disabled={!allChecked} onClick={onReady} style={{ ...btn(allChecked ? THEME.violet : "rgba(255,255,255,0.12)"), cursor: allChecked ? "pointer" : "default" }}>
+        {allChecked ? "I'm Ready →" : `Check all ${READY_ITEMS.length} to continue`}
+      </button>
+    </Panel>
+  );
+}
+
+// Combo meter: consecutive correct keys. Tiers light up at 10/25/50/100.
+function ComboMeter({ combo }) {
+  const tier = comboTier(combo);
+  return (
+    <div style={{ display: "flex", justifyContent: "flex-end", alignItems: "center", gap: 8, height: 26, marginBottom: 6 }}>
+      <style>{`@keyframes rsPulse { 0%{transform:scale(1)} 50%{transform:scale(1.12)} 100%{transform:scale(1)} }`}</style>
+      {combo >= 5 && (
+        <span key={tier ? tier.label : "none"} style={{
+          fontSize: 13, fontWeight: 800, letterSpacing: 1,
+          color: tier ? tier.color : THEME.muted,
+          textShadow: tier ? `0 0 10px ${tier.color}` : "none",
+          animation: "rsPulse .35s",
+        }}>
+          🔥 {combo} COMBO{tier ? ` · ${tier.label}` : ""}
+        </span>
+      )}
+    </div>
+  );
+}
+
+// Little celebration when a passage is passed: stars fly up and fade.
+function StarBurst() {
+  const bits = ["⭐", "✨", "💎", "⭐", "✨", "⭐", "💫", "✨"];
+  return (
+    <div style={{ position: "relative", height: 0 }} aria-hidden="true">
+      <style>{`
+        @keyframes rsBurst { 0% { opacity: 0; transform: translate(0,0) scale(.4); } 20% { opacity: 1; } 100% { opacity: 0; transform: translate(var(--dx), -120px) scale(1.2); } }
+        @keyframes rsPop { 0% { opacity: 0; transform: scale(.6); } 70% { transform: scale(1.08); } 100% { opacity: 1; transform: scale(1); } }
+      `}</style>
+      {bits.map((b, i) => (
+        <span key={i} style={{ position: "absolute", left: `${8 + i * 11}%`, top: 10, fontSize: 22, ["--dx"]: `${(i % 2 ? 1 : -1) * (10 + i * 4)}px`, animation: `rsBurst 1.2s ${i * 0.08}s ease-out both`, pointerEvents: "none" }}>{b}</span>
+      ))}
+    </div>
+  );
+}
+
+// Shows a window of lines around the cursor: done text dims, current line is
+// bright, current char gets the cursor. Enter shows as ↵, Tab as →.
 function TextView({ text, pos, flashKey, hasError }) {
   const lines = useMemo(() => {
     const out = [];

@@ -73,7 +73,7 @@ export default function DistressCallBadge({ assignmentId }) {
         📡 Active Signal
       </div>
       <div style={{ fontSize: 14, fontWeight: 700, marginBottom: pct !== null ? 6 : 0 }}>
-        {progress.current}{progress.target ? ` / ${progress.target}` : ""} checkpoints cleared
+        {progress.current}{progress.target ? ` / ${progress.target}` : ""} {progress.unitLabel || "checkpoints cleared"}
       </div>
       {pct !== null && (
         <div style={{ height: 5, background: "rgba(255,255,255,.2)", borderRadius: 999, overflow: "hidden" }}>

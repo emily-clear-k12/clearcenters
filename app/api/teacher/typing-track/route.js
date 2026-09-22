@@ -44,7 +44,7 @@ export async function POST(request) {
     if (ids.length) {
       const { data, error } = await supabaseAdmin
         .from("relay_station_progress")
-        .select("student_id, current_level, level_results, completed_at, updated_at")
+        .select("student_id, current_level, level_results, completed_at, updated_at, placement")
         .in("student_id", ids);
       if (error) return NextResponse.json({ error: error.message }, { status: 500 });
       progressRows = data || [];
@@ -54,6 +54,45 @@ export async function POST(request) {
       total,
       students: activeStudents.map((s) => ({ id: s.id, firstName: s.first_name, progress: byStudent[s.id] || null })),
     });
+  }
+
+  // Standards report (Tech Apps (c)(12)(C) keyboarding): one summary row per
+  // class — how far students have climbed the Foundations Track.
+  if (action === "summary") {
+    const { data: classes } = await supabaseAdmin.from("classes").select("id, name, grade").eq("teacher_id", teacherId).order("name");
+    const classIds = (classes || []).map((c) => c.id);
+    if (!classIds.length) return NextResponse.json({ total, classes: [] });
+    const { data: students } = await supabaseAdmin.from("students").select("id, class_id, active").in("class_id", classIds);
+    const active = (students || []).filter((s) => s.active !== false);
+    const ids = active.map((s) => s.id);
+    let rows = [];
+    if (ids.length) {
+      const { data } = await supabaseAdmin.from("relay_station_progress").select("student_id, current_level, level_results, completed_at").in("student_id", ids);
+      rows = data || [];
+    }
+    const byStudent = Object.fromEntries(rows.map((r) => [r.student_id, r]));
+    const summary = (classes || []).map((c) => {
+      const kids = active.filter((s) => s.class_id === c.id);
+      const started = kids.filter((s) => byStudent[s.id]);
+      const passedCounts = started.map((s) => Math.min(byStudent[s.id].current_level - 1, total));
+      const accs = [];
+      started.forEach((s) => Object.values(byStudent[s.id].level_results || {}).forEach((r) => { if (r && r.passed && !r.placed && typeof r.accuracy === "number") accs.push(r.accuracy); }));
+      const wpms = [];
+      started.forEach((s) => Object.values(byStudent[s.id].level_results || {}).forEach((r) => { if (r && r.passed && !r.placed && typeof r.wpm === "number") wpms.push(r.wpm); }));
+      const avg = (arr) => (arr.length ? arr.reduce((a, b) => a + b, 0) / arr.length : null);
+      return {
+        classId: c.id,
+        className: c.name,
+        grade: c.grade || null,
+        studentCount: kids.length,
+        startedCount: started.length,
+        completedCount: started.filter((s) => byStudent[s.id].completed_at).length,
+        avgLevelsPassed: avg(passedCounts),
+        avgAccuracy: avg(accs),
+        avgWpm: avg(wpms),
+      };
+    });
+    return NextResponse.json({ total, classes: summary });
   }
 
   if (action === "setLevel") {

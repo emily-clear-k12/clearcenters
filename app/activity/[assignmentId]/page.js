@@ -6,7 +6,7 @@ import { getSignalCheckPublicCase } from "../../../lib/cases/signal-check/index.
 import { getMissionMapPublicCase } from "../../../lib/cases/mission-map/index.public";
 import { getSimulationLabPublicCase } from "../../../lib/cases/simulation-lab/index.public";
 import { getSignalDefensePublicCase } from "../../../lib/cases/signal-defense/index.public";
-import { getRelayStationLesson } from "../../../lib/cases/relay-station";
+import { resolveRelayStationLesson } from "../../../lib/relayStationServer";
 import ActivityClient from "./ActivityClient";
 import SignalCheckClient from "./SignalCheckClient";
 import MissionMapClient from "./MissionMapClient";
@@ -131,13 +131,13 @@ export default async function ActivityPage({ params }) {
   // can always retry for more stars; the submit route keeps the best run.
   const isRelayStation = engine === "relay_station";
   if (isRelayStation) {
-    const lesson = getRelayStationLesson(assignment.case_standard);
+    const lesson = await resolveRelayStationLesson(assignment.case_standard);
     // Foundations Track: progress belongs to the STUDENT (one row in
     // relay_station_progress), so it carries across re-assignments/classes.
     if (lesson && lesson.isTrack) {
       const { data: trackProgress } = await supabaseAdmin
         .from("relay_station_progress")
-        .select("current_level, level_results, completed_at")
+        .select("current_level, level_results, completed_at, placement")
         .eq("student_id", studentId)
         .maybeSingle();
       return (

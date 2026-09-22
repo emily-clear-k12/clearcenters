@@ -311,7 +311,7 @@ function LiveOpsBoardContent() {
                 <div style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 700, fontSize: "clamp(56px, 10vw, 130px)", color: progress.rewardGiven ? "#FFC44D" : COLORS.white, lineHeight: 1 }}>
                   {progress.current}{progress.target ? <span style={{ color: "rgba(255,255,255,.4)", fontSize: "0.5em" }}> / {progress.target}</span> : null}
                 </div>
-                <div style={{ color: "rgba(255,255,255,.7)", fontSize: 15, margin: "6px 0 28px 0" }}>checkpoints cleared</div>
+                <div style={{ color: "rgba(255,255,255,.7)", fontSize: 15, margin: "6px 0 28px 0" }}>{progress.unitLabel || "checkpoints cleared"}</div>
 
                 {pct !== null && (
                   <div style={{ width: "min(600px, 80%)", height: 20, background: "rgba(255,255,255,.12)", borderRadius: 999, overflow: "hidden", marginBottom: 24 }}>

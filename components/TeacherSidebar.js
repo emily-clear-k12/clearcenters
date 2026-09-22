@@ -70,6 +70,8 @@ export const NAV_GROUPS = [
       // teacher displays to the class (design doc §1/§5). Nav icon from Evie.
       { label: "Live Ops Board", icon: "/teacher/nav_live_ops.png", href: "/teacher/live-ops-board" },
   { label: "Signal Ops Board", icon: "/teacher/nav_live_ops.png", href: "/teacher/signal-ops-board" },
+      // Sept 22 2026 — Relay Station custom texts (teacher-pasted passages).
+      { label: "Typing Texts", icon: "/teacher/nav_assignments.png", href: "/teacher/typing-texts" },
     ],
   },
   {

@@ -4,7 +4,8 @@ import React, { useState, useEffect, useCallback, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Search, Calendar, ChevronLeft } from "lucide-react";
 import { supabase } from "../../../../lib/supabaseClient";
-import { engineSupportsDistressCall } from "../../../../lib/distressCallEngines";
+import { engineSupportsDistressCall, distressCallUnit } from "../../../../lib/distressCallEngines";
+import { isCustomCode, customCodeOwnerPrefix } from "../../../../lib/cases/relay-station";
 import { GAME_SKINS, DEFAULT_GAME_SKIN } from "../../../../lib/frequencyRushSkins";
 import TeacherHUD from "../../../../components/TeacherHUD";
 import { COLORS, PAGE_ACCENTS, PAGE_BACKGROUNDS, panelStyle } from "../../../../lib/teacherTheme";
@@ -103,6 +104,15 @@ function isRetiredSignalCheckCase(standard) {
 }
 
 
+// Sept 22, 2026 — Relay Station (typing). The Foundations Track
+// (RS.<grade>.TRACK) gets its own tile under the four subject tiles, per
+// Emily: "a 5th tile underneath that says Foundations Track". Picking it
+// selects that grade's track directly and jumps to the assign step.
+const FOUNDATIONS = "Foundations";
+function isTypingTrackCase(standard) {
+  return /^RS\.[345]\.TRACK$/.test(String(standard || ""));
+}
+
 function NewAssignmentContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -180,9 +190,16 @@ function NewAssignmentContent() {
 
   const searchQ = caseSearch.trim().toLowerCase();
   const filteredCases = cases.filter((c) => {
-    if (c.grade !== parseInt(browseGrade) || c.subject !== browseSubject) return false;
+    if (c.grade !== parseInt(browseGrade)) return false;
+    if (browseSubject !== FOUNDATIONS && c.subject !== browseSubject) return false;
     if (!matchesChallenge(c.engine, selectedChallenge?.key)) return false;
     if (isRetiredSignalCheckCase(c.standard)) return false;
+    // Relay Station's Foundations Track has its own 5th tile (FOUNDATIONS
+    // below) instead of hiding among the ELAR readings.
+    // Relay Station custom texts are private to the teacher who made them.
+    if (isCustomCode(c.standard) && customCodeOwnerPrefix(c.standard) !== String(teacherId || "").replace(/-/g, "").slice(0, 8).toLowerCase()) return false;
+    if (browseSubject === FOUNDATIONS) return isTypingTrackCase(c.standard);
+    if (isTypingTrackCase(c.standard)) return false;
     if (!searchQ) return true;
     return (
       (c.title || "").toLowerCase().includes(searchQ) ||
@@ -334,7 +351,7 @@ function NewAssignmentContent() {
               </p>
               {distressCallEnabled && (
                 <p style={{ color: COLORS.violet, fontSize: 12.5, fontWeight: 700, marginBottom: 20, background: `${COLORS.violet}1A`, borderRadius: 10, padding: "8px 12px", display: "inline-block" }}>
-                  🚨 Distress Call is live{distressCallTarget ? ` — target: ${distressCallTarget} checkpoints` : ""}. Students will see the meter update as they work.
+                  🚨 Distress Call is live{distressCallTarget ? ` — target: ${distressCallTarget} ${distressCallUnit(selectedCase?.engine, selectedCase?.standard)}` : ""}. Students will see the meter update as they work.
                   {!!distressCallRewardPoints && parseInt(distressCallRewardPoints, 10) > 0 && ` Everyone gets +${distressCallRewardPoints} crystal points when they hit it.`}
                 </p>
               )}
@@ -424,8 +441,45 @@ function NewAssignmentContent() {
                       ))}
                     </div>
 
-                    <button onClick={() => setChallengeStep("caseList")} className="gc-btn" style={{ width: "100%", background: ACCENT, color: COLORS.white, borderRadius: 999, padding: "11px 20px", fontWeight: 700, fontSize: 14 }}>
-                      Browse {browseGrade === "3" ? "3rd" : `${browseGrade}th`} Grade {browseSubject} Cases →
+                    {selectedChallenge?.key === "relay_station" && (
+                      <button
+                        className="gc-btn"
+                        onClick={() => {
+                          setBrowseSubject(FOUNDATIONS);
+                          const track = cases.find((c) => isTypingTrackCase(c.standard) && c.grade === parseInt(browseGrade));
+                          if (track) setSelectedCase(track);
+                          setChallengeStep("caseList");
+                        }}
+                        style={{
+                          position: "relative",
+                          width: "100%",
+                          height: 110,
+                          borderRadius: 16,
+                          border: browseSubject === FOUNDATIONS ? `3px solid ${ACCENT}` : "3px solid transparent",
+                          padding: "0 22px",
+                          marginBottom: 14,
+                          overflow: "hidden",
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 18,
+                          textAlign: "left",
+                          background: "linear-gradient(120deg, #0D1B2A 0%, #16243F 55%, #7B5DFF 140%)",
+                          boxShadow: browseSubject === FOUNDATIONS ? `0 6px 18px ${ACCENT}47` : "0 2px 8px rgba(13,27,42,.12)",
+                        }}
+                      >
+                        <span style={{ fontSize: 40 }}>⌨️</span>
+                        <span style={{ flex: 1 }}>
+                          <span style={{ display: "block", fontSize: 24, fontWeight: 800, color: "#FFFFFF", letterSpacing: .3 }}>Foundations Track</span>
+                          <span style={{ display: "block", fontSize: 12.5, color: "rgba(255,255,255,.75)", marginTop: 3 }}>
+                            Assign once — every student climbs 20 levels at their own pace and moves up automatically. Works for any grade 3–5 class.
+                          </span>
+                        </span>
+                        <span style={{ fontSize: 13, fontWeight: 800, color: "#FFC44D", whiteSpace: "nowrap" }}>Assign →</span>
+                      </button>
+                    )}
+
+                    <button onClick={() => { if (browseSubject === FOUNDATIONS) setBrowseSubject("ELAR"); setChallengeStep("caseList"); }} className="gc-btn" style={{ width: "100%", background: ACCENT, color: COLORS.white, borderRadius: 999, padding: "11px 20px", fontWeight: 700, fontSize: 14 }}>
+                      Browse {browseGrade === "3" ? "3rd" : `${browseGrade}th`} Grade {browseSubject === FOUNDATIONS ? "ELAR" : browseSubject} {selectedChallenge?.key === "relay_station" ? "Readings" : "Cases"} →
                     </button>
                   </>
                 )}
@@ -439,6 +493,11 @@ function NewAssignmentContent() {
                         {`${filteredCases.length} case${filteredCases.length === 1 ? "" : "s"}`}
                       </div>
                     </div>
+                    {selectedChallenge?.key === "relay_station" && (
+                      <button onClick={() => router.push("/teacher/typing-texts")} className="gc-btn" style={{ background: `${ACCENT}18`, color: ACCENT, borderRadius: 999, padding: "7px 14px", fontWeight: 700, fontSize: 12.5, marginBottom: 10 }}>
+                        ✏️ Create your own text (spelling list, vocabulary, any passage) →
+                      </button>
+                    )}
                     <div style={{ position: "relative", marginBottom: 12 }}>
                       <Search size={15} style={{ position: "absolute", left: 10, top: 10, color: COLORS.textMuted }} />
                       <input value={caseSearch} onChange={(e) => setCaseSearch(e.target.value)} placeholder="Search by title or standard..." style={{ width: "100%", border: "2px solid #ECEAF5", borderRadius: 10, padding: "8px 10px 8px 32px", fontSize: 13, boxSizing: "border-box" }} />
@@ -632,13 +691,13 @@ function NewAssignmentContent() {
                         <span style={{ fontWeight: 700, fontSize: 13, color: COLORS.textDark }}>🚨 Make this a Distress Call</span>
                       </button>
                       <p style={{ fontSize: 11.5, color: COLORS.textMuted, margin: "6px 0 0 24px" }}>
-                        Turns this into a shared goal — students see a live meter as checkpoints get cleared across the group.
+                        Turns this into a shared goal — students see a live meter as {distressCallUnit(selectedCase?.engine, selectedCase?.standard)} add up across the group.
                       </p>
                       {distressCallEnabled && (
                         <div style={{ marginTop: 10, marginLeft: 24 }}>
                           <div style={{ display: "flex", gap: 10 }}>
                             <div style={{ flex: 1 }}>
-                              <label style={{ fontSize: 11, fontWeight: 700, color: COLORS.textMuted }}>Target (checkpoints)</label>
+                              <label style={{ fontSize: 11, fontWeight: 700, color: COLORS.textMuted }}>Target ({distressCallUnit(selectedCase?.engine, selectedCase?.standard)})</label>
                               <input
                                 type="number"
                                 min="1"

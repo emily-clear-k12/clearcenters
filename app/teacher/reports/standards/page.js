@@ -28,6 +28,10 @@ export default function StandardsReportPage() {
   const [loading, setLoading] = useState(true);
   const [teacherEmail, setTeacherEmail] = useState("");
   const [classGroups, setClassGroups] = useState([]);
+  // Sept 22 2026 — Relay Station keyboarding (Tech Apps (c)(12)(C)). Typing
+  // has no teacher grade, so it gets its own section built from Foundations
+  // Track progress (via /api/teacher/typing-track "summary").
+  const [typing, setTyping] = useState(null);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data, error }) => {
@@ -96,6 +100,20 @@ export default function StandardsReportPage() {
     });
 
     setClassGroups(grouped);
+
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const res = await fetch("/api/teacher/typing-track", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "summary", accessToken: session?.access_token }),
+      });
+      const t = await res.json();
+      if (res.ok) setTyping(t);
+    } catch (err) {
+      // Typing section is optional — the rest of the report still renders.
+    }
+
     setLoading(false);
   }, []);
 
@@ -157,6 +175,32 @@ export default function StandardsReportPage() {
           )}
           {!anyStandards && classGroups.length > 0 && (
             <div style={{ fontSize: 13, color: COLORS.textMuted, textAlign: "center", padding: "20px 0" }}>No released grades yet across any class — this fills in once grades are released.</div>
+          )}
+
+          {typing && typing.classes && typing.classes.some((c) => c.startedCount > 0) && (
+            <div style={{ marginBottom: 28, paddingBottom: 12, borderBottom: `2px solid ${COLORS.border}` }}>
+              <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 2, fontFamily: "'Poppins', sans-serif" }}>Keyboarding — Relay Station Foundations Track</div>
+              <div style={{ fontSize: 11.5, color: COLORS.textMuted, marginBottom: 10 }}>Tech Apps TEKS 3.12C / 4.12C / 5.12C — "demonstrate proper touch keyboarding techniques" with accuracy (and speed, grades 4–5). Based on track levels passed, not a teacher grade.</div>
+              <div style={{ display: "grid", gap: 2 }}>
+                {typing.classes.filter((c) => c.startedCount > 0).map((c) => {
+                  const pct = Math.round(((c.avgLevelsPassed || 0) / typing.total) * 100);
+                  const band = pct >= 90 ? { label: "Excellent", color: COLORS.success } : pct >= 70 ? { label: "Proficient", color: COLORS.info } : pct >= 40 ? { label: "Developing", color: COLORS.violet } : { label: "Needs Support", color: COLORS.danger };
+                  const code = c.grade ? `Tech Apps ${c.grade}.12C` : "Tech Apps 12C";
+                  return (
+                    <div key={c.classId} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 4px", borderBottom: `1px solid ${COLORS.border}`, fontSize: 12.5, flexWrap: "wrap" }}>
+                      <div style={{ width: 220, fontWeight: 600 }}>{c.className} <span style={{ color: COLORS.textMuted, fontWeight: 400 }}>({code})</span></div>
+                      <div style={{ color: COLORS.textMuted }}>
+                        {c.startedCount}/{c.studentCount} started · {c.completedCount} completed · avg {Math.round((c.avgLevelsPassed || 0) * 10) / 10} of {typing.total} levels
+                        {c.avgAccuracy !== null ? ` · ${Math.round(c.avgAccuracy)}% acc` : ""}{c.avgWpm !== null ? ` · ${Math.round(c.avgWpm)} WPM` : ""}
+                      </div>
+                      <div style={{ flex: 1 }} />
+                      <div style={{ width: 40, fontWeight: 700, textAlign: "right" }}>{pct}%</div>
+                      <span style={{ fontSize: 10.5, fontWeight: 700, padding: "2px 9px", borderRadius: 999, background: band.color + "22", color: band.color }}>{band.label}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
           )}
 
           {classGroups.map((g) => (

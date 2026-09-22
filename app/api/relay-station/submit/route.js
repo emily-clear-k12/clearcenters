@@ -1,11 +1,12 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { supabaseAdmin } from "../../../../lib/supabaseAdmin";
+import { resolveRelayStationLesson } from "../../../../lib/relayStationServer";
 import {
-  getRelayStationLesson,
   getTrackLevelLesson,
   computeStars,
   computeRun,
+  meetsAccuracy,
   isCheckpointLevel,
   rankFor,
   CRYSTALS,
@@ -61,7 +62,8 @@ export async function POST(request) {
     return NextResponse.json({ error: "Assignment not found." }, { status: 404 });
   }
 
-  const lesson = getRelayStationLesson(assignment.case_standard);
+  // Built-in lessons AND teacher custom texts (DB) resolve here.
+  const lesson = await resolveRelayStationLesson(assignment.case_standard);
   if (!lesson) {
     return NextResponse.json({ error: "This typing lesson isn't set up yet." }, { status: 404 });
   }
@@ -78,8 +80,8 @@ function scoreRun(passage, result) {
   const ms = Math.max(1000, Number(result.ms) || 0);
   const errors = Math.max(0, Math.floor(Number(result.errors) || 0));
   const keystrokes = Math.max(chars + errors, Math.floor(Number(result.keystrokes) || 0));
-  const { wpm, accuracy } = computeRun({ chars, keystrokes, errors, ms });
-  const stars = computeStars(passage.goals, wpm, accuracy);
+  const { wpm, accuracy, accuracyExact } = computeRun({ chars, keystrokes, errors, ms });
+  const stars = computeStars(passage.goals, wpm, accuracyExact);
   const troubleKeys = Array.isArray(result.troubleKeys)
     ? result.troubleKeys
         .slice(0, 5)
@@ -87,7 +89,7 @@ function scoreRun(passage, result) {
         .map((t) => ({ key: t.key, count: Math.max(0, Math.floor(Number(t.count) || 0)) }))
     : [];
   const bestCombo = Math.max(0, Math.min(chars, Math.floor(Number(result.bestCombo) || 0)));
-  return { wpm, accuracy, stars, errors, keystrokes, chars, ms, troubleKeys, bestCombo, finishedAt: new Date().toISOString() };
+  return { wpm, accuracy, accuracyExact, stars, errors, keystrokes, chars, ms, troubleKeys, bestCombo, finishedAt: new Date().toISOString() };
 }
 
 function isBetter(run, prev) {
@@ -174,7 +176,8 @@ async function handleTrackRun({ studentId, assignmentId, track, level, result })
   }
 
   const run = scoreRun(passage, result);
-  const passed = run.accuracy >= track.goals.accuracy;
+  // Pass bar rises with the level (90 / 95 / 100) — passage.goals carries it.
+  const passed = meetsAccuracy(passage.goals, run.accuracyExact);
   const results = { ...((row && row.level_results) || {}) };
   const prev = results[String(levelNum)] || null;
   const isNewBest = passed && isBetter(run, prev && prev.passed ? prev : null);
