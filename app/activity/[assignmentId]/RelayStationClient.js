@@ -1,9 +1,9 @@
 "use client";
 
-import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
+import React, { useState, useEffect, useRef, useCallback, useMemo, useContext, createContext } from "react";
 import BackToHubButton from "../../../components/BackToHubButton";
 import DistressCallBadge from "../../../components/DistressCallBadge";
-import { TIERS, PLACEMENT_STAGES, PLACEMENT_MIN_WPM, placementResult, computeStars, meetsAccuracy, passAccuracyForLevel, getTrackLevelLesson, rankFor, RANKS, isCheckpointLevel, unitsCleared, comboTier, CRYSTALS } from "../../../lib/cases/relay-station";
+import { applyAccommodations, normalizeAccommodations, ACCOMMODATION_DEFAULTS, cleanTimeline, buildRepairDrill, trackAllowedChars, TIERS, PLACEMENT_STAGES, PLACEMENT_MIN_WPM, placementResult, computeStars, meetsAccuracy, passAccuracyForLevel, getTrackLevelLesson, rankFor, RANKS, isCheckpointLevel, unitsCleared, comboTier, CRYSTALS } from "../../../lib/cases/relay-station";
 
 // Relay Station — the typing center. Added Sept 22, 2026.
 // Design doc: claude/RelayStation_Digital_Design_v1.md.
@@ -98,24 +98,32 @@ function calcStats({ correctChars, keystrokes, errors, startedAt, endedAt }) {
   return { ms, wpm, accuracy, accuracyExact };
 }
 
+// Wave 1 (Sept 22 2026): per-student supports set by the teacher on the
+// Typing Track board — large text, dyslexia-friendly font, reduced motion,
+// hidden live speed, lower pass bar. Read anywhere below via useContext.
+const AccContext = createContext(ACCOMMODATION_DEFAULTS);
+
 const SEGMENT_COLORS = ["#FFC44D", "#67E8F9", "#39D97A", "#F9A8D4", "#A5B4FC", "#FDBA74"];
 
-export default function RelayStationClient({ assignmentId, lesson, existingBest, trackProgress }) {
+export default function RelayStationClient({ assignmentId, lesson, existingBest, trackProgress, accommodations }) {
+  const acc = useMemo(() => normalizeAccommodations(accommodations), [accommodations]);
   // DistressCallBadge renders nothing unless the teacher flagged this
   // assignment as a Distress Call (class goal: levels passed / stars).
   if (lesson.isTrack) {
     return (
-      <>
+      <AccContext.Provider value={acc}>
         <DistressCallBadge assignmentId={assignmentId} />
         <TrackView assignmentId={assignmentId} track={lesson} initialProgress={trackProgress} />
-      </>
+      </AccContext.Provider>
     );
   }
   return (
-    <Shell>
-      <DistressCallBadge assignmentId={assignmentId} />
-      <PassageRun assignmentId={assignmentId} lesson={lesson} initialBest={existingBest} />
-    </Shell>
+    <AccContext.Provider value={acc}>
+      <Shell>
+        <DistressCallBadge assignmentId={assignmentId} />
+        <PassageRun assignmentId={assignmentId} lesson={lesson} initialBest={existingBest} />
+      </Shell>
+    </AccContext.Provider>
   );
 }
 
@@ -125,6 +133,7 @@ export default function RelayStationClient({ assignmentId, lesson, existingBest,
 // per STUDENT, loaded server-side in page.js and updated from each submit.
 // ======================================================================
 function TrackView({ assignmentId, track, initialProgress }) {
+  const acc = useContext(AccContext);
   const total = track.levels.length;
   const [progress, setProgress] = useState(() => normalizeProgress(initialProgress, total));
   const [view, setView] = useState("map"); // map | run
@@ -218,7 +227,9 @@ function TrackView({ assignmentId, track, initialProgress }) {
               <div style={{ fontSize: 13.5, color: THEME.muted }}>
                 {complete
                   ? "You passed every level. You can replay any level to earn more stars."
-                  : `Pass this level with ${passAccuracyForLevel(current)}% accuracy and you move up automatically. The bar rises: 90% for levels 1-10, 95% for 11-15, 100% for 16-20.`}
+                  : acc.passOffset
+                    ? `Pass this level with ${applyAccommodations({ accuracy: passAccuracyForLevel(current) }, acc).accuracy}% accuracy and you move up automatically.`
+                    : `Pass this level with ${passAccuracyForLevel(current)}% accuracy and you move up automatically. The bar rises: 90% for levels 1-10, 95% for 11-15, 100% for 16-20.`}
               </div>
             </div>
             <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
@@ -319,6 +330,13 @@ function normalizeProgress(p, total) {
 function PassageRun({ assignmentId, lesson, initialBest, trackLevel, trackTotal, autoStart, onServerResult, onNextLevel, onBackToMap, onFinishOverride }) {
   const text = lesson.text;
   const isTrackLevel = !!trackLevel;
+  const acc = useContext(AccContext);
+  // Accommodations lower the accuracy goal for real lessons (never for the
+  // Placement Check or a Repair Drill). The server applies the same rule.
+  const goals = useMemo(
+    () => (lesson.kind === "placement" || lesson.kind === "drill" ? lesson.goals : applyAccommodations(lesson.goals, acc)),
+    [lesson, acc]
+  );
   const [phase, setPhase] = useState(autoStart ? "typing" : "intro"); // intro | typing | done
   const [pos, setPos] = useState(0);
   const [errors, setErrors] = useState(0);
@@ -337,16 +355,20 @@ function PassageRun({ assignmentId, lesson, initialBest, trackLevel, trackTotal,
   const [combo, setCombo] = useState(0);
   const [bestCombo, setBestCombo] = useState(0);
   const [reward, setReward] = useState(null); // { crystals, promotedTo }
+  // Wave 1: ghost racer (replays the best run's timeline) + Repair Drill.
+  const [ghostOn, setGhostOn] = useState(true);
+  const [drill, setDrill] = useState(null); // lesson object while a drill runs
+  const [drillResult, setDrillResult] = useState(null);
 
   // Refs mirror state so the keydown handler never reads stale values
   // (fast typists can fire several keys before React re-renders).
-  const stateRef = useRef({ pos: 0, errors: 0, keystrokes: 0, startedAt: null, misses: {}, combo: 0, bestCombo: 0 });
+  const stateRef = useRef({ pos: 0, errors: 0, keystrokes: 0, startedAt: null, misses: {}, combo: 0, bestCombo: 0, timeline: [] });
 
   const reset = useCallback(() => {
-    stateRef.current = { pos: 0, errors: 0, keystrokes: 0, startedAt: null, misses: {}, combo: 0, bestCombo: 0 };
+    stateRef.current = { pos: 0, errors: 0, keystrokes: 0, startedAt: null, misses: {}, combo: 0, bestCombo: 0, timeline: [] };
     setPos(0); setErrors(0); setKeystrokes(0); setStartedAt(null); setEndedAt(null);
     setMisses({}); setLastWrong(null); setSaveState("idle"); setNewBest(false);
-    setCombo(0); setBestCombo(0); setReward(null);
+    setCombo(0); setBestCombo(0); setReward(null); setDrillResult(null);
   }, []);
 
   const submitRun = useCallback(async (run) => {
@@ -374,20 +396,20 @@ function PassageRun({ assignmentId, lesson, initialBest, trackLevel, trackTotal,
     setEndedAt(finishedAt);
     if (onFinishOverride) {
       // Placement Check: hand the raw counts to the parent instead of saving.
-      onFinishOverride({ keystrokes: s.keystrokes, errors: s.errors, ms: finishedAt - s.startedAt, chars: text.length });
+      onFinishOverride({ keystrokes: s.keystrokes, errors: s.errors, ms: finishedAt - s.startedAt, chars: text.length, misses: s.misses });
       return;
     }
     setPhase("done");
     const { ms, wpm, accuracy, accuracyExact } = calcStats({
       correctChars: text.length, keystrokes: s.keystrokes, errors: s.errors, startedAt: s.startedAt, endedAt: finishedAt,
     });
-    if (!meetsAccuracy(lesson.goals, accuracyExact)) setFailStreak((n) => n + 1);
+    if (!meetsAccuracy(goals, accuracyExact)) setFailStreak((n) => n + 1);
     const troubleKeys = Object.entries(s.misses)
       .sort((a, b) => b[1] - a[1])
       .slice(0, 5)
       .map(([ch, count]) => ({ key: ch, count }));
-    submitRun({ wpm, accuracy, errors: s.errors, keystrokes: s.keystrokes, chars: text.length, ms, troubleKeys, bestCombo: s.bestCombo });
-  }, [text, lesson.goals, submitRun, onFinishOverride]);
+    submitRun({ wpm, accuracy, errors: s.errors, keystrokes: s.keystrokes, chars: text.length, ms, troubleKeys, bestCombo: s.bestCombo, timeline: s.timeline });
+  }, [text, goals, submitRun, onFinishOverride]);
 
   const handleKey = useCallback((e) => {
     if (e.ctrlKey || e.metaKey || e.altKey) return;
@@ -412,6 +434,7 @@ function PassageRun({ assignmentId, lesson, initialBest, trackLevel, trackTotal,
     s.keystrokes += 1;
 
     if (typed === expected) {
+      s.timeline.push(t - s.startedAt); // ghost racer: when each char landed
       s.pos += 1;
       s.combo += 1;
       if (s.combo > s.bestCombo) s.bestCombo = s.combo;
@@ -440,14 +463,25 @@ function PassageRun({ assignmentId, lesson, initialBest, trackLevel, trackTotal,
     return () => window.removeEventListener("keydown", handleKey);
   }, [phase, handleKey]);
 
-  // Tick the live timer / WPM while typing.
+  // The ghost: the best run's per-character timeline (if one was saved).
+  const ghostTimeline = useMemo(() => (best ? cleanTimeline(best.timeline, text.length) : null), [best, text]);
+  const ghostActive = !!(ghostTimeline && ghostOn && !onFinishOverride);
+
+  // Tick the live timer / WPM while typing (faster when a ghost is racing).
   useEffect(() => {
     if (phase !== "typing" || !startedAt) return undefined;
-    const id = setInterval(() => setNow(Date.now()), 500);
+    const id = setInterval(() => setNow(Date.now()), ghostActive ? 100 : 500);
     return () => clearInterval(id);
-  }, [phase, startedAt]);
+  }, [phase, startedAt, ghostActive]);
 
   const live = calcStats({ correctChars: pos, keystrokes, errors, startedAt, endedAt: endedAt || now });
+  let ghostPos = null;
+  if (ghostActive && startedAt) {
+    const elapsed = (endedAt || now) - startedAt;
+    let lo = 0, hi = ghostTimeline.length; // count of entries <= elapsed
+    while (lo < hi) { const mid = (lo + hi) >> 1; if (ghostTimeline[mid] <= elapsed) lo = mid + 1; else hi = mid; }
+    ghostPos = lo;
+  }
   const expected = text[pos];
   const nextKey = keyFor(expected);
 
@@ -487,15 +521,15 @@ function PassageRun({ assignmentId, lesson, initialBest, trackLevel, trackTotal,
         <div style={{ background: "rgba(255,255,255,0.06)", borderRadius: 12, padding: "10px 14px", fontSize: 13.5, color: THEME.muted, marginBottom: 20, lineHeight: 1.6 }}>
           {isTrackLevel ? (
             <>
-              <b style={{ color: THEME.text }}>To pass: {lesson.goals.accuracy}% accuracy</b>{lesson.goals.accuracy >= 100 ? " — zero wrong keys! Go slow and steady." : " — then you move up automatically."}<br />
-              ★★★ Pass it with {lesson.goals.wpm}+ words per minute for three stars.<br />
+              <b style={{ color: THEME.text }}>To pass: {goals.accuracy}% accuracy</b>{goals.accuracy >= 100 ? " — zero wrong keys! Go slow and steady." : " — then you move up automatically."}<br />
+              ★★★ Pass it with {goals.wpm}+ words per minute for three stars.<br />
               💎 {CRYSTALS.perNewStar} crystal for every new star{isCheckpointLevel(trackLevel) ? <> · <b style={{ color: THEME.cursor }}>⚡ CHECKPOINT: pass it for +{CRYSTALS.checkpoint} bonus crystals and a promotion!</b></> : ""}
             </>
           ) : (
             <>
               ★ Finish the transmission<br />
-              ★★ Accuracy {lesson.goals.accuracy}% or higher<br />
-              ★★★ Accuracy goal <b>and</b> {lesson.goals.wpm}+ words per minute
+              ★★ Accuracy {goals.accuracy}% or higher<br />
+              ★★★ Accuracy goal <b>and</b> {goals.wpm}+ words per minute
             </>
           )}
           {best && (
@@ -503,17 +537,44 @@ function PassageRun({ assignmentId, lesson, initialBest, trackLevel, trackTotal,
           )}
         </div>
         <div style={{ fontSize: 13, color: THEME.teal, marginBottom: 14 }}>🪑 Ready position: sit tall · feet flat · wrists floating · fingers on home row · eyes on the screen</div>
+        {ghostTimeline && (
+          <label style={{ display: "flex", gap: 8, alignItems: "center", fontSize: 14, color: THEME.text, marginBottom: 14, cursor: "pointer" }}>
+            <input type="checkbox" checked={ghostOn} onChange={(e) => setGhostOn(e.target.checked)} />
+            👻 Race my ghost — a purple marker replays my best run ({best.wpm} WPM)
+          </label>
+        )}
         <button onClick={start} style={btn(THEME.violet)}>Start Relay</button>
         <div style={{ fontSize: 12, color: THEME.dim, marginTop: 12 }}>Eyes on the screen, not your hands. If you press a wrong key, just press the right one — no backspace needed.</div>
       </Panel>
     );
   }
 
+  // ---------- REPAIR DRILL (runs inside the results screen) ----------
+  if (phase === "done" && drill) {
+    return (
+      <div style={{ width: "100%", maxWidth: 960 }}>
+        <button onClick={() => setDrill(null)} style={linkBtn()}>← Back to results</button>
+        <PassageRun
+          key={drill.code}
+          assignmentId={assignmentId}
+          lesson={drill}
+          autoStart
+          onFinishOverride={(r) => {
+            const focusMisses = drill.focus.reduce((n, k) => n + ((r.misses || {})[k] || 0), 0);
+            const accPct = r.keystrokes ? Math.round(((r.keystrokes - r.errors) / r.keystrokes) * 100) : 100;
+            setDrillResult({ accuracy: accPct, focusMisses, focus: drill.focus });
+            setDrill(null);
+          }}
+        />
+      </div>
+    );
+  }
+
   // ---------- DONE ----------
   if (phase === "done") {
     const run = calcStats({ correctChars: text.length, keystrokes, errors, startedAt, endedAt });
-    const stars = computeStars(lesson.goals, run.wpm, run.accuracyExact);
-    const passed = meetsAccuracy(lesson.goals, run.accuracyExact);
+    const stars = computeStars(goals, run.wpm, run.accuracyExact);
+    const passed = meetsAccuracy(goals, run.accuracyExact);
     const trouble = Object.entries(misses).sort((a, b) => b[1] - a[1]).slice(0, 5);
     const nextLevel = (trackLevel || 0) + 1;
     return (
@@ -548,7 +609,7 @@ function PassageRun({ assignmentId, lesson, initialBest, trackLevel, trackTotal,
           )}
         </div>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(120px, 1fr))", gap: 10, margin: "12px 0 18px" }}>
-          <Stat label="Words per minute" value={run.wpm} good={run.wpm >= lesson.goals.wpm} />
+          <Stat label="Words per minute" value={run.wpm} good={run.wpm >= goals.wpm} />
           <Stat label="Accuracy" value={`${run.accuracy}%`} good={passed} />
           <Stat label="Time" value={formatTime(run.ms)} />
           <Stat label="Errors" value={errors} />
@@ -556,14 +617,14 @@ function PassageRun({ assignmentId, lesson, initialBest, trackLevel, trackTotal,
 
         {!passed && (
           <div style={{ fontSize: 14.5, color: THEME.text, marginBottom: 14, background: "rgba(255,196,77,0.12)", borderRadius: 10, padding: "10px 12px" }}>
-            You need {lesson.goals.accuracy}% accuracy{isTrackLevel ? " to move up" : " for two stars"} — you got {run.accuracy}%.{" "}
+            You need {goals.accuracy}% accuracy{isTrackLevel ? " to move up" : " for two stars"} — you got {run.accuracy}%.{" "}
             {failStreak >= 2
               ? "Tip: go SLOW. Say each letter in your head before you press it. Speed comes later — accuracy is what moves you up."
               : "Slow down a little and watch the glowing key."}
           </div>
         )}
         {passed && stars < 3 && (
-          <div style={{ fontSize: 14, color: THEME.muted, marginBottom: 14 }}>Accuracy goal met! For three stars, reach {lesson.goals.wpm} words per minute.</div>
+          <div style={{ fontSize: 14, color: THEME.muted, marginBottom: 14 }}>Accuracy goal met! For three stars, reach {goals.wpm} words per minute.</div>
         )}
 
         {trouble.length > 0 && (
@@ -578,6 +639,27 @@ function PassageRun({ assignmentId, lesson, initialBest, trackLevel, trackTotal,
             </div>
           </div>
         )}
+
+        {trouble.length > 0 && lesson.kind !== "drill" && (() => {
+          const d = buildRepairDrill(trouble.map(([key, count]) => ({ key, count })), isTrackLevel ? trackAllowedChars(trackLevel - 1) : null, (flashKey % 97) + 1);
+          if (!d) return null;
+          return (
+            <div style={{ background: "rgba(0,194,199,0.10)", border: `1px solid ${THEME.teal}`, borderRadius: 12, padding: "10px 14px", marginBottom: 16, display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap" }}>
+              <span style={{ fontSize: 22 }}>🔧</span>
+              <span style={{ flex: 1, minWidth: 200, fontSize: 14, color: THEME.text }}>
+                {drillResult
+                  ? <>Repair Drill done: <b>{drillResult.accuracy}%</b> accuracy · {drillResult.focusMisses === 0 ? "zero misses on your trouble keys — fixed! 🎉" : `${drillResult.focusMisses} miss${drillResult.focusMisses === 1 ? "" : "es"} on your trouble keys. Keep practicing!`}</>
+                  : <>Repair Drill: a quick 30-second practice built from your trouble keys ({d.focus.map(charName).join(", ")}).</>}
+              </span>
+              <button
+                onClick={() => setDrill({ code: `drill-${Date.now()}`, kind: "drill", title: `Repair Drill: ${d.focus.map(charName).join(", ")}`, intro: "", newKeys: [], text: d.text, segments: null, goals, focus: d.focus })}
+                style={btn(THEME.teal, "#0D1B2A")}
+              >
+                {drillResult ? "Drill Again" : "Start Repair Drill"}
+              </button>
+            </div>
+          );
+        })()}
 
         {lesson.segments && <LabelReveal segments={lesson.segments} />}
 
@@ -608,16 +690,19 @@ function PassageRun({ assignmentId, lesson, initialBest, trackLevel, trackTotal,
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", color: THEME.muted, fontSize: 13, marginBottom: 8, gap: 12, flexWrap: "wrap" }}>
         <span style={{ color: THEME.text, fontWeight: 700 }}>{lesson.title}</span>
         <span>
-          <b style={{ color: THEME.text }}>{live.wpm}</b> WPM · <b style={{ color: THEME.text }}>{live.accuracy}%</b> accuracy · {formatTime(live.ms)}
+          {!acc.hideSpeed && <><b style={{ color: THEME.text }}>{live.wpm}</b> WPM · </>}<b style={{ color: THEME.text }}>{live.accuracy}%</b> accuracy{!acc.hideSpeed && <> · {formatTime(live.ms)}</>}
         </span>
       </div>
-      <ComboMeter combo={combo} />
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10 }}>
+        <GhostStatus ghostPos={ghostPos} pos={pos} total={text.length} />
+        <ComboMeter combo={combo} />
+      </div>
       <div style={{ height: 6, background: "rgba(255,255,255,0.1)", borderRadius: 99, marginBottom: 12, overflow: "hidden" }}>
         <div style={{ width: `${progress}%`, height: "100%", background: THEME.done, transition: "width .15s" }} />
       </div>
 
       <Panel style={{ padding: "22px 24px" }}>
-        <TextView text={text} pos={pos} flashKey={flashKey} hasError={lastWrong !== null} />
+        <TextView text={text} pos={pos} flashKey={flashKey} hasError={lastWrong !== null} ghostPos={ghostPos} />
       </Panel>
 
       <div style={{ textAlign: "center", color: THEME.muted, fontSize: 14, margin: "12px 0 10px", minHeight: 22 }}>
@@ -789,8 +874,21 @@ function ReadyPosition({ onReady }) {
   );
 }
 
+// Ghost racer status line: how far ahead/behind your best run you are.
+function GhostStatus({ ghostPos, pos, total }) {
+  if (ghostPos === null || ghostPos === undefined) return <span />;
+  const diff = pos - ghostPos;
+  let msg;
+  if (ghostPos >= total && pos < total) msg = "👻 Your ghost finished — keep going, you've got this!";
+  else if (diff > 0) msg = `👻 You're ${diff} ahead of your best run!`;
+  else if (diff < 0) msg = `👻 Ghost is ${-diff} ahead — catch it!`;
+  else msg = "👻 Neck and neck with your ghost!";
+  return <span style={{ fontSize: 13, fontWeight: 700, color: diff > 0 ? THEME.done : "#C4B5FD" }}>{msg}</span>;
+}
+
 // Combo meter: consecutive correct keys. Tiers light up at 10/25/50/100.
 function ComboMeter({ combo }) {
+  const acc = useContext(AccContext);
   const tier = comboTier(combo);
   return (
     <div style={{ display: "flex", justifyContent: "flex-end", alignItems: "center", gap: 8, height: 26, marginBottom: 6 }}>
@@ -800,7 +898,7 @@ function ComboMeter({ combo }) {
           fontSize: 13, fontWeight: 800, letterSpacing: 1,
           color: tier ? tier.color : THEME.muted,
           textShadow: tier ? `0 0 10px ${tier.color}` : "none",
-          animation: "rsPulse .35s",
+          animation: acc.reducedMotion ? "none" : "rsPulse .35s",
         }}>
           🔥 {combo} COMBO{tier ? ` · ${tier.label}` : ""}
         </span>
@@ -811,6 +909,8 @@ function ComboMeter({ combo }) {
 
 // Little celebration when a passage is passed: stars fly up and fade.
 function StarBurst() {
+  const acc = useContext(AccContext);
+  if (acc.reducedMotion) return null;
   const bits = ["⭐", "✨", "💎", "⭐", "✨", "⭐", "💫", "✨"];
   return (
     <div style={{ position: "relative", height: 0 }} aria-hidden="true">
@@ -827,7 +927,8 @@ function StarBurst() {
 
 // Shows a window of lines around the cursor: done text dims, current line is
 // bright, current char gets the cursor. Enter shows as ↵, Tab as →.
-function TextView({ text, pos, flashKey, hasError }) {
+function TextView({ text, pos, flashKey, hasError, ghostPos }) {
+  const acc = useContext(AccContext);
   const lines = useMemo(() => {
     const out = [];
     let start = 0;
@@ -841,10 +942,15 @@ function TextView({ text, pos, flashKey, hasError }) {
   let curLine = lines.findIndex((l) => pos >= l.start && pos < l.end);
   if (curLine === -1) curLine = lines.length - 1;
   const first = Math.max(0, curLine - 2);
-  const last = Math.min(lines.length, first + 7);
+  const last = Math.min(lines.length, first + (acc.largeText ? 5 : 7));
 
   return (
-    <div style={{ fontFamily: "'JetBrains Mono', 'Courier New', monospace", fontSize: 26, lineHeight: 1.7, whiteSpace: "pre-wrap", wordBreak: "break-word" }}>
+    <div style={{
+      fontFamily: acc.dyslexiaFont ? "'Lexend', Verdana, sans-serif" : "'JetBrains Mono', 'Courier New', monospace",
+      letterSpacing: acc.dyslexiaFont ? "0.06em" : "normal",
+      fontSize: acc.largeText ? 36 : 26,
+      lineHeight: 1.7, whiteSpace: "pre-wrap", wordBreak: "break-word",
+    }}>
       <style>{`@keyframes rsShake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-3px)} 75%{transform:translateX(3px)} }`}</style>
       {lines.slice(first, last).map((line, li) => {
         const lineIdx = first + li;
@@ -859,6 +965,10 @@ function TextView({ text, pos, flashKey, hasError }) {
           else if (ch === "\t") display = "→   ";
           let style = { color: isDone ? THEME.done : isCur ? THEME.text : THEME.dim, opacity: isDone && !isCur ? 0.55 : 1 };
           if (ch === "\n" || ch === "\t") style = { ...style, color: isDone ? "rgba(57,217,122,0.5)" : isCur ? THEME.teal : THEME.dim, fontSize: "0.8em" };
+          // Ghost marker: a purple underline where your best run was at this moment.
+          if (ghostPos !== null && ghostPos !== undefined && i === ghostPos && !isCursor) {
+            style = { ...style, boxShadow: "inset 0 -4px 0 #A78BFA", background: "rgba(167,139,250,0.18)", borderRadius: 3 };
+          }
           if (isCursor) {
             style = {
               ...style,
@@ -866,7 +976,7 @@ function TextView({ text, pos, flashKey, hasError }) {
               background: hasError ? THEME.error : THEME.cursor,
               borderRadius: 4,
               boxShadow: `0 0 0 2px ${hasError ? THEME.error : THEME.cursor}`,
-              animation: hasError ? "rsShake .18s" : "none",
+              animation: hasError && !acc.reducedMotion ? "rsShake .18s" : "none",
             };
             if (ch === " ") display = "␣";
           }
@@ -963,10 +1073,12 @@ function Panel({ children, style }) {
 }
 
 function Shell({ children }) {
+  const acc = useContext(AccContext);
   return (
     <div style={{ minHeight: "100vh", background: THEME.bg, fontFamily: "'Inter', sans-serif", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "72px 16px 32px", position: "relative" }}>
+      {acc.dyslexiaFont && <style>{`@import url('https://fonts.googleapis.com/css2?family=Lexend:wght@400;600;800&display=swap');`}</style>}
       <BackToHubButton />
-      <div style={{ position: "relative", zIndex: 1, width: "100%", display: "flex", flexDirection: "column", alignItems: "center" }}>
+      <div style={{ position: "relative", zIndex: 1, width: "100%", display: "flex", flexDirection: "column", alignItems: "center", fontFamily: acc.dyslexiaFont ? "'Lexend', Verdana, sans-serif" : undefined }}>
         {children}
       </div>
     </div>

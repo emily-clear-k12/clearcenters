@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "../../../../lib/supabaseAdmin";
-import { TRACK_LEVELS } from "../../../../lib/cases/relay-station";
+import { TRACK_LEVELS, normalizeAccommodations } from "../../../../lib/cases/relay-station";
 
 // SERVER ONLY. Teacher side of the Relay Station Foundations Track
 // (design doc: claude/RelayStation_Digital_Design_v1.md §9).
@@ -14,7 +14,8 @@ import { TRACK_LEVELS } from "../../../../lib/cases/relay-station";
 // goes through here with the admin key after an ownership check — same
 // pattern as app/api/teacher/roster/student/route.js.
 export async function POST(request) {
-  const { accessToken, action, classId, studentId, level } = await request.json().catch(() => ({}));
+  const body = await request.json().catch(() => ({}));
+  const { accessToken, action, classId, studentId, level } = body;
   if (!accessToken || !action) {
     return NextResponse.json({ error: "Missing action or session." }, { status: 400 });
   }
@@ -44,7 +45,7 @@ export async function POST(request) {
     if (ids.length) {
       const { data, error } = await supabaseAdmin
         .from("relay_station_progress")
-        .select("student_id, current_level, level_results, completed_at, updated_at, placement")
+        .select("student_id, current_level, level_results, completed_at, updated_at, placement, accommodations")
         .in("student_id", ids);
       if (error) return NextResponse.json({ error: error.message }, { status: 500 });
       progressRows = data || [];
@@ -125,6 +126,31 @@ export async function POST(request) {
     );
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
     return NextResponse.json({ success: true });
+  }
+
+  // Wave 1: per-student supports (large text, dyslexia-friendly font,
+  // reduced motion, hide live speed, lower pass bar by 5 or 10 points).
+  if (action === "setAccommodations") {
+    if (!studentId) return NextResponse.json({ error: "Pick a student." }, { status: 400 });
+    const { data: student } = await supabaseAdmin
+      .from("students")
+      .select("id, classes(teacher_id)")
+      .eq("id", studentId)
+      .maybeSingle();
+    if (!student || student.classes?.teacher_id !== teacherId) {
+      return NextResponse.json({ error: "That student doesn't belong to one of your classes." }, { status: 403 });
+    }
+    const accommodations = normalizeAccommodations(body.accommodations);
+    const { data: existing } = await supabaseAdmin
+      .from("relay_station_progress")
+      .select("student_id")
+      .eq("student_id", studentId)
+      .maybeSingle();
+    const { error } = existing
+      ? await supabaseAdmin.from("relay_station_progress").update({ accommodations }).eq("student_id", studentId)
+      : await supabaseAdmin.from("relay_station_progress").insert({ student_id: studentId, current_level: 1, level_results: {}, accommodations });
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ success: true, accommodations });
   }
 
   return NextResponse.json({ error: "Unknown action." }, { status: 400 });

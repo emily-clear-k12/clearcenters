@@ -137,7 +137,7 @@ export default async function ActivityPage({ params }) {
     if (lesson && lesson.isTrack) {
       const { data: trackProgress } = await supabaseAdmin
         .from("relay_station_progress")
-        .select("current_level, level_results, completed_at, placement")
+        .select("current_level, level_results, completed_at, placement, accommodations")
         .eq("student_id", studentId)
         .maybeSingle();
       return (
@@ -145,6 +145,7 @@ export default async function ActivityPage({ params }) {
           assignmentId={assignmentId}
           lesson={lesson}
           trackProgress={trackProgress || null}
+          accommodations={trackProgress ? trackProgress.accommodations : null}
         />
       );
     }
@@ -155,11 +156,19 @@ export default async function ActivityPage({ params }) {
         .eq("assignment_id", assignmentId)
         .eq("student_id", studentId)
         .maybeSingle();
+      // Teacher-set supports (large text, lower pass bar...) follow the
+      // student into readings too.
+      const { data: rsSupports } = await supabaseAdmin
+        .from("relay_station_progress")
+        .select("accommodations")
+        .eq("student_id", studentId)
+        .maybeSingle();
       return (
         <RelayStationClient
           assignmentId={assignmentId}
           lesson={lesson}
           existingBest={rsSubmission?.relay_station_data?.best || null}
+          accommodations={rsSupports ? rsSupports.accommodations : null}
         />
       );
     }

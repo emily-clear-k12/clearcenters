@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "../../../lib/supabaseClient";
 import TeacherHUD from "../../../components/TeacherHUD";
 import { COLORS, PAGE_ACCENTS, panelStyle } from "../../../lib/teacherTheme";
-import { TRACK_LEVELS, TRACK_UNITS } from "../../../lib/cases/relay-station";
+import { TRACK_LEVELS, TRACK_UNITS, normalizeAccommodations } from "../../../lib/cases/relay-station";
 
 // Relay Station — Typing Track board (Sept 22, 2026). Design doc:
 // claude/RelayStation_Digital_Design_v1.md §9. One row per student: where
@@ -38,6 +38,7 @@ function TypingTrackContent() {
   const [rows, setRows] = useState(null);
   const [error, setError] = useState(null);
   const [savingId, setSavingId] = useState(null);
+  const [supportsFor, setSupportsFor] = useState(null); // student id whose Supports panel is open
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data, error: authError }) => {
@@ -89,6 +90,18 @@ function TypingTrackContent() {
     setSavingId(null);
   }
 
+  async function saveSupports(studentId, accommodations) {
+    setSavingId(studentId);
+    setError(null);
+    try {
+      await callApi({ action: "setAccommodations", studentId, accommodations });
+      await load();
+    } catch (err) {
+      setError(err.message);
+    }
+    setSavingId(null);
+  }
+
   if (loadingAuth) {
     return <div style={{ minHeight: "100vh", background: COLORS.canvas, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Inter', sans-serif", color: COLORS.textMuted }}>Loading...</div>;
   }
@@ -132,6 +145,8 @@ function TypingTrackContent() {
 
         {error && <div style={{ background: `${COLORS.danger}18`, color: COLORS.danger, borderRadius: 10, padding: "10px 14px", marginBottom: 12, fontSize: 13.5 }}>{error}</div>}
 
+        {rows && rows.length > 0 && <TroubleHeatmap rows={rows} />}
+
         <div style={{ ...panelStyle(ACCENT, { padding: 0, overflow: "hidden" }) }}>
           {rows === null ? (
             <div style={{ padding: 24, color: COLORS.textMuted, fontSize: 14 }}>{classId ? "Loading students…" : "Pick a class."}</div>
@@ -142,7 +157,7 @@ function TypingTrackContent() {
               <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13.5 }}>
                 <thead>
                   <tr style={{ background: `${ACCENT}14`, textAlign: "left" }}>
-                    {["Student", "Status", "Current level", "Progress", "Tries on this level", "Last try", "Place at"].map((h) => (
+                    {["Student", "Status", "Current level", "Progress", "Tries on this level", "Last try", "Supports", "Place at"].map((h) => (
                       <th key={h} style={{ padding: "10px 12px", fontSize: 12, color: COLORS.textMuted, fontWeight: 700 }}>{h}</th>
                     ))}
                   </tr>
@@ -157,8 +172,17 @@ function TypingTrackContent() {
                     const levelInfo = TRACK_LEVELS[cur - 1];
                     const unit = UNIT_BY_ID[levelInfo.unit];
                     const last = curRes && !curRes.passed ? curRes : null;
+                    const supports = normalizeAccommodations(p && p.accommodations);
+                    const supportLabels = [
+                      supports.largeText && "Large text",
+                      supports.dyslexiaFont && "Dyslexia font",
+                      supports.reducedMotion && "Less motion",
+                      supports.hideSpeed && "Speed hidden",
+                      supports.passOffset && `Pass bar −${supports.passOffset}`,
+                    ].filter(Boolean);
                     return (
-                      <tr key={s.id} style={{ borderTop: `1px solid ${COLORS.border}` }}>
+                      <React.Fragment key={s.id}>
+                      <tr style={{ borderTop: `1px solid ${COLORS.border}` }}>
                         <td style={{ padding: "10px 12px", fontWeight: 700 }}>{s.firstName}</td>
                         <td style={{ padding: "10px 12px" }}><Chip color={st.color} label={st.label} /></td>
                         <td style={{ padding: "10px 12px" }}>
@@ -182,6 +206,12 @@ function TypingTrackContent() {
                             <div>Trouble: {last.troubleKeys.map((t) => ({ " ": "Space", "\n": "Enter", "\t": "Tab" }[t.key] || t.key)).join(" ")}</div>
                           )}
                         </td>
+                        <td style={{ padding: "10px 12px", fontSize: 12 }}>
+                          <button onClick={() => setSupportsFor(supportsFor === s.id ? null : s.id)} style={{ background: supportLabels.length ? `${COLORS.violet}1A` : "transparent", color: supportLabels.length ? COLORS.violet : COLORS.textMuted, border: `1px solid ${supportLabels.length ? COLORS.violet : COLORS.border}`, borderRadius: 999, padding: "3px 10px", fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "inherit", whiteSpace: "nowrap" }}>
+                            ⚙️ {supportLabels.length ? supportLabels.length : "Add"}
+                          </button>
+                          {supportLabels.length > 0 && <div style={{ color: COLORS.textMuted, marginTop: 3 }}>{supportLabels.join(" · ")}</div>}
+                        </td>
                         <td style={{ padding: "10px 12px" }}>
                           <select
                             disabled={savingId === s.id}
@@ -196,6 +226,20 @@ function TypingTrackContent() {
                           </select>
                         </td>
                       </tr>
+                      {supportsFor === s.id && (
+                        <tr>
+                          <td colSpan={8} style={{ padding: "4px 12px 14px" }}>
+                            <SupportsEditor
+                              name={s.firstName}
+                              value={supports}
+                              saving={savingId === s.id}
+                              onSave={(v) => saveSupports(s.id, v)}
+                              onClose={() => setSupportsFor(null)}
+                            />
+                          </td>
+                        </tr>
+                      )}
+                      </React.Fragment>
                     );
                   })}
                 </tbody>
@@ -204,6 +248,98 @@ function TypingTrackContent() {
           )}
         </div>
       </main>
+    </div>
+  );
+}
+
+// Per-student supports (Wave 1). Applied to the Foundations Track AND to
+// every Relay Station reading the student opens.
+function SupportsEditor({ name, value, saving, onSave, onClose }) {
+  const [v, setV] = useState(value);
+  const toggle = (k) => setV((x) => ({ ...x, [k]: !x[k] }));
+  const opt = (k, label, hint) => (
+    <label style={{ display: "flex", gap: 8, alignItems: "flex-start", fontSize: 13, cursor: "pointer" }}>
+      <input type="checkbox" checked={!!v[k]} onChange={() => toggle(k)} style={{ marginTop: 3 }} />
+      <span><b>{label}</b><br /><span style={{ color: COLORS.textMuted, fontSize: 12 }}>{hint}</span></span>
+    </label>
+  );
+  return (
+    <div style={{ background: COLORS.white, border: `1px solid ${COLORS.border}`, borderRadius: 12, padding: 14 }}>
+      <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 10 }}>Supports for {name}</div>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 12, marginBottom: 12 }}>
+        {opt("largeText", "Large text", "Bigger letters in the transmission.")}
+        {opt("dyslexiaFont", "Dyslexia-friendly font", "Lexend, with extra letter spacing.")}
+        {opt("reducedMotion", "Less motion", "No shaking, bursts, or pulsing effects.")}
+        {opt("hideSpeed", "Hide speed while typing", "Speed is still saved, just not shown live.")}
+        <label style={{ fontSize: 13 }}>
+          <b>Pass bar</b><br />
+          <select value={v.passOffset} onChange={(e) => setV((x) => ({ ...x, passOffset: Number(e.target.value) }))} style={{ marginTop: 4, padding: "5px 8px", borderRadius: 8, border: `1px solid ${COLORS.border}`, fontSize: 12.5 }}>
+            <option value={0}>Standard (90 / 95 / 100%)</option>
+            <option value={5}>5 points lower (85 / 90 / 95%)</option>
+            <option value={10}>10 points lower (80 / 85 / 90%)</option>
+          </select>
+          <div style={{ color: COLORS.textMuted, fontSize: 12, marginTop: 3 }}>Also lowers the goal on readings. Never below 70%.</div>
+        </label>
+      </div>
+      <div style={{ display: "flex", gap: 8 }}>
+        <button disabled={saving} onClick={() => onSave(v)} style={{ background: COLORS.violet, color: "#fff", border: "none", borderRadius: 999, padding: "7px 16px", fontWeight: 700, fontSize: 13, cursor: "pointer", fontFamily: "inherit" }}>{saving ? "Saving…" : "Save supports"}</button>
+        <button onClick={onClose} style={{ background: "none", border: "none", color: COLORS.textMuted, fontWeight: 700, fontSize: 13, cursor: "pointer", fontFamily: "inherit" }}>Close</button>
+      </div>
+    </div>
+  );
+}
+
+// Class trouble-key heatmap (Wave 1): adds up the keys students missed most
+// on their Foundations Track levels (skipping levels given by placement) and
+// shades a keyboard — the darker the key, the more the class misses it.
+const HEAT_ROWS = [
+  "1234567890".split(""),
+  "qwertyuiop".split(""),
+  "asdfghjkl;'".split(""),
+  "zxcvbnm,./".split(""),
+];
+function TroubleHeatmap({ rows }) {
+  const counts = {};
+  rows.forEach((r) => {
+    const results = (r.progress && r.progress.level_results) || {};
+    Object.values(results).forEach((lv) => {
+      if (!lv || lv.placed) return;
+      (lv.troubleKeys || []).forEach((t) => {
+        const k = t.key === "?" ? "/" : t.key === '"' ? "'" : t.key === ":" ? ";" : t.key.length === 1 ? t.key.toLowerCase() : t.key;
+        counts[k] = (counts[k] || 0) + (t.count || 1);
+      });
+    });
+  });
+  const max = Math.max(0, ...Object.values(counts));
+  if (!max) return null;
+  const top = Object.entries(counts).sort((a, b) => b[1] - a[1]).slice(0, 5);
+  const label = (k) => ({ " ": "Space", "\n": "Enter", "\t": "Tab" }[k] || k.toUpperCase());
+  const shade = (n) => (n ? `rgba(228, 87, 76, ${0.15 + 0.85 * (n / max)})` : "#F4F1FF");
+  return (
+    <div style={{ ...panelStyle(ACCENT, { padding: 16, marginBottom: 16 }) }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", flexWrap: "wrap", gap: 8, marginBottom: 10 }}>
+        <div style={{ fontWeight: 700, fontSize: 14 }}>Class trouble keys</div>
+        <div style={{ fontSize: 12.5, color: COLORS.textMuted }}>
+          Most missed: {top.map(([k, n]) => `${label(k)} (${n})`).join(" · ")}
+        </div>
+      </div>
+      <div style={{ display: "flex", flexDirection: "column", gap: 4, alignItems: "center" }}>
+        {HEAT_ROWS.map((row, ri) => (
+          <div key={ri} style={{ display: "flex", gap: 4, marginLeft: ri * 14 }}>
+            {row.map((k) => (
+              <div key={k} title={`${label(k)}: ${counts[k] || 0} misses`} style={{ width: 34, height: 34, borderRadius: 7, background: shade(counts[k] || 0), color: (counts[k] || 0) / max > 0.55 ? "#fff" : COLORS.textDark, display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, fontSize: 13 }}>
+                {k.toUpperCase()}
+              </div>
+            ))}
+          </div>
+        ))}
+        <div style={{ display: "flex", gap: 4, marginTop: 2 }}>
+          {[[" ", "Space", 220], ["\n", "Enter", 70], ["\t", "Tab", 60]].map(([k, name, w]) => (
+            <div key={name} title={`${name}: ${counts[k] || 0} misses`} style={{ width: w, height: 30, borderRadius: 7, background: shade(counts[k] || 0), color: (counts[k] || 0) / max > 0.55 ? "#fff" : COLORS.textDark, display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, fontSize: 12 }}>{name}</div>
+          ))}
+        </div>
+      </div>
+      <div style={{ fontSize: 11.5, color: COLORS.textMuted, marginTop: 8, textAlign: "center" }}>Darker = missed more often across the class. Use it to pick a quick reteach or a mini-lesson on finger placement.</div>
     </div>
   );
 }

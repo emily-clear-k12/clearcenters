@@ -10,6 +10,8 @@ import {
   isCheckpointLevel,
   rankFor,
   CRYSTALS,
+  applyAccommodations,
+  cleanTimeline,
 } from "../../../../lib/cases/relay-station";
 
 // Relay Station (typing center) submit — added Sept 22, 2026.
@@ -89,7 +91,9 @@ function scoreRun(passage, result) {
         .map((t) => ({ key: t.key, count: Math.max(0, Math.floor(Number(t.count) || 0)) }))
     : [];
   const bestCombo = Math.max(0, Math.min(chars, Math.floor(Number(result.bestCombo) || 0)));
-  return { wpm, accuracy, accuracyExact, stars, errors, keystrokes, chars, ms, troubleKeys, bestCombo, finishedAt: new Date().toISOString() };
+  // Ghost racer: per-character timeline, kept only if it's well-formed.
+  const timeline = cleanTimeline(result.timeline, chars);
+  return { wpm, accuracy, accuracyExact, stars, errors, keystrokes, chars, ms, troubleKeys, bestCombo, timeline, finishedAt: new Date().toISOString() };
 }
 
 function isBetter(run, prev) {
@@ -115,7 +119,15 @@ async function writeSubmission({ assignmentId, studentId, fields }) {
 
 // ---------------------------------------------------------------- READING
 async function handleReadingRun({ studentId, assignmentId, lesson, result }) {
-  const run = { lessonCode: lesson.code, kind: lesson.kind, goals: lesson.goals, ...scoreRun(lesson, result) };
+  // Wave 1: teacher-set accommodations (lower pass bar) apply to readings too.
+  const { data: accRow } = await supabaseAdmin
+    .from("relay_station_progress")
+    .select("accommodations")
+    .eq("student_id", studentId)
+    .maybeSingle();
+  const goals = applyAccommodations(lesson.goals, accRow && accRow.accommodations);
+  const passage = { ...lesson, goals };
+  const run = { lessonCode: lesson.code, kind: lesson.kind, goals, ...scoreRun(passage, result) };
 
   const { data: existing } = await supabaseAdmin
     .from("submissions")
@@ -140,7 +152,8 @@ async function handleReadingRun({ studentId, assignmentId, lesson, result }) {
     studentId,
     fields: {
       attempt2: summary,
-      relay_station_data: { best, last: run, attempts },
+      // The ghost timeline lives only on `best` (it's what students race).
+      relay_station_data: { best, last: { ...run, timeline: undefined }, attempts },
       submitted_at: new Date().toISOString(),
       revision_requested: false,
     },
@@ -165,7 +178,7 @@ async function handleTrackRun({ studentId, assignmentId, track, level, result })
 
   const { data: row, error: readError } = await supabaseAdmin
     .from("relay_station_progress")
-    .select("student_id, current_level, level_results, completed_at")
+    .select("student_id, current_level, level_results, completed_at, accommodations")
     .eq("student_id", studentId)
     .maybeSingle();
   if (readError) return NextResponse.json({ error: readError.message }, { status: 500 });
@@ -175,6 +188,7 @@ async function handleTrackRun({ studentId, assignmentId, track, level, result })
     return NextResponse.json({ error: "That level is still locked." }, { status: 403 });
   }
 
+  passage.goals = applyAccommodations(passage.goals, row && row.accommodations);
   const run = scoreRun(passage, result);
   // Pass bar rises with the level (90 / 95 / 100) — passage.goals carries it.
   const passed = meetsAccuracy(passage.goals, run.accuracyExact);
@@ -187,7 +201,7 @@ async function handleTrackRun({ studentId, assignmentId, track, level, result })
   const attempts = ((prev && prev.attempts) || 0) + 1;
   let record;
   if (isNewBest) {
-    record = { passed: true, stars: run.stars, wpm: run.wpm, accuracy: run.accuracy, errors: run.errors, troubleKeys: run.troubleKeys, bestCombo: Math.max(run.bestCombo, (prev && prev.bestCombo) || 0), passedAt: (prev && prev.passedAt) || run.finishedAt };
+    record = { passed: true, stars: run.stars, wpm: run.wpm, accuracy: run.accuracy, errors: run.errors, troubleKeys: run.troubleKeys, bestCombo: Math.max(run.bestCombo, (prev && prev.bestCombo) || 0), timeline: run.timeline, passedAt: (prev && prev.passedAt) || run.finishedAt };
   } else if (prev && prev.passed) {
     record = { ...prev };
   } else {
