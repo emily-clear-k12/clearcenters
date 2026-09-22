@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import BackToHubButton from "../../../components/BackToHubButton";
 import DistressCallBadge from "../../../components/DistressCallBadge";
-import { PLACEMENT_STAGES, PLACEMENT_MIN_WPM, placementResult, computeStars, meetsAccuracy, passAccuracyForLevel, getTrackLevelLesson, rankFor, RANKS, isCheckpointLevel, unitsCleared, comboTier, CRYSTALS } from "../../../lib/cases/relay-station";
+import { TIERS, PLACEMENT_STAGES, PLACEMENT_MIN_WPM, placementResult, computeStars, meetsAccuracy, passAccuracyForLevel, getTrackLevelLesson, rankFor, RANKS, isCheckpointLevel, unitsCleared, comboTier, CRYSTALS } from "../../../lib/cases/relay-station";
 
 // Relay Station — the typing center. Added Sept 22, 2026.
 // Design doc: claude/RelayStation_Digital_Design_v1.md.
@@ -467,7 +467,14 @@ function PassageRun({ assignmentId, lesson, initialBest, trackLevel, trackTotal,
           📡 INCOMING TRANSMISSION, CADET{isTrackLevel ? ` · LEVEL ${trackLevel} OF ${trackTotal}` : ""}
         </div>
         <h1 style={{ fontSize: 26, margin: "0 0 6px", color: THEME.text }}>{lesson.title}</h1>
-        <div style={{ fontSize: 12.5, color: THEME.muted, marginBottom: 16 }}>Relay it exactly — letter for letter.</div>
+        <div style={{ fontSize: 12.5, color: THEME.muted, marginBottom: 16, display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
+          <span>Relay it exactly — letter for letter.</span>
+          {lesson.tier && TIERS[lesson.tier] && (
+            <span style={{ background: "rgba(255,255,255,0.08)", border: `1px solid ${THEME.border}`, borderRadius: 999, padding: "2px 10px", color: THEME.text, fontWeight: 700 }}>
+              {TIERS[lesson.tier].icon} {TIERS[lesson.tier].label} · {TIERS[lesson.tier].note}
+            </span>
+          )}
+        </div>
         <p style={{ fontSize: 16, lineHeight: 1.55, color: THEME.text, margin: "0 0 16px" }}>{lesson.intro}</p>
         {lesson.newKeys && lesson.newKeys.length > 0 && (
           <div style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 16, flexWrap: "wrap" }}>
