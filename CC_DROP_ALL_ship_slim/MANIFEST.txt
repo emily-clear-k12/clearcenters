@@ -1,0 +1,25 @@
+ClearCenters — Ship cohesion DROP v1 (APPROVED packs + case thumbs)
+One extract at repo root → commit → push
+
+HOW TO USE:
+1. Extract CLEARCENTERS_DROP_ship_rooms_and_cases_v1.tar.gz into clearcenters repo root
+2. GitHub Desktop shows public/cases + room windows + challenge tiles
+3. Commit: "Ship cohesion: bright MM/SL/SC/SD case thumbs + GC + room windows"
+4. Push → Vercel
+
+Total images: 176
+
+public/cases/*-MM.jpg  (25)  — Mission Map family (12 variations rotated)
+public/cases/*-SL.jpg  (10)  — Simulation Lab family
+public/cases/*-SD.jpg  (34)  — Signal Ops / defense family
+public/cases/*-SC.jpg  (87)  — Signal Check family
+public/group-chat/window.jpg
+public/mission-map/window.jpg
+public/signal-check/window.jpg
+public/simulation-lab/background.jpg, window.jpg, console.jpg
+public/teacher/challenges/* (GC, MM, SL, Repair, Museum, Newsroom, Territory + prior Relay/FR/SC/SO)
+public/relay/station_hero.jpg
+
+Does NOT include: Comment Court / Classification / Live Ops / Library (not on Challenge Library yet)
+
+NOTE: slim re-encode for download (quality ~80-85). Same files/paths.
