@@ -6,6 +6,7 @@ import { getSignalCheckPublicCase } from "../../../lib/cases/signal-check/index.
 import { getMissionMapPublicCase } from "../../../lib/cases/mission-map/index.public";
 import { getSimulationLabPublicCase } from "../../../lib/cases/simulation-lab/index.public";
 import { getSignalDefensePublicCase } from "../../../lib/cases/signal-defense/index.public";
+import { getAssemblyDeckPublicCase } from "../../../lib/cases/assembly-deck/index.public";
 import { resolveRelayStationLesson } from "../../../lib/relayStationServer";
 import { centralDateKey, dailyTextFor, continuesStreak } from "../../../lib/cases/relay-station";
 import ActivityClient from "./ActivityClient";
@@ -15,6 +16,7 @@ import SimulationLabClient from "./SimulationLabClient";
 import FrequencyRushClient from "./FrequencyRushClient";
 import SignalDefenseClient from "./SignalDefenseClient";
 import RelayStationClient from "./RelayStationClient";
+import AssemblyDeckClient from "./AssemblyDeckClient";
 
 export default async function ActivityPage({ params }) {
   const { assignmentId } = params;
@@ -207,11 +209,15 @@ export default async function ActivityPage({ params }) {
   // repeating the exact missing-branch bug class documented above for
   // Mission Map.
   const isSimulationLab = engine === "simulation_lab";
-  const caseEntry = isSignalCheck || isMissionMap || isSimulationLab ? null : getPublicCase(assignment.case_standard);
+  // Assembly Deck's branch, added Sept 22 2026 with the engine's first six
+  // cases — up front, for the same reason Simulation Lab's was.
+  const isAssemblyDeck = engine === "assembly_deck";
+  const caseEntry = isSignalCheck || isMissionMap || isSimulationLab || isAssemblyDeck ? null : getPublicCase(assignment.case_standard);
   const signalCheckCase = isSignalCheck ? getSignalCheckPublicCase(assignment.case_standard) : null;
   const missionMapCase = isMissionMap ? getMissionMapPublicCase(assignment.case_standard) : null;
   const simulationLabCase = isSimulationLab ? getSimulationLabPublicCase(assignment.case_standard) : null;
-  if (!caseEntry && !signalCheckCase && !missionMapCase && !simulationLabCase) {
+  const assemblyDeckCase = isAssemblyDeck ? getAssemblyDeckPublicCase(assignment.case_standard) : null;
+  if (!caseEntry && !signalCheckCase && !missionMapCase && !simulationLabCase && !assemblyDeckCase) {
     return (
       <div style={{ minHeight: "100vh", background: "#16243F", display: "flex", alignItems: "center", justifyContent: "center", color: "#FFFFFF", fontFamily: "sans-serif", textAlign: "center", padding: 20 }}>
         <div>
@@ -277,6 +283,22 @@ export default async function ActivityPage({ params }) {
         studentId={studentId}
         caseStandard={assignment.case_standard}
         publicCase={simulationLabCase}
+        existingSubmission={existingSubmission}
+        alreadySubmitted={alreadySubmitted}
+        revisionRequested={revisionRequested}
+        revisionFeedback={revisionFeedback}
+        samSkin={student.equipped_sam_skin}
+        samNickname={student.sam_nickname}
+      />
+    );
+  }
+
+  if (isAssemblyDeck) {
+    return (
+      <AssemblyDeckClient
+        assignmentId={assignmentId}
+        caseStandard={assignment.case_standard}
+        publicCase={assemblyDeckCase}
         existingSubmission={existingSubmission}
         alreadySubmitted={alreadySubmitted}
         revisionRequested={revisionRequested}

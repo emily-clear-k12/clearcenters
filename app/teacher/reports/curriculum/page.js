@@ -41,7 +41,8 @@ const ENGINE_LABELS = {
   repair_desk: "Repair Desk",
   museum_exhibit: "Museum Exhibit Builder",
   newsroom: "Newsroom",
-  territory_builder: "Territory Builder",
+  relay_station: "Relay Station",
+  assembly_deck: "Assembly Deck",
 };
 
 // Same fallback/prefix rules as matchesChallenge() in Challenge Library: a

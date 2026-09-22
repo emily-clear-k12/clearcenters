@@ -62,6 +62,13 @@ const CHALLENGE_TYPES = [
   // placeholder until Emily's batched image upload replaces it with a .jpg.
   { key: "relay_station", label: "Relay Station", image: "/teacher/challenges/relay_station.svg", real: true,
     description: "Typing practice with a purpose. Assign the Foundations Track once and every student climbs 20 levels at their own pace — home row to capitals, numbers, and layout — moving up automatically. Then assign grade-level readings: conversations, paragraphs, and letters to relay letter for letter." },
+  // Sept 22, 2026 — Assembly Deck, the build-it center (design doc:
+  // claude/AssemblyDeck_Digital_Design_v1.md). Wave 1 ships the paragraph
+  // mode; investigation, map, and word-problem modes follow. Territory
+  // Builder was retired into this engine's map mode per Emily's Sept 2026
+  // call, so its tile is gone rather than promising a separate engine.
+  { key: "assembly_deck", label: "Assembly Deck", image: "/teacher/challenges/assembly_deck.jpg", real: true,
+    description: "Students build the whole piece, not one answer — three paragraphs assembled sentence by sentence, with decoys that have to be left in the tray and explained, then put in the order a reader actually needs. Runs about 20 minutes." },
   // Coming soon — kept below live tiles (Assign library sorts real:true first as well).
   { key: "repair_desk", label: "Repair Desk", image: "/teacher/challenges/repair_desk.jpg", real: false,
     description: "A broken ticket arrives — a flawed diagram, model, or work sample. Students diagnose what's wrong, fix it, and explain the fix to whoever sent it in." },
@@ -69,8 +76,6 @@ const CHALLENGE_TYPES = [
     description: "Students curate a small exhibit from a pile of evidence — choosing the strongest items, rejecting at least one on purpose, and writing placards that explain why." },
   { key: "newsroom", label: "Newsroom", image: "/teacher/challenges/newsroom.jpg", real: false,
     description: "Students gather their own evidence from the scene, then build and produce a report — headline, script, and all — before it airs." },
-  { key: "territory_builder", label: "Territory Builder", image: "/teacher/challenges/territory_builder.jpg", real: false,
-    description: "Students place things on an actual map — habitats, settlements, resources — and get feedback on whether the placement actually holds up." },
 ];
 
 function caseImagePath(standard) {

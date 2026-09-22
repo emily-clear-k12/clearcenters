@@ -24,21 +24,29 @@ A paragraph's slots are rhetorical (topic / evidence / reasoning / conclusion). 
 
 ---
 
+## 3 · A case is a whole piece, not a paragraph (Emily, Sept 22)
+
+These run in a ~20-minute center rotation, so one paragraph is not enough work. Every case is **three paragraph builds plus an assembly round**, and the rounds are labeled by **content** ("What happened to the outside bank"), never by position, so ordering them at the end is a real structure decision rather than a formality. Measured against the engine's own time model — reading every sentence in the tray, placing them, choosing a reason for each leftover, the assembly, and the writing — the six Wave 1 cases land at 19–20 minutes each.
+
+---
+
 ## 3 · Student flow
 
-1. **Mission brief** — the situation in three or four lines, in the station voice, plus what they're building and who it's for. S.A.M. is on screen, as on every Relay Station screen.
-2. **The deck** — the board (empty slots) above, the tray of pieces below. Tap a piece, tap a slot (or drag, on a device that supports it). Pieces move back to the tray freely. Nothing is timed.
-3. **Check** — one button. The board is graded instantly against the key. Correct pieces lock with a green edge; wrong ones bounce back with a one-line reason ("This is true, but it isn't *evidence* for the claim"). **Attempt 2 is allowed**, then the correct build is shown. Same two-attempt shape as the other engines, stored in `attempt1` / `attempt2`.
-4. **The rejects** — after the board is right, the leftover pieces come forward: "Two of these never belonged. Why not?" Students tap the ones they rejected on purpose. This is graded too, and it is where most of the thinking is.
-5. **Explain** — one short written answer against 3–5 visible criteria ("Name the piece you rejected and say why"). S.A.M. reads it first and returns glows + one grow; Emily is the scorer of record. Same pattern as Group Chat and Signal Check.
-6. **Payoff** — the finished build is shown clean (a paragraph reads as a paragraph, a map shows the finished territory), plus crystals and a line about what they can do now that they couldn't before.
+1. **Mission brief** — the situation in three or four lines, in the station voice, plus what they're building, who it's for, and how long it runs. The source card (survey notes, fact card, research card) opens here and stays reachable on every later screen. S.A.M. is on screen throughout, the Relay Station pattern.
+2. **The deck** — the board (empty slots) above, the tray of sentences below. Tap a sentence, tap a slot. Pieces move back to the tray freely. Nothing is timed, and every control is a real button, so the whole engine works from a keyboard.
+3. **Check** — one button. The board is graded instantly against the key. Correct sentences lock with a green edge; wrong ones return to the tray carrying a one-line reason — a different one depending on whether the sentence belongs elsewhere in the paragraph ("This is a measurement from the survey — evidence") or never belonged at all ("This is an opinion about the creek"). **Attempt 2 is allowed**; if it is still wrong, the correct build is filled in rather than leaving a student stuck.
+4. **Read it back** — a correct board shows the finished paragraph as continuous prose before anything else happens. This beat is the payoff for the round and is never auto-skipped.
+5. **The leftovers** — the sentences still in the tray come forward, and for each one the student picks **why** it failed: an opinion, a contradiction of the notes, a claim nothing supports, an off-topic fact, a personal story, or one example standing in for evidence. The leftovers are obvious; naming what each one *was* is the thinking. Graded, with the real reason shown either way.
+6. **Repeat** for each paragraph, then **assemble**: the finished paragraphs, in the student's own words, get ordered. A wrong order stays changeable — the check is feedback, not a lock — and a correct one shows why that order is the one a reader needs.
+7. **Explain** — one short written answer against 3–5 visible criteria. S.A.M. reads it first and returns two glows and one grow; Emily is the scorer of record. Same pattern as Group Chat and Signal Check.
+8. **Payoff** — the whole assembled piece read back in order, the three scores, and crystals.
 
 ---
 
 ## 4 · The four modes
 
-### 4.1 `paragraph` — Build an Explanation
-Slots: **Topic sentence · Evidence · Reasoning · Conclusion** (grade 3 uses three slots; grades 4–5 add transitions as their own tile type). Pieces are single sentences. Decoy types, one of each in most cases:
+### 4.1 `paragraph` — Build an Explanation *(built, Wave 1)*
+Slots: **Topic sentence · Evidence (×2) · Reasoning · Conclusion**; grade 3 drops the reasoning slot, because 3.11B(i) names only an introduction and a conclusion. Grades 4–5 model transitions in the sentences themselves — the engine never grades a connector word, which would be easy to satisfy and hard to satisfy honestly. Pieces are single sentences. Decoy types, one or two per round:
 - **off-topic** — true, interesting, wrong paragraph
 - **opinion-as-evidence** — "Everyone knows deserts are the worst"
 - **contradicts-the-source** — states the opposite of the given text
@@ -60,6 +68,8 @@ Slots: **Situation · The numbers · The question**, then a second board for **t
 ## 5 · Case schema
 
 Same `public` / `server` split and folder layout as Simulation Lab: `lib/cases/assembly-deck/<CODE>-AD.public.js` and `.server.js`, registered in the folder's `index.public.js` / `index.server.js`. Case codes carry the `-AD` suffix, and Math/ELAR use the `MA.` / `ELA.` prefixes already in use.
+
+A case file holds `rounds[]` (each with its own slots, tray, decoys, and offered reason chips) plus one `assembly` block; the server file mirrors it with `rounds{}` keyed the same way, an `assemblyKey`, and one rubric for the whole piece.
 
 **Public (safe in the browser — no key):**
 ```js
@@ -93,6 +103,19 @@ export const SERVER_CASE = {
 ```
 
 Map mode adds `board: { image: "/assembly-deck/maps/texas-regions.jpg", zones: [ { id, shape: "rect", x, y, w, h, label } ] }` in the public file and the same `key` shape in the server file — zone id in place of slot id.
+
+---
+
+## 5.5 · Making it fun (Emily's picks, Sept 22)
+
+Four additions, all data, no new screens except one:
+
+- **The leftovers fight back.** Every decoy has a protest line in its own voice — the opinion sentence insists it's "practically data," the contradicting one mutters "outward, backward, the bank moved, didn't it" — and S.A.M. answers it with the real reason. Protest lines live in the **server** case, so the tray never hints at which sentences are decoys, and they arrive only after the student has committed to a reason.
+- **The requester writes back.** Chief Okafor, Chief Engineer Vance, the Alvarado family, the curator, Ms. Alvarez, the athletic director — whoever asked for the piece replies on the results screen, in one of three tiers picked from the student's actual scores. The "rough" reply is honest rather than consoling: *"half of what you wrote is the test, and half is what somebody assumed."*
+- **The Editor's Trap.** After the assembly, S.A.M. slips one bad sentence into a paragraph the student built and dares them to find it, worth +2 💎. The trap text never ships with the case: the route rebuilds the paragraph from the student's own board, inserts the trap at the position the case names, and returns **plain sentences with no ids**. The answer is checked by index, so nothing in the payload gives it away. Optional by default.
+- **Chief's Challenge.** An opt-in harder run that adds no content and takes scaffolding away: slot hints hidden, tray shuffled (deterministically, so a re-render doesn't reorder it mid-build), every reason chip in the engine offered instead of the case's shortlist, the second-attempt reveal switched off, and the Editor's Trap made mandatory. +3 💎.
+
+A perfect challenge run with the trap caught pays 13 crystals; a quiet ordinary run pays 3.
 
 ---
 
@@ -162,7 +185,7 @@ Same batching rule as Relay Station: prompts collected, one upload.
 
 ## 11 · Build waves
 
-1. **Wave 1 — the engine + `paragraph`.** Deck, slots, check, rejects, explain, results, submit route, teacher tile, Distress Call adapter, SQL. First six cases: two Science, two Social Studies, two ELAR (grades 3–5 spread).
+1. **Wave 1 — the engine + `paragraph`. BUILT Sept 22, 2026.** Deck, slots, check, read-back, leftovers, assembly, explain, results, submit route, teacher tile, Distress Call adapter, SQL. Six cases, two per grade: `3.6A-AD`, `4.10B-AD`, `SS.4.6B-AD`, `SS.5.4C-AD`, `ELA.3.12B-AD`, `ELA.5.12C-AD`. Territory Builder's "coming soon" tile was removed in the same change, since its content now lands in this engine's map mode. Validated by `sim/assembly.cjs` (a full student run, including a messy first attempt) and `advalidate.cjs` (every case's key, decoy reasons, slot capacities, assembly key, and runtime).
 2. **Wave 2 — `investigation`.** Needs the Science practice codes verified first. Four cases.
 3. **Wave 3 — `map`.** Territory Builder's library lands here; needs map art. Four cases.
 4. **Wave 4 — `problem`.** Math, including the representation board. Four cases.
