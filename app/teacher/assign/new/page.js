@@ -60,7 +60,7 @@ const CHALLENGE_TYPES = [
   // claude/RelayStation_Digital_Design_v1.md). Tile art is an SVG
   // placeholder until Emily's batched image upload replaces it with a .jpg.
   { key: "relay_station", label: "Relay Station", image: "/teacher/challenges/relay_station.svg", real: true,
-    description: "Typing practice with a purpose: students relay incoming transmissions letter for letter — home-row drills up through vocabulary, conversations, paragraphs, and friendly letters — with stars for accuracy and speed." },
+    description: "Typing practice with a purpose. Assign the Foundations Track once and every student climbs 20 levels at their own pace — home row to capitals, numbers, and layout — moving up automatically. Then assign grade-level readings: conversations, paragraphs, and letters to relay letter for letter." },
   // Coming soon — kept below live tiles (Assign library sorts real:true first as well).
   { key: "repair_desk", label: "Repair Desk", image: "/teacher/challenges/repair_desk.jpg", real: false,
     description: "A broken ticket arrives — a flawed diagram, model, or work sample. Students diagnose what's wrong, fix it, and explain the fix to whoever sent it in." },
@@ -341,6 +341,9 @@ function NewAssignmentContent() {
               <div style={{ display: "flex", gap: 10, justifyContent: "center", flexWrap: "wrap" }}>
                 {distressCallEnabled && newAssignmentId && (
                   <button onClick={() => router.push(`/teacher/live-ops-board?assignmentId=${newAssignmentId}`)} className="gc-btn" style={{ background: "#0D1B2A", color: COLORS.white, borderRadius: 999, padding: "11px 20px", fontWeight: 700, fontSize: 13.5 }}>📡 Project on Live Ops Board</button>
+                )}
+                {selectedCase?.engine === "relay_station" && /\.TRACK$/.test(selectedCase.standard || "") && (
+                  <button onClick={() => router.push(`/teacher/typing-track?classId=${assignClassId}`)} className="gc-btn" style={{ background: "#0D1B2A", color: COLORS.white, borderRadius: 999, padding: "11px 20px", fontWeight: 700, fontSize: 13.5 }}>⌨️ Open Typing Track Board</button>
                 )}
                 {selectedCase?.engine === "signal_defense" && newAssignmentId && (
                   <button onClick={() => router.push(`/teacher/signal-ops-board?assignmentId=${newAssignmentId}`)} className="gc-btn" style={{ background: "#0D1B2A", color: COLORS.white, borderRadius: 999, padding: "11px 20px", fontWeight: 700, fontSize: 13.5 }}>Open Signal Ops Board</button>

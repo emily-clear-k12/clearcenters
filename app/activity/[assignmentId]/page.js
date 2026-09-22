@@ -132,6 +132,22 @@ export default async function ActivityPage({ params }) {
   const isRelayStation = engine === "relay_station";
   if (isRelayStation) {
     const lesson = getRelayStationLesson(assignment.case_standard);
+    // Foundations Track: progress belongs to the STUDENT (one row in
+    // relay_station_progress), so it carries across re-assignments/classes.
+    if (lesson && lesson.isTrack) {
+      const { data: trackProgress } = await supabaseAdmin
+        .from("relay_station_progress")
+        .select("current_level, level_results, completed_at")
+        .eq("student_id", studentId)
+        .maybeSingle();
+      return (
+        <RelayStationClient
+          assignmentId={assignmentId}
+          lesson={lesson}
+          trackProgress={trackProgress || null}
+        />
+      );
+    }
     if (lesson) {
       const { data: rsSubmission } = await supabaseAdmin
         .from("submissions")

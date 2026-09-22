@@ -78,6 +78,8 @@ export const NAV_GROUPS = [
       { label: "Student Progress", icon: "/teacher/nav_student_progress.png", href: "/teacher/progress" },
       { label: "Submissions", icon: "/teacher/nav_submissions.png", href: "/teacher/grade" },
       { label: "Reports", icon: "/teacher/nav_reports.png", href: "/teacher/reports" },
+      // Sept 22 2026 — Relay Station Foundations Track board (typing).
+      { label: "Typing Track", icon: "/teacher/nav_student_progress.png", href: "/teacher/typing-track" },
     ],
   },
   {
