@@ -23,9 +23,11 @@ import { getAssemblyDeckPublicCase, getRound, CHALLENGE } from "../../../../lib/
 
 const CRYSTALS = { base: 3, cleanBuild: 2, cleanRejects: 2, cleanAssembly: 1, trapCaught: 2 };
 
-async function gradeExplanation(serverCase, text) {
+async function gradeExplanation(serverCase, text, grade) {
   const rubric = (serverCase.mustInclude || []).map((m) => "  - " + m).join("\n");
-  const youngReader = /^(ELA\.3|3)\./.test(serverCase.standard || "");
+  // Read the grade off the case, not off the code — SS.3.* and MA.3.* are
+  // third graders too, and a regex on the standard would miss them.
+  const readingLevel = grade === 3 ? "third" : grade === 4 ? "fourth" : "fifth";
   const prompt = `You are grading an elementary student's short written explanation from ClearCenters' Assembly Deck. The student assembled several paragraphs out of sentence tiles, deliberately left some sentences in the tray, and is now explaining why those sentences did not belong. Score 0/1/2 against the rubric. Respond with ONLY a JSON object like {"score": 0, "glows": ["...", "..."], "grow": "...", "rationale": "..."} — no other text, no markdown, no code fence.
 
 Case: ${serverCase.title}
@@ -35,7 +37,7 @@ Model answer (one acceptable version, not the only one): ${serverCase.modelAnswe
 Pedagogical context: ${serverCase.aiContext || "(none)"}
 
 A 2 meets every line of the rubric in the student's own words. A 1 meets part of it. A 0 misses most of it or shows a real misunderstanding.
-"glows" are two specific, warm things the student actually did, written to the student as "you". "grow" is ONE concrete next step, also written to the student. Keep each under 20 words at a ${youngReader ? "third" : "fourth-to-fifth"}-grade reading level. "rationale" is 1-2 sentences for the teacher. Never mention scores or rubrics to the student.
+"glows" are two specific, warm things the student actually did, written to the student as "you". "grow" is ONE concrete next step, also written to the student. Keep each under 20 words at a ${readingLevel}-grade reading level, in short sentences. "rationale" is 1-2 sentences for the teacher. Never mention scores or rubrics to the student.
 
 Student's explanation:
 ${text || "(nothing written)"}`;
@@ -128,7 +130,7 @@ export async function POST(request) {
 
   // --- submit: regrade everything from the client's boards, then one AI call
   const graded = gradeCase(serverCase, { boards: boards || {}, rejections: rejections || {}, assembly: assembly || {} });
-  const ai = await gradeExplanation(serverCase, explanation);
+  const ai = await gradeExplanation(serverCase, explanation, publicCase.grade);
   const attempts = Math.max(1, Math.floor(Number(attempt) || 1));
   const crystals =
     CRYSTALS.base +

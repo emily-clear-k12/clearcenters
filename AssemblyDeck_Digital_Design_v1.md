@@ -119,6 +119,24 @@ A perfect challenge run with the trap caught pays 13 crystals; a quiet ordinary 
 
 ---
 
+## 5.6 · Reading level — grade 3 has to read like grade 3
+
+Every case's student-facing text is gated against its grade band before it ships (`tools/assembly-deck-gradecheck.cjs`). Flesch-Kincaid is measured twice: once on the sentences the student actually sorts, and once on everything else on screen (brief, source card, prompts, the notes that come back, the protest lines, the requester's reply).
+
+| Grade | FK band | Avg sentence | Longest single sentence |
+|---|---|---|---|
+| 3 | 2.0 – 4.2 | ≤ 11 words | ≤ 16 words |
+| 4 | 3.5 – 5.6 | ≤ 14 words | ≤ 21 words |
+| 5 | 5.0 – 7.2 | ≤ 16 words | ≤ 25 words |
+
+There is a **floor** as well as a ceiling: a grade-5 case that reads at 3.5 isn't on grade either. The gate also fails if the grades stop separating — each grade's average has to sit at least 0.8 above the one below it.
+
+The Wave 1 six were written before this gate existed and all six failed it (grade 3 was reading at 4.6–5.2, and the Lewis and Clark case at 8.6). They were rewritten sentence by sentence on Sept 22; the six now read 3.1 / 3.1 / 4.5 / 4.8 / 6.0 / 6.6, separating 3.1 → 4.7 → 6.3 across the grades. Target vocabulary — *erosion*, *deposition*, *property*, *scarcity* — is exempt from the word-length pressure: those words are the lesson, and the sentences around them carry the load instead.
+
+S.A.M.'s written feedback takes its reading level from the case's `grade` field, not from a pattern on the standard code, so `SS.3.*` and `MA.3.*` get third-grade phrasing too.
+
+---
+
 ## 6 · Grading
 
 - **Build score** — correct pieces in correct slots, out of the total. Attempt 1 counts; attempt 2 is recorded but capped (matches the other engines' second-attempt handling).
