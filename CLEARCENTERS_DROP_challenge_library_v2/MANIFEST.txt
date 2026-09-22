@@ -1,0 +1,25 @@
+ClearCenters — Challenge Library ship tiles (APPROVED)
+One extract → commit → push
+
+HOW TO USE (GitHub Desktop):
+1. Download CLEARCENTERS_DROP_challenge_library_v2.tar.gz
+2. Extract INTO your clearcenters repo root
+   (same folder that already has public/ and package.json)
+3. GitHub Desktop will show the changed files under public/
+4. Commit message suggestion:
+   "Challenge Library: bright ship tiles for Relay, Frequency Rush, Signal Check, Signal Ops"
+5. Push → Vercel deploys
+
+FILES:
+  public/teacher/challenges/relay_station.jpg      Relay Station (RS-2)
+  public/teacher/challenges/frequency_rush.jpg     Frequency Rush
+  public/teacher/challenges/signal_check.jpg       Signal Check (new name)
+  public/teacher/challenges/signal_ops.jpg         Signal Ops (new name)
+  public/teacher/challenges/fact_check_desk.jpg    Signal Check (legacy filename)
+  public/teacher/challenges/signal_defense.jpg     Signal Ops (legacy filename)
+  public/relay/station_hero.jpg                    Relay room hero
+
+NOTES:
+- Overwrites only the files listed above.
+- signal_check.jpg / signal_ops.jpg are extra copies so either naming works.
+- If UI still shows old dark cards after deploy, hard-refresh or purge CDN cache.
