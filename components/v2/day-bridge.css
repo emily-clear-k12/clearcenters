@@ -681,3 +681,87 @@ dialog:has(#day-lesson-detail)::backdrop {
   background: rgba(25, 16, 53, 0.3);
   backdrop-filter: blur(3px);
 }
+
+/* Subject light frames: blue / red / green / yellow. Status remains text-labeled. */
+.day-bridge [data-subject="math"] {
+  --subject-light: #459aff;
+  --subject-rgb: 69, 154, 255;
+  --subject-ink: #2460a8;
+}
+.day-bridge [data-subject="elar"] {
+  --subject-light: #ff5964;
+  --subject-rgb: 255, 89, 100;
+  --subject-ink: #b12e3a;
+}
+.day-bridge [data-subject="science"] {
+  --subject-light: #39d97a;
+  --subject-rgb: 57, 217, 122;
+  --subject-ink: #207848;
+}
+.day-bridge [data-subject="social"] {
+  --subject-light: #ffdd40;
+  --subject-rgb: 255, 221, 64;
+  --subject-ink: #806511;
+}
+.db-hero[data-subject] {
+  border-color: transparent;
+  box-shadow:
+    0 0 0 2.5px var(--subject-light),
+    0 0 22px rgba(var(--subject-rgb), 0.47),
+    0 10px 30px rgba(57, 34, 108, 0.12);
+}
+.db-hero[data-subject] .db-now {
+  background: rgba(var(--subject-rgb), 0.13);
+  color: var(--subject-ink);
+}
+.db-hero[data-subject] .db-lesson-art {
+  background: radial-gradient(
+    circle at 40% 30%,
+    #fff,
+    rgba(var(--subject-rgb), 0.2)
+  );
+  color: var(--subject-ink);
+}
+.db-hero[data-subject] .db-next {
+  background:
+    linear-gradient(
+      rgba(var(--subject-rgb), 0.055),
+      rgba(var(--subject-rgb), 0.055)
+    ),
+    #fff;
+  border-top-color: rgba(var(--subject-rgb), 0.25);
+}
+.db-timeline li[data-subject] .db-timeline-item {
+  border-color: transparent;
+  box-shadow:
+    0 0 0 2px var(--subject-light),
+    0 0 14px rgba(var(--subject-rgb), 0.4),
+    0 6px 18px rgba(57, 34, 108, 0.06);
+}
+.db-timeline li[data-subject][data-status="Now"] .db-timeline-item {
+  background:
+    linear-gradient(
+      rgba(var(--subject-rgb), 0.055),
+      rgba(var(--subject-rgb), 0.055)
+    ),
+    #fff;
+  border-color: transparent;
+  box-shadow:
+    0 0 0 2.5px var(--subject-light),
+    0 0 22px rgba(var(--subject-rgb), 0.47);
+}
+.db-timeline li[data-subject] .db-status {
+  color: var(--subject-ink);
+}
+.db-timeline li[data-subject][data-status="Now"] .db-timeline-dot {
+  background: var(--subject-light);
+  border-color: var(--subject-light);
+  box-shadow: 0 0 7px rgba(var(--subject-rgb), 0.35);
+}
+.db-subjects button[data-subject] {
+  color: var(--subject-ink);
+}
+.db-subjects button[data-subject][aria-pressed="true"] {
+  background: rgba(var(--subject-rgb), 0.13);
+  box-shadow: inset 0 -2px var(--subject-light);
+}

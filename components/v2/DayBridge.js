@@ -141,7 +141,11 @@ export default function DayBridge({
       </header>
       <div className="db-layout">
         <div className="db-teaching">
-          <section className="db-hero db-surface" aria-label="Current lesson">
+          <section
+            className="db-hero db-surface"
+            data-subject={current?.subject}
+            aria-label="Current lesson"
+          >
             <div className="db-periods" aria-label="Choose class">
               {p.setup.classes.map((c) => (
                 <button
@@ -160,7 +164,10 @@ export default function DayBridge({
                 <div className="db-hero-content">
                   <div className="db-hero-copy">
                     <span className="db-now">NOW</span>
-                    <p className="db-subject" style={{ color: subject?.color }}>
+                    <p
+                      className="db-subject"
+                      style={{ color: "var(--subject-ink)" }}
+                    >
                       {subject?.name}
                       {current.standard ? ` · ${current.standard}` : ""}
                     </p>
@@ -282,6 +289,7 @@ export default function DayBridge({
                   <button
                     type="button"
                     key={key}
+                    data-subject={key}
                     aria-pressed={p.subjectFilter === key}
                     onClick={() => p.setSubjectFilter(key)}
                   >
@@ -300,7 +308,7 @@ export default function DayBridge({
                       ? "Next"
                       : "Later";
                 return (
-                  <li key={a.id} data-status={status}>
+                  <li key={a.id} data-status={status} data-subject={a.subject}>
                     <span className="db-timeline-dot" aria-hidden="true">
                       {status === "Completed" && <Check size={12} />}
                     </span>
