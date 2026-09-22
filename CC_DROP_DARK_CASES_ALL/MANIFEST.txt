@@ -1,0 +1,12 @@
+ClearCenters dark case thumbs fix v1 — MOCKUP / pending approval
+Total replaced: 122 cases with brightness < 110
+
+Category mapping:
+  FR  (29) → Frequency Rush family (3 styles rotated)
+  RS  (31) → Relay Station family (3 styles rotated)
+  GEN (62) → general ship rooms (12 styles rotated)
+    (SS social-studies, plain TEKS, BN, etc.)
+
+Does NOT touch already-bright MM/SL/SC/SD case files.
+
+Extract into repo root → public/cases/*.jpg overwrites only listed dark files.
