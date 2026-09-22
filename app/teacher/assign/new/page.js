@@ -79,6 +79,16 @@ const CHALLENGE_TYPES = [
     description: "Students gather their own evidence from the scene, then build and produce a report — headline, script, and all — before it airs." },
 ];
 
+// A case with no thumbnail file used to render a broken-image icon — as of
+// Sept 22, 2026 that is 100 real cases (94 Relay Station + 6 Assembly Deck),
+// and every future case is in the same state until its art is generated.
+// Hide the image and tint the frame instead, so an art-less case reads as a
+// plain card rather than a bug.
+function thumbFallback(e) {
+  const img = e.currentTarget;
+  img.style.display = "none";
+  if (img.parentElement) img.parentElement.style.background = "linear-gradient(135deg, #8C52F2 0%, #4DD6FF 100%)";
+}
 function caseImagePath(standard) {
   return `/cases/${standard.replace(/\./g, "-")}.jpg`;
 }
@@ -404,7 +414,7 @@ function NewAssignmentContent() {
                       {[...CHALLENGE_TYPES].sort((a, b) => Number(b.real) - Number(a.real)).map((ch) => (
                         <button key={ch.key} className="gc-btn" disabled={!ch.real} onClick={() => { setSelectedChallenge(ch); setChallengeStep("gradeSubject"); }} style={{ position: "relative", borderRadius: 12, overflow: "hidden", border: `1px solid ${COLORS.border}`, padding: 0, textAlign: "left", opacity: ch.real ? 1 : 0.7, cursor: ch.real ? "pointer" : "default", background: COLORS.white }}>
                           <div style={{ position: "relative", height: 110 }}>
-                            <img src={ch.image} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block", filter: ch.real ? "none" : "grayscale(0.3)" }} />
+                            <img src={ch.image} alt="" onError={thumbFallback} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block", filter: ch.real ? "none" : "grayscale(0.3)" }} />
                             {!ch.real && <span style={{ position: "absolute", top: 6, right: 6, fontSize: 9.5, fontWeight: 700, background: "rgba(255,255,255,.92)", color: COLORS.textMuted, padding: "2px 8px", borderRadius: 999 }}>Coming Soon</span>}
                           </div>
                           <div style={{ padding: "8px 10px 2px 10px", fontSize: 12.5, fontWeight: 700, color: COLORS.textDark }}>{ch.label}</div>
@@ -461,7 +471,7 @@ function NewAssignmentContent() {
                           }}
                         >
                           <span style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 26, fontWeight: 800, color: "#3B2A7A", letterSpacing: .3 }}>{s.v}</span>
-                          <img src={s.img} alt={s.v} onError={(e) => { e.currentTarget.style.display = "none"; }} style={{ position: "relative", width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+                          <img src={s.img} alt={s.v} onError={thumbFallback} style={{ position: "relative", width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
                         </button>
                       ))}
                     </div>
@@ -532,7 +542,7 @@ function NewAssignmentContent() {
                         return (
                           <button key={c.standard} className="gc-btn" onClick={() => { setSelectedCase(c); }} style={{ textAlign: "left", background: isSelected ? `${ACCENT}15` : COLORS.white, border: isSelected ? `2px solid ${ACCENT}` : "2px solid transparent", borderRadius: 14, overflow: "hidden", padding: 0, boxShadow: "0 2px 8px rgba(13,27,42,.05)" }}>
                             <div style={{ height: 88, overflow: "hidden" }}>
-                              <img src={caseImagePath(c.standard)} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+                              <img src={caseImagePath(c.standard)} alt="" onError={thumbFallback} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
                             </div>
                             <div style={{ padding: "10px 12px 12px 12px" }}>
                               <div style={{ fontSize: 13, fontWeight: 700, lineHeight: 1.3, marginBottom: 4, color: COLORS.textDark }}>{c.title}</div>
@@ -561,7 +571,7 @@ function NewAssignmentContent() {
                 <div style={panelStyle(ACCENT, { padding: 16 })}>
                   <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
                     <div style={{ width: 40, height: 40, borderRadius: 8, overflow: "hidden", flexShrink: 0 }}>
-                      <img src={caseImagePath(selectedCase.standard)} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                      <img src={caseImagePath(selectedCase.standard)} alt="" onError={thumbFallback} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                     </div>
                     <div>
                       <div style={{ fontSize: 14, fontWeight: 700, color: COLORS.textDark }}>{selectedCase.title}</div>

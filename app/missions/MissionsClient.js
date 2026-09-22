@@ -18,6 +18,16 @@ const COLORS = {
   textMuted: "#8892A6",
 };
 
+// A case with no thumbnail file used to render a broken-image icon — as of
+// Sept 22, 2026 that is 100 real cases (94 Relay Station + 6 Assembly Deck),
+// and every future case is in the same state until its art is generated.
+// Hide the image and tint the frame instead, so an art-less case reads as a
+// plain card rather than a bug.
+function thumbFallback(e) {
+  const img = e.currentTarget;
+  img.style.display = "none";
+  if (img.parentElement) img.parentElement.style.background = "linear-gradient(135deg, #8C52F2 0%, #4DD6FF 100%)";
+}
 function caseImagePath(standard) {
   return `/cases/${standard.replace(/\./g, "-")}.jpg`;
 }
@@ -276,7 +286,7 @@ export default function MissionsClient({ student, assignments }) {
               >
                 <div style={{ width: cardW, borderRadius: 14, overflow: "hidden", background: "rgba(255,255,255,.94)", boxShadow: shadow, display: "flex", flexDirection: "column" }}>
                   <div style={{ position: "relative", height: imgH }}>
-                    <img src={caseImagePath(mission.case_standard)} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+                    <img src={caseImagePath(mission.case_standard)} alt="" onError={thumbFallback} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
                     {mission.revisionRequested && (
                       <div title="Sent back for revision" style={{ position: "absolute", top: 4, left: 4, width: Math.round(18 * slot.scale), height: Math.round(18 * slot.scale), borderRadius: "50%", background: COLORS.gold, boxShadow: "0 2px 6px rgba(0,0,0,.3)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: Math.round(10 * slot.scale) }}>
                         ⭐
@@ -323,7 +333,7 @@ export default function MissionsClient({ student, assignments }) {
               }}
             >
               <div style={{ width: "100%", aspectRatio: "16/7", overflow: "hidden" }}>
-                <img src={caseImagePath(selected.case_standard)} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+                <img src={caseImagePath(selected.case_standard)} alt="" onError={thumbFallback} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
               </div>
               <div style={{ padding: "12px 16px 16px" }}>
                 <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 8 }}>
@@ -413,7 +423,7 @@ export default function MissionsClient({ student, assignments }) {
                     }}
                   >
                     <div style={{ position: "relative", width: 40, height: 40, borderRadius: 9, overflow: "hidden", flexShrink: 0 }}>
-                      <img src={caseImagePath(mission.case_standard)} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+                      <img src={caseImagePath(mission.case_standard)} alt="" onError={thumbFallback} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
                       {mission.revisionRequested && (
                         <div style={{ position: "absolute", top: 1, left: 1, width: 14, height: 14, borderRadius: "50%", background: COLORS.gold, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 8 }}>⭐</div>
                       )}
