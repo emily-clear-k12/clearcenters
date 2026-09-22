@@ -56,6 +56,11 @@ const CHALLENGE_TYPES = [
     description: "Students race the clock to lock onto the right definition before the signal scrambles — fast vocabulary review with streaks and speed bonuses, replayable anytime as practice." },
   { key: "signal_defense", label: "Signal Ops", image: "/teacher/challenges/signal_defense.jpg", real: true,
     description: "The whole class defends one shared base together — answering review questions to keep power, health, and salvage up before the next wave hits." },
+  // Sept 22, 2026 — Relay Station, the typing center (design doc:
+  // claude/RelayStation_Digital_Design_v1.md). Tile art is an SVG
+  // placeholder until Emily's batched image upload replaces it with a .jpg.
+  { key: "relay_station", label: "Relay Station", image: "/teacher/challenges/relay_station.svg", real: true,
+    description: "Typing practice with a purpose: students relay incoming transmissions letter for letter — home-row drills up through vocabulary, conversations, paragraphs, and friendly letters — with stars for accuracy and speed." },
   // Coming soon — kept below live tiles (Assign library sorts real:true first as well).
   { key: "repair_desk", label: "Repair Desk", image: "/teacher/challenges/repair_desk.jpg", real: false,
     description: "A broken ticket arrives — a flawed diagram, model, or work sample. Students diagnose what's wrong, fix it, and explain the fix to whoever sent it in." },

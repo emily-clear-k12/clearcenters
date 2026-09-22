@@ -6,12 +6,14 @@ import { getSignalCheckPublicCase } from "../../../lib/cases/signal-check/index.
 import { getMissionMapPublicCase } from "../../../lib/cases/mission-map/index.public";
 import { getSimulationLabPublicCase } from "../../../lib/cases/simulation-lab/index.public";
 import { getSignalDefensePublicCase } from "../../../lib/cases/signal-defense/index.public";
+import { getRelayStationLesson } from "../../../lib/cases/relay-station";
 import ActivityClient from "./ActivityClient";
 import SignalCheckClient from "./SignalCheckClient";
 import MissionMapClient from "./MissionMapClient";
 import SimulationLabClient from "./SimulationLabClient";
 import FrequencyRushClient from "./FrequencyRushClient";
 import SignalDefenseClient from "./SignalDefenseClient";
+import RelayStationClient from "./RelayStationClient";
 
 export default async function ActivityPage({ params }) {
   const { assignmentId } = params;
@@ -120,6 +122,31 @@ export default async function ActivityPage({ params }) {
         studentFirstName={student.first_name || null}
       />
     );
+  }
+  // Relay Station (typing center) — its own branch, added Sept 22 2026 in the
+  // same pass as the engine itself (same lesson as Mission Map's missing
+  // branch below). Lessons live in lib/cases/relay-station/index.js (no
+  // public/server split — the text IS the answer). Early-returns before the
+  // shared alreadySubmitted gating: a student who reopens a finished lesson
+  // can always retry for more stars; the submit route keeps the best run.
+  const isRelayStation = engine === "relay_station";
+  if (isRelayStation) {
+    const lesson = getRelayStationLesson(assignment.case_standard);
+    if (lesson) {
+      const { data: rsSubmission } = await supabaseAdmin
+        .from("submissions")
+        .select("relay_station_data")
+        .eq("assignment_id", assignmentId)
+        .eq("student_id", studentId)
+        .maybeSingle();
+      return (
+        <RelayStationClient
+          assignmentId={assignmentId}
+          lesson={lesson}
+          existingBest={rsSubmission?.relay_station_data?.best || null}
+        />
+      );
+    }
   }
   // Mission Map's own branch — this was missing entirely until Sept 1, 2026,
   // which meant every Mission Map assignment (3.1-MM, 4.1-MM, 5.1-MM) fell
