@@ -122,6 +122,9 @@ function AssemblyDeckContent() {
             {data && data.totals && (
               <div style={{ fontSize: 13, color: COLORS.textMuted }}>
                 {data.totals.builds} build{data.totals.builds === 1 ? "" : "s"} from {data.totals.students} of {data.totals.ofClass} students
+                {data.totals.pinpoint && data.totals.pinpoint.total > 0 && (
+                  <> · debrief {data.totals.pinpoint.correct + data.totals.quickCheck.correct}/{data.totals.pinpoint.total + data.totals.quickCheck.total}</>
+                )}
               </div>
             )}
           </div>
@@ -213,6 +216,12 @@ function AssemblyDeckContent() {
                         <div style={{ marginTop: 10, paddingTop: 10, borderTop: `1px solid ${ACCENT}22`, fontSize: 13.5, color: COLORS.textMuted, lineHeight: 1.7 }}>
                           <div>Sentences placed correctly: <strong style={{ color: COLORS.textDark }}>{s.placement.correct}/{s.placement.total}</strong> · paragraph order: <strong style={{ color: COLORS.textDark }}>{s.assembly.correct}/{s.assembly.total}</strong></div>
                           <div>Editor&apos;s Trap caught: <strong style={{ color: COLORS.textDark }}>{s.traps.caught}/{s.traps.offered}</strong>{s.challenge ? ` · ran Chief's Challenge ${s.challenge}×` : ""}</div>
+                          {s.debrief && (s.debrief.pinpoint.asked > 0 || s.debrief.quickCheck.asked > 0) && (
+                            <div>
+                              Debrief — found the sentence: <strong style={{ color: COLORS.textDark }}>{s.debrief.pinpoint.correct}/{s.debrief.pinpoint.asked}</strong>
+                              {" · "}multiple choice: <strong style={{ color: COLORS.textDark }}>{s.debrief.quickCheck.correct}/{s.debrief.quickCheck.asked}</strong>
+                            </div>
+                          )}
                           {missed.length
                             ? <div>Keeps missing: {missed.map(([k, n]) => `${labelFor(k)} (${n}×)`).join(", ")}</div>
                             : <div style={{ color: COLORS.success }}>Named every leftover correctly.</div>}

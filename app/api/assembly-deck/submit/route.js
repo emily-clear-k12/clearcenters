@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { supabaseAdmin } from "../../../../lib/supabaseAdmin";
 import { callClaude, extractJSON } from "../../../../lib/anthropic";
-import { getAssemblyDeckServerCase, gradeRound, gradeRejections, gradeAssembly, gradeCase, trapSentences, trapVerdict, requesterReply } from "../../../../lib/cases/assembly-deck/index.server";
+import { getAssemblyDeckServerCase, gradeRound, gradeRejections, gradeAssembly, gradeCase, gradePinpoint, gradeQuickCheck, trapSentences, trapVerdict, requesterReply } from "../../../../lib/cases/assembly-deck/index.server";
 import { getAssemblyDeckPublicCase, getRound, CHALLENGE } from "../../../../lib/cases/assembly-deck/index.public";
 
 // Assembly Deck (design doc §6). Four kinds of traffic:
@@ -15,23 +15,33 @@ import { getAssemblyDeckPublicCase, getRound, CHALLENGE } from "../../../../lib/
 //                 finished paragraph. Sent as plain text with no ids, so the
 //                 payload cannot give the intruder away.
 //   "trapAnswer" -> grade the sentence the student tapped, by position.
+//   "pinpoint" -> Chief's Debrief question one: the student taps one sentence
+//                 in the report they assembled. Graded by piece id.
+//   "quickCheck" -> Chief's Debrief question two: one multiple-choice question
+//                 on the standard.
 //   "submit"   -> the whole case, regraded server-side from the boards the
 //                 client sends, plus ONE Claude call on the written
 //                 explanation. Crystals and the submission land here.
 // The keys never leave this file's imports, so a student reading the page
 // source sees the sentences but never which slot they belong in.
 
-const CRYSTALS = { base: 3, cleanBuild: 2, cleanRejects: 2, cleanAssembly: 1, trapCaught: 2 };
+const CRYSTALS = { base: 3, cleanBuild: 2, cleanRejects: 2, cleanAssembly: 1, trapCaught: 2, pinpoint: 1, quickCheck: 1 };
 
-async function gradeExplanation(serverCase, text, grade) {
+async function gradeExplanation(serverCase, publicCase, text, grade) {
   const rubric = (serverCase.mustInclude || []).map((m) => "  - " + m).join("\n");
   // Read the grade off the case, not off the code — SS.3.* and MA.3.* are
   // third graders too, and a regex on the standard would miss them.
   const readingLevel = grade === 3 ? "third" : grade === 4 ? "fourth" : "fifth";
-  const prompt = `You are grading an elementary student's short written explanation from ClearCenters' Assembly Deck. The student assembled several paragraphs out of sentence tiles, deliberately left some sentences in the tray, and is now explaining why those sentences did not belong. Score 0/1/2 against the rubric. Respond with ONLY a JSON object like {"score": 0, "glows": ["...", "..."], "grow": "...", "rationale": "..."} — no other text, no markdown, no code fence.
+  // The question the student was actually asked comes from the case, not from
+  // this file. It used to be hard-coded as "why did you leave those sentences
+  // out" — the last question is now about the report itself, and it differs
+  // per case.
+  const asked = ((publicCase || {}).explain || {}).prompt || "(see rubric)";
+  const prompt = `You are grading an elementary student's short written answer from ClearCenters' Assembly Deck. The student built a multi-paragraph report out of sentence tiles, sorted out the sentences that did not belong, put the paragraphs in order, and has now been asked one last written question about what they built. Score 0/1/2 against the rubric. Respond with ONLY a JSON object like {"score": 0, "glows": ["...", "..."], "grow": "...", "rationale": "..."} — no other text, no markdown, no code fence.
 
 Case: ${serverCase.title}
-A strong explanation:
+The question the student was asked: ${asked}
+A strong answer:
 ${rubric}
 Model answer (one acceptable version, not the only one): ${serverCase.modelAnswer || "(none provided)"}
 Pedagogical context: ${serverCase.aiContext || "(none)"}
@@ -39,7 +49,7 @@ Pedagogical context: ${serverCase.aiContext || "(none)"}
 A 2 meets every line of the rubric in the student's own words. A 1 meets part of it. A 0 misses most of it or shows a real misunderstanding.
 "glows" are two specific, warm things the student actually did, written to the student as "you". "grow" is ONE concrete next step, also written to the student. Keep each under 20 words at a ${readingLevel}-grade reading level, in short sentences. "rationale" is 1-2 sentences for the teacher. Never mention scores or rubrics to the student.
 
-Student's explanation:
+Student's answer:
 ${text || "(nothing written)"}`;
   try {
     const raw = await callClaude({ messages: [{ role: "user", content: prompt }], max_tokens: 400 });
@@ -61,11 +71,16 @@ function summarizeForHumans(publicCase, graded, explanation, attempts, challenge
     const label = ((publicCase.rounds || []).find((x) => x.id === r.id) || {}).label || r.id;
     return `  ${label}: ${r.build.correct}/${r.build.total} placed, ${r.rejects.correct}/${r.rejects.total} leftovers explained`;
   });
+  const debrief = [
+    graded.pinpoint ? `Pinpoint (tap the sentence that…): ${graded.pinpoint.correct ? "correct" : "missed"}` : null,
+    graded.quickCheck ? `Quick check (multiple choice): ${graded.quickCheck.correct ? "correct" : `chose ${graded.quickCheck.choiceId || "nothing"}, key ${graded.quickCheck.key}`}` : null,
+  ].filter(Boolean);
   return [
     `Assembly Deck (${publicCase.title}) — ${graded.placement.correct}/${graded.placement.total} sentences placed, ${graded.decoys.correct}/${graded.decoys.total} leftovers correctly explained, paragraph order ${graded.assembly.correct}/${graded.assembly.total}.`,
     ...rounds,
+    ...(debrief.length ? [`  ${debrief.join(" · ")}`] : []),
     `Boards checked ${attempts} time(s).${challenge ? " Ran Chief's Challenge (no hints, no reveal)." : ""}${trapCaught ? " Caught the Editor's Trap." : ""}`,
-    `Explanation: ${explanation || "(nothing written)"}`,
+    `Written answer: ${explanation || "(nothing written)"}`,
   ].join("\n");
 }
 
@@ -123,14 +138,36 @@ export async function POST(request) {
     return NextResponse.json(verdict);
   }
 
+  if (action === "pinpoint") {
+    const g = gradePinpoint(serverCase, body.pinpointPieceId);
+    if (!g) return NextResponse.json({ error: "This case has no debrief yet." }, { status: 404 });
+    // Only the verdict and the note for the answer given go back. The accept
+    // list stays here, or a second attempt would be free.
+    return NextResponse.json({ correct: g.correct, why: g.why });
+  }
+
+  if (action === "quickCheck") {
+    const g = gradeQuickCheck(serverCase, body.quickCheckChoiceId);
+    if (!g) return NextResponse.json({ error: "This case has no debrief yet." }, { status: 404 });
+    // A wrong answer is told what was wrong with the choice it made and then
+    // what the right one was — the key only travels once it has been answered.
+    return NextResponse.json({ correct: g.correct, why: g.why, key: g.key, keyWhy: g.keyWhy });
+  }
+
   if (action === "assembly") {
     const g = gradeAssembly(serverCase, assembly || {});
     return NextResponse.json({ results: g.results, correct: g.correct, total: g.total, perfect: g.perfect, note: g.perfect ? serverCase.assemblyNote || null : null });
   }
 
   // --- submit: regrade everything from the client's boards, then one AI call
-  const graded = gradeCase(serverCase, { boards: boards || {}, rejections: rejections || {}, assembly: assembly || {} });
-  const ai = await gradeExplanation(serverCase, explanation, publicCase.grade);
+  const graded = gradeCase(serverCase, {
+    boards: boards || {},
+    rejections: rejections || {},
+    assembly: assembly || {},
+    pinpointPieceId: body.pinpointPieceId,
+    quickCheckChoiceId: body.quickCheckChoiceId,
+  });
+  const ai = await gradeExplanation(serverCase, publicCase, explanation, publicCase.grade);
   const attempts = Math.max(1, Math.floor(Number(attempt) || 1));
   const crystals =
     CRYSTALS.base +
@@ -138,6 +175,8 @@ export async function POST(request) {
     (graded.rejectPerfect ? CRYSTALS.cleanRejects : 0) +
     (graded.assemblyPerfect ? CRYSTALS.cleanAssembly : 0) +
     (trapCaught ? CRYSTALS.trapCaught : 0) +
+    (graded.pinpoint && graded.pinpoint.correct ? CRYSTALS.pinpoint : 0) +
+    (graded.quickCheck && graded.quickCheck.correct ? CRYSTALS.quickCheck : 0) +
     (challenge ? CHALLENGE.bonusCrystals : 0);
   const reply = requesterReply(serverCase, graded, trapCaught);
 
@@ -155,6 +194,8 @@ export async function POST(request) {
       placement: { ...graded.placement, perfect: graded.buildPerfect },
       decoys: { ...graded.decoys, perfect: graded.rejectPerfect },
       assemblyScore: { correct: graded.assembly.correct, total: graded.assembly.total, perfect: graded.assemblyPerfect },
+      pinpoint: graded.pinpoint ? { pieceId: graded.pinpoint.pieceId, correct: graded.pinpoint.correct } : null,
+      quickCheck: graded.quickCheck ? { choiceId: graded.quickCheck.choiceId, correct: graded.quickCheck.correct, key: graded.quickCheck.key } : null,
       rounds: graded.rounds.map((r) => ({ id: r.id, build: { correct: r.build.correct, total: r.build.total }, rejects: { correct: r.rejects.correct, total: r.rejects.total } })),
       explanation: explanation || "",
       glows: ai.glows,
@@ -202,6 +243,8 @@ export async function POST(request) {
     placement: graded.placement,
     decoys: graded.decoys,
     assemblyScore: { correct: graded.assembly.correct, total: graded.assembly.total },
+    pinpoint: graded.pinpoint ? { correct: graded.pinpoint.correct } : null,
+    quickCheck: graded.quickCheck ? { correct: graded.quickCheck.correct } : null,
     assemblyNote: serverCase.assemblyNote || null,
     reply,
     challenge: !!challenge,

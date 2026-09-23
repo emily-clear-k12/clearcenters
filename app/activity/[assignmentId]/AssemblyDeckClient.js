@@ -3,10 +3,10 @@
 import { useState, useEffect, useMemo, useCallback, createContext, useContext } from "react";
 import SamGuide from "../../../components/SamGuide";
 import BackToHubButton from "../../../components/BackToHubButton";
-import { getRound, reasonChipsFor, rejectReason, roundSize, trayOrder, CHALLENGE } from "../../../lib/cases/assembly-deck/index.public";
+import { assembledReport, getRound, leftoversSoFar, reasonChipsFor, rejectReason, roundSize, trayOrder, CHALLENGE } from "../../../lib/cases/assembly-deck/index.public";
 
 // Assembly Deck — the student screen (design doc §3).
-// brief -> [build -> rejects] x rounds -> assembly -> trap -> explain -> done
+// brief -> [build -> rejects] x rounds -> assembly -> trap -> debrief -> explain -> done
 // Pieces move by TAP-then-TAP, never drag-only: tap a sentence, tap a slot.
 // Everything is a real <button>, so the whole engine works from a keyboard and
 // with a screen reader, and nothing here is timed.
@@ -86,6 +86,116 @@ function SourceCard({ source, open, onToggle }) {
         </ul>
       )}
     </div>
+  );
+}
+
+// ======================================================================
+// CASE FILE — openable from every working screen (Emily, Sept 22)
+// ======================================================================
+// A student cannot answer a question about the report they built if the report
+// has scrolled off three screens ago. The Case File is the whole record: the
+// notes they were given, the paragraphs they have finished, and — the part
+// that was missing — every sentence they left in the tray, with the reason
+// they gave for it. Read-only. It never shows an answer the student has not
+// already earned: a leftover's verdict appears only once that round has been
+// checked.
+function CaseFile({ publicCase, boards, rejections, rejectResults, onClose }) {
+  useEffect(() => {
+    const onKey = (e) => { if (e.key === "Escape") onClose(); };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onClose]);
+
+  const report = assembledReport(publicCase, boards, null);
+  const leftovers = leftoversSoFar(publicCase, boards, rejections);
+
+  return (
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-label="Case file"
+      style={{ position: "fixed", inset: 0, zIndex: 60, background: "rgba(4,8,16,0.82)", overflowY: "auto", padding: "24px 16px 80px", display: "flex", flexDirection: "column", alignItems: "center" }}
+    >
+      <Panel>
+        <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12, marginBottom: 14 }}>
+          <div>
+            <div style={{ fontSize: 12, letterSpacing: 2, color: THEME.teal, fontWeight: 700 }}>🗂️ CASE FILE</div>
+            <h2 style={{ fontSize: 22, margin: "6px 0 0" }}>{publicCase.title}</h2>
+          </div>
+          <button onClick={onClose} style={{ ...btn(THEME.violet), padding: "9px 16px", flexShrink: 0 }}>Close</button>
+        </div>
+
+        {publicCase.source && (
+          <div style={{ background: "rgba(255,255,255,0.05)", border: `1px solid ${THEME.border}`, borderRadius: 14, padding: "12px 14px", marginBottom: 14 }}>
+            <div style={{ fontSize: 11.5, letterSpacing: 1.4, fontWeight: 800, color: THEME.teal, marginBottom: 8 }}>📋 {publicCase.source.title}</div>
+            <ul style={{ margin: 0, paddingLeft: 20, color: THEME.muted, fontSize: 14.5, lineHeight: 1.75 }}>
+              {publicCase.source.lines.map((line, i) => <li key={i}>{line}</li>)}
+            </ul>
+          </div>
+        )}
+
+        <div style={{ fontSize: 11.5, letterSpacing: 1.4, fontWeight: 800, color: THEME.muted, marginBottom: 8 }}>PARAGRAPHS YOU HAVE BUILT</div>
+        {report.length ? (
+          report.map((para) => (
+            <div key={para.roundId} style={{ background: "rgba(123,93,255,0.1)", border: `1px solid ${THEME.border}`, borderRadius: 14, padding: "12px 14px", marginBottom: 10 }}>
+              <div style={{ fontSize: 13, fontWeight: 800, color: THEME.cursor, marginBottom: 6 }}>{para.label}</div>
+              <div style={{ fontSize: 15, lineHeight: 1.75 }}>{para.sentences.map((s) => s.text).join(" ")}</div>
+            </div>
+          ))
+        ) : (
+          <div style={{ color: THEME.dim, fontSize: 14, marginBottom: 14 }}>Nothing built yet.</div>
+        )}
+
+        <div style={{ fontSize: 11.5, letterSpacing: 1.4, fontWeight: 800, color: THEME.muted, margin: "18px 0 8px" }}>
+          SENTENCES YOU LEFT IN THE TRAY
+        </div>
+        {leftovers.length ? (
+          leftovers.map((group) => (
+            <div key={group.roundId} style={{ marginBottom: 12 }}>
+              <div style={{ fontSize: 13, fontWeight: 800, color: THEME.cursor, marginBottom: 6 }}>{group.label}</div>
+              {group.pieces.map((p) => {
+                const graded = ((rejectResults || {})[group.roundId] || []).find((r) => r.pieceId === p.pieceId) || null;
+                const chosen = rejectReason(p.reason);
+                return (
+                  <div key={p.pieceId} style={{ background: "rgba(255,255,255,0.05)", border: `1px solid ${graded ? (graded.correct ? THEME.done : THEME.error) : "transparent"}`, borderRadius: 12, padding: "10px 12px", marginBottom: 8 }}>
+                    <div style={{ fontSize: 14.5, lineHeight: 1.6 }}>{p.text}</div>
+                    {chosen && (
+                      <div style={{ marginTop: 6, fontSize: 13, color: graded ? (graded.correct ? THEME.done : THEME.error) : THEME.muted }}>
+                        {graded ? (graded.correct ? "✓ " : "✗ ") : ""}You said: {chosen.short}
+                      </div>
+                    )}
+                    {graded && !graded.correct && (
+                      <div style={{ marginTop: 4, fontSize: 13, color: THEME.muted }}>
+                        It was: {(rejectReason(graded.correctReason) || {}).short || graded.correctReason}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          ))
+        ) : (
+          <div style={{ color: THEME.dim, fontSize: 14 }}>Nothing left over yet — build a paragraph first.</div>
+        )}
+      </Panel>
+    </div>
+  );
+}
+
+function CaseFileButton({ onOpen }) {
+  return (
+    <button
+      onClick={onOpen}
+      aria-label="Open the case file"
+      style={{
+        position: "fixed", left: 14, bottom: 14, zIndex: 45,
+        background: THEME.panel, border: `1px solid ${THEME.border}`, borderRadius: 99,
+        padding: "11px 18px", color: THEME.text, fontSize: 14.5, fontWeight: 800,
+        fontFamily: "inherit", cursor: "pointer", boxShadow: "0 10px 30px rgba(0,0,0,0.4)",
+      }}
+    >
+      🗂️ Case file
+    </button>
   );
 }
 
@@ -317,7 +427,7 @@ function BuildRound({ publicCase, round, roundNumber, board, setBoard, onDone, s
 // ======================================================================
 // REJECTS — why didn't these belong?
 // ======================================================================
-function RejectRound({ publicCase, round, roundNumber, board, rejections, setRejections, onDone, challenge }) {
+function RejectRound({ publicCase, round, roundNumber, board, rejections, setRejections, onDone, onGraded, challenge }) {
   const say = useSay();
   const [feedback, setFeedback] = useState(null);
   const [busy, setBusy] = useState(false);
@@ -342,6 +452,8 @@ function RejectRound({ publicCase, round, roundNumber, board, rejections, setRej
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Couldn't check those.");
       setFeedback(data);
+      // Hand the verdicts up so the Case File can show them on later screens.
+      if (onGraded) onGraded(data.results);
       say(data.perfect ? "Both of them, exactly right. Listen to them complain." : "Read what each one really was — that is the skill.", data.perfect ? "celebrating" : "helping", 3500);
     } catch (e) {
       setErr(e.message);
@@ -526,7 +638,7 @@ function AssemblyRound({ publicCase, boards, assembly, setAssembly, onDone }) {
           {busy ? "Checking…" : feedback ? "Try this order" : "Check the order"}
         </button>
       ) : (
-        <button onClick={onDone} style={btn(THEME.violet)}>Last step: explain →</button>
+        <button onClick={onDone} style={btn(THEME.violet)}>One more thing →</button>
       )}
     </Panel>
   );
@@ -585,7 +697,7 @@ function TrapRound({ publicCase, boards, challenge, onDone }) {
         </p>
         <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
           <button onClick={() => setDared(true)} style={btn(THEME.cursor)}>Try me →</button>
-          <button onClick={onDone} style={{ ...btn("rgba(255,255,255,0.08)"), color: THEME.muted }}>Skip it</button>
+          <button onClick={() => onDone(false)} style={{ ...btn("rgba(255,255,255,0.08)"), color: THEME.muted }}>Skip it</button>
         </div>
       </Panel>
     );
@@ -630,9 +742,161 @@ function TrapRound({ publicCase, boards, challenge, onDone }) {
             <strong style={{ color: verdict.correct ? THEME.done : THEME.cursor }}>{verdict.correct ? "Caught it. +2 💎" : "That was one of yours."}</strong>
             <div style={{ marginTop: 6, color: THEME.muted }}>{verdict.why}</div>
           </div>
-          <button onClick={() => onDone(verdict.correct)} style={btn(THEME.violet)}>Last step: explain →</button>
+          <button onClick={() => onDone(verdict.correct)} style={btn(THEME.violet)}>On to the debrief →</button>
         </>
       )}
+    </Panel>
+  );
+}
+
+// ======================================================================
+// CHIEF'S DEBRIEF — tap the line, then one multiple choice (Emily, Sept 22)
+// ======================================================================
+// The case used to end on the leftovers twice: sort them three times, then
+// write about them. This screen asks about the report the student actually
+// built. Question one is a hotspot — every sentence in the finished report is
+// tappable. Question two is a single multiple choice on the standard. Question
+// two does not appear until question one has been answered, so the screen is
+// never a wall of questions.
+function Debrief({ publicCase, boards, assembly, pinpoint, setPinpoint, quick, setQuick, onDone }) {
+  const say = useSay();
+  const [picked, setPicked] = useState(null);
+  const [choice, setChoice] = useState(null);
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState(null);
+
+  const spec = publicCase.debrief || {};
+  const report = useMemo(() => assembledReport(publicCase, boards, assembly), [publicCase, boards, assembly]);
+
+  useEffect(() => { say("Debrief, Cadet. Two questions about the report you just built.", "thinking"); }, [say]);
+
+  async function ask(action, payload, setter, onOk) {
+    setBusy(true); setErr(null);
+    try {
+      const res = await fetch("/api/assembly-deck/submit", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ caseStandard: publicCase.standard, action, ...payload }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Couldn't check that.");
+      setter({ ...data, ...payload });
+      onOk(data);
+    } catch (e) { setErr(e.message); }
+    setBusy(false);
+  }
+
+  return (
+    <Panel>
+      <div style={{ fontSize: 12, letterSpacing: 2, color: THEME.teal, fontWeight: 700 }}>🔎 CHIEF&apos;S DEBRIEF</div>
+      <h2 style={{ fontSize: 21, margin: "6px 0 4px" }}>{spec.pinpoint ? spec.pinpoint.prompt : "Find it in your report."}</h2>
+      {spec.pinpoint && spec.pinpoint.hint && (
+        <p style={{ color: THEME.muted, fontSize: 14, margin: "0 0 14px" }}>{spec.pinpoint.hint}</p>
+      )}
+
+      <div style={{ display: "flex", flexDirection: "column", gap: 12, marginBottom: 18 }}>
+        {report.map((para) => (
+          <div key={para.roundId}>
+            <div style={{ fontSize: 11.5, letterSpacing: 1.2, fontWeight: 800, color: THEME.cursor, marginBottom: 6 }}>{para.label.toUpperCase()}</div>
+            {para.sentences.map((s) => {
+              const on = picked === s.pieceId;
+              const chosenAndWrong = pinpoint && pinpoint.pinpointPieceId === s.pieceId && !pinpoint.correct;
+              const chosenAndRight = pinpoint && pinpoint.pinpointPieceId === s.pieceId && pinpoint.correct;
+              return (
+                <button
+                  key={s.pieceId}
+                  disabled={!!pinpoint}
+                  onClick={() => setPicked(on ? null : s.pieceId)}
+                  aria-pressed={on}
+                  style={{
+                    display: "block", width: "100%", textAlign: "left", marginBottom: 6,
+                    background: chosenAndRight ? "rgba(57,217,122,0.2)" : chosenAndWrong ? "rgba(255,90,110,0.16)" : on ? "rgba(255,196,77,0.2)" : "rgba(255,255,255,0.06)",
+                    border: `1px solid ${chosenAndRight ? THEME.done : chosenAndWrong ? THEME.error : on ? THEME.cursor : "transparent"}`,
+                    borderRadius: 10, padding: "10px 12px", color: THEME.text, fontSize: 15, lineHeight: 1.6,
+                    fontFamily: "inherit", cursor: pinpoint ? "default" : "pointer",
+                  }}
+                >
+                  {chosenAndRight ? "✓ " : chosenAndWrong ? "✗ " : ""}{s.text}
+                </button>
+              );
+            })}
+          </div>
+        ))}
+      </div>
+
+      {pinpoint && pinpoint.why && (
+        <div style={{ background: pinpoint.correct ? "rgba(57,217,122,0.12)" : "rgba(255,255,255,0.05)", border: `1px solid ${pinpoint.correct ? THEME.done : THEME.border}`, borderRadius: 12, padding: "12px 14px", fontSize: 14.5, lineHeight: 1.7, marginBottom: 16 }}>
+          <strong style={{ color: pinpoint.correct ? THEME.done : THEME.cursor }}>{pinpoint.correct ? "That's the one. +1 💎" : "Not that one."}</strong>
+          <div style={{ marginTop: 6, color: THEME.muted }}>{pinpoint.why}</div>
+        </div>
+      )}
+
+      {!pinpoint && (
+        <button
+          onClick={() => ask("pinpoint", { pinpointPieceId: picked }, setPinpoint, (d) => say(d.correct ? "That is the sentence." : "Read my note — then look again at what that sentence actually says.", d.correct ? "celebrating" : "helping", 4000))}
+          disabled={!picked || busy}
+          style={btn(THEME.done, !picked || busy)}
+        >
+          {busy ? "Checking…" : "That sentence"}
+        </button>
+      )}
+
+      {/* question two only opens once question one is answered */}
+      {pinpoint && spec.quickCheck && (
+        <>
+          <div style={{ borderTop: `1px solid ${THEME.border}`, margin: "4px 0 16px" }} />
+          <div style={{ fontSize: 12, letterSpacing: 2, color: THEME.teal, fontWeight: 700 }}>QUESTION 2 OF 2</div>
+          <h2 style={{ fontSize: 20, margin: "6px 0 12px" }}>{spec.quickCheck.prompt}</h2>
+          <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 16 }}>
+            {spec.quickCheck.choices.map((c) => {
+              const on = choice === c.id;
+              const isKey = quick && quick.key === c.id;
+              const wrongPick = quick && quick.choiceId === c.id && !quick.correct;
+              return (
+                <button
+                  key={c.id}
+                  disabled={!!quick}
+                  onClick={() => setChoice(on ? null : c.id)}
+                  aria-pressed={on}
+                  style={{
+                    textAlign: "left",
+                    background: isKey ? "rgba(57,217,122,0.2)" : wrongPick ? "rgba(255,90,110,0.16)" : on ? "rgba(255,196,77,0.2)" : "rgba(255,255,255,0.06)",
+                    border: `1px solid ${isKey ? THEME.done : wrongPick ? THEME.error : on ? THEME.cursor : "transparent"}`,
+                    borderRadius: 10, padding: "10px 12px", color: THEME.text, fontSize: 15, lineHeight: 1.6, fontFamily: "inherit",
+                    cursor: quick ? "default" : "pointer",
+                  }}
+                >
+                  {isKey ? "✓ " : wrongPick ? "✗ " : ""}{c.text}
+                </button>
+              );
+            })}
+          </div>
+          {quick && (
+            <div style={{ background: quick.correct ? "rgba(57,217,122,0.12)" : "rgba(255,255,255,0.05)", border: `1px solid ${quick.correct ? THEME.done : THEME.border}`, borderRadius: 12, padding: "12px 14px", fontSize: 14.5, lineHeight: 1.7, marginBottom: 16 }}>
+              <strong style={{ color: quick.correct ? THEME.done : THEME.cursor }}>{quick.correct ? "Right. +1 💎" : "Not quite."}</strong>
+              {quick.why && <div style={{ marginTop: 6, color: THEME.muted }}>{quick.why}</div>}
+              {!quick.correct && quick.keyWhy && <div style={{ marginTop: 6, color: THEME.muted }}>{quick.keyWhy}</div>}
+            </div>
+          )}
+          {!quick ? (
+            <button
+              onClick={() => ask("quickCheck", { quickCheckChoiceId: choice }, setQuick, (d) => say(d.correct ? "Good. Last thing." : "Read the note. Then the last question.", d.correct ? "celebrating" : "helping", 3500))}
+              disabled={!choice || busy}
+              style={btn(THEME.done, !choice || busy)}
+            >
+              {busy ? "Checking…" : "Lock it in"}
+            </button>
+          ) : (
+            <button onClick={onDone} style={btn(THEME.violet)}>Last question →</button>
+          )}
+        </>
+      )}
+
+      {/* a case authored before the debrief existed still has to be finishable */}
+      {pinpoint && !spec.quickCheck && (
+        <button onClick={onDone} style={btn(THEME.violet)}>Last question →</button>
+      )}
+
+      {err && <div style={{ color: THEME.error, fontSize: 13, marginTop: 10 }}>{err}</div>}
     </Panel>
   );
 }
@@ -684,6 +948,8 @@ function Done({ publicCase, boards, assembly, result }) {
         <Stat label="Sentences placed" value={`${result.placement.correct}/${result.placement.total}`} />
         <Stat label="Leftovers explained" value={`${result.decoys.correct}/${result.decoys.total}`} />
         <Stat label="Paragraph order" value={`${result.assemblyScore.correct}/${result.assemblyScore.total}`} />
+        {result.pinpoint && <Stat label="Pinpoint" value={result.pinpoint.correct ? "✓ Found it" : "Missed"} accent={result.pinpoint.correct ? THEME.done : THEME.muted} />}
+        {result.quickCheck && <Stat label="Quick check" value={result.quickCheck.correct ? "✓ Right" : "Missed"} accent={result.quickCheck.correct ? THEME.done : THEME.muted} />}
         {result.crystalsEarned > 0 && <Stat label="Crystals" value={`+${result.crystalsEarned} 💎`} accent={THEME.cursor} />}
         {result.challenge && <Stat label="Mode" value="⚡ Challenge" accent={THEME.cursor} />}
         {result.trapCaught && <Stat label="Editor's Trap" value="🎭 Caught" accent={THEME.done} />}
@@ -750,6 +1016,8 @@ export default function AssemblyDeckClient({ assignmentId, caseStandard, publicC
     placement: saved.placement || { correct: 0, total: 0 },
     decoys: saved.decoys || { correct: 0, total: 0 },
     assemblyScore: saved.assemblyScore || { correct: 0, total: 0 },
+    pinpoint: saved.pinpoint || null,
+    quickCheck: saved.quickCheck || null,
     glows: saved.glows || [],
     grow: saved.grow || null,
     crystalsEarned: 0,
@@ -760,6 +1028,13 @@ export default function AssemblyDeckClient({ assignmentId, caseStandard, publicC
   const [sourceOpen, setSourceOpen] = useState(true);
   const [challenge, setChallenge] = useState(false);
   const [trapCaught, setTrapCaught] = useState(false);
+  // Graded leftover verdicts, kept at the root so the Case File can show them
+  // on any later screen — a student answering the last question can see which
+  // of their reasons held up.
+  const [rejectResults, setRejectResults] = useState({});
+  const [pinpoint, setPinpoint] = useState(null);
+  const [quick, setQuick] = useState(null);
+  const [caseFileOpen, setCaseFileOpen] = useState(false);
 
   const round = publicCase.rounds[roundIndex];
 
@@ -770,7 +1045,12 @@ export default function AssemblyDeckClient({ assignmentId, caseStandard, publicC
       const res = await fetch("/api/assembly-deck/submit", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ assignmentId, caseStandard, action: "submit", boards, rejections, assembly, explanation, attempt: attempts, challenge, trapCaught }),
+        body: JSON.stringify({
+          assignmentId, caseStandard, action: "submit", boards, rejections, assembly, explanation,
+          attempt: attempts, challenge, trapCaught,
+          pinpointPieceId: pinpoint ? pinpoint.pinpointPieceId : null,
+          quickCheckChoiceId: quick ? quick.quickCheckChoiceId : null,
+        }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Couldn't turn that in.");
@@ -814,20 +1094,38 @@ export default function AssemblyDeckClient({ assignmentId, caseStandard, publicC
           if (roundIndex + 1 < publicCase.rounds.length) { setRoundIndex(roundIndex + 1); setPhase("build"); }
           else setPhase("assembly");
         }}
+        onGraded={(results) => setRejectResults((all) => ({ ...all, [round.id]: results }))}
         challenge={challenge}
       />
     );
   } else if (phase === "assembly") {
     body = <AssemblyRound publicCase={publicCase} boards={boards} assembly={assembly} setAssembly={setAssembly} onDone={() => setPhase("trap")} />;
   } else if (phase === "trap") {
-    body = <TrapRound publicCase={publicCase} boards={boards} challenge={challenge} onDone={(caught) => { setTrapCaught(!!caught); setPhase("explain"); }} />;
+    body = <TrapRound publicCase={publicCase} boards={boards} challenge={challenge} onDone={(caught) => { setTrapCaught(!!caught); setPhase(publicCase.debrief ? "debrief" : "explain"); }} />;
+  } else if (phase === "debrief") {
+    body = (
+      <Debrief
+        publicCase={publicCase}
+        boards={boards}
+        assembly={assembly}
+        pinpoint={pinpoint}
+        setPinpoint={setPinpoint}
+        quick={quick}
+        setQuick={setQuick}
+        onDone={() => setPhase("explain")}
+      />
+    );
   } else if (phase === "explain") {
     body = <Explain publicCase={publicCase} text={explanation} setText={setExplanation} onSubmit={submit} busy={busy} err={err} />;
   } else {
     body = <Done publicCase={publicCase} boards={boards} assembly={assembly} result={result} />;
   }
 
-  const progress = phase === "done" ? 1 : phase === "trap" ? 0.95 : phase === "explain" ? 0.98 : (roundIndex + (phase === "rejects" ? 0.5 : 0)) / (publicCase.rounds.length + 1);
+  const progress = phase === "done" ? 1
+    : phase === "trap" ? 0.92
+    : phase === "debrief" ? 0.96
+    : phase === "explain" ? 0.98
+    : (roundIndex + (phase === "rejects" ? 0.5 : 0)) / (publicCase.rounds.length + 1);
 
   return (
     <SamContext.Provider value={say}>
@@ -846,6 +1144,16 @@ export default function AssemblyDeckClient({ assignmentId, caseStandard, publicC
           </div>
         )}
         {body}
+        {phase !== "brief" && phase !== "done" && !caseFileOpen && <CaseFileButton onOpen={() => setCaseFileOpen(true)} />}
+        {caseFileOpen && (
+          <CaseFile
+            publicCase={publicCase}
+            boards={boards}
+            rejections={rejections}
+            rejectResults={rejectResults}
+            onClose={() => setCaseFileOpen(false)}
+          />
+        )}
       </Shell>
     </SamContext.Provider>
   );

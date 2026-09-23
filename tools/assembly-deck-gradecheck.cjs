@@ -37,7 +37,15 @@ for(const p of PUB.listAssemblyDeckCases()){
     ...p.rounds.flatMap(r=>Object.values(s.rounds[r.id].misplacementNotes||{})),
     p.assembly.prompt,p.assembly.hint,p.explain.prompt,...p.explain.criteria,
     ...Object.values(s.decoyProtest||{}), ...(s.requester?Object.values(s.requester.replies||{}):[]),
-    s.trap?s.trap.text:"", s.trap?s.trap.why:"", s.assemblyNote||""].filter(Boolean);
+    s.trap?s.trap.text:"", s.trap?s.trap.why:"", s.assemblyNote||"",
+    // Chief's Debrief: both questions, every answer choice, and every note a
+    // student can be shown. These are read under time pressure at the end of a
+    // 20-minute center, so they are held to the same band as everything else.
+    ...(p.debrief?[p.debrief.pinpoint?p.debrief.pinpoint.prompt:"", p.debrief.pinpoint?p.debrief.pinpoint.hint:"",
+      p.debrief.quickCheck?p.debrief.quickCheck.prompt:"",
+      ...((p.debrief.quickCheck?p.debrief.quickCheck.choices:[])||[]).map(c=>c.text)]:[]),
+    ...(s.debrief?[s.debrief.pinpointWhy||"", s.debrief.pinpointMiss||"", ...Object.values(s.debrief.quickCheckWhy||{})]:[]),
+  ].filter(Boolean);
   const P=fkOf(pieces), A=fkOf(around);
   const ok = P.fk>=b.fk[0] && P.fk<=b.fk[1] && P.avg<=b.avg && P.longest.n<=b.max && A.fk<=b.fk[1]+0.8;
   console.log(`${p.standard.padEnd(13)} ${p.grade}     ${String(P.fk).padStart(4)}  ${String(P.avg).padStart(5)}  ${String(P.longest.n).padStart(3)}w     ${b.fk[0]}-${b.fk[1]}, avg<=${b.avg}, max ${b.max}w ${ok?"✓":"✗"}`);

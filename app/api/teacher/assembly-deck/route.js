@@ -66,6 +66,8 @@ export async function POST(request) {
       id: row.student_id, name: nameOf[row.student_id], builds: 0,
       placement: { correct: 0, total: 0 }, decoys: { correct: 0, total: 0 },
       assembly: { correct: 0, total: 0 }, missedBy: {}, traps: { caught: 0, offered: 0 },
+      // Chief's Debrief: the two questions asked on the finished report.
+      debrief: { pinpoint: { correct: 0, asked: 0 }, quickCheck: { correct: 0, asked: 0 } },
       challenge: 0, lastScore: null,
     });
     st.builds += 1;
@@ -73,6 +75,8 @@ export async function POST(request) {
     if (d.challenge) st.challenge += 1;
     if (d.trapCaught) st.traps.caught += 1;
     st.traps.offered += 1;
+    if (d.pinpoint) { st.debrief.pinpoint.asked += 1; if (d.pinpoint.correct) st.debrief.pinpoint.correct += 1; }
+    if (d.quickCheck) { st.debrief.quickCheck.asked += 1; if (d.quickCheck.correct) st.debrief.quickCheck.correct += 1; }
     ["placement", "decoys"].forEach((k) => {
       if (d[k]) { st[k].correct += d[k].correct || 0; st[k].total += d[k].total || 0; }
     });
@@ -109,6 +113,8 @@ export async function POST(request) {
         ofClass: active.length,
         placement: Object.values(perStudent).reduce((a, s) => ({ correct: a.correct + s.placement.correct, total: a.total + s.placement.total }), { correct: 0, total: 0 }),
         decoys: Object.values(perStudent).reduce((a, s) => ({ correct: a.correct + s.decoys.correct, total: a.total + s.decoys.total }), { correct: 0, total: 0 }),
+        pinpoint: Object.values(perStudent).reduce((a, s) => ({ correct: a.correct + s.debrief.pinpoint.correct, total: a.total + s.debrief.pinpoint.asked }), { correct: 0, total: 0 }),
+        quickCheck: Object.values(perStudent).reduce((a, s) => ({ correct: a.correct + s.debrief.quickCheck.correct, total: a.total + s.debrief.quickCheck.asked }), { correct: 0, total: 0 }),
       }
     : null;
 
