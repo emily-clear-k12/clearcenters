@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo, useCallback, createContext, useContext } from "react";
+import { useState, useEffect, useMemo, useCallback, createContext, useContext, useRef } from "react";
 import SamGuide from "../../../components/SamGuide";
 import BackToHubButton from "../../../components/BackToHubButton";
 import { assembledReport, getRound, leftoversSoFar, reasonChipsFor, rejectReason, roundSize, trayOrder, CHALLENGE } from "../../../lib/cases/assembly-deck/index.public";
@@ -704,18 +704,22 @@ function AssemblyRound({ publicCase, boards, assembly, setAssembly, onDone }) {
 // ======================================================================
 // EDITOR'S TRAP — S.A.M. slips one bad sentence into a finished paragraph
 // ======================================================================
-function TrapRound({ publicCase, boards, challenge, onDone }) {
+function TrapRound({ publicCase, boards, challenge, onDone, embedded }) {
   const say = useSay();
-  const [dared, setDared] = useState(!!challenge);
+  const [dared, setDared] = useState(!!challenge || !!embedded);
   const [data, setData] = useState(null);
   const [picked, setPicked] = useState(null);
   const [verdict, setVerdict] = useState(null);
+  const [tries, setTries] = useState(0);
+  const [hint, setHint] = useState("");
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState(null);
+  const told = useRef(false);
 
   useEffect(() => {
-    if (!dared) say("One more thing, Cadet. Want to see if I can fool you?", "thinking");
-  }, [say, dared]);
+    if (embedded || dared) return undefined;
+    say("One more thing, Cadet. Want to see if I can fool you?", "thinking");
+  }, [say, dared, embedded]);
 
   const call = useCallback(async (payload) => {
     const res = await fetch("/api/assembly-deck/submit", {
@@ -730,7 +734,7 @@ function TrapRound({ publicCase, boards, challenge, onDone }) {
   useEffect(() => {
     let cancelled = false;
     if (!dared || data) return undefined;
-    call({ action: "trap" }).then((d) => { if (!cancelled) { setData(d); say("I hid one sentence of mine in your paragraph. Find it.", "helping"); } }, (e) => setErr(e.message));
+    call({ action: "trap" }).then((d) => { if (!cancelled) { setData(d); if (!embedded) say("I hid one sentence of mine in your paragraph. Find it.", "helping"); } }, (e) => setErr(e.message));
     return () => { cancelled = true; };
   }, [dared, data, call, say]);
 
@@ -738,8 +742,20 @@ function TrapRound({ publicCase, boards, challenge, onDone }) {
     setBusy(true); setErr(null);
     try {
       const d = await call({ action: "trapAnswer", chosenIndex: picked });
-      setVerdict(d);
-      say(d.correct ? "Caught me. That sentence was mine." : "That one was yours. Mine is the one still highlighted.", d.correct ? "celebrating" : "thinking", 4000);
+      if (embedded && !d.correct && tries < 1) {
+        setTries(1);
+        setPicked(null);
+        setHint("Not that one. Try once more.");
+        say("Not that one. Look again.", "helping", 2500);
+      } else {
+        setVerdict(embedded ? { correct: !!d.correct } : d);
+        setHint("");
+        if (embedded && !told.current) {
+          told.current = true;
+          onDone(!!d.correct);
+        }
+        say(d.correct ? "Caught it." : embedded ? "Okay. On to the next check." : "That one was yours. Mine is the one still highlighted.", d.correct ? "celebrating" : "thinking", 3000);
+      }
     } catch (e) { setErr(e.message); }
     setBusy(false);
   }
@@ -762,13 +778,13 @@ function TrapRound({ publicCase, boards, challenge, onDone }) {
 
   return (
     <Panel>
-      <div style={{ fontSize: 12, letterSpacing: 2, color: THEME.cursor, fontWeight: 700 }}>🎭 EDITOR&apos;S TRAP</div>
+      <div style={{ fontSize: 12, letterSpacing: 2, color: THEME.cursor, fontWeight: 700 }}>{embedded ? "1 · SPOT THE FAKE" : "EDITOR TRAP"}</div>
       <h2 style={{ fontSize: 21, margin: "6px 0 4px" }}>One of these sentences is mine. Which one?</h2>
       <p style={{ color: THEME.muted, fontSize: 14, margin: "0 0 14px" }}>{data ? data.label : "Loading the paragraph…"}</p>
       <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 16 }}>
         {(data ? data.sentences : []).map((text, i) => {
           const on = picked === i;
-          const isTrap = verdict && verdict.position === i;
+          const isTrap = !embedded && verdict && verdict.position === i;
           return (
             <button
               key={i}
@@ -788,18 +804,19 @@ function TrapRound({ publicCase, boards, challenge, onDone }) {
           );
         })}
       </div>
+      {hint && !verdict && <div style={{ color: "#9A3412", fontWeight: 700, fontSize: 15, marginBottom: 10 }}>{hint}</div>}
       {err && <div style={{ color: THEME.error, fontSize: 13, marginBottom: 10 }}>{err}</div>}
       {!verdict ? (
         <button onClick={answer} disabled={picked === null || busy} style={btn(THEME.done, picked === null || busy)}>
-          {busy ? "Checking…" : "That one"}
+          {busy ? "Checking…" : tries === 0 ? "That one" : "Check again"}
         </button>
       ) : (
         <>
-          <div style={{ background: verdict.correct ? "rgba(57,217,122,0.12)" : THEME.inset, border: `1px solid ${verdict.correct ? THEME.done : THEME.border}`, borderRadius: 12, padding: "12px 14px", fontSize: 14.5, lineHeight: 1.7, marginBottom: 14 }}>
-            <strong style={{ color: verdict.correct ? THEME.done : THEME.cursor }}>{verdict.correct ? "Caught it. +2 💎" : "That was one of yours."}</strong>
-            <div style={{ marginTop: 6, color: THEME.muted }}>{verdict.why}</div>
+          <div style={{ background: verdict.correct ? "rgba(57,217,122,0.12)" : THEME.inset, border: `1px solid ${verdict.correct ? THEME.done : THEME.border}`, borderRadius: 12, padding: "12px 14px", fontSize: 14.5, lineHeight: 1.7, marginBottom: embedded ? 0 : 14 }}>
+            <strong style={{ color: verdict.correct ? THEME.done : THEME.cursor }}>{verdict.correct ? "Caught it. +2 💎" : "Okay."}</strong>
+            {!embedded && verdict.why && <div style={{ marginTop: 6, color: THEME.muted }}>{verdict.why}</div>}
           </div>
-          <button onClick={() => onDone(verdict.correct)} style={btn(THEME.violet)}>On to the debrief →</button>
+          {!embedded && <button onClick={() => onDone(verdict.correct)} style={btn(THEME.violet)}>On to the debrief →</button>}
         </>
       )}
     </Panel>
@@ -815,7 +832,7 @@ function TrapRound({ publicCase, boards, challenge, onDone }) {
 // tappable. Question two is a single multiple choice on the standard. Question
 // two does not appear until question one has been answered, so the screen is
 // never a wall of questions.
-function Debrief({ publicCase, boards, assembly, pinpoint, setPinpoint, quick, setQuick, onDone }) {
+function Debrief({ publicCase, boards, assembly, pinpoint, setPinpoint, quick, setQuick, onDone, embedded }) {
   const say = useSay();
   const [picked, setPicked] = useState(null);
   const [choice, setChoice] = useState(null);
@@ -825,9 +842,18 @@ function Debrief({ publicCase, boards, assembly, pinpoint, setPinpoint, quick, s
   const [err, setErr] = useState(null);
 
   const spec = publicCase.debrief || {};
+  const part = useRef({ pin: false, quick: !(spec.quickCheck) });
+  const sent = useRef(false);
+  function mark(which) {
+    part.current[which] = true;
+    if (embedded && !sent.current && part.current.pin && part.current.quick) {
+      sent.current = true;
+      onDone();
+    }
+  }
   const report = useMemo(() => assembledReport(publicCase, boards, assembly), [publicCase, boards, assembly]);
 
-  useEffect(() => { say("Debrief, Cadet. Two questions about the report you just built.", "thinking"); }, [say]);
+  useEffect(() => { if (!embedded) say("Debrief, Cadet. Two questions about the report you just built.", "thinking"); }, [say, embedded]);
 
   async function ask(action, payload, setter, onOk) {
     setBusy(true); setErr(null);
@@ -846,7 +872,7 @@ function Debrief({ publicCase, boards, assembly, pinpoint, setPinpoint, quick, s
 
   return (
     <Panel>
-      <div style={{ fontSize: 12, letterSpacing: 2, color: THEME.teal, fontWeight: 700 }}>🔎 CHIEF&apos;S DEBRIEF</div>
+      <div style={{ fontSize: 12, letterSpacing: 2, color: THEME.teal, fontWeight: 700 }}>{embedded ? "3 · TWO QUICK QUESTIONS" : "CHIEF DEBRIEF"}</div>
       <h2 style={{ fontSize: 21, margin: "6px 0 4px" }}>{spec.pinpoint ? spec.pinpoint.prompt : "Find it in your report."}</h2>
       {spec.pinpoint && spec.pinpoint.hint && (
         <p style={{ color: THEME.muted, fontSize: 14, margin: "0 0 14px" }}>{spec.pinpoint.hint}</p>
@@ -891,7 +917,10 @@ function Debrief({ publicCase, boards, assembly, pinpoint, setPinpoint, quick, s
 
       {!pinpoint && (
         <button
-          onClick={() => ask("pinpoint", { pinpointPieceId: picked }, setPinpoint, (d) => say(d.correct ? "That is the sentence." : "Try once more. The question tells you what to look for.", d.correct ? "celebrating" : "helping", 4000))}
+          onClick={() => ask("pinpoint", { pinpointPieceId: picked }, setPinpoint, (d) => {
+            say(d.correct ? "That is the sentence." : "Try once more. The question tells you what to look for.", d.correct ? "celebrating" : "helping", 2500);
+            if (d.correct || pinTries >= 1) mark("pin");
+          })}
           disabled={!picked || busy}
           style={btn(THEME.done, !picked || busy)}
         >
@@ -903,7 +932,7 @@ function Debrief({ publicCase, boards, assembly, pinpoint, setPinpoint, quick, s
       )}
 
       {/* question two only opens once question one is answered */}
-      {pinpoint && spec.quickCheck && (
+      {(embedded || pinpoint) && spec.quickCheck && (
         <>
           <div style={{ borderTop: `1px solid ${THEME.border}`, margin: "4px 0 16px" }} />
           <div style={{ fontSize: 12, letterSpacing: 2, color: THEME.teal, fontWeight: 700 }}>QUESTION 2 OF 2</div>
@@ -941,7 +970,10 @@ function Debrief({ publicCase, boards, assembly, pinpoint, setPinpoint, quick, s
           )}
           {!quick ? (
             <button
-              onClick={() => ask("quickCheck", { quickCheckChoiceId: choice }, setQuick, (d) => say(d.correct ? "Good. Last thing." : "Read the note. Then the last question.", d.correct ? "celebrating" : "helping", 3500))}
+              onClick={() => ask("quickCheck", { quickCheckChoiceId: choice }, setQuick, (d) => {
+                say(d.correct ? "Good." : "Try once more if you have it.", d.correct ? "celebrating" : "helping", 2500);
+                if (d.correct || quickTries >= 1) mark("quick");
+              })}
               disabled={!choice || busy}
               style={btn(THEME.done, !choice || busy)}
             >
@@ -949,9 +981,9 @@ function Debrief({ publicCase, boards, assembly, pinpoint, setPinpoint, quick, s
             </button>
           ) : publicCase.chain && !quick.correct && quickTries < 1 ? (
             <button onClick={() => { setQuickTries(1); setQuick(null); setChoice(null); }} style={btn(THEME.violet)}>Try again</button>
-          ) : (
+          ) : !embedded ? (
             <button onClick={onDone} style={btn(THEME.violet)}>Last question →</button>
-          )}
+          ) : null}
         </>
       )}
 
@@ -1283,7 +1315,7 @@ function guessId(marks, nobody) {
   return "other";
 }
 
-function WhatIfRound({ publicCase, onDone, setChoice, onMark, onCut }) {
+function WhatIfRound({ publicCase, onDone, setChoice, onMark, onCut, embedded }) {
   const say = useSay();
   const [marks, setMarks] = useState([]);
   const [nobody, setNobody] = useState(false);
@@ -1291,7 +1323,7 @@ function WhatIfRound({ publicCase, onDone, setChoice, onMark, onCut }) {
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState(null);
   const ready = nobody || marks.length > 0;
-  useEffect(() => { say("The line is live. Mark who loses power, then cut the plants.", "thinking"); }, [say]);
+  useEffect(() => { if (!embedded) say("The line is live. Mark who loses power, then cut the plants.", "thinking"); }, [say, embedded]);
 
   function toggle(id) {
     if (feedback) return;
@@ -1318,6 +1350,7 @@ function WhatIfRound({ publicCase, onDone, setChoice, onMark, onCut }) {
       if (!res.ok) throw new Error(data.error || "Couldn't throw the switch.");
       setFeedback(data);
       if (onCut) onCut();
+      if (embedded && onDone) onDone();
       say(data.correct ? "You read the line. Watch it go dark." : "Watch the shutoff. The plants feed everything after them.", data.correct ? "celebrating" : "helping", 4000);
     } catch (e) {
       setErr(e.message);
@@ -1328,7 +1361,7 @@ function WhatIfRound({ publicCase, onDone, setChoice, onMark, onCut }) {
   const targets = (publicCase.chain && publicCase.chain.links || []).filter((link) => link.id !== "sun");
   return (
     <Panel>
-      <div style={{ fontSize: 12, letterSpacing: 2, color: THEME.teal, fontWeight: 700 }}>CUT THE LINE</div>
+      <div style={{ fontSize: 12, letterSpacing: 2, color: THEME.teal, fontWeight: 700 }}>{embedded ? "2 · CUT THE PLANTS" : "CUT THE LINE"}</div>
       <h2 style={{ fontSize: 22, margin: "6px 0 8px" }}>{publicCase.whatIf.prompt}</h2>
       <p style={{ color: THEME.muted, fontSize: 14.5, margin: "0 0 14px" }}>{publicCase.whatIf.hint}</p>
       <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 14 }}>
@@ -1356,10 +1389,32 @@ function WhatIfRound({ publicCase, onDone, setChoice, onMark, onCut }) {
         <button onClick={cut} disabled={!ready || busy} style={btn(ready ? THEME.error : THEME.done, !ready || busy)}>
           {busy ? "Cutting…" : "Cut the plants"}
         </button>
-      ) : (
+      ) : !embedded ? (
         <button onClick={onDone} style={btn(THEME.violet)}>One more thing →</button>
-      )}
+      ) : null}
     </Panel>
+  );
+}
+
+function BonusTransmission({ publicCase, boards, assembly, challenge, onCut, onMark, setChoice, setTrapCaught, pinpoint, setPinpoint, quick, setQuick, onDone }) {
+  const say = useSay();
+  const [ready, setReady] = useState({ trap: false, cut: false, debrief: false });
+  const all = ready.trap && ready.cut && ready.debrief;
+  useEffect(() => { say("Bonus transmission. Three short checks, all on this page.", "thinking"); }, [say]);
+  return (
+    <>
+      <Panel>
+        <div style={{ fontSize: 12, letterSpacing: 2, color: THEME.teal, fontWeight: 800 }}>BONUS TRANSMISSION</div>
+        <h2 style={{ fontSize: 24, margin: "6px 0 8px" }}>Three short checks. One page.</h2>
+        <p style={{ color: THEME.muted, fontSize: 16, lineHeight: 1.6, margin: 0 }}>Spot the fake sentence, cut the plants, then answer two quick questions. Crystals if you catch them. Nothing here opens a new screen.</p>
+      </Panel>
+      <TrapRound publicCase={publicCase} boards={boards} challenge={challenge} embedded onDone={(caught) => { setTrapCaught(!!caught); setReady((r) => ({ ...r, trap: true })); }} />
+      <WhatIfRound publicCase={publicCase} setChoice={setChoice} onMark={onMark} onCut={onCut} embedded onDone={() => setReady((r) => ({ ...r, cut: true }))} />
+      <Debrief publicCase={publicCase} boards={boards} assembly={assembly} pinpoint={pinpoint} setPinpoint={setPinpoint} quick={quick} setQuick={setQuick} embedded onDone={() => setReady((r) => ({ ...r, debrief: true }))} />
+      <Panel>
+        <button onClick={onDone} disabled={!all} style={{ ...btn(THEME.violet, !all), width: "100%" }}>{all ? "Last question →" : "Finish all three checks"}</button>
+      </Panel>
+    </>
   );
 }
 
@@ -1482,7 +1537,7 @@ export default function AssemblyDeckClient({ assignmentId, caseStandard, publicC
       />
     );
   } else if (phase === "assembly") {
-    body = <AssemblyRound publicCase={publicCase} boards={boards} assembly={assembly} setAssembly={setAssembly} onDone={() => setPhase(publicCase.whatIf ? "whatif" : "trap")} />;
+    body = <AssemblyRound publicCase={publicCase} boards={boards} assembly={assembly} setAssembly={setAssembly} onDone={() => setPhase(publicCase.chain ? "bonus" : publicCase.whatIf ? "whatif" : "trap")} />;
   } else if (phase === "repair") {
     body = (
       <RepairRound
@@ -1492,6 +1547,28 @@ export default function AssemblyDeckClient({ assignmentId, caseStandard, publicC
           if (roundIndex + 1 < publicCase.rounds.length) { setRoundIndex(roundIndex + 1); setPhase("build"); }
           else setPhase("assembly");
         }}
+      />
+    );
+  } else if (phase === "bonus") {
+    body = (
+      <BonusTransmission
+        publicCase={publicCase}
+        boards={boards}
+        assembly={assembly}
+        challenge={challenge}
+        setChoice={setWhatIfChoice}
+        onMark={setGuess}
+        onCut={() => {
+          setCutStep(0);
+          setTimeout(() => setCutStep(1), 650);
+          setTimeout(() => setCutStep(2), 1300);
+        }}
+        setTrapCaught={setTrapCaught}
+        pinpoint={pinpoint}
+        setPinpoint={setPinpoint}
+        quick={quick}
+        setQuick={setQuick}
+        onDone={() => setPhase("explain")}
       />
     );
   } else if (phase === "whatif") {
@@ -1532,6 +1609,7 @@ export default function AssemblyDeckClient({ assignmentId, caseStandard, publicC
   }
 
   const progress = phase === "done" ? 1
+    : phase === "bonus" ? 0.9
     : phase === "trap" ? 0.92
     : phase === "debrief" ? 0.96
     : phase === "feel" ? 0.99
@@ -1544,7 +1622,7 @@ export default function AssemblyDeckClient({ assignmentId, caseStandard, publicC
         bright={!!publicCase.chain}
         sam={<SamGuide skinKey={samSkin} alt={samNickname || "S.A.M."} size={96} anchors={{ home: { right: 14, bottom: 14 } }} line={sam.line} state={sam.state} tipOnTap zIndex={40} />}
       >
-        {publicCase.chain && <PondBoard chain={publicCase.chain} locked={locked} scenario={phase === "whatif" ? "cut-test" : "story"} cutStep={cutStep} guess={phase === "whatif" ? guess : []} />}
+        {publicCase.chain && <PondBoard chain={publicCase.chain} locked={locked} scenario={phase === "whatif" || phase === "bonus" ? "cut-test" : "story"} cutStep={cutStep} guess={phase === "whatif" || phase === "bonus" ? guess : []} />}
         {revisionRequested && (
           <Panel style={{ background: "rgba(255,196,77,0.12)", border: `1px solid ${THEME.cursor}`, maxWidth: 900 }}>
             <strong style={{ color: THEME.cursor }}>Your teacher sent this back for another look.</strong>
