@@ -3,6 +3,9 @@
 import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "../../../lib/supabaseClient";
+import Link from 'next/link';
+import {BridgePage,PageHeading,ClassTabs,Empty} from '../../../components/teacher/BridgeUI';
+import {subjectStyle} from '../../../lib/teacherBridge';
 import TeacherHUD from "../../../components/TeacherHUD";
 import { COLORS, PAGE_ACCENTS, PAGE_BACKGROUNDS } from "../../../lib/teacherTheme";
 
@@ -30,6 +33,9 @@ export default function TeacherGradeListPage() {
   const [submissions, setSubmissions] = useState([]);
   const [selectedClassId, setSelectedClassId] = useState("all");
   const [search, setSearch] = useState("");
+  const [reviewFilter,setReviewFilter]=useState("all");
+  const [assignmentFilter,setAssignmentFilter]=useState("all");
+  useEffect(()=>{const id=new URLSearchParams(window.location.search).get("classId");if(id)setSelectedClassId(id)},[]);
   const [error, setError] = useState(null);
 
   useEffect(() => {
@@ -94,7 +100,7 @@ export default function TeacherGradeListPage() {
 
     const studentIds = [...new Set(list.map((s) => s.student_id).filter(Boolean))];
     const { data: students } = studentIds.length > 0 ? await supabase.from("students").select("id, first_name").in("id", studentIds) : { data: [] };
-    const { data: cases } = caseStandards.length > 0 ? await supabase.from("cases").select("standard, title").in("standard", caseStandards) : { data: [] };
+    const { data: cases } = caseStandards.length > 0 ? await supabase.from("cases").select("standard, title, subject").in("standard", caseStandards) : { data: [] };
 
     const studentMap = Object.fromEntries((students || []).map((s) => [s.id, s]));
     const caseMap = Object.fromEntries((cases || []).map((c) => [c.standard, c]));
@@ -103,6 +109,7 @@ export default function TeacherGradeListPage() {
       const assignment = assignmentMap[s.assignment_id];
       return {
         ...s,
+        subject: assignment ? caseMap[assignment.case_standard]?.subject : null,
         studentName: studentMap[s.student_id]?.first_name || "Unknown student",
         caseTitle: assignment ? (caseMap[assignment.case_standard]?.title || assignment.case_standard) : "Unknown case",
         classId: assignment ? assignment.class_id : null,
@@ -181,157 +188,18 @@ export default function TeacherGradeListPage() {
     );
   }
 
-  return (
-    <div
-      style={{
-        minHeight: "100vh",
-        background: COLORS.canvas,
-        backgroundImage: `linear-gradient(180deg, rgba(243,239,252,.55) 0%, rgba(243,239,252,.82) 100%), url(${BG})`,
-        backgroundSize: "cover",
-        backgroundPosition: "center top",
-        backgroundAttachment: "fixed",
-        fontFamily: "'Inter', sans-serif",
-        color: COLORS.textDark,
-        display: "flex",
-        flexDirection: "column",
-      }}
-    >
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@600;700&family=Inter:wght@400;500;600;700&display=swap');
-        .gc-btn { transition: transform 150ms ease; cursor: pointer; border: none; font-family: 'Inter', sans-serif; }
-        .gc-btn:hover { transform: translateY(-1px); }
-      `}</style>
-
-      <TeacherHUD title="Review Submissions" subtitle="Observatory — grade and release feedback" accent={ACCENT} teacherEmail={teacherEmail} />
-
-      <div style={{ flex: 1, padding: "28px 36px 40px", display: "flex", justifyContent: "center" }}>
-        <div style={{ width: "100%", maxWidth: 1100 }}>
-          {error && (
-            <div style={{ background: `${COLORS.danger}18`, border: `1px solid ${COLORS.danger}55`, color: "#8A2A22", borderRadius: 10, padding: "10px 14px", fontSize: 13, marginBottom: 16 }}>
-              {error}
-            </div>
-          )}
-
-          <div style={{ background: `linear-gradient(135deg, ${ACCENT}, ${COLORS.info})`, borderRadius: 16, padding: "16px 20px", display: "flex", alignItems: "center", gap: 14, marginBottom: 18, boxShadow: `0 6px 18px ${ACCENT}40` }}>
-            <div style={{ fontSize: 24 }}>⚡</div>
-            <div style={{ flex: 1 }}>
-              <div style={{ color: COLORS.white, fontWeight: 700, fontSize: 15, fontFamily: "'Poppins', sans-serif" }}>Grade Next</div>
-              <div style={{ color: "rgba(255,255,255,.85)", fontSize: 12 }}>
-                {totalNeedsReview > 0
-                  ? `Jump straight to the oldest ungraded submission — ${totalNeedsReview} waiting${selectedClassId === "all" ? " across all classes" : ""}.`
-                  : "Nothing waiting — you're all caught up!"}
-              </div>
-            </div>
-            <button className="gc-btn" onClick={handleGradeNext} disabled={totalNeedsReview === 0} style={{ background: COLORS.white, color: ACCENT, borderRadius: 999, padding: "10px 20px", fontWeight: 700, fontSize: 13, opacity: totalNeedsReview === 0 ? 0.6 : 1, cursor: totalNeedsReview === 0 ? "default" : "pointer" }}>
-              Start Grading →
-            </button>
-          </div>
-
-          <div style={{ position: "relative", maxWidth: 300, marginBottom: 16 }}>
-            <input
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search students..."
-              style={{ width: "100%", border: "2px solid #ECEAF5", borderRadius: 10, padding: "9px 10px 9px 34px", fontSize: 13, boxSizing: "border-box", fontFamily: "inherit", background: "rgba(255,255,255,.7)" }}
-            />
-            <span style={{ position: "absolute", left: 10, top: 9, color: COLORS.textMuted }}>🔍</span>
-          </div>
-          <div style={{ fontSize: 11, color: COLORS.textMuted, marginBottom: 14 }}>Sorted by how many submissions still need review — not by which assignment is newest.</div>
-
-          {classes.length > 1 && (
-            <div style={{ display: "flex", gap: 8, marginBottom: 20, flexWrap: "wrap" }}>
-              <button
-                className="gc-btn"
-                onClick={() => setSelectedClassId("all")}
-                style={{ background: selectedClassId === "all" ? ACCENT : COLORS.white, color: selectedClassId === "all" ? COLORS.white : COLORS.textDark, border: selectedClassId === "all" ? "none" : `1px solid ${COLORS.border}`, borderRadius: 999, padding: "9px 18px", fontWeight: 700, fontSize: 13 }}
-              >
-                All Classes
-              </button>
-              {classes.map((c) => (
-                <button
-                  key={c.id}
-                  className="gc-btn"
-                  onClick={() => setSelectedClassId(c.id)}
-                  style={{ background: selectedClassId === c.id ? ACCENT : COLORS.white, color: selectedClassId === c.id ? COLORS.white : COLORS.textDark, border: selectedClassId === c.id ? "none" : `1px solid ${COLORS.border}`, borderRadius: 999, padding: "9px 18px", fontWeight: 700, fontSize: 13 }}
-                >
-                  {c.name}
-                </button>
-              ))}
-            </div>
-          )}
-
-          {assignmentGroups.length === 0 ? (
-            <div style={{ background: COLORS.white, borderRadius: 16, padding: 32, textAlign: "center", color: COLORS.textMuted }}>
-              No submissions yet — once a student submits a mission, it'll show up here.
-            </div>
-          ) : (
-            assignmentGroups.map((g) => (
-              <div key={g.assignmentId} style={{ marginBottom: 28, opacity: g.needsCount === 0 ? 0.6 : 1 }}>
-                <div style={{ display: "flex", alignItems: "baseline", gap: 8, marginBottom: 10, padding: "0 2px" }}>
-                  <h2 style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 700, fontSize: 15.5, margin: 0, color: COLORS.textDark }}>{g.caseTitle}</h2>
-                  {selectedClassId === "all" && (
-                    <span style={{ fontSize: 11, fontWeight: 700, color: ACCENT, background: `${ACCENT}22`, padding: "2px 9px", borderRadius: 999 }}>{g.className}</span>
-                  )}
-                  {g.needsCount > 0 ? (
-                    <span style={{ fontSize: 11, fontWeight: 700, color: "#B8860B", background: "#FFF4E5", padding: "2px 9px", borderRadius: 999 }}>🔴 {g.needsCount} need review</span>
-                  ) : (
-                    <span style={{ fontSize: 11, fontWeight: 700, color: COLORS.success, background: "#E9F9EE", padding: "2px 9px", borderRadius: 999 }}>✓ all graded</span>
-                  )}
-                  <span style={{ fontSize: 12, color: COLORS.textMuted, marginLeft: "auto" }}>
-                    {g.submissions.length} submission{g.submissions.length === 1 ? "" : "s"}
-                  </span>
-                </div>
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(6, 1fr)", gap: 12 }}>
-                  {g.submissions.map((s) => {
-                    const isNeedsReview = needsReview(s);
-                    // Same "amber = needs your attention, teal = handled" split the
-                    // old row layout used — graded-but-not-yet-released counts as
-                    // handled here too, same as it always has. These are genuine
-                    // submission-status colors, not page branding, so they stay
-                    // put regardless of this page's own aqua accent.
-                    const isHandled = s.released || (!isNeedsReview && !s.revision_requested);
-                    const statusBg = isHandled ? "#E6F8F9" : "#FFF4E5";
-                    const statusColor = isHandled ? COLORS.teal : "#B8860B";
-                    const statusLabel = s.released ? "Released" : s.revision_requested ? "Sent Back" : isNeedsReview ? "Needs Review" : "Graded";
-                    return (
-                      <button
-                        key={s.id}
-                        className="gc-btn"
-                        onClick={() => router.push(`/teacher/grade/${s.id}`)}
-                        title={`${s.studentName} · submitted ${new Date(s.submitted_at).toLocaleDateString()}`}
-                        style={{
-                          aspectRatio: "1 / 1",
-                          display: "flex",
-                          flexDirection: "column",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          gap: 6,
-                          background: statusBg,
-                          border: `1.5px solid ${statusColor}33`,
-                          borderRadius: 14,
-                          padding: 10,
-                          textAlign: "center",
-                          overflow: "hidden",
-                        }}
-                      >
-                        <div style={{ width: 34, height: 34, borderRadius: "50%", background: COLORS.white, display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, color: COLORS.violet, fontSize: 13.5, flexShrink: 0 }}>
-                          {s.studentName?.[0] || "?"}
-                        </div>
-                        <div style={{ fontWeight: 700, fontSize: 12, color: COLORS.textDark, maxWidth: "100%", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                          {s.studentName}
-                        </div>
-                        <span style={{ fontSize: 9.5, fontWeight: 700, color: statusColor, letterSpacing: .2 }}>
-                          {s.revision_requested && !s.released ? "🔁 " : ""}{statusLabel}
-                        </span>
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-            ))
-          )}
-        </div>
-      </div>
-    </div>
-  );
+  const rows=filteredSubmissions.filter(s=>(assignmentFilter==='all'||s.assignment_id===assignmentFilter)&&(reviewFilter==='all'||(reviewFilter==='review'?needsReview(s):!needsReview(s))));
+  const chosen=rows.find(s=>needsReview(s));
+  return <BridgePage teacherEmail={teacherEmail}>
+    <PageHeading title="Review student work" subtitle="See what is finished and what needs your feedback."><ClassTabs classes={classes} value={selectedClassId} onChange={id=>{setSelectedClassId(id);setAssignmentFilter('all')}} all/></PageHeading>
+    {error&&<div className="cc-error" role="alert">{error}</div>}
+    <div className="cc-three"><div className="cc-summary"><strong>{totalNeedsReview}</strong><span>ready to review</span></div><div className="cc-summary"><strong>{classFilteredSubmissions.filter(s=>s.teacher_grade!=null&&!s.revision_requested).length}</strong><span>graded</span></div><div className="cc-summary"><strong>{classFilteredSubmissions.filter(s=>s.revision_requested).length}</strong><span>returned for revision</span></div></div>
+    <section className="cc-panel cc-frame" style={subjectStyle(assignmentFilter==='all'?null:submissions.find(s=>s.assignment_id===assignmentFilter)?.subject)}>
+    <div className="cc-toolbar"><select aria-label="Assignment" value={assignmentFilter} onChange={e=>setAssignmentFilter(e.target.value)}><option value="all">All assignments</option>{assignmentGroups.map(g=><option key={g.assignmentId} value={g.assignmentId}>{g.caseTitle}</option>)}</select><input className="cc-input cc-search" value={search} onChange={e=>setSearch(e.target.value)} placeholder="Find a student" aria-label="Find a student"/><button className="cc-btn" disabled={!totalNeedsReview} onClick={handleGradeNext}>Review next</button></div>
+    <div className="cc-tabs">{[['all','All submissions'],['review','Needs review'],['reviewed','Reviewed / returned']].map(([key,label])=><button key={key} aria-pressed={reviewFilter===key} onClick={()=>setReviewFilter(key)}>{label}</button>)}</div>
+    <div className="cc-table-scroll"><table className="cc-table"><thead><tr><th>Student</th><th>Assignment</th><th>Submitted</th><th>Teacher score</th><th>Status</th><th>Action</th></tr></thead><tbody>{rows.map(s=><tr key={s.id}><td><strong>{s.studentName}</strong><small>{s.className}</small></td><td>{s.caseTitle}</td><td>{new Date(s.submitted_at).toLocaleDateString()}</td><td>{s.teacher_grade==null?'—':`${s.teacher_grade} / 2`}</td><td><span className={'cc-badge '+(s.released?'teal':s.revision_requested?'neutral':'')}>{s.released?'Released':s.revision_requested?'Returned':needsReview(s)?'Needs review':'Graded'}</span></td><td><Link className={'cc-btn '+(needsReview(s)?'':'secondary')} href={`/teacher/grade/${s.id}`}>{needsReview(s)?'Review work':'View work'}</Link></td></tr>)}</tbody></table></div>
+    {!rows.length&&<Empty>{submissions.length?'No submissions match these filters.':'Student submissions will appear here when they are ready.'}</Empty>}
+    <p className="cc-muted">Teacher scores use the existing 0–2 rubric. Open student work to review the evidence and release feedback.</p></section>
+    {chosen&&<section className="cc-panel cc-row cc-between" style={{marginTop:18}}><div><h2>Next up: {chosen.studentName}</h2><p className="cc-muted">{chosen.caseTitle} · Awaiting your feedback</p></div><Link className="cc-btn" href={`/teacher/grade/${chosen.id}`}>Open full response</Link></section>}
+  </BridgePage>;
 }

@@ -4,6 +4,9 @@ import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { Search } from "lucide-react";
 import { supabase } from "../../../lib/supabaseClient";
+import Link from 'next/link';
+import {BridgePage,PageHeading,ClassTabs,Empty} from '../../../components/teacher/BridgeUI';
+import {subjectStyle} from '../../../lib/teacherBridge';
 import TeacherHUD from "../../../components/TeacherHUD";
 import { COLORS, PAGE_ACCENTS, PAGE_BACKGROUNDS, panelStyle } from "../../../lib/teacherTheme";
 
@@ -30,6 +33,9 @@ export default function ReportsPage() {
   const [classes, setClasses] = useState([]);
   const [allStudents, setAllStudents] = useState([]);
   const [search, setSearch] = useState("");
+  const [selectedClassId,setSelectedClassId]=useState("all");
+  const [evidence,setEvidence]=useState([]);
+  const [error,setError]=useState(null);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data, error }) => {
@@ -43,7 +49,8 @@ export default function ReportsPage() {
 
   const loadClasses = useCallback(async (teacherId) => {
     setLoading(true);
-    const { data: classesData } = await supabase.from("classes").select("id, name").eq("teacher_id", teacherId).order("name");
+    const { data: classesData, error: classError } = await supabase.from("classes").select("id, name").eq("teacher_id", teacherId).order("name");
+    if(classError){setError("Could not load reports. Please refresh to try again.");setLoading(false);return;}
     const classIds = (classesData || []).map((c) => c.id);
 
     let students = [];
@@ -60,18 +67,22 @@ export default function ReportsPage() {
     // fine at this scale, and it means a teacher can see which class to
     // check on before even opening a report.
     let needsCounts = {};
+    let evidenceRows=[];
+    const gradesByStudent={};
     if (classIds.length > 0 && students.length > 0) {
-      const { data: assignments } = await supabase.from("assignments").select("id, class_id").in("class_id", classIds);
+      const { data: assignments } = await supabase.from("assignments").select("id, class_id, case_standard").in("class_id", classIds);
       const assignmentIds = (assignments || []).map((a) => a.id);
       const classByAssignment = Object.fromEntries((assignments || []).map((a) => [a.id, a.class_id]));
 
       let submissions = [];
       if (assignmentIds.length > 0) {
-        const { data } = await supabase.from("submissions").select("student_id, assignment_id, teacher_grade, released").in("assignment_id", assignmentIds);
+        const { data } = await supabase.from("submissions").select("student_id, assignment_id, teacher_grade, released, submitted_at").in("assignment_id", assignmentIds);
         submissions = data || [];
       }
 
-      const gradesByStudent = {};
+      const standards=[...new Set((assignments||[]).map(a=>a.case_standard))];
+      const {data:cases}=standards.length?await supabase.from('cases').select('standard, title, subject').in('standard',standards):{data:[]};
+      evidenceRows=(assignments||[]).map(a=>({...a,case:(cases||[]).find(c=>c.standard===a.case_standard),submissions:submissions.filter(s=>s.assignment_id===a.id)}));
       submissions.forEach((s) => {
         if (!s.released || s.teacher_grade === null || s.teacher_grade === undefined) return;
         if (!gradesByStudent[s.student_id]) gradesByStudent[s.student_id] = [];
@@ -88,7 +99,8 @@ export default function ReportsPage() {
       });
     }
 
-    setAllStudents(students.map((s) => ({ ...s, className: (classesData || []).find((c) => c.id === s.class_id)?.name || "" })));
+    setEvidence(evidenceRows);
+    setAllStudents(students.map((s) => ({ ...s, support: gradesByStudent[s.id]?.length>0 && proficiencyBand(gradesByStudent[s.id].reduce((a,b)=>a+b,0)/gradesByStudent[s.id].length)==="Needs Support", className: (classesData || []).find((c) => c.id === s.class_id)?.name || "" })));
     setClasses((classesData || []).map((c) => ({ ...c, studentCount: counts[c.id] || 0, needsAttention: needsCounts[c.id] || 0 })));
     setLoading(false);
   }, []);
@@ -103,108 +115,16 @@ export default function ReportsPage() {
     return <div style={{ minHeight: "100vh", background: COLORS.canvas, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Inter', sans-serif", color: COLORS.textMuted }}>Loading...</div>;
   }
 
-  return (
-    <div
-      style={{
-        minHeight: "100vh",
-        // Same full-bleed-art-behind-scrolling-content pattern as My Classes
-        // and Student Progress: the observatory room sits fixed behind
-        // everything with a soft lavender wash over it so panels stay legible.
-        background: COLORS.canvas,
-        backgroundImage: `linear-gradient(180deg, rgba(243,239,252,.55) 0%, rgba(243,239,252,.82) 100%), url(${BG})`,
-        backgroundSize: "cover",
-        backgroundPosition: "center top",
-        backgroundAttachment: "fixed",
-        fontFamily: "'Inter', sans-serif",
-        color: COLORS.textDark,
-        display: "flex",
-        flexDirection: "column",
-      }}
-    >
-      <style>{`@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@600;700&family=Inter:wght@400;500;600;700&display=swap');
-        .gc-card { transition: transform 150ms ease, box-shadow 150ms ease; cursor: pointer; }
-        .gc-card:hover { transform: translateY(-2px); box-shadow: 0 10px 28px rgba(80,60,150,.2); }
-        .gc-hit { cursor: pointer; }
-        .gc-hit:hover { background: ${ACCENT}18; }
-      `}</style>
-
-      <TeacherHUD
-        title="Reports"
-        subtitle="Observatory — class and student reports for conferences and admin check-ins"
-        accent={ACCENT}
-        teacherEmail={teacherEmail}
-      />
-
-      <div style={{ flex: 1, padding: "28px 36px 40px", display: "flex", justifyContent: "center" }}>
-        <div style={{ width: "100%", maxWidth: 900 }}>
-          <div style={{ marginBottom: 22 }}>
-            <div style={{ position: "relative", maxWidth: 420 }}>
-              <Search size={16} style={{ position: "absolute", left: 14, top: "50%", transform: "translateY(-50%)", color: COLORS.textMuted }} />
-              <input
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder="Search for a student across all your classes..."
-                style={{ width: "100%", boxSizing: "border-box", padding: "12px 16px 12px 38px", borderRadius: 12, border: `1.5px solid ${COLORS.border}`, fontSize: 14, fontFamily: "inherit", color: COLORS.textDark, background: "rgba(255,255,255,.75)" }}
-              />
-            </div>
-            {search.trim() && (
-              <div style={{ maxWidth: 420, marginTop: 8, ...panelStyle(ACCENT, { overflow: "hidden", padding: 0 }) }}>
-                {searchResults.length === 0 ? (
-                  <div style={{ padding: "14px", fontSize: 12.5, color: COLORS.textMuted }}>No students match "{search}".</div>
-                ) : (
-                  searchResults.map((s) => (
-                    <div key={s.id} className="gc-hit" onClick={() => router.push(`/teacher/reports/student/${s.id}`)} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 14px", borderBottom: `1px solid ${COLORS.border}` }}>
-                      <div>
-                        <div style={{ fontWeight: 700, fontSize: 13.5 }}>{s.first_name}</div>
-                        <div style={{ fontSize: 11.5, color: COLORS.textMuted }}>{s.className}</div>
-                      </div>
-                      <div style={{ fontSize: 12.5, fontWeight: 700, color: ACCENT }}>View report →</div>
-                    </div>
-                  ))
-                )}
-              </div>
-            )}
-          </div>
-
-          <div className="gc-card" onClick={() => router.push("/teacher/reports/standards")} style={{ ...panelStyle(ACCENT, { padding: "18px 20px", marginBottom: 14, display: "flex", alignItems: "center", gap: 16 }) }}>
-            <div style={{ width: 44, height: 44, borderRadius: 12, background: COLORS.white, display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, color: ACCENT, fontSize: 20, flexShrink: 0 }}>📊</div>
-            <div style={{ flex: 1 }}>
-              <div style={{ fontWeight: 700, fontSize: 15 }}>Standards Report — All Classes</div>
-              <div style={{ fontSize: 12.5, color: COLORS.textMuted }}>How every standard is going, broken out class by class — one printable page.</div>
-            </div>
-            <div style={{ color: ACCENT, fontWeight: 700, fontSize: 13 }}>View →</div>
-          </div>
-
-          <div className="gc-card" onClick={() => router.push("/teacher/reports/curriculum")} style={{ ...panelStyle(ACCENT, { padding: "18px 20px", marginBottom: 20, display: "flex", alignItems: "center", gap: 16 }) }}>
-            <div style={{ width: 44, height: 44, borderRadius: 12, background: COLORS.white, display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, color: ACCENT, fontSize: 20, flexShrink: 0 }}>🧭</div>
-            <div style={{ flex: 1 }}>
-              <div style={{ fontWeight: 700, fontSize: 15 }}>Curriculum Analytics</div>
-              <div style={{ fontSize: 12.5, color: COLORS.textMuted }}>Every case you've assigned, combined across all classes — completion, score, and how often work gets sent back.</div>
-            </div>
-            <div style={{ color: ACCENT, fontWeight: 700, fontSize: 13 }}>View →</div>
-          </div>
-
-          {classes.length === 0 ? (
-            <div style={panelStyle(ACCENT, { padding: 24, textAlign: "center", color: COLORS.textMuted, fontSize: 14 })}>No classes yet.</div>
-          ) : (
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: 16 }}>
-              {classes.map((c) => (
-                <div key={c.id} className="gc-card" onClick={() => router.push(`/teacher/reports/${c.id}`)} style={{ position: "relative", ...panelStyle(ACCENT, { padding: 20 }) }}>
-                  {c.needsAttention > 0 && (
-                    <div style={{ position: "absolute", top: 14, right: 14, background: COLORS.danger + "18", color: COLORS.danger, fontSize: 10.5, fontWeight: 700, padding: "3px 9px", borderRadius: 999 }}>
-                      {c.needsAttention} need attention
-                    </div>
-                  )}
-                  <div style={{ width: 44, height: 44, borderRadius: 12, background: `${ACCENT}22`, display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, color: ACCENT, fontSize: 18, marginBottom: 12 }}>{c.name[0]}</div>
-                  <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 4 }}>{c.name}</div>
-                  <div style={{ fontSize: 12.5, color: COLORS.textMuted }}>{c.studentCount} student{c.studentCount === 1 ? "" : "s"}</div>
-                  <div style={{ marginTop: 12, color: ACCENT, fontWeight: 700, fontSize: 12.5 }}>Generate Report →</div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      </div>
-    </div>
-  );
+  const scoped=evidence.filter(a=>selectedClassId==='all'||a.class_id===selectedClassId);
+  const byStandard=Object.values(scoped.reduce((m,a)=>{const key=a.case_standard;if(!m[key])m[key]={key,title:a.case?.title||key,subject:a.case?.subject,work:[]};m[key].work.push(...a.submissions);return m},{}));
+  const support=allStudents.filter(s=>s.support&&(selectedClassId==='all'||s.class_id===selectedClassId));
+  const studentMatches=allStudents.filter(s=>(selectedClassId==='all'||s.class_id===selectedClassId)&&s.first_name.toLowerCase().includes(search.toLowerCase()));
+  return <BridgePage teacherEmail={teacherEmail}><PageHeading title="See what’s clicking" subtitle="Use learning evidence to plan your next step."><ClassTabs classes={classes} value={selectedClassId} onChange={setSelectedClassId} all/></PageHeading>
+  {error&&<div className="cc-error" role="alert">{error}</div>}
+  <div className="cc-toolbar"><input className="cc-input cc-search" value={search} onChange={e=>setSearch(e.target.value)} placeholder="Find a student report" aria-label="Find a student report"/><Link className="cc-btn secondary" href="/teacher/reports/standards">Standards report</Link><Link className="cc-btn secondary" href="/teacher/reports/curriculum">Curriculum report</Link></div>
+  {search&&<section className="cc-panel" style={{marginBottom:18}}>{studentMatches.length?studentMatches.map(s=><div className="cc-person" key={s.id}><div className="cc-avatar">{s.first_name[0]}</div><div><strong>{s.first_name}</strong><p>{s.className}</p></div><Link className="cc-link" href={`/teacher/reports/student/${s.id}`}>Open report</Link></div>):<Empty>No matching students.</Empty>}</section>}
+  <div className="cc-two"><section className="cc-panel"><h2>Learning evidence</h2><p className="cc-muted">Completed activities and teacher-reviewed work, across all dates.</p><div className="cc-table-scroll"><table className="cc-table"><thead><tr><th>Activity / standard</th><th>Evidence collected</th><th>Review</th></tr></thead><tbody>{byStandard.map(g=>{const submitted=g.work.filter(s=>s.submitted_at),graded=submitted.filter(s=>s.released&&s.teacher_grade!=null);return <tr key={g.key} style={{borderLeft:`3px solid ${subjectStyle(g.subject)["--subject"]}`}}><td><strong>{g.title}</strong><small>{g.key}</small></td><td>{submitted.length} submission{submitted.length===1?'':'s'}<small>{graded.length} released teacher review{graded.length===1?'':'s'}</small></td><td><Link className="cc-link" href="/teacher/reports/standards">View evidence →</Link></td></tr>})}</tbody></table></div>{!byStandard.length&&<Empty>Evidence will appear as your class works through assigned activities.</Empty>}</section>
+  <aside className="cc-stack"><section className="cc-panel"><h2>Plan a follow-up</h2><p className="cc-muted">Students in the Needs Support band, based on released teacher grades.</p>{support.length?support.slice(0,5).map(s=><div className="cc-person" key={s.id}><div className="cc-avatar">{s.first_name[0]}</div><div><strong>{s.first_name}</strong><p>{s.className}</p></div><Link className="cc-link" href={`/teacher/reports/student/${s.id}`}>View</Link></div>):<p className="cc-muted">No students in this band in the selected scope.</p>}<Link className="cc-btn secondary" style={{marginTop:14}} href="/teacher/progress">Explore student progress</Link></section><section className="cc-panel"><h3>Class reports</h3>{classes.filter(c=>selectedClassId==='all'||c.id===selectedClassId).map(c=><div key={c.id} className="cc-person"><div><strong>{c.name}</strong><p>{c.studentCount} students</p></div><Link className="cc-link" href={`/teacher/reports/${c.id}`}>Open</Link></div>)}</section></aside></div>
+  <section className="cc-panel cc-row cc-between" style={{marginTop:18}}><div><h2>Choose the next learning experience</h2><p className="cc-muted">Use the evidence above to choose a topic and assign it to a class or selected students.</p></div><Link className="cc-btn" href={`/teacher/assign/new${selectedClassId==='all'?'':`?classId=${selectedClassId}`}`}>Find an activity</Link></section>
+  </BridgePage>;
 }
