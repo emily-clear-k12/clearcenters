@@ -1,8 +1,9 @@
 # TEKS reference — locked to Emily's official documents
 
-**Source of truth:** the 6 official Texas TEKS PDFs Emily provided (Grade 3/4/5
-Science, Grade 3/4/5 Social Studies — Science adopted 2021 / effective
-2024–2025, Social Studies adopted 2022 / effective 2024–2025). Copies live in
+**Source of truth:** the official Texas TEKS PDFs Emily provided. As of
+**Sept 22, 2026 every subject is covered**: Grade 3/4/5 Science (adopted 2021,
+effective 2024–2025), Grade 3/4/5 Social Studies (adopted 2022, effective
+2024–2025), **ELAR Grades 3–5**, and **Mathematics Grades 3–5**. Copies live in
 the Masters archive under `05_REFERENCE/TEKS/`. **Do not invent or guess a
 TEKS code for new case content — look it up in those PDFs (or this file, once
 a code has already been verified here) first.**
@@ -10,6 +11,10 @@ a code has already been verified here) first.**
 This file is a running log of codes that have been checked against the real
 documents while building case content. It is not a full transcription of the
 TEKS — for the complete standard text, use the source PDFs.
+
+**Read §"Not yet logged" at the bottom before assuming a code is safe.** A code
+being *used by live content* is not the same fact as a code being *checked
+against a PDF*, and this file now separates the two.
 
 ## Verified codes currently used by real case content
 
@@ -128,3 +133,149 @@ group review-question banks Emily authored in
 set), converted into `lib/cases/signal-defense/<standard>-SD.public.js`.
 Logged Sept 11, 2026 alongside the content-pipeline layered pass — `3.6B-SD`
 was the original pilot case; the other 21 were added in the same pass.
+
+### Mission Map (`mission_map` engine)
+
+Mission Map is the one engine whose case code is **not** a TEKS code — it
+numbers cases sequentially as internal concept numbers (`3.1-MM`, `3.2-MM`),
+so the real standard lives in each case's own `teksLabel` and in
+`lib/cases/mission-map/teksLabels.js`. 23 of the 25 do not line up with their
+own number; `4.6-MM` and `5.7-MM` match only by coincidence. Logged here so
+the mapping exists in one place a person can read.
+
+| Case code | TEKS code | Grade | Subject | Topic |
+|---|---|---|---|---|
+| `3.1-MM` | 3.12B | 3 | Science | Food chains & ecosystem changes |
+| `3.2-MM` | 3.10A | 3 | Science | Weather |
+| `3.3-MM` | 3.7A | 3 | Science | Forces |
+| `3.4-MM` | 3.12C | 3 | Science | Environmental changes |
+| `3.5-MM` | 3.7C | 3 | Social Studies | Government services |
+| `3.6-MM` | 3.4C | 3 | Social Studies | Map elements |
+| `3.7-MM` | 3.1A | 3 | Social Studies | How communities change |
+| `3.8-MM` | 3.6A | 3 | Social Studies | Supply & demand |
+| `4.1-MM` | 4.9B | 4 | Science | Moon patterns |
+| `4.2-MM` | 4.10A | 4 | Science | Water cycle |
+| `4.3-MM` | 4.10B | 4 | Science | Weathering, erosion & deposition |
+| `4.4-MM` | 4.12B | 4 | Science | Food webs |
+| `4.5-MM` | 4.10C | 4 | Science | Weather vs. climate |
+| `4.6-MM` | 4.6A | 4 | Social Studies | Four physical regions of Texas |
+| `4.7-MM` | 4.4C | 4 | Social Studies | Railroads in Texas |
+| `4.8-MM` | 4.19A | 4 | Social Studies | Primary & secondary sources |
+| `4.9-MM` | 4.22A | 4 | Social Studies | Democratic decision making |
+| `5.1-MM` | 5.7A & 5.7B | 5 | Science | Equal & unequal forces / force investigation |
+| `5.2-MM` | 5.8B | 5 | Science | Electrical circuits & energy transformations |
+| `5.3-MM` | 5.6A | 5 | Science | Physical properties of matter |
+| `5.4-MM` | 5.12B | 5 | Science | Changes in food webs |
+| `5.5-MM` | 5.19A | 5 | Social Studies | Rights guaranteed by the Bill of Rights |
+| `5.6-MM` | 5.15B | 5 | Social Studies | Checks & balances |
+| `5.7-MM` | 5.7B | 5 | Social Studies | Geographic factors & settlement |
+| `5.8-MM` | 5.23E | 5 | Social Studies | Point of view |
+
+Four of these were re-anchored after failing verification — `3.1-MM` (built
+outside any real standard, rewritten to 3.12B), `3.4-MM` ("basic needs" →
+3.12C), `4.5-MM` (weather vs. climate moved down from grade 5), `3.8-MM`
+("Goods and Services Market Map" → 3.6A) and `4.9-MM` (civic participation →
+4.22A). **Mission Map's Math and ELAR concepts (24) are not authored yet.**
+
+### Assembly Deck (`assembly_deck` engine) — live cases
+
+Verified Sept 22, 2026 against the real PDFs before any content was written.
+
+| Standard (with suffix) | TEKS code | Grade | Subject | Topic |
+|---|---|---|---|---|
+| `3.6A-AD` | 3.6A | 3 | Science | Classifying matter by physical properties incl. magnetism |
+| `4.10B-AD` | 4.10B | 4 | Science | Erosion & deposition at a stream bend |
+| `SS.4.6B-AD` | 4.6B | 4 | Social Studies | Comparing two Texas physical regions |
+| `SS.5.4C-AD` | 5.4C | 5 | Social Studies | The Lewis and Clark expedition |
+| `ELA.3.12B-AD` | 3.12B (+ 3.11B(i)) | 3 | ELAR | Compose informational texts |
+| `ELA.5.12C-AD` | 5.12C (+ 5.11B(i)) | 5 | ELAR | Compose argumentative texts |
+
+**These are the first ELAR codes in this log.** `ELA.3.12B` and `ELA.5.12C`
+were checked against Emily's ELAR PDF on Sept 22 while it was in hand.
+
+### Assembly Deck — the 48-case map (checked, not yet authored)
+
+`claude/AssemblyDeck_CaseMap_v1.md` names 48 more cases, all checked against
+the real PDFs in the Sept 22 session. They are **verified but unauthored** —
+safe to build against without re-opening a PDF.
+
+- **Science** — G3: 3.12B, 3.11B, 3.13A, 3.10C · G4: 4.8B, 4.9B, 4.12B, 4.11B · G5: 5.6B, 5.8C, 5.12B, 5.10C
+- **Social Studies** — G3: 3.5B, 3.7C, 3.9A, 3.14B · G4: 4.2C, 4.3D, 4.4B, 4.11C · G5: 5.2A, 5.14A, 5.15B, 5.12B
+- **ELAR** — G3: 3.12A, 3.12C, 3.12D, 3.7D · G4: 4.12B, 4.12C, 4.12D, 4.7D · G5: 5.12B, 5.12D, 5.7D, 5.13D
+- **Math** — G3: 3.5A, 3.5B, 3.4K, 3.8B · G4: 4.5A, 4.4H, 4.5B, 4.9B · G5: 5.4B, 5.3K, 5.3L, 5.9C
+
+**This is the only verified Math list anywhere in the project**, and the only
+broad ELAR one. Anything authoring Math or ELAR content should start here.
+
+### Mission Map — the Math batch (authored Sept 22, 2026)
+
+The first verified Math codes in this project. Every one was checked against
+Emily's real **Texas Mathematics TEKS** PDF (19 TAC §§111.5–111.7) before any
+content was written. The reasoning for each anchor, including the three that
+deliberately avoid a more obvious code, is in
+`claude/MissionMap_MathELAR_Anchors_v1.md`.
+
+Remember Mission Map's own rule: the case code is an internal concept number,
+**not** a TEKS code.
+
+| Case code | TEKS code | Grade | Topic |
+|---|---|---|---|
+| `3.9-MM` | 3.7B | 3 | Perimeter of a polygon & a missing side length |
+| `3.10-MM` | 3.4D | 3 | Total objects in equally-sized groups and arrays |
+| `3.11-MM` | 3.7A | 3 | Fractions as distances from zero on a number line |
+| `3.12-MM` | 3.8B | 3 | Problems from a bar graph with scaled intervals |
+| `4.10-MM` | 4.3D | 4 | Comparing fractions with unlike numerators and denominators |
+| `4.11-MM` | 4.5D | 4 | Perimeter and area problems with whole-number dimensions |
+| `4.12-MM` | 4.2B | 4 | Value of a digit in decimals to the hundredths |
+| `4.13-MM` | 4.5A | 4 | Multi-step problems, strip diagrams, a letter for the unknown |
+| `5.9-MM` | 5.2B | 5 | Comparing and ordering decimals to the thousandths |
+| `5.10-MM` | 5.6B | 5 | Volume of a rectangular prism as layers times the base |
+| `5.11-MM` | 5.9C | 5 | Problems from a stem-and-leaf plot and other displays |
+| `5.12-MM` | 5.3H | 5 | Adding fractions with unequal denominators, same whole |
+
+**Three anchors that are not the obvious choice, and why:**
+
+- **`3.9-MM` is 3.7B, not 3.6C.** 3.6C is the AREA of rectangles. 3.7B is
+  perimeter, and it is the only code that names finding "a missing length when
+  given perimeter and remaining side lengths," which is the case's second gate.
+- **`3.10-MM` is 3.4D, not 3.5B.** Both mention arrays. 3.4D says
+  *equally-sized* groups, and the case's trap is a story with the same digits
+  and unequal groups — so 3.4D is the standard the trap tests. It also avoids a
+  third case on 3.5B, which `MA.3.5B` (Signal Check) and the Assembly Deck case
+  map already claim.
+- **`4.12-MM` is 4.2B, not 4.2G.** The case's own final idea is "the position
+  of a digit after the decimal point tells its value," and its trap is 0.4
+  against 0.04. That is place value. 4.2G is the secondary skill and is already
+  covered by `MA.4.2G` (Signal Check).
+
+**Useful confirmations from the Math PDF while it was open:**
+
+- **5.5 and 5.7 genuinely have no lettered subparts.** The document says so in
+  its own "How the codes work" note. `MA.5.5` in the Signal Check list below is
+  therefore a correctly-formed code, not a missing letter — the opposite of the
+  `5.9`/`5.9A` Science problem recorded above.
+- **3.8B ends with "with scaled intervals."** The scale is part of the standard,
+  not an authoring choice.
+
+## Not yet logged — used by live content, never checked against a PDF *in this file*
+
+These codes are in shipped case files. They may well be correct — several were
+authored in sessions that had the PDFs open — but **this log has never verified
+them**, and the distinction matters after `3.1-MM`, `3.6E-SC`, `4.7B-SC`,
+`5.10D-SC` and the `5.9`/`5.9A` correction. Treat them as candidates, not
+facts, until someone checks them off against the real documents.
+
+**Signal Check Math (12 cases, authored Sept 21–22, 2026)**
+`MA.3.3H` · `MA.3.5B` · `MA.3.5C` · `MA.3.6C` · `MA.4.2F` · `MA.4.2G` ·
+`MA.4.3E` · `MA.4.6B` · `MA.5.3E` · `MA.5.3I` · `MA.5.4F` · `MA.5.5`
+
+*(`MA.5.5`'s bare code is confirmed correct — see the Mission Map Math section
+above. The other eleven still want a read against the PDF.)*
+
+**Signal Check ELAR (12 cases, authored Sept 21–22, 2026)**
+`ELA.3.3C` · `ELA.3.6F` · `ELA.3.7C` · `ELA.3.9D` · `ELA.4.8A` · `ELA.4.9E` ·
+`ELA.4.10A` · `ELA.4.11D` · `ELA.5.8A` · `ELA.5.9E` · `ELA.5.10B` · `ELA.5.10D`
+
+**Engines with no entry in this file at all:** Simulation Lab (10 cases),
+Relay Station (94 lessons), Frequency Rush, Group Chat, Newsroom. Their
+standards live only in their own case files.
