@@ -175,7 +175,8 @@ Four of these were re-anchored after failing verification — `3.1-MM` (built
 outside any real standard, rewritten to 3.12B), `3.4-MM` ("basic needs" →
 3.12C), `4.5-MM` (weather vs. climate moved down from grade 5), `3.8-MM`
 ("Goods and Services Market Map" → 3.6A) and `4.9-MM` (civic participation →
-4.22A). **Mission Map's Math and ELAR concepts (24) are not authored yet.**
+4.22A). Mission Map's Math (Sept 22) and ELAR (Sept 23) batches are logged
+in their own sections below.
 
 ### Assembly Deck (`assembly_deck` engine) — live cases
 
@@ -256,6 +257,46 @@ Remember Mission Map's own rule: the case code is an internal concept number,
   `5.9`/`5.9A` Science problem recorded above.
 - **3.8B ends with "with scaled intervals."** The scale is part of the standard,
   not an authoring choice.
+
+### Mission Map — the ELAR batch (authored Sept 23, 2026)
+
+Checked against Emily's real **Texas ELAR TEKS, Grades 3–5** PDF in the
+Sept 22 session, before any content was written, and approved by Emily on
+Sept 23. (That PDF was supplied in chat and is **not** in
+`05_REFERENCE/TEKS/` — only the Science and Social Studies PDFs are on disk.
+Worth dropping ELAR and Math there so the next check does not depend on a
+chat upload.) Full reasoning: `claude/MissionMap_MathELAR_Anchors_v1.md`.
+
+| Case code | TEKS code | Grade | Topic |
+|---|---|---|---|
+| `3.13-MM` | 3.7C | 3 | Use text evidence to support a response (character trait) |
+| `3.14-MM` | 3.6G | 3 | Evaluate details to determine key ideas |
+| `3.15-MM` | 3.8C | 3 | Plot: sequence, conflict, resolution |
+| `3.16-MM` | 3.10C | 3 | Author's use of print and graphic features |
+| `4.14-MM` | 4.8A | 4 | Infer basic themes with text evidence |
+| `4.15-MM` | 4.10A | 4 | Author's purpose and message (via a repeated detail) |
+| `4.16-MM` | 4.9E | 4 | Argument: claim, facts, intended audience |
+| `4.17-MM` | 4.7D | 4 | Summarize in ways that keep meaning and logical order |
+| `5.13-MM` | 5.6F | 5 | Make inferences and use evidence |
+| `5.14-MM` | 5.7B | 5 | Compare and contrast ideas across sources |
+| `5.15-MM` | 5.8A | 5 | Infer MULTIPLE themes with text evidence |
+| `5.16-MM` | 5.10A | 5 | Author's purpose and message |
+
+**Two judgment calls, both Emily's:**
+
+- **`3.13-MM` is 3.7C.** Grade 3 ELAR has no character-traits expectation.
+  The case grades evidence selection, which is 3.7C.
+- **`4.15-MM` is 4.10A, not 4.10D.** 4.10D names imagery, figurative language
+  and sound devices, not repetition. The case keeps the library's repetition
+  concept and grades purpose and message, which is what 4.10A names.
+
+**One case goes beyond its library concept to meet the standard:** `5.15-MM`.
+5.8A says *multiple* themes; the library concept only ranked evidence for
+one. The case adds a second theme with its own evidence.
+
+**Overlap with Signal Check** (depth, not a conflict — codes differ): 3.7C,
+4.8A, 4.9E, 4.10A, 5.8A. The ELAR anchors above also confirm, in passing,
+that those five Signal Check ELAR codes name real Grade 3–5 standards.
 
 ## Not yet logged — used by live content, never checked against a PDF *in this file*
 
