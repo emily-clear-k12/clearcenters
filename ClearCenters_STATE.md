@@ -56,6 +56,36 @@ Nothing else. This file is a status document, not a design document — design n
 
 ## 0.5 · SESSION LOG
 
+**Sept 23, 2026 (Signal Check measured) — Signal Check's reading level was measured for the first time. Only 19 of 108 cases are on grade. Nothing has been rewritten yet; the numbers went to Emily first.**
+
+- New tool: `tools/signal-check-gradecheck.cjs`. It uses the same form-aware method and bands as the Mission Map checker. FK is measured on the claim, the field-report notes, the signals, the readings and the proof lines. `--list` prints every over-long sentence. The rule-17 check was done: the longest "sentences" (up to 40 words) are real prose, not the scorer joining things together.
+- Mean FK by grade 3 / 4 / 5 (ceilings 4.2 / 5.6 / 7.2):
+  - **Science:** 5.6 / 6.1 / 8.1. 5 of 54 cases pass; 109 sentences are too long.
+  - **Social Studies:** 5.8 / 9.2 / 9.7. 0 of 30 pass; 100 sentences are too long. This is the worst in the project.
+  - **Math:** 0.9 / 0.3 / 1.8. 11 of 12 pass. The numbers look low because numerals count as one syllable, not because the text is easy.
+  - **ELAR:** 4.5 / 4.4 / 4.2. 7 of 12 pass. It does not separate by grade.
+- Rewrites would touch only student-facing text fields. Verdicts, `stemEvidenceIds`, `sortBins` and every id stay as they are.
+
+---
+
+**Sept 23, 2026 (reading level) — Mission Map re-leveled. Open decision 26 is closed: the original 25 cases now read on grade, and all 49 separate cleanly by grade.**
+
+*What changed*
+- Emily approved the retroactive pass. All 25 Science and Social Studies cases were measured with `tools/mission-map-gradecheck.cjs`. **173 sentences were over their grade's limit**, some up to 39 words. The rule-17 check was run first: the long sentences were real, not a scorer artifact.
+- 23 cases were rewritten, field by field. Grade 3 got full plain-language rewrites. Grades 4 and 5 were mostly sentence splits. 5.2 and 5.4 already passed and were left alone. **Server files are untouched, so answer keys, rubrics and model answers did not change.** `mission-map-casecheck.cjs` still passes all 49. Standards vocabulary was kept (rule 18).
+- Result (same scorer for every subject): **Science 2.5 / 3.7 / 5.6, Social Studies 2.1 / 3.6 / 6.0** for grades 3 / 4 / 5, down from 5.3 / 5.7 / 5.7 and 5.6 / 7.1 / 6.7. Every sentence is now within its grade's max. ELAR reads 2.0 / 3.3 / 4.4.
+- One content fix along the way: **5.7-MM cp5's evidence contradicted the case.** It said "the three sites are actually the same location," while the brief promised three different sites. It was rewritten to say the first three survey stops looked at one river-valley site from different sides.
+- Two Math sentences were split (3.10 final prompt, 5.11 cp1).
+- Someone had pointed the 12 Math cases' `mapImage` at the fallback `/teacher/challenges/mission_map.jpg`, because their maps don't exist yet. **The 12 ELAR cases now use the same fallback**, instead of pointing at missing images.
+- Found during the pass: the Math files on disk had changed at 12:18, when that fallback edit came in with a pull. The two Math edits were re-applied on top of the current files, so nothing was overwritten.
+
+*What is still open*
+- The scorer still flags Math grade 4→5 separation (2.0 → 2.6). That is mostly numerals scoring as one syllable, so it was not acted on.
+- Grade 3 Social Studies 3.6 and 3.7 read at 1.4 and 1.7, a little below the 2.0 floor. That is fine for grade 3, but they are the plainest cases in the library.
+- None of it is live-tested. Commit and push the 37 changed case files; no SQL is needed.
+
+---
+
 **Sept 23, 2026 (audit) — First full production audit: the database now matches the code, with one small gap.**
 
 *What changed*
@@ -390,7 +420,7 @@ The old-era 5.6A "Creek Sensor Mix-Up" packet had strong reasoning design underm
 - ~~Mission Map's ELAR 12~~ **Authored Sept 23.** Its SQL is not yet run, and the files are not yet pushed.
 - **Map art for Mission Map's 24 Math/ELAR cases** (`/mission-map/<code>-map.jpg`, which should also be saved as the `/cases/` thumbnail).
 - ~~Case hints for Mission Map's Math 12~~ **Done Sept 23.**
-- **Mission Map's original 25 cases read above grade band** (5.8 / 6.7 / 6.8 for grades 3/4/5) and barely separate. Measured Sept 23, deliberately not acted on.
+- ~~Mission Map's original 25 read above grade band~~ **Re-leveled Sept 23.**
 - **A "Student progress" commit made on GitHub is deployed but unreviewed by Claude** and unpulled on Emily's machine.
 - **Relay Station art is generated but unconnected** — rank badges, keyboard-skin previews, posture and hands diagrams are referenced nowhere in code, and the challenge tile still points at the SVG placeholder. Paths unknown to Claude.
 - **The 48-case Assembly Deck map is unreviewed** by Emily, who is author of record.
@@ -411,7 +441,7 @@ The old-era 5.6A "Creek Sensor Mix-Up" packet had strong reasoning design underm
 
 ## 8 · OPEN DECISIONS
 
-26. **(Sept 23, 2026, new) Should the Math batch be re-leveled up toward the existing Mission Map cases, or the existing 25 re-leveled down?** They now differ noticeably: the Math 12 read 2.2 / 3.6 / 4.3 and separate cleanly; the original 25 read 5.8 / 6.7 / 6.8 and barely separate. One of the two sets is wrong for its grades, and it is more likely the older one.
+26. ~~Re-level Math up or the original 25 down?~~ **Resolved Sept 23: the original 25 were re-leveled down. All 49 now separate by grade.**
 25. ~~**Does the leftovers step hold up three times per case?**~~ **Answered Sept 23 by the pilot: yes.** Emily ran the grade 3 Science case with a student and the leftovers step held. What did not hold was using it *again* as the final written question — that ending is now the Chief's Debrief.
 24. **(Sept 22, 2026, new) Should the reading-level gate be applied retroactively to the older engines** (Frequency Rush, Signal Check, Mission Map, Simulation Lab, Briefings)? Offered and declined for now ("no thats ok for now").
 23. **(Sept 22, 2026, new) Where did the generated art land, and which pieces map to which paths?** Blocking all art wiring for both new engines.
