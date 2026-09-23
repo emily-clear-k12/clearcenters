@@ -1,9 +1,9 @@
 "use client";
+import {BridgePage,PageHeading} from "../../../components/teacher/BridgeUI";
 
 import React, { useState, useEffect, useCallback, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "../../../lib/supabaseClient";
-import TeacherHUD from "../../../components/TeacherHUD";
 import { COLORS, PAGE_ACCENTS, panelStyle } from "../../../lib/teacherTheme";
 import { RACE_MESSAGES, RACE_CRYSTALS, listRelayStationLessons } from "../../../lib/cases/relay-station";
 
@@ -12,7 +12,7 @@ import { RACE_MESSAGES, RACE_CRYSTALS, listRelayStationLessons } from "../../../
 // message assembles leg by leg as students finish: green = delivered,
 // gold = someone is typing it (with their name), dim = still open.
 // Students join from their "Class Relay Race" assignment.
-const ACCENT = PAGE_ACCENTS["/teacher/assign"] || COLORS.copper;
+const ACCENT = "#7541cf";
 
 function fmt(sec) {
   const s = Math.max(0, Math.round(sec));
@@ -87,10 +87,10 @@ function RelayRaceContent() {
   const avgAcc = finishedLegs.length ? Math.round(finishedLegs.reduce((n, l) => n + l.accuracy, 0) / finishedLegs.length) : null;
 
   return (
-    <div style={{ minHeight: "100vh", background: COLORS.canvas, fontFamily: "'Inter', sans-serif", color: COLORS.textDark, display: "flex", flexDirection: "column" }}>
+    <BridgePage teacherEmail={teacherEmail} >
       <style>{`@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@600;700&family=Inter:wght@400;500;600;700&display=swap');`}</style>
-      <TeacherHUD title="Relay Race Board" subtitle="Relay Station · Class Relay Race" accent={ACCENT} teacherEmail={teacherEmail} />
-      <main style={{ flex: 1, padding: "24px 28px", maxWidth: 1200, margin: "0 auto", width: "100%", boxSizing: "border-box" }}>
+      <PageHeading title="Relay Race Board" subtitle="Relay Station · Class Relay Race"></PageHeading>
+      <div className="cc-detail-content">
         <div style={{ ...panelStyle(ACCENT, { padding: 16, marginBottom: 14 }), display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap" }}>
           <label style={{ fontSize: 13, fontWeight: 700 }}>Class{" "}
             <select value={classId} onChange={(e) => setClassId(e.target.value)} style={{ marginLeft: 6, padding: "6px 10px", borderRadius: 8, border: `1px solid ${COLORS.border}` }}>
@@ -154,8 +154,8 @@ function RelayRaceContent() {
             </>
           )}
         </div>
-      </main>
-    </div>
+      </div>
+    </BridgePage>
   );
 }
 

@@ -1,5 +1,6 @@
 "use client";
 
+import {BridgePage,PageHeading} from "../../../../components/teacher/BridgeUI";
 import React, { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ChevronLeft } from "lucide-react";
@@ -53,19 +54,19 @@ function DisplayContent() {
       <div style={{ minHeight: "100vh", background: COLORS.cream, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Inter', sans-serif", padding: 20, textAlign: "center" }}>
         <div>
           <p style={{ color: COLORS.textMuted, marginBottom: 12 }}>No class selected.</p>
-          <button onClick={() => router.push("/teacher/assign")} style={{ background: COLORS.violet, color: COLORS.white, border: "none", borderRadius: 999, padding: "10px 20px", fontWeight: 700, cursor: "pointer" }}>Go to My Classes</button>
+          <button onClick={() => router.push(classId ? `/teacher/roster/${classId}` : "/teacher/roster")} style={{ background: COLORS.violet, color: COLORS.white, border: "none", borderRadius: 999, padding: "10px 20px", fontWeight: 700, cursor: "pointer" }}>Go to My Classes</button>
         </div>
       </div>
     );
   }
 
   return (
-    <div style={{ minHeight: "100vh", background: "#1F2A44", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Inter', sans-serif", position: "relative" }}>
+    <BridgePage><PageHeading title="Join your class" subtitle={classInfo.name}/>
       <style>{`@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@600;700&family=Inter:wght@400;500;600;700&display=swap');`}</style>
 
       <button
-        onClick={() => router.push("/teacher/assign")}
-        style={{ position: "absolute", top: 24, left: 24, zIndex: 10, display: "flex", alignItems: "center", gap: 6, background: COLORS.white, border: "none", borderRadius: 999, padding: "10px 18px", fontWeight: 700, fontSize: 13, color: COLORS.textDark, cursor: "pointer", boxShadow: "0 4px 16px rgba(13,27,42,.1)" }}
+        onClick={() => router.push(classId ? `/teacher/roster/${classId}` : "/teacher/roster")}
+        style={{ marginBottom: 18, display: "flex", alignItems: "center", gap: 6, background: COLORS.white, border: "none", borderRadius: 999, padding: "10px 18px", fontWeight: 700, fontSize: 13, color: COLORS.textDark, cursor: "pointer", boxShadow: "0 4px 16px rgba(13,27,42,.1)" }}
       >
         <ChevronLeft size={16} /> Exit
       </button>
@@ -85,7 +86,7 @@ function DisplayContent() {
           {joinUrl && <QRCodeSVG value={joinUrl} size={110} fgColor="#0D1B2A" style={{ width: "78%", height: "auto" }} />}
         </div>
       </div>
-    </div>
+    </BridgePage>
   );
 }
 

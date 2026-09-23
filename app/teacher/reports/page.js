@@ -8,7 +8,6 @@ import { supabase } from "../../../lib/supabaseClient";
 import Link from 'next/link';
 import {BridgePage,PageHeading,ClassTabs,Empty} from '../../../components/teacher/BridgeUI';
 import {subjectStyle} from '../../../lib/teacherBridge';
-import TeacherHUD from "../../../components/TeacherHUD";
 import { COLORS, PAGE_ACCENTS, PAGE_BACKGROUNDS, panelStyle } from "../../../lib/teacherTheme";
 
 // Sept 13 — Reports moves to the console-interior look, same pattern as

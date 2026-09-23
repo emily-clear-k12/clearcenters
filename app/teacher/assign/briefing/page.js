@@ -1,10 +1,10 @@
 "use client";
+import {BridgePage,PageHeading} from "../../../../components/teacher/BridgeUI";
 
 import React, { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ChevronLeft } from "lucide-react";
 import { supabase } from "../../../../lib/supabaseClient";
-import TeacherHUD from "../../../../components/TeacherHUD";
 import { COLORS, PAGE_ACCENTS, PAGE_BACKGROUNDS, panelStyle } from "../../../../lib/teacherTheme";
 
 // Sept 13 — moved to the console-interior look, same pattern as My Classes
@@ -14,7 +14,7 @@ import { COLORS, PAGE_ACCENTS, PAGE_BACKGROUNDS, panelStyle } from "../../../../
 // than leaving it on the old light-cream look while everything around it
 // moves over. Decorative violet became this page's pink ACCENT; no query
 // or assignment logic changed.
-const ACCENT = PAGE_ACCENTS["/teacher/assign"];
+const ACCENT = "#7541cf";
 const BG = PAGE_BACKGROUNDS["/teacher/assign"];
 
 function AssignBriefingInner() {
@@ -146,29 +146,16 @@ function AssignBriefingInner() {
   }
 
   return (
-    <div
-      style={{
-        minHeight: "100vh",
-        background: COLORS.canvas,
-        backgroundImage: `linear-gradient(180deg, rgba(243,239,252,.55) 0%, rgba(243,239,252,.82) 100%), url(${BG})`,
-        backgroundSize: "cover",
-        backgroundPosition: "center top",
-        backgroundAttachment: "fixed",
-        fontFamily: "'Inter', sans-serif",
-        color: COLORS.textDark,
-        display: "flex",
-        flexDirection: "column",
-      }}
-    >
+    <BridgePage  >
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@600;700&family=Inter:wght@400;500;600;700&display=swap');
         .gc-btn { transition: transform 150ms ease; cursor: pointer; border: none; font-family: 'Inter', sans-serif; }
         .gc-btn:hover { transform: translateY(-1px); }
       `}</style>
 
-      <TeacherHUD title="Assign Briefing" subtitle="Mission Control — Social Studies teach-first shelf" accent={ACCENT} />
+      <PageHeading title="Assign Briefing" subtitle="Social Studies teach-first shelf"></PageHeading>
 
-      <div style={{ flex: 1, padding: "28px 36px 40px", display: "flex", justifyContent: "center" }}>
+      <div className="cc-detail-content">
         <div style={{ width: "100%", maxWidth: 980 }}>
           <button
             type="button"
@@ -176,7 +163,7 @@ function AssignBriefingInner() {
             onClick={() => router.push("/teacher/assign")}
             style={{ background: "none", color: COLORS.textMuted, display: "flex", alignItems: "center", gap: 4, padding: 0, marginBottom: 16, fontWeight: 600, fontSize: 13 }}
           >
-            <ChevronLeft size={16} /> Back to My Classes
+            <ChevronLeft size={16} /> Back to class management
           </button>
 
           <div style={panelStyle(ACCENT, { padding: 22 })}>
@@ -276,7 +263,7 @@ function AssignBriefingInner() {
           </div>
         </div>
       </div>
-    </div>
+    </BridgePage>
   );
 }
 

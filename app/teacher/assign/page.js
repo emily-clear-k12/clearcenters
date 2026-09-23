@@ -1,18 +1,18 @@
 "use client";
+import {BridgePage,PageHeading} from "../../../components/teacher/BridgeUI";
 
 import React, { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { Plus, Copy, Check, Printer } from "lucide-react";
 import { CaseImage } from "../../../lib/caseImage";
 import { supabase } from "../../../lib/supabaseClient";
-import TeacherHUD from "../../../components/TeacherHUD";
 import { COLORS, PAGE_ACCENTS, PAGE_BACKGROUNDS, panelStyle } from "../../../lib/teacherTheme";
 
 // This page's own accent — Mission Control's color on the Overview console
 // (see PAGE_ACCENTS in lib/teacherTheme.js) — so arriving here from that
 // landmark feels like walking into the same amber-lit room, and every
 // primary action on this page picks it up instead of a flat generic violet.
-const ACCENT = PAGE_ACCENTS["/teacher/assign"];
+const ACCENT = "#7541cf";
 const BG = PAGE_BACKGROUNDS["/teacher/assign"];
 
 function generateClassCode() {
@@ -262,25 +262,7 @@ export default function MyClassesPage() {
   }
 
   return (
-    <div
-      style={{
-        minHeight: "100vh",
-        // The room art (bg-platform-room.jpg, same one Emily picked for
-        // this page) sits full-bleed behind everything as a fixed backdrop
-        // — a soft lavender wash over it (matching COLORS.canvas) keeps the
-        // scrolling content on top legible no matter how bright a given
-        // patch of the art is, same idea as the glass panelStyle() cards.
-        background: COLORS.canvas,
-        backgroundImage: `linear-gradient(180deg, rgba(243,239,252,.55) 0%, rgba(243,239,252,.82) 100%), url(${BG})`,
-        backgroundSize: "cover",
-        backgroundPosition: "center top",
-        backgroundAttachment: "fixed",
-        fontFamily: "'Inter', sans-serif",
-        color: COLORS.textDark,
-        display: "flex",
-        flexDirection: "column",
-      }}
-    >
+    <BridgePage teacherEmail={teacherEmail} >
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@600;700&family=Inter:wght@400;500;600;700&display=swap');
         .gc-btn { transition: transform 150ms ease; cursor: pointer; border: none; font-family: 'Inter', sans-serif; }
@@ -288,14 +270,9 @@ export default function MyClassesPage() {
         .gc-input::placeholder { color: #8A84AC; }
       `}</style>
 
-      <TeacherHUD
-        title="My Classes"
-        subtitle="Mission Control — assign work, add students, keep tabs on your roster"
-        accent={ACCENT}
-        teacherEmail={teacherEmail}
-      />
+      <PageHeading title="My Classes" subtitle="assign work, add students, keep tabs on your roster"></PageHeading>
 
-      <div style={{ flex: 1, padding: "28px 36px 40px", display: "flex", justifyContent: "center" }}>
+      <div className="cc-detail-content">
         <div style={{ width: "100%", maxWidth: 1080 }}>
           {error && <div style={{ background: `${COLORS.danger}18`, border: `1px solid ${COLORS.danger}55`, color: "#8A2A22", borderRadius: 10, padding: "10px 14px", fontSize: 13, marginBottom: 16 }}>{error}</div>}
 
@@ -609,6 +586,6 @@ export default function MyClassesPage() {
           </div>
         </div>
       )}
-    </div>
+    </BridgePage>
   );
 }

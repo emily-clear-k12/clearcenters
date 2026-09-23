@@ -1,10 +1,10 @@
 "use client";
+import {BridgePage,PageHeading} from "../../../../../components/teacher/BridgeUI";
 
 import React, { useState, useEffect, useCallback } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { ChevronLeft, Printer, Link2, Check } from "lucide-react";
 import { supabase } from "../../../../../lib/supabaseClient";
-import TeacherHUD from "../../../../../components/TeacherHUD";
 import { COLORS, PAGE_ACCENTS, PAGE_BACKGROUNDS } from "../../../../../lib/teacherTheme";
 
 // Sept 13 — moved to the console-interior look, same pattern as the rest of
@@ -17,7 +17,7 @@ import { COLORS, PAGE_ACCENTS, PAGE_BACKGROUNDS } from "../../../../../lib/teach
 // would hurt at-a-glance readability rather than help it. Crystal Points
 // stays violet too — that's this app's consistent brand color for the
 // points/rewards currency everywhere, not a page-specific accent.
-const ACCENT = PAGE_ACCENTS["/teacher/reports"];
+const ACCENT = "#7541cf";
 const BG = PAGE_BACKGROUNDS["/teacher/reports"];
 
 function proficiencyBand(avg) {
@@ -324,21 +324,7 @@ export default function StudentReportPage() {
   }
 
   return (
-    <div
-      className="reports-shell"
-      style={{
-        minHeight: "100vh",
-        background: COLORS.canvas,
-        backgroundImage: `linear-gradient(180deg, rgba(243,239,252,.55) 0%, rgba(243,239,252,.82) 100%), url(${BG})`,
-        backgroundSize: "cover",
-        backgroundPosition: "center top",
-        backgroundAttachment: "fixed",
-        fontFamily: "'Inter', sans-serif",
-        color: COLORS.textDark,
-        display: "flex",
-        flexDirection: "column",
-      }}
-    >
+    <BridgePage teacherEmail={teacherEmail} >
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@600;700&family=Inter:wght@400;500;600;700&display=swap');
         .gc-btn { cursor: pointer; border: none; font-family: 'Inter', sans-serif; }
@@ -350,9 +336,9 @@ export default function StudentReportPage() {
         }
       `}</style>
 
-      <div className="no-print"><TeacherHUD title="Reports" subtitle={`Observatory — ${report.studentName}`} accent={ACCENT} teacherEmail={teacherEmail} /></div>
+      <div className="no-print"><PageHeading title="Reports" subtitle={`${report.studentName}`}></PageHeading></div>
 
-      <main style={{ flex: 1, padding: "28px 36px 60px" }}>
+      <div className="cc-detail-content">
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", maxWidth: 800, margin: "0 auto 20px" }} className="no-print">
           <button onClick={() => router.push(`/teacher/reports/${report.classId}`)} className="gc-btn" style={{ display: "flex", alignItems: "center", gap: 6, background: "none", color: COLORS.textMuted, fontWeight: 700, fontSize: 13.5 }}>
             <ChevronLeft size={18} /> Back to {report.className}
@@ -510,7 +496,7 @@ export default function StudentReportPage() {
             </div>
           </div>
         </div>
-      </main>
-    </div>
+      </div>
+    </BridgePage>
   );
 }

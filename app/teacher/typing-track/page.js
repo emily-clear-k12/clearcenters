@@ -1,9 +1,9 @@
 "use client";
+import {BridgePage,PageHeading} from "../../../components/teacher/BridgeUI";
 
 import React, { useState, useEffect, useCallback, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "../../../lib/supabaseClient";
-import TeacherHUD from "../../../components/TeacherHUD";
 import { COLORS, PAGE_ACCENTS, panelStyle } from "../../../lib/teacherTheme";
 import { TRACK_LEVELS, TRACK_UNITS, normalizeAccommodations } from "../../../lib/cases/relay-station";
 
@@ -15,7 +15,7 @@ import { TRACK_LEVELS, TRACK_UNITS, normalizeAccommodations } from "../../../lib
 //
 // Reads/writes go through /api/teacher/typing-track (admin key after an
 // ownership check), because relay_station_progress has no RLS policies.
-const ACCENT = PAGE_ACCENTS["/teacher/progress"] || COLORS.aqua;
+const ACCENT = "#7541cf";
 const TOTAL = TRACK_LEVELS.length;
 const STUCK_ATTEMPTS = 4; // tries on the current level without a pass = flag it
 const UNIT_BY_ID = Object.fromEntries(TRACK_UNITS.map((u) => [u.id, u]));
@@ -117,11 +117,11 @@ function TypingTrackContent() {
   });
 
   return (
-    <div style={{ minHeight: "100vh", background: COLORS.canvas, fontFamily: "'Inter', sans-serif", color: COLORS.textDark, display: "flex", flexDirection: "column" }}>
+    <BridgePage teacherEmail={teacherEmail} >
       <style>{`@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@600;700&family=Inter:wght@400;500;600;700&display=swap');`}</style>
-      <TeacherHUD title="Typing Track" subtitle="Relay Station · Foundations Track progress" accent={ACCENT} teacherEmail={teacherEmail} />
+      <PageHeading title="Typing Track" subtitle="Relay Station · Foundations Track progress"></PageHeading>
 
-      <main style={{ flex: 1, padding: "28px 32px", maxWidth: 1100, margin: "0 auto", width: "100%", boxSizing: "border-box" }}>
+      <div className="cc-detail-content">
         <div style={{ ...panelStyle(ACCENT, { padding: 18, marginBottom: 16 }) }}>
           <div style={{ display: "flex", gap: 14, alignItems: "center", flexWrap: "wrap" }}>
             <label style={{ fontSize: 13, fontWeight: 700 }}>
@@ -252,8 +252,8 @@ function TypingTrackContent() {
             </div>
           )}
         </div>
-      </main>
-    </div>
+      </div>
+    </BridgePage>
   );
 }
 
