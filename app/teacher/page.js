@@ -4,6 +4,7 @@ import React, { useState, useEffect, useCallback, useMemo, useRef } from "react"
 import { useRouter } from "next/navigation";
 import { supabase } from "../../lib/supabaseClient";
 import { SAM_SKINS, FALLBACK_ICON, getSamSkin, DEFAULT_SAM_SKIN } from "../../lib/samSkins";
+import TodayBridge from "../../components/teacher/TodayBridge";
 import { planetForClass } from "../../lib/classPlanets";
 
 // ---------------------------------------------------------------------------
@@ -524,7 +525,11 @@ export default function TeacherOverview() {
   const [rawSubmissions, setRawSubmissions] = useState([]);
   const [rawHintRequests, setRawHintRequests] = useState([]);
   const [caseMap, setCaseMap] = useState({});
+  const [caseDetails,setCaseDetails]=useState({});
+  const [targets,setTargets]=useState([]);
+  const [targetsError,setTargetsError]=useState(false);
   const [awardModalOpen, setAwardModalOpen] = useState(false);
+  const [rewardClassId,setRewardClassId]=useState(null);
   const [awarding, setAwarding] = useState(false);
   const [awardSuccess, setAwardSuccess] = useState(null);
 
@@ -585,7 +590,7 @@ export default function TeacherOverview() {
     // Now: log the real Postgres error instead of swallowing it, and fall
     // back to the pre-planet_key select so classes still show (just
     // without a saved pick) rather than vanishing outright.
-    let { data: classesData, error: classesError } = await supabase.from("classes").select("id, name, planet_key").eq("teacher_id", teacherId).order("name");
+    let { data: classesData, error: classesError } = await supabase.from("classes").select("id, name, planet_key, grade, subject").eq("teacher_id", teacherId).order("name");
     if (classesError) {
       console.error("Failed to load classes with planet_key — falling back without it. Run the migration in Teacher_Dashboard_OrbitMap_Art_Spec.md if this persists:", classesError);
       const fallback = await supabase.from("classes").select("id, name").eq("teacher_id", teacherId).order("name");
@@ -600,31 +605,36 @@ export default function TeacherOverview() {
 
     let students = [];
     if (classIds.length > 0) {
-      const { data } = await supabase.from("students").select("id, first_name, class_id, crystal_points").in("class_id", classIds);
+      const { data,error:readError } = await supabase.from("students").select("*").in("class_id", classIds);
       students = data || [];
+      if(readError)setError("Could not load all student data. Please refresh before using progress totals.");
     }
     setRawStudents(students);
 
     let assignments = [];
     if (classIds.length > 0) {
-      const { data } = await supabase.from("assignments").select("id, case_standard, due_date, class_id, created_at").in("class_id", classIds).order("created_at", { ascending: false });
+      const { data,error:readError } = await supabase.from("assignments").select("id, case_standard, due_date, class_id, created_at, distress_call").in("class_id", classIds).order("created_at", { ascending: false });
       assignments = data || [];
+      if(readError)setError("Could not load assignments. Please refresh to try again.");
     }
     setRawAssignments(assignments);
 
     const caseStandards = [...new Set(assignments.map((a) => a.case_standard).filter(Boolean))];
     if (caseStandards.length > 0) {
-      const { data: cases } = await supabase.from("cases").select("standard, title").in("standard", caseStandards);
+      const { data: cases } = await supabase.from("cases").select("standard, title, engine, subject, grade, learning_target").in("standard", caseStandards);
       setCaseMap(Object.fromEntries((cases || []).map((c) => [c.standard, c.title])));
+      setCaseDetails(Object.fromEntries((cases || []).map(c=>[c.standard,c])));
     } else {
-      setCaseMap({});
+      setCaseMap({});setCaseDetails({});
     }
 
     const assignmentIds = assignments.map((a) => a.id);
+    if(assignmentIds.length){const result=await supabase.from("assignment_students").select("assignment_id, student_id").in("assignment_id",assignmentIds);setTargets(result.data||[]);setTargetsError(!!result.error)}else{setTargets([]);setTargetsError(false)}
     let allSubmissions = [];
     if (assignmentIds.length > 0) {
-      const { data } = await supabase.from("submissions").select("id, student_id, assignment_id, submitted_at, teacher_grade, released, revision_requested").in("assignment_id", assignmentIds);
+      const { data,error:readError } = await supabase.from("submissions").select("id, student_id, assignment_id, submitted_at, teacher_grade, released, revision_requested").in("assignment_id", assignmentIds);
       allSubmissions = data || [];
+      if(readError){setTargetsError(true);setError("Could not load submitted work. Progress totals are unavailable.");}
     }
     setRawSubmissions(allSubmissions);
 
@@ -781,7 +791,7 @@ export default function TeacherOverview() {
 
   if (loadingAuth || loading) {
     return (
-      <div style={{ minHeight: "100vh", background: COLORS.navy, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Inter', sans-serif", color: COLORS.textMuted }}>
+      <div style={{ minHeight: "100vh", background: "#f4effb", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Inter', sans-serif", color: COLORS.textMuted }}>
         Loading...
       </div>
     );
@@ -794,190 +804,8 @@ export default function TeacherOverview() {
   const teacherFirstName = displayName.split(" ")[0] || "";
   const planetSlots = planetLayout(perClassStats.length);
 
-  return (
-    <div
-      style={{
-        // minHeight (not fixed height): on any screen shape a real device
-        // actually has, the scene below exactly fills the viewport with no
-        // scroll (verified down to very short laptop windows). This is a
-        // floor, not a cap, purely as a safety net for the one scenario
-        // that can't stay both full-bleed AND fully on-screen — someone
-        // resizing their browser to something oddly short-and-wide, wider
-        // than about 2.6x its own height — where the scene's own min-height
-        // below takes priority over fitting one screen, and the page
-        // scrolls a little rather than cropping the console buttons.
-        minHeight: "100vh",
-        backgroundColor: COLORS.navy,
-        backgroundImage: `radial-gradient(ellipse at 50% -10%, #1B2A52 0%, ${COLORS.deepNavy} 45%, ${COLORS.navy} 100%)`,
-        fontFamily: "'Inter', sans-serif",
-        display: "flex",
-        flexDirection: "column",
-        position: "relative",
-      }}
-    >
-      <style>{`
-        @keyframes twinkle { 0%,100% { opacity:.25 } 50% { opacity:.9 } }
-        .orbit-star { position:absolute; width:2px; height:2px; border-radius:50%; background:#fff; animation:twinkle 3.5s ease-in-out infinite; }
-      `}</style>
-
-      {/* decorative starfield, purely CSS so it works with zero art */}
-      {Array.from({ length: 40 }).map((_, i) => (
-        <div key={i} className="orbit-star" style={{ top: `${(i * 37) % 90}%`, left: `${(i * 53) % 100}%`, animationDelay: `${(i % 7) * 0.4}s` }} />
-      ))}
-
-      {/* HUD */}
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "20px 32px", position: "relative", zIndex: 5 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <svg viewBox="0 0 24 24" width="24" height="24" fill="none"><path d="M12 2 4 7v10l8 5 8-5V7l-8-5Z" fill={COLORS.violet} /><path d="M12 2 4 7l8 5 8-5-8-5Z" fill={COLORS.aqua} /></svg>
-          <span style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 700, fontSize: 15, color: COLORS.white }}>ClearCenters</span>
-        </div>
-
-        <div ref={digestRef} style={{ textAlign: "center", position: "relative" }}>
-          <div style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 700, fontSize: 20, color: COLORS.white }}>
-            Welcome Back{teacherFirstName ? `, ${teacherFirstName}` : ""}
-          </div>
-          {totalUrgent > 0 ? (
-            <button
-              onClick={() => setDigestOpen((v) => !v)}
-              style={{ marginTop: 2, background: "none", border: "none", cursor: "pointer", padding: "2px 6px", display: "inline-flex", alignItems: "center", gap: 5, borderRadius: 999 }}
-              aria-expanded={digestOpen}
-              aria-label="Today, at a glance"
-            >
-              <span style={{ fontSize: 12.5, color: COLORS.gold, fontWeight: 700 }}>
-                {totalUrgent} thing{totalUrgent === 1 ? "" : "s"} need{totalUrgent === 1 ? "s" : ""} your attention across {classes.length} class{classes.length === 1 ? "" : "es"}.
-              </span>
-              <span style={{ display: "flex", color: COLORS.gold, opacity: 0.75, transform: digestOpen ? "rotate(180deg)" : "none", transition: "transform 150ms ease" }}>
-                {ICONS.chevron}
-              </span>
-            </button>
-          ) : (
-            <div style={{ fontSize: 12.5, color: COLORS.textMuted, marginTop: 2 }}>Everything's on track — nothing urgent right now.</div>
-          )}
-
-          {digestOpen && digest.length > 0 && (
-            <div
-              style={{
-                position: "absolute", top: "calc(100% + 10px)", left: "50%", transform: "translateX(-50%)",
-                width: 300, textAlign: "left", zIndex: 40,
-                background: COLORS.deepNavy, border: "1px solid rgba(255,255,255,.14)",
-                borderRadius: 14, padding: "8px 6px", boxShadow: "0 16px 44px rgba(0,0,0,.5)",
-              }}
-            >
-              <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: 0.6, textTransform: "uppercase", color: COLORS.textMuted, padding: "6px 10px 8px" }}>
-                Today, at a glance
-              </div>
-              {digest.map((d) => (
-                <div key={d.key} style={{ display: "flex", alignItems: "center", gap: 10, padding: "7px 10px" }}>
-                  <span style={{ color: d.color, flexShrink: 0, display: "flex" }}>{d.icon}</span>
-                  <span style={{ flex: 1, fontSize: 12.5, color: COLORS.white, lineHeight: 1.4 }}>
-                    <strong>{d.count}</strong> {d.label}
-                    {d.classCount > 1 && <span style={{ color: COLORS.textMuted }}> across {d.classCount} classes</span>}
-                  </span>
-                  <button
-                    onClick={() => { setDigestOpen(false); d.onGo(); }}
-                    style={{ background: "none", border: "none", color: COLORS.aqua, fontSize: 11.5, fontWeight: 700, cursor: "pointer", flexShrink: 0, padding: 0 }}
-                  >
-                    Go →
-                  </button>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-
-        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-          <div style={{ width: 32, height: 32, borderRadius: "50%", background: "rgba(255,255,255,.12)", color: COLORS.white, fontWeight: 700, fontSize: 13, display: "flex", alignItems: "center", justifyContent: "center" }}>
-            {(teacherFirstName || "T")[0].toUpperCase()}
-          </div>
-          <button onClick={() => router.push("/teacher/settings")} style={{ background: "none", border: "none", color: COLORS.textMuted, cursor: "pointer" }} aria-label="Settings">{ICONS.gear}</button>
-          <button onClick={handleLogout} style={{ background: "none", border: "none", color: COLORS.textMuted, fontSize: 12, fontWeight: 700, cursor: "pointer" }}>Log Out</button>
-        </div>
-      </div>
-
-      {error && <div style={{ margin: "0 32px 12px", background: "#FBEAEA", color: "#B23A3A", borderRadius: 10, padding: "10px 14px", fontSize: 13 }}>{error}</div>}
-
-      {/* Scene — the art's own proportions (BG_ASPECT) are preserved on an
-          inner "canvas" box, so the planet/console percent-coordinates
-          below always land exactly on the right spot on the art.
-          Sept 13 (second pass): this used to crop the canvas to fill the
-          wrapper edge-to-edge like CSS `background-size: cover` (first
-          bottom-anchored, before that centered) — but ANY crop-to-fill
-          approach is a trade-off between two things that both need to
-          stay fully visible: the planets near the top of the art and the
-          console along the bottom. Center-crop cut the console off the
-          bottom on short windows; bottom-anchoring that fix then cut the
-          planets off the top instead on windows wide enough relative to
-          their height (which turned out to be the common case, not an
-          edge case). Switched to "contain" sizing instead: the canvas is
-          the LARGEST size that fits entirely inside the wrapper at the
-          art's real aspect ratio (inset:0 + margin:auto + max-width/
-          max-height:100%, no explicit width/height so the browser solves
-          for the biggest non-cropped fit), centered. Nothing in the art is
-          ever cropped — on window shapes that don't match the art's ratio,
-          you get a sliver of letterboxing (top/bottom or left/right) that
-          shows the plain starfield/navy background behind it, which reads
-          fine since it's the same dark-space look either way. minHeight is
-          just a floor so the scene can't shrink to an unreadably thin
-          sliver on an extremely short window — below it the page scrolls
-          instead, same fallback as before. */}
-      <div style={{ flex: 1, position: "relative", overflow: "hidden", minHeight: "26vw" }}>
-        <div
-          style={{
-            position: "absolute", inset: 0, margin: "auto",
-            aspectRatio: BG_ASPECT,
-            maxWidth: "100%", maxHeight: "100%",
-            backgroundImage: `url(${ART.background})`, backgroundSize: "100% 100%", backgroundPosition: "center",
-            backgroundColor: COLORS.deepNavy,
-          }}
-        >
-          {classes.length === 0 ? (
-            <div style={{ position: "absolute", top: "34%", left: "50%", transform: "translateX(-50%)", textAlign: "center", color: COLORS.textMuted, fontSize: 14, whiteSpace: "nowrap" }}>
-              No classes yet —{" "}
-              <button onClick={() => router.push("/teacher/assign")} style={{ background: "none", border: "none", color: COLORS.aqua, fontWeight: 700, cursor: "pointer", fontSize: 14 }}>create one to get started</button>.
-            </div>
-          ) : (
-            perClassStats.map((c, i) => (
-              <PlanetNode
-                key={c.id}
-                cls={c}
-                index={i}
-                left={planetSlots[i].left}
-                top={planetSlots[i].top}
-                size={planetSlots[i].size}
-                onOpen={() => router.push(`/teacher/assign?classId=${c.id}`)}
-                onReview={() => router.push("/teacher/grade")}
-                onProgress={() => router.push("/teacher/progress")}
-              />
-            ))
-          )}
-
-          {/* Landmarks — hologram panels floating on the console, standing in
-              for the old sidebar's nav groups. Positions match the 5 lit
-              panel slots baked into the background art. */}
-          <Landmark art={ART.missionControl} icon={ICONS.launch} label="Mission Control" sub="Assign & Launch" accent={COLORS.copper} onClick={() => router.push("/teacher/assign")} {...CONSOLE_SLOTS[0]} />
-          <Landmark art={ART.observatory} icon={ICONS.telescope} label="Observatory" sub="Progress & Reports" accent={COLORS.aqua} onClick={() => router.push("/teacher/reports")} {...CONSOLE_SLOTS[1]} />
-          <Landmark art={samArtFor(teacherSamSkin)} icon={ICONS.gem} label="S.A.M." sub="Results & Shortcuts" accent={COLORS.teal} onClick={() => setAwardModalOpen(true)} {...CONSOLE_SLOTS[2]} />
-          <Landmark art={ART.beacon} icon={ICONS.mail} label="Messages" sub="Inbox & Updates" accent={COLORS.magenta} onClick={() => router.push("/teacher/messages")} {...CONSOLE_SLOTS[3]} />
-          <Landmark art={ART.resources} icon={ICONS.folder} label="Resources" sub="Tools & Badges" accent={COLORS.success} onClick={() => router.push("/teacher/resources")} {...CONSOLE_SLOTS[4]} />
-        </div>
-      </div>
-
-      {awardSuccess && (
-        <div style={{ position: "fixed", bottom: 28, right: 28, background: COLORS.white, color: "#1F2A44", borderRadius: 12, padding: "14px 20px", fontWeight: 700, fontSize: 13.5, boxShadow: "0 8px 24px rgba(0,0,0,.35)", zIndex: 200 }}>
-          {awardSuccess}
-        </div>
-      )}
-
-      <RewardsModal
-        open={awardModalOpen}
-        classes={classes}
-        rawStudents={rawStudents}
-        awarding={awarding}
-        onCancel={() => setAwardModalOpen(false)}
-        onAwardPoints={handleAwardPoints}
-        onGrantSkin={handleGrantSkin}
-        onSendShoutout={handleSendShoutout}
-      />
-    </div>
-  );
+  return <TodayBridge teacherName={displayName} teacherEmail={teacherEmail} classes={classes} students={rawStudents} assignments={rawAssignments} submissions={rawSubmissions} hints={rawHintRequests} caseDetails={caseDetails} targets={targets} targetsError={targetsError} error={error} onRewards={id=>{setRewardClassId(id);setAwardModalOpen(true)}}>
+    {awardSuccess&&<div role="status" className="cc-panel">{awardSuccess}</div>}
+    <RewardsModal open={awardModalOpen} classes={classes} rawStudents={rawStudents} defaultClassId={rewardClassId||classes[0]?.id} awarding={awarding} onCancel={()=>setAwardModalOpen(false)} onAwardPoints={handleAwardPoints} onGrantSkin={handleGrantSkin} onSendShoutout={handleSendShoutout}/>
+  </TodayBridge>;
 }

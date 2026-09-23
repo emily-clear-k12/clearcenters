@@ -57,6 +57,8 @@ export default function MyClassesPage() {
   const [copiedCode, setCopiedCode] = useState(false);
   const [error, setError] = useState(null);
   const [caseDetailAssignment, setCaseDetailAssignment] = useState(null);
+  const [openedFromLink,setOpenedFromLink]=useState(false);
+  useEffect(()=>{if(openedFromLink||!assignments.length)return;const id=new URLSearchParams(window.location.search).get('assignmentId');const match=assignments.find(a=>a.id===id);if(match){setCaseDetailAssignment(match);setOpenedFromLink(true)}},[assignments,openedFromLink]);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState(null);
@@ -87,7 +89,8 @@ export default function MyClassesPage() {
       setClassCounts(counts);
     }
 
-    setSelectedClassId((prev) => prev || (list.length > 0 ? list[0].id : null));
+    const requestedClass = new URLSearchParams(window.location.search).get('classId');
+    setSelectedClassId(prev => prev || (list.some(c=>c.id===requestedClass)?requestedClass:list[0]?.id||null));
     setLoadingClasses(false);
   }, [teacherId]);
 
