@@ -31,3 +31,13 @@
 .cc-page .gc-btn{font-family:inherit;cursor:pointer;border:0}.cc-page .gc-btn:disabled{opacity:.5;cursor:not-allowed}
 @media(max-width:1100px){.cc-console{padding:17px 26px;gap:8px}.cc-brand{padding-right:8px;font-size:20px}.cc-nav-link{padding:12px 8px}}
 @media(max-width:760px){.cc-console{padding:14px 20px;min-height:0}.cc-console:before{clip-path:polygon(4% 0,96% 0,100% 15%,100% 85%,96% 100%,4% 100%,0 85%,0 15%)}.cc-console:after{clip-path:polygon(4% 0,96% 0,100% 15%,100% 85%,96% 100%,4% 100%,0 85%,0 15%)}.cc-brand{font-size:20px;border:0;padding:0}.cc-account-trigger{padding:5px}.cc-console nav{padding:3px}.cc-account-trigger span{max-width:70px}.cc-account-menu{right:-10px}.cc-nav-link{padding:10px;font-size:12px}}
+
+/* Shared dashboard refinements. */
+.cc-sam-group img{width:64px;height:64px}.cc-sam-group strong{font-size:16px}
+.cc-notes-layout{grid-template-columns:minmax(0,1.3fr) minmax(0,1fr)}
+.cc-note-modes{justify-content:flex-start;margin:18px 0}.cc-note-body{width:100%;resize:vertical;line-height:1.6}
+.cc-sent-notes{max-height:620px;overflow:auto}.cc-sent-note{padding:18px 0;border-bottom:1px solid #eee9f7}.cc-sent-note:last-child{border:0}.cc-sent-note strong{font-size:13px}.cc-sent-note p{white-space:pre-wrap;overflow-wrap:anywhere;font-size:14px;line-height:1.6}.cc-sent-note time{font-size:12px}
+.cc-week-scroll{overflow-x:auto}.cc-week{min-width:740px}.cc-week-range{font-weight:600;font-size:14px;color:#563d83}.cc-week-date{padding:10px;font-size:12px;font-weight:600;border-radius:12px}.cc-week-date span{display:block;font-size:10px;margin-top:4px;text-transform:uppercase;letter-spacing:.05em}.cc-week-date.is-today{background:#7044cb;color:#fff}.cc-day{min-height:120px;overflow-wrap:anywhere}.cc-day.is-today{border-color:#b598e6;background:#fcf9ff}.cc-day .cc-day-empty{color:#81778f;font-size:11px;line-height:1.6;margin-top:16px}.cc-week-label{align-items:flex-start;padding-top:14px}
+.cc-browse-filters{background:#f8f6fc;border-radius:16px;padding:16px;align-items:end}.cc-browse-filters .cc-field{margin:0}.cc-browse-filters select{min-width:190px}.cc-browse-filters .cc-search{min-width:180px}.cc-compact-gallery .cc-activity>img{height:86px}
+.cc-page input:focus-visible,.cc-page select:focus-visible,.cc-page textarea:focus-visible{outline:3px solid #8253d5;outline-offset:2px}
+@media(max-width:760px){.cc-notes-layout{grid-template-columns:1fr}.cc-week{grid-template-columns:92px repeat(5,minmax(0,1fr))}.cc-browse-filters .cc-field{width:100%}.cc-browse-filters select{width:100%}}

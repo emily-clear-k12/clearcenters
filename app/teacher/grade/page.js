@@ -1,5 +1,6 @@
 "use client";
 
+import {rememberedTeacherClass} from "../../../lib/teacherClass";
 import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "../../../lib/supabaseClient";
@@ -35,7 +36,9 @@ export default function TeacherGradeListPage() {
   const [search, setSearch] = useState("");
   const [reviewFilter,setReviewFilter]=useState("all");
   const [assignmentFilter,setAssignmentFilter]=useState("all");
-  useEffect(()=>{const id=new URLSearchParams(window.location.search).get("classId");if(id)setSelectedClassId(id)},[]);
+
+  const classContextReady = React.useRef(false);
+  useEffect(()=>{if(classes.length&&!classContextReady.current){classContextReady.current=true;setSelectedClassId(rememberedTeacherClass(classes,'all'))}},[classes]);
   const [error, setError] = useState(null);
 
   useEffect(() => {

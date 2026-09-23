@@ -17,7 +17,7 @@ function mondayOf(date) {
 function dayKey(date) {
   const x = new Date(date);
   x.setHours(0, 0, 0, 0);
-  return x.toISOString().slice(0, 10);
+  return `${x.getFullYear()}-${String(x.getMonth()+1).padStart(2,'0')}-${String(x.getDate()).padStart(2,'0')}`;
 }
 
 export default function ResourcesPage() {
@@ -83,21 +83,22 @@ export default function ResourcesPage() {
 
   return (
     <BridgePage teacherEmail={email}>
-      <PageHeading title="Resources" subtitle="Planning for every class, then the guides." />
+      <PageHeading title="Resources" subtitle="Plan your week and find support for your next lesson." />
       {loading ? <Empty>Loading your week…</Empty> : (
         <div className="cc-stack">
           <section className="cc-panel">
             <div className="cc-row cc-between">
               <div>
-                <h2>Planning</h2>
-                <p className="cc-muted">Upload a calendar with date, class, topic, and an optional small group. This week shows what is already assigned, plus what the file suggests. Nothing goes to students until you assign it.</p>
+                <h2>This week</h2>
+                <p className="cc-week-range">{days[0].toLocaleDateString(undefined,{month:"long",day:"numeric"})} – {days[4].toLocaleDateString(undefined,{month:"long",day:"numeric",year:"numeric"})}</p>
+                <p className="cc-muted">See activities by due date and ideas from your calendar. Upload a CSV with date, class, topic, and optional small group. Ideas stay private until you assign them.</p>
               </div>
               <label className="cc-btn secondary">Upload calendar<input type="file" accept=".csv,text/csv,text/plain" onChange={onUpload} style={{ display: "none" }} /></label>
             </div>
             {note && <p className="cc-muted">{note}</p>}
-            <div className="cc-week">
+            <div className="cc-week-scroll"><div className="cc-week">
               <span />
-              {days.map((day) => <em key={dayKey(day)} style={{ fontStyle: "normal", fontSize: 11, letterSpacing: ".04em", textTransform: "uppercase", color: "#70658d" }}>{day.toLocaleDateString(undefined, { weekday: "short", day: "numeric" })}</em>)}
+              {days.map(day=><div key={dayKey(day)} className={'cc-week-date'+(dayKey(day)===dayKey(new Date())?' is-today':'')} aria-current={dayKey(day)===dayKey(new Date())?'date':undefined}>{day.toLocaleDateString(undefined,{weekday:'short',day:'numeric'})}{dayKey(day)===dayKey(new Date())&&<span>Today</span>}</div>)}
               {classes.map((c) => (
                 <Fragment key={c.id}>
                   <div className="cc-week-label">{c.name}</div>
@@ -106,10 +107,10 @@ export default function ResourcesPage() {
                     const due = assignments.filter((a) => a.class_id === c.id && a.due_date === key);
                     const ideas = plan.filter((item) => item.date === key && (!item.className || item.className.toLowerCase() === c.name.toLowerCase()));
                     return (
-                      <article key={key} className="cc-day">
+                      <article key={key} className={"cc-day"+(key===dayKey(new Date())?" is-today":"")}>
                         {due.map((a) => <p key={a.id}>{a.case_standard} due</p>)}
                         {ideas.map((item, i) => <React.Fragment key={`${item.topic}-${i}`}><strong>{item.topic}</strong>{item.group && <small>Small group · {item.group}</small>}</React.Fragment>)}
-                        {!due.length && !ideas.length && <p> </p>}
+                        {!due.length && !ideas.length && <p className="cc-day-empty">No activities scheduled</p>}
                         {ideas[0] && <Link className="cc-link" href={`/teacher/assign/new?classId=${c.id}&standard=${encodeURIComponent(ideas[0].topic)}`}>Use this</Link>}
                       </article>
                     );
@@ -117,11 +118,13 @@ export default function ResourcesPage() {
                 </Fragment>
               ))}
             </div>
+            </div>
             {!classes.length && <Empty>Create a class before planning a week.</Empty>}
           </section>
           <section className="cc-panel">
-            <h2>Guides</h2>
-            <p className="cc-muted">Teaching guides for a standard will live here. The printable companions are still being gathered.</p>
+            <div className="cc-row cc-between"><h2>Teaching guides</h2><span className="cc-badge neutral">Coming soon</span></div>
+            <p className="cc-muted">Printable lesson companions are on their way. For now, open an activity to explore its learning purpose and teaching notes.</p>
+            <Link className="cc-btn secondary" href="/teacher/assign/new">Explore activities</Link>
           </section>
         </div>
       )}
