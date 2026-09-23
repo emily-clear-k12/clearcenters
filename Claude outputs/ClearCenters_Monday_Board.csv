@@ -1,0 +1,27 @@
+﻿Item,Type,Status,Subject,Grades,Cases done,Cases planned,Priority,Blocked by,Next action,Notes
+Group Chat,Engine,Live,All subjects,3-5,8,27,Low,,Decide whether the 19 older cases are still wanted,8 published. 19 more were built in the old paper era and never converted for the app.
+Signal Check,Engine,Live,All subjects,3-5,108,108,Medium,,Confirm the Social Studies database changes actually ran,"84 Science and Social Studies standards, plus 24 Math and ELAR cases added 21-22 Sept. Three dead files still need deleting."
+Mission Map,Engine,Live,All subjects,3-5,37,49,High,,Author the ELAR 12,"Science 13/13, Social Studies 12/12, Math 12/12 as of 23 Sept. ELAR is the only remaining gap and its standards are already approved."
+Simulation Lab,Engine,Needs testing,Science,3-5,10,10,Medium,,"Run the 10 cases with a student, then generate their artwork",Two real bugs were found the last time this was tested with a student. Nothing has been tested since.
+Frequency Rush / Signal Ops,Engine,Live,All subjects,3-5,,,Low,,None,Vocabulary practice engine plus the whole-class Signal Ops board.
+Relay Station,Engine,Needs testing,ELAR,3-5,94,94,Medium,,Run Waves 2 and 3 with a student,"Typing centre that doubles as reading practice: a 20-level track, 72 readings, and a whole-class race. Waves 2 and 3 have only been checked by simulation."
+Assembly Deck,Engine,Needs testing,All subjects,3-5,6,54,High,,Re-run one case with a student now the new ending is in,"Piloted successfully with a grade 3 student on 23 Sept. That pilot produced two changes: a Case File students can open on any screen, and a new two-question debrief. 48 further cases are mapped and standards-checked."
+Classification Lab,Engine,Not started,Not subject-specific,3-5,0,0,Low,,Decide whether it is still wanted,Designed 29 Aug. Never built.
+Repair Desk,Engine,Not started,Not subject-specific,3-5,0,0,Low,,Decide whether it is still wanted,Designed 29 Aug. 11 cases exist from the old paper era.
+Field Dispatch,Engine,Not started,Not subject-specific,3-5,0,0,Low,Needs original artwork for every single case,Decide whether it is still wanted,The only planned engine that cannot reuse artwork between cases.
+The Tribunal,Engine,Not started,Not subject-specific,3-5,0,0,Low,,Decide whether it is still wanted,Designed 29 Aug. Never built.
+Newsroom,Engine,Not started,Not subject-specific,3-5,0,0,Low,,Decide whether it is still wanted,"38 cards exist from the old era, but they were written against a design that was later rejected."
+Mission Map - Math 12,Content batch,Done,Math,3-5,12,12,High,,None - shipped 23 Sept,"Closed a gap that had been open since August, waiting on official standards documents."
+Mission Map - ELAR 12,Content batch,Ready to start,ELAR,3-5,0,12,High,,Author the 12 cases,Standards already checked against the official ELAR document and approved. Nothing is blocking this.
+Assembly Deck - ELAR 12,Content batch,Blocked,ELAR,3-5,0,12,Medium,The 48-case plan has not been reviewed yet,Review the 48-case plan,First of four planned batches.
+Assembly Deck - Science 12,Content batch,Blocked,Science,3-5,0,12,Medium,The 48-case plan has not been reviewed yet,Review the 48-case plan,
+Assembly Deck - Social Studies 12,Content batch,Blocked,Social Studies,3-5,0,12,Medium,The 48-case plan has not been reviewed yet,Review the 48-case plan,
+Assembly Deck - Math 12,Content batch,Blocked,Math,3-5,0,12,Medium,The 48-case plan has not been reviewed yet,Review the 48-case plan,This batch also needs a scratch pad added to the student screen.
+Test flag still unlocks everything,Risk,Not started,Not subject-specific,,,,High,,Switch the flag off,Every planet in the Galaxy Hub is currently unlocked for every student. This has to be switched off before the site is used with a real class.
+Three engines have never been tested with students,Risk,Not started,Not subject-specific,,,,High,,Book time to run each one,"Assembly Deck since its redesign, Relay Station Waves 2 and 3, and Simulation Lab's 10 cases."
+Older content never checked for reading level,Risk,Not started,All subjects,3-5,,,Medium,,Decide whether to run the checker over it,"Frequency Rush, Signal Check, Simulation Lab and the Briefings were all written before the grade-level checker existed."
+Mission Map's original 25 cases read above grade,Risk,Not started,All subjects,3-5,,,Medium,,Decide whether to rewrite them,"Measured 23 Sept. The grade 3 cases read at a 5.8 reading level against a 4.2 ceiling, and the three grades barely differ from one another."
+Older database changes never confirmed,Risk,Not started,Not subject-specific,,,,Medium,,Check each one against the live database,"Simulation Lab, Mission Map's September batch and Signal Check's Social Studies batch were never verified after the changes were written."
+Assembly Deck has no artwork of its own,Art,Not started,Not subject-specific,,,,Medium,,Generate the tile image,The engine is currently displaying the Repair Desk picture. Nothing is broken; it is just wearing another engine's artwork.
+Relay Station artwork not connected,Art,Not started,ELAR,3-5,,,Low,Nobody knows which folder the generated files went into,Locate the generated files,"Rank badges, keyboard skin previews, and the posture and hand-position diagrams."
+Case thumbnails missing,Art,Not started,All subjects,3-5,,,Low,,Generate the remaining images,63 Relay Station readings and all 10 Simulation Lab cases still have no thumbnail.

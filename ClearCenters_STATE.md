@@ -1,5 +1,5 @@
 # ClearCenters — STATE
-**Current truth. Start here.** · Last updated: September 22, 2026 (two new engines shipped in one day — Relay Station Waves 1-3 and Assembly Deck Wave 1 — plus every remaining TEKS PDF received, unblocking Math/ELAR everywhere) · *state updated at session end*
+**Current truth. Start here.** · Last updated: September 23, 2026 (Assembly Deck's first real pilot and the fixes it produced; Mission Map's Math 12 authored, closing a block that had stood since August; **all pending SQL run and everything pushed — verified against the deployed commit, not assumed**) · *state updated at session end*
 
 *Reconciled from four sources: the Claude project · `ClearCenters_Project_Files.zip` · `ClearCenters_MANIFEST.md` · and both device folders.*
 *Supersedes `ClearCenters_PROJECT_SPRINGBOARD_v4.md` (stale — predates Newsroom).*
@@ -55,6 +55,50 @@ Nothing else. This file is a status document, not a design document — design n
 ---
 
 ## 0.5 · SESSION LOG
+
+**Sept 23, 2026 — Assembly Deck's first classroom pilot, the three changes it produced, and Mission Map's Math batch: 12 cases authored against the real Math TEKS, closing the last standards block from August. Everything in this entry is live — verified file by file against the commit Vercel is deploying, not taken on trust.**
+
+*What changed*
+
+**Assembly Deck — the pilot happened, and it moved the design.** Emily ran `3.6A-AD` with a real grade 3 student ("i love it") and came back with three notes. All three are built.
+- **The last question was impossible.** It asked why six sentences had been left out — of a student who had last seen those sentences three screens and twenty minutes earlier. Fixed with the **Case File**: a button pinned bottom-left on every screen from the first build to the last question, opening a read-only overlay with the source notes, every paragraph built so far, and every leftover sentence with the reason the student gave for it. Once a round's leftovers are checked it also shows which reasons held up. It never reveals a verdict the student has not earned.
+- **The leftovers were carrying the whole end of the case** — sort them three times, then write about them. Emily: "the leftover step is necessary but i dont think we need that to also be the last question." The three rounds stay; the ending changed.
+- **Added a second question type.** The new **Chief's Debrief** sits between the Editor's Trap and the written answer and asks two things about the report the student just built: a **pinpoint** (a hotspot on their own finished report — every sentence tappable, the question naming a job the sentence does) and one **multiple choice** on the standard, with a written explanation for *every* choice so a wrong answer is told what was wrong with its reasoning. Question two stays hidden until question one is answered.
+- **The written question was re-pointed in all six cases**, off the leftovers and onto the content. The AI grader now reads the case's own `explain.prompt`, so re-pointing a question re-points its grading automatically.
+- **Open decision 25 is answered.** The leftovers step does hold up three times per case. It just should not also be the finale.
+
+**Mission Map — the Math batch (12 cases), blocked since August, now live.** The 24 Math/ELAR concepts in the Evidence Quest library had been waiting on real TEKS documents. Emily supplied the Mathematics and ELAR PDFs; all 24 were anchored against them and the Math 12 were authored.
+- `3.9`–`3.12-MM`, `4.10`–`4.13-MM`, `5.9`–`5.12-MM`. **Mission Map is now 37 cases and complete in Science, Social Studies and Math.**
+- **All 12 Math codes are new coverage** — not one is used by any other engine's case.
+- Three anchors deliberately avoid the obvious code, and the reasoning is recorded in each case file and in `claude/MissionMap_MathELAR_Anchors_v1.md`: perimeter to **3.7B** not 3.6C (3.6C is area; 3.7B is the only code naming a missing side length); arrays to **3.4D** not 3.5B (3.4D says *equally-sized* groups, which is exactly what the case's trap tests); decimal place value to **4.2B** not 4.2G (the case's own final idea is that position sets value).
+- Emily approved both judgment calls on the ELAR side in advance: `ELAR 3.1` anchors to **3.7C** (grade 3 has no character-traits standard at all), and `ELAR 4.2` to **4.10A** (grade 4's craft standard names imagery and sound devices, not repetition).
+
+**A validator the engine did not have.** Mission Map grades each checkpoint twice — the client from the public case, the server from the server case — so the two files can disagree and a student is told they are right while the gradebook records a miss. Nothing was checking that. `tools/mission-map-casecheck.cjs` now does, across all 37 cases, along with checkpoint ordering, choice-key validity, showdown and sequence shape, and completeness of `teksLabels.js`. All 37 pass.
+
+**Reading level — a measurement error caught before it caused a rewrite, and a real defect found underneath it.** The first pass said all 12 Math cases were badly over limit, with 70-word sentences. The scorer was fusing consecutive answer choices into one sentence — the same bug class as the September Relay Station sweep, and the second time this exact mistake has been made. Once the scorer was made form-aware, the real picture appeared: **the grade 5 cases read easier than the grade 4 ones.** That is backwards. The grade 5 prose was raised and 31 over-long sentences were split across all 12. They now read **2.2 → 3.6 → 4.3** across grades 3/4/5, every sentence inside its grade's limit.
+
+**A finding about the existing Mission Map library, measured and deliberately not acted on.** The 25 shipped Science and Social Studies cases read at **5.8 / 6.7 / 6.8** for grades 3/4/5 — grade 3 well above its 4.2 ceiling, and the three grades barely separating. Longest sentences run 37–39 words. Emily declined a retroactive sweep of the older engines on Sept 22 and that still stands, so this is recorded, not fixed. It does mean the Math batch reads noticeably plainer than the Science and Social Studies cases beside it.
+
+**The assign page's thumbnail fallback, lost and restored.** The `thumbFallback` helper added Sept 22 survived the `teacher-bridge-live` rewrite of `app/teacher/assign/new/page.js` as a defined-but-unwired function — none of the new `<img>` tags called it. Re-attached. Worth noting what the investigation found: **nothing was actually broken on that page**, because every image it renders exists. The fix is for the next missing one.
+
+*What is now true*
+- **Every pending SQL block has been run** and Emily confirmed it: Relay Station Wave 3, Assembly Deck Wave 1, and the Mission Map Math 12. For the first time since Sept 4 there is no schema debt sitting behind shipped code.
+- **Everything is pushed and deployed.** Verified by walking the deployed commit's own tree rather than trusting timestamps: all 27 Mission Map files, `lib/cases/TEKS_STANDARDS.md`, `tools/mission-map-casecheck.cjs` and the re-wired assign page are byte-identical inside it.
+- **`lib/cases/TEKS_STANDARDS.md` has Math codes for the first time** — all 12, with the reasoning for the three non-obvious anchors. The Math PDF also settled a standing question in that file: **5.5 and 5.7 genuinely have no lettered subparts**, so `MA.5.5` is correctly formed, the opposite of the `5.9`/`5.9A` problem.
+- **Mission Map: 37 cases.** Science 13, Social Studies 12, Math 12.
+- **Assembly Deck: 6 cases**, all six carrying the Case File, the Chief's Debrief and a re-pointed written question, and one of them pilot-tested with a real student.
+
+*What is still open*
+- **Mission Map's ELAR 12 is the last content gap in that engine.** All 12 anchors are checked and Emily-approved; this is pure authoring. Both judgment calls are settled.
+- **Assembly Deck has not been re-piloted since the debrief was added.** The Case File and the pinpoint have been verified by simulation only. A second 20-minute run of `3.6A-AD` is the cheapest possible de-risking of the 48-case map.
+- **The 48-case Assembly Deck map is still unreviewed** by Emily, who is author of record.
+- **Emily's local checkout is one commit behind origin.** A "Student progress" change — work-first ordering, a grade graph and past-due handling — was committed on GitHub and is deployed, but has not been pulled down. Claude has never seen that code.
+- **`assembly_deck.jpg` still does not exist.** Assembly Deck is borrowing the Repair Desk bench artwork through `lib/teacherBridge.js`. It looks fine; it is just not its own art.
+- **`DEV_FORCE_UNLOCK_ALL` is still `true`** and must be flipped before real classroom use.
+- Reading level remains unmeasured on Frequency Rush, Signal Check, Simulation Lab, the Briefings, and — as of this session, measured but unaddressed — Mission Map's original 25.
+- Everything else open before this session is unchanged.
+
+---
 
 **Sept 22, 2026 — Two engines shipped in one day: Relay Station (a typing center, Waves 1-3, 94 lessons) and Assembly Deck (a build-the-paragraph center, Wave 1, 6 cases) — plus every remaining TEKS PDF received, and a reading-level gate applied retroactively to both engines' content.**
 
@@ -208,18 +252,18 @@ Nothing else. This file is a status document, not a design document — design n
 
 **29 complete centers are built and sitting on disk, unpublished** from the old Site/PacketPress era — see the Aug 29 caveat: only Group Chat and Signal Check were confirmed to exist in the current 100%-digital Next.js app (`clearcenters`) as of Aug 29; Mission Map, Simulation Lab, Frequency Rush/Signal Ops, Relay Station and Assembly Deck have since joined them, built from scratch in that app.
 
-**Cases authored (current app): Group Chat 27 (8 live + 19 built/waiting) · Signal Check 84 standards (54 Science + 30 Social Studies) · Mission Map 25 live cases (Science 13/13, Social Studies 12/12; Math/ELAR 24 concepts NO LONGER BLOCKED — all TEKS PDFs received Sept 22) · Simulation Lab 10 live cases across Grades 3-5 Science · Relay Station 94 lessons (20-level Foundations Track + 72 readings + daily/race) · Assembly Deck 6 cases (2 per grade) with 48 more mapped and standards-verified.**
+**Cases authored (current app): Group Chat 27 (8 live + 19 built/waiting) · Signal Check 84 Science/SS standards plus 24 Math/ELAR cases authored Sept 21-22 · Mission Map 37 live cases (Science 13/13, Social Studies 12/12, **Math 12/12 as of Sept 23**; ELAR 12 is the last gap and its anchors are approved) · Simulation Lab 10 live cases across Grades 3-5 Science · Relay Station 94 lessons (20-level Foundations Track + 72 readings + daily/race) · Assembly Deck 6 cases (2 per grade), now with the Case File and Chief's Debrief, and 48 more mapped and standards-verified.**
 
-**As of Sept 22, the newest schema is DELIVERED BUT NOT RUN** — Relay Station Wave 3 and Assembly Deck Wave 1 SQL are both pending, and the Relay Wave 3 code is already committed. See §9.16; this is the same failure mode that took down login on Sept 4.
+**As of Sept 23, there is no outstanding schema debt for the first time since Sept 4.** Relay Station Wave 3, Assembly Deck Wave 1 and the Mission Map Math 12 have all been run and confirmed by Emily, and everything is pushed and deployed — the deployed commit's own tree was walked file by file to confirm it, rather than inferred from timestamps. §9.16 still applies to the next batch.
 
 | Engine | Status |
 |---|---|
 | Group Chat | Live. 8 published, 19 built and content/TEKS-verified, formatting pending (old-era paper, largely moot for the current app). |
 | Signal Check | Live. 84 standards across grades 3-5. 3 dead files await manual deletion; the Social Studies batch's SQL/images still pending — **re-verify, don't assume.** |
-| Mission Map/Evidence Quest | Live. 25 cases across Science (13/13) and Social Studies (12/12). **Math/ELAR (24 concepts) unblocked as of Sept 22** — the TEKS PDFs that blocked it since August are now in hand. Not live-tested since the Sept 2 batch; SQL run status should be re-checked. |
+| Mission Map/Evidence Quest | Live. **37 cases** — Science 13/13, Social Studies 12/12, **Math 12/12 (new Sept 23)**. ELAR's 12 concepts are the last gap; their anchors are checked against the real ELAR PDF and Emily-approved, so that batch is pure authoring. SQL run and deployed. `tools/mission-map-casecheck.cjs` now guards the engine's client/server answer-key agreement across all 37. Still not live-tested since the Sept 2 batch. |
 | Simulation Lab | 10 cases across Grades 3-5 Science, all to the documented rigor rubric. Two bugs found and fixed in live-testing. Not live-tested since; SQL run status unconfirmed. Anchor art still needed for all 10. |
-| **Relay Station** | **NEW Sept 22, 2026. Live in code through Wave 3.** A typing center that doubles as reading practice: a 20-level auto-advancing Foundations Track (rising pass bar 90/95/100%) with placement and teacher override, a 72-reading library across 6 topic families, ghost racer, Repair Drills, a class trouble-key heatmap, per-student Supports, Dictation and Corrupted Transmission modes, Copy → Compose (AI-first-read), a Daily Transmission with weekday streaks, 7 rank-unlocked keyboard skins, S.A.M. on every screen, and a whole-class Relay Race with a projector board. Teacher surfaces: Typing Track, Typing Texts, Relay Race Board, Distress Call, standards report. **Wave 3 SQL not yet run — and its code is already committed.** Waves 2-3 not live-tested. |
-| **Assembly Deck** | **NEW Sept 22, 2026. Live in code, Wave 1 (paragraph mode).** Students build three paragraphs sentence by sentence, name what each leftover sentence actually was, order the finished paragraphs, and write a short explanation S.A.M. reads first. ~20 minutes per case. 6 cases (2 per grade, Science/SS/ELAR); 48 more mapped and standards-verified, awaiting Emily's review. Includes protest lines, a requester who writes back, the Editor's Trap, Chief's Challenge, and the Sentence Sort teacher board. **Territory Builder retired into this engine** (its map mode). **SQL not yet run. Never live-tested — a one-case pilot is the recommended next step.** Tile art missing (broken image until supplied). |
+| **Relay Station** | **Live through Wave 3; Wave 3 SQL now run and deployed.** A typing center that doubles as reading practice: a 20-level auto-advancing Foundations Track (rising pass bar 90/95/100%) with placement and teacher override, a 72-reading library across 6 topic families, ghost racer, Repair Drills, a class trouble-key heatmap, per-student Supports, Dictation and Corrupted Transmission modes, Copy → Compose (AI-first-read), a Daily Transmission with weekday streaks, 7 rank-unlocked keyboard skins, S.A.M. on every screen, and a whole-class Relay Race with a projector board. Teacher surfaces: Typing Track, Typing Texts, Relay Race Board, Distress Call, standards report. Waves 2-3 still not live-tested. |
+| **Assembly Deck** | **Live, Wave 1 (paragraph mode). Piloted with a real student Sept 23.** Students build three paragraphs sentence by sentence, name what each leftover sentence actually was, order the finished paragraphs, answer the two **Chief's Debrief** questions about the report they built, and write a short explanation S.A.M. reads first. A **Case File** is reachable from every screen. ~20 minutes per case. 6 cases (2 per grade, Science/SS/ELAR); 48 more mapped, awaiting Emily's review. Includes protest lines, a requester who writes back, the Editor's Trap and Chief's Challenge, plus the Sentence Sort teacher board. **Territory Builder retired into this engine** (its map mode). **SQL run and deployed.** Not re-piloted since the debrief was added. Its own tile art still does not exist — it borrows the Repair Desk image. |
 | Frequency Rush / Signal Ops | Live (built before this file's last full refresh). Vocabulary engine plus the whole-class Signal Ops board. |
 | Galaxy Hub (Gear Locker) | Per-world "World Reward Station" pages. **Lumara and Mechara** are real reference builds with story + self-hosted game (Mechara: Word Blaster added Sept 22); Frostveil/Cindara/Solara/Cloudreach still "coming soon." `DEV_FORCE_UNLOCK_ALL` still `true` — must be turned off before real use. |
 | Home dashboard | 6 free rotating backgrounds plus per-world earned backgrounds and S.A.M. trails via the Settings panel. All backing SQL confirmed run. |
@@ -240,7 +284,7 @@ Everything is under `ClearCenters - Masters`. Nine folders, numbered so Explorer
 
 **Only the `clearcenters` app folder is connected to Claude sessions** — the Masters folder is not, so `00_START_HERE` copies of this file have to be placed by Emily or a folder grant arranged.
 
-**New this session:** `tools/` in the app folder now holds the content checkers (`assembly-deck-gradecheck.cjs`, `relay-station-gradecheck.cjs`, `relay-station-readingcheck.cjs`). Design docs for both new engines, plus the Relay art batch and the Assembly Deck case map, sit at the app folder root and in the Claude project.
+**`tools/` in the app folder holds the content checkers:** `assembly-deck-gradecheck.cjs` (reading level), `assembly-deck-casecheck.cjs` and `mission-map-casecheck.cjs` (case consistency), `relay-station-gradecheck.cjs` and `relay-station-readingcheck.cjs`. A `sim/` folder holds a small React runtime that walks an Assembly Deck case end to end as a student. Design docs for both new engines, plus the Relay art batch and the Assembly Deck case map, sit at the app folder root and in the Claude project.
 
 **The rule:** a file's folder is decided by *what it is for*, not when it was made.
 
@@ -254,10 +298,10 @@ A shippable engine needs: a case schema (`public.js`/`server.js` pair), a client
 |---|---|---|---|---|---|---|
 | Group Chat | ● | ● | ● | ● | ● | Live |
 | Signal Check | ● | ● | ● | ● | ● | Live, 84 standards |
-| Mission Map | ● | ● | ● | ● | ● | Live, 25 cases — Math/ELAR now unblocked |
+| Mission Map | ● | ● | ● | ● | ● | Live, 37 cases — ELAR 12 is the last gap |
 | Simulation Lab | ● | ● | ● | ● | ● | 10 cases — needs live-test; SQL unconfirmed |
-| **Relay Station** | **●** | **●** | **●** | **●** | **●** | **94 lessons — Wave 3 SQL NOT RUN; Waves 2-3 untested** |
-| **Assembly Deck** | **●** | **●** | **●** | **●** | **●** | **6 cases — SQL NOT RUN; never live-tested; tile art missing** |
+| **Relay Station** | ● | ● | ● | ● | ● | 94 lessons — SQL run; Waves 2-3 still untested |
+| **Assembly Deck** | ● | ● | ● | ● | ● | 6 cases — SQL run; piloted once; own tile art missing |
 | Classification Lab | ○ | ○ | ○ | ○ | ○ | Designed, not built |
 | Repair Desk | ○ | ○ | ○ | ○ | ○ | Designed, not built |
 | Field Dispatch | ○ | ○ | ○ | ○ | ○ | Designed, not built |
@@ -283,12 +327,12 @@ The old-era 5.6A "Creek Sensor Mix-Up" packet had strong reasoning design underm
 **Current-app build order (confirmed Aug 29, amended since):** Mission Map ✓ → Simulation Lab ✓ (10 cases) → *(inserted by Emily's call: Frequency Rush/Signal Ops ✓, Relay Station ✓, Assembly Deck — in progress)* → Classification Lab → Repair Desk → Field Dispatch → The Tribunal → Newsroom. **Sector Survey is no longer in the order** — retired into Assembly Deck.
 
 **Immediate next steps:**
-1. **Run the two pending SQL blocks** (Relay Station Wave 3, Assembly Deck Wave 1) and confirm each with the `select` at the bottom of each block. The Relay Wave 3 code is already committed, so this is the highest-risk open item in the project.
-2. **Pilot one Assembly Deck case with a real student** — the grade 3 Science one. The open question a simulation can't answer: does the leftovers step hold up when it repeats three times in one case? Findings then decide whether the 48-case map is authored as drafted.
-3. **Emily reviews `AssemblyDeck_CaseMap_v1.md`** (48 cases, four per subject per grade, all standards-verified). Then author in batches: ELAR 12 → Science 12 → Social Studies 12 → Math 12.
-4. **Tell Claude where the generated art landed** so the Assembly Deck tile, the Relay Station challenge tile (still an SVG placeholder), rank badges, skin previews and the posture/hands diagrams can be wired up.
-5. **Do the deliberate "run everything still flagged" SQL sweep** (Simulation Lab's 9 newest `cases` rows, Mission Map's Sept 2 Social Studies batch, Signal Check's Social Studies batch) and confirm each against the live database.
-6. **Use the now-unblocked TEKS PDFs** for Mission Map's 24 Math/ELAR concepts.
+1. **Pull.** Emily's local checkout is one commit behind origin — the "Student progress" change was made on GitHub and is deployed but not down on her machine. Pull before editing anything, or the next commit fights it.
+2. **Re-pilot `3.6A-AD` with a student**, now that the Case File and the Chief's Debrief are in it. Twenty minutes, and it is the cheapest de-risking available before 48 more cases are written against that ending.
+3. **Author Mission Map's ELAR 12** — the last gap in that engine. Anchors are checked and approved; nothing blocks it.
+4. **Emily reviews `AssemblyDeck_CaseMap_v1.md`** (48 cases, four per subject per grade, all standards-verified). Then author in batches: ELAR 12 → Science 12 → Social Studies 12 → Math 12.
+5. **Generate `assembly_deck.jpg`** so Assembly Deck stops borrowing the Repair Desk artwork, and tell Claude where the rest of the generated art landed (Relay rank badges, skin previews, posture/hands diagrams).
+6. **Do the deliberate "run everything still flagged" SQL sweep** (Simulation Lab's 9 newest `cases` rows, Mission Map's Sept 2 Social Studies batch, Signal Check's Social Studies batch) and confirm each against the live database. The three newest blocks are now clean; these older ones were never confirmed.
 7. Turn `DEV_FORCE_UNLOCK_ALL` back to `false` before real classroom use.
 8. Live-test the World Reward Station end to end, plus Simulation Lab's 10 cases.
 9. Decide stories/games for the remaining 4 worlds (Frostveil, Cindara, Solara, Cloudreach).
@@ -299,9 +343,12 @@ The old-era 5.6A "Creek Sensor Mix-Up" packet had strong reasoning design underm
 
 ## 7 · STILL GENUINELY MISSING (current app)
 
-- **Relay Station Wave 3 and Assembly Deck Wave 1 SQL — delivered, not run.** Highest-risk item in the project right now, because the Relay code is already committed.
-- **No live test of Assembly Deck at all, or of Relay Station Waves 2-3.**
-- **Assembly Deck tile art** (`/teacher/challenges/assembly_deck.jpg`) — the tile shows a broken image until it exists.
+- ~~Relay Station Wave 3 and Assembly Deck Wave 1 SQL~~ **Run and confirmed Sept 23**, along with the Mission Map Math 12. No outstanding schema debt.
+- **Assembly Deck has not been re-piloted since the Chief's Debrief was added**, and Relay Station Waves 2-3 have never been live-tested.
+- **Assembly Deck tile art** (`/teacher/challenges/assembly_deck.jpg`) still does not exist. It is not a broken image — `lib/teacherBridge.js` points the engine at `repair_desk.jpg` — but Assembly Deck is wearing another engine's picture.
+- **Mission Map's ELAR 12** — the last content gap in that engine. Anchors checked and approved; purely unwritten.
+- **Mission Map's original 25 cases read above grade band** (5.8 / 6.7 / 6.8 for grades 3/4/5) and barely separate. Measured Sept 23, deliberately not acted on.
+- **A "Student progress" commit made on GitHub is deployed but unreviewed by Claude** and unpulled on Emily's machine.
 - **Relay Station art is generated but unconnected** — rank badges, keyboard-skin previews, posture and hands diagrams are referenced nowhere in code, and the challenge tile still points at the SVG placeholder. Paths unknown to Claude.
 - **The 48-case Assembly Deck map is unreviewed** by Emily, who is author of record.
 - **Reading level unmeasured on Frequency Rush, Signal Check, Mission Map, Simulation Lab and the Briefings** — the gate exists now and has only been applied to the two newest engines.
@@ -321,14 +368,15 @@ The old-era 5.6A "Creek Sensor Mix-Up" packet had strong reasoning design underm
 
 ## 8 · OPEN DECISIONS
 
-25. **(Sept 22, 2026, new) Does the leftovers step hold up three times per case?** The pilot answers it. If it drags, the fix is fewer rounds per case or fewer leftovers per round — cheap at 6 cases, expensive at 54.
+26. **(Sept 23, 2026, new) Should the Math batch be re-leveled up toward the existing Mission Map cases, or the existing 25 re-leveled down?** They now differ noticeably: the Math 12 read 2.2 / 3.6 / 4.3 and separate cleanly; the original 25 read 5.8 / 6.7 / 6.8 and barely separate. One of the two sets is wrong for its grades, and it is more likely the older one.
+25. ~~**Does the leftovers step hold up three times per case?**~~ **Answered Sept 23 by the pilot: yes.** Emily ran the grade 3 Science case with a student and the leftovers step held. What did not hold was using it *again* as the final written question — that ending is now the Chief's Debrief.
 24. **(Sept 22, 2026, new) Should the reading-level gate be applied retroactively to the older engines** (Frequency Rush, Signal Check, Mission Map, Simulation Lab, Briefings)? Offered and declined for now ("no thats ok for now").
 23. **(Sept 22, 2026, new) Where did the generated art land, and which pieces map to which paths?** Blocking all art wiring for both new engines.
 22. **(Sept 4, 2026) Should there be a recurring "SQL audit" step at the end of every session that touches schema?** Leaning yes; §9.16 covers the principle but it isn't a formal step. **The Sept 22 session ended with two unrun blocks, which argues for adopting it.**
 20. **(Sept 4, 2026) What should the remaining worlds' stories and games be?** Lumara and Mechara are done; 4 remain.
 21. **(Sept 4, 2026) Delete or keep the orphaned old Glow Garden files and `student_planet_discoveries`/`/api/planets/discover`?**
 19. ~~How should Home backgrounds gate on Galaxy Hub unlocks?~~ **Resolved Sept 4** — per-world, via reading that world's story.
-15. **(Aug 29) Which of the designed-but-uncoded engines gets built, in order?** Amended repeatedly by Emily's own calls (Frequency Rush, then Relay Station, then Assembly Deck all jumped the queue). Sector Survey is now retired. **Next decision point: finish Assembly Deck's library, or move to Classification Lab.**
+15. **(Aug 29) Which of the designed-but-uncoded engines gets built, in order?** Amended repeatedly by Emily's own calls (Frequency Rush, then Relay Station, then Assembly Deck all jumped the queue). Sector Survey is now retired. **Sept 23 note: the choice is now three-way — finish Mission Map's ELAR 12, build out Assembly Deck's 48, or start Classification Lab. The first is the smallest and completes an engine.**
 18. **(Sept 1) Should the background-scrim and Save Progress patterns be pulled into shared components?** Not done, not yet asked for.
 13. **(Aug 29) Do Newsroom's 4 modes still make sense as separate modes under the new mechanic?**
 10/11. **(Aug 29) Should Repair Desk's design be revisited for the space theme, and is the space theme default-on for every future design?** (Relay Station and Assembly Deck both adopted the Cadet/transmission voice by default, which is evidence for "yes.")
@@ -355,8 +403,13 @@ The old-era 5.6A "Creek Sensor Mix-Up" packet had strong reasoning design underm
 14. **(Sept 4, 2026) Grade-based rigor is a per-case content-authoring decision, not a schema/UI one.** **Extended Sept 22:** it is now *measured*, not asserted — `tools/*gradecheck.cjs` gate every case against its grade's band, with a floor as well as a ceiling and a required gap between grades.
 15. **(Sept 4, 2026) When a student reports something looks "broken" or "lost," check the actual current code before assuming a fix is needed.**
 16. **(Sept 4, 2026) "SQL delivered in chat" and "SQL confirmed run in production" are different facts — do not let the first stand in for the second.** Also don't trust a `200` status alone on a page that redirects. **Sept 22 note: this file ends with two unrun blocks and one of them has its code already committed. Check this first next session.**
-17. **(Sept 22, 2026, new) Measure before rewriting, and check the measurement before trusting it.** The first reading-level sweep of Relay Station flagged 26 of 72 readings, but part of that was the scorer treating headlines, recipe steps and dialogue lines as running prose. The fix was a form-aware scorer, then rewriting only what was genuinely wrong. A number that tells you to change 26 things deserves a second look before you change them.
-18. **(Sept 22, 2026, new) Vocabulary that a standard names is not "too hard."** When a reading scores above grade because of *conductors*, *deposition* or *Reconstruction*, the sentence around the word is the lever — not the word. `tools/relay-station-readingcheck.cjs` exists to tell those two cases apart.
+17. **(Sept 22, 2026) Measure before rewriting, and check the measurement before trusting it.** The first reading-level sweep of Relay Station flagged 26 of 72 readings, but part of that was the scorer treating headlines, recipe steps and dialogue lines as running prose. The fix was a form-aware scorer, then rewriting only what was genuinely wrong. A number that tells you to change 26 things deserves a second look before you change them.
+    **Sept 23 — this happened again, the same way.** Scoring the 12 new Math cases reported 70-word sentences and all 12 out of band; the scorer was fusing consecutive answer choices into one sentence, because a multiple-choice option has no full stop at the end of it. **The rule is now specific: before acting on a text measurement, look at the longest "sentence" it found.** If that string spans two things a student would never read as one sentence, the scorer is wrong, not the content. Both times, the honest measurement underneath revealed a smaller real defect that would otherwise have been buried in the noise — on Sept 23 it was that the grade 5 cases read easier than the grade 4 ones.
+19. **(Sept 23, 2026, new) When an engine grades the same answer in two places, something automated has to check that the two agree.** Mission Map decides right/wrong on the client from the public case, and again on the server from the server case, for 37 cases and four checkpoint types. A disagreement between those two files is invisible in review and silent in production: the student is told they were right and the gradebook records a miss. Nothing was checking it until `tools/mission-map-casecheck.cjs` existed. Any engine with a public/server case pair should assume the same risk.
+
+20. **(Sept 23, 2026, new) A pilot's job is to move the design, not to approve it.** The Assembly Deck pilot produced "i love it" AND three changes that reshaped the end of every case. The useful output was not the verdict; it was Emily noticing that the last question was unanswerable because the evidence had scrolled away twenty minutes earlier. No simulation was going to find that, and a pilot that only returns a thumbs-up has not been run properly.
+
+18. **(Sept 22, 2026) Vocabulary that a standard names is not "too hard."** When a reading scores above grade because of *conductors*, *deposition* or *Reconstruction*, the sentence around the word is the lever — not the word. `tools/relay-station-readingcheck.cjs` exists to tell those two cases apart.
 
 ---
 
@@ -364,8 +417,10 @@ The old-era 5.6A "Creek Sensor Mix-Up" packet had strong reasoning design underm
 
 **TEKS documents in hand (as of Sept 22, 2026): ALL OF THEM** — Grade 3/4/5 Science (adopted 2021, implemented 2024-25), Grade 3/4/5 Social Studies (adopted 2022, implemented 2024-25), ELAR Grades 3-5, and Mathematics Grades 3-5. Nothing in the project is blocked on a standards document any more.
 
+**Confirmed TEKS (current app), added Sept 23:** all 12 Mission Map Math anchors — 3.7B, 3.4D, 3.7A, 3.8B (grade 3) · 4.3D, 4.5D, 4.2B, 4.5A (grade 4) · 5.2B, 5.6B, 5.9C, 5.3H (grade 5) — each checked against the real Texas Mathematics TEKS PDF before authoring. The same pass confirmed **5.5 and 5.7 have no lettered subparts**, so `MA.5.5` is a correctly-formed code. The 12 ELAR anchors are checked and approved but not yet authored.
+
 **Confirmed TEKS (current app):** `3.1-MM` (3.12B) · `4.1-MM` (4.9B) · `5.1-MM` (5.7A/5.7B) · all 22 Sept 2 Mission Map cases · all 84 Signal Check standards · all 10 Simulation Lab cases · Relay Station's keyboarding anchors (Tech Apps 3/4/5.12C) and all 72 readings' subject anchors · all 6 Assembly Deck cases (3.6A, 4.10B, SS 4.6B, SS 5.4C, ELA 3.12B + 3.11B(i), ELA 5.12C + 5.11B(i)) · all 48 mapped Assembly Deck cases, checked in-session against the PDFs above.
 
-**Outstanding:** Mission Map's Math and ELAR concepts (24 — no longer blocked, just not authored) · Simulation Lab's two Social Studies candidates and a possible second Grade 4/5 batch · old-era Mission Quest/Judge/Comment Section codes (historical).
+**Outstanding:** Mission Map's ELAR concepts (12 — anchored and approved, not yet authored) · the 24 Math/ELAR Signal Check cases authored Sept 21-22, whose codes are used by live content but have never been checked off in `TEKS_STANDARDS.md` · Simulation Lab's two Social Studies candidates and a possible second Grade 4/5 batch · old-era Mission Quest/Judge/Comment Section codes (historical).
 
 **Failed verification, later fixed:** `3.1-MM`'s original pollination premise (no such standard at grades 3-5; rewritten to 3.12B) · Mission Map's "basic needs" Habitat Trail (re-anchored to 3.12C) · Mission Map's Grade 5 weather-vs-climate concept (moved to Grade 4) · Mission Map's "Goods and Services Market Map" (re-anchored to 3.6A) · Mission Map's civic-participation anchor (re-pointed to 4.22A) · Relay Station's early uncertain TEKS letters (reduced to knowledge-and-skills numbers only: 4.2, 4.3, 4.4, 5.4) until the real PDFs arrived.
