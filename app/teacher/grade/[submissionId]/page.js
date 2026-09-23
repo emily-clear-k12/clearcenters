@@ -1,4 +1,5 @@
 "use client";
+import {BridgePage,PageHeading} from "../../../../components/teacher/BridgeUI";
 
 import React, { useState, useEffect, useCallback } from "react";
 import { useRouter, useParams } from "next/navigation";
@@ -7,7 +8,6 @@ import { supabase } from "../../../../lib/supabaseClient";
 import { getPublicCase } from "../../../../lib/cases/index.public";
 import { getNewsroomBNPublicCase } from "../../../../lib/cases/newsroom-bn/index.public";
 import { getSignalCheckPublicCase } from "../../../../lib/cases/signal-check/index.public";
-import TeacherHUD from "../../../../components/TeacherHUD";
 import { COLORS, PAGE_ACCENTS, PAGE_BACKGROUNDS, panelStyle } from "../../../../lib/teacherTheme";
 
 // Sept 13 — moved to the console-interior look, same Observatory family
@@ -38,7 +38,7 @@ import { COLORS, PAGE_ACCENTS, PAGE_BACKGROUNDS, panelStyle } from "../../../../
 // informational callout like Learning Target elsewhere, not a fixed
 // cross-page signature the way Distress Call or Crystal Points are. No
 // query, grading, or release/send-back logic changed.
-const ACCENT = PAGE_ACCENTS["/teacher/grade"];
+const ACCENT = "#7541cf";
 const BG = PAGE_BACKGROUNDS["/teacher/grade"];
 
 const GRADE_LABELS = { 0: "Level 0", 1: "Level 1", 2: "Level 2" };
@@ -330,20 +330,7 @@ export default function TeacherGradeDetailPage() {
     : null;
 
   return (
-    <div
-      style={{
-        minHeight: "100vh",
-        background: COLORS.canvas,
-        backgroundImage: `linear-gradient(180deg, rgba(243,239,252,.55) 0%, rgba(243,239,252,.82) 100%), url(${BG})`,
-        backgroundSize: "cover",
-        backgroundPosition: "center top",
-        backgroundAttachment: "fixed",
-        fontFamily: "'Inter', sans-serif",
-        color: COLORS.textDark,
-        display: "flex",
-        flexDirection: "column",
-      }}
-    >
+    <BridgePage teacherEmail={teacherEmail} >
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@600;700&family=Inter:wght@400;500;600;700&display=swap');
         .gc-btn { transition: transform 150ms ease; cursor: pointer; border: none; font-family: 'Inter', sans-serif; }
@@ -352,9 +339,9 @@ export default function TeacherGradeDetailPage() {
         @keyframes gcFadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
       `}</style>
 
-      <TeacherHUD title="Review Submission" subtitle="Observatory — grade and release feedback" accent={ACCENT} teacherEmail={teacherEmail} />
+      <PageHeading title="Review Submission" subtitle="grade and release feedback"></PageHeading>
 
-      <div style={{ flex: 1, padding: "24px 32px 40px" }}>
+      <div className="cc-detail-content">
         <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 20, ...panelStyle(ACCENT, { padding: "14px 20px" }) }}>
           <button onClick={() => router.push("/teacher/grade")} style={{ background: "none", border: "none", color: COLORS.textMuted, display: "flex", alignItems: "center", padding: 6, borderRadius: 8, cursor: "pointer" }}>
             <ChevronLeft size={20} />
@@ -638,6 +625,6 @@ export default function TeacherGradeDetailPage() {
 
       <ReleaseConfirmModal open={showConfirm} studentName={studentName} grade={finalGrade} onCancel={() => setShowConfirm(false)} onConfirm={handleRelease} />
       <SendBackConfirmModal open={showSendBackConfirm} studentName={studentName} feedback={feedback} onCancel={() => setShowSendBackConfirm(false)} onConfirm={handleSendBack} />
-    </div>
+    </BridgePage>
   );
 }

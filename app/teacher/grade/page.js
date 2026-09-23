@@ -7,7 +7,6 @@ import { supabase } from "../../../lib/supabaseClient";
 import Link from 'next/link';
 import {BridgePage,PageHeading,ClassTabs,Empty} from '../../../components/teacher/BridgeUI';
 import {subjectStyle} from '../../../lib/teacherBridge';
-import TeacherHUD from "../../../components/TeacherHUD";
 import { COLORS, PAGE_ACCENTS, PAGE_BACKGROUNDS } from "../../../lib/teacherTheme";
 
 // Sept 13 — moved to the console-interior look, same pattern as the rest of

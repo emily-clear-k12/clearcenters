@@ -1,9 +1,9 @@
 "use client";
+import {BridgePage,PageHeading} from "../../../components/teacher/BridgeUI";
 
 import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "../../../lib/supabaseClient";
-import TeacherHUD from "../../../components/TeacherHUD";
 import { COLORS, PAGE_ACCENTS, panelStyle } from "../../../lib/teacherTheme";
 import { sanitizeTypingText, CUSTOM_MAX_CHARS } from "../../../lib/cases/relay-station";
 
@@ -12,7 +12,7 @@ import { sanitizeTypingText, CUSTOM_MAX_CHARS } from "../../../lib/cases/relay-s
 // only they see in the Challenge Library (Relay Station → grade → subject).
 // The preview shows exactly what students will type, after cleanup (curly
 // quotes, dashes, accents, emoji, extra spaces).
-const ACCENT = PAGE_ACCENTS["/teacher/assign"] || COLORS.copper;
+const ACCENT = "#7541cf";
 
 const KIND_OPTIONS = [
   { v: "paragraph", label: "Paragraph / reading" },
@@ -104,11 +104,11 @@ export default function TypingTextsPage() {
   const canSave = form.title.trim() && cleaned.text.length >= 20 && !saving;
 
   return (
-    <div style={{ minHeight: "100vh", background: COLORS.canvas, fontFamily: "'Inter', sans-serif", color: COLORS.textDark, display: "flex", flexDirection: "column" }}>
+    <BridgePage teacherEmail={teacherEmail} >
       <style>{`@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@600;700&family=Inter:wght@400;500;600;700&display=swap');`}</style>
-      <TeacherHUD title="Typing Texts" subtitle="Relay Station · your own passages to assign" accent={ACCENT} teacherEmail={teacherEmail} />
+      <PageHeading title="Typing Texts" subtitle="Relay Station · your own passages to assign"></PageHeading>
 
-      <main style={{ flex: 1, padding: "28px 32px", maxWidth: 1100, margin: "0 auto", width: "100%", boxSizing: "border-box" }}>
+      <div className="cc-detail-content">
         {error && <div style={{ background: `${COLORS.danger}18`, color: COLORS.danger, borderRadius: 10, padding: "10px 14px", marginBottom: 12, fontSize: 13.5 }}>{error}</div>}
         {notice && <div style={{ background: `${COLORS.success}18`, color: COLORS.success, borderRadius: 10, padding: "10px 14px", marginBottom: 12, fontSize: 13.5, fontWeight: 600 }}>{notice}</div>}
 
@@ -214,7 +214,7 @@ export default function TypingTextsPage() {
             </div>
           )}
         </div>
-      </main>
-    </div>
+      </div>
+    </BridgePage>
   );
 }

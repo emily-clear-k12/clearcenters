@@ -1,9 +1,9 @@
 "use client";
+import {BridgePage,PageHeading} from "../../../components/teacher/BridgeUI";
 
 import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "../../../lib/supabaseClient";
-import TeacherHUD from "../../../components/TeacherHUD";
 import { COLORS, PAGE_ACCENTS, PAGE_BACKGROUNDS, panelStyle } from "../../../lib/teacherTheme";
 
 // Sept 13 — second page moved to the console-interior look (see
@@ -13,7 +13,7 @@ import { COLORS, PAGE_ACCENTS, PAGE_BACKGROUNDS, panelStyle } from "../../../lib
 // Excellent) is left untouched by that — those are a real 4-way signal, not
 // decorative brand accent, same reasoning as leaving COLORS.warning alone
 // on My Classes' "Need Review" tile.
-const ACCENT = PAGE_ACCENTS["/teacher/progress"];
+const ACCENT = "#7541cf";
 const BG = PAGE_BACKGROUNDS["/teacher/progress"];
 
 function proficiencyBand(avg) {
@@ -39,6 +39,7 @@ export default function StudentProgressPage() {
   const [view, setView] = useState("student"); // "student" | "standard"
   const [expandedKey, setExpandedKey] = useState(null);
   const [selectedClassId, setSelectedClassId] = useState("all");
+  useEffect(()=>{const id=new URLSearchParams(window.location.search).get("classId");if(id)setSelectedClassId(id)},[]);
   const [search, setSearch] = useState("");
   const [bandFilter, setBandFilter] = useState(null);
 
@@ -196,23 +197,7 @@ export default function StudentProgressPage() {
   }
 
   return (
-    <div
-      style={{
-        minHeight: "100vh",
-        // Same full-bleed-art-behind-scrolling-content pattern as My
-        // Classes: the observatory room sits fixed behind everything with a
-        // soft lavender wash over it so the panels on top stay legible.
-        background: COLORS.canvas,
-        backgroundImage: `linear-gradient(180deg, rgba(243,239,252,.55) 0%, rgba(243,239,252,.82) 100%), url(${BG})`,
-        backgroundSize: "cover",
-        backgroundPosition: "center top",
-        backgroundAttachment: "fixed",
-        fontFamily: "'Inter', sans-serif",
-        color: COLORS.textDark,
-        display: "flex",
-        flexDirection: "column",
-      }}
-    >
+    <BridgePage teacherEmail={teacherEmail} >
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@600;700&family=Inter:wght@400;500;600;700&display=swap');
         .sp-btn { transition: transform 150ms ease; cursor: pointer; border: none; font-family: 'Inter', sans-serif; }
@@ -220,14 +205,9 @@ export default function StudentProgressPage() {
         .sp-input::placeholder { color: #8A84AC; }
       `}</style>
 
-      <TeacherHUD
-        title="Student Progress"
-        subtitle="Observatory — proficiency across every class, by student or by standard"
-        accent={ACCENT}
-        teacherEmail={teacherEmail}
-      />
+      <PageHeading title="Student Progress" subtitle="proficiency across every class, by student or by standard"></PageHeading>
 
-      <div style={{ flex: 1, padding: "28px 36px 40px", display: "flex", justifyContent: "center" }}>
+      <div className="cc-detail-content">
         <div style={{ width: "100%", maxWidth: 1200 }}>
           {/* Sept 13 (later pass) — this whole controls cluster (view
               toggle, class/search/band filters, the summary line) used to
@@ -424,6 +404,6 @@ export default function StudentProgressPage() {
           ))}
         </div>
       </div>
-    </div>
+    </BridgePage>
   );
 }
