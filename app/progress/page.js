@@ -1,6 +1,7 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { supabaseAdmin } from "../../lib/supabaseAdmin";
+import { getVisibleAssignmentsForStudent } from "../../lib/getStudentAssignments";
 import ProgressClient from "./ProgressClient";
 
 export default async function ProgressPage() {
@@ -15,7 +16,7 @@ export default async function ProgressPage() {
   // Streak" card, same value Home already shows.
   const { data: student, error: studentError } = await supabaseAdmin
     .from("students")
-    .select("id, first_name, crystal_points, streak_days, last_progress_check_at")
+    .select("id, first_name, class_id, crystal_points, streak_days, last_progress_check_at")
     .eq("id", studentId)
     .single();
 
@@ -89,6 +90,18 @@ export default async function ProgressPage() {
 
   const subs = submissions || [];
 
+  let pastDue = [];
+  if (student.class_id) {
+    try {
+      const openAssignments = await getVisibleAssignmentsForStudent(student.id, student.class_id);
+      const now = new Date();
+      const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+      pastDue = (openAssignments || []).filter((a) => a.due_date && a.due_date < today);
+    } catch (err) {
+      pastDue = [];
+    }
+  }
+
   const missions = subs.map((s) => {
     const caseStandard = s.assignments?.case_standard || null;
     const caseTitle = s.assignments?.cases?.title || caseStandard || "Mission";
@@ -120,6 +133,7 @@ export default async function ProgressPage() {
       missions={missions}
       badgeTiers={badgeTiers || []}
       pointsHistory={pointsHistory || []}
+      pastDue={pastDue}
     />
   );
 }
