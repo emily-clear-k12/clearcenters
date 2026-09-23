@@ -5,6 +5,9 @@ import { useRouter, useParams } from "next/navigation";
 import { Printer, ChevronLeft, Copy, Check, Plus, UserX, UserCheck, ArrowRightLeft } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
 import { supabase } from "../../../../lib/supabaseClient";
+import Link from 'next/link';
+import {BridgePage,PageHeading,ClassTabs} from '../../../../components/teacher/BridgeUI';
+import {subjectStyle} from '../../../../lib/teacherBridge';
 import TeacherHUD from "../../../../components/TeacherHUD";
 import { COLORS, PAGE_ACCENTS, PAGE_BACKGROUNDS, panelStyle } from "../../../../lib/teacherTheme";
 
@@ -20,7 +23,7 @@ import { COLORS, PAGE_ACCENTS, PAGE_BACKGROUNDS, panelStyle } from "../../../../
 // on-screen page below it is the new management console, hidden when
 // printing via `.no-print`, same trick the old page already used for its
 // own header buttons.
-const ACCENT = PAGE_ACCENTS["/teacher/roster"];
+const ACCENT = "#7541cf";
 const BG = PAGE_BACKGROUNDS["/teacher/roster"];
 
 const GRADE_LABEL = { 3: "3rd Grade", 4: "4th Grade", 5: "5th Grade" };
@@ -47,6 +50,7 @@ export default function ClassRosterPage() {
   const [error, setError] = useState(null);
 
   const [bulkNames, setBulkNames] = useState("");
+  const [search,setSearch]=useState("");
   const [adding, setAdding] = useState(false);
   const [addError, setAddError] = useState(null);
   const [justAdded, setJustAdded] = useState([]);
@@ -254,123 +258,15 @@ export default function ClassRosterPage() {
   const activeRoster = roster.filter((s) => s.active);
   const removedRoster = roster.filter((s) => !s.active);
 
-  return (
-    <div
-      style={{
-        minHeight: "100vh",
-        background: COLORS.canvas,
-        backgroundImage: `linear-gradient(180deg, rgba(243,239,252,.55) 0%, rgba(243,239,252,.82) 100%), url(${BG})`,
-        backgroundSize: "cover",
-        backgroundPosition: "center top",
-        backgroundAttachment: "fixed",
-        fontFamily: "'Inter', sans-serif",
-        color: COLORS.textDark,
-      }}
-    >
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@600;700&family=Inter:wght@400;500;600;700&display=swap');
-        .gc-btn { transition: transform 150ms ease; cursor: pointer; border: none; font-family: 'Inter', sans-serif; }
-        .gc-btn:hover { transform: translateY(-1px); }
-        .gc-btn:disabled { opacity: .55; cursor: default; transform: none; }
-        .gc-input::placeholder { color: #8A84AC; }
-        .print-only { display: none; }
-
-        @media print {
-          .no-print { display: none !important; }
-          .print-only { display: block !important; }
-          body, html { background: #fff !important; }
-          .roster-print-page { box-shadow: none !important; margin: 0 !important; max-width: none !important; }
-        }
-      `}</style>
-
-      <div className="no-print">
-        <TeacherHUD
-          title={classInfo.name}
-          subtitle="Mission Control — manage this class's roster"
-          accent={ACCENT}
-          teacherEmail={teacherEmail}
-          actions={
-            <button onClick={() => window.print()} className="gc-btn" style={{ background: ACCENT, color: COLORS.white, borderRadius: 999, padding: "9px 18px", fontWeight: 700, fontSize: 13, display: "flex", alignItems: "center", gap: 7 }}>
-              <Printer size={15} /> Print Roster
-            </button>
-          }
-        />
-
-        <div style={{ padding: "24px 36px 40px", display: "flex", justifyContent: "center" }}>
-          <div style={{ width: "100%", maxWidth: 760 }}>
-            <button onClick={() => router.push("/teacher/assign")} className="gc-btn" style={{ background: "none", color: COLORS.textMuted, display: "flex", alignItems: "center", gap: 6, fontSize: 13, fontWeight: 600, marginBottom: 16, padding: 0 }}>
-              <ChevronLeft size={16} /> Back to My Classes
-            </button>
-
-            {activeColumnMissing && (
-              <div style={{ background: `${COLORS.warning}18`, border: `1px solid ${COLORS.warning}55`, color: "#8A5A22", borderRadius: 10, padding: "10px 14px", fontSize: 12.5, marginBottom: 16 }}>
-                Removing/restoring students needs a small database update that hasn't been run yet — ask Claude for the migration SQL. Adding and transferring students both work fine already.
-              </div>
-            )}
-
-            <div style={{ ...panelStyle(ACCENT, { padding: "18px 20px", marginBottom: 16, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, flexWrap: "wrap" }) }}>
-              <div>
-                <div style={{ fontSize: 11.5, fontWeight: 700, color: COLORS.textMuted, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 6 }}>Class Code</div>
-                <div style={{ fontSize: 22, fontWeight: 700, fontFamily: "monospace", letterSpacing: 1, color: COLORS.textDark }}>{classInfo.class_code}</div>
-              </div>
-              <button onClick={copyClassCode} className="gc-btn" style={{ background: `${ACCENT}22`, border: "none", borderRadius: 8, padding: "6px 12px", color: ACCENT, fontWeight: 700, fontSize: 12.5, display: "flex", alignItems: "center", gap: 5 }}>
-                <Copy size={13} /> Copy Code
-              </button>
-              {joinUrl && (
-                <div style={{ padding: 8, background: COLORS.white, borderRadius: 10 }}>
-                  <QRCodeSVG value={joinUrl} size={64} />
-                </div>
-              )}
-              <div style={{ fontSize: 12, color: COLORS.textMuted, maxWidth: 220 }}>
-                {activeRoster.length} active student{activeRoster.length === 1 ? "" : "s"}{removedRoster.length > 0 ? ` · ${removedRoster.length} removed` : ""}
-              </div>
-            </div>
-
-            <div style={{ ...panelStyle(ACCENT, { padding: "18px 20px", marginBottom: 16 }) }}>
-              <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 4, color: COLORS.textDark }}>Add Students</div>
-              <p style={{ fontSize: 12.5, color: COLORS.textMuted, margin: "0 0 10px 0" }}>
-                Paste a list of first names — one per line (or comma-separated). A random 4-digit PIN is generated for each.
-              </p>
-              <form onSubmit={handleBulkAdd}>
-                <textarea
-                  value={bulkNames}
-                  onChange={(e) => setBulkNames(e.target.value)}
-                  placeholder={"Ava\nBen\nCleo"}
-                  rows={4}
-                  className="gc-input"
-                  style={{ width: "100%", background: "rgba(255,255,255,.7)", color: COLORS.textDark, border: `1.5px solid ${COLORS.border}`, borderRadius: 10, padding: "10px 12px", fontSize: 13.5, fontFamily: "inherit", boxSizing: "border-box", resize: "vertical" }}
-                />
-                <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 8 }}>
-                  <button type="submit" disabled={adding || !bulkNames.trim()} className="gc-btn" style={{ background: ACCENT, color: COLORS.white, borderRadius: 10, padding: "9px 18px", fontWeight: 700, fontSize: 13, display: "flex", alignItems: "center", gap: 6 }}>
-                    <Plus size={15} /> {adding ? "Adding..." : "Add Students"}
-                  </button>
-                  {addError && <span style={{ color: COLORS.danger, fontSize: 12.5 }}>{addError}</span>}
-                </div>
-              </form>
-
-              {justAdded.length > 0 && (
-                <div style={{ marginTop: 14, paddingTop: 14, borderTop: `1px solid ${COLORS.border}` }}>
-                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
-                    <div style={{ fontSize: 12.5, fontWeight: 700, color: COLORS.success }}>Added {justAdded.length} student{justAdded.length === 1 ? "" : "s"} — here are their PINs:</div>
-                    <button onClick={copyJustAddedPins} className="gc-btn" style={{ background: `${COLORS.success}22`, border: "none", borderRadius: 8, padding: "4px 10px", color: COLORS.success, fontWeight: 700, fontSize: 11.5, display: "flex", alignItems: "center", gap: 4 }}>
-                      {copiedPins ? <Check size={12} /> : <Copy size={12} />} {copiedPins ? "Copied" : "Copy All"}
-                    </button>
-                  </div>
-                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))", gap: 6 }}>
-                    {justAdded.map((s) => (
-                      <div key={s.id} style={{ background: `${COLORS.success}14`, borderRadius: 8, padding: "6px 10px", fontSize: 12.5 }}>
-                        <strong>{s.first_name}</strong> — <span style={{ fontFamily: "monospace" }}>{s.pin}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-
-            <div style={{ ...panelStyle(ACCENT, { padding: "18px 20px" }) }}>
+  return <><style>{`.print-only{display:none}@media print{.no-print{display:none!important}.print-only{display:block!important}.roster-print-page{box-shadow:none!important;margin:0!important;max-width:none!important}}`}</style><div className="no-print"><BridgePage teacherEmail={teacherEmail}>
+  <PageHeading title="Your class, connected" subtitle="Manage students and classroom access."><ClassTabs classes={[classInfo,...otherClasses]} value={classId} onChange={id=>router.push(`/teacher/roster/${id}`)}/></PageHeading>
+  <section className="cc-panel cc-frame cc-row cc-between" style={{...subjectStyle(classInfo.subject),marginBottom:20}}><div><h2>{classInfo.name}</h2><p className="cc-muted">{classInfo.grade?`Grade ${classInfo.grade} · `:''}{classInfo.subject} · {activeRoster.length} students</p></div><div><div className="cc-eyebrow">CLASS JOIN CODE</div><strong style={{fontSize:28,letterSpacing:2}}>{classInfo.class_code}</strong></div><button className="cc-btn secondary" onClick={copyClassCode}>Copy code</button><button className="cc-btn" onClick={()=>window.print()}>Print roster & sign-in cards</button>{joinUrl&&<QRCodeSVG value={joinUrl} size={64}/>}</section>
+  {error&&<div className="cc-error" role="alert">{error}</div>}
+  {activeColumnMissing&&<p className="cc-muted">Student removal is currently unavailable. Adding and transferring students are available.</p>}
+  <div className="cc-roster-layout"><section className="cc-panel"><div className="cc-toolbar"><h2>Students</h2><input className="cc-input cc-search" aria-label="Find a student" placeholder="Find a student" value={search} onChange={e=>setSearch(e.target.value)}/></div>
               <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 10, color: COLORS.textDark }}>Roster ({activeRoster.length})</div>
               <div style={{ display: "grid", gap: 2 }}>
-                {activeRoster.map((s) => (
+                {activeRoster.filter(s=>s.first_name.toLowerCase().includes(search.toLowerCase())).map((s) => (
                   <RosterRow
                     key={s.id}
                     student={s}
@@ -410,15 +306,47 @@ export default function ClassRosterPage() {
                   </div>
                 </div>
               )}
-            </div>
-          </div>
-        </div>
-      </div>
+  </section><aside className="cc-stack"><section className="cc-panel">
+              <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 4, color: COLORS.textDark }}>Add Students</div>
+              <p style={{ fontSize: 12.5, color: COLORS.textMuted, margin: "0 0 10px 0" }}>
+                Paste a list of first names — one per line (or comma-separated). A random 4-digit PIN is generated for each.
+              </p>
+              <form onSubmit={handleBulkAdd}>
+                <textarea
+                  value={bulkNames}
+                  onChange={(e) => setBulkNames(e.target.value)}
+                  placeholder={"Ava\nBen\nCleo"}
+                  rows={4}
+                  className="gc-input"
+                  style={{ width: "100%", background: "rgba(255,255,255,.7)", color: COLORS.textDark, border: `1.5px solid ${COLORS.border}`, borderRadius: 10, padding: "10px 12px", fontSize: 13.5, fontFamily: "inherit", boxSizing: "border-box", resize: "vertical" }}
+                />
+                <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 8 }}>
+                  <button type="submit" disabled={adding || !bulkNames.trim()} className="gc-btn" style={{ background: ACCENT, color: COLORS.white, borderRadius: 10, padding: "9px 18px", fontWeight: 700, fontSize: 13, display: "flex", alignItems: "center", gap: 6 }}>
+                    <Plus size={15} /> {adding ? "Adding..." : "Add Students"}
+                  </button>
+                  {addError && <span style={{ color: COLORS.danger, fontSize: 12.5 }}>{addError}</span>}
+                </div>
+              </form>
 
-      {/* Printable roster — unchanged from the original print-only page.
-          Only shown by the @media print rule above; a teacher printing
-          this page gets the same clean handout regardless of anything
-          above (removed students are excluded). */}
+              {justAdded.length > 0 && (
+                <div style={{ marginTop: 14, paddingTop: 14, borderTop: `1px solid ${COLORS.border}` }}>
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
+                    <div style={{ fontSize: 12.5, fontWeight: 700, color: COLORS.success }}>Added {justAdded.length} student{justAdded.length === 1 ? "" : "s"} — here are their PINs:</div>
+                    <button onClick={copyJustAddedPins} className="gc-btn" style={{ background: `${COLORS.success}22`, border: "none", borderRadius: 8, padding: "4px 10px", color: COLORS.success, fontWeight: 700, fontSize: 11.5, display: "flex", alignItems: "center", gap: 4 }}>
+                      {copiedPins ? <Check size={12} /> : <Copy size={12} />} {copiedPins ? "Copied" : "Copy All"}
+                    </button>
+                  </div>
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))", gap: 6 }}>
+                    {justAdded.map((s) => (
+                      <div key={s.id} style={{ background: `${COLORS.success}14`, borderRadius: 8, padding: "6px 10px", fontSize: 12.5 }}>
+                        <strong>{s.first_name}</strong> — <span style={{ fontFamily: "monospace" }}>{s.pin}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+  </section><section className="cc-panel"><h2>Crystals & rewards</h2><p className="cc-muted">Celebrate effort and unlock rewards for your students.</p><Link className="cc-btn" href="/teacher/badges">Manage rewards</Link></section><section className="cc-panel"><h3>Classroom settings</h3><p className="cc-muted">Manage your classes and their assignments.</p><Link className="cc-link" href={`/teacher/assign?classId=${classId}`}>Open class settings →</Link></section></aside></div>
+  </BridgePage></div>
       <div className="print-only">
         <div className="roster-print-page" style={{ maxWidth: 800, margin: "32px auto", background: COLORS.white, borderRadius: 16, padding: "40px 48px", color: COLORS.textDark }}>
           <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 24, marginBottom: 28, paddingBottom: 24, borderBottom: `2px solid ${COLORS.border}` }}>
@@ -470,8 +398,7 @@ export default function ClassRosterPage() {
           </table>
         </div>
       </div>
-    </div>
-  );
+ </>;
 }
 
 function RosterRow({ student, accent, otherClasses, transferTarget, onTransferTargetChange, onTransfer, onDeactivate, busy, rowError }) {
@@ -484,6 +411,7 @@ function RosterRow({ student, accent, otherClasses, transferTarget, onTransferTa
           <div style={{ fontSize: 10.5, color: COLORS.textMuted, fontFamily: "monospace" }}>PIN: {student.pin}</div>
         </div>
 
+        <Link className="cc-link" style={{fontSize:12}} href={`/teacher/students/${student.id}`}>View profile</Link>
         {otherClasses.length > 0 && (
           <>
             <select

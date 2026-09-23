@@ -7,6 +7,9 @@ import { supabase } from "../../../../lib/supabaseClient";
 import { engineSupportsDistressCall, distressCallUnit } from "../../../../lib/distressCallEngines";
 import { isCustomCode, customCodeOwnerPrefix } from "../../../../lib/cases/relay-station";
 import { GAME_SKINS, DEFAULT_GAME_SKIN } from "../../../../lib/frequencyRushSkins";
+import Link from 'next/link';
+import {BridgePage,PageHeading,ClassTabs,Empty} from '../../../../components/teacher/BridgeUI';
+import {subjectStyle,engineInfo,SUBJECTS} from '../../../../lib/teacherBridge';
 import TeacherHUD from "../../../../components/TeacherHUD";
 import { COLORS, PAGE_ACCENTS, PAGE_BACKGROUNDS, panelStyle } from "../../../../lib/teacherTheme";
 import { missionMapTeksLabel, missionMapTeksCode } from "../../../../lib/cases/mission-map/teksLabels";
@@ -24,7 +27,7 @@ import { missionMapTeksLabel, missionMapTeksCode } from "../../../../lib/cases/m
 // used for the identical callout on My Classes' case-detail modal rather
 // than inventing its own teal, since it's the same UI concept in both
 // places. No query, calculation, or assignment-flow logic changed.
-const ACCENT = PAGE_ACCENTS["/teacher/assign"];
+const ACCENT = "#7541cf";
 const BG = PAGE_BACKGROUNDS["/teacher/assign/new"];
 
 // Roster as of the Aug 2026 challenge-type consolidation: Model Makeover is
@@ -158,6 +161,10 @@ function NewAssignmentContent() {
 
   const [cases, setCases] = useState([]);
   const [caseSearch, setCaseSearch] = useState("");
+  const [topic,setTopic]=useState('all');
+  const [typeFilter,setTypeFilter]=useState(searchParams.get('engine')||'all');
+  const [limit,setLimit]=useState(12);
+  const [casesLoading,setCasesLoading]=useState(true);
   const [selectedCase, setSelectedCase] = useState(null);
   const [dueDate, setDueDate] = useState("");
   const [assigning, setAssigning] = useState(false);
@@ -205,7 +212,7 @@ function NewAssignmentContent() {
 
   useEffect(() => {
     if (!teacherId) return;
-    supabase.from("classes").select("*").eq("teacher_id", teacherId).order("created_at").then(({ data }) => setClasses(data || []));
+    supabase.from("classes").select("*").eq("teacher_id", teacherId).order("created_at").then(({ data }) => {setClasses(data || []);setAssignClassId(prev=>prev||(data||[])[0]?.id||null)});
   }, [teacherId]);
 
   useEffect(() => {
@@ -216,15 +223,19 @@ function NewAssignmentContent() {
   }, [assignClassId]);
 
   useEffect(() => {
-    supabase.from("cases").select("standard, title, grade, subject, engine, learning_target, lesson_summary, misconception_note").then(({ data }) => setCases(data || []));
+    supabase.from("cases").select("standard, title, grade, subject, engine, learning_target, lesson_summary, misconception_note").then(({ data,error:loadError }) => {setCases(data || []);setCasesLoading(false);if(loadError)setError("Could not load activities. Please refresh to try again.")});
   }, []);
 
+  function topicCode(c){return missionMapTeksCode(c.standard)||c.standard.replace(/-(?:SC|GC|FR|SL|SD|AD|RS|MM).*$/i,'');}
+  const topics=[...new Set(cases.filter(c=>c.grade===Number(browseGrade)&&c.subject===browseSubject&&!isRetiredSignalCheckCase(c.standard)).map(topicCode))].sort((a,b)=>a.localeCompare(b,undefined,{numeric:true}));
   const searchQ = caseSearch.trim().toLowerCase();
   const filteredCases = cases.filter((c) => {
     if (c.grade !== parseInt(browseGrade)) return false;
+    if(!CHALLENGE_TYPES.some(t=>t.real&&matchesChallenge(c.engine,t.key)))return false;
     const specialTile = RELAY_SPECIAL_TILES.find((t) => t.key === browseSubject);
     if (!specialTile && c.subject !== browseSubject) return false;
-    if (!matchesChallenge(c.engine, selectedChallenge?.key)) return false;
+    if (typeFilter!=="all" && !matchesChallenge(c.engine,typeFilter)) return false;
+    if(topic!=="all" && topicCode(c)!==topic)return false;
     if (isRetiredSignalCheckCase(c.standard)) return false;
     // Relay Station's Foundations Track has its own 5th tile (FOUNDATIONS
     // below) instead of hiding among the ELAR readings.
@@ -312,70 +323,10 @@ function NewAssignmentContent() {
     return <div style={{ minHeight: "100vh", background: COLORS.canvas, display: "flex", alignItems: "center", justifyContent: "center", color: COLORS.textMuted, fontFamily: "'Inter', sans-serif" }}>Loading...</div>;
   }
 
-  return (
-    <div style={{ position: "relative", minHeight: "100vh", fontFamily: "'Inter', sans-serif", color: COLORS.textDark, display: "flex", flexDirection: "column" }}>
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@600;700&family=Inter:wght@400;500;600;700&display=swap');
-        .gc-btn { transition: transform 150ms ease; cursor: pointer; border: none; font-family: 'Inter', sans-serif; }
-        .gc-btn:hover { transform: translateY(-1px); }
-      `}</style>
-
-      {/* Emily's Challenge Library background (Aug 27) — a 1672x941 image with
-          the desk/window/crystal art on its right side, close enough to the
-          right and bottom edges that a plain "cover" would risk cropping it
-          on a browser window shaped differently from the source image. Kept
-          the "contain" + matching-canvas-color fix this page already had
-          (the same idea the Overview scene later adopted site-wide on
-          Sept 13, second pass — nothing here is ever cropped): the image is
-          never cropped, and the sampled near-white lavender fallback color
-          blends into any letterboxed edge instead of showing as a bar.
-          Fixed to the viewport so it stays put while this page's content
-          (which can get tall — case grids, forms) scrolls over it. */}
-      <div
-        style={{
-          position: "fixed",
-          inset: 0,
-          zIndex: 0,
-          backgroundColor: COLORS.canvas,
-          backgroundImage: `url(${BG})`,
-          backgroundSize: "contain",
-          backgroundPosition: "center",
-          backgroundRepeat: "no-repeat",
-        }}
-      />
-
-      {/* Sept 14 — this wrapper and the content wrapper below both had
-          zIndex: 1. Equal z-index means CSS falls back to DOM order to break
-          the tie, so the content div (later in the DOM) was painting over
-          this one wherever they overlapped — including over the HUD's own
-          open dropdown, which is what showed up as page-heading text
-          ghosting through the Mission Control/Observatory/Support Deck
-          menus on this page specifically (every other console page renders
-          TeacherHUD as a plain sibling, not inside a competing z-indexed
-          wrapper, so they never had this). Bumping this one above the
-          content wrapper fixes it without touching the content wrapper's
-          own stacking (still above the zIndex:0 background art). */}
-      <div style={{ position: "relative", zIndex: 2 }}>
-        <TeacherHUD title="Challenge Library" subtitle="Mission Control — build a new assignment" accent={ACCENT} teacherEmail={teacherEmail} />
-      </div>
-
-      <div style={{ position: "relative", zIndex: 1, flex: 1, padding: "28px 36px 40px", display: "flex", justifyContent: "center" }}>
-        <div style={{ width: "100%", maxWidth: challengeStep === "library" ? 1240 : challengeStep === "caseList" ? 920 : 640 }}>
-          <button onClick={() => router.push("/teacher/assign")} className="gc-btn" style={{ display: "flex", alignItems: "center", gap: 6, background: "none", color: COLORS.textMuted, fontSize: 13, fontWeight: 600, marginBottom: 14 }}>
-            <ChevronLeft size={16} /> Back to My Classes
-          </button>
-
-          <div style={{ marginBottom: 20 }}>
-            <h1 style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 700, fontSize: 24, margin: "0 0 4px 0", color: COLORS.textDark }}>Challenge Library</h1>
-            <p style={{ color: COLORS.textMuted, fontSize: 14, margin: 0 }}>
-              Browse challenge types and cases, then choose which class to assign to.
-            </p>
-          </div>
-
-          {error && <div style={{ background: `${COLORS.danger}18`, border: `1px solid ${COLORS.danger}55`, color: "#8A2A22", borderRadius: 10, padding: "10px 14px", fontSize: 13, marginBottom: 16 }}>{error}</div>}
-
-          {assignedSuccess ? (
-            <div style={panelStyle(ACCENT, { padding: 32, textAlign: "center" })}>
+  function resetBrowse(){setSelectedCase(null);setTopic('all');setLimit(12);setDistressCallEnabled(false);setDistressCallTarget('');setDistressCallDeadline('');setDistressCallRewardPoints('');}
+  return <BridgePage teacherEmail={teacherEmail}><PageHeading title="Find your next activity" subtitle="Choose a topic. Find the right experience. Make it yours."><ClassTabs classes={classes} value={assignClassId} onChange={setAssignClassId}/><div className="cc-class-context">{targetClass?.name || 'Choose a class'} · {roster.length} students</div></PageHeading>
+    {error&&<div role="alert" className="cc-error">{error}</div>}
+    {assignedSuccess?(            <div style={panelStyle(ACCENT, { padding: 32, textAlign: "center" })}>
               <div style={{ fontSize: 36, marginBottom: 10 }}>✅</div>
               <div style={{ fontWeight: 700, fontSize: 17, marginBottom: 6, color: COLORS.textDark }}>Assigned!</div>
               <p style={{ color: COLORS.textMuted, fontSize: 13.5, marginBottom: distressCallEnabled ? 10 : 20 }}>
@@ -403,249 +354,21 @@ function NewAssignmentContent() {
                 <button onClick={assignAnother} className="gc-btn" style={{ background: `${ACCENT}22`, color: ACCENT, borderRadius: 999, padding: "11px 20px", fontWeight: 700, fontSize: 13.5 }}>Assign Another</button>
                 <button onClick={() => router.push("/teacher/assign")} className="gc-btn" style={{ background: ACCENT, color: COLORS.white, borderRadius: 999, padding: "11px 20px", fontWeight: 700, fontSize: 13.5 }}>Back to My Classes</button>
               </div>
-            </div>
-          ) : (
-            <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-              <div style={{ flex: 1, minWidth: 0, ...panelStyle(ACCENT, { padding: 16 }) }}>
-                {challengeStep === "library" && (
-                  <>
-                    <div style={{ fontWeight: 700, fontSize: 13, marginBottom: 12, color: COLORS.textDark }}>1. Choose a Challenge Type</div>
-                    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(290px, 1fr))", gap: 14 }}>
-                      {[...CHALLENGE_TYPES].sort((a, b) => Number(b.real) - Number(a.real)).map((ch) => (
-                        <button key={ch.key} className="gc-btn" disabled={!ch.real} onClick={() => { setSelectedChallenge(ch); setChallengeStep("gradeSubject"); }} style={{ position: "relative", borderRadius: 12, overflow: "hidden", border: `1px solid ${COLORS.border}`, padding: 0, textAlign: "left", opacity: ch.real ? 1 : 0.7, cursor: ch.real ? "pointer" : "default", background: COLORS.white }}>
-                          <div style={{ position: "relative", height: 110 }}>
-                            <img src={ch.image} alt="" onError={thumbFallback} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block", filter: ch.real ? "none" : "grayscale(0.3)" }} />
-                            {!ch.real && <span style={{ position: "absolute", top: 6, right: 6, fontSize: 9.5, fontWeight: 700, background: "rgba(255,255,255,.92)", color: COLORS.textMuted, padding: "2px 8px", borderRadius: 999 }}>Coming Soon</span>}
-                          </div>
-                          <div style={{ padding: "8px 10px 2px 10px", fontSize: 12.5, fontWeight: 700, color: COLORS.textDark }}>{ch.label}</div>
-                          {ch.description && <div style={{ padding: "0 10px 10px 10px", fontSize: 10.5, lineHeight: 1.4, color: COLORS.textMuted }}>{ch.description}</div>}
-                        </button>
-                      ))}
-                    </div>
-                  </>
-                )}
-
-                {challengeStep === "gradeSubject" && (
-                  <>
-                    <button onClick={() => setChallengeStep("library")} className="gc-btn" style={{ background: "none", color: ACCENT, fontSize: 12.5, fontWeight: 700, marginBottom: 10 }}>← Back to Challenge Types</button>
-                    <div style={{ fontWeight: 700, fontSize: 13, marginBottom: 4, color: COLORS.textDark }}>2. {selectedChallenge?.label} — choose grade & subject</div>
-                    <div style={{ fontSize: 11.5, color: COLORS.textMuted, marginBottom: 14 }}>You can assign any grade level to any class — pick whichever fits this student or group.</div>
-
-                    <div style={{ fontSize: 11, fontWeight: 700, color: COLORS.textMuted, textTransform: "uppercase", letterSpacing: .4, marginBottom: 8 }}>Grade Level</div>
-                    <div style={{ display: "flex", gap: 8, marginBottom: 20 }}>
-                      {[{ v: "3", label: "3rd Grade" }, { v: "4", label: "4th Grade" }, { v: "5", label: "5th Grade" }].map((g) => (
-                        <button key={g.v} className="gc-btn" onClick={() => setBrowseGrade(g.v)} style={{ flex: 1, padding: 12, borderRadius: 12, fontWeight: 700, fontSize: 14, background: browseGrade === g.v ? ACCENT : "rgba(255,255,255,.55)", color: browseGrade === g.v ? COLORS.white : COLORS.textDark, border: "2px solid transparent" }}>
-                          {g.label}
-                        </button>
-                      ))}
-                    </div>
-
-                    <div style={{ fontSize: 11, fontWeight: 700, color: COLORS.textMuted, textTransform: "uppercase", letterSpacing: .4, marginBottom: 8 }}>Subject</div>
-                    {/* Sept 21, 2026 — Math and ELAR tiles added alongside Science and
-                        Social Studies (2x2 grid, so each tile keeps the size it had in the
-                        old two-across row). `v` must match cases.subject exactly.
-                        Tile colors are the four subject frame colors. Until
-                        subject_math.jpg / subject_elar.jpg exist in public/teacher/,
-                        the image hides itself on error and the colored label
-                        underneath shows instead — no broken-image icon. */}
-                    <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 14, marginBottom: 14 }}>
-                      {[
-                        { v: "Science", img: "/teacher/subject_science.jpg", color: "#39D97A" },
-                        { v: "Social Studies", img: "/teacher/subject_social_studies.jpg", color: "#FFDD40" },
-                        { v: "Math", img: "/teacher/subject_math.jpg", color: "#22C3F0" },
-                        { v: "ELAR", img: "/teacher/subject_elar.jpg", color: "#E0338E" },
-                      ].map((s) => (
-                        <button
-                          key={s.v}
-                          className="gc-btn"
-                          onClick={() => setBrowseSubject(s.v)}
-                          style={{
-                            position: "relative",
-                            height: 130,
-                            borderRadius: 16,
-                            border: browseSubject === s.v ? `3px solid ${ACCENT}` : "3px solid transparent",
-                            padding: 0,
-                            overflow: "hidden",
-                            background: `linear-gradient(135deg, ${s.color}40, #F4F1FF 70%)`,
-                            boxShadow: browseSubject === s.v ? `0 6px 18px ${ACCENT}47` : "0 2px 8px rgba(13,27,42,.06)",
-                          }}
-                        >
-                          <span style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 26, fontWeight: 800, color: "#3B2A7A", letterSpacing: .3 }}>{s.v}</span>
-                          <img src={s.img} alt={s.v} onError={thumbFallback} style={{ position: "relative", width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
-                        </button>
-                      ))}
-                    </div>
-
-                    {selectedChallenge?.key === "relay_station" && RELAY_SPECIAL_TILES.map((tile) => (
-                      <button
-                        key={tile.key}
-                        className="gc-btn"
-                        onClick={() => {
-                          setBrowseSubject(tile.key);
-                          const pick = cases.find((c) => tile.match(c.standard) && c.grade === parseInt(browseGrade));
-                          if (pick) setSelectedCase(pick);
-                          setChallengeStep("caseList");
-                        }}
-                        style={{
-                          position: "relative",
-                          width: "100%",
-                          height: 110,
-                          borderRadius: 16,
-                          border: browseSubject === tile.key ? `3px solid ${ACCENT}` : "3px solid transparent",
-                          padding: "0 22px",
-                          marginBottom: 14,
-                          overflow: "hidden",
-                          display: "flex",
-                          alignItems: "center",
-                          gap: 18,
-                          textAlign: "left",
-                          background: tile.bg,
-                          boxShadow: browseSubject === tile.key ? `0 6px 18px ${ACCENT}47` : "0 2px 8px rgba(13,27,42,.12)",
-                        }}
-                      >
-                        <span style={{ fontSize: 40 }}>{tile.icon}</span>
-                        <span style={{ flex: 1 }}>
-                          <span style={{ display: "block", fontSize: 24, fontWeight: 800, color: "#FFFFFF", letterSpacing: .3 }}>{tile.title}</span>
-                          <span style={{ display: "block", fontSize: 12.5, color: "rgba(255,255,255,.75)", marginTop: 3 }}>{tile.blurb}</span>
-                        </span>
-                        <span style={{ fontSize: 13, fontWeight: 800, color: "#FFC44D", whiteSpace: "nowrap" }}>Assign →</span>
-                      </button>
-                    ))}
-
-                    <button onClick={() => { if (RELAY_SPECIAL_TILES.some((t) => t.key === browseSubject)) setBrowseSubject("ELAR"); setChallengeStep("caseList"); }} className="gc-btn" style={{ width: "100%", background: ACCENT, color: COLORS.white, borderRadius: 999, padding: "11px 20px", fontWeight: 700, fontSize: 14 }}>
-                      Browse {browseGrade === "3" ? "3rd" : `${browseGrade}th`} Grade {RELAY_SPECIAL_TILES.some((t) => t.key === browseSubject) ? "ELAR" : browseSubject} {selectedChallenge?.key === "relay_station" ? "Readings" : "Cases"} →
-                    </button>
-                  </>
-                )}
-
-                {challengeStep === "caseList" && (
-                  <>
-                    <button onClick={() => setChallengeStep("gradeSubject")} className="gc-btn" style={{ background: "none", color: ACCENT, fontSize: 12.5, fontWeight: 700, marginBottom: 10 }}>← Change Grade/Subject</button>
-                    <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", marginBottom: 10 }}>
-                      <div style={{ fontWeight: 700, fontSize: 13, color: COLORS.textDark }}>3. Choose a case — {browseGrade === "3" ? "3rd" : `${browseGrade}th`} Grade {browseSubject}</div>
-                      <div style={{ fontSize: 11.5, color: COLORS.textMuted }}>
-                        {`${filteredCases.length} case${filteredCases.length === 1 ? "" : "s"}`}
-                      </div>
-                    </div>
-                    {selectedChallenge?.key === "relay_station" && (
-                      <button onClick={() => router.push("/teacher/typing-texts")} className="gc-btn" style={{ background: `${ACCENT}18`, color: ACCENT, borderRadius: 999, padding: "7px 14px", fontWeight: 700, fontSize: 12.5, marginBottom: 10 }}>
-                        ✏️ Create your own text (spelling list, vocabulary, any passage) →
-                      </button>
-                    )}
-                    <div style={{ position: "relative", marginBottom: 12 }}>
-                      <Search size={15} style={{ position: "absolute", left: 10, top: 10, color: COLORS.textMuted }} />
-                      <input value={caseSearch} onChange={(e) => setCaseSearch(e.target.value)} placeholder="Search by title or standard..." style={{ width: "100%", border: "2px solid #ECEAF5", borderRadius: 10, padding: "8px 10px 8px 32px", fontSize: 13, boxSizing: "border-box" }} />
-                    </div>
-                    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(150px, 1fr))", gap: 12, maxHeight: 420, overflowY: "auto" }}>
-                      {filteredCases.map((c) => {
-                        const isSelected = selectedCase && selectedCase.standard === c.standard;
-                        return (
-                          <button key={c.standard} className="gc-btn" onClick={() => { setSelectedCase(c); }} style={{ textAlign: "left", background: isSelected ? `${ACCENT}15` : COLORS.white, border: isSelected ? `2px solid ${ACCENT}` : "2px solid transparent", borderRadius: 14, overflow: "hidden", padding: 0, boxShadow: "0 2px 8px rgba(13,27,42,.05)" }}>
-                            <div style={{ height: 88, overflow: "hidden" }}>
-                              <img src={caseImagePath(c.standard)} alt="" onError={thumbFallback} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
-                            </div>
-                            <div style={{ padding: "10px 12px 12px 12px" }}>
-                              <div style={{ fontSize: 13, fontWeight: 700, lineHeight: 1.3, marginBottom: 4, color: COLORS.textDark }}>{c.title}</div>
-                              {/* Sept 16, 2026 — for Mission Map this chip used
-                                  to show the case's internal concept number
-                                  (3.1-MM), which reads like a TEKS code and
-                                  isn't one. Show the real standard instead
-                                  when we have it; every other engine already
-                                  puts the real standard in `standard`. */}
-                              <span style={{ display: "inline-block", fontSize: 10.5, fontWeight: 700, color: ACCENT, background: `${ACCENT}22`, padding: "2px 8px", borderRadius: 999 }}>{missionMapTeksCode(c.standard) || c.standard}</span>
-                            </div>
-                          </button>
-                        );
-                      })}
-                      {filteredCases.length === 0 && (
-                        <div style={{ gridColumn: "1 / -1", fontSize: 13, color: COLORS.textMuted, textAlign: "center", padding: 16 }}>
-                          No {browseGrade === "3" ? "3rd" : `${browseGrade}th`} Grade {browseSubject} cases yet — check back once they're added!
-                        </div>
-                      )}
-                    </div>
-                  </>
-                )}
-              </div>
-
-              {selectedCase && (selectedCase.learning_target || selectedCase.lesson_summary || selectedCase.misconception_note) && (
-                <div style={panelStyle(ACCENT, { padding: 16 })}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
-                    <div style={{ width: 40, height: 40, borderRadius: 8, overflow: "hidden", flexShrink: 0 }}>
-                      <img src={caseImagePath(selectedCase.standard)} alt="" onError={thumbFallback} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                    </div>
-                    <div>
-                      <div style={{ fontSize: 14, fontWeight: 700, color: COLORS.textDark }}>{selectedCase.title}</div>
-                      <div style={{ fontSize: 11, color: COLORS.textMuted }}>
-                        {missionMapTeksLabel(selectedCase.standard) || selectedCase.standard}
-                      </div>
-                    </div>
-                  </div>
-
-                  {selectedCase.learning_target && (
-                    <div style={{ marginBottom: 12 }}>
-                      <div style={{ fontSize: 10.5, fontWeight: 700, color: COLORS.textMuted, letterSpacing: .4, marginBottom: 5, textTransform: "uppercase" }}>Learning Target</div>
-                      <div style={{ background: `${COLORS.aqua}18`, borderRadius: 10, padding: "9px 11px", fontSize: 13, color: COLORS.textDark, lineHeight: 1.5 }}>
-                        🎯 {selectedCase.learning_target}
-                      </div>
-                    </div>
-                  )}
-
-                  {selectedCase.lesson_summary && (
-                    <div style={{ marginBottom: 12 }}>
-                      <div style={{ fontSize: 10.5, fontWeight: 700, color: COLORS.textMuted, letterSpacing: .4, marginBottom: 5, textTransform: "uppercase" }}>Lesson Summary</div>
-                      <div style={{ fontSize: 13, color: COLORS.textDark, lineHeight: 1.5 }}>
-                        {selectedCase.lesson_summary}
-                      </div>
-                    </div>
-                  )}
-
-                  {selectedCase.misconception_note && (
-                    <div>
-                      <div style={{ fontSize: 10.5, fontWeight: 700, color: COLORS.textMuted, letterSpacing: .4, marginBottom: 5, textTransform: "uppercase" }}>Watch For</div>
-                      <div style={{ background: `${COLORS.warning}18`, border: `1px solid ${COLORS.warning}55`, borderRadius: 10, padding: "9px 11px", fontSize: 12.5, color: "#7A4A00", lineHeight: 1.5 }}>
-                        ⚠️ {selectedCase.misconception_note}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {selectedCase && (
-                <div style={panelStyle(ACCENT, { padding: 16 })}>
-                  <div style={{ fontWeight: 700, fontSize: 13, marginBottom: 10, color: COLORS.textDark }}>4. Which class is this for?</div>
-                  {classes.length > 0 ? (
-                    <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 14 }}>
-                      {classes.map((c) => (
-                        <button
-                          key={c.id}
-                          className="gc-btn"
-                          onClick={() => setAssignClassId(c.id)}
-                          style={{
-                            background: assignClassId === c.id ? `${ACCENT}22` : "rgba(255,255,255,.55)",
-                            border: assignClassId === c.id ? `2px solid ${ACCENT}` : "2px solid transparent",
-                            borderRadius: 10,
-                            padding: "9px 14px",
-                            fontSize: 12.5,
-                            fontWeight: 700,
-                            color: COLORS.textDark,
-                          }}
-                        >
-                          {c.name}
-                        </button>
-                      ))}
-                    </div>
-                  ) : (
-                    <p style={{ fontSize: 12.5, color: COLORS.textMuted, marginBottom: 10 }}>You don't have any classes yet — create one on My Classes first.</p>
-                  )}
-
+            </div>): <>
+    <section className="cc-panel" style={{padding:'8px 16px',marginBottom:18}}><div className="cc-toolbar" style={{margin:0}}><select aria-label="Grade" value={browseGrade} onChange={e=>{setBrowseGrade(e.target.value);resetBrowse()}}>{['3','4','5'].map(g=><option key={g} value={g}>Grade {g}</option>)}</select><div className="cc-row">{Object.keys(SUBJECTS).map(subject=><button key={subject} className={'cc-btn '+(browseSubject===subject?'':'secondary')} style={{borderBottom:`3px solid ${SUBJECTS[subject].color}`,background:browseSubject===subject?SUBJECTS[subject].ink:'#fff'}} aria-pressed={browseSubject===subject} onClick={()=>{setBrowseSubject(subject);resetBrowse()}}>{subject}</button>)}</div><input className="cc-input cc-search" aria-label="Search topics or standards" placeholder="Search topics or standards" value={caseSearch} onChange={e=>{setCaseSearch(e.target.value);setLimit(12)}}/></div></section>
+    <div className="cc-toolbar"><select aria-label="Standard or topic" value={topic} onChange={e=>{setTopic(e.target.value);setSelectedCase(null);setLimit(12)}}><option value="all">All standards / topics</option>{topics.map(t=><option key={t} value={t}>{t}</option>)}</select><select aria-label="Activity format" value={typeFilter} onChange={e=>{setTypeFilter(e.target.value);setSelectedCase(null);setLimit(12);if(RELAY_SPECIAL_TILES.some(t=>t.key===browseSubject)){setBrowseSubject("ELAR");setTopic("all")}}}><option value="all">All activity formats</option>{CHALLENGE_TYPES.filter(c=>c.real).map(c=><option key={c.key} value={c.key}>{c.label}</option>)}</select><Link className="cc-link" href="/teacher/assign/briefing">Assign a Briefing →</Link><Link className="cc-link" href="/teacher/assign">Manage assignments →</Link></div>
+    {typeFilter==='relay_station'&&<div className="cc-row" style={{marginBottom:18}}>{RELAY_SPECIAL_TILES.map(t=><button key={t.key} className="cc-btn quiet" onClick={()=>{setBrowseSubject(t.key);setTopic('all');setSelectedCase(null)}}>{t.title}</button>)}<Link className="cc-link" href="/teacher/typing-texts">Create a custom text</Link></div>}
+    <div className="cc-two" style={{gridTemplateColumns:undefined}}><section className="cc-panel"><h2>{topic==='all'?'Choose a learning experience':topic}</h2><p className="cc-muted">{browseSubject} · Grade {browseGrade} · {filteredCases.length} activities</p><div className="cc-gallery">{filteredCases.slice(0,limit).map(c=>{const e=engineInfo(c.engine);return <button key={c.standard} className="cc-activity cc-frame" style={subjectStyle(c.subject)} aria-pressed={selectedCase?.standard===c.standard} onClick={()=>{setSelectedCase(c);setSelectedChallenge(CHALLENGE_TYPES.find(t=>matchesChallenge(c.engine,t.key)))}}><img src={e.image} alt=""/><div><div className="cc-eyebrow cc-subject-label">{e.label}</div><h3>{c.title}</h3><p>{c.learning_target||e.description}</p><small>{missionMapTeksCode(c.standard)||c.standard}</small></div></button>})}</div>{casesLoading?<Empty>Loading activities…</Empty>:!filteredCases.length&&<Empty>No activities match these filters. Try another topic, grade, or format.</Empty>}{filteredCases.length>limit&&<button className="cc-btn secondary" style={{marginTop:18}} onClick={()=>setLimit(limit+12)}>Show more activities</button>}</section>
+    <aside className="cc-stack">{selectedCase?<section className="cc-panel cc-frame" style={subjectStyle(selectedCase.subject)}><div className="cc-eyebrow cc-subject-label">SELECTED · {engineInfo(selectedCase.engine).label}</div><h2>{selectedCase.title}</h2><p className="cc-muted">{missionMapTeksLabel(selectedCase.standard)||selectedCase.standard}</p><img className="cc-preview-image" src={engineInfo(selectedCase.engine).image} alt=""/><h3>What students will do</h3><p className="cc-muted">{selectedCase.lesson_summary||engineInfo(selectedCase.engine).description}</p>{selectedCase.learning_target&&<div className="cc-panel" style={{background:'#f5f0fc',padding:14}}>{selectedCase.learning_target}</div>}{selectedCase.misconception_note&&<details><summary>Teaching notes</summary><p className="cc-muted">{selectedCase.misconception_note}</p></details>}
+    <div className="cc-assignment-form"><h3>Assign to {targetClass?.name||'your class'}</h3>
                   {assignClassId && (
                     <>
-                      <div style={{ fontWeight: 700, fontSize: 13, marginBottom: 10, color: COLORS.textDark }}>5. Who gets it?</div>
+                      <div style={{ fontWeight: 700, fontSize: 13, marginBottom: 10, color: COLORS.textDark }}>Who receives this activity?</div>
                       <div style={{ display: "inline-flex", background: "rgba(255,255,255,.55)", borderRadius: 999, padding: 3, marginBottom: 14, gap: 3 }}>
-                        <button className="gc-btn" onClick={() => setTargetMode("whole")} style={{ border: "none", padding: "7px 16px", borderRadius: 999, fontWeight: 700, fontSize: 12.5, background: targetMode === "whole" ? ACCENT : "transparent", color: targetMode === "whole" ? COLORS.white : COLORS.textMuted }}>
+                        <button className="cc-btn" onClick={() => setTargetMode("whole")} style={{ border: "none", padding: "7px 16px", borderRadius: 999, fontWeight: 700, fontSize: 12.5, background: targetMode === "whole" ? ACCENT : "transparent", color: targetMode === "whole" ? COLORS.white : COLORS.textMuted }}>
                           Whole Class
                         </button>
-                        <button className="gc-btn" onClick={() => setTargetMode("specific")} style={{ border: "none", padding: "7px 16px", borderRadius: 999, fontWeight: 700, fontSize: 12.5, background: targetMode === "specific" ? ACCENT : "transparent", color: targetMode === "specific" ? COLORS.white : COLORS.textMuted }}>
+                        <button className="cc-btn" onClick={() => setTargetMode("specific")} style={{ border: "none", padding: "7px 16px", borderRadius: 999, fontWeight: 700, fontSize: 12.5, background: targetMode === "specific" ? ACCENT : "transparent", color: targetMode === "specific" ? COLORS.white : COLORS.textMuted }}>
                           Just Some Students
                         </button>
                       </div>
@@ -657,7 +380,7 @@ function NewAssignmentContent() {
                             return (
                               <button
                                 key={s.id}
-                                className="gc-btn"
+                                className="cc-btn"
                                 onClick={() => toggleStudentTarget(s.id)}
                                 style={{ display: "flex", alignItems: "center", gap: 8, background: checked ? `${ACCENT}22` : COLORS.white, border: checked ? `1.5px solid ${ACCENT}` : `1.5px solid ${COLORS.border}`, borderRadius: 8, padding: "7px 10px", textAlign: "left" }}
                               >
@@ -675,7 +398,7 @@ function NewAssignmentContent() {
                     </>
                   )}
 
-                  <div style={{ fontWeight: 700, fontSize: 13, marginBottom: 10, color: COLORS.textDark }}>6. Due date (optional)</div>
+                  <div style={{ fontWeight: 700, fontSize: 13, marginBottom: 10, color: COLORS.textDark }}>Due date (optional)</div>
                   <div style={{ position: "relative", marginBottom: 14 }}>
                     <Calendar size={14} style={{ position: "absolute", left: 10, top: 11, color: COLORS.textMuted }} />
                     <input type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} style={{ width: "100%", border: "2px solid #ECEAF5", borderRadius: 10, padding: "8px 10px 8px 32px", fontSize: 13, boxSizing: "border-box" }} />
@@ -689,7 +412,7 @@ function NewAssignmentContent() {
                           <button
                             key={skin.id}
                             type="button"
-                            className="gc-btn"
+                            className="cc-btn"
                             onClick={() => setGameSkin(skin.id)}
                             style={{
                               background: gameSkin === skin.id ? ACCENT : COLORS.white,
@@ -715,7 +438,7 @@ function NewAssignmentContent() {
                     <div style={{ marginBottom: 14, border: `1.5px solid ${distressCallEnabled ? COLORS.violet : COLORS.border}`, borderRadius: 12, padding: 12, background: distressCallEnabled ? `${COLORS.violet}1A` : COLORS.white }}>
                       <button
                         type="button"
-                        className="gc-btn"
+                        className="cc-btn"
                         onClick={() => setDistressCallEnabled((v) => !v)}
                         style={{ display: "flex", alignItems: "center", gap: 8, background: "transparent", border: "none", padding: 0, width: "100%", textAlign: "left" }}
                       >
@@ -766,7 +489,7 @@ function NewAssignmentContent() {
                                   key={amt}
                                   type="button"
                                   onClick={() => setDistressCallRewardPoints(amt === 0 ? "" : String(amt))}
-                                  className="gc-btn"
+                                  className="cc-btn"
                                   style={{
                                     background: (amt === 0 ? !distressCallRewardPoints : distressCallRewardPoints === String(amt)) ? COLORS.violet : COLORS.white,
                                     color: (amt === 0 ? !distressCallRewardPoints : distressCallRewardPoints === String(amt)) ? COLORS.white : COLORS.textDark,
@@ -800,7 +523,7 @@ function NewAssignmentContent() {
                     </div>
                   )}
 
-                  <button className="gc-btn" onClick={handleAssign} disabled={assigning || !assignClassId} style={{ width: "100%", background: assignClassId ? ACCENT : "#D8D4E8", color: COLORS.white, borderRadius: 999, padding: "12px 20px", fontWeight: 700, fontSize: 14.5 }}>
+                  <button className="cc-btn" onClick={handleAssign} disabled={assigning || !assignClassId} style={{ width: "100%", background: assignClassId ? ACCENT : "#D8D4E8", color: COLORS.white, borderRadius: 999, padding: "12px 20px", fontWeight: 700, fontSize: 14.5 }}>
                     {assigning
                       ? "Assigning..."
                       : !assignClassId
@@ -809,20 +532,8 @@ function NewAssignmentContent() {
                       ? `Assign to ${selectedStudentIds.length} student${selectedStudentIds.length === 1 ? "" : "s"} →`
                       : `Assign to ${targetClass?.name} →`}
                   </button>
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-      </div>
-    </div>
-  );
+    {!classes.length&&<Link className="cc-link" href="/teacher/assign">Create a class first →</Link>}
+    </div></section>:<section className="cc-panel"><Empty><img src="/icons/sam/cosmic/thinking-poster.png" alt="" style={{width:110}}/><h2>Take a closer look</h2><p>Select an activity to see its learning purpose and assignment options.</p></Empty></section>}</aside></div></>}
+    </BridgePage>;
 }
-
-export default function NewAssignmentPage() {
-  return (
-    <Suspense fallback={<div style={{ minHeight: "100vh", background: COLORS.canvas, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Inter', sans-serif", color: COLORS.textMuted }}>Loading...</div>}>
-      <NewAssignmentContent />
-    </Suspense>
-  );
-}
+export default function NewAssignmentPage(){return <Suspense fallback={<div className="cc-loading">Loading activities…</div>}><NewAssignmentContent/></Suspense>}
