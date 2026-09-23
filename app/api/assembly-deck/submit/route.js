@@ -231,6 +231,7 @@ export async function POST(request) {
       quickCheck: graded.quickCheck ? { choiceId: graded.quickCheck.choiceId, correct: graded.quickCheck.correct, key: graded.quickCheck.key } : null,
       rounds: graded.rounds.map((r) => ({ id: r.id, build: { correct: r.build.correct, total: r.build.total }, rejects: { correct: r.rejects.correct, total: r.rejects.total } })),
       explanation: explanation || "",
+      confidence: body.confidence || null,
       glows: ai.glows,
       grow: ai.grow,
       crystalsEarned: crystals,
