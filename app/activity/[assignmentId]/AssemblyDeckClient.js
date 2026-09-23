@@ -28,6 +28,11 @@ const THEME = {
 };
 
 const SamContext = createContext(() => {});
+
+function pieceWord(publicCase, plural) {
+  if (publicCase.mode === "problem") return plural ? "parts" : "part";
+  return plural ? "paragraphs" : "paragraph";
+}
 const useSay = () => useContext(SamContext);
 
 function Panel({ children, style }) {
@@ -137,7 +142,7 @@ function CaseFile({ publicCase, boards, rejections, rejectResults, onClose }) {
           </div>
         )}
 
-        <div style={{ fontSize: 11.5, letterSpacing: 1.4, fontWeight: 800, color: THEME.muted, marginBottom: 8 }}>PARAGRAPHS YOU HAVE BUILT</div>
+        <div style={{ fontSize: 11.5, letterSpacing: 1.4, fontWeight: 800, color: THEME.muted, marginBottom: 8 }}>{pieceWord(publicCase, true).toUpperCase()} YOU HAVE BUILT</div>
         {report.length ? (
           report.map((para) => (
             <div key={para.roundId} style={{ background: "rgba(123,93,255,0.1)", border: `1px solid ${THEME.border}`, borderRadius: 14, padding: "12px 14px", marginBottom: 10 }}>
@@ -178,7 +183,7 @@ function CaseFile({ publicCase, boards, rejections, rejectResults, onClose }) {
             </div>
           ))
         ) : (
-          <div style={{ color: THEME.dim, fontSize: 14 }}>Nothing left over yet — build a paragraph first.</div>
+          <div style={{ color: THEME.dim, fontSize: 14 }}>Nothing left over yet — build a {pieceWord(publicCase)} first.</div>
         )}
       </Panel>
     </div>
@@ -207,13 +212,13 @@ function CaseFileButton({ onOpen }) {
 // ======================================================================
 function Brief({ publicCase, onStart, challenge, setChallenge }) {
   const say = useSay();
-  useEffect(() => { say("Read the brief, Cadet. You are building the whole report today, not just one paragraph.", "helping"); }, [say]);
+  useEffect(() => { say(publicCase.mode === "problem" ? "Read the brief, Cadet. You are building the whole problem today, not just one part." : "Read the brief, Cadet. You are building the whole report today, not just one paragraph.", "helping"); }, [say, publicCase.mode]);
   return (
     <Panel>
       <div style={{ fontSize: 12, letterSpacing: 2, color: THEME.teal, fontWeight: 700 }}>🧩 ASSEMBLY DECK</div>
       <h1 style={{ fontSize: 28, margin: "8px 0 4px" }}>{publicCase.title}</h1>
       <div style={{ color: THEME.muted, fontSize: 13.5, marginBottom: 14 }}>
-        {publicCase.subject} · Grade {publicCase.grade} · {publicCase.rounds.length} paragraphs · about {publicCase.estimatedMinutes} minutes
+        {publicCase.subject} · Grade {publicCase.grade} · {publicCase.rounds.length} {pieceWord(publicCase, true)} · about {publicCase.estimatedMinutes} minutes
       </div>
       {publicCase.brief.map((line, i) => (
         <p key={i} style={{ fontSize: 16, lineHeight: 1.7, color: i === 0 ? THEME.text : THEME.muted, margin: "0 0 10px" }}>{line}</p>
@@ -254,7 +259,7 @@ function BuildRound({ publicCase, round, roundNumber, board, setBoard, onDone, s
   const full = placedIds.size >= slotCapacity;
 
   useEffect(() => {
-    say(`Paragraph ${roundNumber}: ${round.goal}`, "helping");
+    say(`${publicCase.mode === "problem" ? "Part" : "Paragraph"} ${roundNumber}: ${round.goal}`, "helping");
   }, [say, round.id, round.goal, roundNumber]);
 
   function place(slotId) {
@@ -292,7 +297,7 @@ function BuildRound({ publicCase, round, roundNumber, board, setBoard, onDone, s
       setAttempt(nextAttempt);
       if (data.perfect) {
         setFeedback(data);
-        say("That is the paragraph. Read it back — it sounds like writing now.", "celebrating", 4000);
+        say(publicCase.mode === "problem" ? "That part is set. Read it back." : "That is the paragraph. Read it back — it sounds like writing now.", "celebrating", 4000);
       } else if (publicCase.chain && nextAttempt >= 2) {
         setFeedback({ kept: true });
         say("Next, the ones you left out.", "helping");
@@ -409,7 +414,7 @@ function BuildRound({ publicCase, round, roundNumber, board, setBoard, onDone, s
       {err && <div style={{ color: THEME.error, fontSize: 13, marginBottom: 10 }}>{err}</div>}
       {!feedback?.perfect && !feedback?.revealed && !feedback?.kept && (
         <button onClick={check} disabled={!full || busy} style={btn(THEME.done, !full || busy)}>
-          {busy ? "Checking…" : attempt === 0 ? "Check this paragraph" : "Check again"}
+          {busy ? "Checking…" : attempt === 0 ? `Check this ${pieceWord(publicCase)}` : "Check again"}
         </button>
       )}
       {(feedback?.kept) && (
@@ -420,7 +425,7 @@ function BuildRound({ publicCase, round, roundNumber, board, setBoard, onDone, s
       {(feedback?.perfect || feedback?.revealed) && (
         <>
           <div style={{ background: "rgba(57,217,122,0.12)", border: `3px solid ${THEME.done}`, borderRadius: 12, padding: "14px 16px", fontSize: 15.5, lineHeight: 1.75, marginBottom: 14 }}>
-            <strong style={{ color: THEME.done }}>{feedback.revealed ? "Here is the finished paragraph." : "Paragraph built."}</strong>
+            <strong style={{ color: THEME.done }}>{feedback.revealed ? `Here is the finished ${pieceWord(publicCase)}.` : `${publicCase.mode === "problem" ? "Part" : "Paragraph"} built.`}</strong>
             <div style={{ marginTop: 8 }}>{paragraphText(round, board)}</div>
           </div>
           <button onClick={() => onDone({ attempts: attempt, revealed: !!feedback.revealed })} style={btn(THEME.violet)}>
@@ -487,7 +492,7 @@ function RejectRound({ publicCase, round, roundNumber, board, rejections, setRej
 
   return (
     <Panel>
-      <div style={{ fontSize: 15, fontWeight: 800, color: "#0E7C8A", marginBottom: 4 }}>{publicCase.chain ? "Left out" : "🗑️ The leftovers"} · paragraph {roundNumber}</div>
+      <div style={{ fontSize: 15, fontWeight: 800, color: "#0E7C8A", marginBottom: 4 }}>{publicCase.chain ? "Left out" : "🗑️ The leftovers"} · {pieceWord(publicCase)} {roundNumber}</div>
       <h2 style={{ fontSize: 21, margin: "6px 0 12px" }}>{round.rejectPrompt}</h2>
       <div style={{ display: "flex", flexDirection: "column", gap: 14, marginBottom: 16 }}>
         {leftovers.map((piece) => {
@@ -544,7 +549,7 @@ function RejectRound({ publicCase, round, roundNumber, board, rejections, setRej
         <button onClick={onDone} style={btn(THEME.violet)}>
           {publicCase.repair && round.id === publicCase.repair.roundId
             ? "Look at the chain →"
-            : roundNumber < publicCase.rounds.length ? "Next paragraph →" : "Put the paragraphs in order →"}
+            : roundNumber < publicCase.rounds.length ? `Next ${pieceWord(publicCase)} →` : `Put the ${pieceWord(publicCase, true)} in order →`}
         </button>
       )}
     </Panel>
@@ -579,7 +584,7 @@ function AssemblyRound({ publicCase, boards, assembly, setAssembly, onDone }) {
   const unplaced = deck.filter((r) => !used.has(r.id));
   const complete = publicCase.assembly.slots.every((s) => assembly[s.id]);
 
-  useEffect(() => { say("Every paragraph is built. Now: what order does a reader actually need them in?", "thinking"); }, [say]);
+  useEffect(() => { say(publicCase.mode === "problem" ? "Every part is built. Now: what order does a reader need them in?" : "Every paragraph is built. Now: what order does a reader actually need them in?", "thinking"); }, [say, publicCase.mode]);
 
   function place(slotId) {
     if (!selected) return;
@@ -656,7 +661,7 @@ function AssemblyRound({ publicCase, boards, assembly, setAssembly, onDone }) {
                 </button>
               ) : (
                 <button onClick={() => place(slot.id)} disabled={!selected} style={{ background: "none", border: "none", color: selected ? THEME.cursor : THEME.dim, fontSize: 14, fontFamily: "inherit", padding: "4px 2px", cursor: selected ? "pointer" : "default" }}>
-                  {selected ? "↳ put the selected paragraph here" : "empty"}
+                  {selected ? `↳ put the selected ${pieceWord(publicCase)} here` : "empty"}
                 </button>
               )}
             </div>
@@ -1041,7 +1046,7 @@ function Explain({ publicCase, text, setText, onSubmit, busy, err }) {
         value={text}
         onChange={(e) => setText(e.target.value)}
         rows={6}
-        placeholder="Write your paragraph…"
+        placeholder={publicCase.mode === "problem" ? "Write your answer…" : "Write your paragraph…"}
         style={{ width: "100%", background: "#FFFFFF", border: "3px solid #D5E4F2", borderRadius: 16, padding: 14, color: "#1F2A44", fontSize: 17, lineHeight: 1.7, fontFamily: "inherit", resize: "vertical" }}
       />
       <div style={{ color: THEME.dim, fontSize: 12.5, margin: "6px 0 14px" }}>{words} word{words === 1 ? "" : "s"}</div>
@@ -1267,7 +1272,7 @@ function RepairRound({ publicCase, onDone, onPick }) {
     <Panel>
       <div style={{ fontSize: 12, letterSpacing: 2, color: THEME.teal, fontWeight: 700 }}>LOOK AT THE CHAIN</div>
       <h2 style={{ fontSize: 22, margin: "6px 0 12px" }}>{look.prompt}</h2>
-      <img src={look.image} alt="Sun, pond plants, minnows, and a heron, with arrows from one to the next." style={{ width: "100%", borderRadius: 16, border: "3px solid rgba(14,154,168,0.35)", marginBottom: 8 }} />
+      <img src={look.image} alt={look.prompt || "Diagram for this step."} style={{ width: "100%", borderRadius: 16, border: "3px solid rgba(14,154,168,0.35)", marginBottom: 8 }} />
       <div style={{ display: "flex", justifyContent: "space-between", gap: 8, fontSize: 13, fontWeight: 800, color: "#0E7C8A", marginBottom: 14 }}>
         {((publicCase.chain && publicCase.chain.links) || []).map((link) => <span key={link.id}>{link.label}</span>)}
       </div>
@@ -1299,7 +1304,7 @@ function RepairRound({ publicCase, onDone, onPick }) {
       )}
       <div style={{ marginTop: 14 }}>
         {done ? (
-          <button onClick={onDone} style={btn(THEME.violet)}>Next paragraph →</button>
+          <button onClick={onDone} style={btn(THEME.violet)}>Next {pieceWord(publicCase)} →</button>
         ) : (
           <button onClick={check} disabled={!choice || busy} style={btn(THEME.done, !choice || busy)}>{busy ? "Checking…" : attempt === 0 ? "Check" : "Check again"}</button>
         )}
@@ -1440,6 +1445,41 @@ function BonusTransmission({ publicCase, boards, assembly, challenge, onCut, onM
 // ======================================================================
 // ROOT
 // ======================================================================
+function ScratchPad() {
+  const [open, setOpen] = useState(false);
+  const [text, setText] = useState("");
+  return (
+    <>
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        aria-expanded={open}
+        aria-label="Scratch pad. Not graded."
+        style={{
+          position: "fixed", left: 168, bottom: 14, zIndex: 45,
+          background: THEME.panel, border: `1px solid ${THEME.border}`, borderRadius: 99,
+          padding: "11px 18px", color: THEME.text, fontSize: 14.5, fontWeight: 800,
+          fontFamily: "inherit", cursor: "pointer", boxShadow: "0 10px 30px rgba(0,0,0,0.4)",
+        }}
+      >
+        Scratch pad
+      </button>
+      {open && (
+        <div style={{ position: "fixed", left: 14, bottom: 68, zIndex: 46, width: "min(320px, calc(100vw - 28px))", background: THEME.panel, border: `1px solid ${THEME.border}`, borderRadius: 16, padding: 12, boxShadow: "0 10px 30px rgba(0,0,0,0.28)" }}>
+          <div style={{ fontSize: 12, letterSpacing: 1.2, fontWeight: 800, color: THEME.teal, marginBottom: 8 }}>SCRATCH PAD · NOT GRADED</div>
+          <textarea
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+            rows={6}
+            placeholder="Work the numbers here. This is not turned in."
+            style={{ width: "100%", background: "#FFFFFF", border: "3px solid #D5E4F2", borderRadius: 12, padding: 10, color: "#1F2A44", fontSize: 16, lineHeight: 1.5, fontFamily: "inherit", resize: "vertical" }}
+          />
+        </div>
+      )}
+    </>
+  );
+}
+
 export default function AssemblyDeckClient({ assignmentId, caseStandard, publicCase, existingSubmission, alreadySubmitted, revisionRequested, revisionFeedback, samSkin, samNickname }) {
   const [sam, setSam] = useState({ line: "", state: "idle" });
   const say = useCallback((line, state, ms) => {
@@ -1655,6 +1695,7 @@ export default function AssemblyDeckClient({ assignmentId, caseStandard, publicC
         )}
         {body}
         {phase !== "brief" && phase !== "done" && !caseFileOpen && <CaseFileButton onOpen={() => setCaseFileOpen(true)} />}
+        {publicCase.mode === "problem" && phase !== "done" && <ScratchPad />}
         {caseFileOpen && (
           <CaseFile
             publicCase={publicCase}
