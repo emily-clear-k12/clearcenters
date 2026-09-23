@@ -1,10 +1,10 @@
 "use client";
+import {BridgePage,PageHeading} from "../../../../components/teacher/BridgeUI";
 
 import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { ChevronLeft, Printer } from "lucide-react";
 import { supabase } from "../../../../lib/supabaseClient";
-import TeacherHUD from "../../../../components/TeacherHUD";
 import { COLORS, PAGE_ACCENTS, PAGE_BACKGROUNDS } from "../../../../lib/teacherTheme";
 
 // Sept 14 — Feature 4 of the teacher-efficiency build (see
@@ -14,7 +14,7 @@ import { COLORS, PAGE_ACCENTS, PAGE_BACKGROUNDS } from "../../../../lib/teacherT
 // whole point here is "which standards or case types are landing and which
 // aren't" without digging class-by-class. Same Reports/Observatory chrome
 // as every other report page.
-const ACCENT = PAGE_ACCENTS["/teacher/reports"];
+const ACCENT = "#7541cf";
 const BG = PAGE_BACKGROUNDS["/teacher/reports"];
 
 function proficiencyBand(avg) {
@@ -252,21 +252,7 @@ export default function CurriculumAnalyticsPage() {
   const generatedDate = new Date().toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" });
 
   return (
-    <div
-      className="reports-shell"
-      style={{
-        minHeight: "100vh",
-        background: COLORS.canvas,
-        backgroundImage: `linear-gradient(180deg, rgba(243,239,252,.55) 0%, rgba(243,239,252,.82) 100%), url(${BG})`,
-        backgroundSize: "cover",
-        backgroundPosition: "center top",
-        backgroundAttachment: "fixed",
-        fontFamily: "'Inter', sans-serif",
-        color: COLORS.textDark,
-        display: "flex",
-        flexDirection: "column",
-      }}
-    >
+    <BridgePage teacherEmail={teacherEmail} >
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@600;700&family=Inter:wght@400;500;600;700&display=swap');
         .gc-btn { cursor: pointer; border: none; font-family: 'Inter', sans-serif; }
@@ -279,9 +265,9 @@ export default function CurriculumAnalyticsPage() {
         }
       `}</style>
 
-      <div className="no-print"><TeacherHUD title="Reports" subtitle="Observatory — curriculum analytics across all classes" accent={ACCENT} teacherEmail={teacherEmail} /></div>
+      <div className="no-print"><PageHeading title="Reports" subtitle="curriculum analytics across all classes"></PageHeading></div>
 
-      <main style={{ flex: 1, padding: "28px 36px 60px" }}>
+      <div className="cc-detail-content">
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", maxWidth: 900, margin: "0 auto 20px" }} className="no-print">
           <button onClick={() => router.push("/teacher/reports")} className="gc-btn" style={{ display: "flex", alignItems: "center", gap: 6, background: "none", color: COLORS.textMuted, fontWeight: 700, fontSize: 13.5 }}>
             <ChevronLeft size={18} /> Back to Reports
@@ -336,8 +322,8 @@ export default function CurriculumAnalyticsPage() {
             </>
           )}
         </div>
-      </main>
-    </div>
+      </div>
+    </BridgePage>
   );
 }
 

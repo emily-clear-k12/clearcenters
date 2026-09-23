@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
+import { CaseImage } from "../../lib/caseImage";
 import { HOME_BACKGROUNDS } from "../../lib/homeBackgrounds";
 import { SAM_SKINS, DEFAULT_SAM_SKIN } from "../../lib/samSkins";
 import { getWorldStory } from "../../lib/worldStories";
@@ -74,20 +75,6 @@ const COLORS = {
   textDark: "#1F2A44",
   textMuted: "#8892A6",
 };
-
-// A case with no thumbnail file used to render a broken-image icon — as of
-// Sept 22, 2026 that is 100 real cases (94 Relay Station + 6 Assembly Deck),
-// and every future case is in the same state until its art is generated.
-// Hide the image and tint the frame instead, so an art-less case reads as a
-// plain card rather than a bug.
-function thumbFallback(e) {
-  const img = e.currentTarget;
-  img.style.display = "none";
-  if (img.parentElement) img.parentElement.style.background = "linear-gradient(135deg, #8C52F2 0%, #4DD6FF 100%)";
-}
-function caseImagePath(standard) {
-  return `/cases/${standard.replace(/\./g, "-")}.jpg`;
-}
 
 // Bright per-subject outline on the mission cards so a student can tell
 // what subject an assignment is at a glance, without reading the standard
@@ -801,7 +788,7 @@ export default function HomeClient({ student, studentClass, assignments, mission
             </div>
             <div style={{ display: "flex", gap: 13, alignItems: "center" }}>
               <div style={{ width: 68, height: 68, borderRadius: 13, flexShrink: 0, overflow: "hidden", boxShadow: "0 4px 14px rgba(0,0,0,.25)" }}>
-                <img src={caseImagePath(activeMission.case_standard)} alt="" onError={thumbFallback} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+                <CaseImage standard={activeMission.case_standard} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
               </div>
               <div style={{ minWidth: 0 }}>
                 <p style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 700, fontSize: 15.5, margin: "0 0 3px 0", color: COLORS.white }}>{activeMission.cases?.title}</p>

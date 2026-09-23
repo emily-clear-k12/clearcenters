@@ -1,9 +1,9 @@
 "use client";
+import {BridgePage,PageHeading} from "../../../components/teacher/BridgeUI";
 
 import React, { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "../../../lib/supabaseClient";
-import TeacherHUD from "../../../components/TeacherHUD";
 import { COLORS, PAGE_ACCENTS, PAGE_BACKGROUNDS, panelStyle } from "../../../lib/teacherTheme";
 
 // Sept 13 — moved to the console-interior look. TeacherSidebar +
@@ -43,7 +43,7 @@ import { COLORS, PAGE_ACCENTS, PAGE_BACKGROUNDS, panelStyle } from "../../../lib
 // Also added, same pass: a roster standing section so a teacher can
 // actually see where their students sit relative to the tiers, instead of
 // this page only being able to edit the tiers themselves.
-const ACCENT = PAGE_ACCENTS["/teacher/badges"];
+const ACCENT = "#7541cf";
 const BG = PAGE_BACKGROUNDS["/teacher/badges"];
 
 const POINT_PRESETS = [5, 10, 25, 50];
@@ -301,18 +301,7 @@ export default function BadgesRewardsPage() {
   }
 
   return (
-    <div
-      style={{
-        minHeight: "100vh",
-        background: COLORS.canvas,
-        backgroundImage: BG ? `linear-gradient(180deg, rgba(243,239,252,.55) 0%, rgba(243,239,252,.82) 100%), url(${BG})` : undefined,
-        backgroundSize: "cover",
-        backgroundPosition: "center top",
-        backgroundAttachment: "fixed",
-        fontFamily: "'Inter', sans-serif",
-        color: COLORS.textDark,
-      }}
-    >
+    <BridgePage teacherEmail={teacherEmail} >
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@600;700&family=Inter:wght@400;500;600;700&display=swap');
         .gc-btn { transition: transform 150ms ease; cursor: pointer; border: none; font-family: 'Inter', sans-serif; }
@@ -321,9 +310,9 @@ export default function BadgesRewardsPage() {
         @keyframes gcFadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
       `}</style>
 
-      <TeacherHUD title="Badges & Rewards" subtitle="Resources — missions, badge tiers, and Crystal Points" accent={ACCENT} teacherEmail={teacherEmail} />
+      <PageHeading title="Badges & Rewards" subtitle="Resources — missions, badge tiers, and Crystal Points"></PageHeading>
 
-      <main style={{ padding: "28px 36px 40px", maxWidth: 1000, margin: "0 auto" }}>
+      <div className="cc-detail-content">
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 20 }}>
           <div style={{ maxWidth: "58%" }}>
             <p style={{ margin: 0, color: COLORS.textMuted, fontSize: 14 }}>Rename a tier or change how many missions it takes to reach it — students see these on their Home screen.</p>
@@ -438,7 +427,7 @@ export default function BadgesRewardsPage() {
             })}
           </div>
         )}
-      </main>
+      </div>
 
       {awardSuccess && (
         <div className="gc-fade-in" style={{ position: "fixed", bottom: 28, right: 28, background: COLORS.textDark, color: COLORS.white, borderRadius: 12, padding: "14px 20px", fontWeight: 700, fontSize: 13.5, boxShadow: "0 8px 24px rgba(0,0,0,.25)", zIndex: 200 }}>
@@ -454,6 +443,6 @@ export default function BadgesRewardsPage() {
         onCancel={() => setAwardModalOpen(false)}
         onAward={handleAwardPoints}
       />
-    </div>
+    </BridgePage>
   );
 }

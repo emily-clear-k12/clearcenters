@@ -1,10 +1,10 @@
 "use client";
+import {BridgePage,PageHeading} from "../../../components/teacher/BridgeUI";
 
 import React, { useState, useEffect, useCallback, useRef, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Maximize2, Minimize2, Radio, Users, Shield, Zap } from "lucide-react";
 import { supabase } from "../../../lib/supabaseClient";
-import TeacherHUD from "../../../components/TeacherHUD";
 import { PAGE_ACCENTS } from "../../../lib/teacherTheme";
 
 // Sept 13 — moved the teacher-facing chrome (everything except the actual
@@ -17,7 +17,7 @@ import { PAGE_ACCENTS } from "../../../lib/teacherTheme";
 // established feature identity, not leftover generic styling, so it stays
 // exactly as designed rather than being remapped to this page's accent —
 // same reasoning that keeps Distress Call violet on Challenge Library.
-const ACCENT = PAGE_ACCENTS["/teacher/assign"];
+const ACCENT = "#7541cf";
 
 // Soft Crystal Sci-Fi — lavender / white / violet / teal / gold (not dark cyberpunk).
 const COLORS = {
@@ -229,13 +229,13 @@ function SignalOpsBoardContent() {
   }
 
   return (
-    <div style={{ minHeight: "100vh", background: COLORS.canvas, fontFamily: "'Inter', sans-serif", color: COLORS.textDark }}>
+    <BridgePage teacherEmail={teacherEmail} >
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@600;700&family=Inter:wght@400;500;600;700&display=swap');
       `}</style>
-      {!isFullscreen && <TeacherHUD title="Signal Ops Board" subtitle="Mission Control — start and project a live crew session" accent={ACCENT} teacherEmail={teacherEmail} />}
+      {!isFullscreen && <PageHeading title="Signal Ops Board" subtitle="start and project a live crew session"></PageHeading>}
 
-      <main style={{ padding: isFullscreen ? 0 : "28px 36px 40px", maxWidth: isFullscreen ? "none" : 1100, margin: isFullscreen ? 0 : "0 auto", display: "flex", flexDirection: "column" }}>
+      <div className="cc-detail-content">
         {!isFullscreen && (
           <>
             <p style={{ color: COLORS.textMuted, fontSize: 13.5, margin: "0 0 14px 0" }}>
@@ -457,8 +457,8 @@ function SignalOpsBoardContent() {
             </div>
           </div>
         )}
-      </main>
-    </div>
+      </div>
+    </BridgePage>
   );
 }
 

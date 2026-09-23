@@ -1,10 +1,11 @@
 "use client";
+import {BridgePage,PageHeading} from "../../../../components/teacher/BridgeUI";
 
 import React, { useState, useEffect, useCallback } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { supabase } from "../../../../lib/supabaseClient";
-import TeacherHUD from "../../../../components/TeacherHUD";
 import { COLORS, PAGE_ACCENTS, PAGE_BACKGROUNDS, panelStyle } from "../../../../lib/teacherTheme";
+import { CaseImage } from "../../../../lib/caseImage";
 
 // Sept 13 — moved to the console-interior look. This page isn't reached
 // from one Overview landmark directly (it's a click-through from Grading
@@ -22,14 +23,10 @@ import { COLORS, PAGE_ACCENTS, PAGE_BACKGROUNDS, panelStyle } from "../../../../
 // page branding — identical treatment to the Grading list and Grading
 // detail pages. The student avatar circle also stays violet, matching the
 // precedent that avatars are neutral, not page-branded.
-const ACCENT = PAGE_ACCENTS["/teacher/students"];
+const ACCENT = "#7541cf";
 const BG = PAGE_BACKGROUNDS["/teacher/students"];
 
 const GRADE_LABELS = { 0: "Level 0", 1: "Level 1", 2: "Level 2" };
-
-function caseImagePath(standard) {
-  return `/cases/${standard.replace(/\./g, "-")}.jpg`;
-}
 
 export default function StudentDetailPage() {
   const router = useRouter();
@@ -136,28 +133,17 @@ export default function StudentDetailPage() {
 
   if (notFound) {
     return (
-      <div
-        style={{
-          minHeight: "100vh",
-          background: COLORS.canvas,
-          backgroundImage: `linear-gradient(180deg, rgba(243,239,252,.55) 0%, rgba(243,239,252,.82) 100%), url(${BG})`,
-          backgroundSize: "cover",
-          backgroundPosition: "center top",
-          backgroundAttachment: "fixed",
-          fontFamily: "'Inter', sans-serif",
-          color: COLORS.textDark,
-        }}
-      >
-        <TeacherHUD title="Student" subtitle="Observatory" accent={ACCENT} teacherEmail={teacherEmail} />
-        <div style={{ padding: "32px 36px" }}>
+      <BridgePage teacherEmail={teacherEmail} >
+        <PageHeading title="Student" subtitle="Observatory"></PageHeading>
+        <div className="cc-detail-content">
           <div style={{ ...panelStyle(ACCENT, { padding: 32, textAlign: "center", color: COLORS.textMuted, maxWidth: 460, margin: "40px auto" }) }}>
             Couldn't find that student in one of your classes.
             <div style={{ marginTop: 14 }}>
-              <button className="gc-btn" onClick={() => router.push("/teacher/assign")} style={{ background: ACCENT, color: COLORS.white, borderRadius: 999, padding: "9px 18px", fontWeight: 700, fontSize: 13, border: "none", cursor: "pointer" }}>← Back to My Classes</button>
+              <button className="gc-btn" onClick={() => router.push("/teacher/roster")} style={{ background: ACCENT, color: COLORS.white, borderRadius: 999, padding: "9px 18px", fontWeight: 700, fontSize: 13, border: "none", cursor: "pointer" }}>← Back to roster</button>
             </div>
           </div>
         </div>
-      </div>
+      </BridgePage>
     );
   }
 
@@ -167,29 +153,18 @@ export default function StudentDetailPage() {
   const completed = rows.filter((r) => r.status === "graded" || r.status === "released").length;
 
   return (
-    <div
-      style={{
-        minHeight: "100vh",
-        background: COLORS.canvas,
-        backgroundImage: `linear-gradient(180deg, rgba(243,239,252,.55) 0%, rgba(243,239,252,.82) 100%), url(${BG})`,
-        backgroundSize: "cover",
-        backgroundPosition: "center top",
-        backgroundAttachment: "fixed",
-        fontFamily: "'Inter', sans-serif",
-        color: COLORS.textDark,
-      }}
-    >
+    <BridgePage teacherEmail={teacherEmail} >
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@600;700&family=Inter:wght@400;500;600;700&display=swap');
         .gc-btn { transition: transform 150ms ease; cursor: pointer; border: none; font-family: 'Inter', sans-serif; }
         .gc-btn:hover { transform: translateY(-1px); }
       `}</style>
 
-      <TeacherHUD title={student.first_name} subtitle="Observatory — student progress" accent={ACCENT} teacherEmail={teacherEmail} />
+      <PageHeading title={student.first_name} subtitle="student progress"></PageHeading>
 
-      <div style={{ padding: "28px 36px 40px", display: "flex", justifyContent: "center" }}>
+      <div className="cc-detail-content">
         <div style={{ width: "100%", maxWidth: 900 }}>
-          <button onClick={() => router.push("/teacher/assign")} className="gc-btn" style={{ background: "none", color: COLORS.textMuted, fontWeight: 600, fontSize: 13, marginBottom: 14, padding: 0 }}>← Back to My Classes</button>
+          <button onClick={() => router.push("/teacher/roster")} className="gc-btn" style={{ background: "none", color: COLORS.textMuted, fontWeight: 600, fontSize: 13, marginBottom: 14, padding: 0 }}>← Back to roster</button>
 
           <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 20 }}>
             <div style={{ width: 52, height: 52, borderRadius: "50%", background: `${COLORS.violet}22`, display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, color: COLORS.violet, fontSize: 20, flexShrink: 0 }}>{student.first_name[0]}</div>
@@ -238,7 +213,7 @@ export default function StudentDetailPage() {
                       style={{ display: "flex", alignItems: "center", gap: 12, padding: "10px 8px", borderBottom: `1px solid ${COLORS.border}`, background: "none", border: "none", width: "100%", textAlign: "left", cursor: clickable ? "pointer" : "default", font: "inherit", color: "inherit" }}
                     >
                       <div style={{ width: 36, height: 36, borderRadius: 8, overflow: "hidden", flexShrink: 0 }}>
-                        <img src={caseImagePath(r.case_standard)} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                        <CaseImage standard={r.case_standard} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                       </div>
                       <div style={{ flex: 1 }}>
                         <div style={{ fontSize: 13, fontWeight: 600 }}>{r.cases?.title || r.case_standard}</div>
@@ -267,6 +242,6 @@ export default function StudentDetailPage() {
           </div>
         </div>
       </div>
-    </div>
+    </BridgePage>
   );
 }

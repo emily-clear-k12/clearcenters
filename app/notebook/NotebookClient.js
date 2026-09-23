@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import StudentSidebar from "../../components/StudentSidebar";
 import { getPublicCase } from "../../lib/cases/index.public";
+import { CaseImage } from "../../lib/caseImage";
 
 const COLORS = {
   violet: "#7B5DFF",
@@ -24,10 +25,6 @@ const CONFIDENCE_META = {
   strong: { emoji: "😄", label: "Really strong" },
 };
 
-function caseImagePath(standard) {
-  return `/cases/${standard.replace(/\./g, "-")}.jpg`;
-}
-
 function DetailModal({ entry, onClose }) {
   if (!entry) return null;
   const standard = entry.assignments?.case_standard;
@@ -39,7 +36,7 @@ function DetailModal({ entry, onClose }) {
     <div onClick={onClose} style={{ position: "fixed", inset: 0, background: "rgba(13,20,35,.65)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 100, padding: 20 }}>
       <div onClick={(e) => e.stopPropagation()} style={{ background: COLORS.white, borderRadius: 20, width: "min(560px, 100%)", maxHeight: "85vh", overflowY: "auto", boxShadow: "0 24px 60px rgba(0,0,0,.4)" }}>
         <div style={{ position: "relative", height: 160, borderRadius: "20px 20px 0 0", overflow: "hidden" }}>
-          {standard && <img src={caseImagePath(standard)} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />}
+          {standard && <CaseImage standard={standard} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />}
           <button onClick={onClose} style={{ position: "absolute", top: 12, right: 12, width: 32, height: 32, borderRadius: "50%", background: "rgba(13,20,35,.6)", color: COLORS.white, border: "none", cursor: "pointer", fontSize: 16 }}>×</button>
         </div>
         <div style={{ padding: 22 }}>
@@ -114,7 +111,7 @@ export default function NotebookClient({ student, entries }) {
               return (
                 <div key={entry.id} className="gc-card" onClick={() => setSelected(entry)} style={{ background: COLORS.white, borderRadius: 16, overflow: "hidden", boxShadow: "0 4px 16px rgba(0,0,0,.08)" }}>
                   <div style={{ position: "relative", height: 120 }}>
-                    {standard && <img src={caseImagePath(standard)} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />}
+                    {standard && <CaseImage standard={standard} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />}
                     {entry.released && entry.teacher_grade !== null && entry.teacher_grade !== undefined && (
                       <div style={{ position: "absolute", top: 8, right: 8, background: COLORS.gold, color: COLORS.textDark, borderRadius: 999, padding: "3px 10px", fontSize: 11, fontWeight: 700 }}>
                         {GRADE_LABELS[entry.teacher_grade]}

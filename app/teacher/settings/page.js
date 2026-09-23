@@ -1,9 +1,9 @@
 "use client";
+import {BridgePage,PageHeading} from "../../../components/teacher/BridgeUI";
 
 import React, { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "../../../lib/supabaseClient";
-import TeacherHUD from "../../../components/TeacherHUD";
 import { COLORS, PAGE_ACCENTS, PAGE_BACKGROUNDS, panelStyle } from "../../../lib/teacherTheme";
 import { SAM_SKINS, FALLBACK_ICON, DEFAULT_SAM_SKIN } from "../../../lib/samSkins";
 import { CLASS_PLANETS, planetForClass } from "../../../lib/classPlanets";
@@ -22,7 +22,7 @@ import { CLASS_PLANETS, planetForClass } from "../../../lib/classPlanets";
 // that's the individual planet's real color (same hue used on the Overview
 // scene), not page decoration, so it stays whatever that planet's hue is
 // regardless of this page's teal accent.
-const ACCENT = PAGE_ACCENTS["/teacher/settings"];
+const ACCENT = "#7541cf";
 const BG = PAGE_BACKGROUNDS["/teacher/settings"];
 
 const GRADE_LABEL = { 3: "3rd Grade", 4: "4th Grade", 5: "5th Grade" };
@@ -154,23 +154,12 @@ export default function ClassSettingsPage() {
   }
 
   return (
-    <div
-      style={{
-        minHeight: "100vh",
-        background: COLORS.canvas,
-        backgroundImage: BG ? `linear-gradient(180deg, rgba(243,239,252,.55) 0%, rgba(243,239,252,.82) 100%), url(${BG})` : undefined,
-        backgroundSize: "cover",
-        backgroundPosition: "center top",
-        backgroundAttachment: "fixed",
-        fontFamily: "'Inter', sans-serif",
-        color: COLORS.textDark,
-      }}
-    >
+    <BridgePage teacherEmail={teacherEmail} >
       <style>{`@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@600;700&family=Inter:wght@400;500;600;700&display=swap');`}</style>
 
-      <TeacherHUD title="Class Settings" subtitle="S.A.M. — your console's own companion" accent={ACCENT} teacherEmail={teacherEmail} />
+      <PageHeading title="Class Settings" subtitle="S.A.M. — your console's own companion"></PageHeading>
 
-      <main style={{ padding: "28px 36px 40px", maxWidth: 780, margin: "0 auto" }}>
+      <div className="cc-detail-content">
         <p style={{ color: COLORS.textMuted, fontSize: 14.5, lineHeight: 1.6, margin: "0 0 20px 0" }}>
           Rename any of your classes below, or change its planet on the Hub. To add, remove, or transfer students, open a class's roster from My Classes ("Manage Roster").
         </p>
@@ -294,7 +283,7 @@ export default function ClassSettingsPage() {
             })}
           </div>
         )}
-      </main>
-    </div>
+      </div>
+    </BridgePage>
   );
 }

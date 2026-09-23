@@ -1,9 +1,9 @@
 "use client";
+import {BridgePage,PageHeading} from "../../../components/teacher/BridgeUI";
 
 import React, { useState, useEffect, useCallback, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "../../../lib/supabaseClient";
-import TeacherHUD from "../../../components/TeacherHUD";
 import { COLORS, PAGE_ACCENTS, panelStyle } from "../../../lib/teacherTheme";
 
 // Assembly Deck — Sentence Sort board (Sept 22, 2026). Design doc:
@@ -17,7 +17,7 @@ import { COLORS, PAGE_ACCENTS, panelStyle } from "../../../lib/teacherTheme";
 //
 // Reads go through /api/teacher/assembly-deck (admin key after an ownership
 // check). Nothing here is stored — it is recomputed from submissions.
-const ACCENT = PAGE_ACCENTS["/teacher/progress"] || COLORS.aqua;
+const ACCENT = "#7541cf";
 
 const pct = (c, t) => (t ? Math.round((c / t) * 100) : null);
 
@@ -109,10 +109,10 @@ function AssemblyDeckContent() {
     : null;
 
   return (
-    <div style={{ minHeight: "100vh", background: COLORS.canvas, fontFamily: "'Inter', sans-serif", color: COLORS.textDark, display: "flex", flexDirection: "column" }}>
-      <TeacherHUD title="Sentence Sort" subtitle="Assembly Deck · what kind of bad sentence gets past this class" accent={ACCENT} teacherEmail={teacherEmail} />
+    <BridgePage teacherEmail={teacherEmail} >
+      <PageHeading title="Sentence Sort" subtitle="Assembly Deck · what kind of bad sentence gets past this class"></PageHeading>
 
-      <main style={{ flex: 1, padding: "28px 32px", maxWidth: 1100, margin: "0 auto", width: "100%", boxSizing: "border-box" }}>
+      <div className="cc-detail-content">
         <div style={{ ...panelStyle(ACCENT, { padding: 18, marginBottom: 16 }) }}>
           <div style={{ display: "flex", gap: 14, alignItems: "center", flexWrap: "wrap" }}>
             <label style={{ fontSize: 13, fontWeight: 700 }}>Class</label>
@@ -239,8 +239,8 @@ function AssemblyDeckContent() {
             </div>
           </>
         )}
-      </main>
-    </div>
+      </div>
+    </BridgePage>
   );
 }
 

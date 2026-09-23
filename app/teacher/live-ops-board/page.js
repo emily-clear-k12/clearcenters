@@ -1,10 +1,10 @@
 "use client";
+import {BridgePage,PageHeading} from "../../../components/teacher/BridgeUI";
 
 import React, { useState, useEffect, useCallback, useRef, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Maximize2, Minimize2, Radio } from "lucide-react";
 import { supabase } from "../../../lib/supabaseClient";
-import TeacherHUD from "../../../components/TeacherHUD";
 import { PAGE_ACCENTS } from "../../../lib/teacherTheme";
 
 // Sept 13 — moved the teacher-facing chrome (everything except the actual
@@ -18,7 +18,7 @@ import { PAGE_ACCENTS } from "../../../lib/teacherTheme";
 // Library regardless of that page's own accent), not leftover generic
 // styling, so it stays exactly as designed rather than being remapped to
 // this page's accent.
-const ACCENT = PAGE_ACCENTS["/teacher/assign"];
+const ACCENT = "#7541cf";
 
 const COLORS = {
   canvas: "#F2F0FA",
@@ -170,14 +170,14 @@ function LiveOpsBoardContent() {
   const pct = progress?.active && progress?.supported && progress.target ? Math.min(100, Math.round((progress.current / progress.target) * 100)) : null;
 
   return (
-    <div style={{ minHeight: "100vh", background: COLORS.canvas, fontFamily: "'Inter', sans-serif", color: COLORS.textDark }}>
+    <BridgePage teacherEmail={teacherEmail} >
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@600;700&family=Inter:wght@400;500;600;700&display=swap');
         @keyframes lob-goal-glow { 0%, 100% { box-shadow: 0 0 18px rgba(255,196,77,.35); } 50% { box-shadow: 0 0 32px rgba(255,196,77,.7); } }
       `}</style>
-      {!isFullscreen && <TeacherHUD title="Live Ops Board" subtitle="Mission Control — project this screen for the class" accent={ACCENT} teacherEmail={teacherEmail} />}
+      {!isFullscreen && <PageHeading title="Live Ops Board" subtitle="project this screen for the class"></PageHeading>}
 
-      <main style={{ padding: isFullscreen ? 0 : "28px 36px 40px", maxWidth: isFullscreen ? "none" : 1100, margin: isFullscreen ? 0 : "0 auto", display: "flex", flexDirection: "column" }}>
+      <div className="cc-detail-content">
         {!isFullscreen && (
           <>
             <p style={{ color: COLORS.textMuted, fontSize: 13.5, margin: "0 0 14px 0" }}>Only one signal shows at a time.</p>
@@ -332,8 +332,8 @@ function LiveOpsBoardContent() {
             )}
           </div>
         )}
-      </main>
-    </div>
+      </div>
+    </BridgePage>
   );
 }
 

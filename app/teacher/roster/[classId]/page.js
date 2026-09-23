@@ -8,7 +8,6 @@ import { supabase } from "../../../../lib/supabaseClient";
 import Link from 'next/link';
 import {BridgePage,PageHeading,ClassTabs} from '../../../../components/teacher/BridgeUI';
 import {subjectStyle} from '../../../../lib/teacherBridge';
-import TeacherHUD from "../../../../components/TeacherHUD";
 import { COLORS, PAGE_ACCENTS, PAGE_BACKGROUNDS, panelStyle } from "../../../../lib/teacherTheme";
 
 // Sept 14 — Roster Management. Used to be a print-only page (class code +

@@ -1,10 +1,10 @@
 "use client";
+import {BridgePage,PageHeading} from "../../../../components/teacher/BridgeUI";
 
 import React, { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { ChevronLeft, Printer } from "lucide-react";
 import { supabase } from "../../../../lib/supabaseClient";
-import TeacherHUD from "../../../../components/TeacherHUD";
 import { COLORS, PAGE_ACCENTS, PAGE_BACKGROUNDS } from "../../../../lib/teacherTheme";
 import { missionMapTeksCode } from "../../../../lib/cases/mission-map/teksLabels";
 
@@ -12,7 +12,7 @@ import { missionMapTeksCode } from "../../../../lib/cases/mission-map/teksLabels
 // Reports. Same reasoning as the class/student reports: plain opaque white
 // report card (printable document), aqua Observatory chrome around it,
 // proficiency-band colors (including violet for "Developing") untouched.
-const ACCENT = PAGE_ACCENTS["/teacher/reports"];
+const ACCENT = "#7541cf";
 const BG = PAGE_BACKGROUNDS["/teacher/reports"];
 
 function proficiencyBand(avg) {
@@ -125,21 +125,7 @@ export default function StandardsReportPage() {
   const anyStandards = classGroups.some((g) => g.standards.length > 0);
 
   return (
-    <div
-      className="reports-shell"
-      style={{
-        minHeight: "100vh",
-        background: COLORS.canvas,
-        backgroundImage: `linear-gradient(180deg, rgba(243,239,252,.55) 0%, rgba(243,239,252,.82) 100%), url(${BG})`,
-        backgroundSize: "cover",
-        backgroundPosition: "center top",
-        backgroundAttachment: "fixed",
-        fontFamily: "'Inter', sans-serif",
-        color: COLORS.textDark,
-        display: "flex",
-        flexDirection: "column",
-      }}
-    >
+    <BridgePage teacherEmail={teacherEmail} >
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@600;700&family=Inter:wght@400;500;600;700&display=swap');
         .gc-btn { cursor: pointer; border: none; font-family: 'Inter', sans-serif; }
@@ -151,9 +137,9 @@ export default function StandardsReportPage() {
         }
       `}</style>
 
-      <div className="no-print"><TeacherHUD title="Reports" subtitle="Observatory — standards, all classes" accent={ACCENT} teacherEmail={teacherEmail} /></div>
+      <div className="no-print"><PageHeading title="Reports" subtitle="standards, all classes"></PageHeading></div>
 
-      <main style={{ flex: 1, padding: "28px 36px 60px" }}>
+      <div className="cc-detail-content">
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", maxWidth: 800, margin: "0 auto 20px" }} className="no-print">
           <button onClick={() => router.push("/teacher/reports")} className="gc-btn" style={{ display: "flex", alignItems: "center", gap: 6, background: "none", color: COLORS.textMuted, fontWeight: 700, fontSize: 13.5 }}>
             <ChevronLeft size={18} /> Back to Reports
@@ -231,7 +217,7 @@ export default function StandardsReportPage() {
             )
           ))}
         </div>
-      </main>
-    </div>
+      </div>
+    </BridgePage>
   );
 }

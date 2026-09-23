@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { supabaseAdmin } from "../../../../lib/supabaseAdmin";
 import { callClaude, extractJSON } from "../../../../lib/anthropic";
-import { getAssemblyDeckServerCase, gradeRound, gradeRejections, gradeAssembly, gradeCase, gradePinpoint, gradeQuickCheck, trapSentences, trapVerdict, requesterReply } from "../../../../lib/cases/assembly-deck/index.server";
+import { getAssemblyDeckServerCase, gradeRound, gradeRejections, gradeAssembly, gradeCase, gradePinpoint, gradeQuickCheck, gradeWhatIf, gradeRepair, gradeLook, trapSentences, trapVerdict, requesterReply } from "../../../../lib/cases/assembly-deck/index.server";
 import { getAssemblyDeckPublicCase, getRound, CHALLENGE } from "../../../../lib/cases/assembly-deck/index.public";
 
 // Assembly Deck (design doc §6). Four kinds of traffic:
@@ -25,7 +25,7 @@ import { getAssemblyDeckPublicCase, getRound, CHALLENGE } from "../../../../lib/
 // The keys never leave this file's imports, so a student reading the page
 // source sees the sentences but never which slot they belong in.
 
-const CRYSTALS = { base: 3, cleanBuild: 2, cleanRejects: 2, cleanAssembly: 1, trapCaught: 2, pinpoint: 1, quickCheck: 1 };
+const CRYSTALS = { base: 3, cleanBuild: 2, cleanRejects: 2, cleanAssembly: 1, trapCaught: 2, pinpoint: 1, quickCheck: 1, whatIf: 1, repair: 1 };
 
 async function gradeExplanation(serverCase, publicCase, text, grade) {
   const rubric = (serverCase.mustInclude || []).map((m) => "  - " + m).join("\n");
@@ -107,10 +107,21 @@ export async function POST(request) {
 
   if (action === "check") {
     const g = gradeRound(serverCase, roundId, board || {});
-    // Chief's Challenge switches the second-attempt bail-out off: you keep
-    // trying until it is right.
-    const reveal = !challenge && Number(attempt) >= 2 && !g.perfect ? (serverCase.rounds[roundId] || {}).key || null : null;
-    return NextResponse.json({ results: g.results, correct: g.correct, total: g.total, perfect: g.perfect, reveal });
+    const quiet = !!publicCase.chain;
+    const results = quiet
+      ? g.results.map((r) => ({
+          pieceId: r.pieceId,
+          slotId: r.slotId,
+          correct: r.correct,
+          note: r.kind === "spot"
+            ? "Right sentence, wrong spot."
+            : r.kind === "out"
+            ? "This one does not belong. Check the notes."
+            : null,
+        }))
+      : g.results;
+    const reveal = !quiet && !challenge && Number(attempt) >= 2 && !g.perfect ? (serverCase.rounds[roundId] || {}).key || null : null;
+    return NextResponse.json({ results, correct: g.correct, total: g.total, perfect: g.perfect, reveal });
   }
 
   if (action === "rejects") {
@@ -141,22 +152,39 @@ export async function POST(request) {
   if (action === "pinpoint") {
     const g = gradePinpoint(serverCase, body.pinpointPieceId);
     if (!g) return NextResponse.json({ error: "This case has no debrief yet." }, { status: 404 });
-    // Only the verdict and the note for the answer given go back. The accept
-    // list stays here, or a second attempt would be free.
-    return NextResponse.json({ correct: g.correct, why: g.why });
+    const why = publicCase.chain && !g.correct
+      ? "Not that sentence. Read the question again and look for the line that answers it."
+      : g.why;
+    return NextResponse.json({ correct: g.correct, why });
   }
 
   if (action === "quickCheck") {
     const g = gradeQuickCheck(serverCase, body.quickCheckChoiceId);
     if (!g) return NextResponse.json({ error: "This case has no debrief yet." }, { status: 404 });
-    // A wrong answer is told what was wrong with the choice it made and then
-    // what the right one was — the key only travels once it has been answered.
+    if (publicCase.chain) {
+      return NextResponse.json({
+        correct: g.correct,
+        why: g.correct ? g.why : "Not that one. Use the chain you built, then try once more.",
+      });
+    }
     return NextResponse.json({ correct: g.correct, why: g.why, key: g.key, keyWhy: g.keyWhy });
   }
 
   if (action === "assembly") {
     const g = gradeAssembly(serverCase, assembly || {});
     return NextResponse.json({ results: g.results, correct: g.correct, total: g.total, perfect: g.perfect, note: g.perfect ? serverCase.assemblyNote || null : null });
+  }
+
+  if (action === "whatIf") {
+    const g = gradeWhatIf(serverCase, body.whatIfChoiceId);
+    if (!g) return NextResponse.json({ error: "This case has no what-if." }, { status: 404 });
+    return NextResponse.json({ correct: g.correct, why: g.why, key: g.key, keyWhy: g.keyWhy, walk: g.walk, walkLine: g.walkLine });
+  }
+
+  if (action === "look") {
+    const g = gradeLook(serverCase, body.lookChoiceId, body.attempt);
+    if (!g) return NextResponse.json({ error: "This case has nothing to look at." }, { status: 404 });
+    return NextResponse.json(g);
   }
 
   // --- submit: regrade everything from the client's boards, then one AI call
@@ -169,6 +197,9 @@ export async function POST(request) {
   });
   const ai = await gradeExplanation(serverCase, publicCase, explanation, publicCase.grade);
   const attempts = Math.max(1, Math.floor(Number(attempt) || 1));
+  const whatIf = gradeWhatIf(serverCase, body.whatIfChoiceId);
+  const looked = gradeLook(serverCase, body.lookChoiceId, 1);
+  const repair = looked || gradeRepair(serverCase, body.repairText, 1);
   const crystals =
     CRYSTALS.base +
     (graded.buildPerfect && attempts <= publicCase.rounds.length ? CRYSTALS.cleanBuild : 0) +
@@ -177,6 +208,8 @@ export async function POST(request) {
     (trapCaught ? CRYSTALS.trapCaught : 0) +
     (graded.pinpoint && graded.pinpoint.correct ? CRYSTALS.pinpoint : 0) +
     (graded.quickCheck && graded.quickCheck.correct ? CRYSTALS.quickCheck : 0) +
+    (whatIf && whatIf.correct ? CRYSTALS.whatIf : 0) +
+    (repair && repair.correct ? CRYSTALS.repair : 0) +
     (challenge ? CHALLENGE.bonusCrystals : 0);
   const reply = requesterReply(serverCase, graded, trapCaught);
 
@@ -198,11 +231,14 @@ export async function POST(request) {
       quickCheck: graded.quickCheck ? { choiceId: graded.quickCheck.choiceId, correct: graded.quickCheck.correct, key: graded.quickCheck.key } : null,
       rounds: graded.rounds.map((r) => ({ id: r.id, build: { correct: r.build.correct, total: r.build.total }, rejects: { correct: r.rejects.correct, total: r.rejects.total } })),
       explanation: explanation || "",
+      confidence: body.confidence || null,
       glows: ai.glows,
       grow: ai.grow,
       crystalsEarned: crystals,
       challenge: !!challenge,
       trapCaught: !!trapCaught,
+      whatIf: whatIf ? { choiceId: whatIf.choiceId, correct: whatIf.correct } : null,
+      repair: repair ? { text: body.repairText || "", correct: repair.correct } : null,
       requesterTier: reply ? reply.tier : null,
     },
     submitted_at: new Date().toISOString(),
@@ -245,6 +281,8 @@ export async function POST(request) {
     assemblyScore: { correct: graded.assembly.correct, total: graded.assembly.total },
     pinpoint: graded.pinpoint ? { correct: graded.pinpoint.correct } : null,
     quickCheck: graded.quickCheck ? { correct: graded.quickCheck.correct } : null,
+    whatIf: whatIf ? { correct: whatIf.correct } : null,
+    repair: repair ? { correct: repair.correct } : null,
     assemblyNote: serverCase.assemblyNote || null,
     reply,
     challenge: !!challenge,
