@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useRef, useState } from "react";
+import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import BackToHubButton from "../../components/BackToHubButton";
 import { CaseImage } from "../../lib/caseImage";
@@ -37,9 +37,8 @@ const CONFIDENCE_META = {
 };
 
 const card = {
-  background: "rgba(255,255,255,.97)",
-  border: "1px solid #e4dcfa",
-  borderRadius: 24,
+  background: "rgba(255,255,255,.95)",
+  borderRadius: 18,
   boxShadow: "0 4px 20px rgba(60,40,120,.12)",
 };
 
@@ -71,15 +70,7 @@ function samLines(finished) {
   return [line1, line2];
 }
 
-function DetailModal({ entry, onClose, onRetry }) {
-  const dialogRef = useRef(null);
-  useEffect(() => {
-    if (!entry) return;
-    const previous = document.activeElement;
-    const dialog = dialogRef.current;
-    dialog?.showModal();
-    return () => { dialog?.close(); previous?.focus(); };
-  }, [entry]);
+function DetailModal({ entry, onClose }) {
   if (!entry) return null;
   const standard = entry.caseStandard;
   const caseEntry = standard ? getPublicCase(standard) : null;
@@ -87,15 +78,15 @@ function DetailModal({ entry, onClose, onRetry }) {
   const meta = entry.released && GRADE_META[entry.grade] ? GRADE_META[entry.grade] : null;
 
   return (
-    <dialog ref={dialogRef} aria-label={entry.caseTitle} onCancel={onClose} onClick={(e) => { if (e.target === e.currentTarget) onClose(); }} style={{ padding: 0, border: 0, borderRadius: 20, width: 560, maxWidth: "calc(100vw - 32px)", color: COLORS.textDark }}>
+    <div onClick={onClose} style={{ position: "fixed", inset: 0, background: "rgba(13,20,35,.65)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 100, padding: 20 }}>
       <div onClick={(e) => e.stopPropagation()} style={{ background: COLORS.white, borderRadius: 20, width: "min(560px, 100%)", maxHeight: "85vh", overflowY: "auto", boxShadow: "0 24px 60px rgba(0,0,0,.4)" }}>
         <div style={{ position: "relative", height: 160, borderRadius: "20px 20px 0 0", overflow: "hidden", background: "#1a1038" }}>
           {standard && <CaseImage standard={standard} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />}
-          <button aria-label="Close mission details" onClick={onClose} style={{ position: "absolute", top: 12, right: 12, width: 32, height: 32, borderRadius: "50%", background: "rgba(13,20,35,.6)", color: COLORS.white, border: "none", cursor: "pointer", fontSize: 16 }}>×</button>
+          <button onClick={onClose} style={{ position: "absolute", top: 12, right: 12, width: 32, height: 32, borderRadius: "50%", background: "rgba(13,20,35,.6)", color: COLORS.white, border: "none", cursor: "pointer", fontSize: 16 }}>×</button>
         </div>
         <div style={{ padding: 22 }}>
           {meta && <span style={{ display: "inline-block", background: meta.bg, color: meta.color, borderRadius: 999, padding: "6px 12px", fontSize: 12, fontWeight: 700, marginBottom: 8 }}>{meta.label}</span>}
-          {!entry.released && <span style={{ display: "inline-block", background: COLORS.violetSoft, color: COLORS.violet, borderRadius: 999, padding: "6px 12px", fontSize: 12, fontWeight: 700, marginBottom: 8 }}>{entry.revisionRequested ? "Ready for another try" : "Waiting for your teacher"}</span>}
+          {!entry.released && <span style={{ display: "inline-block", background: COLORS.violetSoft, color: COLORS.violet, borderRadius: 999, padding: "6px 12px", fontSize: 12, fontWeight: 700, marginBottom: 8 }}>Waiting for your teacher</span>}
           <h2 style={{ fontFamily: "'Poppins', sans-serif", fontSize: 20, fontWeight: 700, margin: "0 0 12px 0" }}>{entry.caseTitle}</h2>
           {caseEntry?.publicCase?.bigQuestion && (
             <div style={{ fontSize: 13.5, background: COLORS.tealSoft, borderRadius: 12, padding: "10px 12px", marginBottom: 14, lineHeight: 1.5 }}>
@@ -111,12 +102,9 @@ function DetailModal({ entry, onClose, onRetry }) {
               {feeling ? `${feeling}. ` : ""}{entry.feedback || ""}
             </div>
           )}
-          {entry.revisionRequested && !(entry.released && entry.grade != null) && (
-            <button type="button" className="sp-primary" style={{ marginTop: 18 }} onClick={() => onRetry(entry.assignmentId)}>Try this mission again →</button>
-          )}
         </div>
       </div>
-    </dialog>
+    </div>
   );
 }
 
@@ -150,43 +138,21 @@ export default function ProgressClient({ student, missions, badgeTiers, pastDue 
     .slice(-8);
   const [line1, line2] = samLines(finished);
   const late = pastDue[0];
-  const recentFeedback = [...finished].sort((a, b) => new Date(b.releasedAt || b.submittedAt) - new Date(a.releasedAt || a.submittedAt)).find((m) => m.feedback);
-  const nextMission = needsAttention[0] || recentFeedback;
-  const nextHeading = needsAttention.length ? "One small step forward" : recentFeedback ? "Your teacher left a note" : late ? "Your next mission is waiting" : waitingForTeacher.length ? "Your thinking is with your teacher" : "Ready for your next step?";
-  const nextMessage = needsAttention.length ? `Your teacher wants another try on ${nextMission.caseTitle}. Read your feedback, then give it another go.` : recentFeedback ? `See what went well and what to try next on ${recentFeedback.caseTitle}.` : late ? "You have a past-due mission. Open it when you’re ready to get started." : waitingForTeacher.length ? "You’ve turned your work in. Your feedback will appear here when your teacher releases it." : "Choose a mission, share your thinking, and watch your progress grow.";
 
   return (
     <div style={{ position: "relative", minHeight: "100vh", fontFamily: "'Inter', sans-serif", color: COLORS.textDark }}>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@600;700&family=Inter:wght@400;500;600;700&display=swap');
-        .sp-shell { position: relative; z-index: 1; padding: 110px 24px 40px; max-width: 1080px; margin: 0 auto; }
-        .sp-hero { display: flex; align-items: center; gap: 28px; padding: 12px 30px 24px; }
-        .sp-hero > img { width: 190px; height: 190px; object-fit: contain; flex-shrink: 0; }
-        .sp-hero h2 { font-family: 'Poppins', sans-serif; font-size: clamp(24px, 3vw, 34px); line-height: 1.2; margin: 0 0 10px; color: #20134b; }
-        .sp-hero p { color: #62577e; line-height: 1.6; margin: 0 0 16px; }
-        .sp-primary { background: linear-gradient(120deg,#8445ff,#6835e8); color: white; border: 0; border-radius: 14px; padding: 13px 20px; font: inherit; font-weight: 700; cursor: pointer; }
-        .sp-status { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 14px; padding: 0 24px 24px; }
-        .sp-status a { text-align: center; padding: 18px 8px; border-radius: 18px; color: #281956; text-decoration: none; line-height: 1.5; }
-        .sp-status strong { display: block; font-size: 28px; }
-        .sp-cols { display: grid; grid-template-columns: 1fr; gap: 16px; margin-bottom: 16px; }
-        .sp-cols section { scroll-margin-top: 24px; }
-        .sp-cols h2 { font-family: 'Poppins', sans-serif; font-size: 21px !important; text-transform: none !important; letter-spacing: 0 !important; color: #281956 !important; }
-        .sp-cols section > button, .sp-cols section > div { background: #fff !important; border: 1px solid #e6def8 !important; padding: 14px !important; box-shadow: none !important; }
-        .sp-stage { display: grid; grid-template-columns: 1fr; gap: 20px; }
+        .sp-pop { animation: sp-pop .5s cubic-bezier(.2,1.4,.4,1) both; }
+        @keyframes sp-pop { from { opacity: 0; transform: translateY(-10px) scale(.96); } to { opacity: 1; transform: none; } }
+        .sp-eq { transform-origin: bottom; animation: sp-eq .9s ease-in-out infinite; }
+        @keyframes sp-eq { 50% { transform: scaleY(.35); } }
+        .sp-cols { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; margin-bottom: 16px; }
+        .sp-stage { display: grid; grid-template-columns: 280px minmax(0, 1fr); gap: 8px; }
         .sp-bar { border: 0; background: none; padding: 0; cursor: pointer; font: inherit; color: inherit; }
         .sp-bar:hover div { filter: brightness(1.08); }
-        .sp-chart { overflow-x: auto; }
-        .sp-chart-inner { min-width: 620px; }
-        .sp-shell button:focus-visible, .sp-shell a:focus-visible { outline: 3px solid #5a32ba; outline-offset: 4px; }
-        dialog::backdrop { background: rgba(20,12,50,.6); }
-        .sp-badge-path { overflow-x: auto; }
-        @media (max-width: 600px) {
-          .sp-shell { padding: 80px 12px 24px; }
-          .sp-hero { gap: 8px; padding: 10px 18px 20px; flex-direction: column; text-align: center; }
-          .sp-hero > img { width: 130px; height: 130px; }
-          .sp-status { gap: 8px; padding: 0 12px 16px; font-size: 12px; }
-          .sp-cols section > button, .sp-cols section > div { flex-wrap: wrap; }
-          .sp-header { flex-wrap: wrap; }
+        @media (max-width: 900px) {
+          .sp-cols, .sp-stage { grid-template-columns: 1fr; }
         }
       `}</style>
 
@@ -194,11 +160,11 @@ export default function ProgressClient({ student, missions, badgeTiers, pastDue 
         <img src="/student/progress_hub_bg.jpg" alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
       </div>
 
-      <div className="sp-shell">
+      <div style={{ position: "relative", zIndex: 1, padding: "70px 24px 40px", maxWidth: 1180, margin: "0 auto" }}>
         <BackToHubButton />
 
-        <header style={{ ...card, marginBottom: 18 }}>
-          <div className="sp-header" style={{ display: "flex", justifyContent: "space-between", gap: 16, alignItems: "center", padding: "18px 24px" }}>
+        <header style={{ ...card, marginBottom: 18, background: "rgba(255,255,255,.82)", backdropFilter: "blur(8px)" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", gap: 16, alignItems: "center", padding: "18px 22px 8px" }}>
             <div>
               <h1 style={{ fontFamily: "'Poppins', sans-serif", fontSize: 28, fontWeight: 700, margin: "0 0 4px" }}>My Progress</h1>
               <p style={{ margin: 0, color: COLORS.textMuted, fontSize: 15 }}>
@@ -208,24 +174,9 @@ export default function ProgressClient({ student, missions, badgeTiers, pastDue 
             </div>
             <div style={{ display: "flex", alignItems: "center", gap: 6, fontWeight: 700, fontSize: 18 }}>
               <img src="/icons/crystal_points.png" alt="" style={{ width: 26, height: 26, objectFit: "contain" }} />
-              <span aria-label={`${student.crystal_points} crystal points`}>{student.crystal_points}</span>
+              {student.crystal_points}
             </div>
           </div>
-          <div className="sp-hero">
-            <img src="/icons/sam/cosmic/idle-poster.png" alt="S.A.M., your mission companion" />
-            <div>
-              <h2>{nextHeading}</h2>
-              <p>{nextMessage}</p>
-              <button type="button" className="sp-primary" onClick={() => nextMission ? setSelected(nextMission) : router.push(late ? `/activity/${late.id}` : "/missions")}>
-                {nextMission ? "Read my feedback" : late ? "Open my mission" : "Go to my missions"} <span aria-hidden="true">→</span>
-              </button>
-            </div>
-          </div>
-          <nav className="sp-status" aria-label="Your mission status">
-            <a href="#try-again" style={{ background: "#fff0eb" }}><span aria-hidden="true">↻</span><strong>{needsAttention.length}</strong>Try again</a>
-            <a href="#with-teacher" style={{ background: "#fff7df" }}><span aria-hidden="true">◷</span><strong>{waitingForTeacher.length}</strong>With my teacher</a>
-            <a href="#finished" style={{ background: "#e6faef" }}><span aria-hidden="true">✓</span><strong>{finished.length}</strong>Finished</a>
-          </nav>
           {late && (
             <div className="sp-pop" style={{ display: "flex", alignItems: "center", gap: 12, margin: "4px 18px 16px", padding: "10px 12px", background: "#fff5f6", border: "2px solid #ee5264", borderRadius: 14 }}>
               <strong style={{ color: "#c4233a", fontSize: 12, letterSpacing: ".06em", textTransform: "uppercase" }}>Past due</strong>
@@ -241,7 +192,7 @@ export default function ProgressClient({ student, missions, badgeTiers, pastDue 
         </header>
 
         <div className="sp-cols">
-          <section id="try-again" style={{ ...card, padding: 22 }}>
+          <section style={{ ...card, padding: 16 }}>
             <h2 style={{ margin: "0 0 10px", fontSize: 13, letterSpacing: ".04em", textTransform: "uppercase", color: "#b8560e" }}>Try again · {needsAttention.length}</h2>
             {needsAttention.length === 0 ? (
               <p style={{ fontSize: 13, color: COLORS.textMuted, margin: "6px 0" }}>Nothing to try again.</p>
@@ -257,7 +208,7 @@ export default function ProgressClient({ student, missions, badgeTiers, pastDue 
             ))}
           </section>
 
-          <section id="with-teacher" style={{ ...card, padding: 22 }}>
+          <section style={{ ...card, padding: 16 }}>
             <h2 style={{ margin: "0 0 10px", fontSize: 13, letterSpacing: ".04em", textTransform: "uppercase", color: "#6a45d6" }}>Waiting for your teacher · {waitingForTeacher.length}</h2>
             {waitingForTeacher.length === 0 ? (
               <p style={{ fontSize: 13, color: COLORS.textMuted, margin: "6px 0" }}>Nothing is waiting.</p>
@@ -272,9 +223,8 @@ export default function ProgressClient({ student, missions, badgeTiers, pastDue 
             ))}
           </section>
 
-          <section id="finished" style={{ ...card, padding: 22 }}>
+          <section style={{ ...card, padding: 16 }}>
             <h2 style={{ margin: "0 0 10px", fontSize: 13, letterSpacing: ".04em", textTransform: "uppercase", color: "#0e7a45" }}>Finished · {finished.length}</h2>
-            <p style={{ color: COLORS.textMuted, fontSize: 14 }}>Open a mission to read your feedback and see your answer.</p>
             {finished.length === 0 ? (
               <p style={{ fontSize: 13, color: COLORS.textMuted, margin: "6px 0" }}>Grades show up here.</p>
             ) : finished.map((m) => {
@@ -284,8 +234,7 @@ export default function ProgressClient({ student, missions, badgeTiers, pastDue 
                   <CaseImage standard={m.caseStandard} alt="" style={{ width: 48, height: 48, borderRadius: 10, objectFit: "cover" }} />
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <strong style={{ display: "block", fontSize: 14 }}>{m.caseTitle}</strong>
-                    <span style={{ display: "block", fontSize: 13, color: COLORS.textMuted }}>{CONFIDENCE_META[m.selfConfidence] || "Turned in"}</span>
-                    {m.feedback && <span style={{ display: "block", fontSize: 14, marginTop: 5, lineHeight: 1.5 }}>Your teacher’s note: {m.feedback}</span>}
+                    <span style={{ fontSize: 12, color: COLORS.textMuted }}>{CONFIDENCE_META[m.selfConfidence] || "Turned in"}</span>
                   </div>
                   {meta && <span style={{ background: meta.bg, color: meta.color, borderRadius: 999, padding: "6px 10px", fontSize: 12, fontWeight: 700, whiteSpace: "nowrap" }}>{meta.label}</span>}
                 </button>
@@ -294,11 +243,17 @@ export default function ProgressClient({ student, missions, badgeTiers, pastDue 
           </section>
         </div>
 
-        <section style={{ ...card, background: "rgba(255,255,255,.82)", backdropFilter: "blur(8px)", padding: 24, marginBottom: 16 }} className="sp-stage">
-          <aside style={{ background: "#f4efff", color: "#48346d", borderRadius: 16, padding: "16px 20px", lineHeight: 1.6 }}>
-            <strong>S.A.M. notices</strong>
-            <p style={{ margin: "8px 0" }}>{line1}</p>
-            <p style={{ margin: 0 }}>{line2}</p>
+        <section style={{ ...card, background: "rgba(255,255,255,.82)", backdropFilter: "blur(8px)", padding: 14, marginBottom: 16 }} className="sp-stage">
+          <aside style={{ background: "linear-gradient(180deg,#161036,#2a1868)", color: "#f6f3ff", borderRadius: 16, padding: "8px 16px 16px", border: "1px solid rgba(126,231,255,.45)" }}>
+            <img src="/icons/sam/cosmic/idle-poster.png" alt="" style={{ width: 140, height: 140, objectFit: "contain", display: "block", margin: "0 auto 2px", transform: "rotate(8deg)" }} />
+            <div style={{ display: "flex", alignItems: "flex-end", gap: 8, color: "#7ee7ff", fontSize: 11, fontWeight: 700, letterSpacing: ".14em", textTransform: "uppercase" }}>
+              <span style={{ display: "flex", alignItems: "flex-end", gap: 2, height: 14 }}>
+                {[6, 12, 8, 14].map((h, i) => <i key={i} className="sp-eq" style={{ width: 3, height: h, borderRadius: 2, background: "#7ee7ff", display: "block", animationDelay: `${i * 0.12}s` }} />)}
+              </span>
+              S.A.M. live
+            </div>
+            <p style={{ margin: "12px 0 0", fontSize: 14.5, lineHeight: 1.45 }}>{line1}</p>
+            <p style={{ margin: "12px 0 0", paddingTop: 12, borderTop: "1px solid rgba(126,231,255,.28)", fontSize: 14.5, lineHeight: 1.45 }}>{line2}</p>
           </aside>
           <div>
             <div style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "flex-end", flexWrap: "wrap" }}>
@@ -306,14 +261,14 @@ export default function ProgressClient({ student, missions, badgeTiers, pastDue 
                 <h2 style={{ margin: 0, fontFamily: "'Poppins', sans-serif", fontSize: 20 }}>How your missions landed</h2>
                 <p style={{ margin: "4px 0 0", color: COLORS.textMuted, fontSize: 13 }}>{bars.length ? "Tap a bar to see that grade." : "Your graph starts after the first grade."}</p>
               </div>
-              <div style={{ display: "flex", flexWrap: "wrap", gap: 12, fontSize: 12, fontWeight: 700, color: COLORS.textMuted }}>
+              <div style={{ display: "flex", gap: 12, fontSize: 12, fontWeight: 700, color: COLORS.textMuted }}>
                 <span><i style={{ display: "inline-block", width: 8, height: 8, borderRadius: "50%", background: "#e2b100", marginRight: 4 }} />Keep Practicing</span>
                 <span><i style={{ display: "inline-block", width: 8, height: 8, borderRadius: "50%", background: "#1aa7b5", marginRight: 4 }} />Getting There</span>
                 <span><i style={{ display: "inline-block", width: 8, height: 8, borderRadius: "50%", background: "#22a35a", marginRight: 4 }} />Nailed It</span>
               </div>
             </div>
             {bars.length > 0 && (
-              <div className="sp-chart"><div className="sp-chart-inner" style={{ display: "flex", gap: 12, alignItems: "flex-end", marginTop: 12 }}>
+              <div style={{ display: "flex", gap: 12, alignItems: "flex-end", marginTop: 12 }}>
                 <div style={{ position: "relative", height: 200, width: 110, flexShrink: 0, fontSize: 12, fontWeight: 700, color: COLORS.textMuted }}>
                   <span style={{ position: "absolute", top: 0, right: 8 }}>Nailed It</span>
                   <span style={{ position: "absolute", top: 82, right: 8 }}>Getting There</span>
@@ -323,23 +278,20 @@ export default function ProgressClient({ student, missions, badgeTiers, pastDue 
                   {bars.map((m) => {
                     const meta = GRADE_META[m.grade] || GRADE_META[0];
                     return (
-                      <button key={m.id} type="button" className="sp-bar" aria-label={`${m.caseTitle}: ${(GRADE_META[m.grade] || GRADE_META[0]).label}. Open mission details.`} onClick={() => setSelected(m)} style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "flex-end", alignItems: "center", minWidth: 0 }}>
+                      <button key={m.id} type="button" className="sp-bar" onClick={() => setSelected(m)} style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "flex-end", alignItems: "center", minWidth: 0 }}>
                         <div style={{ width: "min(64px, 100%)", height: meta.height, borderRadius: "14px 14px 4px 4px", background: meta.bar }} />
                         <span style={{ position: "relative", top: 26, fontSize: 12, fontWeight: 700, color: "#3d3558" }}>{shortTitle(m.caseTitle)}</span>
                       </button>
                     );
                   })}
                 </div>
-              </div></div>
+              </div>
             )}
           </div>
         </section>
 
         {path.length > 0 && (
-          <section className="sp-badge-path" style={{ ...card, padding: "22px 24px" }}>
-            <h2 style={{ margin: "0 0 6px", fontFamily: "'Poppins', sans-serif", fontSize: 22 }}>{nextTier ? `Next badge · ${nextTier.label}` : "Your badge path"}</h2>
-            <p style={{ margin: "0 0 20px", color: COLORS.textMuted }}>{nextTier ? `${missionsToNext} more mission${missionsToNext === 1 ? "" : "s"} to your next badge. ` : "Look how far you’ve come. "}{thisWeek} turned in this week.</p>
-            <div style={{ position: "relative", minWidth: 360 }}>
+          <section style={{ ...card, background: "rgba(255,255,255,.82)", backdropFilter: "blur(8px)", padding: "18px 28px 16px", position: "relative" }}>
             <div style={{ position: "absolute", top: 64, left: "12%", right: "12%", height: 4, borderRadius: 99, background: "linear-gradient(90deg,#7b5dff 0 42%,#d9d0ee 42%)" }} />
             <div style={{ display: "flex", justifyContent: "space-between", position: "relative" }}>
               {path.map((stop) => (
@@ -356,12 +308,12 @@ export default function ProgressClient({ student, missions, badgeTiers, pastDue 
                 </div>
               ))}
             </div>
-            </div>
+            <b style={{ position: "absolute", left: "24%", top: 52, background: "#fff", color: "#5b3db5", border: "2px solid #7b5dff", borderRadius: 999, padding: "4px 10px", fontSize: 12 }}>{thisWeek} this week</b>
           </section>
         )}
       </div>
 
-      <DetailModal entry={selected} onClose={() => setSelected(null)} onRetry={(id) => router.push(`/activity/${id}`)} />
+      <DetailModal entry={selected} onClose={() => setSelected(null)} />
     </div>
   );
 }
