@@ -56,6 +56,24 @@ Nothing else. This file is a status document, not a design document — design n
 
 ## 0.5 · SESSION LOG
 
+**Sept 23, 2026 (audit) — First full production audit: the database now matches the code, with one small gap.**
+
+*What changed*
+- Built `audit_production_readonly.sql` (app root). It reads only and changes nothing. It checks every case code in every engine's registry against `cases` (row present, engine right), and every table, column and function the API code uses against the live schema. It was tested on a local Postgres, where it caught a missing row and a wrong engine and was silent when everything was right. **Re-run it before any push that touches schema.** This answers open decision 22 in practice.
+- Emily ran it on production.
+
+*What is now true*
+- **Schema is clean.** No missing table, column or function. So there is no hidden login-outage-class risk left.
+- **The three "never confirmed" blocks are confirmed live:** Simulation Lab's 10 cases, Mission Map's Sept 2 Social Studies batch, and Signal Check's Social Studies batch. The ELAR 12 are in too (Mission Map: 49 rows).
+
+*What is still open*
+- **3 Assembly Deck rows missing: 3.10C-AD, 3.11B-AD, 3.13A-AD.** Another session authored these four grade 3 Science cases today (3.12B-AD's row is in). Their SQL is `add_assembly_deck_g3_sci_batch.sql`. Until it runs, those cases open as Group Chat.
+- **5 case rows are ahead of the code** (identified Sept 23): Assembly Deck grade 4 Science `4.8B-AD` (The Cold Lunchbox Job), `4.9B-AD` (Twenty-Eight Nights), `4.11B-AD` (Two Ways to Power the School), `4.12B-AD` (When the Owls Left), and Classification Lab `3.6B-CL` (Solid, Liquid, or Gas?). There are no case files for them in local main or on origin/main. So they show in the teacher library, but a student who opens one gets the "This mission isn't ready yet" screen, not a crash. **Their code must ship before real classroom use, or the rows need to be pulled.**
+- Git, seen from the reflog: Emily pulled and pushed at 12:38–12:39 ("MM update"). Local main now equals origin/main, so the earlier "one commit behind" note is resolved.
+- **172 retired Signal Check Weigh-In/Thread rows** are still in `cases`. The app filters them, so this is harmless. `remove_signal_check_wi_th_cases.sql` deletes them when Emily wants.
+
+---
+
 **Sept 23, 2026 (later session) — Mission Map's ELAR 12 authored. Mission Map is now complete: 49 cases, all four subjects, every concept in the 48-concept library plus the original pilot.**
 
 *What changed*
@@ -72,7 +90,7 @@ Nothing else. This file is a status document, not a design document — design n
 *What is still open*
 - **THE ELAR SQL IS DELIVERED, NOT RUN, AND NOTHING IS COMMITTED OR PUSHED.** Rule 16: run `add_mission_map_elar_batch.sql` before pushing these files. Also, **pull first**: her checkout was already one commit behind origin (the "Student progress" commit).
 - **No map art for 24 cases.** The Math 12 and ELAR 12 point at `/mission-map/<code>-map.jpg`, and none of those files exist yet. The Science and SS maps do exist.
-- **Math 12 need case hints.**
+- ~~Math 12 need case hints~~ **Done Sept 23: `lib/hints.js` now has one hint for each checkpoint in all 49 Mission Map cases (checked by script).**
 - Scorer calibration note: the new scorer puts the Math batch at 1.0 / 2.0 / 2.6, lower than the 2.2 / 3.6 / 4.3 recorded this morning. Numerals count as one syllable, and a different scorer was used then. **Compare batches with the same tool.** On this tool, ELAR reads a little above Math at every grade.
 - The ELAR and Math TEKS PDFs are still not in `05_REFERENCE/TEKS/`; they only ever came in through chat.
 - Not live-tested.
@@ -352,10 +370,10 @@ The old-era 5.6A "Creek Sensor Mix-Up" packet had strong reasoning design underm
 **Immediate next steps:**
 1. **Pull.** Emily's local checkout is one commit behind origin — the "Student progress" change was made on GitHub and is deployed but not down on her machine. Pull before editing anything, or the next commit fights it.
 2. **Re-pilot `3.6A-AD` with a student**, now that the Case File and the Chief's Debrief are in it. Twenty minutes, and it is the cheapest de-risking available before 48 more cases are written against that ending.
-3. ~~Author Mission Map's ELAR 12~~ **Done Sept 23 (later session).** **Run `add_mission_map_elar_batch.sql` BEFORE pushing** (rule 16), after pulling. Then: map art for the 24 Math/ELAR cases, and case hints for the Math 12.
+3. ~~Author Mission Map's ELAR 12~~ **Done Sept 23 (later session).** The ELAR SQL has been run (the audit shows 49 rows) and the code was pushed at 12:39. Still to do: map art for the 24 Math/ELAR cases. Math hints are done.
 4. **Emily reviews `AssemblyDeck_CaseMap_v1.md`** (48 cases, four per subject per grade, all standards-verified). Then author in batches: ELAR 12 → Science 12 → Social Studies 12 → Math 12.
 5. **Generate `assembly_deck.jpg`** so Assembly Deck stops borrowing the Repair Desk artwork, and tell Claude where the rest of the generated art landed (Relay rank badges, skin previews, posture/hands diagrams).
-6. **Do the deliberate "run everything still flagged" SQL sweep** (Simulation Lab's 9 newest `cases` rows, Mission Map's Sept 2 Social Studies batch, Signal Check's Social Studies batch) and confirm each against the live database. The three newest blocks are now clean; these older ones were never confirmed.
+6. ~~SQL sweep~~ **Done Sept 23 via `audit_production_readonly.sql` — schema clean; only 3 Assembly Deck rows outstanding.**
 7. Turn `DEV_FORCE_UNLOCK_ALL` back to `false` before real classroom use.
 8. Live-test the World Reward Station end to end, plus Simulation Lab's 10 cases.
 9. Decide stories/games for the remaining 4 worlds (Frostveil, Cindara, Solara, Cloudreach).
@@ -371,7 +389,7 @@ The old-era 5.6A "Creek Sensor Mix-Up" packet had strong reasoning design underm
 - **Assembly Deck tile art** (`/teacher/challenges/assembly_deck.jpg`) still does not exist. It is not a broken image — `lib/teacherBridge.js` points the engine at `repair_desk.jpg` — but Assembly Deck is wearing another engine's picture.
 - ~~Mission Map's ELAR 12~~ **Authored Sept 23.** Its SQL is not yet run, and the files are not yet pushed.
 - **Map art for Mission Map's 24 Math/ELAR cases** (`/mission-map/<code>-map.jpg`, which should also be saved as the `/cases/` thumbnail).
-- **Case hints for Mission Map's Math 12** (ELAR has them; Math falls back to generic hints).
+- ~~Case hints for Mission Map's Math 12~~ **Done Sept 23.**
 - **Mission Map's original 25 cases read above grade band** (5.8 / 6.7 / 6.8 for grades 3/4/5) and barely separate. Measured Sept 23, deliberately not acted on.
 - **A "Student progress" commit made on GitHub is deployed but unreviewed by Claude** and unpulled on Emily's machine.
 - **Relay Station art is generated but unconnected** — rank badges, keyboard-skin previews, posture and hands diagrams are referenced nowhere in code, and the challenge tile still points at the SVG placeholder. Paths unknown to Claude.
