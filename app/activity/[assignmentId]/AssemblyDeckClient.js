@@ -441,7 +441,7 @@ function RejectRound({ publicCase, round, roundNumber, board, rejections, setRej
   const options = reasonChipsFor(round, challenge);
   const answered = leftovers.every((p) => rejections[p.id]);
 
-  useEffect(() => { say("This is the part that counts. Why did each one fail to make the paragraph?", "thinking"); }, [say, round.id]);
+  useEffect(() => { say(publicCase.chain ? "These will not seat. Say why each one stays dark." : "This is the part that counts. Why did each one fail to make the paragraph?", "thinking"); }, [say, round.id, publicCase.chain]);
 
   async function check() {
     setBusy(true);
@@ -466,7 +466,7 @@ function RejectRound({ publicCase, round, roundNumber, board, rejections, setRej
 
   return (
     <Panel>
-      <div style={{ fontSize: 12, letterSpacing: 2, color: THEME.cursor, fontWeight: 700 }}>🗑️ THE LEFTOVERS · PARAGRAPH {roundNumber}</div>
+      <div style={{ fontSize: 12, letterSpacing: 2, color: THEME.cursor, fontWeight: 700 }}>{publicCase.chain ? "UNSEATED · PARAGRAPH" : "🗑️ THE LEFTOVERS · PARAGRAPH"} {roundNumber}</div>
       <h2 style={{ fontSize: 21, margin: "6px 0 12px" }}>{round.rejectPrompt}</h2>
       <div style={{ display: "flex", flexDirection: "column", gap: 14, marginBottom: 16 }}>
         {leftovers.map((piece) => {
@@ -474,6 +474,13 @@ function RejectRound({ publicCase, round, roundNumber, board, rejections, setRej
           const result = feedback && feedback.results.find((r) => r.pieceId === piece.id);
           return (
             <div key={piece.id} style={{ background: THEME.inset, borderRadius: 12, padding: "12px 14px", border: `1px solid ${result ? (result.correct ? THEME.done : THEME.error) : "transparent"}` }}>
+              {publicCase.chain && (
+                <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
+                  <div style={{ width: 16, height: 16, borderRadius: 4, border: "2px solid #9AA8B8", background: "#E7EDF4" }} />
+                  <div style={{ height: 4, width: 42, borderRadius: 99, background: "#C5D0DE" }} />
+                  <span style={{ fontSize: 11, letterSpacing: 1.1, fontWeight: 800, color: "#7B8798" }}>WILL NOT SEAT</span>
+                </div>
+              )}
               <div style={{ fontSize: 15, lineHeight: 1.6, marginBottom: 10 }}>{piece.text}</div>
               <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
                 {options.map((opt) => {
@@ -495,9 +502,9 @@ function RejectRound({ publicCase, round, roundNumber, board, rejections, setRej
                   );
                 })}
               </div>
-              {result && (result.protest || result.why) && (
+              {result && (result.why || (result.protest && !publicCase.chain)) && (
                 <div style={{ marginTop: 12, borderLeft: `3px solid ${THEME.border}`, paddingLeft: 12 }}>
-                  {result.protest && (
+                  {result.protest && !publicCase.chain && (
                     <div style={{ fontSize: 13.5, color: THEME.cursor, fontStyle: "italic", lineHeight: 1.6 }}>
                       🗯️ {result.protest}
                     </div>
@@ -521,7 +528,7 @@ function RejectRound({ publicCase, round, roundNumber, board, rejections, setRej
       ) : (
         <button onClick={onDone} style={btn(THEME.violet)}>
           {publicCase.repair && round.id === publicCase.repair.roundId
-            ? "Fix one leftover →"
+            ? "Write a new label →"
             : roundNumber < publicCase.rounds.length ? "Next paragraph →" : "Put the paragraphs in order →"}
         </button>
       )}
@@ -1002,38 +1009,67 @@ function Stat({ label, value, accent }) {
 }
 
 // ======================================================================
-// POND — lights up as each paragraph locks
+// POND — a power line. Paragraphs open the next stretch. A cut drops
+// everything downstream. Leftovers never talk; they just refuse to seat.
 // ======================================================================
-function PondBoard({ chain, locked, walked }) {
+function PondBoard({ chain, locked, scenario, cutStep, guess }) {
   if (!chain) return null;
-  const broken = locked.includes(chain.breakOn);
+  const testing = scenario === "cut-test";
+  const broken = !testing && locked.includes(chain.breakOn);
+  const cutAt = chain.links.findIndex((link) => link.id === "plants");
+  function lit(link, index) {
+    const earned = testing || locked.includes(link.on);
+    if (!earned) return false;
+    if (broken && link.breakLabel && link.id !== "plants" && link.id !== "sun") return false;
+    if (testing && cutStep >= 0 && index >= cutAt) {
+      if (index === cutAt) return false;
+      if (link.id === "minnows") return cutStep < 1;
+      if (link.id === "herons") return cutStep < 2;
+      return cutStep < 1;
+    }
+    return true;
+  }
+  const status = testing && cutStep >= 2
+    ? "Plants cut. Minnows dark. Herons dark."
+    : testing && cutStep >= 0
+    ? "Cutting the plants…"
+    : testing
+    ? "Line is live. Mark who you think goes dark."
+    : broken
+    ? chain.breakLine
+    : "Power moves along the line as each paragraph locks.";
   return (
-    <div style={{ width: "100%", maxWidth: 900, background: "rgba(255,255,255,0.9)", border: "1px solid rgba(14,154,168,0.32)", borderRadius: 22, padding: "14px 16px 16px", boxShadow: "0 12px 30px rgba(14,120,140,0.12)" }}>
+    <div style={{ width: "100%", maxWidth: 900, background: "rgba(255,255,255,0.92)", border: "1px solid rgba(14,154,168,0.32)", borderRadius: 22, padding: "14px 16px 16px", boxShadow: "0 12px 30px rgba(14,120,140,0.12)" }}>
       <div style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "baseline", flexWrap: "wrap" }}>
         <div style={{ fontSize: 12, letterSpacing: 1.6, fontWeight: 800, color: "#0E7C8A" }}>{String(chain.title || "Pond").toUpperCase()}</div>
-        <div style={{ fontSize: 13.5, color: "#3D6B78", lineHeight: 1.4 }}>{broken ? chain.breakLine : "The pond fills in as each paragraph locks."}</div>
+        <div style={{ fontSize: 13.5, color: "#3D6B78", lineHeight: 1.4 }}>{status}</div>
       </div>
-      <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 14, overflowX: "auto" }}>
+      <div style={{ display: "flex", alignItems: "center", marginTop: 16, overflowX: "auto" }}>
         {chain.links.map((link, i) => {
-          const on = locked.includes(link.on);
-          const gone = broken && link.breakLabel && link.id !== "plants" && link.id !== "sun";
+          const on = lit(link, i);
+          const nextOn = i < chain.links.length - 1 && lit(chain.links[i + 1], i + 1);
+          const marked = (guess || []).includes(link.id);
           const thick = broken && link.id === "plants";
-          const hot = (walked || []).includes(link.id);
           const fill = link.id === "sun" ? "#FFE08A" : link.id === "plants" ? "#8BE0A4" : link.id === "minnows" ? "#8ECAFF" : "#D4C6FF";
           return (
-            <div key={link.id} style={{ display: "flex", alignItems: "center", gap: 6, flex: "1 0 auto" }}>
-              <div style={{ textAlign: "center", minWidth: 78, opacity: on ? (gone ? 0.45 : 1) : 0.4, transform: hot ? "translateY(-2px)" : "none", transition: "opacity .35s, transform .35s" }}>
+            <div key={link.id} style={{ display: "flex", alignItems: "center", flex: "1 1 0", minWidth: 88 }}>
+              <div style={{ textAlign: "center", width: 78, flexShrink: 0 }}>
                 <div style={{
-                  width: thick ? 62 : 54, height: thick ? 62 : 54, margin: "0 auto", borderRadius: "50%",
-                  display: "flex", alignItems: "center", justifyContent: "center", fontSize: thick ? 28 : 24,
-                  background: on ? fill : "#F4F7FC",
-                  border: `2px solid ${hot ? "#E0A322" : on ? "rgba(14,154,168,0.45)" : "rgba(90,70,180,0.15)"}`,
-                  boxShadow: hot ? "0 0 0 4px rgba(224,163,34,0.25)" : "none",
-                  textDecoration: gone ? "line-through" : "none",
+                  width: thick ? 58 : 52, height: thick ? 58 : 52, margin: "0 auto", borderRadius: "50%",
+                  display: "flex", alignItems: "center", justifyContent: "center", fontSize: 24,
+                  background: on ? fill : "#EEF2F6",
+                  border: `3px solid ${marked ? "#E0A322" : on ? "#0E9AA8" : "#D5DEE8"}`,
+                  boxShadow: on ? "0 0 16px rgba(14,154,168,0.35)" : "none",
+                  filter: on ? "none" : "grayscale(0.7)",
+                  transition: "background .4s, box-shadow .4s, filter .4s, border-color .2s",
                 }}>{link.mark}</div>
-                <div style={{ marginTop: 6, fontSize: 12.5, fontWeight: 800, color: "#1F2A44" }}>{broken && link.breakLabel ? link.breakLabel : link.label}</div>
+                <div style={{ marginTop: 6, fontSize: 12.5, fontWeight: 800, color: on ? "#1F2A44" : "#8B95A8" }}>
+                  {broken && link.breakLabel ? link.breakLabel : link.label}
+                </div>
               </div>
-              {i < chain.links.length - 1 && <div style={{ color: on ? "#0E9AA8" : "#C5D0DE", fontWeight: 800, fontSize: 18 }}>→</div>}
+              {i < chain.links.length - 1 && (
+                <div style={{ flex: 1, height: 8, margin: "0 2px 18px", borderRadius: 99, background: on && nextOn ? "linear-gradient(90deg, #7DDEE8, #12A36A)" : "#D5DEE8", boxShadow: on && nextOn ? "0 0 10px rgba(14,154,168,0.45)" : "none", transition: "background .4s, box-shadow .4s" }} />
+              )}
             </div>
           );
         })}
@@ -1049,7 +1085,8 @@ function RepairRound({ publicCase, onDone, text, setText }) {
   const [attempt, setAttempt] = useState(0);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState(null);
-  useEffect(() => { say("One leftover can be saved. Turn it into a sentence the notes can stand behind.", "helping"); }, [say]);
+  const seated = !!(feedback && feedback.correct);
+  useEffect(() => { say("This piece is loose. Write a label the notes can stand behind, and it can connect.", "helping"); }, [say]);
 
   async function check() {
     const next = attempt + 1;
@@ -1065,7 +1102,7 @@ function RepairRound({ publicCase, onDone, text, setText }) {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Couldn't check that.");
       setFeedback(data);
-      say(data.correct ? "That sentence can go in the log." : "Not yet. Make it true.", data.correct ? "celebrating" : "helping", 3500);
+      say(data.correct ? "It seats. That label is true." : "It still will not seat. Make the label true.", data.correct ? "celebrating" : "helping", 3500);
     } catch (e) {
       setErr(e.message);
     }
@@ -1074,13 +1111,19 @@ function RepairRound({ publicCase, onDone, text, setText }) {
 
   return (
     <Panel>
-      <div style={{ fontSize: 12, letterSpacing: 2, color: THEME.teal, fontWeight: 700 }}>✎ FIX ONE LEFTOVER</div>
-      <h2 style={{ fontSize: 22, margin: "6px 0 8px" }}>{publicCase.repair.prompt}</h2>
-      {piece && <p style={{ color: THEME.muted, fontSize: 15, lineHeight: 1.6, margin: "0 0 12px" }}>The leftover: “{piece.text}”</p>}
+      <div style={{ fontSize: 12, letterSpacing: 2, color: THEME.teal, fontWeight: 700 }}>LOOSE PIECE</div>
+      <h2 style={{ fontSize: 22, margin: "6px 0 12px" }}>{publicCase.repair.prompt}</h2>
+      <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
+        <div style={{ width: 22, height: 22, borderRadius: 6, border: `3px solid ${seated ? THEME.done : "#9AA8B8"}`, background: seated ? "#8BE0A4" : "#E7EDF4", boxShadow: seated ? "0 0 12px rgba(18,163,106,0.45)" : "none" }} />
+        <div style={{ height: 8, width: 48, borderRadius: 99, background: seated ? "linear-gradient(90deg, #7DDEE8, #12A36A)" : "#D5DEE8" }} />
+        <div style={{ fontSize: 12, letterSpacing: 1.1, fontWeight: 800, color: seated ? THEME.done : "#7B8798" }}>{seated ? "SEATED" : "NOT SEATED"}</div>
+      </div>
+      {piece && <p style={{ color: THEME.muted, fontSize: 15, lineHeight: 1.6, margin: "0 0 8px" }}>Old label: “{piece.text}”</p>}
+      <div style={{ fontSize: 12, fontWeight: 800, letterSpacing: 1, color: THEME.teal, marginBottom: 6 }}>NEW LABEL</div>
       <textarea
         value={text}
         onChange={(e) => setText(e.target.value)}
-        disabled={!!(feedback && feedback.correct)}
+        disabled={seated}
         rows={3}
         placeholder="The notes never…"
         style={{ width: "100%", background: "#F4FBFF", border: `1px solid ${THEME.border}`, borderRadius: 12, padding: 12, color: THEME.text, fontSize: 16, lineHeight: 1.6, fontFamily: "inherit", resize: "vertical" }}
@@ -1088,9 +1131,9 @@ function RepairRound({ publicCase, onDone, text, setText }) {
       {err && <div style={{ color: THEME.error, fontSize: 13, marginTop: 8 }}>{err}</div>}
       {feedback && (
         <div style={{ marginTop: 12, background: feedback.correct ? "rgba(57,217,122,0.12)" : "#F4F7FC", border: `1px solid ${feedback.correct ? THEME.done : THEME.border}`, borderRadius: 12, padding: "12px 14px", fontSize: 14.5, lineHeight: 1.6 }}>
-          <strong style={{ color: feedback.correct ? THEME.done : THEME.cursor }}>{feedback.correct ? "That works." : "Try once more."}</strong>
+          <strong style={{ color: feedback.correct ? THEME.done : THEME.cursor }}>{feedback.correct ? "Connected." : "Still loose."}</strong>
           <div style={{ marginTop: 4, color: THEME.muted }}>{feedback.why}</div>
-          {feedback.model && <div style={{ marginTop: 8 }}>One way to say it: {feedback.model}</div>}
+          {feedback.model && <div style={{ marginTop: 8 }}>A label that would seat: {feedback.model}</div>}
         </div>
       )}
       <div style={{ marginTop: 14 }}>
@@ -1098,7 +1141,7 @@ function RepairRound({ publicCase, onDone, text, setText }) {
           <button onClick={onDone} style={btn(THEME.violet)}>Next paragraph →</button>
         ) : (
           <button onClick={check} disabled={text.trim().split(/\s+/).filter(Boolean).length < 6 || busy} style={btn(THEME.done, text.trim().split(/\s+/).filter(Boolean).length < 6 || busy)}>
-            {busy ? "Checking…" : "Check my sentence"}
+            {busy ? "Trying the seat…" : "Seat it"}
           </button>
         )}
       </div>
@@ -1106,70 +1149,89 @@ function RepairRound({ publicCase, onDone, text, setText }) {
   );
 }
 
-function WhatIfRound({ publicCase, onDone, choice, setChoice, onWalk }) {
+function guessId(marks, nobody) {
+  if (nobody) return "c";
+  const has = (id) => marks.includes(id);
+  if (has("minnows") && has("herons") && !has("plants") && !has("sun")) return "a";
+  if (has("herons") && !has("minnows") && !has("plants") && !has("sun")) return "b";
+  if (has("plants") && !has("minnows") && !has("herons") && !has("sun")) return "d";
+  if (!marks.length) return null;
+  return "other";
+}
+
+function WhatIfRound({ publicCase, onDone, setChoice, onMark, onCut }) {
   const say = useSay();
+  const [marks, setMarks] = useState([]);
+  const [nobody, setNobody] = useState(false);
   const [feedback, setFeedback] = useState(null);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState(null);
-  useEffect(() => { say("The log is finished. Use the chain for a question the notes never asked.", "thinking"); }, [say]);
+  const ready = nobody || marks.length > 0;
+  useEffect(() => { say("The line is live. Mark who loses power, then cut the plants.", "thinking"); }, [say]);
 
-  async function check() {
+  function toggle(id) {
+    if (feedback) return;
+    setNobody(false);
+    setMarks((cur) => {
+      const next = cur.includes(id) ? cur.filter((x) => x !== id) : [...cur, id];
+      if (onMark) onMark(next);
+      return next;
+    });
+  }
+
+  async function cut() {
+    const id = guessId(marks, nobody);
+    setChoice(id);
     setBusy(true);
     setErr(null);
     try {
       const res = await fetch("/api/assembly-deck/submit", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ caseStandard: publicCase.standard, action: "whatIf", whatIfChoiceId: choice }),
+        body: JSON.stringify({ caseStandard: publicCase.standard, action: "whatIf", whatIfChoiceId: id }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Couldn't check that.");
+      if (!res.ok) throw new Error(data.error || "Couldn't throw the switch.");
       setFeedback(data);
-      if (onWalk && data.walk) onWalk(data.walk);
-      say(data.correct ? "You followed the chain." : "Watch the pond. The food starts with the plants.", data.correct ? "celebrating" : "helping", 4000);
+      if (onCut) onCut();
+      say(data.correct ? "You read the line. Watch it go dark." : "Watch the shutoff. The plants feed everything after them.", data.correct ? "celebrating" : "helping", 4000);
     } catch (e) {
       setErr(e.message);
     }
     setBusy(false);
   }
 
+  const targets = (publicCase.chain && publicCase.chain.links || []).filter((link) => link.id !== "sun");
   return (
     <Panel>
-      <div style={{ fontSize: 12, letterSpacing: 2, color: THEME.teal, fontWeight: 700 }}>WHAT IF</div>
+      <div style={{ fontSize: 12, letterSpacing: 2, color: THEME.teal, fontWeight: 700 }}>CUT THE LINE</div>
       <h2 style={{ fontSize: 22, margin: "6px 0 8px" }}>{publicCase.whatIf.prompt}</h2>
       <p style={{ color: THEME.muted, fontSize: 14.5, margin: "0 0 14px" }}>{publicCase.whatIf.hint}</p>
-      <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 14 }}>
-        {publicCase.whatIf.choices.map((item) => {
-          const on = choice === item.id;
-          const isKey = feedback && feedback.key === item.id;
-          const wrong = feedback && on && !feedback.correct;
+      <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 14 }}>
+        {targets.map((link) => {
+          const on = marks.includes(link.id);
           return (
-            <button
-              key={item.id}
-              disabled={!!feedback}
-              onClick={() => setChoice(item.id)}
-              style={{
-                textAlign: "left",
-                background: isKey ? "rgba(57,217,122,0.2)" : wrong ? "rgba(225,75,96,0.12)" : on ? "rgba(255,196,77,0.2)" : THEME.chip,
-                border: `1px solid ${isKey ? THEME.done : wrong ? THEME.error : on ? THEME.cursor : "transparent"}`,
-                borderRadius: 12, padding: "12px 14px", color: THEME.text, fontSize: 15.5, lineHeight: 1.5, fontFamily: "inherit", cursor: feedback ? "default" : "pointer",
-              }}
-            >
-              {item.text}
+            <button key={link.id} disabled={!!feedback} onClick={() => toggle(link.id)} style={{ background: on ? "rgba(224,163,34,0.18)" : THEME.chip, border: `1px solid ${on ? THEME.cursor : "transparent"}`, borderRadius: 999, padding: "8px 14px", color: THEME.text, fontWeight: 800, fontFamily: "inherit", cursor: feedback ? "default" : "pointer" }}>
+              {link.mark} {link.label}
             </button>
           );
         })}
+        <button disabled={!!feedback} onClick={() => { if (feedback) return; setNobody(true); setMarks([]); if (onMark) onMark([]); }} style={{ background: nobody ? "rgba(224,163,34,0.18)" : THEME.chip, border: `1px solid ${nobody ? THEME.cursor : "transparent"}`, borderRadius: 999, padding: "8px 14px", color: THEME.text, fontWeight: 800, fontFamily: "inherit", cursor: feedback ? "default" : "pointer" }}>
+          Nobody
+        </button>
       </div>
       {feedback && (
         <div style={{ background: feedback.correct ? "rgba(57,217,122,0.12)" : "#F4FBFF", border: `1px solid ${feedback.correct ? THEME.done : THEME.border}`, borderRadius: 12, padding: "12px 14px", fontSize: 14.5, lineHeight: 1.65, marginBottom: 14 }}>
-          <strong style={{ color: feedback.correct ? THEME.done : THEME.cursor }}>{feedback.correct ? "You used the chain. +1 💎" : "Watch the path."}</strong>
+          <strong style={{ color: feedback.correct ? THEME.done : THEME.cursor }}>{feedback.correct ? "The shutoff matches your mark. +1 💎" : "The line corrected you."}</strong>
           <div style={{ marginTop: 6, color: THEME.muted }}>{feedback.why}</div>
           {feedback.walkLine && <div style={{ marginTop: 6 }}>{feedback.walkLine}</div>}
         </div>
       )}
       {err && <div style={{ color: THEME.error, fontSize: 13, marginBottom: 10 }}>{err}</div>}
       {!feedback ? (
-        <button onClick={check} disabled={!choice || busy} style={btn(THEME.done, !choice || busy)}>{busy ? "Checking…" : "Check"}</button>
+        <button onClick={cut} disabled={!ready || busy} style={btn(ready ? THEME.error : THEME.done, !ready || busy)}>
+          {busy ? "Cutting…" : "Cut the plants"}
+        </button>
       ) : (
         <button onClick={onDone} style={btn(THEME.violet)}>One more thing →</button>
       )}
@@ -1219,7 +1281,8 @@ export default function AssemblyDeckClient({ assignmentId, caseStandard, publicC
   const [quick, setQuick] = useState(null);
   const [caseFileOpen, setCaseFileOpen] = useState(false);
   const [locked, setLocked] = useState(() => (alreadySubmitted ? publicCase.rounds.map((r) => r.id) : []));
-  const [walked, setWalked] = useState([]);
+  const [cutStep, setCutStep] = useState(-1);
+  const [guess, setGuess] = useState([]);
   const [whatIfChoice, setWhatIfChoice] = useState(null);
   const [repairText, setRepairText] = useState("");
 
@@ -1310,12 +1373,12 @@ export default function AssemblyDeckClient({ assignmentId, caseStandard, publicC
     body = (
       <WhatIfRound
         publicCase={publicCase}
-        choice={whatIfChoice}
         setChoice={setWhatIfChoice}
-        onWalk={(ids) => {
-          const path = ids || [];
-          setWalked([]);
-          path.forEach((_, i) => setTimeout(() => setWalked(path.slice(0, i + 1)), 550 * (i + 1)));
+        onMark={setGuess}
+        onCut={() => {
+          setCutStep(0);
+          setTimeout(() => setCutStep(1), 650);
+          setTimeout(() => setCutStep(2), 1300);
         }}
         onDone={() => setPhase("trap")}
       />
@@ -1353,7 +1416,7 @@ export default function AssemblyDeckClient({ assignmentId, caseStandard, publicC
         bright={!!publicCase.chain}
         sam={<SamGuide skinKey={samSkin} alt={samNickname || "S.A.M."} size={96} anchors={{ home: { right: 14, bottom: 14 } }} line={sam.line} state={sam.state} tipOnTap zIndex={40} />}
       >
-        {publicCase.chain && <PondBoard chain={publicCase.chain} locked={locked} walked={walked} />}
+        {publicCase.chain && <PondBoard chain={publicCase.chain} locked={locked} scenario={phase === "whatif" ? "cut-test" : "story"} cutStep={cutStep} guess={phase === "whatif" ? guess : []} />}
         {revisionRequested && (
           <Panel style={{ background: "rgba(255,196,77,0.12)", border: `1px solid ${THEME.cursor}`, maxWidth: 900 }}>
             <strong style={{ color: THEME.cursor }}>Your teacher sent this back for another look.</strong>
