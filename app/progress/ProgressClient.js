@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import BackToHubButton from "../../components/BackToHubButton";
+import { CaseImage } from "../../lib/caseImage";
 import { getPublicCase } from "../../lib/cases/index.public";
 
 const COLORS = {
@@ -40,11 +41,6 @@ const card = {
   borderRadius: 18,
   boxShadow: "0 4px 20px rgba(60,40,120,.12)",
 };
-
-function caseImagePath(standard) {
-  if (!standard) return "/icons/crystal_points.png";
-  return `/cases/${standard.replace(/\./g, "-")}.jpg`;
-}
 
 function formatDue(dateStr) {
   return new Date(`${dateStr}T12:00:00`).toLocaleDateString(undefined, { weekday: "long" });
@@ -85,7 +81,7 @@ function DetailModal({ entry, onClose }) {
     <div onClick={onClose} style={{ position: "fixed", inset: 0, background: "rgba(13,20,35,.65)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 100, padding: 20 }}>
       <div onClick={(e) => e.stopPropagation()} style={{ background: COLORS.white, borderRadius: 20, width: "min(560px, 100%)", maxHeight: "85vh", overflowY: "auto", boxShadow: "0 24px 60px rgba(0,0,0,.4)" }}>
         <div style={{ position: "relative", height: 160, borderRadius: "20px 20px 0 0", overflow: "hidden", background: "#1a1038" }}>
-          {standard && <img src={caseImagePath(standard)} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />}
+          {standard && <CaseImage standard={standard} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />}
           <button onClick={onClose} style={{ position: "absolute", top: 12, right: 12, width: 32, height: 32, borderRadius: "50%", background: "rgba(13,20,35,.6)", color: COLORS.white, border: "none", cursor: "pointer", fontSize: 16 }}>×</button>
         </div>
         <div style={{ padding: 22 }}>
@@ -202,7 +198,7 @@ export default function ProgressClient({ student, missions, badgeTiers, pastDue 
               <p style={{ fontSize: 13, color: COLORS.textMuted, margin: "6px 0" }}>Nothing to try again.</p>
             ) : needsAttention.map((m) => (
               <div key={m.id} style={{ display: "flex", gap: 10, alignItems: "center", background: COLORS.cream, borderRadius: 12, padding: 10, boxShadow: "inset 4px 0 0 #39D97A", marginBottom: 8 }}>
-                <img src={caseImagePath(m.caseStandard)} alt="" style={{ width: 48, height: 48, borderRadius: 10, objectFit: "cover" }} />
+                <CaseImage standard={m.caseStandard} alt="" style={{ width: 48, height: 48, borderRadius: 10, objectFit: "cover" }} />
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <strong style={{ display: "block", fontSize: 14 }}>{m.caseTitle}</strong>
                   <span style={{ fontSize: 12, color: COLORS.textMuted }}>Your teacher wants another try.</span>
@@ -218,7 +214,7 @@ export default function ProgressClient({ student, missions, badgeTiers, pastDue 
               <p style={{ fontSize: 13, color: COLORS.textMuted, margin: "6px 0" }}>Nothing is waiting.</p>
             ) : waitingForTeacher.map((m) => (
               <button key={m.id} type="button" onClick={() => setSelected(m)} style={{ display: "flex", gap: 10, alignItems: "center", background: COLORS.cream, borderRadius: 12, padding: 10, width: "100%", border: 0, textAlign: "left", marginBottom: 8, cursor: "pointer", font: "inherit", color: "inherit" }}>
-                <img src={caseImagePath(m.caseStandard)} alt="" style={{ width: 48, height: 48, borderRadius: 10, objectFit: "cover" }} />
+                <CaseImage standard={m.caseStandard} alt="" style={{ width: 48, height: 48, borderRadius: 10, objectFit: "cover" }} />
                 <div>
                   <strong style={{ display: "block", fontSize: 14 }}>{m.caseTitle}</strong>
                   <span style={{ fontSize: 12, fontWeight: 700, color: "#6a45d6" }}>Your teacher has this.</span>
@@ -235,7 +231,7 @@ export default function ProgressClient({ student, missions, badgeTiers, pastDue 
               const meta = GRADE_META[m.grade];
               return (
                 <button key={m.id} type="button" onClick={() => setSelected(m)} style={{ display: "flex", gap: 10, alignItems: "center", background: COLORS.cream, borderRadius: 12, padding: 10, width: "100%", border: 0, textAlign: "left", marginBottom: 8, cursor: "pointer", font: "inherit", color: "inherit", boxShadow: `inset 4px 0 0 ${meta?.bar || "#39D97A"}` }}>
-                  <img src={caseImagePath(m.caseStandard)} alt="" style={{ width: 48, height: 48, borderRadius: 10, objectFit: "cover" }} />
+                  <CaseImage standard={m.caseStandard} alt="" style={{ width: 48, height: 48, borderRadius: 10, objectFit: "cover" }} />
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <strong style={{ display: "block", fontSize: 14 }}>{m.caseTitle}</strong>
                     <span style={{ fontSize: 12, color: COLORS.textMuted }}>{CONFIDENCE_META[m.selfConfidence] || "Turned in"}</span>

@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { Plus, Copy, Check, Printer } from "lucide-react";
+import { CaseImage } from "../../../lib/caseImage";
 import { supabase } from "../../../lib/supabaseClient";
 import TeacherHUD from "../../../components/TeacherHUD";
 import { COLORS, PAGE_ACCENTS, PAGE_BACKGROUNDS, panelStyle } from "../../../lib/teacherTheme";
@@ -26,10 +27,6 @@ function generateClassCode() {
 
 function generatePin() {
   return String(Math.floor(1000 + Math.random() * 9000));
-}
-
-function caseImagePath(standard) {
-  return `/cases/${standard.replace(/\./g, "-")}.jpg`;
 }
 
 export default function MyClassesPage() {
@@ -410,7 +407,7 @@ export default function MyClassesPage() {
                           style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 4px", background: "none", border: "none", borderBottom: `1px solid ${COLORS.border}`, width: "100%", textAlign: "left", cursor: "pointer", font: "inherit", color: "inherit" }}
                         >
                           <div style={{ width: 34, height: 34, borderRadius: 8, overflow: "hidden", flexShrink: 0 }}>
-                            <img src={caseImagePath(a.case_standard)} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                            <CaseImage standard={a.case_standard} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                           </div>
                           <div style={{ flex: 1, minWidth: 0 }}>
                             <div style={{ fontSize: 12.5, fontWeight: 600, color: COLORS.textDark, display: "flex", alignItems: "center", gap: 6 }}>
@@ -499,7 +496,7 @@ export default function MyClassesPage() {
             style={{ background: "#FAF8FF", border: `1px solid ${ACCENT}44`, borderRadius: 20, maxWidth: 520, width: "100%", maxHeight: "85vh", overflowY: "auto", boxShadow: `0 20px 60px rgba(80,60,150,.35), 0 0 0 1px ${ACCENT}22` }}
           >
             <div style={{ height: 140, overflow: "hidden", borderRadius: "20px 20px 0 0", position: "relative" }}>
-              <img src={caseImagePath(caseDetailAssignment.case_standard)} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+              <CaseImage standard={caseDetailAssignment.case_standard} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
               <button
                 onClick={closeCaseDetail}
                 className="gc-btn"

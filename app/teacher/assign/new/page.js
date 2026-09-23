@@ -92,9 +92,6 @@ function thumbFallback(e) {
   img.style.display = "none";
   if (img.parentElement) img.parentElement.style.background = "linear-gradient(135deg, #8C52F2 0%, #4DD6FF 100%)";
 }
-function caseImagePath(standard) {
-  return `/cases/${standard.replace(/\./g, "-")}.jpg`;
-}
 
 // A case's `engine` column tells us which challenge type it belongs to.
 // Newsroom currently only ships Breaking News mode ("newsroom_bn"), but

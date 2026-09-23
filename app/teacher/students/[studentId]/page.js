@@ -5,6 +5,7 @@ import { useRouter, useParams } from "next/navigation";
 import { supabase } from "../../../../lib/supabaseClient";
 import TeacherHUD from "../../../../components/TeacherHUD";
 import { COLORS, PAGE_ACCENTS, PAGE_BACKGROUNDS, panelStyle } from "../../../../lib/teacherTheme";
+import { CaseImage } from "../../../../lib/caseImage";
 
 // Sept 13 — moved to the console-interior look. This page isn't reached
 // from one Overview landmark directly (it's a click-through from Grading
@@ -26,10 +27,6 @@ const ACCENT = PAGE_ACCENTS["/teacher/students"];
 const BG = PAGE_BACKGROUNDS["/teacher/students"];
 
 const GRADE_LABELS = { 0: "Level 0", 1: "Level 1", 2: "Level 2" };
-
-function caseImagePath(standard) {
-  return `/cases/${standard.replace(/\./g, "-")}.jpg`;
-}
 
 export default function StudentDetailPage() {
   const router = useRouter();
@@ -238,7 +235,7 @@ export default function StudentDetailPage() {
                       style={{ display: "flex", alignItems: "center", gap: 12, padding: "10px 8px", borderBottom: `1px solid ${COLORS.border}`, background: "none", border: "none", width: "100%", textAlign: "left", cursor: clickable ? "pointer" : "default", font: "inherit", color: "inherit" }}
                     >
                       <div style={{ width: 36, height: 36, borderRadius: 8, overflow: "hidden", flexShrink: 0 }}>
-                        <img src={caseImagePath(r.case_standard)} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                        <CaseImage standard={r.case_standard} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                       </div>
                       <div style={{ flex: 1 }}>
                         <div style={{ fontSize: 13, fontWeight: 600 }}>{r.cases?.title || r.case_standard}</div>
