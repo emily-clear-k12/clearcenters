@@ -1,5 +1,6 @@
 "use client";
 
+import {rememberedTeacherClass} from "../../../lib/teacherClass";
 import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { Search } from "lucide-react";
@@ -35,6 +36,8 @@ export default function ReportsPage() {
   const [search, setSearch] = useState("");
   const [selectedClassId,setSelectedClassId]=useState("all");
   const [evidence,setEvidence]=useState([]);
+  const classContextReady = React.useRef(false);
+  useEffect(()=>{if(classes.length&&!classContextReady.current){classContextReady.current=true;setSelectedClassId(rememberedTeacherClass(classes,'all'))}},[classes]);
   const [error,setError]=useState(null);
 
   useEffect(() => {

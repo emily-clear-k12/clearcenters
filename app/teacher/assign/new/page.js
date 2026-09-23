@@ -147,16 +147,17 @@ const RELAY_SPECIAL_TILES = [
   { key: DAILY, match: isTypingDailyCase, icon: "📅", title: "Daily Transmission", blurb: "Assign once — a short new warm-up every school day, the same for the whole class, with streaks and crystals.", bg: "linear-gradient(120deg, #0D1B2A 0%, #16243F 55%, #00C2C7 140%)" },
 ];
 
+import {rememberedTeacherClass,rememberTeacherClass} from "../../../../lib/teacherClass";
+
 function NewAssignmentContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const incomingClassId = searchParams.get("classId");
 
   const [loadingAuth, setLoadingAuth] = useState(true);
   const [teacherId, setTeacherId] = useState(null);
   const [teacherEmail, setTeacherEmail] = useState("");
   const [classes, setClasses] = useState([]);
-  const [assignClassId, setAssignClassId] = useState(incomingClassId || null);
+  const [assignClassId, setAssignClassId] = useState(null);
   const [error, setError] = useState(null);
 
   const [cases, setCases] = useState([]);
@@ -214,11 +215,12 @@ function NewAssignmentContent() {
 
   useEffect(() => {
     if (!teacherId) return;
-    supabase.from("classes").select("*").eq("teacher_id", teacherId).order("created_at").then(({ data }) => {setClasses(data || []);setAssignClassId(prev=>prev||(data||[])[0]?.id||null)});
+    supabase.from("classes").select("*").eq("teacher_id", teacherId).order("created_at").then(({ data }) => {setClasses(data || []);setAssignClassId(rememberedTeacherClass(data||[],(data||[])[0]?.id||null))});
   }, [teacherId]);
 
   useEffect(() => {
     if (!assignClassId) { setRoster([]); return; }
+    if(classes.some(c=>c.id===assignClassId))rememberTeacherClass(assignClassId);
     supabase.from("students").select("id, first_name").eq("class_id", assignClassId).order("first_name").then(({ data }) => setRoster(data || []));
     setTargetMode("whole");
     setSelectedStudentIds([]);
@@ -248,7 +250,9 @@ function NewAssignmentContent() {
     if (!searchQ) return true;
     return (
       (c.title || "").toLowerCase().includes(searchQ) ||
-      (c.standard || "").toLowerCase().includes(searchQ)
+      (c.standard || "").toLowerCase().includes(searchQ) ||
+      (c.learning_target || "").toLowerCase().includes(searchQ) ||
+      (missionMapTeksLabel(c.standard) || "").toLowerCase().includes(searchQ)
     );
   });
 
@@ -331,7 +335,7 @@ function NewAssignmentContent() {
   }
 
   function resetBrowse(){setSelectedCase(null);setTopic('all');setLimit(12);setDistressCallEnabled(false);setDistressCallTarget('');setDistressCallDeadline('');setDistressCallRewardPoints('');}
-  return <BridgePage teacherEmail={teacherEmail}><PageHeading title="Find your next activity" subtitle="Choose a topic. Find the right experience. Make it yours."><ClassTabs classes={classes} value={assignClassId} onChange={setAssignClassId}/><div className="cc-class-context">{targetClass?.name || 'Choose a class'} · {roster.length} students</div></PageHeading>
+  return <BridgePage teacherEmail={teacherEmail}><PageHeading title="Find your next activity" subtitle="Choose a topic. Find the right experience. Make it yours."><ClassTabs classes={classes} value={assignClassId} onChange={id=>{setAssignClassId(id);resetBrowse();setCaseSearch('')}}/><div className="cc-class-context">{targetClass?.name || 'Choose a class'} · {roster.length} students</div></PageHeading>
     {error&&<div role="alert" className="cc-error">{error}</div>}
     {assignedSuccess?(            <div style={panelStyle(ACCENT, { padding: 32, textAlign: "center" })}>
               <div style={{ fontSize: 36, marginBottom: 10 }}>✅</div>
@@ -367,11 +371,11 @@ function NewAssignmentContent() {
       <button type="button" aria-pressed={lane==='relay'} onClick={()=>{setLane('relay');setTypeFilter('all');setTopic('all');setBrowseSubject(FOUNDATIONS);setSelectedCase(null);}}>Relay</button>
       <button type="button" className="cc-link" onClick={()=>setFollowClass(v=>!v)}>{followClass?'Change grade or subject':'Use this class'}</button>
     </div>
-    {!followClass&&<section className="cc-panel" style={{padding:'8px 16px',marginBottom:18}}><div className="cc-toolbar" style={{margin:0}}><select aria-label="Grade" value={browseGrade} onChange={e=>{setBrowseGrade(e.target.value);resetBrowse()}}>{['3','4','5'].map(g=><option key={g} value={g}>Grade {g}</option>)}</select><div className="cc-row">{Object.keys(SUBJECTS).map(subject=><button key={subject} className={'cc-btn '+(browseSubject===subject?'':'secondary')} style={{borderBottom:`3px solid ${SUBJECTS[subject].color}`,background:browseSubject===subject?SUBJECTS[subject].ink:'#fff'}} aria-pressed={browseSubject===subject} onClick={()=>{setBrowseSubject(subject);resetBrowse()}}>{subject}</button>)}</div><input className="cc-input cc-search" aria-label="Search topics or standards" placeholder="Search topics or standards" value={caseSearch} onChange={e=>{setCaseSearch(e.target.value);setLimit(12)}}/></div></section>}
-    {lane==='standard'&&<div className="cc-classes" style={{justifyContent:'flex-start',marginBottom:16}}><button type="button" aria-pressed={topic==='all'} onClick={()=>{setTopic('all');setSelectedCase(null);}}>All standards</button>{topics.map(t=><button key={t} type="button" aria-pressed={topic===t} onClick={()=>{setTopic(t);setSelectedCase(null);setLimit(12);}}>{t}</button>)}</div>}
+    {!followClass&&<section className="cc-panel" style={{padding:'8px 16px',marginBottom:18}}><div className="cc-toolbar" style={{margin:0}}><select aria-label="Grade" value={browseGrade} onChange={e=>{setBrowseGrade(e.target.value);resetBrowse()}}>{['3','4','5'].map(g=><option key={g} value={g}>Grade {g}</option>)}</select><div className="cc-row">{Object.keys(SUBJECTS).map(subject=><button key={subject} className={'cc-btn '+(browseSubject===subject?'':'secondary')} style={{borderBottom:`3px solid ${SUBJECTS[subject].color}`,background:browseSubject===subject?SUBJECTS[subject].ink:'#fff'}} aria-pressed={browseSubject===subject} onClick={()=>{setBrowseSubject(subject);resetBrowse()}}>{subject}</button>)}</div></div></section>}
+    {lane==='standard'&&<div className="cc-toolbar cc-browse-filters"><label className="cc-field">Standard<select value={topic} onChange={e=>{setTopic(e.target.value);setSelectedCase(null);setLimit(12)}}><option value="all">All standards</option>{topics.map(t=><option key={t} value={t}>{t}</option>)}</select></label><label className="cc-field cc-search">Find an activity<input className="cc-input" type="search" placeholder="Search a topic, title, or standard" value={caseSearch} onChange={e=>{setCaseSearch(e.target.value);setLimit(12)}}/></label></div>}
     {lane==='standard'&&topic!=='all'&&<Link className="cc-panel cc-frame" style={{display:'block',marginBottom:16,...subjectStyle(browseSubject)}} href={`/teacher/assign/briefing?classId=${assignClassId||''}`}><div className="cc-eyebrow cc-subject-label">Briefing · Teach first</div><h2 style={{margin:'6px 0'}}>Teach {topic} first</h2><p className="cc-muted">Students see it under Briefings, not Missions.</p></Link>}
     {lane==='relay'&&<div className="cc-gallery" style={{marginBottom:18}}>{RELAY_SPECIAL_TILES.map(t=><button key={t.key} type="button" className="cc-activity cc-frame" style={subjectStyle('ELAR')} aria-pressed={browseSubject===t.key} onClick={()=>{setBrowseSubject(t.key);setTopic('all');setSelectedCase(null);}}><div><div className="cc-eyebrow cc-subject-label">Relay Station</div><h3>{t.title}</h3><p>{t.blurb}</p></div></button>)}<Link className="cc-activity cc-frame" style={subjectStyle('ELAR')} href="/teacher/typing-texts"><div><div className="cc-eyebrow cc-subject-label">Relay Station</div><h3>Custom typing text</h3><p>A passage you paste for this class.</p></div></Link></div>}
-    <div className="cc-two" style={{gridTemplateColumns:undefined}}><section className="cc-panel"><h2>{topic==='all'?'Choose a learning experience':topic}</h2><p className="cc-muted">{browseSubject} · Grade {browseGrade} · {filteredCases.length} activities</p><div className="cc-gallery">{filteredCases.slice(0,limit).map(c=>{const e=engineInfo(c.engine);return <button key={c.standard} className="cc-activity cc-frame" style={subjectStyle(c.subject)} aria-pressed={selectedCase?.standard===c.standard} onClick={()=>{setSelectedCase(c);setSelectedChallenge(CHALLENGE_TYPES.find(t=>matchesChallenge(c.engine,t.key)))}}><img src={e.image} alt="" onError={thumbFallback}/><div><div className="cc-eyebrow cc-subject-label">{e.label}</div><h3>{c.title}</h3><p>{c.learning_target||e.description}</p><small>{missionMapTeksCode(c.standard)||c.standard}</small></div></button>})}</div>{casesLoading?<Empty>Loading activities…</Empty>:!filteredCases.length&&<Empty>No activities match these filters. Try another topic, grade, or format.</Empty>}{filteredCases.length>limit&&<button className="cc-btn secondary" style={{marginTop:18}} onClick={()=>setLimit(limit+12)}>Show more activities</button>}</section>
+    <div className="cc-two" style={{gridTemplateColumns:undefined}}><section className="cc-panel"><h2>{topic==='all'?'Choose a learning experience':topic}</h2><p className="cc-muted">{browseSubject} · Grade {browseGrade} · {filteredCases.length} activities</p><div className="cc-gallery cc-compact-gallery">{filteredCases.slice(0,limit).map(c=>{const e=engineInfo(c.engine);return <button key={c.standard} className="cc-activity cc-frame" style={subjectStyle(c.subject)} aria-pressed={selectedCase?.standard===c.standard} onClick={()=>{setSelectedCase(c);setSelectedChallenge(CHALLENGE_TYPES.find(t=>matchesChallenge(c.engine,t.key)))}}><img src={e.image} alt="" onError={thumbFallback}/><div><div className="cc-eyebrow cc-subject-label">{e.label}</div><h3>{c.title}</h3><p>{c.learning_target||e.description}</p><small>{missionMapTeksCode(c.standard)||c.standard}</small></div></button>})}</div>{casesLoading?<Empty>Loading activities…</Empty>:!filteredCases.length&&<Empty>No activities match these filters. Try another topic, grade, or format.</Empty>}{filteredCases.length>limit&&<button className="cc-btn secondary" style={{marginTop:18}} onClick={()=>setLimit(limit+12)}>Show more activities</button>}</section>
     <aside className="cc-stack">{selectedCase?<section className="cc-panel cc-frame" style={subjectStyle(selectedCase.subject)}><div className="cc-eyebrow cc-subject-label">SELECTED · {engineInfo(selectedCase.engine).label}</div><h2>{selectedCase.title}</h2><p className="cc-muted">{missionMapTeksLabel(selectedCase.standard)||selectedCase.standard}</p><img className="cc-preview-image" src={engineInfo(selectedCase.engine).image} alt="" onError={thumbFallback}/><h3>What students will do</h3><p className="cc-muted">{selectedCase.lesson_summary||engineInfo(selectedCase.engine).description}</p>{selectedCase.learning_target&&<div className="cc-panel" style={{background:'#f5f0fc',padding:14}}>{selectedCase.learning_target}</div>}{selectedCase.misconception_note&&<details><summary>Teaching notes</summary><p className="cc-muted">{selectedCase.misconception_note}</p></details>}
     <div className="cc-assignment-form"><h3>Assign to {targetClass?.name||'your class'}</h3>
                   {assignClassId && (
