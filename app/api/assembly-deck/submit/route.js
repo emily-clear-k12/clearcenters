@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { supabaseAdmin } from "../../../../lib/supabaseAdmin";
 import { callClaude, extractJSON } from "../../../../lib/anthropic";
-import { getAssemblyDeckServerCase, gradeRound, gradeRejections, gradeAssembly, gradeCase, gradePinpoint, gradeQuickCheck, trapSentences, trapVerdict, requesterReply } from "../../../../lib/cases/assembly-deck/index.server";
+import { getAssemblyDeckServerCase, gradeRound, gradeRejections, gradeAssembly, gradeCase, gradePinpoint, gradeQuickCheck, gradeWhatIf, gradeRepair, trapSentences, trapVerdict, requesterReply } from "../../../../lib/cases/assembly-deck/index.server";
 import { getAssemblyDeckPublicCase, getRound, CHALLENGE } from "../../../../lib/cases/assembly-deck/index.public";
 
 // Assembly Deck (design doc §6). Four kinds of traffic:
@@ -25,7 +25,7 @@ import { getAssemblyDeckPublicCase, getRound, CHALLENGE } from "../../../../lib/
 // The keys never leave this file's imports, so a student reading the page
 // source sees the sentences but never which slot they belong in.
 
-const CRYSTALS = { base: 3, cleanBuild: 2, cleanRejects: 2, cleanAssembly: 1, trapCaught: 2, pinpoint: 1, quickCheck: 1 };
+const CRYSTALS = { base: 3, cleanBuild: 2, cleanRejects: 2, cleanAssembly: 1, trapCaught: 2, pinpoint: 1, quickCheck: 1, whatIf: 1, repair: 1 };
 
 async function gradeExplanation(serverCase, publicCase, text, grade) {
   const rubric = (serverCase.mustInclude || []).map((m) => "  - " + m).join("\n");
@@ -159,6 +159,18 @@ export async function POST(request) {
     return NextResponse.json({ results: g.results, correct: g.correct, total: g.total, perfect: g.perfect, note: g.perfect ? serverCase.assemblyNote || null : null });
   }
 
+  if (action === "whatIf") {
+    const g = gradeWhatIf(serverCase, body.whatIfChoiceId);
+    if (!g) return NextResponse.json({ error: "This case has no what-if." }, { status: 404 });
+    return NextResponse.json({ correct: g.correct, why: g.why, key: g.key, keyWhy: g.keyWhy, walk: g.walk, walkLine: g.walkLine });
+  }
+
+  if (action === "repair") {
+    const g = gradeRepair(serverCase, body.repairText, body.attempt);
+    if (!g) return NextResponse.json({ error: "This case has no leftover to repair." }, { status: 404 });
+    return NextResponse.json(g);
+  }
+
   // --- submit: regrade everything from the client's boards, then one AI call
   const graded = gradeCase(serverCase, {
     boards: boards || {},
@@ -169,6 +181,8 @@ export async function POST(request) {
   });
   const ai = await gradeExplanation(serverCase, publicCase, explanation, publicCase.grade);
   const attempts = Math.max(1, Math.floor(Number(attempt) || 1));
+  const whatIf = gradeWhatIf(serverCase, body.whatIfChoiceId);
+  const repair = gradeRepair(serverCase, body.repairText, 1);
   const crystals =
     CRYSTALS.base +
     (graded.buildPerfect && attempts <= publicCase.rounds.length ? CRYSTALS.cleanBuild : 0) +
@@ -177,6 +191,8 @@ export async function POST(request) {
     (trapCaught ? CRYSTALS.trapCaught : 0) +
     (graded.pinpoint && graded.pinpoint.correct ? CRYSTALS.pinpoint : 0) +
     (graded.quickCheck && graded.quickCheck.correct ? CRYSTALS.quickCheck : 0) +
+    (whatIf && whatIf.correct ? CRYSTALS.whatIf : 0) +
+    (repair && repair.correct ? CRYSTALS.repair : 0) +
     (challenge ? CHALLENGE.bonusCrystals : 0);
   const reply = requesterReply(serverCase, graded, trapCaught);
 
@@ -203,6 +219,8 @@ export async function POST(request) {
       crystalsEarned: crystals,
       challenge: !!challenge,
       trapCaught: !!trapCaught,
+      whatIf: whatIf ? { choiceId: whatIf.choiceId, correct: whatIf.correct } : null,
+      repair: repair ? { text: body.repairText || "", correct: repair.correct } : null,
       requesterTier: reply ? reply.tier : null,
     },
     submitted_at: new Date().toISOString(),
@@ -245,6 +263,8 @@ export async function POST(request) {
     assemblyScore: { correct: graded.assembly.correct, total: graded.assembly.total },
     pinpoint: graded.pinpoint ? { correct: graded.pinpoint.correct } : null,
     quickCheck: graded.quickCheck ? { correct: graded.quickCheck.correct } : null,
+    whatIf: whatIf ? { correct: whatIf.correct } : null,
+    repair: repair ? { correct: repair.correct } : null,
     assemblyNote: serverCase.assemblyNote || null,
     reply,
     challenge: !!challenge,
