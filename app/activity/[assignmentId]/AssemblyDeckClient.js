@@ -1163,28 +1163,31 @@ function PondBoard({ chain, locked, scenario, cutStep, guess }) {
   if (!chain) return null;
   const testing = scenario === "cut-test";
   const broken = !testing && locked.includes(chain.breakOn);
-  const cutAt = chain.links.findIndex((link) => link.id === "plants");
+  const cutId = chain.cutId || "plants";
+  const sourceId = chain.sourceId || "sun";
+  const stay = new Set(chain.stayOn || [sourceId, cutId]);
+  const cutAt = chain.links.findIndex((link) => link.id === cutId);
+  const cutPlan = chain.cutDark || chain.links.slice(Math.max(cutAt, 0) + 1).map((link) => link.id);
   function lit(link, index) {
     const earned = testing || locked.includes(link.on);
     if (!earned) return false;
-    if (broken && link.breakLabel && link.id !== "plants" && link.id !== "sun") return false;
-    if (testing && cutStep >= 0 && index >= cutAt) {
-      if (index === cutAt) return false;
-      if (link.id === "minnows") return cutStep < 1;
-      if (link.id === "herons") return cutStep < 2;
-      return cutStep < 1;
+    if (broken && link.breakLabel && !stay.has(link.id)) return false;
+    if (testing && cutStep >= 0) {
+      if (link.id === cutId) return false;
+      const at = cutPlan.indexOf(link.id);
+      if (at >= 0) return cutStep < (at + 1);
     }
     return true;
   }
-  const status = testing && cutStep >= 2
-    ? "Plants cut. Minnows dark. Herons dark."
+  const status = testing && cutStep >= cutPlan.length
+    ? (chain.cutDone || "Everything past the cut went dark.")
     : testing && cutStep >= 0
-    ? "Cutting the plants…"
+    ? (chain.cutting || "Cutting…")
     : testing
-    ? "Line is live. Mark who you think goes dark."
+    ? (chain.liveLine || "The line is live. Mark what you think goes dark.")
     : broken
     ? chain.breakLine
-    : "Power moves along the line as each paragraph locks.";
+    : (chain.fillLine || "The line fills in as each paragraph locks.");
   return (
     <div style={{ width: "100%", maxWidth: 900, background: "rgba(255,255,255,0.92)", border: "1px solid rgba(14,154,168,0.32)", borderRadius: 22, padding: "14px 16px 16px", boxShadow: "0 12px 30px rgba(14,120,140,0.12)" }}>
       <div style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "baseline", flexWrap: "wrap" }}>
@@ -1266,7 +1269,7 @@ function RepairRound({ publicCase, onDone, onPick }) {
       <h2 style={{ fontSize: 22, margin: "6px 0 12px" }}>{look.prompt}</h2>
       <img src={look.image} alt="Sun, pond plants, minnows, and a heron, with arrows from one to the next." style={{ width: "100%", borderRadius: 16, border: "3px solid rgba(14,154,168,0.35)", marginBottom: 8 }} />
       <div style={{ display: "flex", justifyContent: "space-between", gap: 8, fontSize: 13, fontWeight: 800, color: "#0E7C8A", marginBottom: 14 }}>
-        <span>Sun</span><span>Plants</span><span>Minnows</span><span>Heron</span>
+        {((publicCase.chain && publicCase.chain.links) || []).map((link) => <span key={link.id}>{link.label}</span>)}
       </div>
       <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
         {look.choices.map((item) => {
@@ -1305,7 +1308,18 @@ function RepairRound({ publicCase, onDone, onPick }) {
   );
 }
 
-function guessId(marks, nobody) {
+function guessId(marks, nobody, choices) {
+  const list = choices || [];
+  if (list.some((c) => c.nobody || Array.isArray(c.marks))) {
+    if (nobody) {
+      const none = list.find((c) => c.nobody);
+      return none ? none.id : "other";
+    }
+    const set = [...marks].sort().join("|");
+    const hit = list.find((c) => Array.isArray(c.marks) && [...c.marks].sort().join("|") === set);
+    if (hit) return hit.id;
+    return marks.length ? "other" : null;
+  }
   if (nobody) return "c";
   const has = (id) => marks.includes(id);
   if (has("minnows") && has("herons") && !has("plants") && !has("sun")) return "a";
@@ -1336,7 +1350,7 @@ function WhatIfRound({ publicCase, onDone, setChoice, onMark, onCut, embedded })
   }
 
   async function cut() {
-    const id = guessId(marks, nobody);
+    const id = guessId(marks, nobody, publicCase.whatIf.choices);
     setChoice(id);
     setBusy(true);
     setErr(null);
@@ -1358,7 +1372,10 @@ function WhatIfRound({ publicCase, onDone, setChoice, onMark, onCut, embedded })
     setBusy(false);
   }
 
-  const targets = (publicCase.chain && publicCase.chain.links || []).filter((link) => link.id !== "sun");
+  const choices = (publicCase.whatIf && publicCase.whatIf.choices) || [];
+  const markIds = new Set(choices.flatMap((item) => item.marks || []));
+  const targets = ((publicCase.chain && publicCase.chain.links) || []).filter((link) => (markIds.size ? markIds.has(link.id) : link.id !== (publicCase.chain.sourceId || "sun")));
+  const showNobody = choices.some((item) => item.nobody) || !markIds.size;
   return (
     <Panel>
       <div style={{ fontSize: 12, letterSpacing: 2, color: THEME.teal, fontWeight: 700 }}>{embedded ? "2 · CUT THE PLANTS" : "CUT THE LINE"}</div>
@@ -1373,9 +1390,11 @@ function WhatIfRound({ publicCase, onDone, setChoice, onMark, onCut, embedded })
             </button>
           );
         })}
+        {showNobody && (
         <button disabled={!!feedback} onClick={() => { if (feedback) return; setNobody(true); setMarks([]); if (onMark) onMark([]); }} style={{ background: nobody ? "rgba(224,163,34,0.18)" : THEME.chip, border: `1px solid ${nobody ? THEME.cursor : "transparent"}`, borderRadius: 999, padding: "8px 14px", color: THEME.text, fontWeight: 800, fontFamily: "inherit", cursor: feedback ? "default" : "pointer" }}>
           Nobody
         </button>
+        )}
       </div>
       {feedback && (
         <div style={{ background: feedback.correct ? "rgba(57,217,122,0.12)" : "#F4FBFF", border: `1px solid ${feedback.correct ? THEME.done : THEME.border}`, borderRadius: 12, padding: "12px 14px", fontSize: 14.5, lineHeight: 1.65, marginBottom: 14 }}>
@@ -1387,7 +1406,7 @@ function WhatIfRound({ publicCase, onDone, setChoice, onMark, onCut, embedded })
       {err && <div style={{ color: THEME.error, fontSize: 13, marginBottom: 10 }}>{err}</div>}
       {!feedback ? (
         <button onClick={cut} disabled={!ready || busy} style={btn(ready ? THEME.error : THEME.done, !ready || busy)}>
-          {busy ? "Cutting…" : "Cut the plants"}
+          {busy ? "Cutting…" : (publicCase.whatIf.switch || "Cut the plants")}
         </button>
       ) : !embedded ? (
         <button onClick={onDone} style={btn(THEME.violet)}>One more thing →</button>
@@ -1461,6 +1480,14 @@ export default function AssemblyDeckClient({ assignmentId, caseStandard, publicC
   const [caseFileOpen, setCaseFileOpen] = useState(false);
   const [locked, setLocked] = useState(() => (alreadySubmitted ? publicCase.rounds.map((r) => r.id) : []));
   const [cutStep, setCutStep] = useState(-1);
+  function playCut() {
+    const chain = publicCase.chain || {};
+    const links = chain.links || [];
+    const cutAt = links.findIndex((link) => link.id === (chain.cutId || "plants"));
+    const plan = chain.cutDark || links.slice(Math.max(cutAt, 0) + 1).map((link) => link.id);
+    setCutStep(0);
+    plan.forEach((_, i) => setTimeout(() => setCutStep(i + 1), 650 * (i + 1)));
+  }
   const [guess, setGuess] = useState([]);
   const [whatIfChoice, setWhatIfChoice] = useState(null);
   const [lookChoice, setLookChoice] = useState(null);
@@ -1558,11 +1585,7 @@ export default function AssemblyDeckClient({ assignmentId, caseStandard, publicC
         challenge={challenge}
         setChoice={setWhatIfChoice}
         onMark={setGuess}
-        onCut={() => {
-          setCutStep(0);
-          setTimeout(() => setCutStep(1), 650);
-          setTimeout(() => setCutStep(2), 1300);
-        }}
+        onCut={playCut}
         setTrapCaught={setTrapCaught}
         pinpoint={pinpoint}
         setPinpoint={setPinpoint}
@@ -1577,11 +1600,7 @@ export default function AssemblyDeckClient({ assignmentId, caseStandard, publicC
         publicCase={publicCase}
         setChoice={setWhatIfChoice}
         onMark={setGuess}
-        onCut={() => {
-          setCutStep(0);
-          setTimeout(() => setCutStep(1), 650);
-          setTimeout(() => setCutStep(2), 1300);
-        }}
+        onCut={playCut}
         onDone={() => setPhase("trap")}
       />
     );
