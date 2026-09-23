@@ -179,7 +179,7 @@ export default function MessagesPage() {
         .gc-mode { cursor: pointer; border: none; font-family: 'Inter', sans-serif; }
       `}</style>
 
-      <TeacherHUD title="Messages" subtitle="Announcements & direct messages" accent={ACCENT} teacherEmail={teacherEmail} />
+      <TeacherHUD title="Messages" subtitle="Notes and rewards" accent={ACCENT} teacherEmail={teacherEmail} actions={<a className="cc-btn" href="/teacher/badges">Rewards</a>} />
 
       <main style={{ flex: 1, padding: "28px 36px 60px", display: "flex", justifyContent: "center" }}>
         <div style={{ width: "100%", maxWidth: 720 }}>
