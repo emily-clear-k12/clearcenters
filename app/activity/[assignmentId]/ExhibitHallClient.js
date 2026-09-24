@@ -1,21 +1,22 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useState } from "react";
 import "./exhibit-hall.css";
 
-function CardFace({ card, tall }) {
+function CardFace({ card }) {
   if (card.kind === "text") return <p className="ms-quote">{card.text}</p>;
   if (card.kind === "graph" || card.kind === "chart") {
     const bars = card.bars || [];
     return (
-      <div className={tall ? "ms-graph is-tall" : "ms-graph"}>
+      <div className="ms-graph is-tall">
         {bars.map((bar, index) => (
           <div key={bar.label}><span style={{ height: bar.height, background: index === 0 ? "#1aa7b5" : "#6d45c8" }} /><small>{bar.label}</small></div>
         ))}
       </div>
     );
   }
-  return <img src={card.image} alt="" style={tall ? { width: "100%", maxHeight: 280, objectFit: "cover", borderRadius: 12 } : undefined} />;
+  if (!card.image) return null;
+  return <img src={card.image} alt="" />;
 }
 
 export default function ExhibitHallClient({ assignmentId, publicCase, alreadySubmitted }) {
@@ -25,7 +26,6 @@ export default function ExhibitHallClient({ assignmentId, publicCase, alreadySub
   const cardBy = (id) => cards.find((card) => card.id === id);
 
   const [step, setStep] = useState(alreadySubmitted ? "done" : "build");
-  const [picked, setPicked] = useState(null);
   const [wall, setWall] = useState([null, null, null, null]);
   const [bin, setBin] = useState(null);
   const [reason, setReason] = useState(null);
@@ -43,12 +43,8 @@ export default function ExhibitHallClient({ assignmentId, publicCase, alreadySub
   const [daysFalse, setDaysFalse] = useState(null);
   const [notePick, setNotePick] = useState(null);
   const [stamps, setStamps] = useState({});
-  const [pending, setPending] = useState(null);
-  const [status, setStatus] = useState("Open a card and stamp it before you use it.");
+  const [status, setStatus] = useState("Open a card. The picture is inside.");
   const [busy, setBusy] = useState(false);
-  const dragRef = useRef(null);
-  const skipClick = useRef(false);
-  const [ghost, setGhost] = useState(null);
 
   const used = new Set([...wall.filter(Boolean), bin].filter(Boolean));
   const loose = cards.filter((card) => !used.has(card.id));
@@ -83,14 +79,12 @@ export default function ExhibitHallClient({ assignmentId, publicCase, alreadySub
       setBin(null);
       setReason(null);
     }
-    setPicked(null);
   }
 
   function putInBin(id) {
     setWall((prev) => prev.map((item) => (item === id ? null : item)));
     setBin(id);
     setReason(null);
-    setPicked(null);
   }
 
   function putAway(id) {
@@ -99,69 +93,32 @@ export default function ExhibitHallClient({ assignmentId, publicCase, alreadySub
       setBin(null);
       setReason(null);
     }
-    setPicked(null);
   }
 
   function trySpot(id, slot) {
     if (!stamps[id]) {
-      setPending({ id, target: slot });
       setLook(id);
       setStatus("Look at it and choose what kind of source it is.");
       return;
     }
     putOnSpot(id, slot);
+    setLook(null);
   }
 
   function tryBin(id) {
     if (!stamps[id]) {
-      setPending({ id, target: "bin" });
       setLook(id);
       setStatus("Look at it and choose what kind of source it is.");
       return;
     }
     putInBin(id);
+    setLook(null);
   }
 
   function chooseStamp(kind) {
     if (!look) return;
-    const id = look;
-    const drop = pending;
-    setStamps((prev) => ({ ...prev, [id]: kind }));
-    setLook(null);
-    setPending(null);
-    if (drop?.id === id) {
-      if (drop.target === "bin") putInBin(id);
-      else putOnSpot(id, drop.target);
-      return;
-    }
-    setPicked(id);
-  }
-
-  function onPointerDown(event, id) {
-    if (event.button !== 0) return;
-    dragRef.current = { id, x: event.clientX, y: event.clientY, moved: false };
-    event.currentTarget.setPointerCapture(event.pointerId);
-  }
-
-  function onPointerMove(event) {
-    const drag = dragRef.current;
-    if (!drag) return;
-    if (!drag.moved && Math.hypot(event.clientX - drag.x, event.clientY - drag.y) < 8) return;
-    drag.moved = true;
-    setGhost({ id: drag.id, x: event.clientX, y: event.clientY });
-  }
-
-  function onPointerUp(event) {
-    const drag = dragRef.current;
-    dragRef.current = null;
-    setGhost(null);
-    if (!drag?.moved) return;
-    skipClick.current = true;
-    const under = document.elementFromPoint(event.clientX, event.clientY);
-    const drop = under?.closest("[data-drop]")?.dataset.drop;
-    if (drop === "bin") tryBin(drag.id);
-    else if (drop === "storage") putAway(drag.id);
-    else if (drop?.startsWith("spot-")) trySpot(drag.id, Number(drop.slice(5)));
+    setStamps((prev) => ({ ...prev, [look]: kind }));
+    setStatus("Now choose where it goes.");
   }
 
   async function check() {
@@ -190,24 +147,10 @@ export default function ExhibitHallClient({ assignmentId, publicCase, alreadySub
   function piece(id) {
     const card = cardBy(id);
     return (
-      <button
-        type="button"
-        className={picked === id ? "ms-piece is-on" : "ms-piece"}
-        onPointerDown={(event) => onPointerDown(event, id)}
-        onPointerMove={onPointerMove}
-        onPointerUp={onPointerUp}
-        onClick={() => {
-          if (skipClick.current) {
-            skipClick.current = false;
-            return;
-          }
-          setPicked(id);
-        }}
-      >
-        <CardFace card={card} />
+      <button type="button" className="ms-piece" onClick={() => setLook(id)}>
         <b>{card.title}</b>
         <span>{card.tag}</span>
-        {stamps[id] ? <span>{stamps[id]}</span> : null}
+        {stamps[id] ? <span>{stamps[id]}</span> : <span>Tap to open</span>}
       </button>
     );
   }
@@ -233,13 +176,10 @@ export default function ExhibitHallClient({ assignmentId, publicCase, alreadySub
           <div className="ms-layout">
             <section className="ms-panel">
               <h2>Storage room</h2>
-              <p className="ms-quiet">{loose.length} cards left. Open one and stamp it, then drag it to a spot.</p>
-              <div className="ms-cards" data-drop="storage">
+              <p className="ms-quiet">{loose.length} cards left. A card shows its name. Tap it to see the picture.</p>
+              <div className="ms-cards">
                 {loose.map((card) => (
-                  <div key={card.id}>
-                    {piece(card.id)}
-                    <button type="button" className="ms-ghost" onClick={() => setLook(card.id)}>Bigger</button>
-                  </div>
+                  <div key={card.id}>{piece(card.id)}</div>
                 ))}
               </div>
             </section>
@@ -248,13 +188,13 @@ export default function ExhibitHallClient({ assignmentId, publicCase, alreadySub
                 <h2>Your wall · one problem each</h2>
                 <div className="ms-wall">
                   {wall.map((id, index) => (
-                    <div key={spots[index].id} className={picked || ghost ? "ms-slot is-on" : "ms-slot"} data-drop={`spot-${index}`}>
+                    <div key={spots[index].id} className="ms-slot">
                       <b>{spots[index].label}</b>
-                      {id ? piece(id) : <button type="button" className="ms-ghost" onClick={() => picked && trySpot(picked, index)}>Empty spot</button>}
+                      {id ? piece(id) : <p className="ms-quiet">Empty spot</p>}
                     </div>
                   ))}
                 </div>
-                <div className={picked || ghost ? "ms-bin is-on" : "ms-bin"} data-drop="bin">
+                <div className="ms-bin">
                   <b>Not in this exhibit</b>
                   {bin ? piece(bin) : <p className="ms-quiet">Put one piece here that does not belong.</p>}
                   {bin && (
@@ -264,7 +204,7 @@ export default function ExhibitHallClient({ assignmentId, publicCase, alreadySub
                       ))}
                     </div>
                   )}
-                  {!bin && <button type="button" className="ms-ghost" onClick={() => picked && tryBin(picked)}>Put the chosen card here</button>}
+                  {!bin && <p className="ms-quiet">Open a card, then choose this if it does not belong.</p>}
                 </div>
               </section>
               <aside className="ms-panel ms-sam">
@@ -281,14 +221,14 @@ export default function ExhibitHallClient({ assignmentId, publicCase, alreadySub
             <p className="ms-sentence">This exhibit shows <input aria-label="What the exhibit shows" value={plaque} onChange={(event) => setPlaque(event.target.value)} />.</p>
             <p className="ms-sentence">The two pieces a visitor should look at first are <input aria-label="First piece" value={best.one} onChange={(event) => setBest((prev) => ({ ...prev, one: event.target.value }))} /> and <input aria-label="Second piece" value={best.two} onChange={(event) => setBest((prev) => ({ ...prev, two: event.target.value }))} />.</p>
             <p className="ms-kicker">2 · The labels</p>
-            <div className="ms-wall">
+            <div className="ms-labels">
               {wall.map((id, index) => (
                 <div key={spots[index].id} className="ms-slot">
                   <b>{spots[index].label}</b>
                   {id ? (
                     <>
-                      <CardFace card={cardBy(id)} />
-                      <span>{cardBy(id).title}</span>
+                      <div className="ms-frame"><CardFace card={cardBy(id)} /></div>
+                      <strong>{cardBy(id).title}</strong>
                       <p className="ms-sentence">I notice <input aria-label={`What you notice on ${cardBy(id).title}`} value={lines[id]?.what || ""} onChange={(event) => setLines((prev) => ({ ...prev, [id]: { what: event.target.value, why: prev[id]?.why || "" } }))} />.</p>
                       <p className="ms-sentence">This helps because <input aria-label={`Why ${cardBy(id).title} helps`} value={lines[id]?.why || ""} onChange={(event) => setLines((prev) => ({ ...prev, [id]: { what: prev[id]?.what || "", why: event.target.value } }))} />.</p>
                     </>
@@ -300,8 +240,8 @@ export default function ExhibitHallClient({ assignmentId, publicCase, alreadySub
             <div className="ms-bin">
               {bin ? (
                 <>
-                  <CardFace card={cardBy(bin)} />
-                  <span>{cardBy(bin).title}</span>
+                  <div className="ms-frame"><CardFace card={cardBy(bin)} /></div>
+                  <strong>{cardBy(bin).title}</strong>
                   <p className="ms-sentence">Someone might think <input aria-label="What someone might think" value={fooled} onChange={(event) => setFooled(event.target.value)} />.</p>
                   <p className="ms-sentence">This stays out because <input aria-label="Why it stays out" value={leftOut} onChange={(event) => setLeftOut(event.target.value)} />.</p>
                 </>
@@ -311,8 +251,8 @@ export default function ExhibitHallClient({ assignmentId, publicCase, alreadySub
               <>
                 <p className="ms-kicker">4 · Still in storage</p>
                 <div className="ms-bin">
-                  <CardFace card={heldCard} />
-                  <span>{heldCard.title}</span>
+                  <div className="ms-frame"><CardFace card={heldCard} /></div>
+                  <strong>{heldCard.title}</strong>
                   <p className="ms-sentence">I did not use this because <input aria-label="Why it stayed in storage" value={held} onChange={(event) => setHeld(event.target.value)} />.</p>
                 </div>
               </>
@@ -391,24 +331,35 @@ export default function ExhibitHallClient({ assignmentId, publicCase, alreadySub
           </div>
         </footer>
 
-        {ghost && (
-          <div className="ms-float" style={{ left: ghost.x, top: ghost.y }}>
-            <CardFace card={cardBy(ghost.id)} />
-            <b>{cardBy(ghost.id).title}</b>
-          </div>
-        )}
         {look && (
-          <div className="ms-look" onClick={() => { setLook(null); setPending(null); }}>
-            <div onClick={(event) => event.stopPropagation()}>
-              <CardFace card={cardBy(look)} tall />
+          <div className="ms-look" onClick={() => setLook(null)}>
+            <div className="ms-sheet" onClick={(event) => event.stopPropagation()}>
+              <CardFace card={cardBy(look)} />
               <h2>{cardBy(look).title}</h2>
               <p>{cardBy(look).tag}</p>
-              <p>What kind of source is this?</p>
-              <div className="ms-reasons">
-                {exhibit.stamps.map((kind) => (
-                  <button key={kind} type="button" aria-pressed={stamps[look] === kind} onClick={() => chooseStamp(kind)}>{kind}</button>
-                ))}
-              </div>
+              {step === "build" && (
+                <>
+                  <p>What kind of source is this?</p>
+                  <div className="ms-reasons">
+                    {exhibit.stamps.map((kind) => (
+                      <button key={kind} type="button" aria-pressed={stamps[look] === kind} onClick={() => chooseStamp(kind)}>{kind}</button>
+                    ))}
+                  </div>
+                  {stamps[look] && (
+                    <>
+                      <p>Where does it go?</p>
+                      <div className="ms-reasons">
+                        {spots.map((spot, index) => (
+                          <button key={spot.id} type="button" onClick={() => trySpot(look, index)}>{spot.label}</button>
+                        ))}
+                        <button type="button" onClick={() => tryBin(look)}>Not in this exhibit</button>
+                        <button type="button" onClick={() => { putAway(look); setLook(null); }}>Back to storage</button>
+                      </div>
+                    </>
+                  )}
+                </>
+              )}
+              <button type="button" className="ms-ghost" onClick={() => setLook(null)}>Close</button>
             </div>
           </div>
         )}
