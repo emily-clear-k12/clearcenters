@@ -35,7 +35,7 @@ export default async function BriefingsPage() {
     grade: b.grade,
     teks: b.teks,
     minutes: b.minutes,
-    art: b.art?.intel || null,
+    art: b.art?.intel || Object.values(b.art || {})[0] || null,
   }));
 
   return (
