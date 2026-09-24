@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
-import { supabaseAdmin } from "../../../../../lib/supabaseAdmin";
-import { getExhibitCase } from "../../../../../lib/cases/exhibit-hall/catalog";
-import { gradeExhibit } from "../../../../../lib/cases/exhibit-hall/index.server";
+import { supabaseAdmin } from "../../../../lib/supabaseAdmin";
+import { getExhibitCase } from "../../../../lib/cases/exhibit-hall/catalog";
+import { gradeExhibit } from "../../../../lib/cases/exhibit-hall/index.server";
 
 const REASON = {
   point: "Doesn't prove the point",
