@@ -1,0 +1,294 @@
+{
+  "id": "SS-4.6A-CL",
+  "subject": "Social Studies",
+  "grade": "Grade 4",
+  "title": "Far from the beach",
+  "teks": "4.6A",
+  "learningTarget": "I can tell which physical region of Texas a place is in.",
+  "lessonSummary": "Students sort Texas places into the Coastal Plains or the Mountains and Basins. The trap is going by how a place looks instead of where it is. Page 2 adds places in the other two regions.",
+  "trap": "Thinking the Coastal Plains is only land by the beach, and that any place with cliffs belongs in the mountains.",
+  "pages": [
+    {
+      "rule": "Sort by the region each place is in.",
+      "notThis": "A region is huge. One photo does not show the whole region.",
+      "groups": [
+        {
+          "id": "cp",
+          "label": "Coastal Plains"
+        },
+        {
+          "id": "mb",
+          "label": "Mountains and Basins"
+        }
+      ],
+      "items": [
+        {
+          "id": "galveston",
+          "label": "Galveston Island",
+          "clue": "Sandy beach",
+          "group": "cp",
+          "imageNote": "Photo of a sandy Gulf beach with low waves. No people, no text."
+        },
+        {
+          "id": "piney",
+          "label": "Piney Woods",
+          "clue": "Tall pine forest, far from the beach",
+          "group": "cp",
+          "imageNote": "Photo of a thick forest of tall pine trees in East Texas. No text."
+        },
+        {
+          "id": "houston",
+          "label": "Houston",
+          "clue": "Big city",
+          "group": "cp",
+          "imageNote": "Photo of the Houston skyline on a sunny day. No readable signs or text."
+        },
+        {
+          "id": "guadalupe",
+          "label": "Guadalupe Mountains",
+          "clue": "Highest point in Texas",
+          "group": "mb",
+          "imageNote": "Photo of the rocky cliffs of the Guadalupe Mountains. No text."
+        },
+        {
+          "id": "saltflat",
+          "label": "Salt flats in far West Texas",
+          "clue": "Flat and low",
+          "group": "mb",
+          "imageNote": "Photo of flat, white salt flats with mountains far in the background. No text."
+        },
+        {
+          "id": "elpaso",
+          "label": "El Paso",
+          "clue": "Big city",
+          "group": "mb",
+          "imageNote": "Photo of the El Paso skyline with brown mountains behind it. No readable signs or text."
+        }
+      ]
+    },
+    {
+      "rule": "Sort by the region each place is in. Some are in neither.",
+      "notThis": "Cliffs and canyons are not only in the mountains. Check where the place is.",
+      "groups": [
+        {
+          "id": "cp",
+          "label": "Coastal Plains"
+        },
+        {
+          "id": "mb",
+          "label": "Mountains and Basins"
+        },
+        {
+          "id": "neither",
+          "label": "Neither"
+        }
+      ],
+      "items": [
+        {
+          "id": "dallas",
+          "label": "Dallas",
+          "clue": "Hundreds of miles from the coast",
+          "group": "cp",
+          "imageNote": "Photo of the Dallas skyline. No readable signs or text."
+        },
+        {
+          "id": "corpus",
+          "label": "Corpus Christi",
+          "clue": "Port city",
+          "group": "cp",
+          "imageNote": "Photo of Corpus Christi's bayfront with boats. No readable signs or text."
+        },
+        {
+          "id": "davis",
+          "label": "Davis Mountains",
+          "clue": "Cool, green hills",
+          "group": "mb",
+          "imageNote": "Photo of the grassy, rolling Davis Mountains. No text."
+        },
+        {
+          "id": "bigbend",
+          "label": "Big Bend National Park",
+          "clue": "Next to the Rio Grande",
+          "group": "mb",
+          "imageNote": "Photo of desert mountains in Big Bend National Park. No people, no text."
+        },
+        {
+          "id": "paloduro",
+          "label": "Palo Duro Canyon",
+          "clue": "Tall red cliffs",
+          "group": "neither",
+          "imageNote": "Photo of the red and orange cliffs of Palo Duro Canyon. No people, no text."
+        },
+        {
+          "id": "ftworth",
+          "label": "Fort Worth",
+          "clue": "Right next to Dallas",
+          "group": "neither",
+          "imageNote": "Photo of the Fort Worth skyline. No readable signs or text."
+        }
+      ]
+    }
+  ],
+  "venn": {
+    "labels": [
+      {
+        "id": "cp",
+        "text": "Coastal Plains"
+      },
+      {
+        "id": "rio",
+        "text": "On the Rio Grande"
+      }
+    ],
+    "items": [
+      {
+        "id": "brownsville",
+        "label": "Brownsville",
+        "sets": [
+          "cp",
+          "rio"
+        ],
+        "imageNote": "Photo of a palm-lined street in Brownsville. No readable signs or text."
+      },
+      {
+        "id": "laredo",
+        "label": "Laredo",
+        "sets": [
+          "cp",
+          "rio"
+        ],
+        "imageNote": "Photo of Laredo beside the Rio Grande. No readable signs or text."
+      },
+      {
+        "id": "beaumont",
+        "label": "Beaumont",
+        "sets": [
+          "cp"
+        ],
+        "imageNote": "Photo of downtown Beaumont with green trees. No readable signs or text."
+      },
+      {
+        "id": "elpasoV",
+        "label": "El Paso",
+        "sets": [
+          "rio"
+        ],
+        "imageNote": "Photo of El Paso and the Rio Grande with mountains behind. No readable signs or text."
+      },
+      {
+        "id": "lubbock",
+        "label": "Lubbock",
+        "sets": [],
+        "imageNote": "Photo of flat farm fields near Lubbock. No text."
+      },
+      {
+        "id": "abilene",
+        "label": "Abilene",
+        "sets": [],
+        "imageNote": "Photo of downtown Abilene. No readable signs or text."
+      }
+    ],
+    "mc": {
+      "prompt": "Dallas is hundreds of miles from the beach. Why is it in the Coastal Plains?",
+      "choices": [
+        {
+          "id": "yes",
+          "text": "The Coastal Plains reaches far inland from the coast."
+        },
+        {
+          "id": "trap",
+          "text": "Because it is a big city, like Houston."
+        },
+        {
+          "id": "no",
+          "text": "Because it sits on the Rio Grande."
+        }
+      ],
+      "answer": "yes"
+    },
+    "multi": {
+      "prompt": "Choose all that are true about the Mountains and Basins.",
+      "choices": [
+        {
+          "id": "west",
+          "text": "It is in far West Texas."
+        },
+        {
+          "id": "high",
+          "text": "It has the highest point in Texas."
+        },
+        {
+          "id": "beach",
+          "text": "It has ocean beaches."
+        },
+        {
+          "id": "allmtn",
+          "text": "Every place in it is a mountain."
+        }
+      ],
+      "answers": [
+        "west",
+        "high"
+      ]
+    },
+    "inline": {
+      "before": "The card was about",
+      "after": ".",
+      "choices": [
+        {
+          "id": "right",
+          "text": "where each place is"
+        },
+        {
+          "id": "trap",
+          "text": "what each place looks like"
+        }
+      ],
+      "answer": "right"
+    }
+  },
+  "defs": [
+    [
+      {
+        "term": "Coastal Plains",
+        "text": "A large, mostly flat region in the east and south of Texas. It reaches far inland from the coast."
+      },
+      {
+        "term": "Mountains and Basins",
+        "text": "The region in far West Texas. It has mountains, with low, flat basins between them."
+      }
+    ],
+    [
+      {
+        "term": "Coastal Plains",
+        "text": "A large, mostly flat region in the east and south of Texas. It reaches far inland from the coast."
+      },
+      {
+        "term": "Mountains and Basins",
+        "text": "The region in far West Texas. It has mountains, with low, flat basins between them."
+      },
+      {
+        "term": "Neither",
+        "text": "It is in one of the other two regions: the Great Plains or the North Central Plains."
+      }
+    ],
+    [
+      {
+        "term": "Coastal Plains",
+        "text": "A large, mostly flat region in the east and south of Texas. It reaches far inland from the coast."
+      },
+      {
+        "term": "On the Rio Grande",
+        "text": "The place sits on the river that forms the border between Texas and Mexico."
+      },
+      {
+        "term": "Center",
+        "text": "Both are true."
+      },
+      {
+        "term": "Outside",
+        "text": "Neither is true."
+      }
+    ]
+  ]
+}

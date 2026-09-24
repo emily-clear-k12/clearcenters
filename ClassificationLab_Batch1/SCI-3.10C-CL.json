@@ -1,0 +1,295 @@
+{
+  "id": "SCI-3.10C-CL",
+  "subject": "Science",
+  "grade": "Grade 3",
+  "title": "Fast or slow",
+  "teks": "3.10C",
+  "learningTarget": "I can tell a fast change to the land from a slow one.",
+  "lessonSummary": "Students sort changes to Earth's surface by how fast they happen, not by how big they are. Page 2 adds something that does not change the land at all.",
+  "trap": "Sorting by size: a giant canyon feels like a fast change, and a small landslide feels slow.",
+  "pages": [
+    {
+      "rule": "Sort by how fast the land changes.",
+      "notThis": "Big does not mean fast. Think about time.",
+      "groups": [
+        {
+          "id": "fast",
+          "label": "Fast change"
+        },
+        {
+          "id": "slow",
+          "label": "Slow change"
+        }
+      ],
+      "items": [
+        {
+          "id": "quake",
+          "label": "Earthquake",
+          "clue": "Only a small crack",
+          "group": "fast",
+          "imageNote": "Photo of a paved road with a crack from an earthquake. No people, no text."
+        },
+        {
+          "id": "volcano",
+          "label": "Volcano erupts",
+          "clue": "Hot, glowing lava",
+          "group": "fast",
+          "imageNote": "Photo of a volcano with red lava flowing down its side. No text."
+        },
+        {
+          "id": "landslide",
+          "label": "Small landslide",
+          "clue": "Only a little dirt moves",
+          "group": "fast",
+          "imageNote": "Photo of a small pile of dirt and rocks that slid down a hillside onto a trail. No people, no text."
+        },
+        {
+          "id": "canyon",
+          "label": "River makes a canyon",
+          "clue": "A giant hole in the land",
+          "group": "slow",
+          "imageNote": "Photo of a deep canyon with a river at the bottom. No text."
+        },
+        {
+          "id": "windrock",
+          "label": "Wind wears down a rock",
+          "clue": "It makes a cool shape",
+          "group": "slow",
+          "imageNote": "Photo of a desert rock shaped into an arch or odd shape by wind. No text."
+        },
+        {
+          "id": "cliff",
+          "label": "Waves wear away a cliff",
+          "clue": "Waves crash every day",
+          "group": "slow",
+          "imageNote": "Photo of ocean waves hitting the bottom of a rocky cliff. No text."
+        }
+      ]
+    },
+    {
+      "rule": "Sort by how fast the land changes. Some do not change it.",
+      "notThis": "Water, wind, and sky are not the rule. Time is.",
+      "groups": [
+        {
+          "id": "fast",
+          "label": "Fast change"
+        },
+        {
+          "id": "slow",
+          "label": "Slow change"
+        },
+        {
+          "id": "neither",
+          "label": "Neither"
+        }
+      ],
+      "items": [
+        {
+          "id": "flood",
+          "label": "Flood",
+          "clue": "It is just water",
+          "group": "fast",
+          "imageNote": "Photo of a muddy river spilling over its banks onto a field. No people, no text."
+        },
+        {
+          "id": "sinkhole",
+          "label": "Sinkhole opens",
+          "clue": "A round hole in a yard",
+          "group": "fast",
+          "imageNote": "Photo of a round sinkhole in a grassy yard, fenced off. No people, no text."
+        },
+        {
+          "id": "rockfall",
+          "label": "Rock falls off a cliff",
+          "clue": "Just one rock",
+          "group": "fast",
+          "imageNote": "Photo of one large boulder that has fallen at the bottom of a cliff. No text."
+        },
+        {
+          "id": "roots",
+          "label": "Roots crack a rock",
+          "clue": "Plants are soft",
+          "group": "slow",
+          "imageNote": "Photo of tree roots growing through a crack in a big rock. No text."
+        },
+        {
+          "id": "dune",
+          "label": "Sand dune moves",
+          "clue": "Wind blows every day",
+          "group": "slow",
+          "imageNote": "Photo of tall sand dunes with wind ripples. No people, no text."
+        },
+        {
+          "id": "clouds",
+          "label": "Dark clouds roll in",
+          "clue": "The sky changes fast",
+          "group": "neither",
+          "imageNote": "Photo of dark storm clouds over a flat field. No text."
+        }
+      ]
+    }
+  ],
+  "venn": {
+    "labels": [
+      {
+        "id": "fast",
+        "text": "Changes land fast"
+      },
+      {
+        "id": "water",
+        "text": "Moving water does it"
+      }
+    ],
+    "items": [
+      {
+        "id": "floodV",
+        "label": "Flood washes out a road",
+        "sets": [
+          "fast",
+          "water"
+        ],
+        "imageNote": "Photo of a country road with a section washed away by floodwater. No people, no text."
+      },
+      {
+        "id": "quakeV",
+        "label": "Earthquake",
+        "sets": [
+          "fast"
+        ],
+        "imageNote": "Photo of a cracked, uneven sidewalk after an earthquake. No people, no text."
+      },
+      {
+        "id": "volcanoV",
+        "label": "Volcano erupts",
+        "sets": [
+          "fast"
+        ],
+        "imageNote": "Photo of a volcano with smoke and lava. No text."
+      },
+      {
+        "id": "canyonV",
+        "label": "River carves a canyon",
+        "sets": [
+          "water"
+        ],
+        "imageNote": "Photo of a winding river deep inside a canyon. No text."
+      },
+      {
+        "id": "beachV",
+        "label": "Waves shape a beach",
+        "sets": [
+          "water"
+        ],
+        "imageNote": "Photo of waves washing onto a sandy beach. No people, no text."
+      },
+      {
+        "id": "windV",
+        "label": "Wind shapes a rock",
+        "sets": [],
+        "imageNote": "Photo of a tall rock shaped by wind in a desert. No text."
+      }
+    ],
+    "mc": {
+      "prompt": "A river made a huge canyon. It took millions of years. What kind of change is it?",
+      "choices": [
+        {
+          "id": "yes",
+          "text": "A slow change"
+        },
+        {
+          "id": "trap",
+          "text": "A fast change, because it is huge"
+        },
+        {
+          "id": "no",
+          "text": "Not a change to the land"
+        }
+      ],
+      "answer": "yes"
+    },
+    "multi": {
+      "prompt": "Choose all that can change the land fast.",
+      "choices": [
+        {
+          "id": "mud",
+          "text": "A mudslide"
+        },
+        {
+          "id": "ice",
+          "text": "Ice cracks a rock over many winters"
+        },
+        {
+          "id": "erupt",
+          "text": "A volcano erupts"
+        },
+        {
+          "id": "sand",
+          "text": "Wind moves sand grains"
+        }
+      ],
+      "answers": [
+        "mud",
+        "erupt"
+      ]
+    },
+    "inline": {
+      "before": "The card was about",
+      "after": ".",
+      "choices": [
+        {
+          "id": "right",
+          "text": "how fast the land changes"
+        },
+        {
+          "id": "trap",
+          "text": "how big the change is"
+        }
+      ],
+      "answer": "right"
+    }
+  },
+  "defs": [
+    [
+      {
+        "term": "Fast change",
+        "text": "The land changes in minutes, hours, or days."
+      },
+      {
+        "term": "Slow change",
+        "text": "The land changes a tiny bit at a time. It takes many years."
+      }
+    ],
+    [
+      {
+        "term": "Fast change",
+        "text": "The land changes in minutes, hours, or days."
+      },
+      {
+        "term": "Slow change",
+        "text": "The land changes a tiny bit at a time. It takes many years."
+      },
+      {
+        "term": "Neither",
+        "text": "It does not change the land. It fits neither group."
+      }
+    ],
+    [
+      {
+        "term": "Changes land fast",
+        "text": "The land changes in minutes, hours, or days."
+      },
+      {
+        "term": "Moving water does it",
+        "text": "Water that moves is what changes the land."
+      },
+      {
+        "term": "Center",
+        "text": "Both are true."
+      },
+      {
+        "term": "Outside",
+        "text": "Neither is true."
+      }
+    ]
+  ]
+}

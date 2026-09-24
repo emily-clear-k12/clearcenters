@@ -1,0 +1,277 @@
+{
+  "id": "MA-4.3C-CL",
+  "subject": "Math",
+  "grade": "Grade 4",
+  "title": "Hidden halves",
+  "teks": "4.3C",
+  "learningTarget": "I can tell if a fraction is equal to 1/2 or to 1 whole.",
+  "lessonSummary": "Students sort fractions by what they are equal to: 1/2 or 1 whole. Big numbers are the trap. Page 2 adds fractions that are close to 1/2 but not equal.",
+  "trap": "Thinking bigger numbers make a bigger fraction, so 6/12 must be more than 1/2.",
+  "pages": [
+    {
+      "rule": "Sort by what each fraction is equal to.",
+      "notThis": "Big numbers do not make a big fraction. Look at the top and bottom together.",
+      "groups": [
+        {
+          "id": "half",
+          "label": "Equal to 1/2"
+        },
+        {
+          "id": "whole",
+          "label": "Equal to 1 whole"
+        }
+      ],
+      "items": [
+        {
+          "id": "f2of4",
+          "label": "2/4",
+          "clue": "Only 2 on top",
+          "group": "half"
+        },
+        {
+          "id": "f6of12",
+          "label": "6/12",
+          "clue": "Twelve pieces",
+          "group": "half"
+        },
+        {
+          "id": "f5of10",
+          "label": "5/10",
+          "clue": "The top number is odd",
+          "group": "half"
+        },
+        {
+          "id": "f3of3",
+          "label": "3/3",
+          "clue": "Small numbers",
+          "group": "whole"
+        },
+        {
+          "id": "f8of8",
+          "label": "8/8",
+          "clue": "Only 8 pieces",
+          "group": "whole"
+        },
+        {
+          "id": "f10of10",
+          "label": "10/10",
+          "clue": "Big numbers",
+          "group": "whole"
+        }
+      ]
+    },
+    {
+      "rule": "Sort by what each fraction is equal to. Some are equal to neither.",
+      "notThis": "Close to 1/2 is not the same as equal to 1/2.",
+      "groups": [
+        {
+          "id": "half",
+          "label": "Equal to 1/2"
+        },
+        {
+          "id": "whole",
+          "label": "Equal to 1 whole"
+        },
+        {
+          "id": "neither",
+          "label": "Neither"
+        }
+      ],
+      "items": [
+        {
+          "id": "f50of100",
+          "label": "50/100",
+          "clue": "Huge numbers",
+          "group": "half"
+        },
+        {
+          "id": "f3of6",
+          "label": "3/6",
+          "clue": "The top number is odd",
+          "group": "half"
+        },
+        {
+          "id": "f4of8",
+          "label": "4/8",
+          "clue": "Two even numbers",
+          "group": "half"
+        },
+        {
+          "id": "f12of12",
+          "label": "12/12",
+          "clue": "Twelve pieces",
+          "group": "whole"
+        },
+        {
+          "id": "f4of6",
+          "label": "4/6",
+          "clue": "Close to half",
+          "group": "neither"
+        },
+        {
+          "id": "f3of4",
+          "label": "3/4",
+          "clue": "Almost a whole",
+          "group": "neither"
+        }
+      ]
+    }
+  ],
+  "venn": {
+    "labels": [
+      {
+        "id": "half",
+        "text": "Equal to 1/2"
+      },
+      {
+        "id": "eighths",
+        "text": "Cut into eighths"
+      }
+    ],
+    "items": [
+      {
+        "id": "v4of8",
+        "label": "4/8",
+        "sets": [
+          "half",
+          "eighths"
+        ]
+      },
+      {
+        "id": "v1of2",
+        "label": "1/2",
+        "sets": [
+          "half"
+        ]
+      },
+      {
+        "id": "v3of6",
+        "label": "3/6",
+        "sets": [
+          "half"
+        ]
+      },
+      {
+        "id": "v8of8",
+        "label": "8/8",
+        "sets": [
+          "eighths"
+        ]
+      },
+      {
+        "id": "v3of8",
+        "label": "3/8",
+        "sets": [
+          "eighths"
+        ]
+      },
+      {
+        "id": "v2of3",
+        "label": "2/3",
+        "sets": []
+      }
+    ],
+    "mc": {
+      "prompt": "Mia says 6/12 is bigger than 1/2 because 6 and 12 are bigger numbers. Is she right?",
+      "choices": [
+        {
+          "id": "yes",
+          "text": "No. 6/12 and 1/2 are equal."
+        },
+        {
+          "id": "trap",
+          "text": "Yes. Bigger numbers make a bigger fraction."
+        },
+        {
+          "id": "no",
+          "text": "No. 6/12 is equal to 1 whole."
+        }
+      ],
+      "answer": "yes"
+    },
+    "multi": {
+      "prompt": "Choose all the ways to show that 3/6 is equal to 1/2.",
+      "choices": [
+        {
+          "id": "half",
+          "text": "3 is half of 6."
+        },
+        {
+          "id": "draw",
+          "text": "Draw both. The shaded parts are the same size."
+        },
+        {
+          "id": "small",
+          "text": "3 and 6 are both small numbers."
+        },
+        {
+          "id": "bigger",
+          "text": "6 is bigger than 2."
+        }
+      ],
+      "answers": [
+        "half",
+        "draw"
+      ]
+    },
+    "inline": {
+      "before": "The card was about",
+      "after": ".",
+      "choices": [
+        {
+          "id": "right",
+          "text": "what each fraction is equal to"
+        },
+        {
+          "id": "trap",
+          "text": "how big the numbers are"
+        }
+      ],
+      "answer": "right"
+    }
+  },
+  "defs": [
+    [
+      {
+        "term": "Equal to 1/2",
+        "text": "The top number is exactly half of the bottom number."
+      },
+      {
+        "term": "Equal to 1 whole",
+        "text": "The top number and the bottom number are the same."
+      }
+    ],
+    [
+      {
+        "term": "Equal to 1/2",
+        "text": "The top number is exactly half of the bottom number."
+      },
+      {
+        "term": "Equal to 1 whole",
+        "text": "The top number and the bottom number are the same."
+      },
+      {
+        "term": "Neither",
+        "text": "It is not equal to 1/2 and not equal to 1 whole."
+      }
+    ],
+    [
+      {
+        "term": "Equal to 1/2",
+        "text": "The top number is exactly half of the bottom number."
+      },
+      {
+        "term": "Cut into eighths",
+        "text": "The bottom number is 8. The whole has 8 equal parts."
+      },
+      {
+        "term": "Center",
+        "text": "Both are true."
+      },
+      {
+        "term": "Outside",
+        "text": "Neither is true."
+      }
+    ]
+  ]
+}

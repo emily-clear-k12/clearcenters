@@ -1,5 +1,5 @@
 # ClearCenters — STATE
-**Current truth. Start here.** · Last updated: September 23, 2026, afternoon (**Signal Check re-leveled: all 108 registered cases now read on grade — written to the app folder, NOT yet committed or pushed; no SQL needed**) · earlier Sept 23: Mission Map ELAR 12 authored and all 49 Mission Map cases re-leveled; Assembly Deck's first pilot and its fixes; Math 12 authored · *state updated at session end*
+**Current truth. Start here.** · Last updated: September 24, 2026, midday (**Maker Studio designed: the next new center, merging Museum Exhibit/Field Dispatch into it; design only, nothing built. New site-wide rule: a confidence check on every submit (§9 rule 21)**) · Sept 23 afternoon: (**Signal Check re-leveled: all 108 registered cases now read on grade — written to the app folder, NOT yet committed or pushed; no SQL needed**) · earlier Sept 23: Mission Map ELAR 12 authored and all 49 Mission Map cases re-leveled; Assembly Deck's first pilot and its fixes; Math 12 authored · *state updated at session end*
 
 *Reconciled from four sources: the Claude project · `ClearCenters_Project_Files.zip` · `ClearCenters_MANIFEST.md` · and both device folders.*
 *Supersedes `ClearCenters_PROJECT_SPRINGBOARD_v4.md` (stale — predates Newsroom).*
@@ -55,6 +55,28 @@ Nothing else. This file is a status document, not a design document — design n
 ---
 
 ## 0.5 · SESSION LOG
+
+**Sept 24, 2026 — Maker Studio designed as the next new center. Design only; no code, no SQL. New site-wide rule: every submit asks "How sure are you?"**
+
+- **What changed:** Emily turned down "game skin" ideas (the rejects are kept in `claude/ClearCenters_Game_Ideas_ParkingLot.md`) and chose **Maker Studio**, a center where students make a product to turn in. **Museum Exhibit / Field Dispatch merges into it** as its first mode, "exhibit." Students get a job with a driving question. They pick pieces from a storage room of pictures, data and passages, some of which are traps, write one placard per piece, then write the plaque that answers the question. The AI reads it first; the teacher grades and releases, as with every center.
+- **Decided today:**
+  - Wall size by grade: 4 pieces in Grade 3, 5 in Grade 4, 6 in Grade 5. About 20 minutes.
+  - Five exhibit types: Prove It, Side by Side, Then to Now, Every Kind, Portrait. The site draws math pieces from data.
+  - Students pick a museum hall. Halls are built so new ones are just a new room picture over the same spots. The first three: Space Station Gallery, Grand Stone Museum, Nature Dome.
+  - Class Museum field trip: exhibits appear only after release, visitors can only leave stickers, and ready-made museum sets are built from topic tags.
+  - A send-back reopens the whole exhibit, with the student's work filled back in.
+  - Teacher checkboxes on the assign page: Class Museum, Gallery stickers, Quick release, Curator's Challenge, Decorations.
+  - No paper companion for now.
+  - Also in Wave 1: the generator-ready case spec, a backup word filter before the museum, "did they read it?" tracking, read-aloud and alt text, a field-trip scavenger hunt, the confidence check, and **My Museum** (a year-long portfolio).
+- **What is now true:**
+  - `MakerStudio_Digital_Design_v1.md` is the design; §13 holds the open decisions and §14 the Wave 1 extras.
+  - `MakerStudio_Exhibit_Table_of_Possibles.md` has 60 possible exhibits (5 types × 4 subjects × 3 grades), with every code checked against the real TEKS PDFs. SS 3.13A was changed to Jonas Salk, because Franklin is not in that standard.
+  - `MakerStudio_Case_3-13A_DRAFT.md` is the full sample case, "Built for the Desert."
+  - All three files are in the app folder and in the project, and none are committed.
+- **Still open:**
+  - The name; whether there is a centerpiece; the Grade 3 writing load; whether arrangement is graded; printing; whether to retire Field Dispatch outright or just re-rank it; the first museum set; which four cases go first (suggested: SCI 3.13A, SS 4.4B, ELA 3.9D(ii), MA 5.4D).
+  - It isn't settled where Maker Studio falls in the build order next to Classification Lab, which Emily is building in another session.
+  - Check that the Sept 23 Signal Check re-level has been committed and pushed.
 
 **Sept 23, 2026 (afternoon) — Signal Check re-leveled. All 108 registered cases now read on grade, and the three grades separate cleanly in Science and Social Studies.**
 
@@ -364,7 +386,7 @@ Nothing else. This file is a status document, not a design document — design n
 | Home dashboard | 6 free rotating backgrounds plus per-world earned backgrounds and S.A.M. trails via the Settings panel. All backing SQL confirmed run. |
 | Classification Lab | 0 built. Design decided Aug 29. |
 | Repair Desk | 11 old-era cases; design decided Aug 29; not built in the current app. |
-| Field Dispatch (née Museum Exhibit Builder) | 0 built. The one engine requiring real per-case image generation. |
+| **Maker Studio** (absorbs Field Dispatch, née Museum Exhibit Builder) | **Designed Sept 24, 0 built.** Exhibit mode first; more product modes later (graph, diagram, blueprint, comic and others). Design: `MakerStudio_Digital_Design_v1.md`. 60 possible exhibits mapped; 1 sample case drafted. It reuses the existing image bank, so far less new art is needed than the old Field Dispatch plan. |
 | The Tribunal (née Comment Court) | 0 built. Design decided Aug 29. |
 | Newsroom | 38 old-era Card 2.0s against a rejected mechanic; new design decided Aug 29; not built. |
 | ~~Sector Survey / Territory Builder~~ | **Retired Sept 22, 2026 into Assembly Deck's map mode** per Emily's call; its coming-soon tile was removed. |
@@ -419,7 +441,7 @@ The old-era 5.6A "Creek Sensor Mix-Up" packet had strong reasoning design underm
 
 ## 6 · THE PLAN
 
-**Current-app build order (confirmed Aug 29, amended since):** Mission Map ✓ → Simulation Lab ✓ (10 cases) → *(inserted by Emily's call: Frequency Rush/Signal Ops ✓, Relay Station ✓, Assembly Deck — in progress)* → Classification Lab → Repair Desk → Field Dispatch → The Tribunal → Newsroom. **Sector Survey is no longer in the order** — retired into Assembly Deck.
+**Current-app build order (confirmed Aug 29, amended since):** Mission Map ✓ → Simulation Lab ✓ (10 cases) → *(inserted by Emily's call: Frequency Rush/Signal Ops ✓, Relay Station ✓, Assembly Deck — in progress)* → Classification Lab → Repair Desk → **Maker Studio** (replaces Field Dispatch, Sept 24; its exact place in line is not yet set) → The Tribunal → Newsroom. **Sector Survey is no longer in the order** — retired into Assembly Deck.
 
 **Immediate next steps:**
 1. **Pull.** Emily's local checkout is one commit behind origin — the "Student progress" change was made on GitHub and is deployed but not down on her machine. Pull before editing anything, or the next commit fights it.
@@ -433,6 +455,8 @@ The old-era 5.6A "Creek Sensor Mix-Up" packet had strong reasoning design underm
 9. Decide stories/games for the remaining 4 worlds (Frostveil, Cindara, Solara, Cloudreach).
 10. Get a decision on the orphaned Glow Garden files and `student_planet_discoveries`.
 11. Old-era items (§4, §5, the 83-case Site-era catalog) remain parked.
+12. **(Sept 24) Commit the Signal Check re-level and the three Maker Studio docs** through GitHub Desktop.
+13. **(Sept 24) Audit every engine's submit screen for the confidence check** (§9 rule 21). Add it wherever it is missing, and store it with the submission so teachers see it next to the level.
 
 ---
 
@@ -505,6 +529,13 @@ The old-era 5.6A "Creek Sensor Mix-Up" packet had strong reasoning design underm
 19. **(Sept 23, 2026, new) When an engine grades the same answer in two places, something automated has to check that the two agree.** Mission Map decides right/wrong on the client from the public case, and again on the server from the server case, for 37 cases and four checkpoint types. A disagreement between those two files is invisible in review and silent in production: the student is told they were right and the gradebook records a miss. Nothing was checking it until `tools/mission-map-casecheck.cjs` existed. Any engine with a public/server case pair should assume the same risk.
 
 20. **(Sept 23, 2026, new) A pilot's job is to move the design, not to approve it.** The Assembly Deck pilot produced "i love it" AND three changes that reshaped the end of every case. The useful output was not the verdict; it was Emily noticing that the last question was unanswerable because the evidence had scrolled away twenty minutes earlier. No simulation was going to find that, and a pilot that only returns a thumbs-up has not been run properly.
+
+21. **(Sept 24, 2026, new — SITE-WIDE RULE, Emily's call) Every submit asks "How sure are you?" 😕 🙂 😄, in every center, every time, including a resubmit after a send-back.**
+    - The answer is saved with that submission.
+    - The teacher sees it next to the level on the grading screen, and sees how it changed between tries.
+    - "Very sure, but Level 0" is the flag that matters: that student believes something wrong.
+    - It never affects the score or the Crystal Points, and students never see it used against them.
+    - New engines include it from the start. Existing engines get audited and backfilled (§6 step 13). Which ones already have it has not been checked; Group Chat's is the model.
 
 18. **(Sept 22, 2026) Vocabulary that a standard names is not "too hard."** When a reading scores above grade because of *conductors*, *deposition* or *Reconstruction*, the sentence around the word is the lever — not the word. `tools/relay-station-readingcheck.cjs` exists to tell those two cases apart.
 

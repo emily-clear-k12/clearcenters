@@ -1,0 +1,278 @@
+{
+  "id": "SS-5.15C-CL",
+  "subject": "Social Studies",
+  "grade": "Grade 5",
+  "title": "Whose job is it?",
+  "teks": "5.15C",
+  "learningTarget": "I can tell which powers belong to the national government and which belong to the states.",
+  "lessonSummary": "Students sort government powers by level: national or state. Page 2 adds city jobs that belong to neither, and the Venn shows powers the two levels share.",
+  "trap": "Sorting by how big or important a job feels, or how close to home it is, instead of which level has the power.",
+  "pages": [
+    {
+      "rule": "Sort by which government has the power to do it.",
+      "notThis": "Important does not mean national. Close to home does not mean state.",
+      "groups": [
+        {
+          "id": "nat",
+          "label": "National government"
+        },
+        {
+          "id": "state",
+          "label": "State government"
+        }
+      ],
+      "items": [
+        {
+          "id": "money",
+          "label": "Print money",
+          "clue": "Used in every store",
+          "group": "nat"
+        },
+        {
+          "id": "war",
+          "label": "Declare war",
+          "clue": "A very serious choice",
+          "group": "nat"
+        },
+        {
+          "id": "mail",
+          "label": "Deliver the mail",
+          "clue": "It comes to your street",
+          "group": "nat"
+        },
+        {
+          "id": "license",
+          "label": "Give driver's licenses",
+          "clue": "Good for driving in any state",
+          "group": "state"
+        },
+        {
+          "id": "hunt",
+          "label": "Give hunting and fishing licenses",
+          "clue": "For lakes and forests",
+          "group": "state"
+        },
+        {
+          "id": "speed",
+          "label": "Set highway speed limits",
+          "clue": "Even on interstate highways",
+          "group": "state"
+        }
+      ]
+    },
+    {
+      "rule": "Sort by which government has the power. Some powers belong to neither.",
+      "notThis": "A job near your home might belong to a city. A city is not the state.",
+      "groups": [
+        {
+          "id": "nat",
+          "label": "National government"
+        },
+        {
+          "id": "state",
+          "label": "State government"
+        },
+        {
+          "id": "neither",
+          "label": "Neither"
+        }
+      ],
+      "items": [
+        {
+          "id": "treaty",
+          "label": "Make treaties with other countries",
+          "clue": "Leaders sign them",
+          "group": "nat"
+        },
+        {
+          "id": "newstate",
+          "label": "Let a new state join the country",
+          "clue": "It changes the map of states",
+          "group": "nat"
+        },
+        {
+          "id": "elect",
+          "label": "Run the election for governor",
+          "clue": "Voters choose a leader",
+          "group": "state"
+        },
+        {
+          "id": "teach",
+          "label": "Give licenses to teachers",
+          "clue": "Every state has teachers",
+          "group": "state"
+        },
+        {
+          "id": "police",
+          "label": "Hire police for a city",
+          "clue": "Keeps people safe",
+          "group": "neither"
+        },
+        {
+          "id": "trash",
+          "label": "Pick a city's trash day",
+          "clue": "Every house gets it",
+          "group": "neither"
+        }
+      ]
+    }
+  ],
+  "venn": {
+    "labels": [
+      {
+        "id": "nat",
+        "text": "National can do it"
+      },
+      {
+        "id": "state",
+        "text": "State can do it"
+      }
+    ],
+    "items": [
+      {
+        "id": "tax",
+        "label": "Collect taxes",
+        "sets": [
+          "nat",
+          "state"
+        ]
+      },
+      {
+        "id": "roads",
+        "label": "Build roads",
+        "sets": [
+          "nat",
+          "state"
+        ]
+      },
+      {
+        "id": "cash",
+        "label": "Print money",
+        "sets": [
+          "nat"
+        ]
+      },
+      {
+        "id": "post",
+        "label": "Run the post office",
+        "sets": [
+          "nat"
+        ]
+      },
+      {
+        "id": "citygov",
+        "label": "Set up city governments",
+        "sets": [
+          "state"
+        ]
+      },
+      {
+        "id": "parks",
+        "label": "Set a city park's hours",
+        "sets": []
+      }
+    ],
+    "mc": {
+      "prompt": "A mail carrier walks down your street every day. Which government runs the mail?",
+      "choices": [
+        {
+          "id": "yes",
+          "text": "The national government"
+        },
+        {
+          "id": "trap",
+          "text": "The state government, because it is close to home"
+        },
+        {
+          "id": "no",
+          "text": "No government runs the mail"
+        }
+      ],
+      "answer": "yes"
+    },
+    "multi": {
+      "prompt": "Choose all the powers that the national and state governments share.",
+      "choices": [
+        {
+          "id": "borrow",
+          "text": "Borrow money"
+        },
+        {
+          "id": "laws",
+          "text": "Make and enforce laws"
+        },
+        {
+          "id": "print",
+          "text": "Print money"
+        },
+        {
+          "id": "drive",
+          "text": "Give driver's licenses"
+        }
+      ],
+      "answers": [
+        "borrow",
+        "laws"
+      ]
+    },
+    "inline": {
+      "before": "The card was about",
+      "after": ".",
+      "choices": [
+        {
+          "id": "right",
+          "text": "which government has the power"
+        },
+        {
+          "id": "trap",
+          "text": "how important the job seems"
+        }
+      ],
+      "answer": "right"
+    }
+  },
+  "defs": [
+    [
+      {
+        "term": "National government",
+        "text": "The government for the whole country. It is based in Washington, D.C."
+      },
+      {
+        "term": "State government",
+        "text": "The government for one state. Texas's state government is based in Austin."
+      }
+    ],
+    [
+      {
+        "term": "National government",
+        "text": "The government for the whole country. It is based in Washington, D.C."
+      },
+      {
+        "term": "State government",
+        "text": "The government for one state. Texas's state government is based in Austin."
+      },
+      {
+        "term": "Neither",
+        "text": "It is not a power of the national or the state government."
+      }
+    ],
+    [
+      {
+        "term": "National can do it",
+        "text": "The Constitution gives this power to the national government."
+      },
+      {
+        "term": "State can do it",
+        "text": "States keep this power for themselves."
+      },
+      {
+        "term": "Center",
+        "text": "Both are true."
+      },
+      {
+        "term": "Outside",
+        "text": "Neither is true."
+      }
+    ]
+  ]
+}
