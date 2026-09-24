@@ -70,6 +70,7 @@ export async function POST(request) {
   let streak = 0;
   let bestStreak = 0;
   let skillSet = null; // set below when this assignment is a skill set (Sept 24)
+  let speedWindowSeconds = ROUND_SECONDS; // teacher's question timer, if set (Sept 24)
   let score = 0;
   const attemptRows = [];
   const perWordResults = [];
@@ -100,11 +101,22 @@ export async function POST(request) {
     // Sept 12, 2026 — sort_bins: choiceId is a bin id; correctness is
     // recomputed server-side from file banks (choiceId === correctBinId).
     // Attempts store word_id as null so vocab FK rows stay intact.
-    const { data: assignment } = await supabaseAdmin
+    let { data: assignment, error: assignmentError } = await supabaseAdmin
       .from("assignments")
-      .select("case_standard")
+      .select("case_standard, question_seconds")
       .eq("id", session.assignment_id)
       .single();
+    if (assignmentError && /question_seconds/i.test(assignmentError.message || "")) {
+      ({ data: assignment } = await supabaseAdmin
+        .from("assignments")
+        .select("case_standard")
+        .eq("id", session.assignment_id)
+        .single());
+    }
+    // Sept 24, 2026 — the speed bonus is measured against the teacher's
+    // question timer when there is one, and the old 8 seconds when there isn't.
+    const teacherSeconds = Math.max(0, Math.min(60, Number(assignment?.question_seconds) || 0));
+    speedWindowSeconds = teacherSeconds > 0 ? teacherSeconds : ROUND_SECONDS;
     const { data: caseRow } = assignment
       ? await supabaseAdmin
           .from("cases")
@@ -154,7 +166,7 @@ export async function POST(request) {
           bestStreak = Math.max(bestStreak, streak);
           pointsEarned = pointsForCorrectAnswer({
             responseTimeMs: a.responseTimeMs,
-            roundSeconds: ROUND_SECONDS,
+            roundSeconds: speedWindowSeconds,
             streakAfterThisAnswer: streak,
           });
           score += pointsEarned;
@@ -186,7 +198,7 @@ export async function POST(request) {
         bestStreak = Math.max(bestStreak, streak);
         pointsEarned = pointsForCorrectAnswer({
           responseTimeMs: a.responseTimeMs,
-          roundSeconds: ROUND_SECONDS,
+          roundSeconds: speedWindowSeconds,
           streakAfterThisAnswer: streak,
         });
         score += pointsEarned;

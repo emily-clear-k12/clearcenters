@@ -7,6 +7,18 @@ import { supabase } from "../../../../lib/supabaseClient";
 import { engineSupportsDistressCall, distressCallUnit } from "../../../../lib/distressCallEngines";
 import { isCustomCode, customCodeOwnerPrefix } from "../../../../lib/cases/relay-station";
 import { GAME_SKINS, DEFAULT_GAME_SKIN } from "../../../../lib/frequencyRushSkins";
+
+// Sept 24, 2026 — teacher-set Frequency Rush question timer. The game
+// accepts 0-60 seconds; 0 means no timer.
+const QUESTION_SECONDS_OPTIONS = [
+  { value: 0, label: "No timer" },
+  { value: 5, label: "5 sec" },
+  { value: 8, label: "8 sec" },
+  { value: 10, label: "10 sec" },
+  { value: 15, label: "15 sec" },
+  { value: 20, label: "20 sec" },
+  { value: 30, label: "30 sec" },
+];
 import Link from 'next/link';
 import {BridgePage,PageHeading,ClassTabs,Empty} from '../../../../components/teacher/BridgeUI';
 import {subjectStyle,engineInfo,SUBJECTS,ENGINES} from '../../../../lib/teacherBridge';
@@ -192,6 +204,10 @@ function NewAssignmentContent() {
   // same "one more conditional field on the assign form" pattern as
   // Distress Call above, just for a different engine.
   const [gameSkin, setGameSkin] = useState(DEFAULT_GAME_SKIN);
+  // Sept 24, 2026 — Frequency Rush question timer, set by the teacher for
+  // the whole assignment (assignments.question_seconds). 0 = no timer.
+  // Students can no longer turn the game's own timer on or off.
+  const [questionSeconds, setQuestionSeconds] = useState(0);
 
   const [challengeStep, setChallengeStep] = useState("library");
   const [selectedChallenge, setSelectedChallenge] = useState(null);
@@ -284,13 +300,25 @@ function NewAssignmentContent() {
     }
     if (selectedCase.engine === "frequency_rush") {
       assignmentFields.game_skin = gameSkin;
+      assignmentFields.question_seconds = questionSeconds;
     }
 
-    const { data: newAssignment, error: insertError } = await supabase
+    let { data: newAssignment, error: insertError } = await supabase
       .from("assignments")
       .insert(assignmentFields)
       .select()
       .single();
+    // Sept 24, 2026 — if add_frequency_rush_skills.sql hasn't run yet, the
+    // question_seconds column doesn't exist. Assign without the timer rather
+    // than block Frequency Rush assigning entirely.
+    if (insertError && /question_seconds/i.test(insertError.message || "")) {
+      const { question_seconds, ...withoutTimer } = assignmentFields;
+      ({ data: newAssignment, error: insertError } = await supabase
+        .from("assignments")
+        .insert(withoutTimer)
+        .select()
+        .single());
+    }
     if (insertError) {
       setAssigning(false);
       setError("Couldn't assign the case: " + insertError.message);
@@ -444,6 +472,34 @@ function NewAssignmentContent() {
                       </div>
                       <p style={{ fontSize: 11.5, color: COLORS.textMuted, margin: "6px 0 0 0" }}>
                         Same words, same scoring — just a different look for the run.
+                      </p>
+                      <div style={{ fontWeight: 700, fontSize: 13, margin: "14px 0 8px 0", color: COLORS.textDark }}>⏱️ Time per question</div>
+                      <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                        {QUESTION_SECONDS_OPTIONS.map((opt) => (
+                          <button
+                            key={opt.value}
+                            type="button"
+                            className="cc-btn"
+                            aria-pressed={questionSeconds === opt.value}
+                            onClick={() => setQuestionSeconds(opt.value)}
+                            style={{
+                              background: questionSeconds === opt.value ? ACCENT : COLORS.white,
+                              color: questionSeconds === opt.value ? COLORS.white : COLORS.textDark,
+                              border: `1.5px solid ${questionSeconds === opt.value ? ACCENT : COLORS.border}`,
+                              borderRadius: 999,
+                              padding: "7px 14px",
+                              fontWeight: 700,
+                              fontSize: 12.5,
+                            }}
+                          >
+                            {opt.label}
+                          </button>
+                        ))}
+                      </div>
+                      <p style={{ fontSize: 11.5, color: COLORS.textMuted, margin: "6px 0 0 0" }}>
+                        {questionSeconds
+                          ? `Students get ${questionSeconds} seconds per question. Running out of time counts as a miss.`
+                          : "No clock. Faster answers still earn a speed bonus."}
                       </p>
                     </div>
                   )}

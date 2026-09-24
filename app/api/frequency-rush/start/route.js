@@ -40,11 +40,21 @@ export async function POST(request) {
   // route change.
   const resolvedGameMode = gameMode || "asteroid_run";
 
-  const { data: assignment } = await supabaseAdmin
+  // Sept 24, 2026 — question_seconds is the teacher's per-question timer
+  // (0 = none). If add_frequency_rush_skills.sql hasn't run yet the column
+  // doesn't exist, so fall back to the old select and no timer.
+  let { data: assignment, error: assignmentError } = await supabaseAdmin
     .from("assignments")
-    .select("id, case_standard, game_skin")
+    .select("id, case_standard, game_skin, question_seconds")
     .eq("id", assignmentId)
     .single();
+  if (assignmentError && /question_seconds/i.test(assignmentError.message || "")) {
+    ({ data: assignment } = await supabaseAdmin
+      .from("assignments")
+      .select("id, case_standard, game_skin")
+      .eq("id", assignmentId)
+      .single());
+  }
   if (!assignment) {
     return NextResponse.json({ error: "Assignment not found." }, { status: 404 });
   }
@@ -55,6 +65,7 @@ export async function POST(request) {
   // param, same "server decides, client just plays" rule as everything else
   // in this route.
   const gameSkin = assignment.game_skin || DEFAULT_GAME_SKIN;
+  const questionSeconds = Math.max(0, Math.min(60, Number(assignment.question_seconds) || 0));
 
   const { data: caseRow } = await supabaseAdmin
     .from("cases")
@@ -100,6 +111,7 @@ export async function POST(request) {
     return NextResponse.json({
       sessionId: skillSession.id,
       roundSeconds: ROUND_SECONDS,
+      questionSeconds,
       gameMode: resolvedGameMode,
       // Frostveil and Cindara can't show sort_bins questions, so a skill set
       // assigned in those worlds plays in the default world instead.
@@ -191,6 +203,7 @@ export async function POST(request) {
   return NextResponse.json({
     sessionId: session.id,
     roundSeconds: ROUND_SECONDS,
+    questionSeconds,
     gameMode: resolvedGameMode,
     gameSkin,
     outpost,

@@ -46,6 +46,10 @@ export default function FrequencyRushClient({ assignmentId, caseTitle }) {
   // Sept 24, 2026 — skill sets (math facts). When set, the start route
   // generated this run's questions and sent round labels for the header.
   const [skill, setSkill] = useState(null);
+  // Sept 24, 2026 — the teacher's per-question timer (0 = none), from the
+  // assignment. Applied through the game's configure(); the game's own
+  // "Add an 8-second timer" checkbox is hidden so students can't change it.
+  const [questionSeconds, setQuestionSeconds] = useState(0);
   // Sept 12, 2026 — which static widget file to load into the iframe below,
   // teacher-chosen at assignment time (assignments.game_skin) and handed
   // back by /api/frequency-rush/start as `gameSkin` — see
@@ -89,6 +93,7 @@ export default function FrequencyRushClient({ assignmentId, caseTitle }) {
       setClassifications(Array.isArray(data.classifications) ? data.classifications : []);
       setSortBins(nextSortBins);
       setSkill(data.skill || null);
+      setQuestionSeconds(Math.max(0, Math.min(60, Number(data.questionSeconds) || 0)));
       setGameSkinFile(getGameSkinFile(data.gameSkin));
       pendingSessionIdRef.current = data.sessionId;
       setPhase("ready");
@@ -226,7 +231,7 @@ export default function FrequencyRushClient({ assignmentId, caseTitle }) {
       // configure() only accepts flightSeconds 4-20 (its own validation),
       // so this is the shortest gap it supports short of the widget file
       // itself being changed. Tune this one number if it still feels off.
-      win.AsteroidRun.configure({ flightSeconds: 4 });
+      win.AsteroidRun.configure({ flightSeconds: 4, questionSeconds });
       win.AsteroidRun.onComplete((result) => { submitRun(result); });
       hideAuthorOnlyControls(win);
       if (skill && skill.labels) relabelSkillRounds(win, skill.labels);
@@ -235,7 +240,7 @@ export default function FrequencyRushClient({ assignmentId, caseTitle }) {
       // a genuine race on first load; the iframe's own load event retries
       // this right after.
     }
-  }, [words, classifications, sortBins, outpostResources, submitRun, skill]);
+  }, [words, classifications, sortBins, outpostResources, submitRun, skill, questionSeconds]);
 
   useEffect(() => {
     if (phase === "ready") wireWidget();
@@ -319,7 +324,9 @@ function hideAuthorOnlyControls(win) {
     if (!doc || doc.getElementById("cc-hide-author-controls")) return;
     const style = doc.createElement("style");
     style.id = "cc-hide-author-controls";
-    style.textContent = "#format-settings, #sample-mission-button { display: none !important; }";
+    // Sept 24, 2026 — .timed-option (the student's own timer checkbox) is
+    // hidden too: the teacher sets the timer on the assignment now.
+    style.textContent = "#format-settings, #sample-mission-button, .timed-option { display: none !important; }";
     doc.head.appendChild(style);
   } catch (err) {
     // Best-effort cosmetic cleanup only — never worth failing the run over.
