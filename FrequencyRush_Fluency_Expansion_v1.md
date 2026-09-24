@@ -89,4 +89,18 @@ Spelling *by ear* (hear the word, pick the spelling) waits for read-aloud in the
 
 **Found while building: Frostveil Run and Cindara Run don't support `sort_bins` at all.** Their `getCapabilities()` lists only vocabulary and classification. So a skill set assigned in those worlds now plays in Asteroid Run instead (`getSkinForSortBins`). **The same gap already affects the existing Science and Social Studies sort banks in those two worlds.** The sort rounds are silently missing there. The fix is the re-export in step 7: all 4 skins should export from the same game version.
 
-**Still open for step 1:** run the SQL, push, then play one set live. The run-length default (10 rounds) and whether facts should use the game's optional per-question timer are not tuned yet.
+**Added Sept 24 (Emily's ask): the teacher sets the time per question.** On the assign page, next to the game world, there are chips for No timer and 5, 8, 10, 15, 20 or 30 seconds. The setting is stored as `assignments.question_seconds` and applies to every Frequency Rush assignment, vocabulary included. The site passes it to the game's `configure({ questionSeconds })`, which is supported in all 4 worlds and tested in each. A timeout counts as a miss. The server measures the speed bonus against the teacher's time, and uses the old 8 seconds when there's no timer. The game's own "Add an 8-second timer" checkbox is hidden, so students can't change it.
+
+**Still open for step 1:** run the SQL, push, then play one set live. The run-length default (10 rounds) is not tuned yet.
+
+### 11.9 · Step 2 built (Sept 24): ELAR word study, 12 sets, 360 questions
+
+- **Emily's picks, 30 questions each:**
+  - Grade 3: 3.3D Homophones, 3.3C Prefixes and Suffixes, 3.3D Synonyms/Antonyms/Idioms, 3.11D Parts of Speech.
+  - Grade 4: 4.3D Homophones, 4.3C Affixes and Roots, 4.11D Irregular Past Tense, 4.9B Simile/Metaphor/Personification.
+  - Grade 5: 5.3C Affixes and Roots, 5.3D Adages and Puns, 5.11D Grammar Fix-Ups, 5.2B Spelling Changes.
+- **Case codes** follow `ELA.<teks>-FR-<SET>`, for example `ELA.4.3D-FR-HOM`, so the assign page groups them under the TEKS code.
+- **Authored sets** live in `lib/cases/frequency-rush/skills/<code>.js`, one JSON bank per set. `lib/frequencyRushSkills.js` registers them as `kind: "authored"`. The server grades from the bank. Answer-button ids are a hash of the choice text, so they don't reveal the answer. Each set carries its own header labels.
+- **Checker:** `tools/frequency-rush-skillcheck.cjs` (rule 17). Sentence limits are 16 / 21 / 25 words for grades 3 / 4 / 5. These are short items, so an FK score isn't meaningful for them; sentence length is the gate.
+- **Review:** `FrequencyRush_ELAR_WordStudy_Review_v1.md`. SQL: `add_frequency_rush_elar_skills.sql`.
+- **Choices that need Emily's eye** are listed at the top of the review sheet: the 3.11D naming-versus-editing split, the repeated prompt in 5.11D, the made-up misspellings in 5.2B, and the two literal lines in 4.9B.

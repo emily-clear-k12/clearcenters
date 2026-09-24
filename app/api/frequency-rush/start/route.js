@@ -121,7 +121,7 @@ export async function POST(request) {
       words: [],
       classifications: [],
       sortBins: skillItems,
-      skill: { kind: skillSet.kind, title: skillSet.title, labels: SKILL_ROUND_LABELS[skillSet.kind] || null },
+      skill: { kind: skillSet.kind, title: skillSet.title, labels: skillSet.labels || SKILL_ROUND_LABELS[skillSet.kind] || null },
     });
   }
 

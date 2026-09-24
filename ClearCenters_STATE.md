@@ -71,6 +71,7 @@ Nothing else. This file is a status document, not a design document — design n
 - **The key finding:** the run game's `sort_bins` question already takes its own 2–6 answer buttons per question. So facts and word study run in the existing worlds with no re-export.
 - **Step 1 built.** There are six generated sets under Math, Grade 3: `MA.3.4F-FR-MUL / -DIV / -MIX` and `MA.3.4A-FR-ADD / -SUB / -MIX`. Emily chose to tag the +/− sets 3.4A. Wrong answers are real near misses. Facts refresh on every replay. The server grades each answer by recomputing the fact from its id. Each answer now saves an `item_key` for later tracking. The files are listed in §11.8 of the plan doc.
 - `add_frequency_rush_skills.sql` was written and tested twice on a local Postgres.
+- **The teacher now sets the time per question** for every Frequency Rush assignment (not just facts): No timer, or 5, 8, 10, 15, 20 or 30 seconds, chosen on the assign page. Running out of time counts as a miss. The speed bonus is measured against the teacher's time. The game's own student-facing timer checkbox is hidden. The setting is stored in `assignments.question_seconds`, which the same SQL file adds. Tested in all 4 worlds. If the SQL hasn't run, assigning and playing still work, just without a timer.
 
 *What is now true*
 - The generator was checked on 57,600 items. Real runs were played in Asteroid Run and Cloudreach Run by a headless browser: the game's right/wrong matched the server's on every answer, and the header reads "MATH FACTS."
