@@ -277,7 +277,9 @@ export default function TeacherGradeDetailPage() {
 
   const isSignalCheck = submission.caseEngine === "fact_check_desk";
   const isClassificationLab = submission.caseEngine === "classification_lab";
+  const isExhibitHall = submission.caseEngine === "exhibit_hall";
   const labData = submission.classification_lab_data || null;
+  const hallData = submission.exhibit_hall_data || null;
   const caseEntry = isSignalCheck ? null : getPublicCase(submission.caseStandard);
   const signalCheckCase = isSignalCheck ? getSignalCheckPublicCase(submission.caseStandard) : null;
   const isNewsroom = (submission.caseEngine || "").startsWith("newsroom");
@@ -364,7 +366,14 @@ export default function TeacherGradeDetailPage() {
         <div style={{ display: "flex", justifyContent: "center" }}>
         <div style={{ width: "100%", maxWidth: 1000, display: "grid", gridTemplateColumns: "1.3fr 1fr", gap: 18 }}>
           <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-            {isClassificationLab && labData ? (
+            {isExhibitHall && hallData ? (
+              <div style={panelStyle(ACCENT, { padding: 16 })}>
+                <div style={{ fontWeight: 700, fontSize: 12.5, color: COLORS.textMuted, marginBottom: 10, textTransform: "uppercase", letterSpacing: 0.5 }}>The exhibit</div>
+                <div style={{ whiteSpace: "pre-wrap", fontSize: 14, lineHeight: 1.5 }}>{submission.attempt1}</div>
+                <div style={{ marginTop: 12, fontWeight: 700 }}>Suggested level: {hallData.level ?? "—"}</div>
+                <div style={{ color: COLORS.textMuted, fontSize: 13 }}>{hallData.wallNote}</div>
+              </div>
+            ) : isClassificationLab && labData ? (
               <div style={panelStyle(ACCENT, { padding: 16 })}>
                 <div style={{ fontWeight: 700, fontSize: 12.5, color: COLORS.textMuted, marginBottom: 10, textTransform: "uppercase", letterSpacing: 0.5 }}>Three sorts</div>
                 {["Sort", "Harder sort", "Venn"].map((name, index) => {
