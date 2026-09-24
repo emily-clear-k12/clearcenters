@@ -1,5 +1,5 @@
 # ClearCenters — STATE
-**Current truth. Start here.** · Last updated: September 23, 2026, later session (**Mission Map complete: ELAR 12 authored, 49 cases across all four subjects — files on disk, SQL delivered, NOT yet run or pushed**) · earlier Sept 23: (Assembly Deck's first real pilot and the fixes it produced; Mission Map's Math 12 authored, closing a block that had stood since August; **all pending SQL run and everything pushed — verified against the deployed commit, not assumed**) · *state updated at session end*
+**Current truth. Start here.** · Last updated: September 23, 2026, afternoon (**Signal Check re-leveled: all 108 registered cases now read on grade — written to the app folder, NOT yet committed or pushed; no SQL needed**) · earlier Sept 23: Mission Map ELAR 12 authored and all 49 Mission Map cases re-leveled; Assembly Deck's first pilot and its fixes; Math 12 authored · *state updated at session end*
 
 *Reconciled from four sources: the Claude project · `ClearCenters_Project_Files.zip` · `ClearCenters_MANIFEST.md` · and both device folders.*
 *Supersedes `ClearCenters_PROJECT_SPRINGBOARD_v4.md` (stale — predates Newsroom).*
@@ -55,6 +55,30 @@ Nothing else. This file is a status document, not a design document — design n
 ---
 
 ## 0.5 · SESSION LOG
+
+**Sept 23, 2026 (afternoon) — Signal Check re-leveled. All 108 registered cases now read on grade, and the three grades separate cleanly in Science and Social Studies.**
+
+*What changed*
+- Emily approved the rewrite ("go ahead and move with signal check reading level revisions"). 89 case files were rewritten, field by field, using the same method as the Mission Map pass: measure, rewrite, re-measure.
+- **Only student-facing text changed:** the claim, field report, signals, reasons, and evidence readings (plus the matching tagline). A before/after script confirmed that every id, verdict, `stemEvidenceIds`, `sortBins` entry, image path, label, echo line and self-check question is byte-identical to before. **No `.server.js` file was touched**, so rubrics and model answers did not change.
+- Standards vocabulary was kept on purpose (rule 18). Examples: *renewable, sediment, porous, migrate, hibernate, abiotic, impressment, Parliament, three branches, vegetation, settlements, federal law, fertile*. Where a first draft dropped one of these, it was put back.
+- The wording was also checked against the S.A.M. hints in `lib/hints.js`. Six cases were adjusted so the hint and the case still use the same words (3.10A "fast-moving weather system", 3.12B "zero real change", 5.6C "particles", SS.3.3A "nearly identical", SS.3.8A "purposes", SS.5.4D "unrelated" / "economic map").
+- **Two small content fixes:** 3.12B-SC evidence reading 5 was garbled ("more of the insects herons used to eat frogs instead of"); it now says fewer frogs meant fewer herons and more insects. SS.5.2A-SC's field report said "Parliament was repealed the Stamp Act"; that typo is fixed.
+- `tools/signal-check-gradecheck.cjs` now scores only the cases registered in `index.public.js`. It lists any unregistered files at the end instead of counting them.
+
+*What is now true*
+- **108/108 registered Signal Check cases pass the gate.** Mean FK by grade 3 / 4 / 5: **Science 3.0 / 4.4 / 5.8** (was 5.6 / 6.1 / 8.1) · **Social Studies 2.4 / 4.8 / 6.3** (was 5.8 / 9.2 / 9.7) · ELAR 3.8 / 4.3 / 4.2 · Math 0.5 / 0.1 / 1.8. Every sentence is within its grade's maximum.
+- **Three case files in the folder are not registered and never reach students:** `3-6E-SC`, `4-7B-SC`, `5-10D-SC`. The 3.6E file is an early copy of the 3.6A magnet case with a wrong tagline about shadows. They were left untouched.
+
+*What is still open*
+- **Commit and push the 89 case files and the checker.** No SQL is needed.
+- ELAR still does not separate by grade (3.8 / 4.3 / 4.2). All ELAR cases pass, but grade 5 sits below its 5.0 floor. Raising grade 5 ELAR is a separate choice for Emily.
+- Some cases now sit slightly under their grade's floor. Most are number-heavy Math and SS cases, where numbers count as one syllable. This was not acted on, just as with Mission Map.
+- Decide whether to delete or archive the three unregistered files.
+- Not live-tested. The grade 4 and grade 5 AI grader reads meaning, not exact words, so the rubric should still line up; one live run per grade would confirm it.
+- Reading level is still unmeasured on Frequency Rush, Simulation Lab and the Briefings.
+
+---
 
 **Sept 23, 2026 (Signal Check measured) — Signal Check's reading level was measured for the first time. Only 19 of 108 cases are on grade. Nothing has been rewritten yet; the numbers went to Emily first.**
 
@@ -330,7 +354,7 @@ Nothing else. This file is a status document, not a design document — design n
 | Engine | Status |
 |---|---|
 | Group Chat | Live. 8 published, 19 built and content/TEKS-verified, formatting pending (old-era paper, largely moot for the current app). |
-| Signal Check | Live. 84 standards across grades 3-5. 3 dead files await manual deletion; the Social Studies batch's SQL/images still pending — **re-verify, don't assume.** |
+| Signal Check | Live. 84 standards across grades 3-5 (108 cases). **Re-leveled Sept 23: all 108 on grade, not yet pushed.** 3 dead files await manual deletion; the Social Studies batch's SQL/images still pending — **re-verify, don't assume.** |
 | Mission Map/Evidence Quest | **Complete: 49 cases**: Science 13, Social Studies 12, Math 12, **ELAR 12 (authored Sept 23, later session; SQL delivered, not run; not pushed)**. Everything up to the Math batch is run and deployed. `tools/mission-map-gradecheck.cjs` gates reading level. Map art is missing for the 24 Math/ELAR cases. `tools/mission-map-casecheck.cjs` now guards the engine's client/server answer-key agreement across all 49. Still not live-tested since the Sept 2 batch. |
 | Simulation Lab | 10 cases across Grades 3-5 Science, all to the documented rigor rubric. Two bugs found and fixed in live-testing. Not live-tested since; SQL run status unconfirmed. Anchor art still needed for all 10. |
 | **Relay Station** | **Live through Wave 3; Wave 3 SQL now run and deployed.** A typing center that doubles as reading practice: a 20-level auto-advancing Foundations Track (rising pass bar 90/95/100%) with placement and teacher override, a 72-reading library across 6 topic families, ghost racer, Repair Drills, a class trouble-key heatmap, per-student Supports, Dictation and Corrupted Transmission modes, Copy → Compose (AI-first-read), a Daily Transmission with weekday streaks, 7 rank-unlocked keyboard skins, S.A.M. on every screen, and a whole-class Relay Race with a projector board. Teacher surfaces: Typing Track, Typing Texts, Relay Race Board, Distress Call, standards report. Waves 2-3 still not live-tested. |
@@ -424,7 +448,7 @@ The old-era 5.6A "Creek Sensor Mix-Up" packet had strong reasoning design underm
 - **A "Student progress" commit made on GitHub is deployed but unreviewed by Claude** and unpulled on Emily's machine.
 - **Relay Station art is generated but unconnected** — rank badges, keyboard-skin previews, posture and hands diagrams are referenced nowhere in code, and the challenge tile still points at the SVG placeholder. Paths unknown to Claude.
 - **The 48-case Assembly Deck map is unreviewed** by Emily, who is author of record.
-- **Reading level unmeasured on Frequency Rush, Signal Check, Mission Map, Simulation Lab and the Briefings** — the gate exists now and has only been applied to the two newest engines.
+- **Reading level unmeasured on Frequency Rush, Simulation Lab and the Briefings.** Assembly Deck, Relay Station, Mission Map and Signal Check are now all measured and on grade.
 - **`lib/cases/TEKS_STANDARDS.md` is behind** — every Science/SS code used on Sept 22 still needs adding, and the log is thin above Grade 3 Science.
 - A deliberate SQL audit sweep for Simulation Lab, Mission Map and Signal Check.
 - Two orphaned pieces from the old Glow Garden system; old per-planet `.png` art.

@@ -46,7 +46,14 @@ function score(p) {
 const want = process.argv.find((a, i) => i > 1 && !a.startsWith("--"));
 const list = process.argv.includes("--list");
 const rows = [];
-for (const f of fs.readdirSync(DIR).filter((f) => /-SC\.public\.js$/.test(f)).sort()) {
+// Only score cases the app actually registers (index.public.js). Case files
+// that sit in the folder but are never imported (3-6E, 4-7B, 5-10D as of
+// Sept 23, 2026) are listed at the end instead of counted.
+const registered = new Set([...fs.readFileSync(path.join(DIR, "index.public.js"), "utf8")
+  .matchAll(/from\s+"\.\/([^"]+-SC)\.public"/g)].map((m) => m[1] + ".public.js"));
+const files = fs.readdirSync(DIR).filter((f) => /-SC\.public\.js$/.test(f)).sort();
+const unregistered = files.filter((f) => !registered.has(f));
+for (const f of files.filter((f) => registered.has(f))) {
   const p = require(path.join(DIR, f)).PUBLIC_CASE;
   if (want && p.subject !== want) continue;
   const b = BAND[p.grade], r = score(p);
@@ -70,4 +77,5 @@ Object.keys(groups).sort().forEach((k) => {
   console.log(`  ${k.padEnd(20)} ${m}   ${g.filter((x) => x.ok).length}/${g.length}   over-long sentences: ${g.reduce((a, x) => a + x.over.length, 0)}`);
 });
 console.log(`\n${rows.length - fails}/${rows.length} cases on grade`);
+if (unregistered.length) console.log(`not scored (in the folder but not in index.public.js): ${unregistered.join(", ")}`);
 process.exit(fails ? 1 : 0);
