@@ -323,6 +323,8 @@ export default async function ActivityPage({ params }) {
         assignmentId={assignmentId}
         publicCase={exhibitHallCase}
         alreadySubmitted={alreadySubmitted}
+        samSkin={student.equipped_sam_skin}
+        samNickname={student.sam_nickname}
       />
     );
   }

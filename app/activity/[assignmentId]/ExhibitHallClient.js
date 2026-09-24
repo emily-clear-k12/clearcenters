@@ -1,6 +1,9 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
+import BackToHubButton from "../../../components/BackToHubButton";
+import SamGuide from "../../../components/SamGuide";
 import "./exhibit-hall.css";
 
 function ChoiceFace({ cards, title }) {
@@ -28,13 +31,15 @@ function CardFace({ card }) {
   return <img src={card.image} alt="" />;
 }
 
-export default function ExhibitHallClient({ assignmentId, publicCase, alreadySubmitted }) {
+export default function ExhibitHallClient({ assignmentId, publicCase, alreadySubmitted, samSkin, samNickname }) {
+  const router = useRouter();
   const exhibit = publicCase;
   const cards = exhibit.cards;
   const spots = exhibit.spots;
   const cardBy = (id) => cards.find((card) => card.id === id);
 
   const [step, setStep] = useState(alreadySubmitted ? "done" : "build");
+  const [picked, setPicked] = useState(null);
   const [wall, setWall] = useState([null, null, null, null]);
   const [bin, setBin] = useState(null);
   const [reason, setReason] = useState(null);
@@ -52,7 +57,7 @@ export default function ExhibitHallClient({ assignmentId, publicCase, alreadySub
   const [daysFalse, setDaysFalse] = useState(null);
   const [notePick, setNotePick] = useState(null);
   const [stamps, setStamps] = useState({});
-  const [status, setStatus] = useState("Open a card. The picture is inside.");
+  const [status, setStatus] = useState("Tap a picture. Mark what kind of source it is, then tap the spot it belongs on.");
   const [busy, setBusy] = useState(false);
 
   const used = new Set([...wall.filter(Boolean), bin].filter(Boolean));
@@ -112,6 +117,7 @@ export default function ExhibitHallClient({ assignmentId, publicCase, alreadySub
     }
     putOnSpot(id, slot);
     setLook(null);
+    setPicked(null);
   }
 
   function tryBin(id) {
@@ -122,12 +128,25 @@ export default function ExhibitHallClient({ assignmentId, publicCase, alreadySub
     }
     putInBin(id);
     setLook(null);
+    setPicked(null);
   }
 
   function chooseStamp(kind) {
     if (!look) return;
     setStamps((prev) => ({ ...prev, [look]: kind }));
-    setStatus("Now choose where it goes.");
+    setPicked(look);
+    setLook(null);
+    setStatus("Now tap the spot on the wall where it belongs.");
+  }
+
+  function openCard(id) {
+    setPicked(id);
+    if (!stamps[id]) {
+      setLook(id);
+      setStatus("Look at the whole picture. What kind of source is it?");
+      return;
+    }
+    setStatus("Tap the spot on the wall where it belongs.");
   }
 
   async function check() {
@@ -156,16 +175,28 @@ export default function ExhibitHallClient({ assignmentId, publicCase, alreadySub
   function piece(id) {
     const card = cardBy(id);
     return (
-      <button type="button" className="ms-piece" onClick={() => setLook(id)}>
+      <button type="button" className={picked === id ? "ms-piece is-on" : "ms-piece"} onClick={() => openCard(id)}>
+        <span className="ms-thumb"><CardFace card={card} /></span>
         <b>{card.title}</b>
         <span>{card.tag}</span>
-        {stamps[id] ? <span>{stamps[id]}</span> : <span>Tap to open</span>}
+        {stamps[id] ? <span>{stamps[id]}</span> : null}
       </button>
     );
   }
 
   return (
     <div className="ms-page">
+      <BackToHubButton />
+      <SamGuide
+        skinKey={samSkin}
+        alt={samNickname || "S.A.M."}
+        size={96}
+        anchors={{ home: { right: 16, bottom: 16 } }}
+        line={step === "build" ? "Tap a picture, then tap the spot it belongs on." : step === "write" ? "Say what you see, then why you used it." : step === "open" ? "Look at the wall you already built." : "Head back to the hub when you are ready."}
+        state={step === "done" ? "celebrating" : "helping"}
+        tipOnTap={step === "build" ? "One picture for each problem. One picture does not belong." : "Use what you can see on the wall."}
+        zIndex={40}
+      />
       <div className="ms-shell">
         <header className="ms-top">
           <div>
@@ -185,7 +216,7 @@ export default function ExhibitHallClient({ assignmentId, publicCase, alreadySub
           <div className="ms-layout">
             <section className="ms-panel">
               <h2>Storage room</h2>
-              <p className="ms-quiet">{loose.length} cards left. A card shows its name. Tap it to see the picture.</p>
+              <p className="ms-quiet">{loose.length} pictures left. Tap one, then tap the spot it belongs on.</p>
               <div className="ms-cards">
                 {loose.map((card) => (
                   <div key={card.id}>{piece(card.id)}</div>
@@ -197,9 +228,9 @@ export default function ExhibitHallClient({ assignmentId, publicCase, alreadySub
                 <h2>Your wall · one problem each</h2>
                 <div className="ms-wall">
                   {wall.map((id, index) => (
-                    <div key={spots[index].id} className="ms-slot">
+                    <div key={spots[index].id} className={picked ? "ms-slot is-on" : "ms-slot"}>
                       <b>{spots[index].label}</b>
-                      {id ? piece(id) : <p className="ms-quiet">Empty spot</p>}
+                      {id ? piece(id) : <button type="button" className="ms-ghost" onClick={() => picked && trySpot(picked, index)}>{picked ? "Hang it here" : "Empty"}</button>}
                     </div>
                   ))}
                 </div>
@@ -213,13 +244,9 @@ export default function ExhibitHallClient({ assignmentId, publicCase, alreadySub
                       ))}
                     </div>
                   )}
-                  {!bin && <p className="ms-quiet">Open a card, then choose this if it does not belong.</p>}
+                  {!bin && <button type="button" className="ms-ghost" onClick={() => picked && tryBin(picked)}>{picked ? "This one does not belong" : "The leftover goes here"}</button>}
                 </div>
               </section>
-              <aside className="ms-panel ms-sam">
-                <p className="ms-kicker">SAM</p>
-                <p>The four spots are four different problems.</p>
-              </aside>
             </div>
           </div>
         )}
@@ -266,10 +293,6 @@ export default function ExhibitHallClient({ assignmentId, publicCase, alreadySub
                 </div>
               </>
             )}
-            <aside className="ms-panel ms-sam">
-              <p className="ms-kicker">SAM</p>
-              <p>Say what you see, then say why you used it. Use your own words.</p>
-            </aside>
           </section>
         )}
 
@@ -337,10 +360,6 @@ export default function ExhibitHallClient({ assignmentId, publicCase, alreadySub
                   </select>.
                 </p>
               </div>
-              <aside className="ms-panel ms-sam">
-                <p className="ms-kicker">SAM</p>
-                <p>Look at the wall you built. Tap a picture if you need it bigger.</p>
-              </aside>
             </section>
           </div>
         )}
@@ -350,6 +369,7 @@ export default function ExhibitHallClient({ assignmentId, publicCase, alreadySub
             <p className="ms-kicker">The Nature Deck</p>
             <h2>{plaque || exhibit.title}</h2>
             <p>The cadets can walk through tomorrow. Your teacher will read what your sources could answer.</p>
+            <button type="button" className="ms-next" onClick={() => router.push("/home")}>Back to Hub</button>
           </section>
         )}
 
@@ -379,18 +399,6 @@ export default function ExhibitHallClient({ assignmentId, publicCase, alreadySub
                       <button key={kind} type="button" aria-pressed={stamps[look] === kind} onClick={() => chooseStamp(kind)}>{kind}</button>
                     ))}
                   </div>
-                  {stamps[look] && (
-                    <>
-                      <p>Where does it go?</p>
-                      <div className="ms-reasons">
-                        {spots.map((spot, index) => (
-                          <button key={spot.id} type="button" onClick={() => trySpot(look, index)}>{spot.label}</button>
-                        ))}
-                        <button type="button" onClick={() => tryBin(look)}>Not in this exhibit</button>
-                        <button type="button" onClick={() => { putAway(look); setLook(null); }}>Back to storage</button>
-                      </div>
-                    </>
-                  )}
                 </>
               )}
               <button type="button" className="ms-ghost" onClick={() => setLook(null)}>Close</button>

@@ -1,6 +1,6 @@
 .ms-page {
   min-height: calc(100vh - 46px);
-  padding: 18px 16px 32px;
+  padding: 64px 16px 32px;
   background: #120c28 url("/maker/hall.jpg") center / cover no-repeat fixed;
   color: #2a2350;
   font-family: Inter, sans-serif;
@@ -48,7 +48,8 @@
   background: #fff; text-align: left; color: inherit; font: inherit;
   box-shadow: inset 0 0 0 1px #e3dcf3; min-width: 0;
 }
-.ms-piece img { display: none; }
+.ms-piece img { display: block; width: 100%; height: 120px; object-fit: contain; background: #120c28; border-radius: 10px; }
+.ms-thumb { display: block; height: 120px; border-radius: 10px; overflow: hidden; background: #120c28; }
 .ms-quote {
   margin: 0; min-height: 84px; padding: 10px; border-radius: 12px;
   background: #f7fbff; border: 1px solid #e3dcf3; font-size: 14px; line-height: 1.45;
