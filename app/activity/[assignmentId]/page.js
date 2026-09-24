@@ -7,6 +7,7 @@ import { getMissionMapPublicCase } from "../../../lib/cases/mission-map/index.pu
 import { getSimulationLabPublicCase } from "../../../lib/cases/simulation-lab/index.public";
 import { getSignalDefensePublicCase } from "../../../lib/cases/signal-defense/index.public";
 import { getAssemblyDeckPublicCase } from "../../../lib/cases/assembly-deck/index.public";
+import { getClassificationLabPublicCase } from "../../../lib/cases/classification-lab/index.public";
 import { resolveRelayStationLesson } from "../../../lib/relayStationServer";
 import { centralDateKey, dailyTextFor, continuesStreak } from "../../../lib/cases/relay-station";
 import ActivityClient from "./ActivityClient";
@@ -17,6 +18,7 @@ import FrequencyRushClient from "./FrequencyRushClient";
 import SignalDefenseClient from "./SignalDefenseClient";
 import RelayStationClient from "./RelayStationClient";
 import AssemblyDeckClient from "./AssemblyDeckClient";
+import ClassificationLabClient from "./ClassificationLabClient";
 
 export default async function ActivityPage({ params }) {
   const { assignmentId } = params;
@@ -212,12 +214,14 @@ export default async function ActivityPage({ params }) {
   // Assembly Deck's branch, added Sept 22 2026 with the engine's first six
   // cases — up front, for the same reason Simulation Lab's was.
   const isAssemblyDeck = engine === "assembly_deck";
-  const caseEntry = isSignalCheck || isMissionMap || isSimulationLab || isAssemblyDeck ? null : getPublicCase(assignment.case_standard);
+  const isClassificationLab = engine === "classification_lab";
+  const caseEntry = isSignalCheck || isMissionMap || isSimulationLab || isAssemblyDeck || isClassificationLab ? null : getPublicCase(assignment.case_standard);
   const signalCheckCase = isSignalCheck ? getSignalCheckPublicCase(assignment.case_standard) : null;
   const missionMapCase = isMissionMap ? getMissionMapPublicCase(assignment.case_standard) : null;
   const simulationLabCase = isSimulationLab ? getSimulationLabPublicCase(assignment.case_standard) : null;
   const assemblyDeckCase = isAssemblyDeck ? getAssemblyDeckPublicCase(assignment.case_standard) : null;
-  if (!caseEntry && !signalCheckCase && !missionMapCase && !simulationLabCase && !assemblyDeckCase) {
+  const classificationLabCase = isClassificationLab ? getClassificationLabPublicCase(assignment.case_standard) : null;
+  if (!caseEntry && !signalCheckCase && !missionMapCase && !simulationLabCase && !assemblyDeckCase && !classificationLabCase) {
     return (
       <div style={{ minHeight: "100vh", background: "#16243F", display: "flex", alignItems: "center", justifyContent: "center", color: "#FFFFFF", fontFamily: "sans-serif", textAlign: "center", padding: 20 }}>
         <div>
@@ -305,6 +309,22 @@ export default async function ActivityPage({ params }) {
         revisionFeedback={revisionFeedback}
         samSkin={student.equipped_sam_skin}
         samNickname={student.sam_nickname}
+      />
+    );
+  }
+
+  if (isClassificationLab) {
+    const rawPages = (existingSubmission && existingSubmission.classification_lab_data && existingSubmission.classification_lab_data.pages) || {};
+    const savedPages = {};
+    Object.keys(rawPages).forEach((key) => {
+      savedPages[key] = { correct: rawPages[key].correct, total: rawPages[key].total };
+    });
+    return (
+      <ClassificationLabClient
+        assignmentId={assignmentId}
+        publicCase={classificationLabCase}
+        savedPages={savedPages}
+        samSkin={student.equipped_sam_skin}
       />
     );
   }
