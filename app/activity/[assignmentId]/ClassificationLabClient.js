@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import SamIcon from "../../../components/SamIcon";
+import BackToHubButton from "../../../components/BackToHubButton";
 import "./classification-lab.css";
 
 const PAGE_NAMES = ["Sort", "Harder sort", "Venn"];
@@ -151,6 +152,7 @@ export default function ClassificationLabClient({ assignmentId, publicCase, save
 
   return (
     <div className="cl-page">
+      <BackToHubButton />
       <div className="cl-shell">
         <header className="cl-top">
           <div>
