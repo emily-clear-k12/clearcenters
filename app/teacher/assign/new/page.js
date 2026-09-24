@@ -253,7 +253,7 @@ function NewAssignmentContent() {
     supabase.from("cases").select("standard, title, grade, subject, engine, learning_target, lesson_summary, misconception_note").then(({ data,error:loadError }) => {setCases(data || []);setCasesLoading(false);if(loadError)setError("Could not load activities. Please refresh to try again.")});
   }, []);
 
-  function topicCode(c){if(FR_CUSTOM_LIST_RE.test(c.standard))return MY_WORD_LISTS;return missionMapTeksCode(c.standard)||c.standard.replace(/-(?:SC|GC|FR|SL|SD|AD|RS|MM).*$/i,'');}
+  function topicCode(c){if(FR_CUSTOM_LIST_RE.test(c.standard))return MY_WORD_LISTS;return missionMapTeksCode(c.standard)||c.standard.replace(/-(?:SC|GC|FR|SL|SD|AD|RS|MM|CL|EX).*$/i,'');}
   const topics=[...new Set(cases.filter(c=>c.grade===Number(browseGrade)&&c.subject===browseSubject&&(typeFilter==='all'||matchesChallenge(c.engine,typeFilter))&&!isRetiredSignalCheckCase(c.standard)&&!((FR_CUSTOM_LIST_RE.exec(c.standard)||[])[1]&&FR_CUSTOM_LIST_RE.exec(c.standard)[1]!==String(teacherId||"").replace(/-/g,"").slice(0,8).toLowerCase())).map(topicCode))].sort((a,b)=>a.localeCompare(b,undefined,{numeric:true}));
   const searchQ = caseSearch.trim().toLowerCase();
   const filteredCases = cases.filter((c) => {
