@@ -3,6 +3,15 @@
 import { useState } from "react";
 import "./exhibit-hall.css";
 
+function ChoiceFace({ cards, title }) {
+  const card = cards.find((item) => item.title === title);
+  if (!card) return null;
+  if (card.kind === "graph") return <span className="ms-choice-tag">Graph</span>;
+  if (card.kind === "text") return <span className="ms-choice-tag">Note</span>;
+  if (!card.image) return null;
+  return <img className="ms-choice-pic" src={card.image} alt="" />;
+}
+
 function CardFace({ card }) {
   if (card.kind === "text") return <p className="ms-quote">{card.text}</p>;
   if (card.kind === "graph" || card.kind === "chart") {
@@ -265,50 +274,75 @@ export default function ExhibitHallClient({ assignmentId, publicCase, alreadySub
         )}
 
         {step === "open" && (
-          <section className="ms-panel">
-            <p className="ms-kicker">A note just came in</p>
-            <h2>Read it, then see what your sources can answer.</h2>
-            <div className="ms-bin">
-              <b>{exhibit.lateTitle}</b>
-              <p className="ms-quote">{exhibit.late}</p>
-              <p className="ms-sentence">This source shows <input aria-label="What the new source shows" value={finding} onChange={(event) => setFinding(event.target.value)} />.</p>
-            </div>
-            <div className="ms-bin">
-              <p>{exhibit.mcPrompt}</p>
-              <div className="ms-reasons">
-                {exhibit.mc.map((choice) => (
-                  <button key={choice} type="button" aria-pressed={heatPick === choice} onClick={() => setHeatPick(choice)}>{choice}</button>
+          <div className="ms-ask">
+            <section className="ms-gallery">
+              <p className="ms-kicker">Your exhibit</p>
+              <h2>{plaque || exhibit.title}</h2>
+              <div className="ms-hang">
+                {wall.map((id, index) => (
+                  <div key={spots[index].id} className="ms-slot">
+                    <b>{spots[index].label}</b>
+                    {id ? (
+                      <>
+                        <button type="button" className="ms-frame" onClick={() => setLook(id)}><CardFace card={cardBy(id)} /></button>
+                        <strong>{cardBy(id).title}</strong>
+                      </>
+                    ) : <p className="ms-quiet">Empty spot</p>}
+                  </div>
                 ))}
               </div>
-            </div>
-            <div className="ms-bin">
-              <p>{exhibit.msPrompt}</p>
-              <div className="ms-reasons">
-                {exhibit.ms.map((choice) => (
-                  <button key={choice} type="button" aria-pressed={sandPicks.includes(choice)} onClick={() => setSandPicks((prev) => prev.includes(choice) ? prev.filter((item) => item !== choice) : [...prev, choice])}>{choice}</button>
-                ))}
+              <div className="ms-placard">
+                <b>{exhibit.lateTitle}</b>
+                <p className="ms-quote">{exhibit.late}</p>
+                <p className="ms-sentence">This source shows <input aria-label="What the new source shows" value={finding} onChange={(event) => setFinding(event.target.value)} />.</p>
               </div>
-            </div>
-            <div className="ms-bin">
-              <p>{exhibit.tfPrompt}</p>
-              <div className="ms-reasons">
-                <button type="button" aria-pressed={daysFalse === false} onClick={() => setDaysFalse(false)}>True</button>
-                <button type="button" aria-pressed={daysFalse === true} onClick={() => setDaysFalse(true)}>False</button>
+            </section>
+            <section className="ms-panel">
+              <p className="ms-kicker">What can these sources answer?</p>
+              <p>Use your exhibit and the new note. A wrong answer can stay.</p>
+              <div className="ms-bin">
+                <p>{exhibit.mcPrompt}</p>
+                <div className="ms-reasons">
+                  {exhibit.mc.map((choice) => (
+                    <button key={choice} type="button" className="ms-choice" aria-pressed={heatPick === choice} onClick={() => setHeatPick(choice)}>
+                      <ChoiceFace cards={cards} title={choice} />
+                      {choice}
+                    </button>
+                  ))}
+                </div>
               </div>
-            </div>
-            <div className="ms-bin">
-              <p className="ms-sentence">{exhibit.icLead}{" "}
-                <select aria-label="What the new source helps with" value={notePick || ""} onChange={(event) => setNotePick(event.target.value)}>
-                  <option value="">choose</option>
-                  {exhibit.ic.map((choice) => <option key={choice}>{choice}</option>)}
-                </select>.
-              </p>
-            </div>
-            <aside className="ms-panel ms-sam">
-              <p className="ms-kicker">SAM</p>
-              <p>Answer each one. A wrong answer can stay.</p>
-            </aside>
-          </section>
+              <div className="ms-bin">
+                <p>{exhibit.msPrompt}</p>
+                <div className="ms-reasons">
+                  {exhibit.ms.map((choice) => (
+                    <button key={choice} type="button" className="ms-choice" aria-pressed={sandPicks.includes(choice)} onClick={() => setSandPicks((prev) => prev.includes(choice) ? prev.filter((item) => item !== choice) : [...prev, choice])}>
+                      <ChoiceFace cards={cards} title={choice} />
+                      {choice}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div className="ms-bin">
+                <p>{exhibit.tfPrompt}</p>
+                <div className="ms-reasons">
+                  <button type="button" aria-pressed={daysFalse === false} onClick={() => setDaysFalse(false)}>True</button>
+                  <button type="button" aria-pressed={daysFalse === true} onClick={() => setDaysFalse(true)}>False</button>
+                </div>
+              </div>
+              <div className="ms-bin">
+                <p className="ms-sentence">{exhibit.icLead}{" "}
+                  <select aria-label="What the new source helps with" value={notePick || ""} onChange={(event) => setNotePick(event.target.value)}>
+                    <option value="">choose</option>
+                    {exhibit.ic.map((choice) => <option key={choice}>{choice}</option>)}
+                  </select>.
+                </p>
+              </div>
+              <aside className="ms-panel ms-sam">
+                <p className="ms-kicker">SAM</p>
+                <p>Look at the wall you built. Tap a picture if you need it bigger.</p>
+              </aside>
+            </section>
+          </div>
         )}
 
         {step === "done" && (
