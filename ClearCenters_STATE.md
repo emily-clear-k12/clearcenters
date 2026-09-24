@@ -56,6 +56,26 @@ Nothing else. This file is a status document, not a design document — design n
 
 ## 0.5 · SESSION LOG
 
+**Sept 24, 2026 (late afternoon) — Frequency Rush step 2: 12 ELAR word-study sets, 360 questions. On disk, awaiting Emily's review; SQL not run; not pushed. Step 1 (facts + timer) is committed ("FR update 1.2").**
+
+*What changed*
+- **12 sets (Emily's picks), 30 questions each.** Every TEKS code was checked in the ELAR PDF.
+  - Grade 3: Homophones (3.3D), Prefixes and Suffixes (3.3C), Synonyms/Antonyms/Idioms (3.3D), Parts of Speech (3.11D).
+  - Grade 4: Homophones (4.3D), Affixes and Roots (4.3C), Irregular Past Tense (4.11D), Simile/Metaphor/Personification (4.9B).
+  - Grade 5: Affixes and Roots (5.3C), Adages and Puns (5.3D), Grammar Fix-Ups (5.11D), Spelling Changes (5.2B).
+- They are **authored skill sets** in `lib/cases/frequency-rush/skills/`, and they run on the same `sort_bins` path as the math facts. The server grades each answer from the bank. The answer buttons have hashed ids, so the right one can't be spotted from its id. Each set has its own header label (for example "HOMOPHONES · Which word fits?"). Every question shows an explanation after it's answered. The math facts now get one too ("3 × 5 = 15."); before, the game printed "3 × 5 = ?: ".
+- **New checker, `tools/frequency-rush-skillcheck.cjs`.** It checks shape (30 items, 3–4 unique choices, answer present, explanation present), game fit (prompt ≤ 110 characters, choice ≤ 70) and the per-grade maximum sentence length. All 12 sets pass. A deliberately broken bank was caught.
+- Played through the game in a headless browser: ELAR items in Cloudreach and Asteroid, with relabeled headers and explanations shown.
+- `add_frequency_rush_elar_skills.sql` adds 12 `cases` rows under ELAR. It was tested twice locally.
+- **The review sheet for Emily** is `FrequencyRush_ELAR_WordStudy_Review_v1.md`: every question, answer, wrong choice and explanation in one table per set.
+
+*What is still open*
+- **Emily reviews the 360 questions (author of record)** before anything is assigned.
+- After the review: run `add_frequency_rush_elar_skills.sql`, then push. The sets don't show on the assign page until the SQL runs.
+- Next in the build order is step 3, teacher's own lists.
+
+---
+
 **Sept 24, 2026 (afternoon) — Frequency Rush becomes the fluency center. The plan for Math and ELAR is decided, and step 1 is built: six Math fact sets. Files are on disk; SQL not run; nothing pushed.**
 
 *What changed*
@@ -494,7 +514,7 @@ The old-era 5.6A "Creek Sensor Mix-Up" packet had strong reasoning design underm
 **Current-app build order (confirmed Aug 29, amended since):** Mission Map ✓ → Simulation Lab ✓ (10 cases) → *(inserted by Emily's call: Frequency Rush/Signal Ops ✓, Relay Station ✓, Assembly Deck ✓ 66 cases)* → Classification Lab ✓ (built, 8 cases) → Repair Desk → **Maker Studio** (replaces Field Dispatch, Sept 24; its exact place in line is not yet set) → The Tribunal → Newsroom. **Sector Survey is no longer in the order** — retired into Assembly Deck.
 
 **Immediate next steps:**
-0a. **(Sept 24) Run `add_frequency_rush_skills.sql`, then push the Frequency Rush fact sets.**
+0a. ~~Run `add_frequency_rush_skills.sql` and push~~ **Committed as "FR update 1.2".** Next: Emily reviews `FrequencyRush_ELAR_WordStudy_Review_v1.md`, then runs `add_frequency_rush_elar_skills.sql` and pushes.
 0. **(Sept 24) Confirm the SQL for the new Assembly Deck (60 cases) and Classification Lab (column + 8 cases) has run.** Then extend `audit_production_readonly.sql` to cover them and re-run it. Do this before assigning any of those cases.
 1. **Pull.** Emily's local checkout is one commit behind origin — the "Student progress" change was made on GitHub and is deployed but not down on her machine. Pull before editing anything, or the next commit fights it.
 2. **Re-pilot `3.6A-AD` with a student**, now that the Case File and the Chief's Debrief are in it. Twenty minutes, and it is the cheapest de-risking available before 48 more cases are written against that ending.

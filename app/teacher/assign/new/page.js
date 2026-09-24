@@ -10,6 +10,13 @@ import { GAME_SKINS, DEFAULT_GAME_SKIN } from "../../../../lib/frequencyRushSkin
 
 // Sept 24, 2026 — teacher-set Frequency Rush question timer. The game
 // accepts 0-60 seconds; 0 means no timer.
+// Sept 24, 2026 — Frequency Rush custom word lists (FR.C.<teacher8>.<id>).
+// Private to the teacher who made them, like Relay Station's custom texts,
+// and grouped under one "My Word Lists" topic. Inlined here on purpose:
+// lib/frequencyRushCustomLists.js carries a large word list meant for the server.
+const FR_CUSTOM_LIST_RE = /^FR\.C\.([a-z0-9]{8})\.[a-z0-9]+$/;
+const MY_WORD_LISTS = "My Word Lists";
+
 const QUESTION_SECONDS_OPTIONS = [
   { value: 0, label: "No timer" },
   { value: 5, label: "5 sec" },
@@ -244,8 +251,8 @@ function NewAssignmentContent() {
     supabase.from("cases").select("standard, title, grade, subject, engine, learning_target, lesson_summary, misconception_note").then(({ data,error:loadError }) => {setCases(data || []);setCasesLoading(false);if(loadError)setError("Could not load activities. Please refresh to try again.")});
   }, []);
 
-  function topicCode(c){return missionMapTeksCode(c.standard)||c.standard.replace(/-(?:SC|GC|FR|SL|SD|AD|RS|MM).*$/i,'');}
-  const topics=[...new Set(cases.filter(c=>c.grade===Number(browseGrade)&&c.subject===browseSubject&&(typeFilter==='all'||matchesChallenge(c.engine,typeFilter))&&!isRetiredSignalCheckCase(c.standard)).map(topicCode))].sort((a,b)=>a.localeCompare(b,undefined,{numeric:true}));
+  function topicCode(c){if(FR_CUSTOM_LIST_RE.test(c.standard))return MY_WORD_LISTS;return missionMapTeksCode(c.standard)||c.standard.replace(/-(?:SC|GC|FR|SL|SD|AD|RS|MM).*$/i,'');}
+  const topics=[...new Set(cases.filter(c=>c.grade===Number(browseGrade)&&c.subject===browseSubject&&(typeFilter==='all'||matchesChallenge(c.engine,typeFilter))&&!isRetiredSignalCheckCase(c.standard)&&!((FR_CUSTOM_LIST_RE.exec(c.standard)||[])[1]&&FR_CUSTOM_LIST_RE.exec(c.standard)[1]!==String(teacherId||"").replace(/-/g,"").slice(0,8).toLowerCase())).map(topicCode))].sort((a,b)=>a.localeCompare(b,undefined,{numeric:true}));
   const searchQ = caseSearch.trim().toLowerCase();
   const filteredCases = cases.filter((c) => {
     if (c.grade !== parseInt(browseGrade)) return false;
@@ -259,6 +266,7 @@ function NewAssignmentContent() {
     // below) instead of hiding among the ELAR readings.
     // Relay Station custom texts are private to the teacher who made them.
     if (isCustomCode(c.standard) && customCodeOwnerPrefix(c.standard) !== String(teacherId || "").replace(/-/g, "").slice(0, 8).toLowerCase()) return false;
+    { const own = FR_CUSTOM_LIST_RE.exec(c.standard); if (own && own[1] !== String(teacherId || "").replace(/-/g, "").slice(0, 8).toLowerCase()) return false; }
     if (specialTile) return specialTile.match(c.standard);
     if (RELAY_SPECIAL_TILES.some((t) => t.match(c.standard))) return false;
     if (!searchQ) return true;

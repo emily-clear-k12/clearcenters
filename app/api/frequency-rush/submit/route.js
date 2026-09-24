@@ -5,6 +5,7 @@ import { ROUND_SECONDS, getFrequencyRushWordSet, getClassifyBanksForCase } from 
 import { pointsForCorrectAnswer } from "../../../../lib/frequencyRushScoring";
 import { getOutpostProgress } from "../../../../lib/outpostBuilder";
 import { getSkillSet, recomputeSkillItem } from "../../../../lib/frequencyRushSkills";
+import { isCustomListCode, recomputeCustomItem } from "../../../../lib/frequencyRushCustomLists";
 
 // Ends a Lock the Signal session. Every answer is re-scored here against the
 // session's own server-generated word_order — never trusted from the client,
@@ -139,6 +140,19 @@ export async function POST(request) {
     // looked up in a file bank, and an id outside the assigned set is ignored.
     const skillStandard = caseRow ? caseRow.standard || assignment.case_standard : null;
     skillSet = skillStandard ? getSkillSet(skillStandard) : null;
+    // Sept 24, 2026 — a teacher's own word list: grade against the saved list.
+    let customList = null;
+    if (!skillSet && isCustomListCode(skillStandard)) {
+      const { data: list } = await supabaseAdmin
+        .from("frequency_rush_custom_lists")
+        .select("standard, title, words, include_meaning, include_spelling")
+        .eq("standard", skillStandard)
+        .maybeSingle();
+      if (list) {
+        customList = list;
+        skillSet = { kind: "custom", title: `My List: ${list.title}` };
+      }
+    }
     let sortBinById = new Map();
     if (caseKey && !skillSet) {
       try {
@@ -155,9 +169,11 @@ export async function POST(request) {
       if (a?.type === "sort_bins") {
         const itemId = a.itemId ?? a.questionId;
         if (itemId == null) continue;
-        const item = skillSet
-          ? recomputeSkillItem(skillStandard, itemId)
-          : sortBinById.get(String(itemId));
+        const item = customList
+          ? recomputeCustomItem(customList, itemId)
+          : skillSet
+            ? recomputeSkillItem(skillStandard, itemId)
+            : sortBinById.get(String(itemId));
         if (!item) continue; // not a real item from this unit's banks, or not part of this skill set
         const correct = a.choiceId != null && String(a.choiceId) === String(item.correctBinId);
         let pointsEarned = 0;

@@ -12,6 +12,7 @@ import {
 import { getOutpostProgress } from "../../../../lib/outpostBuilder";
 import { DEFAULT_GAME_SKIN, getSkinForSortBins } from "../../../../lib/frequencyRushSkins";
 import { getSkillSet, buildSkillItems, SKILL_ROUND_LABELS } from "../../../../lib/frequencyRushSkills";
+import { isCustomListCode, buildCustomListItems, CUSTOM_LIST_LABELS } from "../../../../lib/frequencyRushCustomLists";
 
 // Starts one Lock the Signal / Individual Practice session. Called fresh
 // every time a student plays OR replays — replays are unlimited by design
@@ -80,9 +81,24 @@ export async function POST(request) {
   // A generated set (math facts) has no word bank or sort bank. Its
   // questions are built fresh for every run and ride on the game's
   // existing sort_bins type, so none of the vocabulary loading below runs.
-  const skillSet = getSkillSet(caseRow.standard || assignment.case_standard);
+  const caseCode = caseRow.standard || assignment.case_standard;
+  let skillSet = getSkillSet(caseCode);
+  let skillItems = skillSet ? buildSkillItems(caseCode) : [];
+  // Sept 24, 2026 — a teacher's own word list (step 3). Same path as a skill
+  // set; its questions are built from the saved list.
+  if (!skillSet && isCustomListCode(caseCode)) {
+    const { data: list } = await supabaseAdmin
+      .from("frequency_rush_custom_lists")
+      .select("standard, title, words, include_meaning, include_spelling")
+      .eq("standard", caseCode)
+      .maybeSingle();
+    if (!list) {
+      return NextResponse.json({ error: "This word list isn't available anymore." }, { status: 404 });
+    }
+    skillSet = { kind: "custom", title: list.title, labels: CUSTOM_LIST_LABELS };
+    skillItems = buildCustomListItems(list);
+  }
   if (skillSet) {
-    const skillItems = buildSkillItems(caseRow.standard || assignment.case_standard);
     if (!skillItems.length) {
       return NextResponse.json({ error: "This skill set couldn't be built." }, { status: 500 });
     }
