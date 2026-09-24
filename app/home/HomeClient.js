@@ -848,10 +848,6 @@ export default function HomeClient({ student, studentClass, assignments, mission
           matching Missions/Progress/Galaxy Hub instead of the old standalone
           pill button underneath. */}
       <div style={{ position: "absolute", bottom: "6%", left: "50%", transform: "translateX(-50%)", display: "flex", gap: 64, zIndex: 4 }}>
-        <button type="button" className="hub-portal hub-portal--briefings" onClick={() => router.push("/briefings")}>
-          <div className="hub-orb-wrap"><img src="/student/orb_briefings.png" alt="" /></div>
-          <span style={{ fontWeight: 700, fontSize: 13, color: COLORS.white, background: "rgba(20,26,50,.55)", padding: "4px 14px", borderRadius: 999, backdropFilter: "blur(6px)" }}>My Briefings</span>
-        </button>
         <button type="button" className="hub-portal hub-portal--missions" onClick={() => router.push("/missions")}>
           <div className="hub-orb-wrap"><img src="/student/orb_missions.png" alt="" /></div>
           <span style={{ fontWeight: 700, fontSize: 13, color: COLORS.white, background: "rgba(20,26,50,.55)", padding: "4px 14px", borderRadius: 999, backdropFilter: "blur(6px)" }}>My Missions</span>
