@@ -276,6 +276,8 @@ export default function TeacherGradeDetailPage() {
   }
 
   const isSignalCheck = submission.caseEngine === "fact_check_desk";
+  const isClassificationLab = submission.caseEngine === "classification_lab";
+  const labData = submission.classification_lab_data || null;
   const caseEntry = isSignalCheck ? null : getPublicCase(submission.caseStandard);
   const signalCheckCase = isSignalCheck ? getSignalCheckPublicCase(submission.caseStandard) : null;
   const isNewsroom = (submission.caseEngine || "").startsWith("newsroom");
@@ -362,7 +364,30 @@ export default function TeacherGradeDetailPage() {
         <div style={{ display: "flex", justifyContent: "center" }}>
         <div style={{ width: "100%", maxWidth: 1000, display: "grid", gridTemplateColumns: "1.3fr 1fr", gap: 18 }}>
           <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-            {isSignalCheck ? (
+            {isClassificationLab && labData ? (
+              <div style={panelStyle(ACCENT, { padding: 16 })}>
+                <div style={{ fontWeight: 700, fontSize: 12.5, color: COLORS.textMuted, marginBottom: 10, textTransform: "uppercase", letterSpacing: 0.5 }}>Three sorts</div>
+                {["Sort", "Harder sort", "Venn"].map((name, index) => {
+                  const page = (labData.pages || {})[index] || (labData.pages || {})[String(index)];
+                  if (!page) return <div key={name} style={{ marginBottom: 12, color: COLORS.textMuted }}>{name}: not checked</div>;
+                  return (
+                    <div key={name} style={{ marginBottom: 16 }}>
+                      <div style={{ fontWeight: 700, marginBottom: 6 }}>{name}: {page.correct}/{page.total}</div>
+                      {(page.items || []).map((item) => (
+                        <div key={item.id} style={{ fontSize: 13, marginBottom: 4, color: item.right ? COLORS.success : "#B23A3A" }}>
+                          {item.label}: {item.student}{item.right ? "" : ` — belongs in ${item.correct}`}
+                        </div>
+                      ))}
+                      {(page.questions || []).map((question) => (
+                        <div key={question.id} style={{ fontSize: 13, marginBottom: 4, color: question.right ? COLORS.success : "#B23A3A" }}>
+                          {question.prompt} Answered: {question.student}{question.right ? "" : ` — ${question.correct}`}
+                        </div>
+                      ))}
+                    </div>
+                  );
+                })}
+              </div>
+            ) : isSignalCheck ? (
               // Signal Check only ever has one attempt — no revise step.
               // The per-signal breakdown needs the case content to line the
               // student's answers up against; the fallback below covers a

@@ -72,6 +72,8 @@ const CHALLENGE_TYPES = [
   // call, so its tile is gone rather than promising a separate engine.
   { key: "assembly_deck", label: "Assembly Deck", image: "/teacher/challenges/assembly_deck.jpg", real: true,
     description: "Students build the whole piece, not one answer — three paragraphs assembled sentence by sentence, with decoys that have to be left in the tray and explained, then put in the order a reader actually needs. Runs about 20 minutes." },
+  { key: "classification_lab", label: "Classification Lab", image: "/lab/room.jpg", real: true,
+    description: "Students sort by the rule on the card, not the obvious clue. Three pages: a sort, a harder sort, and a Venn. A miss says how many are wrong, not which ones. About 20 minutes." },
   // Coming soon — kept below live tiles (Assign library sorts real:true first as well).
   { key: "repair_desk", label: "Repair Desk", image: "/teacher/challenges/repair_desk.jpg", real: false,
     description: "A broken ticket arrives — a flawed diagram, model, or work sample. Students diagnose what's wrong, fix it, and explain the fix to whoever sent it in." },

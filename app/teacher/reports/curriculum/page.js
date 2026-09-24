@@ -43,6 +43,7 @@ const ENGINE_LABELS = {
   newsroom: "Newsroom",
   relay_station: "Relay Station",
   assembly_deck: "Assembly Deck",
+  classification_lab: "Classification Lab",
 };
 
 // Same fallback/prefix rules as matchesChallenge() in Challenge Library: a
