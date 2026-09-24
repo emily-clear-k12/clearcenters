@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Crystal Dive · Gameplay Prototype</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#e9f4f5;color:#173d55;font:18px system-ui}main{max-width:1320px;margin:auto;padding:12px}
+header{display:flex;gap:22px;align-items:center;background:#fff;border-radius:20px;padding:14px 24px;box-shadow:0 4px 22px #3052713a}header strong{margin-right:auto;font-size:25px}header span{font-weight:750}
+#game{position:relative;aspect-ratio:16/9;overflow:hidden;border-radius:22px;margin-top:12px;background:#704f55}
+canvas{display:block;width:100%;height:100%}
+#hint{position:absolute;bottom:14px;left:14px;background:#ffffffed;border-radius:13px;padding:12px 17px;font-weight:700}
+#overlay{position:absolute;inset:0;background:#0b1c39a8;display:grid;place-items:center;padding:20px}
+#overlay[hidden]{display:none}.panel{width:min(780px,100%);max-height:96%;overflow:auto;background:#fff;border:2px solid #b7e5e8;border-radius:27px;padding:30px;box-shadow:0 18px 70px #0a203e8c}
+h1{font-size:42px;margin:8px 0}h2{font-size:30px;margin:8px 0 18px}p{line-height:1.5}small{color:#127d98;font-weight:900;letter-spacing:.08em}
+button{font:inherit;cursor:pointer}.primary{background:#128bab;color:#fff;border:0;border-radius:14px;padding:13px 22px;font-weight:800}
+.options{display:grid;grid-template-columns:1fr 1fr;gap:12px}.choice{min-height:72px;text-align:left;padding:14px;border:2px solid #c5e3ea;background:#f2fbfd;border-radius:14px;color:#163b53;font-weight:750}.choice:hover,.choice:focus-visible{border-color:#1ab4c9}
+#targets{position:relative;height:230px;border-radius:15px;background:radial-gradient(circle,#6a5390,#25213d);overflow:hidden}
+.target{position:absolute;width:53px;height:53px;border-radius:50%;border:2px solid white;background:#58d7e6;color:#fff;font-size:26px;box-shadow:0 0 24px #70f1ff}.target.done{background:#83f5c1;opacity:.5}
+#touch{display:flex;justify-content:center;gap:10px;margin:10px}#touch button{min-width:55px;min-height:48px;background:#fff;border:2px solid #85c6d5;border-radius:13px;font-weight:850;color:#1c6882;touch-action:none}
+@media(min-width:900px){#touch{display:none}}@media(max-width:650px){.panel{padding:15px}h1{font-size:27px}h2{font-size:22px}.choice{min-height:58px;padding:8px;font-size:16px}header{gap:8px;padding:7px;font-size:12px}header strong{font-size:16px}}
+</style>
+<main><header><strong>✦ CRYSTAL DIVE</strong><span id="clock">10:00</span><span id="depth">Layer 1</span><span id="score">0 crystals</span></header>
+<div id="game"><canvas id="map" width="1280" height="720" aria-label="Dig map"></canvas><div id="hint">WASD / arrows to dig · Space to enter a cave</div><div id="overlay"><section class="panel" id="panel"></section></div></div>
+<div id="touch"><button data-key="a">←</button><button data-key="w">↑</button><button data-key="s">↓</button><button data-key="d">→</button><button data-key="enter">ENTER</button></div>
+</main>
+<script>
+(function(){
+"use strict";
+var canvas=document.getElementById("map"),g=canvas.getContext("2d"),overlay=document.getElementById("overlay"),panel=document.getElementById("panel");
+var teacher={sessionMinutes:10,questionSeconds:0},bank=[],done=null,mode="intro",layer=1,crystals=0,answers=[],tiles=[],caves=[],gate=false,burst=0,current=null,queue=[],last="",rover={x:15,y:9,dir:1},keys={},endAt=0,questionAt=0,startedAt=0,remaining=600,moveAt=0,finishAt=0;
+var T=40,copy=function(s){return String(s==null?"":s).replace(/[&<>]/g,function(ch){return {"&":"&amp;","<":"&lt;",">":"&gt;"}[ch]})};
+function id(s){return document.getElementById(s)}
+function pick(a){return a[Math.floor(Math.random()*a.length)]}
+function shuffle(a){a=a.slice();for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=a[i];a[i]=a[j];a[j]=t}return a}
+function time(s){s=Math.max(0,Math.ceil(s));return String(Math.floor(s/60)).padStart(2,"0")+":"+String(s%60).padStart(2,"0")}
+function hud(){id("clock").textContent=time(remaining);id("depth").textContent="Layer "+layer;id("score").textContent=crystals+" crystals"}
+function show(s){panel.innerHTML=s;overlay.hidden=false}
+function hide(){overlay.hidden=true}
+function demo(){return [7,8,9,6,4,3].map(function(n,i){return {id:"demo:"+i,prompt:"What is "+n+" × "+(i+3)+"?",bins:[{id:"a",label:String(n*(i+3))},{id:"b",label:String(n*(i+3)+n)},{id:"c",label:String(n*(i+3)-n)},{id:"d",label:String(n+(i+3))}],correctBinId:"a"}})}
+function normalize(b){var a=Array.isArray(b.sortBins)?b.sortBins:[];return a.filter(function(q){return q&&q.id&&q.prompt&&Array.isArray(q.bins)&&q.bins.length>=2&&q.correctBinId!=null}).map(function(q){return {id:q.id,prompt:q.prompt,choices:q.bins.map(function(x){return {id:x.id,label:x.label}}),answer:q.correctBinId,explanation:q.explanation||q.rule||""}})}
+function intro(){mode="intro";show('<small>SOLARA EXPEDITION</small><h1>Crystal Dive</h1><p>Dig through the ground, choose a cave, play a short surprise, then answer four questions to power your way down. Unknown caves stay dark until explored.</p><p>Use WASD or the arrow keys. Press Space near a cave.</p><p id="bankNote"></p><button class="primary" id="start">Start digging</button>');id("bankNote").textContent=bank.length?"Assignment bank ready.":"Preview mode: a few sample math facts.";id("start").onclick=start}
+function level(){
+ tiles=[];for(var y=0;y<18;y++){var row=[];for(var x=0;x<32;x++){row.push(y===0||x===0||x===31?"rock":Math.random()<Math.min(.15,.04+layer*.004)?"rock":"dirt")}tiles.push(row)}
+ for(var x=2;x<30;x++)for(var y=8;y<=10;y++)tiles[y][x]="air";
+ for(var y=11;y<17;y++)tiles[y][15]="dirt";
+ tiles[16][15]="gate";tiles[17][15]="exit";
+ caves=[4,27];if(layer>=5)caves.push(layer%2?9:22);
+ caves=caves.map(function(x){return {x:x,y:9,lit:false,kind:pick(["crystals","shadows","guardian","mechanism"])}});rover={x:15,y:9,dir:1};gate=false;mode="explore";hide();hud();id("hint").textContent="WASD / arrows to dig · Space to enter a cave"}
+function start(){layer=1;crystals=0;answers=[];queue=[];last="";remaining=teacher.sessionMinutes*60;endAt=performance.now()+remaining*1000;level()}
+function move(dx,dy){if(mode!=="explore")return;var x=rover.x+dx,y=rover.y+dy;if(x<1||x>30||y<1||y>17)return;rover.dir=dx||rover.dir;var t=tiles[y][x];if(t==="rock")return;if(t==="gate"){id("hint").textContent="Explore a cave and answer four questions first.";return}if(t==="exit"){if(gate){layer++;level()}return}if(t==="dirt"){tiles[y][x]="air";if(Math.random()<.08)crystals++}rover.x=x;rover.y=y;hud()}
+function enter(){if(mode!=="explore")return;var cave=caves.find(function(v){return !v.lit&&Math.abs(v.x-rover.x)<=1&&Math.abs(v.y-rover.y)<=1});if(!cave)return;cave.lit=true;mode="cave";var names={crystals:"Crystal Pocket",shadows:"Dark Cavern",guardian:"Stone Guardian",mechanism:"Ancient Mechanism"},instructions={crystals:"Tap the glowing crystal seams.",shadows:"Sweep your light across the hidden points.",guardian:"Tap the lights to guide the guardian aside.",mechanism:"Activate the ancient symbols."};
+ show('<small>CAVE DISCOVERED · LAYER '+layer+'</small><h2>'+names[cave.kind]+'</h2><p>'+instructions[cave.kind]+'</p><div id="targets"></div><p id="count">0 / 4 found</p>');
+ var count=0;for(var i=0;i<4;i++){var b=document.createElement("button");b.className="target";b.textContent=cave.kind==="guardian"?"✦":"◆";b.style.left=(15+i*21)+"%";b.style.top=(i%2?55:19)+"%";b.setAttribute("aria-label","Reveal cave point "+(i+1));b.onclick=function(){if(this.classList.contains("done"))return;this.classList.add("done");count++;id("count").textContent=count+" / 4 found";if(count===4){crystals+=cave.kind==="crystals"?5:3;hud();setTimeout(function(){burst=0;ask()},400)}};id("targets").appendChild(b)}}
+function next(){if(!queue.length){queue=shuffle(bank.length?bank:normalize({sortBins:demo()}));if(queue.length>1&&String(queue[queue.length-1].id)===last)queue.unshift(queue.pop())}current=queue.pop();last=String(current.id);return current}
+function ask(){if(remaining<=0)return finish();mode="question";next();startedAt=performance.now();questionAt=startedAt+teacher.questionSeconds*1000;current.answered=false;
+ show('<small>DRILL RECHARGE · QUESTION '+(burst+1)+' OF 4 <span id="qt" style="float:right"></span></small><h2>'+copy(current.prompt)+'</h2><div class="options" id="choices"></div><p id="feedback" role="status">Correct answers find two extra crystals.</p>');
+ id("qt").textContent=teacher.questionSeconds?time(teacher.questionSeconds):"NO TIMER";
+ shuffle(current.choices).forEach(function(ch){var b=document.createElement("button");b.className="choice";b.textContent=ch.label;b.onclick=function(){answer(ch.id)};id("choices").appendChild(b)})}
+function answer(chosen){if(!current||current.answered)return;current.answered=true;var right=String(chosen)===String(current.answer);var ms=Math.round(performance.now()-startedAt);answers.push({type:"sort_bins",itemId:current.id,questionId:current.id,choiceId:chosen,correct:right,responseTimeMs:ms});if(right)crystals+=2;burst++;hud();id("feedback").textContent=chosen==null?"Time is up.":right?"Correct! +2 crystals":current.explanation||"Keep digging. You'll see another question.";id("choices").querySelectorAll("button").forEach(function(b){b.disabled=true});
+ finishAt=performance.now()+850}
+function finish(){if(mode==="recap")return;mode="recap";show('<small>EXPEDITION COMPLETE</small><h1>Layer '+layer+' reached!</h1><p>You collected '+crystals+' crystals and answered '+answers.length+' questions.</p><button class="primary" id="again">Dive again</button>');id("again").onclick=start;if(done)try{done({reason:"completed",answers:answers.slice(),layer:layer,crystals:crystals})}catch(e){console.error(e)}}
+function tick(t){if(mode!=="intro"&&mode!=="recap"){remaining=Math.max(0,(endAt-t)/1000);if(mode==="question"){if(teacher.questionSeconds&&current&&!current.answered){var q=Math.max(0,(questionAt-t)/1000);if(id("qt"))id("qt").textContent=time(q);if(q<=0)answer(null)}if(current&&current.answered&&t>=finishAt){if(remaining<=0)finish();else if(burst<4)ask();else{gate=true;tiles[16][15]="air";mode="explore";hide();id("hint").textContent="Drill charged! Dig down the center shaft."}}}else if(remaining<=0)finish();hud()}
+ if(mode==="explore"&&t-moveAt>115){var dx=(keys.d||keys.arrowright?1:0)-(keys.a||keys.arrowleft?1:0),dy=(keys.s||keys.arrowdown?1:0)-(keys.w||keys.arrowup?1:0);if(dx||dy){move(dx,dy);moveAt=t}}
+ requestAnimationFrame(tick)}
+function render(){var colors=["#a46c4b","#895e5b","#63546c","#456575","#4e7380"],rock=colors[Math.floor((layer-1)/4)%colors.length];g.fillStyle=rock;g.fillRect(0,0,1280,720);
+ for(var y=0;y<18;y++)for(var x=0;x<32;x++){var v=tiles[y]&&tiles[y][x],px=x*40,py=y*40;g.fillStyle=v==="air"||v==="exit"?"#27364c":v==="rock"?"#3e4252":v==="gate"?"#5f929f":rock;g.fillRect(px,py,41,41);if(v==="dirt"){g.fillStyle="#ffd1a137";g.fillRect(px+4,py+7,29,2);g.fillRect(px+17,py+27,17,2)}}
+ caves.forEach(function(v){var cx=(v.x+.5)*40,cy=(v.y+.5)*40;g.beginPath();g.ellipse(cx,cy,59,77,0,0,7);g.fillStyle=v.lit?"#1689a5":"#101c2e";g.fill();g.lineWidth=7;g.strokeStyle=v.lit?"#76ecf0":"#4c4862";g.stroke();if(v.lit){g.fillStyle="#92e7f4";g.font="bold 37px sans-serif";g.fillText("✦",cx-19,cy+14)}});
+ var px=(rover.x+.5)*40,py=(rover.y+.5)*40;g.save();g.beginPath();g.moveTo(px+rover.dir*18,py);g.lineTo(px+rover.dir*190,py-100);g.lineTo(px+rover.dir*190,py+100);g.clip();var beam=g.createRadialGradient(px,py,10,px+rover.dir*75,py,180);beam.addColorStop(0,"#b8faffaa");beam.addColorStop(1,"#9be8ff00");g.fillStyle=beam;g.fillRect(px-210,py-180,420,360);g.restore();
+ g.fillStyle="#f5f8f5";g.strokeStyle="#16759b";g.lineWidth=4;g.beginPath();g.roundRect(px-24,py-17,48,29,9);g.fill();g.stroke();g.fillStyle="#203846";for(var n of [-14,14]){g.beginPath();g.arc(px+n,py+12,7,0,7);g.fill()}g.fillStyle="#76eaf8";g.beginPath();g.arc(px+rover.dir*23,py-3,5,0,7);g.fill();requestAnimationFrame(render)}
+window.addEventListener("keydown",function(e){var k=e.key.toLowerCase();if(["arrowleft","arrowright","arrowup","arrowdown"," ","w","a","s","d"].includes(k))e.preventDefault();keys[k]=true;if(k===" "||k==="enter")enter()});
+window.addEventListener("keyup",function(e){keys[e.key.toLowerCase()]=false});
+document.querySelectorAll("[data-key]").forEach(function(b){b.onpointerdown=function(e){e.preventDefault();b.setPointerCapture(e.pointerId);if(b.dataset.key==="enter")enter();else keys[b.dataset.key]=true};b.onpointerup=b.onpointercancel=function(){keys[b.dataset.key]=false}});
+window.CrystalDive=Object.freeze({setQuestionBank:function(v){if(mode!=="intro"&&mode!=="recap")throw Error("Load bank before play.");bank=normalize(v);intro()},configure:function(v){if(mode!=="intro"&&mode!=="recap")throw Error("Configure before play.");if(v.sessionMinutes!=null){if(![5,10,15,20].includes(v.sessionMinutes))throw RangeError("Session length must be 5, 10, 15 or 20 minutes.");teacher.sessionMinutes=v.sessionMinutes}if(v.questionSeconds!=null){if(![0,5,8,10,15,20,30].includes(v.questionSeconds))throw RangeError("Invalid question timer.");teacher.questionSeconds=v.questionSeconds}},onComplete:function(fn){done=fn},start:start,getSnapshot:function(){return {mode:mode,layer:layer,remainingSeconds:remaining,crystals:crystals,answered:answers.length}},getCapabilities:function(){return {questionBankItemTypes:["sort_bins"],maxSessionMinutes:20,questionBurst:4}}});
+intro();render();requestAnimationFrame(tick);
+})();
+</script></html>
