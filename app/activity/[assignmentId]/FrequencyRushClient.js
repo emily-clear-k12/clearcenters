@@ -43,6 +43,9 @@ export default function FrequencyRushClient({ assignmentId, caseTitle }) {
   // Sept 12, 2026 — file-bank tap-the-bin sort (sort_bins) expanded per item
   // by /api/frequency-rush/start from lib/cases/frequency-rush/classify.
   const [sortBins, setSortBins] = useState([]);
+  // Sept 24, 2026 — skill sets (math facts). When set, the start route
+  // generated this run's questions and sent round labels for the header.
+  const [skill, setSkill] = useState(null);
   // Sept 12, 2026 — which static widget file to load into the iframe below,
   // teacher-chosen at assignment time (assignments.game_skin) and handed
   // back by /api/frequency-rush/start as `gameSkin` — see
@@ -85,6 +88,7 @@ export default function FrequencyRushClient({ assignmentId, caseTitle }) {
       setOutpostResources(data.outpost ? data.outpost.resources : 0);
       setClassifications(Array.isArray(data.classifications) ? data.classifications : []);
       setSortBins(nextSortBins);
+      setSkill(data.skill || null);
       setGameSkinFile(getGameSkinFile(data.gameSkin));
       pendingSessionIdRef.current = data.sessionId;
       setPhase("ready");
@@ -160,6 +164,11 @@ export default function FrequencyRushClient({ assignmentId, caseTitle }) {
     try {
       const next = await mintSession();
       pendingSessionIdRef.current = next.sessionId;
+      // Sept 24, 2026 — a skill set gets a fresh set of facts for every
+      // replay, not the same 24 reshuffled.
+      if (next.skill && Array.isArray(next.sortBins) && next.sortBins.length) {
+        setSortBins(next.sortBins);
+      }
     } catch (err) {
       // Reserved lazily at the top of submitRun itself if this didn't land in time.
     }
@@ -220,12 +229,13 @@ export default function FrequencyRushClient({ assignmentId, caseTitle }) {
       win.AsteroidRun.configure({ flightSeconds: 4 });
       win.AsteroidRun.onComplete((result) => { submitRun(result); });
       hideAuthorOnlyControls(win);
+      if (skill && skill.labels) relabelSkillRounds(win, skill.labels);
     } catch (err) {
       // Only throws if the widget isn't on its intro/recap screen yet —
       // a genuine race on first load; the iframe's own load event retries
       // this right after.
     }
-  }, [words, classifications, sortBins, outpostResources, submitRun]);
+  }, [words, classifications, sortBins, outpostResources, submitRun, skill]);
 
   useEffect(() => {
     if (phase === "ready") wireWidget();
@@ -313,5 +323,50 @@ function hideAuthorOnlyControls(win) {
     doc.head.appendChild(style);
   } catch (err) {
     // Best-effort cosmetic cleanup only — never worth failing the run over.
+  }
+}
+
+// Sept 24, 2026 — skill sets ride on the game's sort_bins question type,
+// whose built-in header reads "Sort the Bins / Cargo Sort Bay / Which bin
+// does this belong in?". That fits a sort, not "7 × 8 = ?". The game file
+// has no setting for that text, so this watches those three spots and swaps
+// in the skill set's own labels whenever the game writes its sort wording.
+// Only the exact default sort text is replaced, so nothing else is touched.
+// The permanent fix is a per-question label field in the next game
+// re-export (FrequencyRush_Fluency_Expansion_v1.md, step 7).
+// Each world names its sort bay differently ("CARGO SORT BAY" in Asteroid
+// Run, "SKYWAY SORT BAY" in Cloudreach), so the encounter check is a pattern.
+const SORT_BIN_DEFAULT_TEXT = {
+  "format-label": /^SORT THE BINS$/,
+  "encounter-label": /^[A-Z ]*SORT BAY$/,
+  "deck-instruction": /^Which bin does this belong in\?$/,
+};
+function relabelSkillRounds(win, labels) {
+  try {
+    const doc = win.document;
+    if (!doc || win.__ccSkillRelabel) {
+      if (win.__ccSkillRelabel) win.__ccSkillRelabel.labels = labels;
+      return;
+    }
+    const state = { labels };
+    const replacement = {
+      "format-label": () => state.labels.format,
+      "encounter-label": () => state.labels.encounter,
+      "deck-instruction": () => state.labels.instruction,
+    };
+    const apply = () => {
+      for (const [id, defaultText] of Object.entries(SORT_BIN_DEFAULT_TEXT)) {
+        const el = doc.getElementById(id);
+        const next = replacement[id]();
+        if (el && next && defaultText.test(el.textContent.trim())) el.textContent = next;
+      }
+    };
+    const observer = new win.MutationObserver(apply);
+    observer.observe(doc.body, { subtree: true, childList: true, characterData: true });
+    state.observer = observer;
+    win.__ccSkillRelabel = state;
+    apply();
+  } catch (err) {
+    // Cosmetic only — the questions still play with the game's own wording.
   }
 }

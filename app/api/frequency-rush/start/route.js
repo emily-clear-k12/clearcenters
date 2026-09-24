@@ -10,7 +10,8 @@ import {
   ROUND_SECONDS,
 } from "../../../../lib/cases/frequency-rush";
 import { getOutpostProgress } from "../../../../lib/outpostBuilder";
-import { DEFAULT_GAME_SKIN } from "../../../../lib/frequencyRushSkins";
+import { DEFAULT_GAME_SKIN, getSkinForSortBins } from "../../../../lib/frequencyRushSkins";
+import { getSkillSet, buildSkillItems, SKILL_ROUND_LABELS } from "../../../../lib/frequencyRushSkills";
 
 // Starts one Lock the Signal / Individual Practice session. Called fresh
 // every time a student plays OR replays — replays are unlimited by design
@@ -62,6 +63,54 @@ export async function POST(request) {
     .single();
   if (!caseRow || caseRow.engine !== "frequency_rush") {
     return NextResponse.json({ error: "Not a Frequency Rush case." }, { status: 400 });
+  }
+
+  // Sept 24, 2026 — skill sets (FrequencyRush_Fluency_Expansion_v1.md §11.4).
+  // A generated set (math facts) has no word bank or sort bank. Its
+  // questions are built fresh for every run and ride on the game's
+  // existing sort_bins type, so none of the vocabulary loading below runs.
+  const skillSet = getSkillSet(caseRow.standard || assignment.case_standard);
+  if (skillSet) {
+    const skillItems = buildSkillItems(caseRow.standard || assignment.case_standard);
+    if (!skillItems.length) {
+      return NextResponse.json({ error: "This skill set couldn't be built." }, { status: 500 });
+    }
+    const { data: skillSession, error: skillSessionError } = await supabaseAdmin
+      .from("frequency_rush_sessions")
+      .insert({
+        assignment_id: assignmentId,
+        student_id: studentId,
+        mode: "individual",
+        format: "sort_bins",
+        game_mode: resolvedGameMode,
+        length_type: "rounds",
+        length_value: skillItems.length,
+        word_order: [],
+      })
+      .select()
+      .single();
+    if (skillSessionError) {
+      return NextResponse.json({ error: skillSessionError.message }, { status: 500 });
+    }
+    const { data: skillStudent } = await supabaseAdmin
+      .from("students")
+      .select("outpost_resources")
+      .eq("id", studentId)
+      .single();
+    return NextResponse.json({
+      sessionId: skillSession.id,
+      roundSeconds: ROUND_SECONDS,
+      gameMode: resolvedGameMode,
+      // Frostveil and Cindara can't show sort_bins questions, so a skill set
+      // assigned in those worlds plays in the default world instead.
+      gameSkin: getSkinForSortBins(gameSkin),
+      outpost: getOutpostProgress(skillStudent ? skillStudent.outpost_resources : 0),
+      rounds: [],
+      words: [],
+      classifications: [],
+      sortBins: skillItems,
+      skill: { kind: skillSet.kind, title: skillSet.title, labels: SKILL_ROUND_LABELS[skillSet.kind] || null },
+    });
   }
 
   let words;

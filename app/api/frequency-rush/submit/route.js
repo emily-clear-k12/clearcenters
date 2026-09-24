@@ -4,6 +4,7 @@ import { supabaseAdmin } from "../../../../lib/supabaseAdmin";
 import { ROUND_SECONDS, getFrequencyRushWordSet, getClassifyBanksForCase } from "../../../../lib/cases/frequency-rush";
 import { pointsForCorrectAnswer } from "../../../../lib/frequencyRushScoring";
 import { getOutpostProgress } from "../../../../lib/outpostBuilder";
+import { getSkillSet, recomputeSkillItem } from "../../../../lib/frequencyRushSkills";
 
 // Ends a Lock the Signal session. Every answer is re-scored here against the
 // session's own server-generated word_order — never trusted from the client,
@@ -68,6 +69,7 @@ export async function POST(request) {
 
   let streak = 0;
   let bestStreak = 0;
+  let skillSet = null; // set below when this assignment is a skill set (Sept 24)
   let score = 0;
   const attemptRows = [];
   const perWordResults = [];
@@ -120,8 +122,13 @@ export async function POST(request) {
           standard: caseRow.standard || assignment.case_standard,
         }
       : null;
+    // Sept 24, 2026 — skill sets: generated items are graded by recomputing
+    // the answer from the item id (lib/frequencyRushSkills.js). Nothing is
+    // looked up in a file bank, and an id outside the assigned set is ignored.
+    const skillStandard = caseRow ? caseRow.standard || assignment.case_standard : null;
+    skillSet = skillStandard ? getSkillSet(skillStandard) : null;
     let sortBinById = new Map();
-    if (caseKey) {
+    if (caseKey && !skillSet) {
       try {
         const { sortBins } = await getClassifyBanksForCase(caseKey);
         sortBinById = new Map((sortBins || []).map((item) => [String(item.id), item]));
@@ -136,8 +143,10 @@ export async function POST(request) {
       if (a?.type === "sort_bins") {
         const itemId = a.itemId ?? a.questionId;
         if (itemId == null) continue;
-        const item = sortBinById.get(String(itemId));
-        if (!item) continue; // not a real item from this unit's file banks
+        const item = skillSet
+          ? recomputeSkillItem(skillStandard, itemId)
+          : sortBinById.get(String(itemId));
+        if (!item) continue; // not a real item from this unit's banks, or not part of this skill set
         const correct = a.choiceId != null && String(a.choiceId) === String(item.correctBinId);
         let pointsEarned = 0;
         if (correct) {
@@ -157,6 +166,9 @@ export async function POST(request) {
         attemptRows.push({
           session_id: sessionId,
           word_id: null,
+          // Sept 24, 2026 — which fact/item this was ("mul:7x8"), so My
+          // Missed Words and the Fact Wall can track single items later.
+          item_key: String(item.id),
           correct,
           response_time_ms: a.responseTimeMs || null,
           points_earned: pointsEarned,
@@ -223,7 +235,15 @@ export async function POST(request) {
   }
 
   if (attemptRows.length > 0) {
-    const { error: attemptsError } = await supabaseAdmin.from("frequency_rush_attempts").insert(attemptRows);
+    let { error: attemptsError } = await supabaseAdmin.from("frequency_rush_attempts").insert(attemptRows);
+    // Sept 24, 2026 — item_key is a new column (add_frequency_rush_skills.sql).
+    // If that SQL hasn't run yet, save the attempts without it rather than
+    // failing every sort run (the Sept 4 login outage lesson, §9.16).
+    if (attemptsError && /item_key/i.test(attemptsError.message || "")) {
+      console.error("Frequency Rush: item_key column missing — run add_frequency_rush_skills.sql. Saving without it.");
+      const fallbackRows = attemptRows.map(({ item_key, ...rest }) => rest);
+      ({ error: attemptsError } = await supabaseAdmin.from("frequency_rush_attempts").insert(fallbackRows));
+    }
     if (attemptsError) return NextResponse.json({ error: attemptsError.message }, { status: 500 });
   }
 
@@ -261,7 +281,7 @@ export async function POST(request) {
   // which is what the Word Wall will aggregate from later.
   const correctCount = perWordResults.filter((r) => r.correct).length;
   const fields = {
-    attempt2: `Frequency Rush (Lock the Signal): ${correctCount}/${perWordResults.length} correct, best streak ${bestStreak}, score ${score}.`,
+    attempt2: `Frequency Rush (${skillSet ? skillSet.title : "Lock the Signal"}): ${correctCount}/${perWordResults.length} correct, best streak ${bestStreak}, score ${score}.`,
     frequency_rush_data: { sessionId, score, bestStreak, correctCount, total: perWordResults.length, perWordResults },
     submitted_at: new Date().toISOString(),
   };
