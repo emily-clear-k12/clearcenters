@@ -24,6 +24,8 @@ const NAV_ITEMS = [
   { label: "Home", icon: "/icons/nav_home.png", href: "/home" },
   { label: "My Missions", icon: "/icons/nav_missions.png", href: "/missions" },
   { label: "Progress", icon: "/icons/nav_progress.png", href: "/progress" },
+  // Sept 24, 2026 — the student's Star Chart (My Sky): Frequency Rush words and facts as stars.
+  { label: "Star Chart", icon: "/icons/nav_progress.png", href: "/star-chart" },
   { label: "Badges", icon: "/icons/nav_badges.png" },
   { label: "Gear Locker", icon: "/icons/nav_gear.png", href: "/gear-locker" },
 ];

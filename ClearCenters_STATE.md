@@ -56,6 +56,32 @@ Nothing else. This file is a status document, not a design document — design n
 
 ## 0.5 · SESSION LOG
 
+**Sept 24, 2026 (late night) — Frequency Rush step 5: the Star Chart (the Living Word Wall). Built; no SQL needed; not pushed.**
+
+*What changed*
+- **Design approved through a clickable mockup** ("Star Chart Mockup" canvas). Emily: "this is the way to go." Name: **Star Chart**. Frequency Rush keeps its name for now.
+- **Teacher page** `/teacher/star-chart` (sidebar: Star Chart). One question: *what do I reteach next?*
+  - Class tabs, plus a Whole class / A group switch; the group is picked by tapping names.
+  - **Reteach next:** the 3 stars the most students are stuck on, each with a **Quick run** button. It assigns that activity again to just those students, keeping the class's world and timer. My Missed Words brings their misses back as SECOND CHANCE.
+  - **The class sky:** one constellation per Frequency Rush activity assigned to the class. Tap a constellation to list its stars; tap a star to see who's stuck and quick-run them. Names never appear on the sky.
+- **Student page** `/star-chart` (student sidebar: Star Chart). One question: *what's mine to work on?* It shows stars lit and new this week, **Power up these 3** with Play buttons, and My Sky: their own stars only, newly lit ones twinkling, tap for the word and meaning. It's never compared to classmates, and only includes activities the student can see (targeting respected).
+- **Rules** (Emily agreed "keep working" to the proposed thresholds):
+  - A **student's** star is *lit* after 2 separate right runs while not missed, *needs work* while it's a missed question (the My Missed Words rule), and *learning* otherwise.
+  - The **class** star is *lit* when 80% of the students in view have lit it, *needs work* when 25% of those who tried are stuck, and *learning* otherwise. Grey means nobody has practiced it.
+  - A constellation draws up to 16 stars, the ones needing attention first; the side list has them all.
+- **Stars come from every content type:** vocabulary units (words), math facts (appear as practiced), ELAR word study (the answer word) and custom lists (per word). Facts from separate assignments of the same activity are combined.
+- **No new tables:** everything is computed from `frequency_rush_sessions` and `frequency_rush_attempts` on each visit, with paging past Supabase's 1,000-row limit.
+- **Tested:** the data logic against a mock database (per-student and class statuses, a student seeing only their own data, "lit this week" dates), and the sky layout drawn from the real layout code and screenshotted. **Not tested:** the React pages themselves render, because React can't be installed in the sandbox; esbuild/npm are blocked. Syntax-checked only.
+- Files (new): `lib/starChart.js`, `lib/starChartLayout.js`, `components/StarSky.js`, `app/api/teacher/star-chart/route.js`, `app/teacher/star-chart/page.js`, `app/star-chart/page.js`, `app/star-chart/StarChartClient.js`. Updated: `components/StudentSidebar.js`, `components/TeacherSidebar.js`.
+
+*What is still open*
+- **Push, then open both pages live.** They are the least-tested part of this build.
+- Watch whether the class sky is mostly yellow in real use. With 80%/25% thresholds a mixed class reads as "learning"; the thresholds are easy to tune in `lib/starChartLayout.js`.
+- Not built yet: Projector mode, the 10×10 Fact Wall grid, and the design doc's one-tier-at-a-time regression (which would need stored history).
+- Next is step 6: daily warm-up + ghost race.
+
+---
+
 **Sept 24, 2026 (night) — Frequency Rush step 4: My Missed Words. Code only; no SQL needed; not pushed.**
 
 *What changed*

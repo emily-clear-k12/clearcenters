@@ -121,6 +121,25 @@ Spelling *by ear* (hear the word, pick the spelling) waits for read-aloud in the
 - **On screen:** a banner before the run, plus the in-game header "SECOND CHANCE · ONE MORE TRY" on retry questions. The site matches the question text; the game file is unchanged.
 - No SQL. It reads existing tables, and a failure just means a normal run.
 
+### 11.10c · Step 5 direction decided (Sept 24): the Star Chart
+
+- **Name: "Star Chart"** (the sidebar and the student page). It replaces the working name "Living Word Wall."
+- **Look: a Star Map.** Every word or fact is a star: dim red means needs work, warm yellow means learning, bright white-blue means lit. The three states also differ in size and brightness, not only in hue. Stars group into constellations, one per assigned unit or skill set; activities that haven't been assigned never show.
+- **Design rule: each screen answers one question, and the rest waits behind a tap.** No full class grid, no rankings, and never more than three to-do items at once.
+- **First build: the teacher desk view and the student's My Sky.** Projector mode and the 10×10 Fact Wall grid wait for a later pass.
+  - **Teacher:** "Reteach next" (the 3 words the most students are missing, each with a Quick run button), then the class sky ("18 of 24 lit" per constellation). Tap a constellation to list its stars; tap a star to see which students are stuck and launch a quick run for just them. A scope switch covers the whole class or a group.
+  - **Student:** a lit-count and a "new this week" count; "Power up these 3" with a **Play my 3** button (those words come back as SECOND CHANCE); then My Sky, their own stars only, where newly lit stars twinkle and tapping a star shows the word, its definition and an encouraging status line.
+- **Mockup:** the "Star Chart Mockup" canvas (a Claude artifact, sample data). Emily approved the direction on seeing it: "this is the way to go."
+- **Still to settle before building:** exact thresholds for a lit star per student and per class. The design doc §3 model is breadth-based with separate sessions for lit and one-tier regression.
+
+### 11.10d · Step 5 built (Sept 24): the Star Chart
+
+- **Pages:** `/teacher/star-chart` (teacher desk view) and `/star-chart` (student My Sky), both in their sidebars. Built as in §11.10c.
+- **Data:** `lib/starChart.js` (server). It computes per-student statuses from sessions and attempts: *lit* = 2 separate right runs and not missed; *needs* = missed (the step-4 rule); *learning* otherwise. It also records "lit at" for the student view.
+- **Shared, browser-safe:** `lib/starChartLayout.js` holds the class rule (lit at 80% lit; needs when 25% of those who tried are stuck), the grid layout (300×250 cells, up to 16 stars drawn, stable positions per star), and the star looks. `components/StarSky.js` draws the sky for both pages.
+- **Quick run:** a new targeted assignment of the same activity for the stuck students, copying the class's latest world and timer.
+- **Later:** Projector mode, the Fact Wall grid, and one-tier regression.
+
 ### 11.11 · Parked for later (Sept 24): more game modes for the question banks
 
 **Why:** Emily raised this: the flying ship will get boring, and the question banks are getting large. Parked, not decided.
