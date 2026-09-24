@@ -6,7 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "../../../lib/supabaseClient";
 import { COLORS, panelStyle } from "../../../lib/teacherTheme";
 import StarSky from "../../../components/StarSky";
-import { layoutSky, classStar, starDotStyle, STATE_WORDS } from "../../../lib/starChartLayout";
+import { layoutSky, classStar, starDotStyle, BANDS, BAND_ON_WHITE } from "../../../lib/starChartLayout";
 
 // Star Chart — teacher desk view (Sept 24, 2026;
 // FrequencyRush_Fluency_Expansion_v1.md §11.10c). The Living Word Wall as a
@@ -21,9 +21,7 @@ import { layoutSky, classStar, starDotStyle, STATE_WORDS } from "../../../lib/st
 //      see who is stuck. Names never appear on the sky itself.
 // Reads go through /api/teacher/star-chart. Nothing is stored.
 const ACCENT = "#5B2FB5";
-const W = STATE_WORDS.teacher;
-// Star colors for the white side panel (the sky's near-white "lit" would vanish on white).
-const ON_WHITE = { lit: "#2F86C9", learning: "#D99A1E", needs: "#C8664F", untried: "#C9C4DB" };
+// Star colors are the teacher home page's score bands (0–50 red … 90–100 blue).
 
 function StarChartContent() {
   const router = useRouter();
@@ -113,12 +111,12 @@ function StarChartContent() {
 
   const layout = useMemo(() => {
     if (!data) return { constellations: [], height: 0 };
-    return layoutSky(data.activities, { width: skyWidth, stateOf: (a, s) => classStars.get(a.caseStandard + "|" + s.key).state });
+    return layoutSky(data.activities, { width: skyWidth, bandOf: (a, s) => classStars.get(a.caseStandard + "|" + s.key).band });
   }, [data, skyWidth, classStars]);
 
   const totals = useMemo(() => {
     let lit = 0, all = 0;
-    classStars.forEach((c) => { all += 1; if (c.state === "lit") lit += 1; });
+    classStars.forEach((c) => { all += 1; if (c.pct != null && c.pct >= 80) lit += 1; });
     return { lit, all };
   }, [classStars]);
 
@@ -135,15 +133,15 @@ function StarChartContent() {
   const selAct = data && data.activities.find((a) => a.caseStandard === selCase);
   const selRows = useMemo(() => {
     if (!selAct) return [];
-    const rank = { needs: 0, learning: 1, lit: 2, untried: 3 };
+    // lowest scores first; never-practiced words at the bottom
     return selAct.stars
       .map((s) => ({ star: s, c: classStars.get(selAct.caseStandard + "|" + s.key) }))
-      .sort((x, y) => rank[x.c.state] - rank[y.c.state] || y.c.stuckIds.length - x.c.stuckIds.length || x.star.label.localeCompare(y.star.label));
+      .sort((x, y) => (x.c.pct ?? 101) - (y.c.pct ?? 101) || y.c.stuckIds.length - x.c.stuckIds.length || x.star.label.localeCompare(y.star.label));
   }, [selAct, classStars]);
   const selRow = selRows.find((r) => r.star.key === selKey);
   const selCounts = useMemo(() => {
-    const n = { lit: 0, learning: 0, needs: 0, untried: 0 };
-    selRows.forEach((r) => { n[r.c.state] += 1; });
+    const n = { red: 0, orange: 0, yellow: 0, green: 0, blue: 0, untried: 0 };
+    selRows.forEach((r) => { n[r.c.band] += 1; });
     return n;
   }, [selRows]);
 
@@ -221,7 +219,7 @@ function StarChartContent() {
                 {reteach.map((r) => (
                   <div key={r.act.caseStandard + r.star.key} style={{ background: "#FFFFFF", border: "1px solid #E4DEF0", borderRadius: 16, padding: "14px 16px", display: "flex", alignItems: "center", gap: 14 }}>
                     <div style={{ width: 44, height: 44, borderRadius: 12, background: "#1B1537", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                      <span style={starDotStyle("needs")} />
+                      <span style={starDotStyle("red")} />
                     </div>
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ fontSize: 17, fontWeight: 700, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{r.star.label}</div>
@@ -238,12 +236,13 @@ function StarChartContent() {
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 10, marginBottom: 6 }}>
                   <div style={{ display: "flex", alignItems: "baseline", gap: 10 }}>
                     <h2 style={{ margin: 0, fontFamily: "Poppins, sans-serif", fontSize: 17, color: "#F2F0FA" }}>{scope === "group" && group.length ? "The group's sky" : "The class sky"}</h2>
-                    <span style={{ fontSize: 13, color: "#A9A3C6" }}>{totals.lit} of {totals.all} stars lit</span>
+                    <span style={{ fontSize: 13, color: "#A9A3C6" }}>{totals.lit} of {totals.all} stars at 80%+</span>
                   </div>
                   <div style={{ display: "flex", gap: 14, fontSize: 12, color: "#C9C4E0", flexWrap: "wrap" }}>
-                    {["needs", "learning", "lit", "untried"].map((st) => (
-                      <span key={st} style={{ display: "flex", alignItems: "center", gap: 6 }}><span style={starDotStyle(st, { inline: true })} />{W[st]}</span>
+                    {BANDS.map((b) => (
+                      <span key={b.key} style={{ display: "flex", alignItems: "center", gap: 6 }}><span style={starDotStyle(b.key, { inline: true })} />{b.label}</span>
                     ))}
+                    <span style={{ display: "flex", alignItems: "center", gap: 6 }}><span style={starDotStyle("untried", { inline: true })} />Not practiced</span>
                   </div>
                 </div>
                 <div style={{ overflowX: "hidden" }}>
@@ -254,7 +253,7 @@ function StarChartContent() {
                     selectedKey={selKey}
                     onPickCons={(cs) => { setSelCase(cs); setSelKey(null); }}
                     onPickStar={(cs, key) => { setSelCase(cs); setSelKey(key); }}
-                    ariaWord={(st) => W[st]}
+                    ariaFor={(cs, s) => { const c = classStars.get(cs + "|" + s.key); return c.pct == null ? `${s.label}, not practiced yet` : `${s.label}, class average ${c.pct}%`; }}
                   />
                 </div>
               </div>
@@ -268,19 +267,19 @@ function StarChartContent() {
                       <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: 1, color: COLORS.textMuted, textTransform: "uppercase" }}>{selAct.subject}</div>
                       <h2 style={{ margin: "2px 0 4px", fontFamily: "Poppins, sans-serif", fontSize: 20 }}>{selAct.title}</h2>
                       <div style={{ display: "flex", gap: 12, fontSize: 13, color: COLORS.textMuted, flexWrap: "wrap" }}>
-                        <span><strong style={{ color: "#1E1B2E" }}>{selCounts.lit}</strong> lit</span>
-                        <span><strong style={{ color: "#1E1B2E" }}>{selCounts.learning}</strong> learning</span>
-                        <span><strong style={{ color: "#1E1B2E" }}>{selCounts.needs}</strong> needs work</span>
+                        {BANDS.filter((b) => selCounts[b.key]).map((b) => (
+                          <span key={b.key}><strong style={{ color: BAND_ON_WHITE[b.key] }}>{selCounts[b.key]}</strong> at {b.label}</span>
+                        ))}
                         {selCounts.untried > 0 && <span><strong style={{ color: "#1E1B2E" }}>{selCounts.untried}</strong> not practiced</span>}
                       </div>
                     </div>
                     <div style={{ maxHeight: 360, overflowY: "auto", borderTop: "1px solid #EEEAF6" }}>
                       {selRows.map(({ star, c }) => (
                         <button key={star.key} type="button" className="sc-row" onClick={() => setSelKey(star.key)} style={star.key === selKey ? { background: "#F1ECFB" } : undefined}>
-                          <span style={{ ...starDotStyle(c.state, { inline: true }), boxShadow: "none", background: ON_WHITE[c.state] }} />
+                          <span style={{ ...starDotStyle(c.band, { inline: true }), boxShadow: "none", background: BAND_ON_WHITE[c.band] }} />
                           <span style={{ flex: 1, fontSize: 14, fontWeight: 600 }}>{star.label}</span>
                           <span style={{ fontSize: 12, color: COLORS.textMuted }}>
-                            {W[c.state]}{c.stuckIds.length ? ` · ${c.stuckIds.length} stuck` : ""}
+                            {c.pct == null ? "Not practiced" : <strong style={{ color: BAND_ON_WHITE[c.band] }}>{c.pct}%</strong>}{c.stuckIds.length ? ` · ${c.stuckIds.length} stuck` : ""}
                           </span>
                         </button>
                       ))}
@@ -290,7 +289,7 @@ function StarChartContent() {
                         <div style={{ fontSize: 13.5, fontWeight: 700 }}>{selRow.star.label}</div>
                         {selRow.star.detail && <div style={{ fontSize: 13, color: COLORS.textMuted }}>{selRow.star.detail}</div>}
                         <div style={{ fontSize: 12.5, color: COLORS.textMuted }}>
-                          {selRow.c.lit} lit · {selRow.c.learning} learning · {selRow.c.needs} stuck · {scopeIds.length - selRow.c.tried} haven't tried it
+                          {selRow.c.pct == null ? "Nobody has practiced it yet." : <><strong style={{ color: BAND_ON_WHITE[selRow.c.band] }}>{selRow.c.pct}% class average</strong> · {selRow.c.lit} at 80%+ · {selRow.c.stuckIds.length} stuck · {scopeIds.length - selRow.c.tried} haven't tried it</>}
                         </div>
                         {selRow.c.stuckIds.length > 0 ? (
                           <>

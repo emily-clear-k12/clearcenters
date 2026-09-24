@@ -17,8 +17,8 @@ import { starDotStyle } from "../lib/starChartLayout";
 //   onPickCons(caseStandard)
 //   onPickStar(caseStandard, starKey)
 //   twinkleKeys     Set of "caseStandard|key" to twinkle (newly lit)
-//   ariaWord        (state) => spoken status word
-export default function StarSky({ layout, width, selectedCase, selectedKey, onPickCons, onPickStar, twinkleKeys, ariaWord }) {
+//   ariaFor         (caseStandard, star) => what a screen reader says for a star
+export default function StarSky({ layout, width, selectedCase, selectedKey, onPickCons, onPickStar, twinkleKeys, ariaFor }) {
   const height = Math.max(260, layout.height);
   const dust = useMemo(() => {
     const out = [];
@@ -55,14 +55,14 @@ export default function StarSky({ layout, width, selectedCase, selectedKey, onPi
                 key={s.key}
                 type="button"
                 className="cc-star-btn"
-                aria-label={`${s.label}, ${ariaWord ? ariaWord(s.state) : s.state}`}
+                aria-label={ariaFor ? ariaFor(c.caseStandard, s) : s.label}
                 title={s.label}
                 onClick={() => onPickStar && onPickStar(c.caseStandard, s.key)}
                 style={{ left: s.x - 15, top: s.y - 15 }}
               >
                 <span
                   className={twinkleKeys && twinkleKeys.has(c.caseStandard + "|" + s.key) ? "cc-twinkle" : undefined}
-                  style={starDotStyle(s.state, { selected: open && s.key === selectedKey })}
+                  style={starDotStyle(s.band, { selected: open && s.key === selectedKey })}
                 />
               </button>
             ))}
@@ -74,7 +74,7 @@ export default function StarSky({ layout, width, selectedCase, selectedKey, onPi
             <button type="button" className="cc-cons-btn" onClick={() => onPickCons && onPickCons(c.caseStandard)} style={{ left: c.labelX - 8, top: c.labelY }}>
               <div style={{ fontSize: 13.5, fontWeight: 700, color: open ? "#FFFFFF" : "#C9C4E0", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{c.title}</div>
               <div style={{ fontSize: 12, color: "#A9A3C6" }}>
-                {c.lit} of {c.total} lit{c.more ? ` · ${c.more} more in the list` : ""}
+                {c.lit} of {c.total} at 80%+{c.more ? ` · ${c.more} more in the list` : ""}
               </div>
             </button>
           </React.Fragment>

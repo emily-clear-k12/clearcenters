@@ -4,7 +4,7 @@ import React, { useMemo, useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import BackToHubButton from "../../components/BackToHubButton";
 import StarSky from "../../components/StarSky";
-import { layoutSky, starDotStyle, STATE_WORDS } from "../../lib/starChartLayout";
+import { layoutSky, starDotStyle, studentStar, BANDS } from "../../lib/starChartLayout";
 
 // Sept 24, 2026 — the student's Star Chart ("My Sky"). It answers one
 // question: what's mine to work on?
@@ -13,15 +13,18 @@ import { layoutSky, starDotStyle, STATE_WORDS } from "../../lib/starChartLayout"
 //      brings them back as SECOND CHANCE (My Missed Words).
 //   3. My Sky: their own stars. Stars lit this week twinkle. Tap a star to
 //      see the word and what it means.
-const W = STATE_WORDS.student;
+// Star colors are the same score bands teachers see (0–50 red … 90–100 blue),
+// so a color means the same thing to a student as it does on a grade.
 const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
 
-const STATUS_LINE = {
-  lit: "Lit. You know this one.",
-  learning: "Getting it. One more good run lights it up.",
-  needs: "Keep practicing. It will come back as SECOND CHANCE.",
-  untried: "Not tried yet.",
-};
+function statusLine(st) {
+  if (st.pct == null) return "Not tried yet.";
+  if (st.stuck) return `${st.pct}% on your last tries. It will come back as SECOND CHANCE.`;
+  if (st.pct >= 90) return `${st.pct}%. You own this one!`;
+  if (st.pct >= 80) return `${st.pct}%. Lit! Keep it glowing.`;
+  if (st.pct >= 70) return `${st.pct}%. Almost lit. One more good run!`;
+  return `${st.pct}%. Keep practicing. You've got this.`;
+}
 
 export default function StarChartClient({ studentId, firstName, activities }) {
   const router = useRouter();
@@ -39,32 +42,30 @@ export default function StarChartClient({ studentId, firstName, activities }) {
     return () => ro.disconnect();
   }, []);
 
-  const stateOf = (act, star) => star.byStudent[studentId] || "untried";
-
   const { lit, fresh, twinkleKeys, powerUp } = useMemo(() => {
     const now = Date.now();
     let litCount = 0;
     const tw = new Set();
     const weak = [];
-    const rank = { needs: 0, learning: 1 };
     activities.forEach((a) => a.stars.forEach((s) => {
-      const st = s.byStudent[studentId];
-      if (st === "lit") {
+      const st = studentStar(s, studentId);
+      if (st.pct != null && st.pct >= 80) {
         litCount += 1;
         const at = s.litAt && s.litAt[studentId];
         if (at && now - new Date(at).getTime() < WEEK_MS) tw.add(a.caseStandard + "|" + s.key);
       }
-      if (st === "needs" || st === "learning") weak.push({ act: a, star: s, st });
+      if (st.stuck || (st.pct != null && st.pct < 80)) weak.push({ act: a, star: s, st });
     }));
-    weak.sort((x, y) => rank[x.st] - rank[y.st]);
+    // missed questions first, then the lowest scores
+    weak.sort((x, y) => (y.st.stuck ? 1 : 0) - (x.st.stuck ? 1 : 0) || x.st.pct - y.st.pct);
     return { lit: litCount, fresh: tw.size, twinkleKeys: tw, powerUp: weak.slice(0, 3) };
   }, [activities, studentId]);
 
-  const layout = useMemo(() => layoutSky(activities, { width, stateOf }), [activities, width]); // eslint-disable-line react-hooks/exhaustive-deps
+  const layout = useMemo(() => layoutSky(activities, { width, bandOf: (a, s) => studentStar(s, studentId).band }), [activities, width, studentId]);
 
   const selAct = sel && activities.find((a) => a.caseStandard === sel.caseStandard);
   const selStar = selAct && selAct.stars.find((s) => s.key === sel.key);
-  const selState = selStar ? stateOf(selAct, selStar) : null;
+  const selSt = selStar ? studentStar(selStar, studentId) : null;
   const playHref = powerUp.length ? `/activity/${powerUp[0].act.assignmentId}` : null;
 
   return (
@@ -78,7 +79,7 @@ export default function StarChartClient({ studentId, firstName, activities }) {
             <h1 style={{ margin: 0, fontFamily: "Poppins, sans-serif", fontSize: 34 }}>{firstName ? `${firstName}'s Star Chart` : "My Star Chart"}</h1>
           </div>
           <div style={{ display: "flex", gap: 12 }}>
-            <Stat value={lit} label="stars lit" />
+            <Stat value={lit} label="stars at 80%+" />
             <Stat value={fresh} label="new this week" color="#9FDCFF" />
           </div>
         </div>
@@ -104,10 +105,10 @@ export default function StarChartClient({ studentId, firstName, activities }) {
                     onClick={() => router.push(`/activity/${p.act.assignmentId}`)}
                     style={{ flex: "1 1 180px", background: "#0F1530", border: "1px solid #2E2A5E", borderRadius: 14, padding: "12px 14px", display: "flex", alignItems: "center", gap: 12, color: "#F2F0FA", cursor: "pointer", textAlign: "left", fontFamily: "inherit", minHeight: 56 }}
                   >
-                    <span style={starDotStyle(p.st, { inline: true })} />
+                    <span style={starDotStyle(p.st.band, { inline: true })} />
                     <span style={{ display: "flex", flexDirection: "column", gap: 2, minWidth: 0 }}>
                       <span style={{ fontSize: 16, fontWeight: 700 }}>{p.star.label}</span>
-                      <span style={{ fontSize: 12, color: "#B8B2D6", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{p.act.title}</span>
+                      <span style={{ fontSize: 12, color: "#B8B2D6", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{p.st.pct}% · {p.act.title}</span>
                     </span>
                   </button>
                 ))}
@@ -126,8 +127,8 @@ export default function StarChartClient({ studentId, firstName, activities }) {
                   <span style={{ fontSize: 13, color: "#A9A3C6" }}>Tap a star to see the word</span>
                 </div>
                 <div style={{ display: "flex", gap: 14, fontSize: 12, color: "#C9C4E0", flexWrap: "wrap" }}>
-                  {["needs", "learning", "lit"].map((st) => (
-                    <span key={st} style={{ display: "flex", alignItems: "center", gap: 6 }}><span style={starDotStyle(st, { inline: true })} />{W[st]}</span>
+                  {BANDS.map((b) => (
+                    <span key={b.key} style={{ display: "flex", alignItems: "center", gap: 6 }}><span style={starDotStyle(b.key, { inline: true })} />{b.label}</span>
                   ))}
                 </div>
               </div>
@@ -139,17 +140,17 @@ export default function StarChartClient({ studentId, firstName, activities }) {
                 onPickCons={(cs) => setSel({ caseStandard: cs, key: null })}
                 onPickStar={(cs, key) => setSel({ caseStandard: cs, key })}
                 twinkleKeys={twinkleKeys}
-                ariaWord={(st) => W[st]}
+                ariaFor={(cs, s) => { const st = studentStar(s, studentId); return st.pct == null ? `${s.label}, not tried yet` : `${s.label}, ${st.pct}%`; }}
               />
               {selStar && (
                 <div role="status" style={{ position: "absolute", right: 20, bottom: 20, width: 320, maxWidth: "calc(100% - 40px)", background: "#141C3A", border: "1px solid #34407A", borderRadius: 16, padding: "16px 18px", display: "flex", flexDirection: "column", gap: 8 }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                    <span style={starDotStyle(selState, { inline: true })} />
+                    <span style={starDotStyle(selSt.band, { inline: true })} />
                     <div style={{ fontFamily: "Poppins, sans-serif", fontSize: 22, fontWeight: 700 }}>{selStar.label}</div>
                   </div>
                   {selStar.detail && <div style={{ fontSize: 14, color: "#DAD6EE", lineHeight: 1.45 }}>{selStar.detail}</div>}
                   <div style={{ fontSize: 13, color: "#9FDCFF", fontWeight: 600 }}>
-                    {selState === "lit" && twinkleKeys.has(sel.caseStandard + "|" + sel.key) ? "You lit this star this week!" : STATUS_LINE[selState]}
+                    {selSt.pct >= 80 && twinkleKeys.has(sel.caseStandard + "|" + sel.key) ? `${selSt.pct}%. You lit this star this week!` : statusLine(selSt)}
                   </div>
                 </div>
               )}

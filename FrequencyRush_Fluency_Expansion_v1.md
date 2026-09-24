@@ -139,6 +139,7 @@ Spelling *by ear* (hear the word, pick the spelling) waits for read-aloud in the
 - **Shared, browser-safe:** `lib/starChartLayout.js` holds the class rule (lit at 80% lit; needs when 25% of those who tried are stuck), the grid layout (300×250 cells, up to 16 stars drawn, stable positions per star), and the star looks. `components/StarSky.js` draws the sky for both pages.
 - **Quick run:** a new targeted assignment of the same activity for the stuck students, copying the class's latest world and timer.
 - **Later:** Projector mode, the Fact Wall grid, and one-tier regression.
+- **Colors changed the same night (Emily):** stars use the teacher home page's score bands (`scoreColor` in `components/teacher/TodayBridge.js`): ≤50 red, <70 orange, <80 yellow, <90 green, else blue. A student's star = percent right on their last 5 answers; a class star = the average over students in view who tried it. On the dark sky, yellow, green and blue are slightly brighter versions of the same hues so they stay visible; the white side panel uses the exact home colors. "Lit" = 80%+. Stuck students still follow the My Missed Words rule.
 
 ### 11.11 · Parked for later (Sept 24): more game modes for the question banks
 
