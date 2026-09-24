@@ -66,7 +66,7 @@ Spelling *by ear* (hear the word, pick the spelling) waits for read-aloud in the
 ### 11.7 · Open decisions from this section
 
 1. ~~The +/− facts set: tag it 3.4A, or leave it untagged?~~ **Decided Sept 24: tag it 3.4A.**
-2. **Teacher spelling lists need wrong-answer spellings.** They can be generated (dropped or doubled letters, vowel swaps) or typed by the teacher. Generated misspellings risk being silly or accidentally correct. A quality check is needed before this ships.
+2. ~~Teacher spelling lists: generated or teacher-typed wrong spellings?~~ **Decided Sept 24: generated automatically.** Checked against an English dictionary so none is a real word, and teachers can re-roll any word before saving (§11.10).
 3. ~~Where do skill sets appear on the assign page?~~ **Decided Sept 24: under the existing Math and ELAR subject tiles**, like every other center's cases.
 4. **Should a skill set also include vocabulary questions** once Math and ELAR vocabulary exists, or stay pure skill practice?
 5. **Group Live** is parked. Revisit after the Wall exists.
@@ -104,3 +104,45 @@ Spelling *by ear* (hear the word, pick the spelling) waits for read-aloud in the
 - **Checker:** `tools/frequency-rush-skillcheck.cjs` (rule 17). Sentence limits are 16 / 21 / 25 words for grades 3 / 4 / 5. These are short items, so an FK score isn't meaningful for them; sentence length is the gate.
 - **Review:** `FrequencyRush_ELAR_WordStudy_Review_v1.md`. SQL: `add_frequency_rush_elar_skills.sql`.
 - **Choices that need Emily's eye** are listed at the top of the review sheet: the 3.11D naming-versus-editing split, the repeated prompt in 5.11D, the made-up misspellings in 5.2B, and the two literal lines in 4.9B.
+
+### 11.10 · Step 3 built (Sept 24): teachers' own word lists
+
+- **Teacher side:** the Word Lists page (`/teacher/word-lists`). Type, paste or upload (.txt/.csv) one word and its definition per line. A dash, colon, comma, equals sign or tab separates them, so two columns pasted from a spreadsheet work too. A "word / definition" header line is skipped. Choose grade, subject, and Meaning and/or Spelling questions. **Check list** shows each word with its three generated wrong spellings; ↻ re-rolls a word. **Save List** creates a private case `FR.C.<teacher8>.<id>`, listed under "My Word Lists" on the assign page. A list can be deleted until it's assigned.
+- **Rules:** 4–30 words. Every word needs a definition of 3–100 characters. No repeated words or definitions. A definition can't contain its own word.
+- **Wrong spellings** (`makeMisspellings`): they come from real mistake types, likeliest first. Each must keep the same first letter (or a same-sound one: ph→f, kn→n, wr→r, c↔k) and stay within 2 letters of the real length. It **must not be a real English word** (SCOWL/hunspell en_US, affixes expanded, packed into `lib/data/englishWords.js`), must not match another list word, and must not add a rude string. Wrong spellings are saved with the list, so the teacher sees exactly what students get. The server re-checks them on save.
+- **In the game:** per word, one meaning question (random direction) and one spelling question. Words that can't get two wrong spellings get meaning questions only. Items are `sort_bins`. The ids are `cl:<index>:<m1|m2|sp>`, and they're graded against the saved list. The header reads "WORD LIST · Pick the best answer."
+- **SQL:** `add_frequency_rush_word_lists.sql`, creating the table `frequency_rush_custom_lists` with RLS on and no policies.
+
+### 11.10b · Step 4 built (Sept 24): My Missed Words
+
+- **Missed** means the latest answer was wrong, or 2 of the last 3 were wrong. It clears once the student answers right. It's tracked per activity (case code), across its assignments, over the student's last 30 runs (`lib/frequencyRushMissed.js`).
+- **Skill sets, word study and custom lists:** up to 4 retries plus fresh questions make exactly 10, the game's run length, so every retry appears. Items are rebuilt from their keys with new shuffles (`skillItemForKey`, `customItemForKey`).
+- **Vocabulary units:** the word bank is trimmed to 10 with the missed words kept; missed sort questions are kept the same way. The game builds its own rounds from that bank, so retries are likely rather than certain.
+- **On screen:** a banner before the run, plus the in-game header "SECOND CHANCE · ONE MORE TRY" on retry questions. The site matches the question text; the game file is unchanged.
+- No SQL. It reads existing tables, and a failure just means a normal run.
+
+### 11.11 · Parked for later (Sept 24): more game modes for the question banks
+
+**Why:** Emily raised this: the flying ship will get boring, and the question banks are getting large. Parked, not decided.
+
+**The key fact:** any game that exposes the run game's API (`setQuestionBank`, `configure`, `onComplete`) can play every question type already built: facts, word study, custom lists, vocabulary and sorts. A new mode is a new export from Emily's game generator. The content isn't touched.
+
+**Ideas, grouped by feel:**
+- **Fast** (short items: facts, homophones)
+  1. Hover Race: correct answers boost you, and you race your ghost (ties to step 6).
+  2. Mining Dig: answers refuel the drill, and rare crystals sit deeper down.
+- **Strategic** (longer items: grammar, adages; untimed)
+  3. Solo Base Defense: reuses Signal Defense's art and mechanics.
+  4. Dungeon Doors: each door is a question, and the boss room is your missed words (ties to step 4).
+  5. Card Battle vs. a Boss: fight the computer, never a classmate.
+- **Calm / collecting** (the long-term hook)
+  6. Deep-Space Fishing: answers reel in alien creatures for a year-long Creature Codex.
+  7. Playable Outpost Builder: answers earn materials you spend on your own base.
+- **Whole class**
+  8. Quiz Show: a Jeopardy-style team board (Group Live).
+  9. Class Boss Raid: everyone's correct answers damage one projector boss (builds on Distress Call).
+
+**Design notes to carry forward:**
+- **Match the mode to the pace of the question type.** Long-sentence items don't suit reflex games. Consider a `pace` tag per set (fast / steady / calm) so the site suggests the right modes.
+- **Rotation keeps it fresh.** The teacher allows several modes and students choose, and/or modes unlock through the Galaxy Hub worlds. That would give the 4 unfinished worlds (Frostveil, Cindara, Solara, Cloudreach) their reward.
+- Every mode must pass §2.13a: each correct answer does something immediate and personal. No player-vs-player competition.

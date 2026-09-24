@@ -56,6 +56,43 @@ Nothing else. This file is a status document, not a design document — design n
 
 ## 0.5 · SESSION LOG
 
+**Sept 24, 2026 (night) — Frequency Rush step 4: My Missed Words. Code only; no SQL needed; not pushed.**
+
+*What changed*
+- **What a student missed comes back in their next run.** A question counts as missed when the student's latest answer to it was wrong, or they got it wrong in 2 of their last 3 tries. It's cleared once they get it right. Missed questions are tracked per activity, across every assignment of it, from the student's last 30 runs.
+- **Skill sets, ELAR word study and custom lists:** up to 4 missed questions go into a 10-question run, so they're sure to appear. Each is rebuilt with freshly shuffled choices. **Vocabulary units:** missed words stay in a word bank trimmed to 10, and missed sort questions are kept the same way, so they're much likelier to come up.
+- **Students see it:** a banner before the run ("🔁 2 questions you missed last time are coming back. Look for SECOND CHANCE.") and, in the game, retry questions get the header **SECOND CHANCE · ONE MORE TRY**. The framing is positive, never "you got this wrong."
+- **No new tables.** It reads `frequency_rush_sessions` and `frequency_rush_attempts` (`item_key`, or `word_id` for vocabulary). If anything fails, the run starts normally.
+- Tested: the missed/cleared rules; a mock database (other students and other activities correctly ignored); and real runs in Asteroid Run (math facts) and Frostveil (vocabulary), where retry questions showed SECOND CHANCE and the others kept their normal header.
+- Files: `lib/frequencyRushMissed.js` (new). Updated: `lib/frequencyRushSkills.js` (`skillItemForKey`), `lib/frequencyRushCustomLists.js` (`customItemForKey`), `app/api/frequency-rush/start/route.js`, `app/activity/[assignmentId]/FrequencyRushClient.js`.
+
+*Process note*
+- **Writing the same temporary file path twice can send an older copy to Emily's folder.** STATE and the plan doc landed one version behind twice today; they were re-sent and confirmed by size. All code files were checked the same way and match. From now on, each batch goes out from a fresh path, and its sizes are confirmed after writing.
+
+*What is still open*
+- Push steps 3 and 4 after running `add_frequency_rush_word_lists.sql`.
+- The ELAR word-study review (step 2) is still waiting on Emily.
+- Next is step 5: Living Word Wall + Fact Wall.
+
+---
+
+**Sept 24, 2026 (evening) — Frequency Rush step 3: teachers' own word lists. On disk; SQL not run; not pushed.**
+
+*What changed*
+- **New teacher page, Word Lists** (`/teacher/word-lists`, in the sidebar under Typing Texts). A teacher types, pastes or uploads (.txt/.csv) a list of words with definitions, picks grade, subject and question types (Meaning, Spelling, or both), and presses **Check list**. **The site makes three wrong spellings for every word** (Emily's call: automatic, not teacher-typed). The teacher sees them and can re-roll any word with ↻ before saving. The list becomes a private Frequency Rush activity under Challenge Library → subject → grade → **My Word Lists**. It follows the same pattern as Relay Station's Typing Texts.
+- **Wrong spellings are real mistake types:** swapped vowel teams (*freind*), endings (*adaptashun*), doubled or dropped letters, unstressed vowels (*seperate*), sound-alike letters (*fone*), a dropped silent e, and a letter dropped from a cluster (*Febuary*). **None can be a real word.** Each one is checked against the SCOWL/hunspell English dictionary (145,736 words, permissive license, notice kept in `lib/data/englishWords.js`). A wrong spelling also can't be another word on the list or contain a rude string. It passed a 5,000-word stress test with 0 real words slipping through. About 5% of words, mostly very short ones like *cat* and *run*, can't get two believable misspellings; they get meaning questions only, and the page says so.
+- **Questions in the game:** each word gets one meaning question (word → definition or definition → word) and one spelling question ("Spell the word that means ___"). The server grades against the saved list. The whole path was tested end to end: paste, parse, check, build, play in the game, grade.
+- **List checks before saving:** 4–30 words, a definition on every word, no duplicate words or definitions, definitions under 100 characters, and no definition that contains its own word.
+- Files: `lib/frequencyRushCustomLists.js`, `lib/data/englishWords.js` (478 KB, server only), `app/api/teacher/word-lists/route.js`, `app/teacher/word-lists/page.js`. The start and submit routes, the assign page (private lists plus the "My Word Lists" topic) and `components/TeacherSidebar.js` were also updated. `add_frequency_rush_word_lists.sql` creates `frequency_rush_custom_lists` with RLS on; it was tested twice locally.
+
+*What is still open*
+- **Run `add_frequency_rush_word_lists.sql` before pushing (rule 16).** Without the table, the Word Lists page errors on save.
+- **The Word Lists page itself has not been rendered.** There was no way to load the Next.js page here. The server logic and the game side were tested; the page layout wasn't. Emily should make one list after pushing.
+- The ELAR word-study review (step 2) is still waiting on Emily.
+- Next is step 4, My Missed Words.
+
+---
+
 **Sept 24, 2026 (late afternoon) — Frequency Rush step 2: 12 ELAR word-study sets, 360 questions. On disk, awaiting Emily's review; SQL not run; not pushed. Step 1 (facts + timer) is committed ("FR update 1.2").**
 
 *What changed*

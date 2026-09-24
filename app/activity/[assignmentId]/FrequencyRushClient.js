@@ -50,6 +50,9 @@ export default function FrequencyRushClient({ assignmentId, caseTitle }) {
   // assignment. Applied through the game's configure(); the game's own
   // "Add an 8-second timer" checkbox is hidden so students can't change it.
   const [questionSeconds, setQuestionSeconds] = useState(0);
+  // Sept 24, 2026 — My Missed Words: prompts of questions this student missed
+  // last time. They're in this run and get a "SECOND CHANCE" header.
+  const [retryPrompts, setRetryPrompts] = useState([]);
   // Sept 12, 2026 — which static widget file to load into the iframe below,
   // teacher-chosen at assignment time (assignments.game_skin) and handed
   // back by /api/frequency-rush/start as `gameSkin` — see
@@ -93,6 +96,7 @@ export default function FrequencyRushClient({ assignmentId, caseTitle }) {
       setClassifications(Array.isArray(data.classifications) ? data.classifications : []);
       setSortBins(nextSortBins);
       setSkill(data.skill || null);
+      setRetryPrompts(Array.isArray(data.retry?.prompts) ? data.retry.prompts : []);
       setQuestionSeconds(Math.max(0, Math.min(60, Number(data.questionSeconds) || 0)));
       setGameSkinFile(getGameSkinFile(data.gameSkin));
       pendingSessionIdRef.current = data.sessionId;
@@ -174,6 +178,8 @@ export default function FrequencyRushClient({ assignmentId, caseTitle }) {
       if (next.skill && Array.isArray(next.sortBins) && next.sortBins.length) {
         setSortBins(next.sortBins);
       }
+      // The next run's retries reflect the run that just ended.
+      setRetryPrompts(Array.isArray(next.retry?.prompts) ? next.retry.prompts : []);
     } catch (err) {
       // Reserved lazily at the top of submitRun itself if this didn't land in time.
     }
@@ -234,13 +240,13 @@ export default function FrequencyRushClient({ assignmentId, caseTitle }) {
       win.AsteroidRun.configure({ flightSeconds: 4, questionSeconds });
       win.AsteroidRun.onComplete((result) => { submitRun(result); });
       hideAuthorOnlyControls(win);
-      if (skill && skill.labels) relabelSkillRounds(win, skill.labels);
+      if ((skill && skill.labels) || retryPrompts.length) relabelSkillRounds(win, skill ? skill.labels : null, retryPrompts);
     } catch (err) {
       // Only throws if the widget isn't on its intro/recap screen yet —
       // a genuine race on first load; the iframe's own load event retries
       // this right after.
     }
-  }, [words, classifications, sortBins, outpostResources, submitRun, skill, questionSeconds]);
+  }, [words, classifications, sortBins, outpostResources, submitRun, skill, questionSeconds, retryPrompts]);
 
   useEffect(() => {
     if (phase === "ready") wireWidget();
@@ -267,6 +273,11 @@ export default function FrequencyRushClient({ assignmentId, caseTitle }) {
 
   return (
     <Shell wide>
+      {retryPrompts.length > 0 && (
+        <div style={{ color: "#fff", background: "rgba(123,93,255,.18)", border: "1px solid rgba(123,93,255,.5)", borderRadius: 999, padding: "8px 18px", marginBottom: 12, fontSize: 14, fontWeight: 600 }}>
+          🔁 {retryPrompts.length === 1 ? "1 question you missed last time is" : `${retryPrompts.length} questions you missed last time are`} coming back. Look for SECOND CHANCE.
+        </div>
+      )}
       <iframe
         ref={iframeRef}
         src={gameSkinFile}
@@ -348,26 +359,38 @@ const SORT_BIN_DEFAULT_TEXT = {
   "encounter-label": /^[A-Z ]*SORT BAY$/,
   "deck-instruction": /^Which bin does this belong in\?$/,
 };
-function relabelSkillRounds(win, labels) {
+function relabelSkillRounds(win, labels, retryPrompts = []) {
   try {
     const doc = win.document;
-    if (!doc || win.__ccSkillRelabel) {
-      if (win.__ccSkillRelabel) win.__ccSkillRelabel.labels = labels;
+    if (!doc) return;
+    if (win.__ccSkillRelabel) {
+      win.__ccSkillRelabel.labels = labels;
+      win.__ccSkillRelabel.retry = new Set(retryPrompts.map((p) => String(p).trim()));
+      win.__ccSkillRelabel.apply();
       return;
     }
-    const state = { labels };
-    const replacement = {
-      "format-label": () => state.labels.format,
-      "encounter-label": () => state.labels.encounter,
-      "deck-instruction": () => state.labels.instruction,
+    const state = { labels, retry: new Set(retryPrompts.map((p) => String(p).trim())) };
+    const setText = (el, text) => {
+      if (el && text && el.textContent !== text) el.textContent = text;
     };
+    // Sept 24, 2026 — My Missed Words: a question the student missed last
+    // time gets a "SECOND CHANCE" header, so the retry is personal and visible.
     const apply = () => {
-      for (const [id, defaultText] of Object.entries(SORT_BIN_DEFAULT_TEXT)) {
-        const el = doc.getElementById(id);
-        const next = replacement[id]();
-        if (el && next && defaultText.test(el.textContent.trim())) el.textContent = next;
+      const question = (doc.getElementById("question-word")?.textContent || "").trim();
+      const isRetry = question && state.retry.has(question);
+      const format = doc.getElementById("format-label");
+      const encounter = doc.getElementById("encounter-label");
+      const instruction = doc.getElementById("deck-instruction");
+      if (isRetry) {
+        setText(format, "SECOND CHANCE");
+        setText(encounter, "ONE MORE TRY");
+      } else if (state.labels) {
+        if (format && SORT_BIN_DEFAULT_TEXT["format-label"].test(format.textContent.trim())) setText(format, state.labels.format);
+        if (encounter && SORT_BIN_DEFAULT_TEXT["encounter-label"].test(encounter.textContent.trim())) setText(encounter, state.labels.encounter);
       }
+      if (state.labels && instruction && SORT_BIN_DEFAULT_TEXT["deck-instruction"].test(instruction.textContent.trim())) setText(instruction, state.labels.instruction);
     };
+    state.apply = apply;
     const observer = new win.MutationObserver(apply);
     observer.observe(doc.body, { subtree: true, childList: true, characterData: true });
     state.observer = observer;

@@ -11,8 +11,14 @@ import {
 } from "../../../../lib/cases/frequency-rush";
 import { getOutpostProgress } from "../../../../lib/outpostBuilder";
 import { DEFAULT_GAME_SKIN, getSkinForSortBins } from "../../../../lib/frequencyRushSkins";
-import { getSkillSet, buildSkillItems, SKILL_ROUND_LABELS } from "../../../../lib/frequencyRushSkills";
-import { isCustomListCode, buildCustomListItems, CUSTOM_LIST_LABELS } from "../../../../lib/frequencyRushCustomLists";
+import { getSkillSet, buildSkillItems, skillItemForKey, SKILL_ROUND_LABELS } from "../../../../lib/frequencyRushSkills";
+import { isCustomListCode, buildCustomListItems, customItemForKey, CUSTOM_LIST_LABELS } from "../../../../lib/frequencyRushCustomLists";
+import { getMissedForStudent, mixRetryPool, MAX_RETRY_PER_RUN } from "../../../../lib/frequencyRushMissed";
+
+// Sept 24, 2026 — My Missed Words: how many questions a run holds when some
+// are retries. The game plays 10 rounds by default, so a 10-item pool means
+// every retry question is sure to come up.
+const RETRY_POOL_SIZE = 10;
 
 // Starts one Lock the Signal / Individual Practice session. Called fresh
 // every time a student plays OR replays — replays are unlimited by design
@@ -84,6 +90,7 @@ export async function POST(request) {
   const caseCode = caseRow.standard || assignment.case_standard;
   let skillSet = getSkillSet(caseCode);
   let skillItems = skillSet ? buildSkillItems(caseCode) : [];
+  let customList = null;
   // Sept 24, 2026 — a teacher's own word list (step 3). Same path as a skill
   // set; its questions are built from the saved list.
   if (!skillSet && isCustomListCode(caseCode)) {
@@ -97,6 +104,21 @@ export async function POST(request) {
     }
     skillSet = { kind: "custom", title: list.title, labels: CUSTOM_LIST_LABELS };
     skillItems = buildCustomListItems(list);
+    customList = list;
+  }
+  // Sept 24, 2026 — My Missed Words (step 4): questions this student missed
+  // in earlier runs of this activity come back first, marked on screen.
+  let retryPrompts = [];
+  if (skillSet) {
+    const missed = await getMissedForStudent(supabaseAdmin, { studentId, caseStandard: caseCode });
+    const retryItems = missed
+      .map((m) => (customList ? customItemForKey(customList, m.key) : skillItemForKey(caseCode, m.key)))
+      .filter(Boolean)
+      .slice(0, MAX_RETRY_PER_RUN);
+    if (retryItems.length) {
+      skillItems = mixRetryPool(retryItems, skillItems, RETRY_POOL_SIZE);
+      retryPrompts = retryItems.map((i) => i.prompt);
+    }
   }
   if (skillSet) {
     if (!skillItems.length) {
@@ -137,6 +159,7 @@ export async function POST(request) {
       words: [],
       classifications: [],
       sortBins: skillItems,
+      retry: { prompts: retryPrompts },
       skill: { kind: skillSet.kind, title: skillSet.title, labels: skillSet.labels || SKILL_ROUND_LABELS[skillSet.kind] || null },
     });
   }
@@ -168,6 +191,29 @@ export async function POST(request) {
   } catch (err) {
     console.error("Frequency Rush: couldn't load sort_bins banks:", err.message);
     sortBins = [];
+  }
+
+  // Sept 24, 2026 — My Missed Words for vocabulary units: missed words stay
+  // in this run's word bank, which is trimmed to 10 when the unit is bigger,
+  // so they're much likelier to come up. Missed sort questions work the same
+  // way in the sort pool.
+  let vocabRetryPrompts = [];
+  {
+    const missed = await getMissedForStudent(supabaseAdmin, { studentId, caseStandard: caseCode });
+    const missedKeys = new Set(missed.slice(0, MAX_RETRY_PER_RUN).map((m) => String(m.key)));
+    if (missedKeys.size) {
+      const missedWords = words.filter((w) => missedKeys.has(String(w.id)));
+      if (missedWords.length && words.length > RETRY_POOL_SIZE) {
+        const others = words.filter((w) => !missedKeys.has(String(w.id))).sort(() => Math.random() - 0.5);
+        words = [...missedWords, ...others.slice(0, RETRY_POOL_SIZE - missedWords.length)];
+      }
+      const missedSorts = sortBins.filter((i) => missedKeys.has(String(i.id)));
+      if (missedSorts.length && sortBins.length > 8) {
+        const others = sortBins.filter((i) => !missedKeys.has(String(i.id))).sort(() => Math.random() - 0.5);
+        sortBins = [...missedSorts, ...others.slice(0, 8 - missedSorts.length)];
+      }
+      vocabRetryPrompts = [...missedWords.map((w) => w.word), ...missedSorts.map((i) => i.prompt)];
+    }
   }
 
   if (words.length < 4 && sortBins.length < 1) {
@@ -266,5 +312,6 @@ export async function POST(request) {
     // (lib/cases/frequency-rush/classify). Client passes these to
     // setQuestionBank({ sortBins }) as format sort_bins.
     sortBins,
+    retry: { prompts: vocabRetryPrompts },
   });
 }
