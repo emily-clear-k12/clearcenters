@@ -26,6 +26,7 @@ const QUESTION_SECONDS_OPTIONS = [
   { value: 20, label: "20 sec" },
   { value: 30, label: "30 sec" },
 ];
+const CRYSTAL_DIVE_MINUTES = [5, 10, 15, 20];
 import Link from 'next/link';
 import {BridgePage,PageHeading,ClassTabs,Empty} from '../../../../components/teacher/BridgeUI';
 import {subjectStyle,engineInfo,SUBJECTS,ENGINES} from '../../../../lib/teacherBridge';
@@ -220,6 +221,7 @@ function NewAssignmentContent() {
   // same "one more conditional field on the assign form" pattern as
   // Distress Call above, just for a different engine.
   const [gameSkin, setGameSkin] = useState(DEFAULT_GAME_SKIN);
+  const [crystalDiveMinutes, setCrystalDiveMinutes] = useState(10);
   // Sept 24, 2026 — Frequency Rush question timer, set by the teacher for
   // the whole assignment (assignments.question_seconds). 0 = no timer.
   // Students can no longer turn the game's own timer on or off.
@@ -316,8 +318,13 @@ function NewAssignmentContent() {
       assignmentFields.distress_call_reward_points = distressCallRewardPoints ? parseInt(distressCallRewardPoints, 10) : 0;
     }
     if (selectedCase.engine === "frequency_rush") {
+      if (gameSkin === "crystal_dive" && /^FR\.[345]\.DAILY$/.test(selectedCase.standard)) {
+        setError("Daily Warm-up uses its own daily scoring. Choose another game world for this activity.");
+        return;
+      }
       assignmentFields.game_skin = gameSkin;
       assignmentFields.question_seconds = questionSeconds;
+      if (gameSkin === "crystal_dive") assignmentFields.crystal_dive_minutes = crystalDiveMinutes;
     }
 
     let { data: newAssignment, error: insertError } = await supabase
@@ -371,6 +378,7 @@ function NewAssignmentContent() {
     setDistressCallDeadline("");
     setDistressCallRewardPoints("");
     setGameSkin(DEFAULT_GAME_SKIN);
+    setCrystalDiveMinutes(10);
   }
 
   if (loadingAuth) {
@@ -417,7 +425,7 @@ function NewAssignmentContent() {
     {(typeFilter!=='all'||lane==='relay')&&<div className="cc-row" style={{marginBottom:16}}><button className="cc-text-button" onClick={()=>{setLane('standard');setTypeFilter('all');setTopic('all');setSelectedCase(null);setBrowseSubject(targetClass?.subject||'Science');setFollowClass(true)}}>← All activity types</button><span className="cc-badge">{lane==='relay'?'Relay Station':engineInfo(typeFilter).label}</span></div>}
     {lane==='standard'&&topic==='all'&&<section className="cc-panel"><h2>Explore a learning experience</h2><p className="cc-muted">Choose an activity type, then a standard to see its lessons.</p><div className="cc-type-grid">{Object.entries(ENGINES).map(([key,art])=><button key={key} className="cc-activity cc-frame" style={subjectStyle(key==='relay_station'?'ELAR':browseSubject)} aria-pressed={typeFilter===key} onClick={()=>{setSelectedCase(null);setCaseSearch('');if(key==='relay_station'){setLane('relay');setTypeFilter('all');setTopic('all');setBrowseSubject(FOUNDATIONS)}else{setTypeFilter(key);setTopic('all')}}}><img src={art.image} alt=""/><div><h3>{art.label}</h3><p>{art.description}</p>{typeFilter===key&&<span className="cc-badge">Choose a standard above</span>}</div></button>)}</div></section>}
     {lane==='relay'&&<div className="cc-gallery" style={{marginBottom:18}}>{RELAY_SPECIAL_TILES.map(t=><button key={t.key} type="button" className="cc-activity cc-frame" style={subjectStyle('ELAR')} aria-pressed={browseSubject===t.key} onClick={()=>{setBrowseSubject(t.key);setTopic('all');setSelectedCase(null);}}><div><div className="cc-eyebrow cc-subject-label">Relay Station</div><h3>{t.title}</h3><p>{t.blurb}</p></div></button>)}<Link className="cc-activity cc-frame" style={subjectStyle('ELAR')} href="/teacher/typing-texts"><div><div className="cc-eyebrow cc-subject-label">Relay Station</div><h3>Custom typing text</h3><p>A passage you paste for this class.</p></div></Link></div>}
-    {(topic!=='all'||lane==='relay')&&<div className="cc-two"><section className="cc-panel"><h2>{topic==='all'?'Choose a learning experience':topic}</h2><p className="cc-muted">{lane==='relay'?'Relay Station':browseSubject} · Grade {browseGrade} · {filteredCases.length} activities</p><label className="cc-field">Find an activity<input className="cc-input" type="search" placeholder="Search these activities" value={caseSearch} onChange={e=>{setCaseSearch(e.target.value);setLimit(12)}}/></label><div className="cc-gallery cc-compact-gallery">{filteredCases.slice(0,limit).map(c=>{const e=engineInfo(c.engine);return <button key={c.standard} className="cc-activity cc-frame" style={subjectStyle(c.subject)} aria-pressed={selectedCase?.standard===c.standard} onClick={()=>{setSelectedCase(c);setSelectedChallenge(CHALLENGE_TYPES.find(t=>matchesChallenge(c.engine,t.key)))}}><img src={e.image} alt="" onError={thumbFallback}/><div><div className="cc-eyebrow cc-subject-label">{e.label}</div><h3>{c.title}</h3><p>{c.learning_target||e.description}</p><small>{missionMapTeksCode(c.standard)||c.standard}</small></div></button>})}</div>{casesLoading?<Empty>Loading activities…</Empty>:!filteredCases.length&&<Empty>No activities match these filters. Try another topic, grade, or format.</Empty>}{filteredCases.length>limit&&<button className="cc-btn secondary" style={{marginTop:18}} onClick={()=>setLimit(limit+12)}>Show more activities</button>}</section>
+    {(topic!=='all'||lane==='relay')&&<div className="cc-two"><section className="cc-panel"><h2>{topic==='all'?'Choose a learning experience':topic}</h2><p className="cc-muted">{lane==='relay'?'Relay Station':browseSubject} · Grade {browseGrade} · {filteredCases.length} activities</p><label className="cc-field">Find an activity<input className="cc-input" type="search" placeholder="Search these activities" value={caseSearch} onChange={e=>{setCaseSearch(e.target.value);setLimit(12)}}/></label><div className="cc-gallery cc-compact-gallery">{filteredCases.slice(0,limit).map(c=>{const e=engineInfo(c.engine);return <button key={c.standard} className="cc-activity cc-frame" style={subjectStyle(c.subject)} aria-pressed={selectedCase?.standard===c.standard} onClick={()=>{setSelectedCase(c);if(/^FR\.[345]\.DAILY$/.test(c.standard))setGameSkin(DEFAULT_GAME_SKIN);setSelectedChallenge(CHALLENGE_TYPES.find(t=>matchesChallenge(c.engine,t.key)))}}><img src={e.image} alt="" onError={thumbFallback}/><div><div className="cc-eyebrow cc-subject-label">{e.label}</div><h3>{c.title}</h3><p>{c.learning_target||e.description}</p><small>{missionMapTeksCode(c.standard)||c.standard}</small></div></button>})}</div>{casesLoading?<Empty>Loading activities…</Empty>:!filteredCases.length&&<Empty>No activities match these filters. Try another topic, grade, or format.</Empty>}{filteredCases.length>limit&&<button className="cc-btn secondary" style={{marginTop:18}} onClick={()=>setLimit(limit+12)}>Show more activities</button>}</section>
     <aside className="cc-stack">{selectedCase?<section className="cc-panel cc-frame" style={subjectStyle(selectedCase.subject)}><div className="cc-eyebrow cc-subject-label">SELECTED · {engineInfo(selectedCase.engine).label}</div><h2>{selectedCase.title}</h2><p className="cc-muted">{missionMapTeksLabel(selectedCase.standard)||selectedCase.standard}</p><img className="cc-preview-image" src={engineInfo(selectedCase.engine).image} alt="" onError={thumbFallback}/><h3>What students will do</h3><p className="cc-muted">{selectedCase.lesson_summary||engineInfo(selectedCase.engine).description}</p>{selectedCase.learning_target&&<div className="cc-panel" style={{background:'#f5f0fc',padding:14}}>{selectedCase.learning_target}</div>}{selectedCase.misconception_note&&<details><summary>Teaching notes</summary><p className="cc-muted">{selectedCase.misconception_note}</p></details>}
     <div className="cc-assignment-form"><h3>Assign to {targetClass?.name||'your class'}</h3>
                   {assignClassId && (
@@ -467,7 +475,7 @@ function NewAssignmentContent() {
                     <div style={{ marginBottom: 14 }}>
                       <div style={{ fontWeight: 700, fontSize: 13, marginBottom: 8, color: COLORS.textDark }}>🛰️ Game world</div>
                       <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
-                        {GAME_SKINS.map((skin) => (
+                        {GAME_SKINS.filter((skin) => skin.id !== "crystal_dive" || !/^FR\.[345]\.DAILY$/.test(selectedCase.standard)).map((skin) => (
                           <button
                             key={skin.id}
                             type="button"
@@ -488,8 +496,14 @@ function NewAssignmentContent() {
                         ))}
                       </div>
                       <p style={{ fontSize: 11.5, color: COLORS.textMuted, margin: "6px 0 0 0" }}>
-                        Same words, same scoring — just a different look for the run.
+                        The worlds use this question bank. Crystal Dive also has its own digging, caves, and crystal wheel.
                       </p>
+                      {gameSkin === "crystal_dive" && <>
+                        <div style={{ fontWeight: 700, fontSize: 13, margin: "14px 0 8px 0", color: COLORS.textDark }}>⏱️ Crystal Dive session length</div>
+                        <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                          {CRYSTAL_DIVE_MINUTES.map((minutes) => <button key={minutes} type="button" className="cc-btn" aria-pressed={crystalDiveMinutes === minutes} onClick={() => setCrystalDiveMinutes(minutes)} style={{ background: crystalDiveMinutes === minutes ? ACCENT : COLORS.white, color: crystalDiveMinutes === minutes ? COLORS.white : COLORS.textDark, border: `1.5px solid ${crystalDiveMinutes === minutes ? ACCENT : COLORS.border}`, borderRadius: 999, padding: "7px 14px", fontWeight: 700, fontSize: 12.5 }}>{minutes} min</button>)}
+                        </div>
+                      </>}
                       <div style={{ fontWeight: 700, fontSize: 13, margin: "14px 0 8px 0", color: COLORS.textDark }}>⏱️ Time per question</div>
                       <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
                         {QUESTION_SECONDS_OPTIONS.map((opt) => (

@@ -17,6 +17,7 @@ import SignalCheckClient from "./SignalCheckClient";
 import MissionMapClient from "./MissionMapClient";
 import SimulationLabClient from "./SimulationLabClient";
 import FrequencyRushClient from "./FrequencyRushClient";
+import CrystalDiveClient from "./CrystalDiveClient";
 import SignalDefenseClient from "./SignalDefenseClient";
 import RelayStationClient from "./RelayStationClient";
 import AssemblyDeckClient from "./AssemblyDeckClient";
@@ -45,7 +46,7 @@ export default async function ActivityPage({ params }) {
 
   const { data: assignment } = await supabaseAdmin
     .from("assignments")
-    .select("id, class_id, case_standard, due_date, pacing_mode")
+    .select("id, class_id, case_standard, due_date, pacing_mode, game_skin")
     .eq("id", assignmentId)
     .single();
 
@@ -93,6 +94,7 @@ export default async function ActivityPage({ params }) {
   // go to Share" state here the way every other engine has one.
   const isFrequencyRush = engine === "frequency_rush";
   if (isFrequencyRush) {
+    if (assignment.game_skin === "crystal_dive") return <CrystalDiveClient assignmentId={assignmentId} caseTitle={caseRow?.title || null} />;
     return (
       <FrequencyRushClient
         assignmentId={assignmentId}

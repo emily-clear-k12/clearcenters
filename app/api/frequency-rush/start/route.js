@@ -53,9 +53,16 @@ export async function POST(request) {
   // doesn't exist, so fall back to the old select and no timer.
   let { data: assignment, error: assignmentError } = await supabaseAdmin
     .from("assignments")
-    .select("id, case_standard, game_skin, question_seconds")
+    .select("id, class_id, case_standard, game_skin, question_seconds, crystal_dive_minutes")
     .eq("id", assignmentId)
     .single();
+  if (assignmentError && /crystal_dive_minutes/i.test(assignmentError.message || "")) {
+    ({ data: assignment, error: assignmentError } = await supabaseAdmin
+      .from("assignments")
+      .select("id, class_id, case_standard, game_skin, question_seconds")
+      .eq("id", assignmentId)
+      .single());
+  }
   if (assignmentError && /question_seconds/i.test(assignmentError.message || "")) {
     ({ data: assignment } = await supabaseAdmin
       .from("assignments")
@@ -74,6 +81,20 @@ export async function POST(request) {
   // in this route.
   const gameSkin = assignment.game_skin || DEFAULT_GAME_SKIN;
   const questionSeconds = Math.max(0, Math.min(60, Number(assignment.question_seconds) || 0));
+  const sessionMinutes = [5, 10, 15, 20].includes(Number(assignment.crystal_dive_minutes)) ? Number(assignment.crystal_dive_minutes) : 10;
+  if ((gameSkin === "crystal_dive") !== (resolvedGameMode === "crystal_dive")) {
+    return NextResponse.json({ error: "This assignment uses a different game." }, { status: 400 });
+  }
+  if (gameSkin === "crystal_dive" && isDailyCode(assignment.case_standard)) {
+    return NextResponse.json({ error: "Daily Warm-up is not available in Crystal Dive." }, { status: 400 });
+  }
+  if (gameSkin === "crystal_dive") {
+    const { data: student } = await supabaseAdmin.from("students").select("class_id").eq("id", studentId).single();
+    if (!student || student.class_id !== assignment.class_id) return NextResponse.json({ error: "That assignment is not yours." }, { status: 403 });
+    const { data: targets, error: targetError } = await supabaseAdmin.from("assignment_students").select("student_id").eq("assignment_id", assignmentId);
+    if (targetError) return NextResponse.json({ error: "Couldn't check assignment access." }, { status: 500 });
+    if (targets.length && !targets.some((target) => target.student_id === studentId)) return NextResponse.json({ error: "That assignment is not yours." }, { status: 403 });
+  }
 
   const { data: caseRow } = await supabaseAdmin
     .from("cases")
@@ -211,6 +232,7 @@ export async function POST(request) {
       sessionId: skillSession.id,
       roundSeconds: ROUND_SECONDS,
       questionSeconds,
+      sessionMinutes,
       gameMode: resolvedGameMode,
       // Frostveil and Cindara can't show sort_bins questions, so a skill set
       // assigned in those worlds plays in the default world instead.
@@ -328,6 +350,7 @@ export async function POST(request) {
     sessionId: session.id,
     roundSeconds: ROUND_SECONDS,
     questionSeconds,
+    sessionMinutes,
     gameMode: resolvedGameMode,
     gameSkin,
     outpost,
