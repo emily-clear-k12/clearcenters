@@ -291,7 +291,29 @@ function resumeMode(runs, answers, cfg) {
 }
 
 /* ======================================================================== */
-export default function SimLabStudio({
+// The saved draft lives in localStorage, which the server can't see, so the
+// studio mounts only on the client (after the first effect) — otherwise a
+// resumed draft would render differently from the server HTML (hydration
+// mismatch). Until then a plain backdrop shows.
+function loadInitial({ assignmentId, studentId, existingSubmission, alreadySubmitted, revisionRequested }) {
+  const storageKey = `cc_simlab2_${assignmentId}_${studentId || "anon"}`;
+  if (alreadySubmitted) return { submitted: true, fromLog: true, answers: {}, entered: true };
+  const local = readLocal(storageKey);
+  if (local && local.v === 2) return local;
+  const sld = existingSubmission && existingSubmission.simulation_lab_data;
+  if (sld && sld.v === 2 && sld.draft && !revisionRequested) return sld;
+  return { v: 2, entered: false, runs: [], answers: {}, text: "", checklist: [], confidence: null };
+}
+
+export default function SimLabStudio(props) {
+  const [initial, setInitial] = useState(null);
+  useEffect(() => { setInitial(loadInitial(props)); /* once, on mount */ }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  if (!initial) return <div className="slx slx-viewport" aria-busy="true" />;
+  return <Studio {...props} initial={initial} />;
+}
+
+function Studio({
+  initial: loaded,
   assignmentId,
   studentId,
   caseStandard,
@@ -308,19 +330,12 @@ export default function SimLabStudio({
   const sceneModule = getScene(publicCase.scene.id);
   const cfg = useMemo(() => buildSceneConfig(publicCase, sceneModule), [publicCase, sceneModule]);
   const storageKey = `cc_simlab2_${assignmentId}_${studentId || "anon"}`;
-
   // Draft: localStorage first (this device), then a server draft saved with
   // "Save" (another device). Ignored once the mission is submitted.
   const initial = useMemo(() => {
-    if (alreadySubmitted) {
-      const sld = (existingSubmission && existingSubmission.simulation_lab_data) || {};
-      return { submitted: true, runs: runsFromTrialLog(sld.trialLog, cfg.variable.id), answers: {}, entered: true };
-    }
-    const local = readLocal(storageKey);
-    if (local && local.v === 2) return local;
-    const sld = existingSubmission && existingSubmission.simulation_lab_data;
-    if (sld && sld.v === 2 && sld.draft && !revisionRequested) return sld;
-    return { v: 2, entered: false, runs: [], answers: {}, text: "", checklist: [], confidence: null };
+    if (!loaded.fromLog) return loaded;
+    const sld = (existingSubmission && existingSubmission.simulation_lab_data) || {};
+    return { ...loaded, runs: runsFromTrialLog(sld.trialLog, cfg.variable.id) };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

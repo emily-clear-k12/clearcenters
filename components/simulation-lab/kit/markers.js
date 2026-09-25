@@ -195,7 +195,9 @@ export function createMarkers({ over, under, geom, anim, ghostLabel, unitTxt, ma
 /* ---------------- gap bracket ---------------- */
 export function createGap({ over, under, geom, anim, unitTxt, onBullseye }) {
   const TY = geom.TY, FH = geom.flagH || 120;
-  const band = el("rect", { y: TY + 1, height: 42, rx: 4, fill: "#7b6cd9", opacity: 0 }, under);
+  // pointer-events off: the band sits over the ruler and must never swallow
+  // a tap meant for the flag's ruler hit area on the next run
+  const band = el("rect", { y: TY + 1, height: 42, rx: 4, fill: "#7b6cd9", opacity: 0, "pointer-events": "none" }, under);
   let g = null;
   async function show(pred, dist) {
     const fx = geom.trackX(pred), lx = geom.trackX(dist), y = TY - FH - 22;

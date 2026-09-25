@@ -309,3 +309,5 @@
 .slx .preset { cursor: pointer; }
 .slx .preset text { font: 600 14px var(--display); fill: #5b5378; pointer-events: none; }
 .slx .preset.on text { fill: #fff; }
+/* run markers never take pointer input (the flag + ruler underneath do) */
+.slx .ghost, .slx .landing, .slx .gap, .slx .chart-svg { pointer-events: none; }
