@@ -195,6 +195,7 @@
 .ms-foot { padding: 14px 16px; }
 @media (max-width: 800px) {
   .ms-layout, .ms-open, .ms-cards, .ms-ask, .ms-split { grid-template-columns: 1fr; }
+  .ms-portrait { grid-template-columns: 1fr 1fr; grid-template-areas: "center center" "n e" "w s"; }
   .ms-top, .ms-foot { flex-direction: column; align-items: flex-start; }
 }
 .ms-model { background: #fff; border-radius: 12px; padding: 12px; min-height: 110px; }
@@ -224,6 +225,57 @@
 .ms-moon.is-gibbous::after { background: #24184a; clip-path: ellipse(34% 50% at 8% 50%); }
 .ms-line { display: flex; flex-direction: column; gap: 10px; margin-top: 8px; padding-left: 16px; border-left: 3px solid #1aa7b5; }
 .ms-line .ms-frame { height: 120px; }
+.ms-portrait {
+  display: grid;
+  grid-template-columns: 1fr 1.15fr 1fr;
+  grid-template-areas:
+    ". n ."
+    "w center e"
+    ". s .";
+  gap: 10px;
+  margin-top: 8px;
+  align-items: stretch;
+}
+.ms-portrait .is-n { grid-area: n; }
+.ms-portrait .is-e { grid-area: e; }
+.ms-portrait .is-s { grid-area: s; }
+.ms-portrait .is-w { grid-area: w; }
+.ms-center {
+  grid-area: center;
+  padding: 10px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: inset 0 0 0 3px #6d45c8, 0 0 0 4px rgba(26, 167, 181, 0.35);
+  text-align: center;
+}
+.ms-center > b { display: block; margin-bottom: 6px; }
+.ms-center > span, .ms-center .ms-quote { display: block; color: #2a2350; font-size: 14px; line-height: 1.4; }
+.ms-center img { width: 100%; height: 140px; object-fit: cover; border-radius: 12px; background: #120c28; }
+.ms-day { display: flex; align-items: center; justify-content: center; gap: 18px; min-height: 110px; }
+.ms-day i { width: 28px; height: 28px; border-radius: 50%; background: #e8943a; box-shadow: 0 0 0 6px rgba(232, 148, 58, 0.25); }
+.ms-day b { width: 74px; height: 74px; border-radius: 50%; background: linear-gradient(90deg, #f4e2a8 50%, #1b2456 50%); box-shadow: inset 0 0 0 2px #24184a; }
+.ms-flag { width: 132px; height: 84px; display: flex; margin: 12px auto; border: 2px solid #24184a; }
+.ms-flag > i { width: 42px; background: #002868; position: relative; }
+.ms-flag > i::after { content: "★"; color: #fff; position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 22px; }
+.ms-flag > b { flex: 1; display: flex; flex-direction: column; }
+.ms-flag > b span { flex: 1; }
+.ms-flag > b span:first-child { background: #fff; }
+.ms-flag > b span:last-child { background: #bf0a30; }
+.ms-map.is-town { min-height: 110px; }
+.ms-map.is-town small { position: absolute; left: 18%; top: 28%; font: 700 14px Inter, sans-serif; color: #24184a; }
+.ms-circuit { position: relative; height: 110px; }
+.ms-circuit b, .ms-circuit i, .ms-circuit em { position: absolute; }
+.ms-circuit b { left: 18px; top: 36px; width: 28px; height: 36px; border-radius: 4px; background: linear-gradient(90deg, #e8943a 50%, #6d45c8 50%); }
+.ms-circuit i { left: 46px; right: 36px; top: 22px; height: 64px; border: 4px solid #1aa7b5; border-left: 0; border-radius: 0 12px 12px 0; }
+.ms-circuit em { right: 18px; top: 38px; width: 22px; height: 32px; border-radius: 50%; background: #f4e2a8; box-shadow: inset 0 0 0 3px #24184a; }
+.ms-ray { position: relative; height: 70px; margin: 20px 12px; }
+.ms-ray i { position: absolute; left: 0; top: 24px; width: 16px; height: 16px; border-radius: 50%; background: #24184a; }
+.ms-ray b { position: absolute; left: 16px; right: 0; top: 30px; height: 4px; background: #1aa7b5; }
+.ms-ray b::after { content: ""; position: absolute; right: -2px; top: -7px; border-left: 14px solid #1aa7b5; border-top: 9px solid transparent; border-bottom: 9px solid transparent; }
+.ms-prism { display: flex; flex-direction: column-reverse; align-items: center; gap: 4px; min-height: 110px; }
+.ms-prism i { display: block; width: 92px; height: 16px; border-radius: 4px; background: #6d45c8; box-shadow: inset 0 0 0 2px #24184a; }
+.ms-prism i:nth-child(2) { width: 78px; background: #1aa7b5; }
+.ms-prism i:nth-child(3) { width: 64px; }
 .ms-split { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .ms-both { grid-column: 1 / -1; }
 .ms-split .ms-slot { position: relative; min-height: 150px; }

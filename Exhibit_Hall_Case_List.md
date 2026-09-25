@@ -83,11 +83,23 @@ Side-by-side, timelines, and drawn math stay off this wall. They are the next wa
 | 4 | 4.9B 29 nights | ELA.4.8C The science fair disaster | SS.4.4B Longhorn boom | 4.5B The growing tower |
 | 5 | 5.10B From mud to stone | ELA.5.8C Lost in the library | SS.5.4C Growing west | 5.10E The family budget |
 
-Do not turn a timeline code into a four-spot or side-by-side case. Portraits are still later.
+Do not turn a timeline code into a four-spot or side-by-side case.
+
+## Portrait wall
+
+**Started Sept 24, 2026.** A center subject, with true and important pieces around it. Order does not matter. One case per subject per grade (12). They use the same activity, with `layout: "portrait"`. Run `add_exhibit_hall_portrait.sql` before they show on Assign.
+
+| Grade | Science | ELAR | Social Studies | Math |
+|---|---|---|---|---|
+| 3 | 3.9A Portrait of a day | ELA.3.10C Portrait of a poster | SS.3.4C Portrait of a map | 3.6C Portrait of this rectangle |
+| 4 | 4.10B Portrait of a canyon | ELA.4.7D Portrait of a summary | SS.4.14A Portrait of the Texas flag | 4.6A Portrait of a ray |
+| 5 | 5.8B Portrait of a circuit | ELA.5.8A Portrait of a theme | SS.5.14B Portrait of the Preamble | 5.6B Portrait of this box |
+
+The old portrait titles (Meet water, Rosa, Franklin, 4,352, and the rest) stay on the four-spot wall. Do not reuse those codes here.
 
 ## Next wall
 
-Side by side is in the engine (12 cases). Timelines are in the engine (12 cases). Do not add a fifth four-spot case.
+Side by side, timelines, and portraits are in the engine (12 cases each). Every Kind is still later. Do not add a fifth four-spot case.
 
 ## When a case ships
 
