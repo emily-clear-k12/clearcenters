@@ -67,6 +67,16 @@ const BG = PAGE_BACKGROUNDS["/teacher/assign/new"];
 // (see ClearCenters_STATE.md's fourth Aug 30 session-log entry) — flip this
 // flag to `real: true` the same day a new engine's first case is authored,
 // not as an afterthought once someone notices the tile is disabled.
+const PRODUCTS = [
+  { key: "lessons", label: "ClearLessons", soon: true },
+  { key: "sheets", label: "ClearSheets", soon: true },
+  { key: "centers", label: "ClearCenters", soon: false },
+  { key: "keys", label: "ClearKeys", soon: true },
+  { key: "quest", label: "Crystal Quest", soon: true },
+  { key: "showdown", label: "ClassCade Showdown", soon: true },
+  { key: "writing", label: "Crystal Writing", soon: true },
+];
+
 const CHALLENGE_TYPES = [
   { key: "group_chat", label: "Group Chat", image: "/teacher/challenges/group_chat.jpg", real: true,
     description: "Students role-play as characters, concepts, or parts of a system in a live group chat, using evidence to prove what's really going on." },
@@ -231,6 +241,7 @@ function NewAssignmentContent() {
   const [topic,setTopic]=useState(searchParams.get('standard')||'all');
   const [typeFilter,setTypeFilter]=useState(searchParams.get('engine')||'all');
   const [lane,setLane]=useState('standard');
+  const [product,setProduct]=useState('centers');
   const [followClass,setFollowClass]=useState(true);
   const [limit,setLimit]=useState(12);
   const [casesLoading,setCasesLoading]=useState(true);
@@ -463,6 +474,19 @@ function NewAssignmentContent() {
   function resetBrowse(){setSelectedCase(null);setTopic('all');setLimit(12);setDistressCallEnabled(false);setDistressCallTarget('');setDistressCallDeadline('');setDistressCallRewardPoints('');}
   return <BridgePage teacherEmail={teacherEmail}><PageHeading title="Find your next activity" subtitle="Choose a topic. Find the right experience. Make it yours."><ClassTabs classes={classes} value={assignClassId} onChange={id=>{setAssignClassId(id);setFollowClass(true);setLane('standard');setTypeFilter('all');resetBrowse();setCaseSearch('')}}/><div className="cc-class-context">{targetClass?.name || 'Choose a class'} · {roster.length} students</div></PageHeading>
     {error&&<div role="alert" className="cc-error">{error}</div>}
+    <div className="cc-products" role="list">
+      {PRODUCTS.map((item) => item.soon ? (
+        <div key={item.key} className="cc-product" role="listitem" aria-disabled="true">
+          <span className="cc-product-name">{item.label}</span>
+          <span className="cc-product-soon">Coming soon</span>
+        </div>
+      ) : (
+        <button key={item.key} type="button" className="cc-product is-ready" aria-pressed={product === item.key} onClick={() => setProduct(item.key)}>
+          <span className="cc-product-name">{item.label}</span>
+          <span className="cc-product-line">Assign a center</span>
+        </button>
+      ))}
+    </div>
     {assignedSuccess?(            <div style={panelStyle(ACCENT, { padding: 32, textAlign: "center" })}>
               <div style={{ fontSize: 36, marginBottom: 10 }}>✅</div>
               <div style={{ fontWeight: 700, fontSize: 17, marginBottom: 6, color: COLORS.textDark }}>Assigned!</div>
@@ -491,7 +515,7 @@ function NewAssignmentContent() {
                 <button onClick={assignAnother} className="gc-btn" style={{ background: `${ACCENT}22`, color: ACCENT, borderRadius: 999, padding: "11px 20px", fontWeight: 700, fontSize: 13.5 }}>Assign Another</button>
                 <button onClick={() => router.push("/teacher/assign")} className="gc-btn" style={{ background: ACCENT, color: COLORS.white, borderRadius: 999, padding: "11px 20px", fontWeight: 700, fontSize: 13.5 }}>Back to My Classes</button>
               </div>
-            </div>): <>
+            </div>): product === "centers" ? <>
     <div className="cc-toolbar cc-browse-filters">
       <label className="cc-field">Grade<select value={browseGrade} onChange={e=>{setFollowClass(false);setBrowseGrade(e.target.value);resetBrowse();setCaseSearch('')}}>{['3','4','5'].map(g=><option key={g} value={g}>Grade {g}</option>)}</select></label>
       <label className="cc-field">Subject<select value={lane==='relay'?'ELAR':browseSubject} onChange={e=>{setFollowClass(false);setLane('standard');setBrowseSubject(e.target.value);setTypeFilter('all');resetBrowse();setCaseSearch('')}}>{Object.keys(SUBJECTS).map(subject=><option key={subject}>{subject}</option>)}</select></label>
@@ -709,7 +733,7 @@ function NewAssignmentContent() {
                       : `Assign to ${targetClass?.name} →`}
                   </button>
     {!classes.length&&<Link className="cc-link" href="/teacher/assign">Create a class first →</Link>}
-    </div></section>:<section className="cc-panel"><Empty><img src="/icons/sam/cosmic/thinking-poster.png" alt="" style={{width:110}}/><h2>Take a closer look</h2><p>Select an activity to see its learning purpose and assignment options.</p></Empty></section>}</aside></div>}</>}
+    </div></section>:<section className="cc-panel"><Empty><img src="/icons/sam/cosmic/thinking-poster.png" alt="" style={{width:110}}/><h2>Take a closer look</h2><p>Select an activity to see its learning purpose and assignment options.</p></Empty></section>}</aside></div>}</> : null}
     </BridgePage>;
 }
 export default function NewAssignmentPage(){return <Suspense fallback={<div className="cc-loading">Loading activities…</div>}><NewAssignmentContent/></Suspense>}
