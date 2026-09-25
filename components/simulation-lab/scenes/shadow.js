@@ -117,7 +117,9 @@ function create(stage, cfg, api) {
     set(glow, { r: 60 + 30 * S.lit, opacity: 0.4 + 0.5 * S.lit });
     set(rays, { transform: `rotate(${(S.pos * 20).toFixed(1)})` });
     const show = S.hour != null;
-    set(clock, { opacity: show ? 1 : 0, transform: `translate(${(p.x + 40).toFixed(1)},${(p.y - 58).toFixed(1)})` });
+    // time chip sits just inside the arc (toward its centre) so it never covers an hour preset
+    const ux = (ARC.cx - p.x) / ARC.r, uy = (ARC.cy - p.y) / ARC.r;
+    set(clock, { opacity: show ? 1 : 0, transform: `translate(${(p.x + ux * 80 - 36).toFixed(1)},${(p.y + uy * 80 - 15).toFixed(1)})` });
     clockT.textContent = show ? `${S.hour}:00` : "";
     marks.forEach((m, i) => set(m.c, { fill: hours[i] === S.hour ? "#ffe9a8" : "#ffffff" }));
     set(lock, { opacity: S.locked ? 1 : 0 });

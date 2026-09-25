@@ -6,12 +6,15 @@ import { getSimulationLabServerCase } from "../../../../lib/cases/simulation-lab
 import { getSimulationLabPublicCase } from "../../../../lib/cases/simulation-lab/index.public";
 import { scoreSubmission, CONFIDENCE_IDS } from "../../../../lib/simulationLabScoring";
 
-// Simulation Lab's checkpoints are single-attempt (unlike Mission Map's
-// two-attempt hint-then-retry checkpoints) — they're quick understanding
-// checks dropped into an experiment loop, not a "walk the path" adventure,
-// so there's no lockedInWrong/firstTryCorrect distinction to track here.
-// Same "no shame" rule as every other engine still applies: a miss is
-// recorded for the teacher but never blocks the mission or shows a red mark.
+// Sept 24, 2026: every live case uses the animated scene flow
+// (components/simulation-lab, ClearCenters_STATE.md §9 rule 22). Scoring is
+// in lib/simulationLabScoring.js: the scene's checkpoints (cp1 + fair) are
+// graded on the student's FIRST attempt (the flow lets them retry with a
+// hint, the "no shame" rule), and the Round 2 twist prediction is saved
+// for the teacher but is informational, never graded.
+//
+// Historical notes below describe the pre-scene (v3) case shape; the case
+// files still carry those fields.
 //
 // v3 update (see SimulationLab_Digital_Design_v1.md §10): the case now
 // has two rounds (each with its own lookup table + trial log), a
