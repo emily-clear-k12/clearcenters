@@ -37,6 +37,9 @@
     el('clock').textContent = time(remaining);
     el('depth').textContent = 'Layer ' + layer;
     el('score').textContent = crystals + ' crystals';
+    const freeze = el('wispFreeze');
+    freeze.hidden = roverFreeze <= 0;
+    if (roverFreeze > 0) freeze.textContent = '⚡ WISP HIT · −1 CRYSTAL · FROZEN ' + Math.ceil(roverFreeze) + 's';
     const boost = el('overdrive'); boost.hidden = overdrive <= 0; boost.textContent = '✦ OVERDRIVE · ' + time(overdrive);
     el('depthMeter').textContent = 'DEPTH · ' + Math.max(0, Math.floor((rover.y - 185) / 10)) + ' m ↓';
     const sec = sectionAt(rover.y);
@@ -51,7 +54,7 @@
   function intro() {
     mode = 'intro';
     panel.className = 'panel';
-    show('<small>SOLARA EXPEDITION</small><h1>Crystal Dive</h1><p>Dig through Solara, discover different cave encounters, and answer four questions to recharge. Get all four right for a short Overdrive burst. Sometimes a third cave hides a jewel you can dig out.</p><p>Reach the next layer before the descent bonus fades for 10 extra crystals. A cave wisp collision costs one crystal and freezes both of you for two seconds; point your headlights at it to keep it back. At the end, spin to see how many crystals you bank!</p><p>Hold WASD or the arrow keys to move. Press Space near a cave. On touch screens, hold the direction buttons.</p><p id="bankNote"></p><button class="primary" id="start">Start digging</button>');
+    show('<small>SOLARA EXPEDITION</small><h1>Crystal Dive</h1><p>Dig through Solara, discover different cave encounters, and answer four questions to recharge. Get all four right for a short Overdrive burst. Sometimes a third cave hides a jewel you can dig out.</p><p>Reach the next layer before the descent bonus fades for 10 extra crystals. A wisp collision costs one crystal and freezes both of you for two seconds. Dazzle a wisp with your headlight, then race to grab the prism it drops for four crystals—but do not drive into it! At the end, spin to see how many crystals you bank.</p><p>Hold WASD or the arrow keys to move. Press Space near a cave. On touch screens, hold the direction buttons.</p><p id="bankNote"></p><button class="primary" id="start">Start digging</button>');
     el('bankNote').textContent = bank.length ? 'Assignment bank ready.' : 'Preview mode: sample math facts.';
     el('start').onclick = start;
   }
@@ -87,7 +90,7 @@
     const bonusStart = Math.max(14, 18 - Math.floor(index / 2));
     const wispCount = index ? Math.min(3, 1 + Math.floor((index - 1) / 2)) : 0;
     const wisps = Array.from({ length: wispCount }, (_, n) => ({ x: [640, 370, 960][n], y: index * LEVEL + 250 + n * 145,
-      baseX: [640, 370, 960][n], baseY: index * LEVEL + 250 + n * 145, phase: index + n * 2.4, stunned: 0, frozen: 0, cooldown: 0 }));
+      baseX: [640, 370, 960][n], baseY: index * LEVEL + 250 + n * 145, phase: index + n * 2.4, stunned: 0, frozen: 0, cooldown: 0, prism: null, prismDropped: false }));
     const section = { index, cells, caves, wisps, charged: false, bonusStart, bonusSeconds: bonusStart, tint: ['#8c5947', '#75546a', '#506076', '#456779', '#51678a'][Math.min(4, Math.floor(index / 2))] };
     sections[index] = section;
     return section;
@@ -125,13 +128,25 @@
       }
       wisp.stunned = Math.max(0, wisp.stunned - dt); wisp.cooldown = Math.max(0, wisp.cooldown - dt);
       wisp.frozen = Math.max(0, wisp.frozen - dt);
+      if (wisp.prism) {
+        wisp.prism.life -= dt;
+        if (wisp.prism.life <= 0) wisp.prism = null;
+      }
       const wx = wisp.x - rover.x, wy = wisp.y - rover.y, distance = Math.hypot(wx, wy);
-      if (!wisp.frozen && distance < 170 && (wx * Math.cos(rover.heading) + wy * Math.sin(rover.heading)) / Math.max(1, distance) > .68) wisp.stunned = 1.1;
-      if (distance < 43 && !wisp.stunned && !wisp.frozen && !wisp.cooldown && !roverFreeze) {
+      // Contact wins at close range. Previously the headlight stunned the
+      // wisp first, so driving directly into it silently avoided the hit.
+      if (distance < 55 && !wisp.frozen && !wisp.cooldown && !roverFreeze) {
         crystals = Math.max(0, crystals - 1);
         roverFreeze = 2; wisp.frozen = 2; hitFlash = 2; wisp.cooldown = 3;
         el('hint').textContent = 'Wisp collision! −1 crystal · Both frozen for 2 seconds.';
         hud();
+      } else if (!roverFreeze && !wisp.frozen && distance >= 75 && distance < 180 && (wx * Math.cos(rover.heading) + wy * Math.sin(rover.heading)) / distance > .75) {
+        if (!wisp.prismDropped) {
+          wisp.prism = { x: Math.max(75, Math.min(WIDTH - 75, wisp.x + (rover.x < wisp.x ? -72 : 72))), y: wisp.y + 50, life: 8 };
+          wisp.prismDropped = true;
+          el('hint').textContent = 'Wisp dazzled! Grab the glowing prism for +4 crystals!';
+        }
+        wisp.stunned = Math.max(wisp.stunned, 1.8);
       }
     }
     let dx = Number(!!(keys.d || keys.arrowright)) - Number(!!(keys.a || keys.arrowleft));
@@ -164,12 +179,20 @@
       }
       hud();
     }
+    if (!roverFreeze) for (const wisp of currentSection?.wisps || []) {
+      if (wisp.prism && Math.hypot(rover.x - wisp.prism.x, rover.y - wisp.prism.y) < 48) {
+        crystals += 4; wisp.prism = null; banner = 1.4;
+        el('hint').textContent = 'PRISM SNATCH! +4 crystals · Keep digging!';
+        hud();
+      }
+    }
     camera += (Math.max(0, rover.y - 295) - camera) * Math.min(1, dt * 6);
     const active = sectionAt(rover.y);
     nearCave = active?.caves.find((c) => !c.lit && Math.hypot(c.x - rover.x, c.y - rover.y) < 110);
     canvas.style.cursor = nearCave ? 'pointer' : 'default';
     if (roverFreeze) el('hint').textContent = 'Wisp collision! −1 crystal · Both frozen for ' + Math.ceil(roverFreeze) + ' seconds.';
     else if (nearCave) el('hint').textContent = 'Cave entrance nearby · Press Space or ENTER';
+    else if (active?.wisps.some((wisp) => wisp.prism)) el('hint').textContent = 'Glowing prism nearby! Grab it before it fades · +4 crystals';
     else if (overdrive > 0) el('hint').textContent = 'OVERDRIVE! Dig fast for extra crystals in the dirt.';
     else if (active && !active.charged && rover.y < active.index * LEVEL + 740) el('hint').textContent = 'Hold WASD / arrows to drill · Find a cave below';
     for (const p of dust) { p.x += p.vx * dt; p.y += p.vy * dt; p.life -= dt; }
@@ -177,7 +200,7 @@
     banner = Math.max(0, banner - dt);
   }
   function enter(target) {
-    if (mode !== 'explore') return;
+    if (mode !== 'explore' || roverFreeze) return;
     const sec = sectionAt(rover.y);
     const cave = target ? (sec?.caves.includes(target) && !target.lit && Math.hypot(target.x - rover.x, target.y - rover.y) < 130 ? target : null)
       : sec?.caves.find((v) => !v.lit && Math.hypot(v.x - rover.x, v.y - rover.y) < 110);
@@ -480,6 +503,16 @@
     }
     g.restore();
   }
+  function renderPrism(prism, t) {
+    const glow = .7 + .3 * Math.sin(t * .012);
+    g.save(); g.translate(prism.x, prism.y - camera);
+    g.globalAlpha = Math.min(1, prism.life * 2);
+    g.strokeStyle = '#b9faff'; g.lineWidth = 4; g.shadowColor = '#5dfaff'; g.shadowBlur = 28;
+    g.beginPath(); g.arc(0, 0, 28 + glow * 5, 0, Math.PI * 2); g.stroke();
+    g.fillStyle = '#7af8fa'; g.beginPath(); g.moveTo(0, -23); g.lineTo(17, 0); g.lineTo(0, 23); g.lineTo(-17, 0); g.closePath(); g.fill();
+    g.fillStyle = '#fff4b8'; g.font = 'bold 18px system-ui'; g.textAlign = 'center'; g.fillText('+4', 0, -36);
+    g.restore();
+  }
   function render(t) {
     g.fillStyle = '#152239'; g.fillRect(0, 0, WIDTH, HEIGHT);
     if (scenery.complete && scenery.naturalWidth) {
@@ -496,7 +529,16 @@
       for (let row = low; row <= high; row++) for (let col = 0; col < 32; col++) {
         const tile = sec.cells[row]?.[col]; if (!tile || tile === 'air') continue;
         const x = col * CELL, y = i * LEVEL + row * CELL - camera;
-        g.fillStyle = tile === 'rock' ? '#303649aa' : tile === 'stone' ? '#654b4baa' : sec.tint + '66'; g.fillRect(x, y, 41, 41);
+        if (tile === 'rock' || tile === 'stone') {
+          g.fillStyle = '#1b2536'; g.fillRect(x, y, 41, 41);
+          g.fillStyle = tile === 'rock' ? '#48556b' : '#67566a'; g.fillRect(x + 3, y + 3, 35, 35);
+          g.strokeStyle = '#a2b4c0'; g.lineWidth = 2;
+          g.beginPath(); g.moveTo(x + 5, y + 32); g.lineTo(x + 5, y + 7); g.lineTo(x + 15, y + 4); g.stroke();
+          g.strokeStyle = '#233348'; g.beginPath(); g.moveTo(x + 17, y + 11); g.lineTo(x + 25, y + 18); g.lineTo(x + 20, y + 29); g.lineTo(x + 32, y + 35); g.stroke();
+          g.fillStyle = '#d4e0df'; g.fillRect(x + 29, y + 9, 4, 3);
+          continue;
+        }
+        g.fillStyle = sec.tint + '66'; g.fillRect(x, y, 41, 41);
         if (tile === 'dirt' && (row + col) % 3 === 0) { g.fillStyle = '#ffd69a30'; g.fillRect(x + 7, y + 14, 16, 3); }
       }
       const barrierY = i * LEVEL + 770 - camera;
@@ -506,6 +548,7 @@
       }
       for (const c of sec.caves) if (c.y - camera > -110 && c.y - camera < HEIGHT + 110) renderCave(c, c.y - camera, t, sec.tint);
       for (const w of sec.wisps) if (w.y - camera > -50 && w.y - camera < HEIGHT + 50) renderWisp(w, t);
+      for (const w of sec.wisps) if (w.prism && w.prism.y - camera > -70 && w.prism.y - camera < HEIGHT + 70) renderPrism(w.prism, t);
     }
     for (const p of dust) { g.globalAlpha = Math.min(1, p.life * 1.5); g.fillStyle = p.overdrive ? '#c7fffc' : '#ffdca9'; g.fillRect(p.x - 3, p.y - camera - 3, p.overdrive ? 11 : 6, p.overdrive ? 11 : 6); } g.globalAlpha = 1;
     renderRover(t);
@@ -533,7 +576,7 @@
     configure(v) { if (mode !== 'intro' && mode !== 'recap') throw Error('Configure before play.'); if (v.sessionMinutes != null) { if (![5, 10, 15, 20].includes(v.sessionMinutes)) throw RangeError('Session length must be 5, 10, 15 or 20 minutes.'); teacher.sessionMinutes = v.sessionMinutes; } if (v.questionSeconds != null) { if (![0, 5, 8, 10, 15, 20, 30].includes(v.questionSeconds)) throw RangeError('Invalid question timer.'); teacher.questionSeconds = v.questionSeconds; } },
     onComplete(fn) { done = fn; }, start,
     onPrepare(fn) { prepare = fn; },
-    getSnapshot() { return { mode, layer, cameraY: Math.round(camera), roverX: Math.round(rover.x), roverY: Math.round(rover.y), cavePositions: sectionAt(rover.y)?.caves.map((c) => ({ x: Math.round(c.x), y: Math.round(c.y), kind: c.kind, lit: c.lit })) || [], wispCount: sectionAt(rover.y)?.wisps.length || 0, wisps: sectionAt(rover.y)?.wisps.map((w) => ({ x: Math.round(w.x), y: Math.round(w.y), frozenSeconds: w.frozen })) || [], freezeSeconds: roverFreeze, overdriveSeconds: overdrive, bonusSeconds: sectionAt(rover.y)?.bonusSeconds ?? 0, remainingSeconds: remaining, crystals, bankedCrystals, spinsLeft, answered: answers.length }; },
+    getSnapshot() { return { mode, layer, cameraY: Math.round(camera), roverX: Math.round(rover.x), roverY: Math.round(rover.y), cavePositions: sectionAt(rover.y)?.caves.map((c) => ({ x: Math.round(c.x), y: Math.round(c.y), kind: c.kind, lit: c.lit })) || [], wispCount: sectionAt(rover.y)?.wisps.length || 0, wisps: sectionAt(rover.y)?.wisps.map((w) => ({ x: Math.round(w.x), y: Math.round(w.y), frozenSeconds: w.frozen, prism: w.prism ? { x: Math.round(w.prism.x), y: Math.round(w.prism.y), seconds: w.prism.life } : null })) || [], freezeSeconds: roverFreeze, overdriveSeconds: overdrive, bonusSeconds: sectionAt(rover.y)?.bonusSeconds ?? 0, remainingSeconds: remaining, crystals, bankedCrystals, spinsLeft, answered: answers.length }; },
     getCapabilities() { return { questionBankItemTypes: ['sort_bins', 'vocabulary', 'classification'], vocabularyFormats: ['lock_signal', 'true_false', 'frequency_fill'], maxSessionMinutes: 20, questionBurst: 4 }; },
   });
   intro(); requestAnimationFrame(render); requestAnimationFrame(tick);
