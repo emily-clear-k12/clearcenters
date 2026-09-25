@@ -10,6 +10,7 @@ import { getAssemblyDeckPublicCase } from "../../../lib/cases/assembly-deck/inde
 import { getClassificationLabPublicCase } from "../../../lib/cases/classification-lab/index.public";
 import { getExhibitHallPublicCase } from "../../../lib/cases/exhibit-hall/index.public";
 import { getExpeditionStationPublicCase } from "../../../lib/cases/expedition-station/index.public";
+import { getMakerStudioPublicCase } from "../../../lib/cases/maker-studio/index.public";
 import { resolveRelayStationLesson } from "../../../lib/relayStationServer";
 import { centralDateKey, dailyTextFor, continuesStreak } from "../../../lib/cases/relay-station";
 import ActivityClient from "./ActivityClient";
@@ -24,6 +25,7 @@ import AssemblyDeckClient from "./AssemblyDeckClient";
 import ClassificationLabClient from "./ClassificationLabClient";
 import ExhibitHallClient from "./ExhibitHallClient";
 import ExpeditionStationClient from "./ExpeditionStationClient";
+import MakerStudioClient from "./MakerStudioClient";
 
 export default async function ActivityPage({ params }) {
   const { assignmentId } = params;
@@ -223,7 +225,8 @@ export default async function ActivityPage({ params }) {
   const isClassificationLab = engine === "classification_lab";
   const isExhibitHall = engine === "exhibit_hall";
   const isExpeditionStation = engine === "expedition_station";
-  const caseEntry = isSignalCheck || isMissionMap || isSimulationLab || isAssemblyDeck || isClassificationLab || isExhibitHall || isExpeditionStation ? null : getPublicCase(assignment.case_standard);
+  const isMakerStudio = engine === "maker_studio";
+  const caseEntry = isSignalCheck || isMissionMap || isSimulationLab || isAssemblyDeck || isClassificationLab || isExhibitHall || isExpeditionStation || isMakerStudio ? null : getPublicCase(assignment.case_standard);
   const signalCheckCase = isSignalCheck ? getSignalCheckPublicCase(assignment.case_standard) : null;
   const missionMapCase = isMissionMap ? getMissionMapPublicCase(assignment.case_standard) : null;
   const simulationLabCase = isSimulationLab ? getSimulationLabPublicCase(assignment.case_standard) : null;
@@ -231,7 +234,8 @@ export default async function ActivityPage({ params }) {
   const classificationLabCase = isClassificationLab ? getClassificationLabPublicCase(assignment.case_standard) : null;
   const exhibitHallCase = isExhibitHall ? getExhibitHallPublicCase(assignment.case_standard) : null;
   const expeditionStationCase = isExpeditionStation ? getExpeditionStationPublicCase(assignment.case_standard) : null;
-  if (!caseEntry && !signalCheckCase && !missionMapCase && !simulationLabCase && !assemblyDeckCase && !classificationLabCase && !exhibitHallCase && !expeditionStationCase) {
+  const makerStudioCase = isMakerStudio ? getMakerStudioPublicCase(assignment.case_standard) : null;
+  if (!caseEntry && !signalCheckCase && !missionMapCase && !simulationLabCase && !assemblyDeckCase && !classificationLabCase && !exhibitHallCase && !expeditionStationCase && !makerStudioCase) {
     return (
       <div style={{ minHeight: "100vh", background: "#16243F", display: "flex", alignItems: "center", justifyContent: "center", color: "#FFFFFF", fontFamily: "sans-serif", textAlign: "center", padding: 20 }}>
         <div>
@@ -333,6 +337,21 @@ export default async function ActivityPage({ params }) {
         existingData={raw}
         alreadySubmitted={alreadySubmitted}
         samSkin={student.equipped_sam_skin}
+      />
+    );
+  }
+
+  if (isMakerStudio) {
+    const raw = (existingSubmission && existingSubmission.maker_studio_data) || null;
+    return (
+      <MakerStudioClient
+        assignmentId={assignmentId}
+        publicCase={makerStudioCase}
+        existingData={raw}
+        alreadySubmitted={alreadySubmitted}
+        revisionFeedback={revisionFeedback}
+        samSkin={student.equipped_sam_skin}
+        samNickname={student.sam_nickname}
       />
     );
   }

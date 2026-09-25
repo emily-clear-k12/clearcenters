@@ -278,8 +278,10 @@ export default function TeacherGradeDetailPage() {
   const isSignalCheck = submission.caseEngine === "fact_check_desk";
   const isClassificationLab = submission.caseEngine === "classification_lab";
   const isExhibitHall = submission.caseEngine === "exhibit_hall";
+  const isMakerStudio = submission.caseEngine === "maker_studio";
   const labData = submission.classification_lab_data || null;
   const hallData = submission.exhibit_hall_data || null;
+  const makerData = submission.maker_studio_data || null;
   const caseEntry = isSignalCheck ? null : getPublicCase(submission.caseStandard);
   const signalCheckCase = isSignalCheck ? getSignalCheckPublicCase(submission.caseStandard) : null;
   const isNewsroom = (submission.caseEngine || "").startsWith("newsroom");
@@ -366,7 +368,17 @@ export default function TeacherGradeDetailPage() {
         <div style={{ display: "flex", justifyContent: "center" }}>
         <div style={{ width: "100%", maxWidth: 1000, display: "grid", gridTemplateColumns: "1.3fr 1fr", gap: 18 }}>
           <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-            {isExhibitHall && hallData ? (
+            {isMakerStudio && makerData ? (
+              <div style={panelStyle(ACCENT, { padding: 16 })}>
+                <div style={{ fontWeight: 700, fontSize: 12.5, color: COLORS.textMuted, marginBottom: 10, textTransform: "uppercase", letterSpacing: 0.5 }}>Maker Studio exhibit</div>
+                <div style={{ fontSize: 14, marginBottom: 8 }}><b>{makerData.exhibitTitle || makerData.title || "Exhibit"}</b></div>
+                <div style={{ whiteSpace: "pre-wrap", fontSize: 14, lineHeight: 1.5 }}>{submission.attempt1}</div>
+                <div style={{ marginTop: 12, fontWeight: 700 }}>Suggested level: {makerData.level ?? "—"}</div>
+                <div style={{ color: COLORS.textMuted, fontSize: 13 }}>{makerData.wallNote}</div>
+                {makerData.mythBuster ? <div style={{ marginTop: 8, color: COLORS.success, fontWeight: 700 }}>Myth buster bonus</div> : null}
+                {makerData.confidence ? <div style={{ marginTop: 6, color: COLORS.textMuted, fontSize: 13 }}>Confidence: {makerData.confidence}</div> : null}
+              </div>
+            ) : isExhibitHall && hallData ? (
               <div style={panelStyle(ACCENT, { padding: 16 })}>
                 <div style={{ fontWeight: 700, fontSize: 12.5, color: COLORS.textMuted, marginBottom: 10, textTransform: "uppercase", letterSpacing: 0.5 }}>The exhibit</div>
                 <div style={{ whiteSpace: "pre-wrap", fontSize: 14, lineHeight: 1.5 }}>{submission.attempt1}</div>

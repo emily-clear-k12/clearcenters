@@ -14,6 +14,12 @@ import {
   normalizeCaseRow,
   isPlayableFrozenRelayRow,
 } from "../../../../lib/cases/expedition-station/assignFallback";
+import {
+  DESERT_MS_STANDARD,
+  DESERT_MS_ASSIGN_FALLBACK,
+  normalizeMakerCaseRow,
+  isPlayableDesertMsRow,
+} from "../../../../lib/cases/maker-studio/assignFallback";
 
 // Sept 24, 2026 — teacher-set Frequency Rush question timer. The game
 // accepts 0-60 seconds; 0 means no timer.
@@ -116,6 +122,9 @@ const CHALLENGE_TYPES = [
   // Sept 25, 2026 — Expedition Station Act 1 (Frozen Relay MA.4.3E-XP) is live.
   { key: "expedition_station", label: "Expedition Station", image: "/teacher/challenges/mission_map.jpg", real: true,
     description: "A 15-task quest on one planet. Station mode: four cards, then a challenge. About 15–20 minutes per act." },
+  // Sept 25, 2026 — Maker Studio Wave-1 seed (SCI.3.13A-MS Built for the Desert).
+  { key: "maker_studio", label: "Maker Studio", image: "/maker/hall.jpg", real: true,
+    description: "Students get a job, curate a wall from a storage room, reject one piece on purpose, and write placards plus a plaque. About 20 minutes." },
   // Coming soon — kept below live tiles (Assign library sorts real:true first as well).
   { key: "repair_desk", label: "Repair Desk", image: "/teacher/challenges/repair_desk.jpg", real: false,
     description: "A broken ticket arrives — a flawed diagram, model, or work sample. Students diagnose what's wrong, fix it, and explain the fix to whoever sent it in." },
@@ -208,6 +217,46 @@ function mergeExpeditionStationCatalog(rows) {
   const fallback = normalizeCaseRow(FROZEN_RELAY_ASSIGN_FALLBACK);
   if (!merged.some(isPlayableFrozenRelayRow)) {
     merged = merged.filter((r) => r.standard !== FROZEN_RELAY_STANDARD);
+    merged = [...merged, fallback];
+  }
+  return merged;
+}
+
+// Sept 25, 2026 — Maker Studio catalog fallback (same pattern as Expedition Station).
+function makerStudioLibraryRows() {
+  // Wave-1: one seed. Catalog stays server-side so answer keys never hit the browser.
+  return [normalizeMakerCaseRow(DESERT_MS_ASSIGN_FALLBACK)];
+}
+
+function mergeMakerStudioCatalog(rows) {
+  const list = (Array.isArray(rows) ? rows : []).map(normalizeCaseRow);
+  const byStandard = new Map();
+  for (const row of list) {
+    if (row && row.standard) byStandard.set(row.standard, row);
+  }
+  for (const cat of makerStudioLibraryRows()) {
+    const existing = byStandard.get(cat.standard);
+    if (!existing) {
+      byStandard.set(cat.standard, cat);
+      continue;
+    }
+    byStandard.set(
+      cat.standard,
+      normalizeMakerCaseRow({
+        ...existing,
+        engine: cat.engine,
+        grade: cat.grade,
+        subject: cat.subject,
+        title: existing.title || cat.title,
+        learning_target: existing.learning_target || cat.learning_target,
+        lesson_summary: existing.lesson_summary || cat.lesson_summary,
+      })
+    );
+  }
+  let merged = Array.from(byStandard.values());
+  const fallback = normalizeMakerCaseRow(DESERT_MS_ASSIGN_FALLBACK);
+  if (!merged.some(isPlayableDesertMsRow)) {
+    merged = merged.filter((r) => r.standard !== DESERT_MS_STANDARD);
     merged = [...merged, fallback];
   }
   return merged;
@@ -367,7 +416,7 @@ function NewAssignmentContent() {
         }
       }
       if (cancelled) return;
-      const merged = mergeExpeditionStationCatalog(data || []);
+      const merged = mergeMakerStudioCatalog(mergeExpeditionStationCatalog(data || []));
       setCases(merged);
       setCasesLoading(false);
       if (loadError) {
@@ -381,7 +430,7 @@ function NewAssignmentContent() {
     return () => { cancelled = true; };
   }, []);
 
-  function topicCode(c){if(FR_CUSTOM_LIST_RE.test(c.standard))return MY_WORD_LISTS;if(isFrDailyCase(c.standard))return FR_DAILY_TOPIC;return missionMapTeksCode(c.standard)||c.standard.replace(/-(?:SC|GC|FR|SL|SD|AD|RS|MM|CL|EX|XP).*$/i,'');}
+  function topicCode(c){if(FR_CUSTOM_LIST_RE.test(c.standard))return MY_WORD_LISTS;if(isFrDailyCase(c.standard))return FR_DAILY_TOPIC;return missionMapTeksCode(c.standard)||c.standard.replace(/-(?:SC|GC|FR|SL|SD|AD|RS|MM|CL|EX|XP|MS).*$/i,'');}
   const topics=[...new Set(cases.map(normalizeCaseRow).filter(c=>c.engine!=='relay_station'&&Number(c.grade)===Number(browseGrade)&&(c.subject===browseSubject||isFrDailyCase(c.standard))&&(typeFilter==='all'||matchesChallenge(c.engine,typeFilter))&&!isRetiredSignalCheckCase(c.standard)&&!((FR_CUSTOM_LIST_RE.exec(c.standard)||[])[1]&&FR_CUSTOM_LIST_RE.exec(c.standard)[1]!==String(teacherId||"").replace(/-/g,"").slice(0,8).toLowerCase())).map(topicCode))].sort((a,b)=>a.localeCompare(b,undefined,{numeric:true}));
   const searchQ = caseSearch.trim().toLowerCase();
   const filteredCases = cases.map(normalizeCaseRow).filter((c) => {
