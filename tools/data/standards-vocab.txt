@@ -1,0 +1,85 @@
+# Standards vocabulary — words the TEKS expect students at this grade to learn.
+# The word-choice check (tools/lib/wordcheck.cjs) never flags these, even when
+# they are uncommon in everyday English (rule 18: vocabulary a standard names
+# is the lesson, not a reading-level problem).
+#
+# Format: "<grade>: word word word". A word listed for grade 3 is also allowed
+# in grades 4 and 5. Lowercase, one form is enough (the checker handles -s,
+# -ed, -ing, -er, -ly endings). Two-word terms: list each word.
+#
+# Sources: the ELAR and Math TEKS PDFs are read automatically
+# (tools/data/teks-words.json). This file adds Science and Social Studies
+# terms from claude/TEKS_Quick_Reference_Grades_3-5.md and the Frequency
+# Rush science vocabulary lists (Sept 8). Add words here as reviews find
+# them; say which case prompted it in a comment.
+
+# ---------- Science ----------
+3: matter property properties physical magnetism magnet magnetic mass temperature thermometer sink float solid liquid gas state states container condensation evaporation evaporate melt melting freeze freezing boil
+3: force forces gravity push pull motion position contact attract repel friction
+3: energy light sound thermal mechanical speed
+3: sun moon earth orbit orbits planet planets solar system mercury venus mars jupiter saturn uranus neptune
+3: weather precipitation wind soil weathering decomposition decompose volcanic volcano eruption erupt earthquake landslide
+3: natural resource resources conservation conserve reduce reuse recycle recycling agriculture transportation construction
+3: organism organisms migration migrate hibernation hibernate dormancy dormant food chain producer consumer ecosystem flood drought thrive perish relocate fossil fossils environment environments
+3: structure structures function survive survival webbed beak life cycle cycles larva pupa nymph seedling germinate beetle cricket radish
+3: investigate investigation observe observation predict prediction data evidence model measure record graph variable
+
+4: density relative buoyancy particle particles mixture mixtures solution solutions dissolve dissolved substance component conserved classified
+4: transfer vibration vibrate wave waves conductor conductors insulator insulators circuit circuits electrical electricity electron current battery switch
+4: seasons daylight lunar revolve rotate rotation phases phase crescent gibbous
+4: water accumulation collection runoff atmosphere erosion erode deposition deposit sediment delta glacier dune landform landforms climate
+4: renewable nonrenewable coal petroleum oil abundance deplete replenish disposal porosity permeability
+4: photosynthesis carbon dioxide oxygen carnivore herbivore omnivore predator prey decomposer decomposers food web biotic abiotic imprint paleontologist
+4: adaptation adaptations defense inherited acquired trait traits offspring behavior interaction
+4: prototype criteria calculation correlation proportion quantity interdependence
+
+5: volume solubility soluble conductivity filings magnetism
+5: equal unequal balanced unbalanced ramp rocket
+5: transformation transformations transform reflect reflection refract refraction absorb absorption opaque translucent transparent
+5: rotation axis shadow shadows
+5: ocean sedimentary fossil fuel fuels canyon canyons dunes deltas
+5: interactions healthy beneficial harmful impact
+5: instinct instinctual learned
+
+# Added Sept 24, 2026 from the first word-choice run (words cases already use
+# that belong to a grade's standards):
+# 3.13-MM (ELAR 3.7C, character traits):
+3: trait traits
+3: decay decayed metamorphosis gills burrow burrows pollinate pollinated nutrition
+3: vapor habitat habitats forecast forecaster lava crater craters fungi algae nutrient nutrients seasonal insulate insulated
+4: conduction measurable observable
+5: reversible
+
+# ---------- Social Studies ----------
+3: community communities citizen citizenship civic responsibility volunteer nonprofit organization government local state national mayor governor president council legislature
+3: declaration independence constitution bill rights consent governed vote voting election
+3: map scale distance compass cardinal intermediate direction directions legend key grid symbol
+3: earn earning spend spending save saving donate donating budget income expense supply demand scarcity cost costs price prices profit entrepreneur goods services producer consumer
+3: celebration celebrations culture cultural heritage tradition traditions hero heroes inventor scientist technology
+3: primary secondary source sources timeline decade century claim
+
+4: american indian indians tribe tribes nomadic hunter gatherer
+4: explorer explorers exploration colonization colony colonies mission missions settler settlers settlement empresario empresarios
+4: revolution republic annexation annex independence alamo battle
+4: civil war reconstruction cattle ranching ranch railroad railroads trail drive
+4: depression drought dust bowl industry
+4: region regions plains mountains basins coastal geography geographic
+4: economy economic economics enterprise free
+4: branch branches legislative executive judicial
+4: symbol symbols landmark landmarks anthem pledge
+
+5: colonial colonist colonists patriot patriots loyalist loyalists parliament tax taxes taxation boycott representation
+5: industrial textile mill mills factory factories immigrant immigrants immigration territorial expansion frontier
+5: slavery abolition amendment amendments
+5: federal federalism checks balances ratify ratified
+5: invention inventions
+# Added Sept 24, 2026 from the first word-choice run:
+3: taxpayer taxpayers historian scarce elevation excerpt
+4: irrigation vegetation humid arid
+5: census sectionalism secession
+4: presidio presidios vaquero vaqueros enslaved migrant migrants surveyor
+5: veto vetoed vetoes vetoing immigrate immigrated grievance grievances
+
+# ---------- Math and ELAR terms the TEKS use in another form ----------
+3: subtract subtracts subtracted add adds width twelfth twelfths informative persuasive preview
+5: rhetoric

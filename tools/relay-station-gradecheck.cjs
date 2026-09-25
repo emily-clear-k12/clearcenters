@@ -1,6 +1,9 @@
 const ts=require("/opt/node22/lib/node_modules/typescript"),fs=require("fs");
 require.extensions[".js"]=(m,f)=>m._compile(ts.transpileModule(fs.readFileSync(f,"utf8"),{compilerOptions:{module:1,target:7,esModuleInterop:true},fileName:f+"x"}).outputText,f);
-const RS=require("/home/claude/cc/lib/cases/relay-station/index.js");
+const RS=require(__dirname+"/../lib/cases/relay-station/index.js");
+// Sept 24, 2026 — word choice, not just sentence length (tools/lib/wordcheck.cjs).
+const { checkWords, wordProblems } = require("./lib/wordcheck.cjs");
+const SHOW_WORDS = process.argv.includes("--words");
 function syl(w){w=w.toLowerCase().replace(/[^a-z]/g,"");if(!w)return 0;if(w.length<=3)return 1;
   w=w.replace(/(?:[^laeiouy]es|ed|[^laeiouy]e)$/,"").replace(/^y/,"");const m=w.match(/[aeiouy]{1,2}/g);return m?m.length:1;}
 // Form-aware: a headline, a recipe step and a line of dialogue are not
@@ -32,7 +35,8 @@ const PROSE=new Set(["paragraph","log","letter"]);
 const rows=[];
 for(const l of RS.listRelayStationLessons()){
   if(!l.text||["track","race","daily","vocabulary","numbers"].includes(l.kind)) continue;
-  rows.push({code:l.code,grade:l.grade,kind:l.kind,prose:PROSE.has(l.kind),...score(l.text)});
+  const W=checkWords([l.text],l.grade,{allow:l.vocab||[]});
+  rows.push({code:l.code,grade:l.grade,kind:l.kind,prose:PROSE.has(l.kind),...score(l.text),W,wp:wordProblems(W,l.grade,l.code)});
 }
 const prose=rows.filter(r=>r.prose), other=rows.filter(r=>!r.prose);
 const avg=a=>a.length?+(a.reduce((x,y)=>x+y,0)/a.length).toFixed(1):0;
@@ -53,3 +57,10 @@ longs.sort((a,b)=>b.longest.n-a.longest.n).forEach(r=>console.log(`   ${r.code.p
 const wideAvg=rows.filter(r=>r.avg>MAXAVG[r.grade]);
 console.log(`\nAVERAGE SENTENCE OVER THE GRADE LIMIT: ${wideAvg.length}`);
 wideAvg.sort((a,b)=>b.avg-a.avg).forEach(r=>console.log(`   ${r.code.padEnd(12)} g${r.grade} avg ${r.avg}w (max ${MAXAVG[r.grade]})`));
+
+// Sept 24, 2026 — word choice.
+const wordFails=rows.filter(r=>r.wp.length);
+console.log(`\nWORD-CHOICE WARNINGS (advisory): ${wordFails.length} of ${rows.length}`);
+[3,4,5].forEach(g=>{const r=rows.filter(x=>x.grade===g);console.log(`  g${g} uncommon ${avg(r.map(x=>+(x.W.uncommonShare*100).toFixed(1)))}%  rich ${avg(r.map(x=>+(x.W.richShare*100).toFixed(1)))}%`);});
+wordFails.forEach(r=>r.wp.forEach(m=>console.log("   "+m)));
+if(SHOW_WORDS) rows.filter(r=>r.W.uncommon.length).forEach(r=>console.log(`   ${r.code.padEnd(12)} g${r.grade} uncommon: ${r.W.uncommon.map(u=>u.word).join(", ")}`));

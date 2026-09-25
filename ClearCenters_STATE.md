@@ -1,5 +1,5 @@
 # ClearCenters — STATE
-**Current truth. Start here.** · Last updated: September 24, 2026, late night (**Frequency Rush step 6 built: Daily Warm-up + beat-your-best; 3 case rows of SQL to run**) · earlier Sept 24 afternoon: (**Reconciled with the app folder: Assembly Deck is now 66 cases and Classification Lab is built with 8 cases, both from other sessions that STATE never logged. Their SQL run status is UNKNOWN**) · Sept 24 midday: (**Maker Studio designed: the next new center, merging Museum Exhibit/Field Dispatch into it; design only, nothing built. New site-wide rule: a confidence check on every submit (§9 rule 21)**) · Sept 23 afternoon: (**Signal Check re-leveled: all 108 registered cases now read on grade — written to the app folder, NOT yet committed or pushed; no SQL needed**) · earlier Sept 23: Mission Map ELAR 12 authored and all 49 Mission Map cases re-leveled; Assembly Deck's first pilot and its fixes; Math 12 authored · *state updated at session end*
+**Current truth. Start here.** · Last updated: September 24, 2026, late night (**Word-choice check added to the reading-level tools (advisory)**) · earlier: (**Cleanup pass: audit extended to all new engines; Assembly Deck grade 5 reads too easy; Exhibit Hall found built**) · earlier: (**Frequency Rush step 6 built: Daily Warm-up + beat-your-best; 3 case rows of SQL to run**) · earlier Sept 24 afternoon: (**Reconciled with the app folder: Assembly Deck is now 66 cases and Classification Lab is built with 8 cases, both from other sessions that STATE never logged. Their SQL run status is UNKNOWN**) · Sept 24 midday: (**Maker Studio designed: the next new center, merging Museum Exhibit/Field Dispatch into it; design only, nothing built. New site-wide rule: a confidence check on every submit (§9 rule 21)**) · Sept 23 afternoon: (**Signal Check re-leveled: all 108 registered cases now read on grade — written to the app folder, NOT yet committed or pushed; no SQL needed**) · earlier Sept 23: Mission Map ELAR 12 authored and all 49 Mission Map cases re-leveled; Assembly Deck's first pilot and its fixes; Math 12 authored · *state updated at session end*
 
 *Reconciled from four sources: the Claude project · `ClearCenters_Project_Files.zip` · `ClearCenters_MANIFEST.md` · and both device folders.*
 *Supersedes `ClearCenters_PROJECT_SPRINGBOARD_v4.md` (stale — predates Newsroom).*
@@ -56,6 +56,65 @@ Nothing else. This file is a status document, not a design document — design n
 
 ## 0.5 · SESSION LOG
 
+**Sept 24, 2026 (late night, word choice) — The reading-level checkers now look at word choice, not just sentence length. Tools only; no content changed.**
+
+*Why:* Emily asked whether leveling was only sentence length. It mostly was: Flesch-Kincaid sees sentence length and syllables, so it can't tell that *fen* or *yield* is hard, or that *everybody* is easy.
+
+*What changed*
+- **New shared checker `tools/lib/wordcheck.cjs`**, used by the Assembly Deck, Mission Map, Signal Check and Relay Station gradechecks. Each case now shows two more numbers:
+  - **uncommon %:** words outside the most common 12,000 / 16,000 / 20,000 for grades 3 / 4 / 5;
+  - **rich %:** words past the basic 2,000, like *supplied* instead of *gave*. A low rich % at grade 5 means the words read young.
+  - `--words` lists the flagged words.
+- **Word frequency comes from movie and TV subtitles** (`tools/data/en_50k.txt`, FrequencyWords from OpenSubtitles 2018, CC BY-SA 4.0). Emily downloaded it, because this workspace can't reach GitHub.
+- **Never flagged:**
+  - standards vocabulary: every word in the ELAR and Math TEKS PDFs (`teks-words.json`, built automatically) plus about 330 Science and Social Studies terms by grade (`standards-vocab.txt`, hand-kept; add to it freely);
+  - names and numbers;
+  - `kid-words.txt`: everyday words the subtitle list ranks low (*crayon, recess, puddle, cafeteria*).
+- The checker also handles word endings, irregular verbs (*shrank → shrink*) and closed compounds (*rainstorm* = rain + storm).
+- **Thresholds were set from content already leveled by hand.** Mission Map has 1 warning, Signal Check 7, Relay Station 0. The first run (rule 17) flagged 351 words, mostly kid words and compounds the list ranked low. After the fixes, what's left are real review words (*recital, auditorium, sectionalism, crumbly, visibly*).
+- **Word-choice results are warnings only for now.** Pass/fail is unchanged: Assembly Deck still has 45 problems, Mission Map is on grade, Signal Check is 108/108.
+
+*What it found*
+- **Assembly Deck's word choice is mostly fine.** Only 7 of the 66 cases warn, all for too few richer words (4.9A, 4.10C, 5.10C, MA.4.5A, MA.4.5B, MA.5.4B, MA.5.3L). So the grade 5 "too easy" problem is mainly **sentence structure** (short, simple sentences), not vocabulary. A rewrite pass should aim at sentence structure first.
+
+*What is still open*
+- **Emily confirms the thresholds** (or adjusts them). Then word choice can become pass/fail.
+- The Frequency Rush skillcheck and Classification Lab / Exhibit Hall have no word-choice check yet.
+
+---
+
+**Sept 24, 2026 (late night, cleanup) — Checks and cleanup pass. The production audit now covers every engine built this week, the 66 Assembly Deck cases were run through both checkers, and Exhibit Hall was found built. Nothing in the content was changed.**
+
+*What changed*
+- **`audit_production_readonly.sql` extended** (app root; still read-only). It now checks:
+  - all 66 Assembly Deck codes (was 10), the 8 Classification Lab codes, Exhibit Hall `3.13A-EX`, and the 6 Frequency Rush fact sets;
+  - the columns `submissions.classification_lab_data`, `submissions.exhibit_hall_data`, `assignments.question_seconds` and `frequency_rush_attempts.item_key`;
+  - **new "6 ORPHAN" rows:** a case row with no case file behind it, for Assembly Deck, Classification Lab, Exhibit Hall, Mission Map, Simulation Lab, Signal Defense and Signal Check. This catches rows like `3.6B-CL`.
+  - **new "7 PENDING" rows:** SQL Emily hasn't run yet on purpose (the ELAR skills, the Daily Warm-up and the word-list table). They're labeled expected and disappear once run.
+  - Tested on a local Postgres, clean and deliberately broken; it caught a missing row, a wrong engine, a missing column and an orphan.
+- **Every one of the 66 Assembly Deck codes has an INSERT in one of the `add_assembly_deck_*.sql` files** (script check).
+- **`assembly-deck-casecheck.cjs`: all 66 cases are internally consistent.**
+- **`assembly-deck-gradecheck.cjs`: 45 problems.** The rule-17 check was done first by reading real pieces; the sentences are real, so the measurement stands.
+  - **Almost all are "too easy," not "too hard."** Only one is over a ceiling: `SS.4.3D-AD` at 6.0 (grade 4 max 5.6).
+  - **Grade 5 doesn't read harder than grade 4** (3.3 vs 3.3 overall). By subject, grade 3 / 4 / 5: Science 2.4 / 3.8 / 3.9 · Social Studies 1.8 / 4.1 / 4.3 · ELAR 2.1 / 3.5 / 3.5. 15 of the 18 grade 5 Science, SS and ELAR cases are below the 5.0 floor.
+  - **The 6 original cases all still pass.** The misses are in the 60 cases added since Sept 23.
+  - **Math reads 0.0 / 1.1 / 0.6.** That's the known numerals-and-equations effect (pieces like "248 - 175 = b."), not a real reading level. Not acted on, same as Mission Map Math.
+- **Exhibit Hall is built** (from another session; STATE never logged it). Engine `exhibit_hall`, `lib/cases/exhibit-hall/`, `ExhibitHallClient.js`, and one case, `3.13A-EX` "Built for the desert". `add_exhibit_hall.sql` adds `submissions.exhibit_hall_data` and the case row. **Its SQL run status is unknown.** It looks like Maker Studio's exhibit mode, built under its own name.
+
+*Checked and still true*
+- `DEV_FORCE_UNLOCK_ALL` is **true** in `lib/devFlags.js`. It now controls both the Galaxy Hub map and the world reward pages.
+- The 3 unregistered Signal Check files (`3-6E-SC`, `4-7B-SC`, `5-10D-SC`) are still in the folder and still not imported. 344 retired Weigh-In/Thread files (`-SC-WI`, `-SC-TH`) also still sit in `lib/cases/signal-check/`, none imported.
+- The old Glow Garden files are still there: `app/gear-locker/glow-garden/` (3 files) and `app/api/planets/discover/`.
+- The four grade 4 Assembly Deck rows that were "ahead of the code" on Sept 23 (`4.8B`, `4.9B`, `4.11B`, `4.12B-AD`) now have case files. That item is resolved.
+
+*What is still open*
+- **Emily runs the extended audit** in Supabase and shares any rows that aren't INFO or PENDING.
+- **Decide on the Assembly Deck reading levels:** raise grade 5 (and a few grade 4) cases, fix `SS.4.3D-AD`, or accept as is.
+- Decisions: flip `DEV_FORCE_UNLOCK_ALL`; delete or archive the 3 unregistered Signal Check files, the 344 WI/TH files and the Glow Garden leftovers.
+- Classification Lab and Exhibit Hall have no content checker yet.
+
+---
+
 **Sept 24, 2026 (late night, later) — Frequency Rush step 6: Daily Warm-up + beat-your-best. Built; needs 3 case rows of SQL; not pushed.**
 
 *What changed*
@@ -72,7 +131,7 @@ Nothing else. This file is a status document, not a design document — design n
 - **Run `add_frequency_rush_daily.sql` before pushing (rule 16).** It needs `item_key`, which "FR update 1.2" already added.
 - Assign the Daily Warm-up to a test class that already has a Frequency Rush activity, and play it twice: the second run should say today's warm-up is done.
 - Still waiting from earlier steps: the ELAR review, `add_frequency_rush_word_lists.sql`, and a live look at the Word Lists and Star Chart pages.
-- Next is step 7: the game re-export spec (pictures, read-aloud, typed answers, a real racing ghost, `sort_bins` in all 4 worlds, a per-question label field).
+- **Step 7 reframed and parked (Emily, same night).** Emily is building new game *modes* (not just skins) in her generator, so step 7 becomes a **game mode contract**: the calls every mode must support (`setQuestionBank`, `configure`, `onComplete`, `getCapabilities`), per-question labels and retry flags instead of the site rewriting the screen, a "played inside ClearCenters" flag instead of hiding controls by id, and optional features (pictures, read-aloud, typed answers, ghost). **Frequency Rush is tabled** until her modes are further along; then Claude writes the contract and checks a real mode against it.
 
 ---
 
@@ -695,6 +754,8 @@ The old-era 5.6A "Creek Sensor Mix-Up" packet had strong reasoning design underm
     - "Very sure, but Level 0" is the flag that matters: that student believes something wrong.
     - It never affects the score or the Crystal Points, and students never see it used against them.
     - New engines include it from the start. Existing engines get audited and backfilled (§6 step 13). Which ones already have it has not been checked; Group Chat's is the model.
+
+17b. **(Sept 24, 2026, new) Reading level is sentence length AND word choice.** Every gradecheck now reports both. When a case reads too hard, check which one is the cause before rewriting: long sentences get split, uncommon words get swapped (unless the standard names them). When a case reads too young, the fix is usually richer sentence structure (cause and effect, contrast, *because*/*although*) and a few richer words, never just longer sentences.
 
 18. **(Sept 22, 2026) Vocabulary that a standard names is not "too hard."** When a reading scores above grade because of *conductors*, *deposition* or *Reconstruction*, the sentence around the word is the lever — not the word. `tools/relay-station-readingcheck.cjs` exists to tell those two cases apart.
 

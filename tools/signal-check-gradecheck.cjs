@@ -11,6 +11,9 @@
 const ts = require("/opt/node22/lib/node_modules/typescript"), fs = require("fs"), path = require("path");
 require.extensions[".js"] = (m, f) => m._compile(ts.transpileModule(fs.readFileSync(f, "utf8"), { compilerOptions: { module: 1, target: 7, esModuleInterop: true }, fileName: f + "x" }).outputText, f);
 const DIR = path.join(__dirname, "../lib/cases/signal-check");
+// Sept 24, 2026 — word choice, not just sentence length (tools/lib/wordcheck.cjs).
+const { checkWords, wordProblems } = require("./lib/wordcheck.cjs");
+const SHOW_WORDS = process.argv.includes("--words");
 
 const BAND = {
   3: { fk: [2.0, 4.2], avg: 11, max: 16 },
@@ -59,13 +62,17 @@ for (const f of files.filter((f) => registered.has(f))) {
   const b = BAND[p.grade], r = score(p);
   const over = r.all.filter((s) => words(s).length > b.max);
   const longest = r.all.map((s) => ({ s, n: words(s).length })).sort((a, c) => c.n - a.n)[0];
-  rows.push({ std: p.standard, subject: p.subject, grade: p.grade, ...r, over, longest,
+  const W = checkWords([...prose(p), ...other(p)], p.grade, { allow: p.vocab || [] });
+  const wp = wordProblems(W, p.grade, p.standard);
+  rows.push({ std: p.standard, subject: p.subject, grade: p.grade, ...r, over, longest, W, wp,
     ok: r.fk <= b.fk[1] && r.avg <= b.avg && !over.length });
 }
 let fails = 0;
 for (const x of rows) {
   if (!x.ok) fails++;
-  console.log(`${x.std.padEnd(13)} ${x.subject.slice(0, 7).padEnd(8)} g${x.grade}  FK ${String(x.fk).padStart(4)}  avg ${String(x.avg).padStart(4)}  longest ${String(x.longest.n).padStart(2)}w  over ${x.over.length}  ${x.ok ? "✓" : "✗"}`);
+  console.log(`${x.std.padEnd(13)} ${x.subject.slice(0, 7).padEnd(8)} g${x.grade}  FK ${String(x.fk).padStart(4)}  avg ${String(x.avg).padStart(4)}  longest ${String(x.longest.n).padStart(2)}w  over ${x.over.length}  uncommon ${(x.W.uncommonShare * 100).toFixed(1).padStart(4)}%  rich ${(x.W.richShare * 100).toFixed(1).padStart(4)}%  ${x.ok ? "✓" : "✗"}`);
+  x.wp.forEach((m) => console.log(`      ⚠ word choice — ${m}`));
+  if (SHOW_WORDS && x.W.uncommon.length) console.log("      uncommon:", x.W.uncommon.map((u) => u.word).join(", "));
   if (list) x.over.forEach((s) => console.log(`      ${words(s).length}w: ${s}`));
 }
 console.log("\nby subject and grade (mean FK · cases passing):");
@@ -77,5 +84,7 @@ Object.keys(groups).sort().forEach((k) => {
   console.log(`  ${k.padEnd(20)} ${m}   ${g.filter((x) => x.ok).length}/${g.length}   over-long sentences: ${g.reduce((a, x) => a + x.over.length, 0)}`);
 });
 console.log(`\n${rows.length - fails}/${rows.length} cases on grade`);
+const warned = rows.filter((x) => x.wp.length).length;
+if (warned) console.log(`${warned} with word-choice warnings (advisory until the thresholds are confirmed)`);
 if (unregistered.length) console.log(`not scored (in the folder but not in index.public.js): ${unregistered.join(", ")}`);
 process.exit(fails ? 1 : 0);

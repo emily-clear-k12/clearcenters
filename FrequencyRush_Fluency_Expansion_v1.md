@@ -152,6 +152,16 @@ Spelling *by ear* (hear the word, pick the spelling) waits for read-aloud in the
 - **SQL:** `add_frequency_rush_daily.sql` (3 case rows only).
 - **Carried to step 7:** a racing ghost ship that replays the best run's timing in the game itself.
 
+### 11.10f · Step 7 reframed and parked (Sept 24)
+
+Emily is building new game **modes** in her generator, not only skins. So step 7 is no longer a re-export of the 4 ship worlds. It becomes a **game mode contract** that every mode targets:
+- **Required:** `setQuestionBank`, `configure` (`questionSeconds`, `roundCount`), `onComplete` (per answer: question id, choice id, correct, time), `getCapabilities`, and `sort_bins` support.
+- **Replacing today's workarounds:** a per-question `label` and `isRetry` flag (instead of the site rewriting screen text), and a "host" flag that turns off the sample mission, format checkboxes and student timer (instead of hiding them by id).
+- **Optional, declared in capabilities:** pictures, read-aloud, typed answers, ghost (record run timing, replay best).
+- **Deliverable when resumed:** the spec plus a pre-launch checklist, then a check of one real mode against it.
+
+**Frequency Rush is tabled** (Emily) until her modes are further along.
+
 ### 11.11 · Parked for later (Sept 24): more game modes for the question banks
 
 **Why:** Emily raised this: the flying ship will get boring, and the question banks are getting large. Parked, not decided.

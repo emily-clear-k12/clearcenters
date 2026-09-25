@@ -16,6 +16,9 @@ const ts = require("/opt/node22/lib/node_modules/typescript"), fs = require("fs"
 require.extensions[".js"] = (m, f) => m._compile(ts.transpileModule(fs.readFileSync(f, "utf8"), { compilerOptions: { module: 1, target: 7, esModuleInterop: true }, fileName: f + "x" }).outputText, f);
 const MM = __dirname + "/../lib/cases/mission-map";
 const PUB = require(MM + "/index.public.js");
+// Sept 24, 2026 — word choice, not just sentence length (tools/lib/wordcheck.cjs).
+const { checkWords, wordProblems } = require("./lib/wordcheck.cjs");
+const SHOW_WORDS = process.argv.includes("--words");
 
 // Same bands as tools/assembly-deck-gradecheck.cjs.
 const BAND = {
@@ -74,9 +77,9 @@ function score(p) {
   return { fk: +(0.39 * (W / S) + 11.8 * (syl / W) - 15.59).toFixed(1), avg: +(W / S).toFixed(1), longest, over: (max) => all.filter((s) => s.split(/\s+/).length > max) };
 }
 
-const want = process.argv[2];
-let fails = 0; const byGrade = {};
-console.log("case       grade   FK    avg  longest");
+const want = process.argv.slice(2).find((a) => !a.startsWith("--"));
+let fails = 0, warn = 0; const byGrade = {};
+console.log("case       grade   FK    avg  longest    uncommon  rich");
 for (const std of PUB.listMissionMapStandards()) {
   const p = PUB.getMissionMapPublicCase(std);
   if (want && p.subject !== want) continue;
@@ -84,7 +87,11 @@ for (const std of PUB.listMissionMapStandards()) {
   (byGrade[p.grade] = byGrade[p.grade] || []).push(r.fk);
   const over = r.over(b.max);
   const ok = r.fk <= b.fk[1] && r.avg <= b.avg && !over.length;
-  console.log(`${std.padEnd(10)} ${p.grade}     ${String(r.fk).padStart(4)}  ${String(r.avg).padStart(5)}  ${String(r.longest.n).padStart(3)}w  ${ok ? "✓" : "✗"}`);
+  const W = checkWords(fieldsOf(p), p.grade, { allow: p.vocab || [] });
+  const wp = wordProblems(W, p.grade, std);
+  console.log(`${std.padEnd(10)} ${p.grade}     ${String(r.fk).padStart(4)}  ${String(r.avg).padStart(5)}  ${String(r.longest.n).padStart(3)}w  ${ok ? "✓" : "✗"}   ${(W.uncommonShare * 100).toFixed(1).padStart(5)}%  ${(W.richShare * 100).toFixed(1).padStart(5)}% ${wp.length ? "⚠" : "✓"}`);
+  if (SHOW_WORDS && W.uncommon.length) console.log("    uncommon:", W.uncommon.map((u) => u.word + (u.count > 1 ? "×" + u.count : "")).join(", "));
+  wp.forEach((m) => { console.log(`    ⚠ word choice — ${m}`); warn++; });
   if (r.fk > b.fk[1]) { console.log(`    ✗ reads at ${r.fk}, above the grade-${p.grade} ceiling ${b.fk[1]}`); fails++; }
   if (r.avg > b.avg) { console.log(`    ✗ average sentence ${r.avg} words, over ${b.avg}`); fails++; }
   over.forEach((s) => { console.log(`    ✗ ${s.split(/\s+/).length}w (max ${b.max}): "${s}"`); fails++; });
@@ -95,4 +102,5 @@ const g = Object.keys(byGrade).sort().map((k) => ({ k, v: avg(byGrade[k]) }));
 console.log("\nby grade:", g.map((x) => `g${x.k}=${x.v}`).join("  "));
 for (let i = 1; i < g.length; i++) if (g[i].v - g[i - 1].v < 0.8) { console.log(`  ✗ grade ${g[i].k} does not read meaningfully harder than grade ${g[i - 1].k}`); fails++; }
 console.log(fails ? `\n${fails} PROBLEMS` : "\nON GRADE");
+if (warn) console.log(`${warn} word-choice warnings (advisory until the thresholds are confirmed)`);
 process.exit(fails ? 1 : 0);
