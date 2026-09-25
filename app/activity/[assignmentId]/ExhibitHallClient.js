@@ -40,6 +40,7 @@ export default function ExhibitHallClient({ assignmentId, publicCase, alreadySub
 
   const [step, setStep] = useState(alreadySubmitted ? "done" : "build");
   const [picked, setPicked] = useState(null);
+  const [landed, setLanded] = useState(null);
   const [wall, setWall] = useState([null, null, null, null]);
   const [bin, setBin] = useState(null);
   const [reason, setReason] = useState(null);
@@ -118,6 +119,8 @@ export default function ExhibitHallClient({ assignmentId, publicCase, alreadySub
     putOnSpot(id, slot);
     setLook(null);
     setPicked(null);
+    setLanded(id);
+    setStatus("It is on the wall.");
   }
 
   function tryBin(id) {
@@ -129,6 +132,8 @@ export default function ExhibitHallClient({ assignmentId, publicCase, alreadySub
     putInBin(id);
     setLook(null);
     setPicked(null);
+    setLanded(id);
+    setStatus("Set aside.");
   }
 
   function chooseStamp(kind) {
@@ -136,7 +141,7 @@ export default function ExhibitHallClient({ assignmentId, publicCase, alreadySub
     setStamps((prev) => ({ ...prev, [look]: kind }));
     setPicked(look);
     setLook(null);
-    setStatus("Now tap the spot on the wall where it belongs.");
+    setStatus("Now tap a glowing spot.");
   }
 
   function openCard(id) {
@@ -146,7 +151,7 @@ export default function ExhibitHallClient({ assignmentId, publicCase, alreadySub
       setStatus("Look at the whole picture. What kind of source is it?");
       return;
     }
-    setStatus("Tap the spot on the wall where it belongs.");
+    setStatus("Tap a glowing spot.");
   }
 
   async function check() {
@@ -192,7 +197,7 @@ export default function ExhibitHallClient({ assignmentId, publicCase, alreadySub
         alt={samNickname || "S.A.M."}
         size={96}
         anchors={{ home: { right: 16, bottom: 16 } }}
-        line={step === "build" ? "Tap a picture, then tap the spot it belongs on." : step === "write" ? "Say what you see, then why you used it." : step === "open" ? "Look at the wall you already built." : "Head back to the hub when you are ready."}
+        line={step === "build" ? "Tap a picture, then tap a glowing spot." : step === "write" ? "Say what you see, then why you used it." : step === "open" ? "Look at the wall you already built." : "Head back to the hub when you are ready."}
         state={step === "done" ? "celebrating" : "helping"}
         tipOnTap={step === "build" ? "One picture for each problem. One picture does not belong." : "Use what you can see on the wall."}
         zIndex={40}
@@ -228,15 +233,15 @@ export default function ExhibitHallClient({ assignmentId, publicCase, alreadySub
                 <h2>Your wall · one problem each</h2>
                 <div className="ms-wall">
                   {wall.map((id, index) => (
-                    <div key={spots[index].id} className={picked ? "ms-slot is-on" : "ms-slot"}>
+                    <div key={spots[index].id} className={`ms-slot${!id && picked ? " is-ready" : ""}${id && landed === id ? " is-landed" : ""}`}>
                       <b>{spots[index].label}</b>
-                      {id ? piece(id) : <button type="button" className="ms-ghost" onClick={() => picked && trySpot(picked, index)}>{picked ? "Hang it here" : "Empty"}</button>}
+                      {id ? piece(id) : <button type="button" className="ms-drop" aria-label={spots[index].label} onClick={() => picked && trySpot(picked, index)} />}
                     </div>
                   ))}
                 </div>
-                <div className="ms-bin">
+                <div className={`ms-bin${!bin && picked ? " is-ready" : ""}${bin && landed === bin ? " is-landed" : ""}`}>
                   <b>Not in this exhibit</b>
-                  {bin ? piece(bin) : <p className="ms-quiet">Put one piece here that does not belong.</p>}
+                  {bin ? piece(bin) : null}
                   {bin && (
                     <div className="ms-reasons">
                       {exhibit.reasons.map((item) => (
@@ -244,7 +249,7 @@ export default function ExhibitHallClient({ assignmentId, publicCase, alreadySub
                       ))}
                     </div>
                   )}
-                  {!bin && <button type="button" className="ms-ghost" onClick={() => picked && tryBin(picked)}>{picked ? "This one does not belong" : "The leftover goes here"}</button>}
+                  {!bin && <button type="button" className="ms-drop" aria-label="Not in this exhibit" onClick={() => picked && tryBin(picked)} />}
                 </div>
               </section>
             </div>
