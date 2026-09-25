@@ -39,6 +39,7 @@ function ModelFace({ model }) {
       </div>
     );
   }
+  if (model.type === "moon") return <div className={`ms-model ms-moon is-${model.phase || "full"}`} aria-hidden="true" />;
   return null;
 }
 
@@ -79,7 +80,7 @@ export default function ExhibitHallClient({ assignmentId, publicCase, alreadySub
   const [step, setStep] = useState(alreadySubmitted ? "done" : "build");
   const [picked, setPicked] = useState(null);
   const [landed, setLanded] = useState(null);
-  const [wall, setWall] = useState([null, null, null, null]);
+  const [wall, setWall] = useState(() => Array.from({ length: spots.length }, () => null));
   const [groups, setGroups] = useState({ left: [], right: [], both: [] });
   const [bin, setBin] = useState(null);
   const [reason, setReason] = useState(null);
@@ -101,6 +102,7 @@ export default function ExhibitHallClient({ assignmentId, publicCase, alreadySub
   const [busy, setBusy] = useState(false);
 
   const split = exhibit.layout === "split";
+  const line = exhibit.layout === "line";
   const splitIds = [...groups.left, ...groups.right, ...groups.both];
   const used = new Set([...(split ? splitIds : wall.filter(Boolean)), bin].filter(Boolean));
   const loose = cards.filter((card) => !used.has(card.id));
@@ -231,14 +233,16 @@ export default function ExhibitHallClient({ assignmentId, publicCase, alreadySub
   }
 
   async function check() {
+    const need = spots.length;
     const splitReady = groups.left.length && groups.right.length && groups.both.length && bin && reason;
-    if (split ? !splitReady : (wallIds.length < 4 || !bin || !reason)) {
-      setStatus(split ? "Put at least one piece on each side, one in both, and one in the bin with a reason." : "Use all 4 spots, and put one piece in the bin with a reason.");
+    const lineReady = wallIds.length === need && bin && reason;
+    if (split ? !splitReady : line ? !lineReady : (wallIds.length < 4 || !bin || !reason)) {
+      setStatus(split ? "Put at least one piece on each side, one in both, and one in the bin with a reason." : line ? `Fill all ${need} steps, in order, and put one piece in the bin with a reason.` : "Use all 4 spots, and put one piece in the bin with a reason.");
       return;
     }
     const data = await send("wall");
     if (data.need === "wall") {
-      setStatus(split ? "Put at least one piece on each side, one in both, and one in the bin with a reason." : "Use all 4 spots, and put one piece in the bin with a reason.");
+      setStatus(split ? "Put at least one piece on each side, one in both, and one in the bin with a reason." : line ? `Fill all ${need} steps, in order, and put one piece in the bin with a reason.` : "Use all 4 spots, and put one piece in the bin with a reason.");
       return;
     }
     setChecks(1);
@@ -274,9 +278,9 @@ export default function ExhibitHallClient({ assignmentId, publicCase, alreadySub
         alt={samNickname || "S.A.M."}
         size={96}
         anchors={{ home: { right: 16, bottom: 16 } }}
-        line={step === "build" ? (split ? "Tap a picture, then tap the side it belongs on." : "Tap a picture, then tap a glowing spot.") : step === "write" ? "Say what you see, then why you used it." : step === "open" ? "Look at the wall you already built." : "Head back to the hub when you are ready."}
+        line={step === "build" ? (split ? "Tap a picture, then tap the side it belongs on." : line ? "Tap a picture, then tap its step. Order matters." : "Tap a picture, then tap a glowing spot.") : step === "write" ? "Say what you see, then why you used it." : step === "open" ? "Look at the wall you already built." : "Head back to the hub when you are ready."}
         state={step === "done" ? "celebrating" : "helping"}
-        tipOnTap={step === "build" ? (split ? "Some pieces belong on both sides." : "One picture for each problem. One picture does not belong.") : "Use what you can see on the wall."}
+        tipOnTap={step === "build" ? (split ? "Some pieces belong on both sides." : line ? "One piece for each step. One piece does not belong." : "One picture for each problem. One picture does not belong.") : "Use what you can see on the wall."}
         zIndex={40}
       />
       <div className="ms-shell">
@@ -284,7 +288,7 @@ export default function ExhibitHallClient({ assignmentId, publicCase, alreadySub
           <div>
             <p className="ms-kicker">{exhibit.kicker}</p>
             <h1>{exhibit.title}</h1>
-            <p className="ms-quiet">{step === "build" ? "1 · The wall" : step === "write" ? "2 · The labels" : step === "open" ? "3 · New source" : "Turned in"}</p>
+            <p className="ms-quiet">{step === "build" ? (line ? "1 · The timeline" : "1 · The wall") : step === "write" ? "2 · The labels" : step === "open" ? "3 · New source" : "Turned in"}</p>
           </div>
         </header>
 
@@ -298,7 +302,7 @@ export default function ExhibitHallClient({ assignmentId, publicCase, alreadySub
           <div className="ms-layout">
             <section className="ms-panel">
               <h2>Storage room</h2>
-              <p className="ms-quiet">{loose.length} left. {split ? "Tap one, then tap the side it belongs on." : "Tap one, then tap the spot it belongs on."}</p>
+              <p className="ms-quiet">{loose.length} left. {split ? "Tap one, then tap the side it belongs on." : line ? "Tap one, then tap the step it belongs on." : "Tap one, then tap the spot it belongs on."}</p>
               <div className="ms-cards">
                 {loose.map((card) => (
                   <div key={card.id}>{piece(card.id)}</div>
@@ -307,7 +311,7 @@ export default function ExhibitHallClient({ assignmentId, publicCase, alreadySub
             </section>
             <div>
               <section className="ms-panel">
-                <h2>{split ? "Your wall · two sides" : "Your wall · one problem each"}</h2>
+                <h2>{split ? "Your wall · two sides" : line ? "Your timeline · in order" : "Your wall · one problem each"}</h2>
                 {split ? (
                   <div className="ms-split">
                     {["left", "right"].map((side) => {
@@ -327,7 +331,7 @@ export default function ExhibitHallClient({ assignmentId, publicCase, alreadySub
                     </div>
                   </div>
                 ) : (
-                <div className="ms-wall">
+                <div className={line ? "ms-line" : "ms-wall"}>
                   {wall.map((id, index) => (
                     <div key={spots[index].id} className={`ms-slot${!id && picked ? " is-ready" : ""}${id && landed === id ? " is-landed" : ""}`}>
                       <b>{spots[index].label}</b>
@@ -359,7 +363,7 @@ export default function ExhibitHallClient({ assignmentId, publicCase, alreadySub
             <p className="ms-sentence">This exhibit shows <input aria-label="What the exhibit shows" value={plaque} onChange={(event) => setPlaque(event.target.value)} />.</p>
             <p className="ms-sentence">The two pieces a visitor should look at first are <input aria-label="First piece" value={best.one} onChange={(event) => setBest((prev) => ({ ...prev, one: event.target.value }))} /> and <input aria-label="Second piece" value={best.two} onChange={(event) => setBest((prev) => ({ ...prev, two: event.target.value }))} />.</p>
             <p className="ms-kicker">2 · The labels</p>
-            <div className={split ? "ms-split" : "ms-labels"}>
+            <div className={split ? "ms-split" : line ? "ms-line" : "ms-labels"}>
               {split ? ["left", "right", "both"].map((side) => {
                 const spot = spots.find((item) => item.id === side);
                 return (
@@ -378,8 +382,14 @@ export default function ExhibitHallClient({ assignmentId, publicCase, alreadySub
                     <>
                       <div className="ms-frame"><CardFace card={cardBy(id)} /></div>
                       <strong>{cardBy(id).title}</strong>
+                      {line ? (
+                        <p className="ms-sentence">This step matters because <input aria-label={`Why ${cardBy(id).title} belongs here`} value={lines[id]?.why || ""} onChange={(event) => setLines((prev) => ({ ...prev, [id]: { what: "", why: event.target.value } }))} />.</p>
+                      ) : (
+                        <>
                       <p className="ms-sentence">I notice <input aria-label={`What you notice on ${cardBy(id).title}`} value={lines[id]?.what || ""} onChange={(event) => setLines((prev) => ({ ...prev, [id]: { what: event.target.value, why: prev[id]?.why || "" } }))} />.</p>
                       <p className="ms-sentence">This helps because <input aria-label={`Why ${cardBy(id).title} helps`} value={lines[id]?.why || ""} onChange={(event) => setLines((prev) => ({ ...prev, [id]: { what: prev[id]?.what || "", why: event.target.value } }))} />.</p>
+                        </>
+                      )}
                     </>
                   ) : <p className="ms-quiet">Empty spot</p>}
                 </div>
@@ -418,7 +428,7 @@ export default function ExhibitHallClient({ assignmentId, publicCase, alreadySub
             <section className="ms-gallery">
               <p className="ms-kicker">Your exhibit</p>
               <h2>{plaque || exhibit.title}</h2>
-              <div className={split ? "ms-split" : "ms-hang"}>
+              <div className={split ? "ms-split" : line ? "ms-line" : "ms-hang"}>
                 {split ? ["left", "right", "both"].map((side) => {
                   const spot = spots.find((item) => item.id === side);
                   return (

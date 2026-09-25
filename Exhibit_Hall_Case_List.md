@@ -73,11 +73,21 @@ Side-by-side, timelines, and drawn math stay off this wall. They are the next wa
 
 **Social Studies 5.** Road to revolution: four causes, not the Declaration itself. Rights: four real protections. Lady Liberty: four true things she stands for. Four problems to solve: four compromises at the Constitutional Convention.
 
+## Timeline wall
+
+**Started Sept 24, 2026.** Numbered steps, in order. One case per subject per grade (12). They use the same activity, with `layout: "line"`. Run `add_exhibit_hall_line.sql` before they show on Assign.
+
+| Grade | Science | ELAR | Social Studies | Math |
+|---|---|---|---|---|
+| 3 | 3.13B A beetle's year | ELA.3.8C The lemonade plan | SS.3.1A How our town grew | 3.9E Maya's bike fund |
+| 4 | 4.9B 29 nights | ELA.4.8C The science fair disaster | SS.4.4B Longhorn boom | 4.5B The growing tower |
+| 5 | 5.10B From mud to stone | ELA.5.8C Lost in the library | SS.5.4C Growing west | 5.10E The family budget |
+
+Do not turn a timeline code into a four-spot or side-by-side case. Portraits are still later.
+
 ## Next wall
 
-Side by side is in the engine (12 cases). Timelines are still later. Do not turn a timeline into a side-by-side case, and do not add a fifth four-spot case.
-
-**Timeline:** Science 3.13B a beetle's year · Science 4.9B moon phases · Science 5.10B mud to stone · Social Studies 3.1A how our town grew · Social Studies 4.4B longhorn boom · Social Studies 5.4C growing west · ELAR 3.8C the lemonade plan · ELAR 4.8C the science fair · ELAR 5.8C the library play · Math 3.9E Maya's bike fund · Math 4.5B the growing tower · Math 5.10E the family budget
+Side by side is in the engine (12 cases). Timelines are in the engine (12 cases). Do not add a fifth four-spot case.
 
 ## When a case ships
 

@@ -11,6 +11,7 @@ const REASON = {
   picture: "Misleading picture",
   topic: "True but off-topic",
   side: "Wrong side",
+  order: "Out of order",
 };
 
 async function awardCrystals(studentId, amount) {
@@ -42,7 +43,8 @@ export async function POST(request) {
   const split = exhibit.layout === "split";
   const groups = body.groups || { left: [], right: [], both: [] };
   const splitFilled = ["left", "right", "both"].every((zone) => (groups[zone] || []).length > 0) && body.bin && body.reason;
-  const filled = split ? splitFilled : Array.isArray(body.wall) && body.wall.filter(Boolean).length === 4 && body.bin && body.reason;
+  const count = exhibit.spots.length;
+  const filled = split ? splitFilled : Array.isArray(body.wall) && body.wall.filter(Boolean).length === count && body.bin && body.reason;
   if (!filled) return NextResponse.json({ need: "wall" });
 
   const { data: existing } = await supabaseAdmin
