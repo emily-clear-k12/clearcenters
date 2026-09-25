@@ -311,3 +311,4 @@
 .slx .preset.on text { fill: #fff; }
 /* run markers never take pointer input (the flag + ruler underneath do) */
 .slx .ghost, .slx .landing, .slx .gap, .slx .chart-svg { pointer-events: none; }
+.slx .chart-svg .pair-label { font: 800 11px var(--font); paint-order: stroke; stroke: #fff; stroke-width: 3px; }

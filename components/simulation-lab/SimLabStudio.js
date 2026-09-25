@@ -572,7 +572,7 @@ function Studio({
       say("Mission complete! You found a pattern AND tested it when conditions changed.");
       setBanner({
         kicker: "Mission complete",
-        title: "Great science, Cadet!",
+        title: cfg.subject === "Math" ? "Great math, Cadet!" : cfg.subject === "Social Studies" ? "Great thinking, Cadet!" : "Great science, Cadet!",
         text: `${runs.length} runs · 2 rounds · 1 pattern that held up. Your lab report is on its way to your teacher.`,
         tone: "teal",
         home: true,

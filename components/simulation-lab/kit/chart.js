@@ -22,9 +22,14 @@ export function createChart(host, { variable: V, outcome: O }, anim) {
     el("line", { x1: m.l, x2: W - m.r, y1: ys(y), y2: ys(y), stroke: y === 0 ? "#bdb5dc" : "#ebe7f6", "stroke-width": y === 0 ? 2 : 1 }, grid);
     el("text", { x: m.l - 8, y: ys(y) + 4.5, "text-anchor": "end", class: "axis", text: String(y) }, grid);
   }
-  for (let x = V.min; x <= V.max + 1e-9; x += V.step) {
+  const tickText = (x) => (V.name ? V.name(x) : `${x}${V.tickSuffix || ""}`);
+  const nTicks = Math.round((V.max - V.min) / V.step) + 1;
+  const longest = Math.max(...Array.from({ length: nTicks }, (_, i) => tickText(V.min + i * V.step).length));
+  // long labels (e.g. "125¢") on many ticks: label every other tick so they don't collide
+  const every = nTicks * (longest * 8 + 8) > W - m.l - m.r ? 2 : 1;
+  for (let i = 0, x = V.min; x <= V.max + 1e-9; i++, x += V.step) {
     el("line", { x1: xs(x), x2: xs(x), y1: ys(0), y2: ys(0) + 5, stroke: "#bdb5dc", "stroke-width": 1.5 }, grid);
-    el("text", { x: xs(x), y: ys(0) + 19, "text-anchor": "middle", class: "axis", text: `${x}${V.tickSuffix || ""}` }, grid);
+    if (i % every === 0) el("text", { x: xs(x), y: ys(0) + 19, "text-anchor": "middle", class: "axis", text: tickText(x) }, grid);
   }
   el("text", { x: (m.l + W - m.r) / 2, y: H - 3, "text-anchor": "middle", class: "axis-title", text: `${V.axis} →` }, grid);
   const midY = (m.t + H - m.b) / 2;
@@ -56,6 +61,11 @@ export function createChart(host, { variable: V, outcome: O }, anim) {
       const quiet = anim.RM || instant;
       if (!quiet) el("circle", { cx, cy, r: 8, fill: "none", stroke: ROUND_COLORS[round], "stroke-width": 3, class: "dot-ring" }, g);
       el("circle", { cx, cy, r: 8.5, fill: ROUND_COLORS[round], stroke: "#fff", "stroke-width": 2.5, class: instant ? "" : anim.RM ? "dot-fade" : "dot-pop" }, g);
+      if (O.pairLabels) {
+        // ordered pair above the dot, nudged left near the right edge
+        const tx = Math.min(cx, W - m.r - 26);
+        el("text", { x: tx, y: cy - 13, "text-anchor": "middle", class: "pair-label", fill: ROUND_COLORS_DARK[round], text: `(${x}, ${y})` }, g);
+      }
     },
     showLines() { linesOn = true; drawLines(); },
   };
