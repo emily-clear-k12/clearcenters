@@ -1,0 +1,399 @@
+case,title,where,item id,label,file to save as (in public),what the photo should show
+SCI-3.7A-CL,"Push, pull, or reach",page 1,kick,Kick a soccer ball,/lab/sci-3.7a-cl-kick.jpg,"Photo of a child's foot kicking a soccer ball on grass. No faces, no text."
+SCI-3.7A-CL,"Push, pull, or reach",page 1,door,Push a door open,/lab/sci-3.7a-cl-door.jpg,Photo of a hand pushing open a wooden door. No text.
+SCI-3.7A-CL,"Push, pull, or reach",page 1,wagon,Pull a wagon by its handle,/lab/sci-3.7a-cl-wagon.jpg,"Photo of a hand pulling a red wagon by its handle on a sidewalk. No faces, no text."
+SCI-3.7A-CL,"Push, pull, or reach",page 1,fridge,A magnet pulls itself onto the fridge door.,/lab/sci-3.7a-cl-fridge.jpg,Photo of a round magnet holding a child's drawing on a fridge door. No words on the drawing or magnet.
+SCI-3.7A-CL,"Push, pull, or reach",page 1,apple,An apple falls from a tree,/lab/sci-3.7a-cl-apple.jpg,"Photo of an apple falling from a branch, caught in midair. No text."
+SCI-3.7A-CL,"Push, pull, or reach",page 1,repel,Two magnets push each other apart,/lab/sci-3.7a-cl-repel.jpg,"Photo of two bar magnets on a table, same ends facing, with a small gap between them. No letters on the magnets, no text."
+SCI-3.7A-CL,"Push, pull, or reach",page 2,rain,A raindrop falls from a cloud,/lab/sci-3.7a-cl-rain.jpg,Photo of raindrops falling and splashing into a puddle. No text.
+SCI-3.7A-CL,"Push, pull, or reach",page 2,nail,A magnet pulls a nail through paper,/lab/sci-3.7a-cl-nail.jpg,"Photo of a nail stuck to one side of a sheet of paper, with a magnet held on the other side. No text."
+SCI-3.7A-CL,"Push, pull, or reach",page 2,leash,A dog pulls on its leash,/lab/sci-3.7a-cl-leash.jpg,"Photo of a dog pulling ahead on a tight leash, seen from behind. No faces, no text."
+SCI-3.7A-CL,"Push, pull, or reach",page 2,sail,Wind pushes a sailboat,/lab/sci-3.7a-cl-sail.jpg,"Photo of a small sailboat on a lake with a full, puffed-out sail. No text."
+SCI-3.7A-CL,"Push, pull, or reach",page 2,sunshine,Sunshine warms a sidewalk,/lab/sci-3.7a-cl-sunshine.jpg,"Photo of a sunny sidewalk with bright light on it. No people, no text."
+SCI-3.7A-CL,"Push, pull, or reach",page 2,nightlight,A night-light glows in a dark room,/lab/sci-3.7a-cl-nightlight.jpg,Photo of a small night-light glowing in a wall outlet in a dark room. No text.
+SCI-3.7A-CL,"Push, pull, or reach",venn,leafV,A leaf falls to the ground,/lab/sci-3.7a-cl-leafv.jpg,Photo of one leaf falling in midair below a tree. No text.
+SCI-3.7A-CL,"Push, pull, or reach",venn,clipV,A magnet pulls a paper clip closer,/lab/sci-3.7a-cl-clipv.jpg,Photo of a magnet with a paper clip sliding toward it across a table. No text.
+SCI-3.7A-CL,"Push, pull, or reach",venn,ropeV,Two kids tug on a rope,/lab/sci-3.7a-cl-ropev.jpg,"Photo of two children pulling on opposite ends of a rope on grass. Faces turned away or cropped, no text."
+SCI-3.7A-CL,"Push, pull, or reach",venn,repelV,Two ring magnets push apart on a stick,/lab/sci-3.7a-cl-repelv.jpg,"Photo of two ring magnets on a wooden stick, the top one floating above the bottom one. No text."
+SCI-3.7A-CL,"Push, pull, or reach",venn,swingV,Push a friend on a swing,/lab/sci-3.7a-cl-swingv.jpg,"Photo of hands pushing a child on a playground swing, seen from behind. No text."
+SCI-3.7A-CL,"Push, pull, or reach",venn,lampV,A lamp lights up a desk,/lab/sci-3.7a-cl-lampv.jpg,Photo of a desk lamp shining on an empty desk. No text.
+SCI-3.8A-CL,Kinds of energy,page 1,flashlight,Flashlight,/lab/sci-3.8a-cl-flashlight.jpg,Photo of a lit flashlight shining a beam on a wall. No text or brand.
+SCI-3.8A-CL,Kinds of energy,page 1,glowstick,Glow stick,/lab/sci-3.8a-cl-glowstick.jpg,Photo of a glowing green glow stick in a dark room. No text.
+SCI-3.8A-CL,Kinds of energy,page 1,firefly,Firefly,/lab/sci-3.8a-cl-firefly.jpg,Photo of a firefly glowing at night in grass. No text.
+SCI-3.8A-CL,Kinds of energy,page 1,drum,Drum,/lab/sci-3.8a-cl-drum.jpg,Photo of a small drum with two drumsticks resting on top. No text or brand.
+SCI-3.8A-CL,Kinds of energy,page 1,whistle,Whistle,/lab/sci-3.8a-cl-whistle.jpg,Photo of a silver coach's whistle on a string. No text.
+SCI-3.8A-CL,Kinds of energy,page 1,chimes,Wind chimes,/lab/sci-3.8a-cl-chimes.jpg,Photo of metal wind chimes hanging from a porch. No text.
+SCI-3.8A-CL,Kinds of energy,page 2,clap,Hands clapping,/lab/sci-3.8a-cl-clap.jpg,"Photo of two hands clapping, close up. No faces, no text."
+SCI-3.8A-CL,Kinds of energy,page 2,guitar,Guitar string plucked,/lab/sci-3.8a-cl-guitar.jpg,"Photo of a finger plucking a guitar string, close up. No text or brand."
+SCI-3.8A-CL,Kinds of energy,page 2,nightlt,Night-light,/lab/sci-3.8a-cl-nightlt.jpg,Photo of a small night-light glowing in a wall outlet in a dark room. No text.
+SCI-3.8A-CL,Kinds of energy,page 2,stars,Glow-in-the-dark star stickers,/lab/sci-3.8a-cl-stars.jpg,Photo of glow-in-the-dark star stickers glowing on a dark ceiling. No text.
+SCI-3.8A-CL,Kinds of energy,page 2,heatpad,Heating pad,/lab/sci-3.8a-cl-heatpad.jpg,"Photo of a folded heating pad on a couch, with no lights showing. No text or brand."
+SCI-3.8A-CL,Kinds of energy,page 2,kite,Kite in the wind,/lab/sci-3.8a-cl-kite.jpg,"Photo of a colorful kite flying high in a blue sky. No people, no text."
+SCI-3.8A-CL,Kinds of energy,venn,fireworksV,Fireworks,/lab/sci-3.8a-cl-fireworksv.jpg,Photo of bright fireworks bursting in a night sky. No text.
+SCI-3.8A-CL,Kinds of energy,venn,tvV,A TV playing a cartoon,/lab/sci-3.8a-cl-tvv.jpg,Photo of a TV screen showing bright colors in a living room. No readable words or logos on screen.
+SCI-3.8A-CL,Kinds of energy,venn,candleV,Candle flame,/lab/sci-3.8a-cl-candlev.jpg,Photo of one lit candle on a table. No text.
+SCI-3.8A-CL,Kinds of energy,venn,birdV,A bird singing,/lab/sci-3.8a-cl-birdv.jpg,Photo of a small songbird on a branch with its beak open. No text.
+SCI-3.8A-CL,Kinds of energy,venn,hornV,A bicycle bell rings.,/lab/sci-3.8a-cl-hornv.jpg,Photo of a silver bell on a bicycle handlebar. No text or brand.
+SCI-3.8A-CL,Kinds of energy,venn,bottleV,Hot water bottle,/lab/sci-3.8a-cl-bottlev.jpg,Photo of a rubber hot water bottle on a bed. No text or brand.
+SCI-3.10C-CL,Fast or slow,page 1,quake,Earthquake,/lab/sci-3.10c-cl-quake.jpg,"Photo of a paved road with a crack from an earthquake. No people, no text."
+SCI-3.10C-CL,Fast or slow,page 1,volcano,Volcano erupts,/lab/sci-3.10c-cl-volcano.jpg,Photo of a volcano with red lava flowing down its side. No text.
+SCI-3.10C-CL,Fast or slow,page 1,landslide,Small landslide,/lab/sci-3.10c-cl-landslide.jpg,"Photo of a small pile of dirt and rocks that slid down a hillside onto a trail. No people, no text."
+SCI-3.10C-CL,Fast or slow,page 1,canyon,River makes a canyon,/lab/sci-3.10c-cl-canyon.jpg,Photo of a deep canyon with a river at the bottom. No text.
+SCI-3.10C-CL,Fast or slow,page 1,windrock,Wind wears down a rock,/lab/sci-3.10c-cl-windrock.jpg,Photo of a desert rock shaped into an arch or odd shape by wind. No text.
+SCI-3.10C-CL,Fast or slow,page 1,cliff,Waves wear away a cliff,/lab/sci-3.10c-cl-cliff.jpg,Photo of ocean waves hitting the bottom of a rocky cliff. No text.
+SCI-3.10C-CL,Fast or slow,page 2,flood,Flood,/lab/sci-3.10c-cl-flood.jpg,"Photo of a muddy river spilling over its banks onto a field. No people, no text."
+SCI-3.10C-CL,Fast or slow,page 2,sinkhole,Sinkhole opens,/lab/sci-3.10c-cl-sinkhole.jpg,"Photo of a round sinkhole in a grassy yard, fenced off. No people, no text."
+SCI-3.10C-CL,Fast or slow,page 2,rockfall,Rock falls off a cliff,/lab/sci-3.10c-cl-rockfall.jpg,Photo of one large boulder that has fallen at the bottom of a cliff. No text.
+SCI-3.10C-CL,Fast or slow,page 2,roots,Roots crack a rock,/lab/sci-3.10c-cl-roots.jpg,Photo of tree roots growing through a crack in a big rock. No text.
+SCI-3.10C-CL,Fast or slow,page 2,dune,Sand dune moves,/lab/sci-3.10c-cl-dune.jpg,"Photo of tall sand dunes with wind ripples. No people, no text."
+SCI-3.10C-CL,Fast or slow,page 2,clouds,Dark clouds roll in,/lab/sci-3.10c-cl-clouds.jpg,Photo of dark storm clouds over a flat field. No text.
+SCI-3.10C-CL,Fast or slow,venn,floodV,Flood washes out a road,/lab/sci-3.10c-cl-floodv.jpg,"Photo of a country road with a section washed away by floodwater. No people, no text."
+SCI-3.10C-CL,Fast or slow,venn,quakeV,Earthquake,/lab/sci-3.10c-cl-quakev.jpg,"Photo of a cracked, uneven sidewalk after an earthquake. No people, no text."
+SCI-3.10C-CL,Fast or slow,venn,volcanoV,Volcano erupts,/lab/sci-3.10c-cl-volcanov.jpg,Photo of a volcano with smoke and lava. No text.
+SCI-3.10C-CL,Fast or slow,venn,canyonV,River carves a canyon,/lab/sci-3.10c-cl-canyonv.jpg,Photo of a winding river deep inside a canyon. No text.
+SCI-3.10C-CL,Fast or slow,venn,beachV,Waves slowly smooth rocks into pebbles.,/lab/sci-3.10c-cl-beachv.jpg,"Photo of smooth, rounded pebbles on a shore with a wave washing over them. No people, no text."
+SCI-3.10C-CL,Fast or slow,venn,windV,Wind shapes a rock,/lab/sci-3.10c-cl-windv.jpg,Photo of a tall rock shaped by wind in a desert. No text.
+SCI-3.11C-CL,Keep it or remake it,page 1,jarpencil,Keep pencils in an old glass jar,/lab/sci-3.11c-cl-jarpencil.jpg,"Photo of a clean glass jar holding pencils on a desk. No label, no text."
+SCI-3.11C-CL,Keep it or remake it,page 1,coat,Wear your cousin's old coat,/lab/sci-3.11c-cl-coat.jpg,Photo of a kid's winter coat hanging on a hook. No text or brand.
+SCI-3.11C-CL,Keep it or remake it,page 1,refill,Refill a water bottle,/lab/sci-3.11c-cl-refill.jpg,"Photo of a plastic water bottle being filled at a sink. No label, no text."
+SCI-3.11C-CL,Keep it or remake it,page 1,glass,Old jars are melted into new jars,/lab/sci-3.11c-cl-glass.jpg,"Photo of a pile of crushed glass next to new, empty glass jars. No labels, no text."
+SCI-3.11C-CL,Keep it or remake it,page 1,fleece,Plastic bottles become a fleece jacket,/lab/sci-3.11c-cl-fleece.jpg,"Photo of a fleece jacket folded next to a pile of empty plastic bottles. No labels, no text."
+SCI-3.11C-CL,Keep it or remake it,page 1,tires,Old tires are ground into playground mats,/lab/sci-3.11c-cl-tires.jpg,"Photo of black rubber mats under a playground slide. No people, no text."
+SCI-3.11C-CL,Keep it or remake it,page 2,rag,Cut an old T-shirt into cleaning rags,/lab/sci-3.11c-cl-rag.jpg,"Photo of an old T-shirt cut into square rags, with scissors beside it. No text or logos."
+SCI-3.11C-CL,Keep it or remake it,page 2,shoes,Give outgrown shoes to a friend,/lab/sci-3.11c-cl-shoes.jpg,Photo of a pair of used kids' sneakers in an open box. No text or brand.
+SCI-3.11C-CL,Keep it or remake it,page 2,cardboard,Old boxes are mashed into new boxes,/lab/sci-3.11c-cl-cardboard.jpg,Photo of flattened cardboard in a big bale next to a new cardboard box. No text or logos.
+SCI-3.11C-CL,Keep it or remake it,page 2,bench,Milk jugs are melted into a park bench,/lab/sci-3.11c-cl-bench.jpg,"Photo of a park bench made of recycled plastic boards. No people, no text."
+SCI-3.11C-CL,Keep it or remake it,page 2,water,Turn off the water while you brush,/lab/sci-3.11c-cl-water.jpg,"Photo of a bathroom sink with the faucet off and a toothbrush beside it. No people, no text."
+SCI-3.11C-CL,Keep it or remake it,page 2,crackers,"Buy one big box, not many small bags",/lab/sci-3.11c-cl-crackers.jpg,"Photo of one large box of crackers next to a pile of small snack bags. No labels, no text."
+SCI-3.11C-CL,Keep it or remake it,venn,jarsV,Melt old jars into new jars,/lab/sci-3.11c-cl-jarsv.jpg,"Photo of glowing melted glass being shaped in a glass factory. No people's faces, no text."
+SCI-3.11C-CL,Keep it or remake it,venn,tiresV,Grind old tires into playground mats,/lab/sci-3.11c-cl-tiresv.jpg,Photo of small rubber pieces from old tires in a pile. No text.
+SCI-3.11C-CL,Keep it or remake it,venn,bottleV,Refill a water bottle,/lab/sci-3.11c-cl-bottlev.jpg,Photo of a reusable water bottle at a water fountain. No text or brand.
+SCI-3.11C-CL,Keep it or remake it,venn,coatV,Wear your sister's old coat,/lab/sci-3.11c-cl-coatv.jpg,Photo of a winter coat on a hanger. No text or brand.
+SCI-3.11C-CL,Keep it or remake it,venn,canV,Crush a can and throw it in the trash,/lab/sci-3.11c-cl-canv.jpg,"Photo of a crushed soda can on top of a full trash can. No labels, no text."
+SCI-3.11C-CL,Keep it or remake it,venn,pizzaV,Throw a pizza box in the trash,/lab/sci-3.11c-cl-pizzav.jpg,"Photo of a whole pizza box sticking out of a trash can. No labels, no text."
+SCI-3.12A-CL,Winter moves,page 1,monarch,Monarch butterfly,/lab/sci-3.12a-cl-monarch.jpg,Photo of one orange and black monarch butterfly on a flower. No text.
+SCI-3.12A-CL,Winter moves,page 1,geese,Canada geese,/lab/sci-3.12a-cl-geese.jpg,Photo of Canada geese flying in a V shape across the sky. No text.
+SCI-3.12A-CL,Winter moves,page 1,crane,Whooping crane,/lab/sci-3.12a-cl-crane.jpg,Photo of a white whooping crane standing in a marsh. No text.
+SCI-3.12A-CL,Winter moves,page 1,groundhog,Groundhog,/lab/sci-3.12a-cl-groundhog.jpg,Photo of a groundhog sitting up in green grass. No text.
+SCI-3.12A-CL,Winter moves,page 1,gsquirrel,Ground squirrel,/lab/sci-3.12a-cl-gsquirrel.jpg,Photo of a thirteen-lined ground squirrel on grass. No text.
+SCI-3.12A-CL,Winter moves,page 1,bat,Little brown bat,/lab/sci-3.12a-cl-bat.jpg,Photo of a little brown bat hanging upside down in a cave. No text.
+SCI-3.12A-CL,Winter moves,page 2,humpback,Humpback whale,/lab/sci-3.12a-cl-humpback.jpg,"Photo of a humpback whale's tail above the ocean. No boats, no text."
+SCI-3.12A-CL,Winter moves,page 2,caribou,Caribou,/lab/sci-3.12a-cl-caribou.jpg,Photo of a herd of caribou walking across snowy land. No text.
+SCI-3.12A-CL,Winter moves,page 2,woodfrog,Wood frog,/lab/sci-3.12a-cl-woodfrog.jpg,Photo of a brown wood frog on dead leaves. No text.
+SCI-3.12A-CL,Winter moves,page 2,boxturtle,Box turtle,/lab/sci-3.12a-cl-boxturtle.jpg,Photo of a box turtle on the forest floor. No text.
+SCI-3.12A-CL,Winter moves,page 2,maple,Maple tree drops its leaves,/lab/sci-3.12a-cl-maple.jpg,Photo of a bare maple tree in winter with fallen leaves around it. No text.
+SCI-3.12A-CL,Winter moves,page 2,cat,House cat,/lab/sci-3.12a-cl-cat.jpg,Photo of a pet cat asleep on a couch. No text.
+SCI-3.12A-CL,Winter moves,venn,hummerV,Ruby-throated hummingbird,/lab/sci-3.12a-cl-hummerv.jpg,Photo of a ruby-throated hummingbird at a flower. No text.
+SCI-3.12A-CL,Winter moves,venn,sandhillV,Sandhill crane,/lab/sci-3.12a-cl-sandhillv.jpg,Photo of sandhill cranes flying over a field. No text.
+SCI-3.12A-CL,Winter moves,venn,graywhaleV,Gray whale,/lab/sci-3.12a-cl-graywhalev.jpg,"Photo of a gray whale's back rising out of the ocean. No boats, no text."
+SCI-3.12A-CL,Winter moves,venn,cardinalV,Northern cardinal,/lab/sci-3.12a-cl-cardinalv.jpg,Photo of a red cardinal on a snowy branch. No text.
+SCI-3.12A-CL,Winter moves,venn,groundhogV,Groundhog,/lab/sci-3.12a-cl-groundhogv.jpg,Photo of a groundhog peeking out of its burrow. No text.
+SCI-3.12A-CL,Winter moves,venn,oakV,Oak tree,/lab/sci-3.12a-cl-oakv.jpg,Photo of a bare oak tree in winter. No text.
+SCI-3.12B-CL,Who makes food?,page 1,grass,Grass,/lab/sci-3.12b-cl-grass.jpg,Photo of a close-up of green grass. No text.
+SCI-3.12B-CL,Who makes food?,page 1,kelp,Kelp,/lab/sci-3.12b-cl-kelp.jpg,"Photo of tall brown-green kelp underwater. No divers, no text."
+SCI-3.12B-CL,Who makes food?,page 1,cactus,Cactus,/lab/sci-3.12b-cl-cactus.jpg,Photo of a prickly pear cactus in the desert. No text.
+SCI-3.12B-CL,Who makes food?,page 1,frog,Green frog,/lab/sci-3.12b-cl-frog.jpg,Photo of a green frog sitting on a lily pad. No text.
+SCI-3.12B-CL,Who makes food?,page 1,caterpillar,Green caterpillar,/lab/sci-3.12b-cl-caterpillar.jpg,Photo of a green caterpillar on a green leaf. No text.
+SCI-3.12B-CL,Who makes food?,page 1,cow,Cow,/lab/sci-3.12b-cl-cow.jpg,Photo of a cow eating grass in a field. No text.
+SCI-3.12B-CL,Who makes food?,page 2,algae,Algae in a pond,/lab/sci-3.12b-cl-algae.jpg,Photo of green algae floating on the top of a pond. No text.
+SCI-3.12B-CL,Who makes food?,page 2,moss,Moss on a rock,/lab/sci-3.12b-cl-moss.jpg,Photo of green moss growing on a gray rock. No text.
+SCI-3.12B-CL,Who makes food?,page 2,turtle,Green sea turtle,/lab/sci-3.12b-cl-turtle.jpg,"Photo of a green sea turtle swimming over seagrass. No divers, no text."
+SCI-3.12B-CL,Who makes food?,page 2,anole,Green anole lizard,/lab/sci-3.12b-cl-anole.jpg,Photo of a green anole lizard on a green leaf. No text.
+SCI-3.12B-CL,Who makes food?,page 2,sun,The sun,/lab/sci-3.12b-cl-sun.jpg,Photo of the sun shining in a clear blue sky. No text.
+SCI-3.12B-CL,Who makes food?,page 2,plastic,Plastic plant,/lab/sci-3.12b-cl-plastic.jpg,Photo of a fake plastic plant in a pot on a shelf. No text or tags.
+SCI-3.12B-CL,Who makes food?,venn,lilyV,Water lily,/lab/sci-3.12b-cl-lilyv.jpg,Photo of a water lily with a flower floating on a pond. No text.
+SCI-3.12B-CL,Who makes food?,venn,duckweedV,Duckweed,/lab/sci-3.12b-cl-duckweedv.jpg,Photo of tiny duckweed covering the top of a pond. No text.
+SCI-3.12B-CL,Who makes food?,venn,appleV,Apple tree,/lab/sci-3.12b-cl-applev.jpg,Photo of an apple tree with red apples. No text.
+SCI-3.12B-CL,Who makes food?,venn,catfishV,Catfish,/lab/sci-3.12b-cl-catfishv.jpg,Photo of a catfish swimming underwater. No text.
+SCI-3.12B-CL,Who makes food?,venn,sharkV,Shark,/lab/sci-3.12b-cl-sharkv.jpg,"Photo of a shark swimming in blue water. No divers, no text."
+SCI-3.12B-CL,Who makes food?,venn,rabbitV,Rabbit,/lab/sci-3.12b-cl-rabbitv.jpg,Photo of a brown rabbit sitting in grass. No text.
+SS-3.3C-CL,Natural or made by people?,page 1,enchanted,Enchanted Rock,/lab/ss-3.3c-cl-enchanted.jpg,"Photo of Enchanted Rock, a big rounded pink granite dome in the Texas Hill Country. No people, no text."
+SS-3.3C-CL,Natural or made by people?,page 1,paloduro,Palo Duro Canyon,/lab/ss-3.3c-cl-paloduro.jpg,"Photo of the red and orange cliffs of Palo Duro Canyon. No people, no text."
+SS-3.3C-CL,Natural or made by people?,page 1,dunes,Sand dunes on Padre Island,/lab/ss-3.3c-cl-dunes.jpg,"Photo of sand dunes with grass on Padre Island, with the sea behind. No people, no text."
+SS-3.3C-CL,Natural or made by people?,page 1,travis,"Lake Travis, held back by a dam",/lab/ss-3.3c-cl-travis.jpg,"Photo of Lake Travis, wide blue water with green hills around it. Dam not shown. No people, no text."
+SS-3.3C-CL,Natural or made by people?,page 1,citypark,A city park with planted trees,/lab/ss-3.3c-cl-citypark.jpg,"Photo of a city park with rows of young trees, mowed grass, and a small pond. No people, no text."
+SS-3.3C-CL,Natural or made by people?,page 1,cornfield,A cornfield,/lab/ss-3.3c-cl-cornfield.jpg,"Photo of a large cornfield with long straight rows of green corn. No people, no text."
+SS-3.3C-CL,Natural or made by people?,page 2,rio,The Rio Grande,/lab/ss-3.3c-cl-rio.jpg,"Photo of the Rio Grande flowing between rocky banks in Big Bend. No people, no text."
+SS-3.3C-CL,Natural or made by people?,page 2,hamilton,"Hamilton Pool, a rock swimming hole",/lab/ss-3.3c-cl-hamilton.jpg,"Photo of Hamilton Pool Preserve, a green pool under a rock overhang with a waterfall. No people, no text."
+SS-3.3C-CL,Natural or made by people?,page 2,treefarm,A tree farm,/lab/ss-3.3c-cl-treefarm.jpg,"Photo of a tree farm with pine trees planted in long straight rows. No people, no text."
+SS-3.3C-CL,Natural or made by people?,page 2,stocktank,A stock tank dug for cows,/lab/ss-3.3c-cl-stocktank.jpg,"Photo of a small muddy farm pond in a Texas pasture, with a few cows nearby. No people, no text."
+SS-3.3C-CL,Natural or made by people?,page 2,rain,A rainstorm,/lab/ss-3.3c-cl-rain.jpg,"Photo of heavy rain falling over an open field. No people, no text."
+SS-3.3C-CL,Natural or made by people?,page 2,lightning,Lightning,/lab/ss-3.3c-cl-lightning.jpg,Photo of a lightning bolt in a dark night sky over flat land. No text.
+SS-3.3C-CL,Natural or made by people?,venn,canyonlakeV,"Canyon Lake, held back by a dam",/lab/ss-3.3c-cl-canyonlakev.jpg,"Photo of Canyon Lake, blue water with green hills. No people, no text."
+SS-3.3C-CL,Natural or made by people?,venn,canalV,A canal that brings water to farms,/lab/ss-3.3c-cl-canalv.jpg,"Photo of a straight cement canal full of water beside farm fields. No people, no text."
+SS-3.3C-CL,Natural or made by people?,venn,fallsV,Pedernales Falls,/lab/ss-3.3c-cl-fallsv.jpg,"Photo of water flowing over wide, layered rocks at Pedernales Falls. No people, no text."
+SS-3.3C-CL,Natural or made by people?,venn,riverV,The Rio Grande in Santa Elena Canyon,/lab/ss-3.3c-cl-riverv.jpg,"Photo of the Rio Grande flowing between tall rock walls in Santa Elena Canyon, Big Bend. No people, no text."
+SS-3.3C-CL,Natural or made by people?,venn,highwayV,A highway,/lab/ss-3.3c-cl-highwayv.jpg,"Photo of a highway with several lanes crossing open land. No readable signs, no text."
+SS-3.3C-CL,Natural or made by people?,venn,peakV,Guadalupe Peak,/lab/ss-3.3c-cl-peakv.jpg,"Photo of the rocky top of Guadalupe Peak in West Texas. No people, no text."
+SS-3.14B-CL,Was the author there?,page 1,moonphoto,A photo an astronaut took on the Moon in 1969,/lab/ss-3.14b-cl-moonphoto.jpg,Photo of Buzz Aldrin standing on the Moon during Apollo 11 (NASA photo). No text.
+SS-3.14B-CL,Was the author there?,page 1,actor,A still from a 2018 movie about the landing,/lab/ss-3.14b-cl-actor.jpg,Photo of a person in a white astronaut costume on a movie set. No text.
+SS-3.14B-CL,Was the author there?,page 2,tv,Live TV video sent from the Moon in 1969,/lab/ss-3.14b-cl-tv.jpg,Still from the grainy black-and-white 1969 TV video of an astronaut on the Moon. No text.
+SS-3.14B-CL,Was the author there?,page 2,painting,"A painting of the landing, made in 2020",/lab/ss-3.14b-cl-painting.jpg,A colorful painting of an astronaut and a lander on the Moon. No text.
+SS-3.14B-CL,Was the author there?,page 2,baseball,A 1969 photo of a baseball game,/lab/ss-3.14b-cl-baseball.jpg,"Old color photo of a baseball game in a stadium. No readable signs, no text."
+SS-3.14B-CL,Was the author there?,venn,footV,"A photo of a bootprint, taken on the Moon",/lab/ss-3.14b-cl-footv.jpg,NASA photo of an astronaut's bootprint in Moon dust from Apollo 11. No text.
+SS-3.14B-CL,Was the author there?,venn,tvV,Live TV video of the astronauts on the Moon,/lab/ss-3.14b-cl-tvv.jpg,Still from the grainy 1969 TV video of astronauts on the Moon. No text.
+SS-3.14B-CL,Was the author there?,venn,drawV,A drawing of the landing in a 2019 kids' book,/lab/ss-3.14b-cl-drawv.jpg,A simple drawing of an astronaut beside a lander on the Moon. No text.
+SS-3.14B-CL,Was the author there?,venn,textV,"A textbook paragraph about the landing, with no pictures",/lab/ss-3.14b-cl-textv.jpg,"Photo of a printed textbook page with only paragraphs of words and no pictures. Words too small to read, no other text."
+SCI-4.7-CL,Which force?,page 1,apple,A ripe apple breaks off its branch and drops straight to the ground.,/lab/sci-4.7-cl-apple.jpg,"Photo of a red apple falling from a tree branch. No people, no text."
+SCI-4.7-CL,Which force?,page 1,rain,Drops of rain fall from the clouds all the way to the ground.,/lab/sci-4.7-cl-rain.jpg,Photo of rain falling from clouds onto a field. No text.
+SCI-4.7-CL,Which force?,page 1,toss,"When a ball is thrown straight up into the air, it comes back down.",/lab/sci-4.7-cl-toss.jpg,"Photo of a ball in the air above a person's open hands, against a blue sky. No face, no text."
+SCI-4.7-CL,Which force?,page 1,grass,A ball rolls across the grass and gradually comes to a stop.,/lab/sci-4.7-cl-grass.jpg,"Photo of a soccer ball resting in tall grass. No people, no text."
+SCI-4.7-CL,Which force?,page 1,sled,A sled slides across flat snow and slowly loses speed.,/lab/sci-4.7-cl-sled.jpg,"Photo of an empty sled on flat, snowy ground. No people, no text."
+SCI-4.7-CL,Which force?,page 1,brakes,"A rider squeezes the brakes, and the bike comes to a stop.",/lab/sci-4.7-cl-brakes.jpg,"Close-up photo of a bike brake pressing on a wheel rim. No people, no text."
+SCI-4.7-CL,Which force?,page 2,river,"A river flows downhill from the mountains, and it eventually reaches the ocean.",/lab/sci-4.7-cl-river.jpg,"Photo of a small river flowing down a rocky hillside. No people, no text."
+SCI-4.7-CL,Which force?,page 2,book,A book slides off the edge of a desk and lands on the floor.,/lab/sci-4.7-cl-book.jpg,"Photo of a book falling in the air next to the edge of a desk. No people, no text."
+SCI-4.7-CL,Which force?,page 2,hands,"You rub your hands together quickly, and they start to feel warm.",/lab/sci-4.7-cl-hands.jpg,"Photo of two hands rubbing together on a cold day. No face, no text."
+SCI-4.7-CL,Which force?,page 2,shoes,A player's sneakers grip the gym floor instead of slipping.,/lab/sci-4.7-cl-shoes.jpg,"Close-up photo of sneakers on a shiny wooden gym floor. No face, no text."
+SCI-4.7-CL,Which force?,page 2,clips,A magnet picks up a pile of paper clips from the table.,/lab/sci-4.7-cl-clips.jpg,Photo of a red horseshoe magnet with a chain of paper clips hanging from it. No text.
+SCI-4.7-CL,Which force?,page 2,compass,A compass needle swings around to point north.,/lab/sci-4.7-cl-compass.jpg,Photo of a compass on a table with its needle pointing. No readable text.
+SCI-4.7-CL,Which force?,venn,brakesV,Bike brakes press against a spinning wheel and slow it down.,/lab/sci-4.7-cl-brakesv.jpg,"Close-up photo of bike brake pads squeezing a wheel. No people, no text."
+SCI-4.7-CL,Which force?,venn,rugV,A toy car rolls from the smooth floor onto a thick rug and slows down.,/lab/sci-4.7-cl-rugv.jpg,"Photo of a toy car on a thick, shaggy rug. No people, no text."
+SCI-4.7-CL,Which force?,venn,upV,A ball tossed into the air slows down as it rises.,/lab/sci-4.7-cl-upv.jpg,"Photo of a ball high in the air against a blue sky. No people, no text."
+SCI-4.7-CL,Which force?,venn,kickV,A player's foot kicks a soccer ball across the field.,/lab/sci-4.7-cl-kickv.jpg,"Photo of a foot kicking a soccer ball on grass. No face, no text."
+SCI-4.7-CL,Which force?,venn,coconutV,A coconut drops from the top of a tall palm tree.,/lab/sci-4.7-cl-coconutv.jpg,"Photo of coconuts hanging high in a palm tree. No people, no text."
+SCI-4.7-CL,Which force?,venn,magnetV,A magnet pulls a paper clip up off the table.,/lab/sci-4.7-cl-magnetv.jpg,"Photo of a paper clip jumping up toward a magnet held above it. No face, no text."
+SCI-4.10A-CL,Up or down the cycle,page 1,puddle,A puddle dries up on a sunny day,/lab/sci-4.10a-cl-puddle.jpg,"Photo of a small, half-dried puddle on a sidewalk in bright sun. No people, no text."
+SCI-4.10A-CL,Up or down the cycle,page 1,clothes,Wet clothes dry on a clothesline,/lab/sci-4.10a-cl-clothes.jpg,"Photo of wet shirts and towels hanging on a clothesline outside. No people, no text."
+SCI-4.10A-CL,Up or down the cycle,page 1,sidewalk,A wet sidewalk dries after rain,/lab/sci-4.10a-cl-sidewalk.jpg,"Photo of a sidewalk with dry patches spreading across wet concrete. No people, no text."
+SCI-4.10A-CL,Up or down the cycle,page 1,dew,Dew forms on grass in the morning,/lab/sci-4.10a-cl-dew.jpg,Close-up photo of water drops on blades of green grass in early morning light. No text.
+SCI-4.10A-CL,Up or down the cycle,page 1,glass,Drops form on a glass of ice water,/lab/sci-4.10a-cl-glass.jpg,Photo of a glass of ice water with drops on the outside of the glass. No text.
+SCI-4.10A-CL,Up or down the cycle,page 1,pot,The white cloud above a boiling pot,/lab/sci-4.10a-cl-pot.jpg,"Photo of a pot of boiling water on a stove with a white cloud rising above it. No people, no text."
+SCI-4.10A-CL,Up or down the cycle,page 2,salt,Seawater dries and leaves salt behind,/lab/sci-4.10a-cl-salt.jpg,Photo of white salt crust left on rocks at the edge of the sea. No text.
+SCI-4.10A-CL,Up or down the cycle,page 2,bowl,A dog's water bowl gets lower on a hot day,/lab/sci-4.10a-cl-bowl.jpg,"Photo of a metal dog water bowl with only a little water left in it. No dog, no text."
+SCI-4.10A-CL,Up or down the cycle,page 2,mirror,A bathroom mirror fogs up,/lab/sci-4.10a-cl-mirror.jpg,"Photo of a foggy bathroom mirror with drops on it. No people, no reflection of a person, no text."
+SCI-4.10A-CL,Up or down the cycle,page 2,breath,Your breath makes a cloud on a cold day,/lab/sci-4.10a-cl-breath.jpg,"Photo of a white puff of breath in cold winter air. No face, no text."
+SCI-4.10A-CL,Up or down the cycle,page 2,rain,Rain falls from a dark cloud,/lab/sci-4.10a-cl-rain.jpg,Photo of rain falling from dark clouds over a field. No text.
+SCI-4.10A-CL,Up or down the cycle,page 2,runoff,Rainwater flows down a street into a lake,/lab/sci-4.10a-cl-runoff.jpg,"Photo of rainwater running down a sloped street toward a creek. No people, no text."
+SCI-4.10A-CL,Up or down the cycle,venn,puddleV,A puddle dries in the sunshine,/lab/sci-4.10a-cl-puddlev.jpg,"Photo of a shrinking puddle on a playground in bright sunshine. No people, no text."
+SCI-4.10A-CL,Up or down the cycle,venn,towelV,A wet towel dries on a sunny beach,/lab/sci-4.10a-cl-towelv.jpg,"Photo of a beach towel spread on sand in bright sun. No people, no text."
+SCI-4.10A-CL,Up or down the cycle,venn,snowV,Sunshine melts snow on a roof,/lab/sci-4.10a-cl-snowv.jpg,Photo of snow melting and dripping off a roof on a sunny day. No text.
+SCI-4.10A-CL,Up or down the cycle,venn,stoveV,Water boils away in a pot on a stove,/lab/sci-4.10a-cl-stovev.jpg,"Photo of a pot on a stove with water boiling hard. No people, no text."
+SCI-4.10A-CL,Up or down the cycle,venn,dryerV,A clothes dryer dries wet socks,/lab/sci-4.10a-cl-dryerv.jpg,Photo of socks tumbling inside an open clothes dryer. No text.
+SCI-4.10A-CL,Up or down the cycle,venn,dewV,Dew forms on a car at night,/lab/sci-4.10a-cl-dewv.jpg,Photo of a car window covered in dew drops at night. No text.
+SCI-4.10B-CL,"Break, move, drop",page 1,iceboulder,"Water freezes inside a crack, and the ice gradually splits a boulder in two.",/lab/sci-4.10b-cl-iceboulder.jpg,"Photo of a large boulder split by a crack, with ice or snow in the crack. No people, no text."
+SCI-4.10B-CL,"Break, move, drop",page 1,treerock,"A tree grows in a crack, and its roots slowly force the rock apart.",/lab/sci-4.10b-cl-treerock.jpg,Photo of a small tree growing out of a split in a large rock. No text.
+SCI-4.10B-CL,"Break, move, drop",page 1,gravestone,Rain falls on an old gravestone for many years and gradually wears it down.,/lab/sci-4.10b-cl-gravestone.jpg,"Photo of a very old, worn gravestone with crumbling edges and letters too worn to read. No readable text."
+SCI-4.10B-CL,"Break, move, drop",page 1,slide,"Rainwater washes loose, broken rocks down the side of a steep hill.",/lab/sci-4.10b-cl-slide.jpg,"Photo of loose, broken rocks sliding down a steep, rocky slope. No people, no text."
+SCI-4.10B-CL,"Break, move, drop",page 1,sandblow,A strong wind blows sand across the desert and carries it far away.,/lab/sci-4.10b-cl-sandblow.jpg,"Photo of sand blowing off the top of a desert dune in the wind. No people, no text."
+SCI-4.10B-CL,"Break, move, drop",page 1,glacier,A huge glacier drags rocks and gravel along as it slides down a valley.,/lab/sci-4.10b-cl-glacier.jpg,Photo of a glacier in a mountain valley with dark lines of rock carried along in the ice. No text.
+SCI-4.10B-CL,"Break, move, drop",page 2,peak,"On a cold mountaintop, freezing ice cracks the rocks into sharp pieces.",/lab/sci-4.10b-cl-peak.jpg,"Photo of a rocky mountaintop with snow and many sharp, cracked rocks. No people, no text."
+SCI-4.10B-CL,"Break, move, drop",page 2,walk,Tree roots grow underneath a sidewalk and gradually crack the concrete.,/lab/sci-4.10b-cl-walk.jpg,"Photo of a concrete sidewalk lifted and cracked by a big tree root. No people, no text."
+SCI-4.10B-CL,"Break, move, drop",page 2,beach,Ocean waves pull sand away from a beach and carry it out to sea.,/lab/sci-4.10b-cl-beach.jpg,"Photo of waves pulling sand back from a beach, with a small cliff of sand left behind. No people, no text."
+SCI-4.10B-CL,"Break, move, drop",page 2,dust,Strong wind lifts loose dust from a dry field and carries it off.,/lab/sci-4.10b-cl-dust.jpg,"Photo of a cloud of dust blowing off a dry, bare farm field. No people, no text."
+SCI-4.10B-CL,"Break, move, drop",page 2,delta,"A river slows down where it meets the sea, and it drops its mud there.",/lab/sci-4.10b-cl-delta.jpg,"Photo from above of a river delta, where a muddy river spreads out into the sea. No text."
+SCI-4.10B-CL,"Break, move, drop",page 2,melt,A glacier melts and leaves behind a large pile of rocks and gravel.,/lab/sci-4.10b-cl-melt.jpg,Photo of a pile of rocks and gravel left at the front edge of a melting glacier. No text.
+SCI-4.10B-CL,"Break, move, drop",venn,glacierV,A glacier scrapes up rocks and carries them far down the valley.,/lab/sci-4.10b-cl-glacierv.jpg,Photo of a glacier with rocks and gravel stuck in its dirty front edge. No text.
+SCI-4.10B-CL,"Break, move, drop",venn,riverV,"After a storm, a fast river carries sand and mud downstream.",/lab/sci-4.10b-cl-riverv.jpg,"Photo of a muddy, brown river flowing fast after a storm. No text."
+SCI-4.10B-CL,"Break, move, drop",venn,windV,Wind blows dry sand grains along the beach to a new spot.,/lab/sci-4.10b-cl-windv.jpg,"Photo of dry sand blowing low across a beach on a windy day. No people, no text."
+SCI-4.10B-CL,"Break, move, drop",venn,frostV,"High on a mountain, ice splits a rock into several sharp pieces.",/lab/sci-4.10b-cl-frostv.jpg,"Photo of a rock split into pieces with ice in the crack, high on a mountain. No text."
+SCI-4.10B-CL,"Break, move, drop",venn,potholeV,"Over many winters, freezing ice cracks the surface of a road.",/lab/sci-4.10b-cl-potholev.jpg,"Photo of a cracked road with frost in the cracks. No cars, no text."
+SCI-4.10B-CL,"Break, move, drop",venn,rootsV,Tree roots grow into a boulder and gradually split it apart.,/lab/sci-4.10b-cl-rootsv.jpg,Photo of tree roots wrapped around and growing into a cracked boulder. No text.
+SCI-4.11A-CL,Will it run out?,page 1,wind,Wind,/lab/sci-4.11a-cl-wind.jpg,Photo of tall white wind turbines on a flat Texas field under a blue sky. No text.
+SCI-4.11A-CL,Will it run out?,page 1,sun,Sunlight,/lab/sci-4.11a-cl-sun.jpg,"Photo of bright sunlight shining on rows of solar panels. No people, no text."
+SCI-4.11A-CL,Will it run out?,page 1,cotton,Cotton plants,/lab/sci-4.11a-cl-cotton.jpg,"Photo of a field of cotton plants with white, fluffy cotton bolls. No people, no text."
+SCI-4.11A-CL,Will it run out?,page 1,cattle,Beef cattle,/lab/sci-4.11a-cl-cattle.jpg,"Photo of a small herd of cattle grazing in a grassy pasture. No people, no text."
+SCI-4.11A-CL,Will it run out?,page 1,coal,Coal,/lab/sci-4.11a-cl-coal.jpg,Photo of a pile of shiny black lumps of coal. No text.
+SCI-4.11A-CL,Will it run out?,page 1,oil,Oil,/lab/sci-4.11a-cl-oil.jpg,"Photo of an oil pump jack working in a dry West Texas field. No people, no text."
+SCI-4.11A-CL,Will it run out?,page 2,river,River water,/lab/sci-4.11a-cl-river.jpg,"Photo of a clear river flowing between rocky banks. No people, no text."
+SCI-4.11A-CL,Will it run out?,page 2,pine,Pine trees,/lab/sci-4.11a-cl-pine.jpg,"Photo of rows of young and tall pine trees in a tree farm. No people, no text."
+SCI-4.11A-CL,Will it run out?,page 2,gas,Natural gas,/lab/sci-4.11a-cl-gas.jpg,Photo of a blue natural gas flame on a kitchen stove burner. No text.
+SCI-4.11A-CL,Will it run out?,page 2,ironore,Iron ore,/lab/sci-4.11a-cl-ironore.jpg,Photo of reddish-brown chunks of iron ore rock. No text.
+SCI-4.11A-CL,Will it run out?,page 2,bottle,Plastic bottle,/lab/sci-4.11a-cl-bottle.jpg,Photo of one empty clear plastic water bottle with no label. No text.
+SCI-4.11A-CL,Will it run out?,page 2,jar,Glass jar,/lab/sci-4.11a-cl-jar.jpg,"Photo of one empty clear glass jar with a lid, no label. No text."
+SCI-4.11A-CL,Will it run out?,venn,riverV,Flowing river water,/lab/sci-4.11a-cl-riverv.jpg,"Photo of water rushing out of a hydroelectric dam into a river. No people, no text."
+SCI-4.11A-CL,Will it run out?,venn,sunV,Sunlight,/lab/sci-4.11a-cl-sunv.jpg,Photo of the Sun shining on a large field of solar panels. No text.
+SCI-4.11A-CL,Will it run out?,venn,woolV,Wool from sheep,/lab/sci-4.11a-cl-woolv.jpg,"Photo of fluffy white sheep in a green field. No people, no text."
+SCI-4.11A-CL,Will it run out?,venn,coalV,Coal,/lab/sci-4.11a-cl-coalv.jpg,Photo of a train car heaped with black coal. No text.
+SCI-4.11A-CL,Will it run out?,venn,gasV,Natural gas,/lab/sci-4.11a-cl-gasv.jpg,Photo of a natural gas pipeline running across a grassy field. No text.
+SCI-4.11A-CL,Will it run out?,venn,ironV,Iron ore,/lab/sci-4.11a-cl-ironv.jpg,"Photo of a pile of reddish iron ore rocks at a mine. No people, no text."
+SCI-4.13B-CL,Born with it?,page 1,eyes,Brown eyes,/lab/sci-4.13b-cl-eyes.jpg,Close-up photo of a child's brown eyes. No text.
+SCI-4.13B-CL,Born with it?,page 1,tabby,A cat's striped fur,/lab/sci-4.13b-cl-tabby.jpg,"Photo of an orange tabby cat with stripes, sitting. No text."
+SCI-4.13B-CL,Born with it?,page 1,tulip,A tulip's red petals,/lab/sci-4.13b-cl-tulip.jpg,Photo of one red tulip in a garden. No text.
+SCI-4.13B-CL,Born with it?,page 1,scar,A girl has a scar on her knee from an accident years ago.,/lab/sci-4.13b-cl-scar.jpg,Close-up photo of a small healed scar on a child's knee. No text.
+SCI-4.13B-CL,Born with it?,page 1,dyed,A girl dyes her hair a bright shade of purple.,/lab/sci-4.13b-cl-dyed.jpg,"Photo of a person's bright purple hair from behind. No face, no text."
+SCI-4.13B-CL,Born with it?,page 1,muscle,A boy builds big muscles by lifting heavy weights every week.,/lab/sci-4.13b-cl-muscle.jpg,"Photo of an adult's strong arm lifting a dumbbell. No face, no text."
+SCI-4.13B-CL,Born with it?,page 2,ears,A dog's floppy ears,/lab/sci-4.13b-cl-ears.jpg,Photo of a beagle puppy with long floppy ears. No text.
+SCI-4.13B-CL,Born with it?,page 2,cactus,A cactus's sharp spines,/lab/sci-4.13b-cl-cactus.jpg,Close-up photo of a cactus covered in sharp spines. No text.
+SCI-4.13B-CL,Born with it?,page 2,bent,"Strong winds gradually bent a tree, so now it leans to one side.",/lab/sci-4.13b-cl-bent.jpg,Photo of a tree growing bent to one side on a windy hilltop. No text.
+SCI-4.13B-CL,Born with it?,page 2,tooth,A boy chipped his front tooth when he fell on the playground.,/lab/sci-4.13b-cl-tooth.jpg,Close-up photo of a smile with one slightly chipped front tooth. No text.
+SCI-4.13B-CL,Born with it?,venn,thornsV,A rose's thorns,/lab/sci-4.13b-cl-thornsv.jpg,Close-up photo of a rose stem with sharp thorns. No text.
+SCI-4.13B-CL,Born with it?,venn,mapleV,The shape of a maple leaf,/lab/sci-4.13b-cl-maplev.jpg,Photo of one green maple leaf on a white background. No text.
+SCI-4.13B-CL,Born with it?,venn,zebraV,A zebra's stripes,/lab/sci-4.13b-cl-zebrav.jpg,Photo of a zebra standing in grass. No text.
+SCI-4.13B-CL,Born with it?,venn,curlyV,Naturally curly hair,/lab/sci-4.13b-cl-curlyv.jpg,"Photo of a child's naturally curly hair from behind. No face, no text."
+SCI-4.13B-CL,Born with it?,venn,sawV,A tree has a branch that a worker sawed off last spring.,/lab/sci-4.13b-cl-sawv.jpg,"Photo of a tree trunk with a flat, round stump where a branch was sawed off. No text."
+SCI-4.13B-CL,Born with it?,venn,dogscarV,A dog got a scar on its nose from a sharp fence.,/lab/sci-4.13b-cl-dogscarv.jpg,Close-up photo of a dog's nose with a small healed scar. No text.
+SS-4.6A-CL,Far from the beach,page 1,galveston,Galveston Island,/lab/ss-4.6a-cl-galveston.jpg,"Photo of a sandy Gulf beach with low waves. No people, no text."
+SS-4.6A-CL,Far from the beach,page 1,piney,Piney Woods,/lab/ss-4.6a-cl-piney.jpg,Photo of a thick forest of tall pine trees in East Texas. No text.
+SS-4.6A-CL,Far from the beach,page 1,houston,Houston,/lab/ss-4.6a-cl-houston.jpg,Photo of the Houston skyline on a sunny day. No readable signs or text.
+SS-4.6A-CL,Far from the beach,page 1,guadalupe,Guadalupe Mountains,/lab/ss-4.6a-cl-guadalupe.jpg,Photo of the rocky cliffs of the Guadalupe Mountains. No text.
+SS-4.6A-CL,Far from the beach,page 1,saltflat,Salt flats in far West Texas,/lab/ss-4.6a-cl-saltflat.jpg,"Photo of flat, white salt flats with mountains far in the background. No text."
+SS-4.6A-CL,Far from the beach,page 1,elpaso,El Paso,/lab/ss-4.6a-cl-elpaso.jpg,Photo of the El Paso skyline with brown mountains behind it. No readable signs or text.
+SS-4.6A-CL,Far from the beach,page 2,dallas,Dallas,/lab/ss-4.6a-cl-dallas.jpg,Photo of the Dallas skyline. No readable signs or text.
+SS-4.6A-CL,Far from the beach,page 2,corpus,Corpus Christi,/lab/ss-4.6a-cl-corpus.jpg,Photo of Corpus Christi's bayfront with boats. No readable signs or text.
+SS-4.6A-CL,Far from the beach,page 2,davis,Davis Mountains,/lab/ss-4.6a-cl-davis.jpg,"Photo of the grassy, rolling Davis Mountains. No text."
+SS-4.6A-CL,Far from the beach,page 2,bigbend,Big Bend National Park,/lab/ss-4.6a-cl-bigbend.jpg,"Photo of desert mountains in Big Bend National Park. No people, no text."
+SS-4.6A-CL,Far from the beach,page 2,paloduro,Palo Duro Canyon,/lab/ss-4.6a-cl-paloduro.jpg,"Photo of the red and orange cliffs of Palo Duro Canyon. No people, no text."
+SS-4.6A-CL,Far from the beach,page 2,ftworth,Fort Worth,/lab/ss-4.6a-cl-ftworth.jpg,Photo of the Fort Worth skyline. No readable signs or text.
+SS-4.6A-CL,Far from the beach,venn,brownsville,Brownsville,/lab/ss-4.6a-cl-brownsville.jpg,Photo of a palm-lined street in Brownsville. No readable signs or text.
+SS-4.6A-CL,Far from the beach,venn,laredo,Laredo,/lab/ss-4.6a-cl-laredo.jpg,Photo of Laredo beside the Rio Grande. No readable signs or text.
+SS-4.6A-CL,Far from the beach,venn,beaumont,Beaumont,/lab/ss-4.6a-cl-beaumont.jpg,Photo of downtown Beaumont with green trees. No readable signs or text.
+SS-4.6A-CL,Far from the beach,venn,elpasoV,El Paso,/lab/ss-4.6a-cl-elpasov.jpg,Photo of El Paso and the Rio Grande with mountains behind. No readable signs or text.
+SS-4.6A-CL,Far from the beach,venn,lubbock,Lubbock,/lab/ss-4.6a-cl-lubbock.jpg,Photo of flat farm fields near Lubbock. No text.
+SS-4.6A-CL,Far from the beach,venn,abilene,Abilene,/lab/ss-4.6a-cl-abilene.jpg,Photo of downtown Abilene. No readable signs or text.
+SS-4.14A-CL,Texas or the U.S.?,page 1,lonestar,Lone Star flag,/lab/ss-4.14a-cl-lonestar.jpg,Photo of the Texas state flag waving on a flagpole against a blue sky. No text.
+SS-4.14A-CL,Texas or the U.S.?,page 1,bluebonnet,Bluebonnet,/lab/ss-4.14a-cl-bluebonnet.jpg,Photo of a field of blue bluebonnet flowers. No text.
+SS-4.14A-CL,Texas or the U.S.?,page 1,alamo,The Alamo,/lab/ss-4.14a-cl-alamo.jpg,"Photo of the front of the Alamo church in San Antonio. No people, no readable signs."
+SS-4.14A-CL,Texas or the U.S.?,page 1,eagle,Bald eagle,/lab/ss-4.14a-cl-eagle.jpg,Photo of a bald eagle perched on a branch. No text.
+SS-4.14A-CL,Texas or the U.S.?,page 1,usflag,Flag of the United States,/lab/ss-4.14a-cl-usflag.jpg,Photo of the flag of the United States waving on a flagpole. No text.
+SS-4.14A-CL,Texas or the U.S.?,page 1,liberty,Statue of Liberty,/lab/ss-4.14a-cl-liberty.jpg,Photo of the Statue of Liberty against a clear sky. No text.
+SS-4.14A-CL,Texas or the U.S.?,page 2,mocking,Mockingbird,/lab/ss-4.14a-cl-mocking.jpg,Photo of a gray mockingbird sitting on a fence post. No text.
+SS-4.14A-CL,Texas or the U.S.?,page 2,sanjac,San Jacinto Monument,/lab/ss-4.14a-cl-sanjac.jpg,Photo of the tall stone San Jacinto Monument with the star on top. No text.
+SS-4.14A-CL,Texas or the U.S.?,page 2,bell,Liberty Bell,/lab/ss-4.14a-cl-bell.jpg,Photo of the Liberty Bell showing its crack. No readable text.
+SS-4.14A-CL,Texas or the U.S.?,page 2,uscap,"U.S. Capitol in Washington, D.C.",/lab/ss-4.14a-cl-uscap.jpg,Photo of the U.S. Capitol building with its white dome. No text.
+SS-4.14A-CL,Texas or the U.S.?,page 2,canada,Canada's maple leaf flag,/lab/ss-4.14a-cl-canada.jpg,Photo of the flag of Canada waving on a flagpole. No text.
+SS-4.14A-CL,Texas or the U.S.?,page 2,bigben,Big Ben's clock tower,/lab/ss-4.14a-cl-bigben.jpg,Photo of the Big Ben clock tower in London. No readable text.
+SS-4.14A-CL,Texas or the U.S.?,venn,lonestarV,Lone Star flag,/lab/ss-4.14a-cl-lonestarv.jpg,Photo of the Texas state flag flying in front of a building. No text.
+SS-4.14A-CL,Texas or the U.S.?,venn,usflagV,Flag of the United States,/lab/ss-4.14a-cl-usflagv.jpg,Photo of the flag of the United States flying on a tall pole. No text.
+SS-4.14A-CL,Texas or the U.S.?,venn,pecan,Pecan tree,/lab/ss-4.14a-cl-pecan.jpg,Photo of a large pecan tree in a green field. No text.
+SS-4.14A-CL,Texas or the U.S.?,venn,txcap,Texas State Capitol,/lab/ss-4.14a-cl-txcap.jpg,Photo of the pink granite Texas State Capitol in Austin. No readable signs.
+SS-4.14A-CL,Texas or the U.S.?,venn,canadaV,Canada's maple leaf flag,/lab/ss-4.14a-cl-canadav.jpg,Photo of the flag of Canada flying on a pole. No text.
+SS-4.14A-CL,Texas or the U.S.?,venn,statueV,Statue of Liberty,/lab/ss-4.14a-cl-statuev.jpg,Photo of the Statue of Liberty holding up her torch. No text.
+SS-4.19A-CL,Alamo sources,page 1,travis,"William B. Travis's letter from the Alamo, February 24, 1836",/lab/ss-4.19a-cl-travis.jpg,"Photo of the handwritten original letter on old paper, words too small to read, no other text."
+SS-4.19A-CL,Alamo sources,page 1,onder,"Robert Onderdonk's painting The Fall of the Alamo, about 1903",/lab/ss-4.19a-cl-onder.jpg,"Image of Robert Onderdonk's painting The Fall of the Alamo, showing defenders fighting inside the fort. No added text."
+SS-4.19A-CL,Alamo sources,page 1,dawn,"Henry McArdle's painting Dawn at the Alamo, finished in 1905",/lab/ss-4.19a-cl-dawn.jpg,"Image of Henry McArdle's painting Dawn at the Alamo, showing the crowded battle at dawn. No added text."
+SS-4.19A-CL,Alamo sources,page 2,decl,"The Texas Declaration of Independence, signed March 2, 1836",/lab/ss-4.19a-cl-decl.jpg,"Photo of the handwritten original document on old paper, words too small to read, no other text."
+SS-4.19A-CL,Alamo sources,page 2,sjpaint,"Henry McArdle's painting The Battle of San Jacinto, finished in 1895",/lab/ss-4.19a-cl-sjpaint.jpg,"Image of Henry McArdle's painting The Battle of San Jacinto, showing soldiers charging across a field. No added text."
+SS-4.19A-CL,Alamo sources,page 2,museum,A sign beside a display in the Alamo museum today,/lab/ss-4.19a-cl-museum.jpg,Photo of a museum display case with an information sign beside it. The sign's words are too small to read. No people.
+SS-4.19A-CL,Alamo sources,page 2,spindle,A 1901 photo of the Spindletop oil gusher,/lab/ss-4.19a-cl-spindle.jpg,The famous 1901 black-and-white photo of oil gushing high into the air from a wooden derrick at Spindletop. No added text.
+SS-4.19A-CL,Alamo sources,page 2,dust,A 1930s photo of a dust storm in the Texas Panhandle,/lab/ss-4.19a-cl-dust.jpg,A 1930s black-and-white photo of a huge wall of dust rolling toward a small Texas Panhandle town. No added text.
+SS-4.19A-CL,Alamo sources,venn,travisV,"William B. Travis's letter from the Alamo, February 24, 1836",/lab/ss-4.19a-cl-travisv.jpg,"Photo of the handwritten original letter on old paper, words too small to read, no other text."
+SS-4.19A-CL,Alamo sources,venn,declV,"The Texas Declaration of Independence, March 2, 1836",/lab/ss-4.19a-cl-declv.jpg,"Photo of the handwritten original document on old paper, words too small to read, no other text."
+SS-4.19A-CL,Alamo sources,venn,onderV,"Robert Onderdonk's painting The Fall of the Alamo, about 1903",/lab/ss-4.19a-cl-onderv.jpg,Image of Robert Onderdonk's painting The Fall of the Alamo. No added text.
+SS-4.19A-CL,Alamo sources,venn,sjV,"Henry McArdle's painting The Battle of San Jacinto, 1895",/lab/ss-4.19a-cl-sjv.jpg,Image of Henry McArdle's painting The Battle of San Jacinto. No added text.
+SCI-5.6A-CL,Properties that matter,page 1,copper,A coil of bare copper wire hangs on a hook.,/lab/sci-5.6a-cl-copper.jpg,"Photo of a coil of bare copper wire, no text."
+SCI-5.6A-CL,Properties that matter,page 1,can,An aluminum soda can,/lab/sci-5.6a-cl-can.jpg,"Photo of a plain, bare, unpainted aluminum can with no label, no text."
+SCI-5.6A-CL,Properties that matter,page 1,graphite,The gray graphite core of a pencil,/lab/sci-5.6a-cl-graphite.jpg,"Close-up photo of a sharpened pencil tip showing the gray graphite core, no text."
+SCI-5.6A-CL,Properties that matter,page 1,rubber,A rubber band holds a stack of cards together.,/lab/sci-5.6a-cl-rubber.jpg,"Photo of a few colored rubber bands on a table, no text."
+SCI-5.6A-CL,Properties that matter,page 1,plasticspoon,A shiny silver plastic spoon,/lab/sci-5.6a-cl-plasticspoon.jpg,"Photo of a shiny silver-colored plastic spoon, no text."
+SCI-5.6A-CL,Properties that matter,page 1,stick,A dry wooden craft stick lies on a desk.,/lab/sci-5.6a-cl-stick.jpg,"Photo of a plain dry wooden craft stick, no text."
+SCI-5.6A-CL,Properties that matter,page 2,saltwater,A cup of salt water,/lab/sci-5.6a-cl-saltwater.jpg,"Photo of a clear cup of water next to a small pile of salt, no text."
+SCI-5.6A-CL,Properties that matter,page 2,gold,A gold ring rests on a small dish.,/lab/sci-5.6a-cl-gold.jpg,"Photo of a plain gold ring on a white surface, no text."
+SCI-5.6A-CL,Properties that matter,page 2,glass,An empty glass jar sits on a shelf.,/lab/sci-5.6a-cl-glass.jpg,"Photo of an empty clear glass jar, no label, no text."
+SCI-5.6A-CL,Properties that matter,page 2,coating,The plastic coating on a lamp cord,/lab/sci-5.6a-cl-coating.jpg,"Close-up photo of a lamp cord with the plastic coating cut back to show the wire, no text."
+SCI-5.6A-CL,Properties that matter,page 2,sunbeam,A beam of sunlight through a window,/lab/sci-5.6a-cl-sunbeam.jpg,"Photo of a beam of sunlight shining through a window into a dim room, no text."
+SCI-5.6A-CL,Properties that matter,page 2,sound,The sound that travels from a ringing bell,/lab/sci-5.6a-cl-sound.jpg,"Photo of a brass hand bell mid-ring, with motion blur, no text."
+SCI-5.6A-CL,Properties that matter,venn,nailV,An iron nail,/lab/sci-5.6a-cl-nailv.jpg,"Photo of a plain iron nail on a white surface, no text."
+SCI-5.6A-CL,Properties that matter,venn,clipV,A bare steel paper clip,/lab/sci-5.6a-cl-clipv.jpg,"Photo of a plain silver steel paper clip with no plastic coating, no text."
+SCI-5.6A-CL,Properties that matter,venn,copperV,A copper pipe,/lab/sci-5.6a-cl-copperv.jpg,"Photo of a short piece of copper pipe, no text."
+SCI-5.6A-CL,Properties that matter,venn,foilV,A sheet of aluminum foil,/lab/sci-5.6a-cl-foilv.jpg,"Photo of a crumpled sheet of aluminum foil, no text."
+SCI-5.6A-CL,Properties that matter,venn,fridgeV,A flexible rubber fridge magnet,/lab/sci-5.6a-cl-fridgev.jpg,"Photo of a plain, blank flexible rubber magnet sheet stuck to a refrigerator door, no text."
+SCI-5.6A-CL,Properties that matter,venn,marbleV,A glass marble,/lab/sci-5.6a-cl-marblev.jpg,"Photo of a clear glass marble on a white surface, no text."
+SCI-5.8C-CL,Where does the light go?,page 1,mirror,You see your face in a bathroom mirror while brushing your teeth.,/lab/sci-5.8c-cl-mirror.jpg,"Photo of a bathroom mirror above a sink, with a toothbrush in a cup and no person in view, no text."
+SCI-5.8C-CL,Where does the light go?,page 1,moon,The full moon brightly illuminates a dark field at night.,/lab/sci-5.8c-cl-moon.jpg,"Photo of a bright full moon above a dark, moonlit field, no text."
+SCI-5.8C-CL,Where does the light go?,page 1,lake,The trees on the shore appear upside down on a calm lake.,/lab/sci-5.8c-cl-lake.jpg,"Photo of a still lake with trees on the far shore mirrored upside down in the water, no text."
+SCI-5.8C-CL,Where does the light go?,page 1,straw,A straw in a glass of water looks broken right at the waterline.,/lab/sci-5.8c-cl-straw.jpg,"Photo of a clear glass of water with a straw that looks broken at the waterline, no text."
+SCI-5.8C-CL,Where does the light go?,page 1,lens,A magnifying lens makes the tiny print on a coin appear much larger.,/lab/sci-5.8c-cl-lens.jpg,"Photo of a magnifying glass held over a coin, showing an enlarged view, no text."
+SCI-5.8C-CL,Where does the light go?,page 1,glasses,A student's eyeglasses help her read the board from the back row.,/lab/sci-5.8c-cl-glasses.jpg,"Photo of a pair of eyeglasses resting on an open notebook, no text."
+SCI-5.8C-CL,Where does the light go?,page 2,spoon,The back of a shiny metal spoon shows a stretched picture of your face.,/lab/sci-5.8c-cl-spoon.jpg,"Photo of the curved back of a polished metal spoon showing a warped reflection of a room, no text."
+SCI-5.8C-CL,Where does the light go?,page 2,reflector,A bike reflector glows red when car headlights shine on it at night.,/lab/sci-5.8c-cl-reflector.jpg,"Photo of a red bike reflector glowing in car headlights at night, no text."
+SCI-5.8C-CL,Where does the light go?,page 2,coin,A coin at the bottom of a pool appears closer than it actually is.,/lab/sci-5.8c-cl-coin.jpg,"Photo of a coin resting on the bottom of a clear swimming pool, seen from above the water, no text."
+SCI-5.8C-CL,Where does the light go?,page 2,prism,A glass prism spreads a beam of sunlight into a band of colors.,/lab/sci-5.8c-cl-prism.jpg,"Photo of a triangular glass prism casting a rainbow band of colors onto a white surface, no text."
+SCI-5.8C-CL,Where does the light go?,page 2,shirt,A black T-shirt gets hot after an hour in the afternoon sun.,/lab/sci-5.8c-cl-shirt.jpg,"Photo of a plain black T-shirt drying in bright sunlight, no text."
+SCI-5.8C-CL,Where does the light go?,page 2,solar,A dark solar panel collects sunlight to produce electricity for a house.,/lab/sci-5.8c-cl-solar.jpg,"Photo of dark blue solar panels on a house roof in bright sunlight, no text."
+SCI-5.8C-CL,Where does the light go?,venn,rainbowV,"Sunlight passes into raindrops, bounces off the back of each drop, and comes out as a rainbow.",/lab/sci-5.8c-cl-rainbowv.jpg,"Photo of a bright rainbow in the sky after a rainstorm, no text."
+SCI-5.8C-CL,Where does the light go?,venn,dentistV,A dentist's small mirror shows the back of a patient's tooth.,/lab/sci-5.8c-cl-dentistv.jpg,"Photo of a dental mirror on a tray of clean dental tools, no people, no text."
+SCI-5.8C-CL,Where does the light go?,venn,signV,A highway sign shines brightly in a car's headlights at night.,/lab/sci-5.8c-cl-signv.jpg,"Photo of a road sign shining brightly in headlights on a dark road, sign face blank, no text."
+SCI-5.8C-CL,Where does the light go?,venn,marbleV,A clear glass marble makes the picture behind it look upside down.,/lab/sci-5.8c-cl-marblev.jpg,"Photo of a clear glass marble on a table, with an upside-down view of the background inside it, no text."
+SCI-5.8C-CL,Where does the light go?,venn,fishV,A goldfish in a round bowl appears larger than its actual size.,/lab/sci-5.8c-cl-fishv.jpg,"Photo of a goldfish in a round glass bowl of water, no text."
+SCI-5.8C-CL,Where does the light go?,venn,roadV,A dark asphalt road gets hot on a summer afternoon.,/lab/sci-5.8c-cl-roadv.jpg,"Photo of a dark asphalt road in bright summer sunlight, no cars, no text."
+SCI-5.8A-CL,Where does the energy end up?,page 1,flash,A flashlight changes the chemical energy in its batteries into a bright beam.,/lab/sci-5.8a-cl-flash.jpg,"Photo of a flashlight shining a beam in a dark room, no text."
+SCI-5.8A-CL,Where does the energy end up?,page 1,desklamp,A desk lamp shines on a notebook while a student does homework.,/lab/sci-5.8a-cl-desklamp.jpg,"Photo of a desk lamp lit up over an open notebook, no text."
+SCI-5.8A-CL,Where does the energy end up?,page 1,string,A string of holiday lights glows along the edge of a roof.,/lab/sci-5.8a-cl-string.jpg,"Photo of colorful holiday string lights along a roof at dusk, no text."
+SCI-5.8A-CL,Where does the energy end up?,page 1,fan,A ceiling fan turns slowly above a living room on a hot day.,/lab/sci-5.8a-cl-fan.jpg,"Photo of a ceiling fan with its blades spinning in a living room, no text."
+SCI-5.8A-CL,Where does the energy end up?,page 1,toothbrush,An electric toothbrush wiggles its bristles back and forth.,/lab/sci-5.8a-cl-toothbrush.jpg,"Photo of an electric toothbrush standing in its charger, no text."
+SCI-5.8A-CL,Where does the energy end up?,page 1,blender,A blender spins its blades to mix a fruit smoothie.,/lab/sci-5.8a-cl-blender.jpg,"Photo of a blender filled with a pink fruit smoothie on a kitchen counter, no text."
+SCI-5.8A-CL,Where does the energy end up?,page 2,projector,A projector shines a movie onto a big classroom screen.,/lab/sci-5.8a-cl-projector.jpg,"Photo of a classroom projector shining a beam toward a blank screen, no text."
+SCI-5.8A-CL,Where does the energy end up?,page 2,exit,An exit sign glows above a doorway all night long.,/lab/sci-5.8a-cl-exit.jpg,"Photo of a glowing exit sign above a door, with the letters blurred so no text is readable."
+SCI-5.8A-CL,Where does the energy end up?,page 2,washer,A washing machine spins its drum to wash a load of clothes.,/lab/sci-5.8a-cl-washer.jpg,"Photo of a front-loading washing machine with clothes inside, no text."
+SCI-5.8A-CL,Where does the energy end up?,page 2,elevator,An elevator carries people from the first floor to the fifth.,/lab/sci-5.8a-cl-elevator.jpg,"Photo of an open elevator door in a building lobby, no people, no text."
+SCI-5.8A-CL,Where does the energy end up?,page 2,toaster,A toaster browns two slices of bread for breakfast.,/lab/sci-5.8a-cl-toaster.jpg,"Photo looking down into a toaster with its wires glowing orange, no text."
+SCI-5.8A-CL,Where does the energy end up?,page 2,speaker,A speaker plays music loudly at a backyard party.,/lab/sci-5.8a-cl-speaker.jpg,"Photo of a portable speaker on a backyard table, no text."
+SCI-5.8A-CL,Where does the energy end up?,venn,flashV,A flashlight lights a trail during a camping trip.,/lab/sci-5.8a-cl-flashv.jpg,"Photo of a flashlight beam shining on a dark forest trail, no people, no text."
+SCI-5.8A-CL,Where does the energy end up?,venn,streetV,A streetlight glows above a sidewalk at night.,/lab/sci-5.8a-cl-streetv.jpg,"Photo of a streetlight glowing above an empty sidewalk at night, no text."
+SCI-5.8A-CL,Where does the energy end up?,venn,candleV,A candle,/lab/sci-5.8a-cl-candlev.jpg,"Photo of a lit candle on a table in a dim room, no text."
+SCI-5.8A-CL,Where does the energy end up?,venn,glowV,A glow stick,/lab/sci-5.8a-cl-glowv.jpg,"Photo of a bent green glow stick glowing in the dark, no text."
+SCI-5.8A-CL,Where does the energy end up?,venn,fanV,An electric fan,/lab/sci-5.8a-cl-fanv.jpg,"Photo of an electric desk fan with its blades spinning, no text."
+SCI-5.8A-CL,Where does the energy end up?,venn,windupV,A wind-up toy car,/lab/sci-5.8a-cl-windupv.jpg,"Photo of a small wind-up toy car with its metal key on a table, no text."
+SCI-5.10C-CL,What built this landform?,page 1,grand,The Grand Canyon cuts more than a mile deep into Arizona rock.,/lab/sci-5.10c-cl-grand.jpg,"Photo of the Grand Canyon's layered red rock walls from the rim, no people, no text."
+SCI-5.10C-CL,What built this landform?,page 1,paloduro,Palo Duro Canyon stretches across the Texas Panhandle with tall red cliffs.,/lab/sci-5.10c-cl-paloduro.jpg,"Photo of the red and orange cliffs of Palo Duro Canyon in Texas, no people, no text."
+SCI-5.10C-CL,What built this landform?,page 1,delta,The Mississippi River delta spreads into the Gulf of Mexico like a bird's foot.,/lab/sci-5.10c-cl-delta.jpg,"Satellite-style photo of the Mississippi River delta fanning into the Gulf of Mexico, no labels, no text."
+SCI-5.10C-CL,What built this landform?,page 1,whitesands,The White Sands dunes in New Mexico are made of bright white grains.,/lab/sci-5.10c-cl-whitesands.jpg,"Photo of rolling white sand dunes at White Sands, New Mexico, under a blue sky, no people, no text."
+SCI-5.10C-CL,What built this landform?,page 1,padre,Tall sand dunes line the beach on Padre Island in Texas.,/lab/sci-5.10c-cl-padre.jpg,"Photo of grassy sand dunes beside the beach on Padre Island, Texas, no people, no text."
+SCI-5.10C-CL,What built this landform?,page 1,greatsand,Great Sand Dunes in Colorado holds the tallest dunes in North America.,/lab/sci-5.10c-cl-greatsand.jpg,"Photo of the tall dunes of Great Sand Dunes National Park with mountains behind, no people, no text."
+SCI-5.10C-CL,What built this landform?,page 2,santaelena,"Santa Elena Canyon has cliffs about 1,500 feet tall in Big Bend National Park.",/lab/sci-5.10c-cl-santaelena.jpg,"Photo of the tall, narrow walls of Santa Elena Canyon in Big Bend, no people, no text."
+SCI-5.10C-CL,What built this landform?,page 2,horseshoe,Horseshoe Bend is a deep curve in the red rock of northern Arizona.,/lab/sci-5.10c-cl-horseshoe.jpg,"Photo of Horseshoe Bend in Arizona from the overlook, no people, no text."
+SCI-5.10C-CL,What built this landform?,page 2,monahans,The Monahans Sandhills rise from the flat land of West Texas.,/lab/sci-5.10c-cl-monahans.jpg,"Photo of the rolling sand hills at Monahans Sandhills State Park, Texas, no people, no text."
+SCI-5.10C-CL,What built this landform?,page 2,indiana,Sand dunes rise along the shore of Lake Michigan in Indiana.,/lab/sci-5.10c-cl-indiana.jpg,"Photo of sand dunes beside Lake Michigan at Indiana Dunes, no people, no text."
+SCI-5.10C-CL,What built this landform?,page 2,yosemite,"Yosemite Valley in California has a wide, U-shaped floor between granite cliffs.",/lab/sci-5.10c-cl-yosemite.jpg,"Photo of Yosemite Valley showing its U shape between granite cliffs, no people, no text."
+SCI-5.10C-CL,What built this landform?,page 2,greatlakes,The giant basins that hold the Great Lakes were scooped out long ago.,/lab/sci-5.10c-cl-greatlakes.jpg,"Photo of a Great Lakes shoreline stretching to the horizon, no people, no text."
+SCI-5.10C-CL,What built this landform?,venn,nileV,The Nile River delta fans out where Egypt meets the Mediterranean Sea.,/lab/sci-5.10c-cl-nilev.jpg,"Satellite-style photo of the green, fan-shaped Nile delta surrounded by desert, no labels, no text."
+SCI-5.10C-CL,What built this landform?,venn,beachV,A sandy beach builds up as waves carry sand onto the shore.,/lab/sci-5.10c-cl-beachv.jpg,"Photo of waves washing sand onto a wide beach, no people, no text."
+SCI-5.10C-CL,What built this landform?,venn,deathV,Sand dunes pile up on the floor of Death Valley.,/lab/sci-5.10c-cl-deathv.jpg,"Photo of the Mesquite Flat sand dunes in Death Valley, no people, no text."
+SCI-5.10C-CL,What built this landform?,venn,moraineV,A long ridge of rocks is left behind where a glacier melted.,/lab/sci-5.10c-cl-morainev.jpg,"Photo of a long, rocky moraine ridge at the end of a mountain glacier, no people, no text."
+SCI-5.10C-CL,What built this landform?,venn,gunnisonV,"The Black Canyon of the Gunnison has steep, dark walls in Colorado.",/lab/sci-5.10c-cl-gunnisonv.jpg,"Photo of the steep, dark walls of the Black Canyon of the Gunnison with a river far below, no text."
+SCI-5.10C-CL,What built this landform?,venn,glacierV,A U-shaped valley curves between the peaks of Glacier National Park.,/lab/sci-5.10c-cl-glacierv.jpg,"Photo of a wide, U-shaped mountain valley in Glacier National Park, no people, no text."
+SCI-5.12A-CL,What is it interacting with?,page 1,mushroom,Mushrooms grow on a fallen log and gradually break it down.,/lab/sci-5.12a-cl-mushroom.jpg,"Photo of mushrooms growing on a mossy fallen log in a forest, no text."
+SCI-5.12A-CL,What is it interacting with?,page 1,millipede,"A millipede munches on dry, brown leaves on the forest floor.",/lab/sci-5.12a-cl-millipede.jpg,"Photo of a millipede crawling over dry brown leaf litter, no text."
+SCI-5.12A-CL,What is it interacting with?,page 1,bee,A honeybee sips nectar from a flower in a meadow.,/lab/sci-5.12a-cl-bee.jpg,"Close-up photo of a honeybee on a flower, no text."
+SCI-5.12A-CL,What is it interacting with?,page 1,lizard,A lizard lies on a sunny rock to warm its body.,/lab/sci-5.12a-cl-lizard.jpg,"Photo of a lizard resting on a sunlit rock, no text."
+SCI-5.12A-CL,What is it interacting with?,page 1,cactus,A cactus soaks up rainwater quickly through its shallow roots.,/lab/sci-5.12a-cl-cactus.jpg,"Photo of a cactus in the desert with wet sand around it after a rain, no text."
+SCI-5.12A-CL,What is it interacting with?,page 1,seedling,A bean seedling bends toward the sunlight coming through a window.,/lab/sci-5.12a-cl-seedling.jpg,"Photo of a young bean plant in a pot, leaning toward a bright window, no text."
+SCI-5.12A-CL,What is it interacting with?,page 2,beetle,A beetle lays its eggs inside a rotting tree stump.,/lab/sci-5.12a-cl-beetle.jpg,"Photo of a beetle on a crumbling, rotting tree stump, no text."
+SCI-5.12A-CL,What is it interacting with?,page 2,owl,A barn owl swoops down and catches a mouse in a field.,/lab/sci-5.12a-cl-owl.jpg,"Photo of a barn owl flying low over a grassy field, no text."
+SCI-5.12A-CL,What is it interacting with?,page 2,fox,An arctic fox grows a thick white coat as the days get shorter and colder each fall.,/lab/sci-5.12a-cl-fox.jpg,"Photo of an arctic fox in its thick white winter coat standing on snow, no text."
+SCI-5.12A-CL,What is it interacting with?,page 2,bird,A sparrow drinks from a puddle after a spring storm.,/lab/sci-5.12a-cl-bird.jpg,"Photo of a small sparrow drinking from a rain puddle, no text."
+SCI-5.12A-CL,What is it interacting with?,page 2,sand,Wind blows loose sand into a tall dune in the desert.,/lab/sci-5.12a-cl-sand.jpg,"Photo of wind blowing sand off the top of a desert dune, no people, no text."
+SCI-5.12A-CL,What is it interacting with?,page 2,ice,Water freezes inside a crack and splits a boulder on a cold night.,/lab/sci-5.12a-cl-ice.jpg,"Photo of a large boulder split by a crack, with frost in the crack, no text."
+SCI-5.12A-CL,What is it interacting with?,venn,insectsV,The insects a pond frog catches to eat,/lab/sci-5.12a-cl-insectsv.jpg,"Photo of a frog on a lily pad catching a fly with its tongue, no text."
+SCI-5.12A-CL,What is it interacting with?,venn,heronV,A heron that hunts for frogs,/lab/sci-5.12a-cl-heronv.jpg,"Photo of a great blue heron standing in shallow pond water, no text."
+SCI-5.12A-CL,What is it interacting with?,venn,turtleV,A snapping turtle that lives in the same pond,/lab/sci-5.12a-cl-turtlev.jpg,"Photo of a snapping turtle resting at the edge of a pond, no text."
+SCI-5.12A-CL,What is it interacting with?,venn,waterV,The pond water,/lab/sci-5.12a-cl-waterv.jpg,"Photo of calm, clear pond water with reeds at the edge, no animals, no text."
+SCI-5.12A-CL,What is it interacting with?,venn,oxygenV,Oxygen in the air above the pond,/lab/sci-5.12a-cl-oxygenv.jpg,"Photo of a sunny sky over a pond, no animals, no text."
+SCI-5.12A-CL,What is it interacting with?,venn,bottleV,A metal can at the bottom of the pond,/lab/sci-5.12a-cl-bottlev.jpg,"Photo of a plain metal can on a pond bottom, no label, no text."
+SCI-5.13B-CL,Born knowing it?,page 1,hatchling,Sea turtle hatchlings crawl straight toward the ocean right after they hatch.,/lab/sci-5.13b-cl-hatchling.jpg,"Photo of tiny sea turtle hatchlings crawling across sand toward the waves, no people, no text."
+SCI-5.13B-CL,Born knowing it?,page 1,web,"A young garden spider spins a detailed, circular web the first time it tries.",/lab/sci-5.13b-cl-web.jpg,"Photo of a round orb spider web with dew on it and a spider in the center, no text."
+SCI-5.13B-CL,Born knowing it?,page 1,monarch,Monarch butterflies fly thousands of miles to Mexico for the winter.,/lab/sci-5.13b-cl-monarch.jpg,"Photo of many monarch butterflies clustered on a tree branch, no text."
+SCI-5.13B-CL,Born knowing it?,page 1,orca,A pod of orcas works together as a team to hunt seals.,/lab/sci-5.13b-cl-orca.jpg,"Photo of several orcas swimming together at the surface, no text."
+SCI-5.13B-CL,Born knowing it?,page 1,chimp,A chimp pokes a thin stick into a nest of termites and pulls them out to eat.,/lab/sci-5.13b-cl-chimp.jpg,"Photo of a chimp holding a thin stick near a tall termite nest, no text."
+SCI-5.13B-CL,Born knowing it?,page 1,sparrow,A young white-crowned sparrow sings the same local song as the adults nearby.,/lab/sci-5.13b-cl-sparrow.jpg,"Photo of a white-crowned sparrow singing on a branch, no text."
+SCI-5.13B-CL,Born knowing it?,page 2,joey,A newborn kangaroo crawls into its mother's pouch on its own.,/lab/sci-5.13b-cl-joey.jpg,"Photo of a young kangaroo joey peeking out of its mother's pouch, no text."
+SCI-5.13B-CL,Born knowing it?,page 2,foal,A newborn foal stands up and finds its mother's milk within hours.,/lab/sci-5.13b-cl-foal.jpg,"Photo of a newborn foal standing beside its mother in a field, no text."
+SCI-5.13B-CL,Born knowing it?,page 2,dog,"A dog sits as soon as its owner says, ""Sit.""",/lab/sci-5.13b-cl-dog.jpg,"Photo of a dog sitting and looking up, with a person's hand held out, no text."
+SCI-5.13B-CL,Born knowing it?,page 2,horse,A horse comes running when it hears its feed bucket rattle.,/lab/sci-5.13b-cl-horse.jpg,"Photo of a horse trotting across a pasture toward a fence, no people, no text."
+SCI-5.13B-CL,Born knowing it?,page 2,webbed,"A duck's wide, webbed feet",/lab/sci-5.13b-cl-webbed.jpg,"Close-up photo of a duck's orange webbed feet, no text."
+SCI-5.13B-CL,Born knowing it?,page 2,shell,"A box turtle's hard, domed shell",/lab/sci-5.13b-cl-shell.jpg,"Close-up photo of a box turtle with its patterned, domed shell, no text."
+SCI-5.13B-CL,Born knowing it?,venn,robinV,A newly hatched robin opens its mouth wide when a parent lands on the nest.,/lab/sci-5.13b-cl-robinv.jpg,"Photo of baby robins in a nest with their mouths wide open, no text."
+SCI-5.13B-CL,Born knowing it?,venn,puppyV,A newborn puppy crawls to its mother to nurse.,/lab/sci-5.13b-cl-puppyv.jpg,"Photo of a newborn puppy nursing beside its mother, no text."
+SCI-5.13B-CL,Born knowing it?,venn,fawnV,A newborn deer lies perfectly still in tall grass when danger is near.,/lab/sci-5.13b-cl-fawnv.jpg,"Photo of a spotted newborn deer lying still in tall grass, no text."
+SCI-5.13B-CL,Born knowing it?,venn,turtleV,A sea turtle hatchling heads for the waves at night.,/lab/sci-5.13b-cl-turtlev.jpg,"Photo of a single sea turtle hatchling on wet sand near the waves, no text."
+SCI-5.13B-CL,Born knowing it?,venn,chimpV,"A chimp cracks nuts open with a stone, the way older chimps in its group do.",/lab/sci-5.13b-cl-chimpv.jpg,"Photo of a chimp using a stone to crack a nut on a rock, no text."
+SCI-5.13B-CL,Born knowing it?,venn,parrotV,A parrot says its owner's name to get attention.,/lab/sci-5.13b-cl-parrotv.jpg,"Photo of a colorful parrot perched on a wooden stand, no text."
+SS-5.7A-CL,"City, country, or in between?",page 1,ranch,"Cattle graze on a ranch, and the nearest neighbor lives two miles away.",/lab/ss-5.7a-cl-ranch.jpg,"Photo of cattle grazing in a wide grassy pasture with one distant ranch house. No people, no text."
+SS-5.7A-CL,"City, country, or in between?",page 1,smalltown,A small town of 600 people is surrounded by cotton fields.,/lab/ss-5.7a-cl-smalltown.jpg,"Photo of a tiny town's main street with a few low shops and open fields behind it. No readable signs, no text."
+SS-5.7A-CL,"City, country, or in between?",page 1,drive,A family drives forty minutes to reach the nearest grocery store.,/lab/ss-5.7a-cl-drive.jpg,"Photo of a pickup truck on a long, empty two-lane country road between fields. No text."
+SS-5.7A-CL,"City, country, or in between?",page 1,towers,Apartment towers and office buildings stand close together downtown.,/lab/ss-5.7a-cl-towers.jpg,"Photo of a crowded downtown skyline with tall apartment and office buildings. No readable signs, no text."
+SS-5.7A-CL,"City, country, or in between?",page 1,subway,Thousands of people ride a subway train to work each morning.,/lab/ss-5.7a-cl-subway.jpg,"Photo of a crowded city subway platform as a train arrives. Faces not the focus, no readable signs, no text."
+SS-5.7A-CL,"City, country, or in between?",page 1,garden,Neighbors grow vegetables in a community garden between tall buildings.,/lab/ss-5.7a-cl-garden.jpg,"Photo of raised vegetable beds in a small garden surrounded by tall city buildings. No readable signs, no text."
+SS-5.7A-CL,"City, country, or in between?",page 2,wheat,A family grows wheat on hundreds of acres of land.,/lab/ss-5.7a-cl-wheat.jpg,Photo of a wide golden wheat field with one farmhouse and a highway far in the distance. No text.
+SS-5.7A-CL,"City, country, or in between?",page 2,forest,A few cabins are scattered through a thick pine forest.,/lab/ss-5.7a-cl-forest.jpg,"Photo of two small wooden cabins far apart in a pine forest. No people, no text."
+SS-5.7A-CL,"City, country, or in between?",page 2,rush,"Buses, taxis and crowds fill the streets of downtown at rush hour.",/lab/ss-5.7a-cl-rush.jpg,"Photo of a busy downtown street at rush hour with buses and taxis between tall buildings. No readable signs, no text."
+SS-5.7A-CL,"City, country, or in between?",page 2,blocks,"Restaurants, offices and apartments share the same crowded city block.",/lab/ss-5.7a-cl-blocks.jpg,"Photo of a city block with shops on the ground floor and apartments above. No readable signs, no text."
+SS-5.7A-CL,"City, country, or in between?",page 2,mall,A large mall sits beside neighborhoods of houses just outside a city.,/lab/ss-5.7a-cl-mall.jpg,"Photo of a big shopping mall parking lot next to rows of houses with yards. No readable signs, no text."
+SS-5.7A-CL,"City, country, or in between?",page 2,commute,"New neighborhoods grow outside a city, and many parents drive into the city for work.",/lab/ss-5.7a-cl-commute.jpg,"Photo of rows of similar houses with driveways and small lawns on a curving street. No people, no text."
+SS-5.7A-CL,"City, country, or in between?",venn,jamV,Taxis and buses crowd a downtown street during rush hour.,/lab/ss-5.7a-cl-jamv.jpg,"Photo of taxis and buses packed on a downtown street between tall buildings. No readable signs, no text."
+SS-5.7A-CL,"City, country, or in between?",venn,bridgeV,Cars crawl across a bridge into the center of a big city.,/lab/ss-5.7a-cl-bridgev.jpg,"Photo of a bridge packed with cars leading into a city skyline. No readable signs, no text."
+SS-5.7A-CL,"City, country, or in between?",venn,parkV,Families picnic on the quiet grass of a park in the middle of a city.,/lab/ss-5.7a-cl-parkv.jpg,"Photo of people on a grassy lawn in a city park with tall buildings around the edges. No readable signs, no text."
+SS-5.7A-CL,"City, country, or in between?",venn,mallV,Cars back up for blocks outside a shopping mall in a suburb.,/lab/ss-5.7a-cl-mallv.jpg,"Photo of a long line of cars on a road outside a suburban shopping mall. No readable signs, no text."
+SS-5.7A-CL,"City, country, or in between?",venn,ranchV,Cows rest beside a quiet dirt road on a ranch.,/lab/ss-5.7a-cl-ranchv.jpg,"Photo of cows standing beside an empty dirt road on a ranch. No people, no text."
+SS-5.7A-CL,"City, country, or in between?",venn,bikeV,Children ride bikes along a quiet street in a suburb.,/lab/ss-5.7a-cl-bikev.jpg,"Photo of an empty suburban street with houses, lawns and two bikes on the sidewalk. Faces not shown, no text."
+SS-5.23A-CL,Revolution sources,venn,statueV,"A statue of Paul Revere on horseback, set up in Boston in 1940.",/lab/ss-5.23a-cl-statuev.jpg,"Photo of a bronze statue of a rider on a horse in a city square. No readable plaques, no text."

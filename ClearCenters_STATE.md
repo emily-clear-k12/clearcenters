@@ -1,5 +1,5 @@
 # ClearCenters — STATE
-**Current truth. Start here.** · Last updated: September 24, 2026, late night (**Assembly Deck grade 5 re-leveled, 16 cases, awaiting review**) · earlier: (**Word-choice check added to the reading-level tools (advisory)**) · earlier: (**Cleanup pass: audit extended to all new engines; Assembly Deck grade 5 reads too easy; Exhibit Hall found built**) · earlier: (**Frequency Rush step 6 built: Daily Warm-up + beat-your-best; 3 case rows of SQL to run**) · earlier Sept 24 afternoon: (**Reconciled with the app folder: Assembly Deck is now 66 cases and Classification Lab is built with 8 cases, both from other sessions that STATE never logged. Their SQL run status is UNKNOWN**) · Sept 24 midday: (**Maker Studio designed: the next new center, merging Museum Exhibit/Field Dispatch into it; design only, nothing built. New site-wide rule: a confidence check on every submit (§9 rule 21)**) · Sept 23 afternoon: (**Signal Check re-leveled: all 108 registered cases now read on grade — written to the app folder, NOT yet committed or pushed; no SQL needed**) · earlier Sept 23: Mission Map ELAR 12 authored and all 49 Mission Map cases re-leveled; Assembly Deck's first pilot and its fixes; Math 12 authored · *state updated at session end*
+**Current truth. Start here.** · Last updated: September 24, 2026, near midnight (**Classification Lab: 73 new cases written, checked and wired into the code (8 → 81); SQL written, not run; not pushed; images come tomorrow**) · earlier late night: (**Assembly Deck grade 5 re-leveled, 16 cases, awaiting review**) · earlier: (**Word-choice check added to the reading-level tools (advisory)**) · earlier: (**Cleanup pass: audit extended to all new engines; Assembly Deck grade 5 reads too easy; Exhibit Hall found built**) · earlier: (**Frequency Rush step 6 built: Daily Warm-up + beat-your-best; 3 case rows of SQL to run**) · earlier Sept 24 afternoon: (**Reconciled with the app folder: Assembly Deck is now 66 cases and Classification Lab is built with 8 cases, both from other sessions that STATE never logged. Their SQL run status is UNKNOWN**) · Sept 24 midday: (**Maker Studio designed: the next new center, merging Museum Exhibit/Field Dispatch into it; design only, nothing built. New site-wide rule: a confidence check on every submit (§9 rule 21)**) · Sept 23 afternoon: (**Signal Check re-leveled: all 108 registered cases now read on grade — written to the app folder, NOT yet committed or pushed; no SQL needed**) · earlier Sept 23: Mission Map ELAR 12 authored and all 49 Mission Map cases re-leveled; Assembly Deck's first pilot and its fixes; Math 12 authored · *state updated at session end*
 
 *Reconciled from four sources: the Claude project · `ClearCenters_Project_Files.zip` · `ClearCenters_MANIFEST.md` · and both device folders.*
 *Supersedes `ClearCenters_PROJECT_SPRINGBOARD_v4.md` (stale — predates Newsroom).*
@@ -55,6 +55,44 @@ Nothing else. This file is a status document, not a design document — design n
 ---
 
 ## 0.5 · SESSION LOG
+
+**Sept 24, 2026 (near midnight) — Classification Lab goes from 8 cases to 81. 73 new cases are written, measured on grade, reviewed for accuracy and wired into the code. Nothing is pushed, the SQL has not been run, and there are no images yet.**
+
+*What changed*
+- **73 new cases**, from `ClassificationLab_CaseMap_v1.md`. Emily said to "just start going down the list… on grade level… keeping the rigor." That covers all 4 subjects in grades 3–5, 40 of them Emily's own ideas. Every TEKS code was checked against her PDFs first.
+  - **Left out on purpose:** 3.6B (a `3.6B-CL` row already sits in the database), 4.11D(v) (it would collide with `ELAR-4.11D-CL`), 5.9A data and 5.5 shape family (both need Emily's design call), and correct/incorrect computation (the spec says no computation).
+- **Reading level is now measured for this engine.** The new `tools/classification-lab-gradecheck.cjs` uses the same bands and the same `tools/lib/wordcheck.cjs` as the other gradechecks. It measures Flesch-Kincaid only on real sentences (at least 4 words, ending in punctuation); rule 17 applied, because the first run was counting short answer choices as sentences.
+  - **The first honest run found the same problem as Assembly Deck:** Grade 4 read at FK ~2.4 and Grade 5 at ~3.0. All 31 low cases were rewritten, with wording changed only: keys, groups and traps were checked unchanged by script.
+  - **Now 73/73 are on grade, with 0 word-choice warnings.** Mean FK is g3 2.5, g4 4.4, g5 6.0, so the grades separate.
+- `tools/classification-lab-casecheck.py` enforces the content spec: page and Venn counts, Neither rules, all four Venn regions, no item named in a definition or notThis line, grade length caps, and definition terms matching labels.
+- **Independent expert review:** four reviewers, one per subject, who didn't write the cases, checked every key and fact. They found 37 must-fix items and all were applied. Examples:
+  - a false cactus fact
+  - the bee waggle dance (now known to be partly learned)
+  - a chrysalis described as "spun"
+  - Coyote stealing fire "from the gods"
+  - Johnny Appleseed keyed as a legend
+  - the ambiguous "the 1900s"
+  - a Texas sales-tax overstatement
+  - several notThis lines and definitions that gave away an item
+- **Wired into the code:**
+  - `lib/cases/classification-lab/catalog.js` (keys) and `index.public.js` (no keys; checked by script that no `group`, `sets` or `answer` leaked) now hold **81 cases**.
+  - A grading test put perfect answers through `gradeClassificationPage` for all 73 on all 3 pages: 0 misses.
+  - **`add_classification_lab_batch2.sql`** adds 73 `cases` rows plus learning_target and lesson_summary. Run it after `add_classification_lab.sql`. It's safe to run twice.
+- **Images:** none yet (Emily adds them tomorrow). `ClassificationLab_Cases/ClassificationLab_ImageList.csv` lists **398 photos**, each with a suggested file path (`/lab/<case>-<item>.jpg`) and what the photo must show. Items have no `image` field yet, so photo items appear as word cards until an image is added. After the photos are saved, a script adds the `image` fields.
+- Source files: `ClassificationLab_Cases/ClassificationLab_Cases_JSON.zip` (the 73 case JSONs) and `ClassificationLab_73_Review.docx` (169 pages, readable review). **`ClassificationLab_Batch1/` is superseded:** its 4 cases are in the new set, reworded to grade level.
+
+*What is now true*
+- Classification Lab has 81 cases in the code, and 8 in the database for certain (73 more once the SQL runs).
+- 5 cases have a Venn or Neither that differs from the case map, each for a stated reason (for example SCI-5.6A's Neither is "energy, not matter"; SS-3.15C uses exact year spans).
+
+*What is still open*
+- **Emily's read as author of record.** `ClassificationLab_73_Review.docx` is the review copy.
+- **Run `add_classification_lab.sql` (if not already run), then `add_classification_lab_batch2.sql`.** Then extend and re-run `audit_production_readonly.sql`.
+- **Commit and push:** catalog.js, index.public.js, the SQL, the two tools and the `ClassificationLab_Cases/` folder.
+- **Photos (398):** generate them, save to `public/lab/`, then add the `image` fields.
+- `lib/gradeFromStandard.js` reads `SCI-3.10C-CL`-style codes as grade 5, because it strips only `XX.` prefixes. This affects any AI prompt that uses it for Classification Lab codes, the original 8 included. Check whether Classification Lab calls it before fixing.
+- The engine has a per-page `hint` field that the new cases don't fill. It isn't used by grading. Confirm whether the client shows it.
+- The confidence check (rule 21) still isn't in Classification Lab.
 
 **Sept 24, 2026 (late night, Assembly Deck re-level) — 15 grade 5 Assembly Deck cases rewritten to read at grade 5, and SS.4.3D-AD brought down to grade 4. On disk for Emily's review; not pushed; no SQL.**
 
@@ -683,7 +721,7 @@ The old-era 5.6A "Creek Sensor Mix-Up" packet had strong reasoning design underm
 
 ## 6 · THE PLAN
 
-**Current-app build order (confirmed Aug 29, amended since):** Mission Map ✓ → Simulation Lab ✓ (10 cases) → *(inserted by Emily's call: Frequency Rush/Signal Ops ✓, Relay Station ✓, Assembly Deck ✓ 66 cases)* → Classification Lab ✓ (built, 8 cases) → Repair Desk → **Maker Studio** (replaces Field Dispatch, Sept 24; its exact place in line is not yet set) → The Tribunal → Newsroom. **Sector Survey is no longer in the order** — retired into Assembly Deck.
+**Current-app build order (confirmed Aug 29, amended since):** Mission Map ✓ → Simulation Lab ✓ (10 cases) → *(inserted by Emily's call: Frequency Rush/Signal Ops ✓, Relay Station ✓, Assembly Deck ✓ 66 cases)* → Classification Lab ✓ (built; 81 cases in code as of Sept 24 midnight) → Repair Desk → **Maker Studio** (replaces Field Dispatch, Sept 24; its exact place in line is not yet set) → The Tribunal → Newsroom. **Sector Survey is no longer in the order** — retired into Assembly Deck.
 
 **Immediate next steps:**
 0a. ~~Run `add_frequency_rush_skills.sql` and push~~ **Committed as "FR update 1.2".** Next: Emily reviews `FrequencyRush_ELAR_WordStudy_Review_v1.md`, then runs `add_frequency_rush_elar_skills.sql` and pushes.
@@ -692,7 +730,7 @@ The old-era 5.6A "Creek Sensor Mix-Up" packet had strong reasoning design underm
 2. **Re-pilot `3.6A-AD` with a student**, now that the Case File and the Chief's Debrief are in it. Twenty minutes, and it is the cheapest de-risking available before 48 more cases are written against that ending.
 3. ~~Author Mission Map's ELAR 12~~ **Done Sept 23 (later session).** The ELAR SQL has been run (the audit shows 49 rows) and the code was pushed at 12:39. Still to do: map art for the 24 Math/ELAR cases. Math hints are done.
 4. ~~Emily reviews `AssemblyDeck_CaseMap_v1.md`, then author the 48~~ **Authored (Sept 24, found in the folder); Assembly Deck is at 66.** Still open: Emily's read of the authored cases as author of record, and a checker run across all 66.
-4b. **(Sept 24) Emily reviews `ClassificationLab_Batch1_Review.docx`**, then the 4 cases get wired into `catalog.js` with their SQL.
+4b. ~~Emily reviews Batch 1, then wire the 4 cases~~ **Superseded, midnight Sept 24:** 73 cases (Batch 1 included) are wired into the code. Next: Emily reviews `ClassificationLab_Cases/ClassificationLab_73_Review.docx`, runs `add_classification_lab_batch2.sql`, pushes, and adds the 398 photos from `ClassificationLab_ImageList.csv`.
 5. **Generate `assembly_deck.jpg`** so Assembly Deck stops borrowing the Repair Desk artwork, and tell Claude where the rest of the generated art landed (Relay rank badges, skin previews, posture/hands diagrams).
 6. ~~SQL sweep~~ **Done Sept 23 via `audit_production_readonly.sql` — schema clean; only 3 Assembly Deck rows outstanding.**
 7. Turn `DEV_FORCE_UNLOCK_ALL` back to `false` before real classroom use.
