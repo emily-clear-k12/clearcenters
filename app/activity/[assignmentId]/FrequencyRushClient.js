@@ -53,6 +53,13 @@ export default function FrequencyRushClient({ assignmentId, caseTitle }) {
   // Sept 24, 2026 — My Missed Words: prompts of questions this student missed
   // last time. They're in this run and get a "SECOND CHANCE" header.
   const [retryPrompts, setRetryPrompts] = useState([]);
+  // Sept 24, 2026 (step 6) — beat-your-best and the Daily Warm-up streak.
+  // `best` is the student's best score/streak on this activity before this
+  // run; `daily` is today's warm-up status; `lastRun` is what the run that
+  // just ended earned (new best, streak day, crystals), shown until the next.
+  const [best, setBest] = useState(null);
+  const [daily, setDaily] = useState(null);
+  const [lastRun, setLastRun] = useState(null);
   // Sept 12, 2026 — which static widget file to load into the iframe below,
   // teacher-chosen at assignment time (assignments.game_skin) and handed
   // back by /api/frequency-rush/start as `gameSkin` — see
@@ -97,6 +104,8 @@ export default function FrequencyRushClient({ assignmentId, caseTitle }) {
       setSortBins(nextSortBins);
       setSkill(data.skill || null);
       setRetryPrompts(Array.isArray(data.retry?.prompts) ? data.retry.prompts : []);
+      setBest(data.best || null);
+      setDaily(data.daily || null);
       setQuestionSeconds(Math.max(0, Math.min(60, Number(data.questionSeconds) || 0)));
       setGameSkinFile(getGameSkinFile(data.gameSkin));
       pendingSessionIdRef.current = data.sessionId;
@@ -154,6 +163,7 @@ export default function FrequencyRushClient({ assignmentId, caseTitle }) {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Couldn't save this run.");
+      setLastRun({ score: data.score, bestStreak: data.bestStreak, personalBest: data.personalBest || null, daily: data.daily || null });
 
       // Sync the widget's own (locally-computed) Outpost total with the
       // real, server-banked figure, in case they drifted.
@@ -178,6 +188,8 @@ export default function FrequencyRushClient({ assignmentId, caseTitle }) {
       if (next.skill && Array.isArray(next.sortBins) && next.sortBins.length) {
         setSortBins(next.sortBins);
       }
+      if (next.best) setBest(next.best);
+      if (next.daily) setDaily(next.daily);
       // The next run's retries reflect the run that just ended.
       setRetryPrompts(Array.isArray(next.retry?.prompts) ? next.retry.prompts : []);
     } catch (err) {
@@ -237,7 +249,9 @@ export default function FrequencyRushClient({ assignmentId, caseTitle }) {
       // configure() only accepts flightSeconds 4-20 (its own validation),
       // so this is the shortest gap it supports short of the widget file
       // itself being changed. Tune this one number if it still feels off.
-      win.AsteroidRun.configure({ flightSeconds: 4, questionSeconds });
+      // Sept 24, 2026 — a Daily Warm-up plays each of its questions once
+      // (roundCount = the mix size); other runs keep the game's default.
+      win.AsteroidRun.configure(skill && skill.roundCount ? { flightSeconds: 4, questionSeconds, roundCount: skill.roundCount } : { flightSeconds: 4, questionSeconds });
       win.AsteroidRun.onComplete((result) => { submitRun(result); });
       hideAuthorOnlyControls(win);
       if ((skill && skill.labels) || retryPrompts.length) relabelSkillRounds(win, skill ? skill.labels : null, retryPrompts);
@@ -273,6 +287,7 @@ export default function FrequencyRushClient({ assignmentId, caseTitle }) {
 
   return (
     <Shell wide>
+      <RunBanners best={best} daily={daily} lastRun={lastRun} isDaily={!!(skill && skill.kind === "daily")} />
       {retryPrompts.length > 0 && (
         <div style={{ color: "#fff", background: "rgba(123,93,255,.18)", border: "1px solid rgba(123,93,255,.5)", borderRadius: 999, padding: "8px 18px", marginBottom: 12, fontSize: 14, fontWeight: 600 }}>
           🔁 {retryPrompts.length === 1 ? "1 question you missed last time is" : `${retryPrompts.length} questions you missed last time are`} coming back. Look for SECOND CHANCE.
@@ -287,6 +302,48 @@ export default function FrequencyRushClient({ assignmentId, caseTitle }) {
         allow="fullscreen"
       />
     </Shell>
+  );
+}
+
+// Sept 24, 2026 (step 6) — the strip above the game: today's warm-up streak,
+// the best to beat, and what the last run earned.
+function RunBanners({ best, daily, lastRun, isDaily }) {
+  const pills = [];
+  const pb = lastRun && lastRun.personalBest;
+  const d = lastRun && lastRun.daily;
+  if (d && d.counted && d.firstToday) {
+    pills.push({ key: "dd", tone: "gold", text: `☀️ Warm-up done! 🔥 ${d.streak}-day streak · +${d.crystalsEarned} 💎${d.crystalsEarned > 1 ? " (streak bonus!)" : ""}` });
+  } else if (d && !d.counted && d.firstToday) {
+    pills.push({ key: "dn", tone: "plain", text: `Answer at least ${d.needed} questions for today's warm-up to count.` });
+  }
+  if (pb && (pb.newScore || pb.newStreak)) {
+    const parts = [];
+    if (pb.newScore) parts.push(`${pb.score} points (was ${pb.previousScore})`);
+    if (pb.newStreak) parts.push(`best streak ${pb.streak} in a row`);
+    pills.push({ key: "nb", tone: "gold", text: `🌟 New personal best! ${parts.join(" · ")}` });
+  } else if (pb && lastRun && !pb.firstRun) {
+    const gap = pb.score - lastRun.score;
+    if (gap > 0) pills.push({ key: "gap", tone: "plain", text: `Last run: ${lastRun.score} points. ${gap} more to beat your best!` });
+  }
+  if (isDaily && daily && !(d && d.counted && d.firstToday)) {
+    pills.push(daily.doneToday
+      ? { key: "dt", tone: "plain", text: `✓ Today's warm-up is done${daily.streak > 0 ? ` · 🔥 ${daily.streak}-day streak` : ""}. Play again for extra practice.` }
+      : { key: "dt", tone: "plain", text: `☀️ Daily Warm-up${daily.streak > 0 ? ` · 🔥 ${daily.streak}-day streak` : ""} · finish today for +${daily.crystalsToday || 1} 💎` });
+  }
+  if (best && best.runs > 0 && !(pb && (pb.newScore || pb.newStreak)) && !pills.some((p) => p.key === "gap")) {
+    pills.push({ key: "b", tone: "plain", text: `🏆 Your best: ${best.score} points · streak ${best.streak}. Beat it!` });
+  } else if (best && best.runs === 0 && !lastRun) {
+    pills.push({ key: "b0", tone: "plain", text: "🏆 First run! Set your best score." });
+  }
+  if (!pills.length) return null;
+  return (
+    <div role="status" style={{ display: "flex", gap: 10, flexWrap: "wrap", justifyContent: "center", marginBottom: 10 }}>
+      {pills.map((p) => (
+        <div key={p.key} style={{ color: p.tone === "gold" ? "#1A1440" : "#fff", background: p.tone === "gold" ? "#F4B94A" : "rgba(255,255,255,.08)", border: p.tone === "gold" ? "none" : "1px solid rgba(255,255,255,.18)", borderRadius: 999, padding: "8px 18px", fontSize: 14, fontWeight: p.tone === "gold" ? 800 : 600 }}>
+          {p.text}
+        </div>
+      ))}
+    </div>
   );
 }
 

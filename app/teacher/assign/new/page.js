@@ -160,6 +160,13 @@ function isTypingDailyCase(standard) {
 function isTypingRaceCase(standard) {
   return /^RS\.[345]\.RACE$/.test(String(standard || ""));
 }
+// Sept 24, 2026 (step 6) — Frequency Rush Daily Warm-up (FR.<grade>.DAILY)
+// mixes questions from every Frequency Rush activity a student has, so it
+// isn't one subject's: it shows under every subject tile, as its own topic.
+const FR_DAILY_TOPIC = "Daily Warm-up";
+function isFrDailyCase(standard) {
+  return /^FR\.[345]\.DAILY$/.test(String(standard || ""));
+}
 const RELAY_SPECIAL_TILES = [
   { key: FOUNDATIONS, match: isTypingTrackCase, icon: "⌨️", title: "Foundations Track", blurb: "Assign once — every student climbs 20 levels at their own pace and moves up automatically. Works for any grade 3–5 class.", bg: "linear-gradient(120deg, #0D1B2A 0%, #16243F 55%, #7B5DFF 140%)" },
   { key: "Race", match: isTypingRaceCase, icon: "🏁", title: "Class Relay Race", blurb: "Assign once — then start a live race any time from the Relay Race Board. Every student types a piece of a secret message and the class decodes it together.", bg: "linear-gradient(120deg, #0D1B2A 0%, #16243F 55%, #FFC44D 150%)" },
@@ -253,14 +260,14 @@ function NewAssignmentContent() {
     supabase.from("cases").select("standard, title, grade, subject, engine, learning_target, lesson_summary, misconception_note").then(({ data,error:loadError }) => {setCases(data || []);setCasesLoading(false);if(loadError)setError("Could not load activities. Please refresh to try again.")});
   }, []);
 
-  function topicCode(c){if(FR_CUSTOM_LIST_RE.test(c.standard))return MY_WORD_LISTS;return missionMapTeksCode(c.standard)||c.standard.replace(/-(?:SC|GC|FR|SL|SD|AD|RS|MM|CL|EX).*$/i,'');}
-  const topics=[...new Set(cases.filter(c=>c.grade===Number(browseGrade)&&c.subject===browseSubject&&(typeFilter==='all'||matchesChallenge(c.engine,typeFilter))&&!isRetiredSignalCheckCase(c.standard)&&!((FR_CUSTOM_LIST_RE.exec(c.standard)||[])[1]&&FR_CUSTOM_LIST_RE.exec(c.standard)[1]!==String(teacherId||"").replace(/-/g,"").slice(0,8).toLowerCase())).map(topicCode))].sort((a,b)=>a.localeCompare(b,undefined,{numeric:true}));
+  function topicCode(c){if(FR_CUSTOM_LIST_RE.test(c.standard))return MY_WORD_LISTS;if(isFrDailyCase(c.standard))return FR_DAILY_TOPIC;return missionMapTeksCode(c.standard)||c.standard.replace(/-(?:SC|GC|FR|SL|SD|AD|RS|MM|CL|EX).*$/i,'');}
+  const topics=[...new Set(cases.filter(c=>c.grade===Number(browseGrade)&&(c.subject===browseSubject||isFrDailyCase(c.standard))&&(typeFilter==='all'||matchesChallenge(c.engine,typeFilter))&&!isRetiredSignalCheckCase(c.standard)&&!((FR_CUSTOM_LIST_RE.exec(c.standard)||[])[1]&&FR_CUSTOM_LIST_RE.exec(c.standard)[1]!==String(teacherId||"").replace(/-/g,"").slice(0,8).toLowerCase())).map(topicCode))].sort((a,b)=>a.localeCompare(b,undefined,{numeric:true}));
   const searchQ = caseSearch.trim().toLowerCase();
   const filteredCases = cases.filter((c) => {
     if (c.grade !== parseInt(browseGrade)) return false;
     if(!CHALLENGE_TYPES.some(t=>t.real&&matchesChallenge(c.engine,t.key)))return false;
     const specialTile = RELAY_SPECIAL_TILES.find((t) => t.key === browseSubject);
-    if (!specialTile && c.subject !== browseSubject) return false;
+    if (!specialTile && c.subject !== browseSubject && !isFrDailyCase(c.standard)) return false;
     if (typeFilter!=="all" && !matchesChallenge(c.engine,typeFilter)) return false;
     if(topic!=="all" && topicCode(c)!==topic)return false;
     if (isRetiredSignalCheckCase(c.standard)) return false;

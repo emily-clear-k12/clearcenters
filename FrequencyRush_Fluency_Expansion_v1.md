@@ -29,7 +29,7 @@ Each `sort_bins` item carries **its own** 2–6 answer buttons, plus an optional
   3. Teacher's own lists.
   4. My Missed Words.
   5. Living Word Wall + Fact Wall.
-  6. Daily warm-up + ghost.
+  6. Daily warm-up + ghost. *(Built Sept 24 as Daily Warm-up + beat-your-best; the in-game ghost moves to step 7. See §11.10e.)*
   7. The re-export spec (pictures + read-aloud).
 - **The first Math facts set:** × and ÷ to 10×10 (TEKS **3.4F**, verified in the Math PDF: "recall facts to multiply up to 10 by 10 with automaticity and recall the corresponding division facts"), **plus + and − facts** as foundation support. Basic +/− facts are below grade 3 in the TEKS. The nearest grade 3 code is 3.4A (fluency within 1,000), so whether the +/− set carries that tag or goes untagged is Emily's call (§11.7).
 
@@ -140,6 +140,17 @@ Spelling *by ear* (hear the word, pick the spelling) waits for read-aloud in the
 - **Quick run:** a new targeted assignment of the same activity for the stuck students, copying the class's latest world and timer.
 - **Later:** Projector mode, the Fact Wall grid, and one-tier regression.
 - **Colors changed the same night (Emily):** stars use the teacher home page's score bands (`scoreColor` in `components/teacher/TodayBridge.js`): ≤50 red, <70 orange, <80 yellow, <90 green, else blue. A student's star = percent right on their last 5 answers; a class star = the average over students in view who tried it. On the dark sky, yellow, green and blue are slightly brighter versions of the same hues so they stay visible; the white side panel uses the exact home colors. "Lit" = 80%+. Stuck students still follow the My Missed Words rule.
+
+### 11.10e · Step 6 built (Sept 24): Daily Warm-up + beat-your-best
+
+- **Emily's picks:** Daily Mix content, 8 questions (~2 minutes), beat-your-best now and the racing ghost in the step 7 re-export.
+- **Cases:** `FR.3.DAILY`, `FR.4.DAILY`, `FR.5.DAILY` (unit `daily`). The assign page lists them under every subject tile, topic "Daily Warm-up".
+- **The mix** (`buildDailyMix` in `lib/frequencyRushDaily.js`) reads the student's own Star Chart (`loadStarChart` with `onlyStudentId`), so it only draws from activities the student can see. Order: missed → below 80% (lowest first) → 2 known (80%+) → untried → any other known. At most 3 per activity on the first pass. Math facts offer fresh facts as untried, because fact stars appear only once practiced. Vocabulary words become "Which word means …?" with other words from the unit as choices. Custom-list words pick one of their questions (spelling first when stuck). The game plays exactly the mix size (`configure({ roundCount })`).
+- **Ids:** `dm|<case>|<key>`. The server grades each by its source case (`recomputeDailyItem`), and only for Frequency Rush activities assigned to the student's class. It saves that id as `item_key`. `loadStarChart` and `getMissedForStudent` parse it, so warm-up answers count toward the source activity. A daily run counts as a run of each activity it drew from.
+- **Streak + crystals:** the Daily Transmission rules (`continuesStreak`, `centralDateKey`, `DAILY_CRYSTALS` imported from `lib/cases/relay-station`). Days come from the student's ended warm-up sessions. A warm-up counts once 4 questions are answered; the submit route saves the answered count in `length_value` for this. +1 💎 on the first counted warm-up each day, +3 every 5 days in a row. The submission stays a draft, so the warm-up stays on the mission list.
+- **Beat-your-best** (`getPersonalBest`): the best score and best streak on the activity across all its assignments. The start route sends it and the submit route says whether the run beat it. It applies to every Frequency Rush run.
+- **SQL:** `add_frequency_rush_daily.sql` (3 case rows only).
+- **Carried to step 7:** a racing ghost ship that replays the best run's timing in the game itself.
 
 ### 11.11 · Parked for later (Sept 24): more game modes for the question banks
 

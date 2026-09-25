@@ -6,6 +6,17 @@ import { pointsForCorrectAnswer } from "../../../../lib/frequencyRushScoring";
 import { getOutpostProgress } from "../../../../lib/outpostBuilder";
 import { getSkillSet, recomputeSkillItem } from "../../../../lib/frequencyRushSkills";
 import { isCustomListCode, recomputeCustomItem } from "../../../../lib/frequencyRushCustomLists";
+import {
+  isDailyCode,
+  loadDailyContext,
+  recomputeDailyItem,
+  dailyItemId,
+  loadDailyDates,
+  dailyStreakAfter,
+  getPersonalBest,
+  DAILY_MIN_ANSWERS,
+  centralDateKey,
+} from "../../../../lib/frequencyRushDaily";
 
 // Ends a Lock the Signal session. Every answer is re-scored here against the
 // session's own server-generated word_order — never trusted from the client,
@@ -72,6 +83,8 @@ export async function POST(request) {
   let bestStreak = 0;
   let skillSet = null; // set below when this assignment is a skill set (Sept 24)
   let speedWindowSeconds = ROUND_SECONDS; // teacher's question timer, if set (Sept 24)
+  let dailyCtx = null; // set when this is a Daily Warm-up run (Sept 24, step 6)
+  let caseStandard = null;
   let score = 0;
   const attemptRows = [];
   const perWordResults = [];
@@ -153,6 +166,14 @@ export async function POST(request) {
         skillSet = { kind: "custom", title: `My List: ${list.title}` };
       }
     }
+    caseStandard = skillStandard;
+    // Sept 24, 2026 (step 6) — Daily Warm-up: each question is graded by the
+    // activity it came from, and only activities assigned to this class count.
+    if (isDailyCode(skillStandard)) {
+      const { data: me } = await supabaseAdmin.from("students").select("class_id").eq("id", studentId).single();
+      dailyCtx = me ? await loadDailyContext(supabaseAdmin, me.class_id) : null;
+      skillSet = { kind: "daily", title: "Daily Warm-up" };
+    }
     let sortBinById = new Map();
     if (caseKey && !skillSet) {
       try {
@@ -169,7 +190,9 @@ export async function POST(request) {
       if (a?.type === "sort_bins") {
         const itemId = a.itemId ?? a.questionId;
         if (itemId == null) continue;
-        const item = customList
+        const item = dailyCtx
+          ? await recomputeDailyItem(supabaseAdmin, itemId, dailyCtx)
+          : customList
           ? recomputeCustomItem(customList, itemId)
           : skillSet
             ? recomputeSkillItem(skillStandard, itemId)
@@ -196,13 +219,14 @@ export async function POST(request) {
           word_id: null,
           // Sept 24, 2026 — which fact/item this was ("mul:7x8"), so My
           // Missed Words and the Fact Wall can track single items later.
-          item_key: String(item.id),
+          // Daily Warm-up answers keep where they came from: "dm|<case>|<key>".
+          item_key: dailyCtx ? dailyItemId(item.caseStandard, item.key) : String(item.id),
           correct,
           response_time_ms: a.responseTimeMs || null,
           points_earned: pointsEarned,
           streak_at_answer: streak,
         });
-        perWordResults.push({ itemId: item.id, type: "sort_bins", correct, choiceId: a.choiceId });
+        perWordResults.push({ itemId: dailyCtx ? dailyItemId(item.caseStandard, item.key) : item.id, type: "sort_bins", correct, choiceId: a.choiceId });
         continue;
       }
 
@@ -277,9 +301,20 @@ export async function POST(request) {
 
   const resolvedEndedReason = ["completed", "hull_breach", "out_of_fuel"].includes(endedReason) ? endedReason : "completed";
 
+  // Sept 24, 2026 (step 6) — beat-your-best: compare with this student's
+  // earlier runs of the same activity (read before this run is saved).
+  const prevBest = caseStandard ? await getPersonalBest(supabaseAdmin, { studentId, caseStandard, excludeSessionId: sessionId }) : null;
+  // Daily Warm-up: the days already done, before this run counts.
+  const dailyDates = dailyCtx ? await loadDailyDates(supabaseAdmin, { studentId, caseStandard, excludeSessionId: sessionId }) : null;
+
+  const sessionUpdate = { score, best_streak: bestStreak, ended_reason: resolvedEndedReason, ended_at: new Date().toISOString() };
+  // A warm-up counts for the day once at least DAILY_MIN_ANSWERS questions
+  // were answered; length_value records how many were, so loadDailyDates
+  // can tell a real warm-up from one quit at the start.
+  if (dailyCtx) sessionUpdate.length_value = perWordResults.length;
   const { error: sessionUpdateError } = await supabaseAdmin
     .from("frequency_rush_sessions")
-    .update({ score, best_streak: bestStreak, ended_reason: resolvedEndedReason, ended_at: new Date().toISOString() })
+    .update(sessionUpdate)
     .eq("id", sessionId);
   if (sessionUpdateError) return NextResponse.json({ error: sessionUpdateError.message }, { status: 500 });
 
@@ -308,11 +343,48 @@ export async function POST(request) {
   // history across every replay lives in frequency_rush_sessions/_attempts,
   // which is what the Word Wall will aggregate from later.
   const correctCount = perWordResults.filter((r) => r.correct).length;
+
+  const personalBest = prevBest
+    ? {
+        score: Math.max(prevBest.score, score),
+        streak: Math.max(prevBest.streak, bestStreak),
+        previousScore: prevBest.score,
+        previousStreak: prevBest.streak,
+        firstRun: prevBest.runs === 0,
+        newScore: prevBest.runs > 0 && score > prevBest.score,
+        newStreak: prevBest.runs > 0 && bestStreak > prevBest.streak,
+      }
+    : null;
+
+  // Daily Warm-up streak + crystals (same rewards as Relay's Daily Transmission).
+  let daily = null;
+  if (dailyCtx) {
+    const today = centralDateKey();
+    const counts = perWordResults.length >= DAILY_MIN_ANSWERS;
+    const after = dailyStreakAfter(dailyDates, today);
+    daily = counts
+      ? { counted: true, firstToday: after.firstToday, streak: after.streak, bestStreak: after.bestStreak, totalDays: after.totalDays, crystalsEarned: after.crystals }
+      : { counted: false, needed: DAILY_MIN_ANSWERS, firstToday: after.firstToday, streak: after.firstToday ? after.streak - 1 : after.streak, totalDays: after.totalDays - (after.firstToday ? 1 : 0), crystalsEarned: 0 };
+    if (daily.crystalsEarned > 0) {
+      try {
+        await supabaseAdmin.rpc("increment_crystal_points", { p_student_id: studentId, p_amount: daily.crystalsEarned });
+      } catch (err) {
+        // a missed reward is never worth failing the submit over
+      }
+    }
+  }
+
   const fields = {
     attempt2: `Frequency Rush (${skillSet ? skillSet.title : "Lock the Signal"}): ${correctCount}/${perWordResults.length} correct, best streak ${bestStreak}, score ${score}.`,
     frequency_rush_data: { sessionId, score, bestStreak, correctCount, total: perWordResults.length, perWordResults },
     submitted_at: new Date().toISOString(),
   };
+  if (daily) {
+    // The warm-up stays on the mission list every day, so it's never "turned in".
+    fields.attempt2 = `Daily Warm-up: ${daily.totalDays} day${daily.totalDays === 1 ? "" : "s"} done, current streak ${Math.max(0, daily.streak)} (best ${daily.bestStreak}). Last warm-up: ${correctCount}/${perWordResults.length} correct, score ${score}.`;
+    fields.frequency_rush_data = { ...fields.frequency_rush_data, daily };
+    fields.submitted_at = null;
+  }
 
   const { data: existing } = await supabaseAdmin
     .from("submissions")
@@ -333,5 +405,5 @@ export async function POST(request) {
     // ignore — streak is a nice-to-have, not worth failing the submit over
   }
 
-  return NextResponse.json({ success: true, score, resourcesBanked, bestStreak, correctCount, total: perWordResults.length, perWordResults, outpost });
+  return NextResponse.json({ success: true, score, resourcesBanked, bestStreak, correctCount, total: perWordResults.length, perWordResults, outpost, personalBest, daily });
 }
