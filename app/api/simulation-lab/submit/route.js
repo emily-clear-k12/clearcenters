@@ -4,6 +4,7 @@ import { supabaseAdmin } from "../../../../lib/supabaseAdmin";
 import { callClaude, extractJSON } from "../../../../lib/anthropic";
 import { getSimulationLabServerCase } from "../../../../lib/cases/simulation-lab/index.server";
 import { getSimulationLabPublicCase } from "../../../../lib/cases/simulation-lab/index.public";
+import { scoreSubmission, CONFIDENCE_IDS } from "../../../../lib/simulationLabScoring";
 
 // Simulation Lab's checkpoints are single-attempt (unlike Mission Map's
 // two-attempt hint-then-retry checkpoints) — they're quick understanding
@@ -22,90 +23,13 @@ import { getSimulationLabPublicCase } from "../../../../lib/cases/simulation-lab
 // "physics," not a secret — see the comment atop 3-8B-SL.public.js) and
 // the data-table grading needs them.
 
-function normalizeAnswer(text) {
-  return (text || "")
-    .toLowerCase()
-    .trim()
-    .replace(/[.!?,;:]/g, "");
-}
-
-// Checkpoints keyed "mc"/"dropdown" are graded the same way (a single
-// submitted choice id against a single correct choice id) — the format
-// only changes how the question is presented client-side (buttons vs. a
-// <select>), not how it's scored. "multiSelect" checks an exact set
-// match. "fillBlank" stays for any future case that wants free text,
-// checked with a forgiving substring match against an accepted-answers
-// list, since elementary students phrase the same correct idea many
-// different ways.
-function scoreCheckpoints(serverCase, submittedResults) {
-  if (!serverCase || !serverCase.checkpoints) return { results: [], correctCount: 0, total: 0 };
-  const byId = {};
-  (submittedResults || []).forEach((r) => { byId[r.id] = r; });
-
-  const results = serverCase.checkpoints.map((cp) => {
-    const submitted = byId[cp.id] || {};
-    let correct = false;
-    if (cp.type === "mc" || cp.type === "dropdown") {
-      correct = submitted.submittedChoiceId === cp.correctChoiceId;
-    } else if (cp.type === "multiSelect") {
-      const submittedSet = new Set(submitted.submittedChoiceIds || []);
-      const correctSet = new Set(cp.correctChoiceIds || []);
-      correct =
-        submittedSet.size === correctSet.size &&
-        [...correctSet].every((id) => submittedSet.has(id));
-    } else if (cp.type === "fillBlank") {
-      const normalized = normalizeAnswer(submitted.submittedText);
-      correct = (cp.acceptedAnswers || []).some(
-        (a) => normalized.includes(normalizeAnswer(a))
-      );
-    }
-    return { id: cp.id, type: cp.type, correct };
-  });
-
-  const correctCount = results.filter((r) => r.correct).length;
-  return { results, correctCount, total: results.length };
-}
-
-// The Data Table step (v3) asks the student to predict an UNTESTED
-// value — an angle (or whatever the case's variable is) they never
-// actually tried in the target round — by extrapolating the pattern in
-// their own data. Graded server-side against that round's real lookup
-// table (re-derived from the public case here, never trusted from the
-// client), with a small tolerance since this is a prediction, not a
-// lookup. Also re-verifies the picked setting really was untested
-// against the student's own submitted trial log for that round, so a
-// student can't get credit for "predicting" a value they already saw run
-// on screen. See design doc §10.2 (point 2) and §10.5.
-function scoreDataTable(publicCase, roundTrialLogs, dataTableResults) {
-  if (!publicCase || !publicCase.dataTableStep || !dataTableResults || dataTableResults.length === 0) {
-    return { results: [], correctCount: 0, total: 0 };
-  }
-  const step = publicCase.dataTableStep;
-  const targetRound = publicCase[step.targetRound]; // e.g. publicCase.roundTwo
-  const tolerance = typeof step.tolerance === "number" ? step.tolerance : 0;
-  const variableId = (publicCase.variables && publicCase.variables[0] && publicCase.variables[0].id) || null;
-  const outcomeId = (publicCase.outcome && publicCase.outcome.id) || null;
-
-  const roundLog = (roundTrialLogs && roundTrialLogs[step.targetRound]) || [];
-  const testedSettings = new Set(roundLog.map((t) => Number(t[variableId])));
-
-  const results = dataTableResults.map((r) => {
-    const settingValue = Number(r.settingValue);
-    const wasUntested = !testedSettings.has(settingValue);
-    const tableEntry = ((targetRound && targetRound.lookupTable) || []).find(
-      (row) => Number(row[variableId]) === settingValue
-    );
-    const expectedValue = tableEntry ? tableEntry[outcomeId] : null;
-    const correct =
-      wasUntested &&
-      expectedValue !== null &&
-      Math.abs(Number(r.submittedValue) - Number(expectedValue)) <= tolerance;
-    return { settingValue, submittedValue: r.submittedValue, expectedValue, wasUntested, correct };
-  });
-
-  const correctCount = results.filter((r) => r.correct).length;
-  return { results, correctCount, total: results.length };
-}
+// Scoring (checkpoints, data-table prediction, clean run) lives in
+// lib/simulationLabScoring.js so the instant-feedback check route and the
+// dev harness grade exactly the same way. Sept 24 2026: scene-based cases
+// (every live case) score the scene flow's own checkpoints (cp1 + fair) on
+// the first attempt, derive the data-table item from the Round 2
+// given-setting prediction, and recompute every trial outcome from the
+// lookup tables. Cases without a scene block keep the original scoring.
 
 function summarizeForHumans(caseData, checkpointScore, dataTableScore, finalResponseText) {
   const cpTotal = checkpointScore.total;
@@ -154,29 +78,13 @@ export async function POST(request) {
     return NextResponse.json({ error: "Not logged in." }, { status: 401 });
   }
 
-  const {
-    assignmentId,
-    caseStandard,
-    roundTrialLogs,
-    checkpointResults,
-    dataTableResults,
-    finalResponseText,
-    checklist,
-  } = await request.json();
+  const body = await request.json();
+  const { assignmentId, caseStandard, finalResponseText, checklist, selfConfidence } = body;
 
   const serverCase = getSimulationLabServerCase(caseStandard);
   const publicCase = getSimulationLabPublicCase(caseStandard);
 
-  const checkpointScore = scoreCheckpoints(serverCase, checkpointResults || []);
-  const dataTableScore = scoreDataTable(publicCase, roundTrialLogs || {}, dataTableResults || []);
-
-  // "Clean run" callout, same purely-positive convention as Mission Map's:
-  // every checkpoint AND every data-table prediction correct. No badge,
-  // and no negative language anywhere, when a run isn't clean.
-  const cleanRun =
-    checkpointScore.total > 0 &&
-    checkpointScore.correctCount === checkpointScore.total &&
-    (dataTableScore.total === 0 || dataTableScore.correctCount === dataTableScore.total);
+  const { trialLog, checkpointScore, dataTableScore, cleanRun } = scoreSubmission(serverCase, publicCase, body);
 
   let aiScore = null;
   let aiRationale = null;
@@ -190,10 +98,7 @@ export async function POST(request) {
     attempt2: summarizeForHumans(serverCase, checkpointScore, dataTableScore, finalResponseText),
     checklist: checklist || null,
     simulation_lab_data: {
-      trialLog: {
-        roundOne: (roundTrialLogs && roundTrialLogs.roundOne) || [],
-        roundTwo: (roundTrialLogs && roundTrialLogs.roundTwo) || [],
-      },
+      trialLog,
       checkpointResults: checkpointScore.results,
       checkpointScore: { correctCount: checkpointScore.correctCount, total: checkpointScore.total },
       dataTableResults: dataTableScore.results,
@@ -202,6 +107,8 @@ export async function POST(request) {
       cleanRun,
     },
     ai_score: aiScore,
+    // Rule 21: "How sure are you?" is asked on every submit and saved with it.
+    ...(CONFIDENCE_IDS.includes(selfConfidence) ? { self_confidence: selfConfidence } : {}),
     ai_rationale: aiRationale,
     submitted_at: new Date().toISOString(),
     revision_requested: false,
