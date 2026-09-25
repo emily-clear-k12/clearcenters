@@ -112,11 +112,10 @@ const CHALLENGE_TYPES = [
     description: "Students sort by the rule on the card, not the obvious clue. Three pages: a sort, a harder sort, and a Venn. A miss says how many are wrong, not which ones. About 20 minutes." },
   { key: "exhibit_hall", label: "Exhibit Hall", image: "/maker/hall.jpg", real: true,
     description: "Students stamp each source, choose what belongs on a four-spot exhibit, and write the labels. A wrong piece stays. About 20 minutes." },
-  // Sept 25, 2026 — Expedition Station (Frozen Relay MA.4.3E-XP). Tile already
-  // appears via ENGINES in teacherBridge; this CHALLENGE_TYPES entry is what
-  // lets Assign's case filter actually show the case (real:true gate).
-  { key: "expedition_station", label: "Expedition Station", image: "/teacher/challenges/mission_map.jpg", real: true,
-    description: "A 15-task quest on one planet. Station mode: four cards, then a challenge. About 15–20 minutes per act." },
+  // Sept 25, 2026 — Expedition Station intentionally hidden from Assign until
+  // the quest is finished. Engine/catalog/fallback/client/SQL remain in repo;
+  // catalog merge below stays dormant (cases filtered out without a real:true
+  // CHALLENGE_TYPES entry). Re-add ENGINES + this CHALLENGE_TYPES row to show.
   // Coming soon — kept below live tiles (Assign library sorts real:true first as well).
   { key: "repair_desk", label: "Repair Desk", image: "/teacher/challenges/repair_desk.jpg", real: false,
     description: "A broken ticket arrives — a flawed diagram, model, or work sample. Students diagnose what's wrong, fix it, and explain the fix to whoever sent it in." },
