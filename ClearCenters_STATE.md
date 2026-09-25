@@ -1,5 +1,5 @@
 # ClearCenters — STATE
-**Current truth. Start here.** · Last updated: September 24, 2026, late night (**Word-choice check added to the reading-level tools (advisory)**) · earlier: (**Cleanup pass: audit extended to all new engines; Assembly Deck grade 5 reads too easy; Exhibit Hall found built**) · earlier: (**Frequency Rush step 6 built: Daily Warm-up + beat-your-best; 3 case rows of SQL to run**) · earlier Sept 24 afternoon: (**Reconciled with the app folder: Assembly Deck is now 66 cases and Classification Lab is built with 8 cases, both from other sessions that STATE never logged. Their SQL run status is UNKNOWN**) · Sept 24 midday: (**Maker Studio designed: the next new center, merging Museum Exhibit/Field Dispatch into it; design only, nothing built. New site-wide rule: a confidence check on every submit (§9 rule 21)**) · Sept 23 afternoon: (**Signal Check re-leveled: all 108 registered cases now read on grade — written to the app folder, NOT yet committed or pushed; no SQL needed**) · earlier Sept 23: Mission Map ELAR 12 authored and all 49 Mission Map cases re-leveled; Assembly Deck's first pilot and its fixes; Math 12 authored · *state updated at session end*
+**Current truth. Start here.** · Last updated: September 24, 2026, late night (**Assembly Deck grade 5 re-leveled, 16 cases, awaiting review**) · earlier: (**Word-choice check added to the reading-level tools (advisory)**) · earlier: (**Cleanup pass: audit extended to all new engines; Assembly Deck grade 5 reads too easy; Exhibit Hall found built**) · earlier: (**Frequency Rush step 6 built: Daily Warm-up + beat-your-best; 3 case rows of SQL to run**) · earlier Sept 24 afternoon: (**Reconciled with the app folder: Assembly Deck is now 66 cases and Classification Lab is built with 8 cases, both from other sessions that STATE never logged. Their SQL run status is UNKNOWN**) · Sept 24 midday: (**Maker Studio designed: the next new center, merging Museum Exhibit/Field Dispatch into it; design only, nothing built. New site-wide rule: a confidence check on every submit (§9 rule 21)**) · Sept 23 afternoon: (**Signal Check re-leveled: all 108 registered cases now read on grade — written to the app folder, NOT yet committed or pushed; no SQL needed**) · earlier Sept 23: Mission Map ELAR 12 authored and all 49 Mission Map cases re-leveled; Assembly Deck's first pilot and its fixes; Math 12 authored · *state updated at session end*
 
 *Reconciled from four sources: the Claude project · `ClearCenters_Project_Files.zip` · `ClearCenters_MANIFEST.md` · and both device folders.*
 *Supersedes `ClearCenters_PROJECT_SPRINGBOARD_v4.md` (stale — predates Newsroom).*
@@ -56,6 +56,35 @@ Nothing else. This file is a status document, not a design document — design n
 
 ## 0.5 · SESSION LOG
 
+**Sept 24, 2026 (late night, Assembly Deck re-level) — 15 grade 5 Assembly Deck cases rewritten to read at grade 5, and SS.4.3D-AD brought down to grade 4. On disk for Emily's review; not pushed; no SQL.**
+
+*What changed*
+- **Cases re-leveled (FK before → after):** 5.6B 4.2→6.4, 5.8C 2.3→5.7, 5.9 2.9→6.5, 5.10A 4.0→6.2, 5.10C 4.0→6.7, 5.12A 4.7→6.6, 5.12B 3.4→5.9, SS.5.2A 3.7→6.4, SS.5.12B 3.3→6.0, SS.5.14A 4.6→6.3, SS.5.15B 3.3→6.3, ELA.5.7D 2.4→6.0, ELA.5.12B 2.4→6.1, ELA.5.12D 3.0→6.3, ELA.5.13D 3.5→6.2, and SS.4.3D 6.0→5.1 (it was too hard).
+- **How:** grade 5 sentence structure (because, although, which, if…then) plus richer words, not just longer sentences (rule 17b). Decoys were rewritten to be as well written as the correct sentences. Standards vocabulary was kept.
+- **Only student-facing text changed.** A script confirmed every id, answer key, decoy category, pinpoint answer and piece order is the same as before. Seven cases gained 1–3 lines of source notes so the richer sentences are backed up. The notes panel lists every line.
+- **Checks:** all 16 pass the reading-level gate with no word-choice warnings, and all 66 still pass the case checker. **Grade separation is back:** grade 3 / 4 / 5 read at 1.8 / 3.3 / 5.2 (grade 5 was 3.3). The gate is down from 45 problems to 28: 16 grade 3–4 cases below their floors and the 12 Math cases (the numerals effect).
+- Done with 4 parallel rewriters and one shared brief (`/home/claude/ad_brief.md`, summarized in the review sheet). Claude checked structure, line endings (CRLF restored on 10 files) and sample cases.
+- **Review sheet:** `AssemblyDeck_Grade5_Relevel_Review_v1.md` (app root and project). It has every card before → after, notes before and after, and the judgment calls.
+
+*Content fixes made along the way (Emily to confirm)*
+- SS.5.12B r3p5 was tagged "unsupported" but contradicted the notes. It's now a claim the notes never make.
+- 5.10A's tap question matched two sentences; it now points only to r1p4.
+- 5.6B, 5.8C and 5.12B had an "offtopic" decoy that was really false. Each is now a true fact that's off topic.
+- Facts added to notes: 5.10A (condensation), 5.12A (oxygen, algae), SS.5.12B (canal and railroad, Pawtucket Falls), SS.5.14A (Jefferson's draft, taxes without consent) and SS.5.15B (branch names, veto, check).
+
+*Pre-existing issues found, not changed*
+- ELA.5.7D's tap question accepts only r2p2, but r3p3 says nearly the same thing.
+- 5.10C's written question and its third grading point don't match.
+- Some decoy tags are arguable: 5.6B r2p6/r3p6 and ELA.5.13D r1p6.
+- ELA.5.12B's repair model answer uses "unsupported" wording for a decoy tagged "contradicts".
+- (Checked, not a problem: the repair prompt copies the picture question in all 60 cases. That's by design, because RepairRound shows the picture question.)
+
+*What is still open*
+- **Emily reviews the sheet, then commits and pushes.**
+- The 16 grade 3–4 cases below their floors and the Math numerals effect are still open. Should grades 3 and 4 get the same treatment?
+
+---
+
 **Sept 24, 2026 (late night, word choice) — The reading-level checkers now look at word choice, not just sentence length. Tools only; no content changed.**
 
 *Why:* Emily asked whether leveling was only sentence length. It mostly was: Flesch-Kincaid sees sentence length and syllables, so it can't tell that *fen* or *yield* is hard, or that *everybody* is easy.
@@ -67,7 +96,7 @@ Nothing else. This file is a status document, not a design document — design n
   - `--words` lists the flagged words.
 - **Word frequency comes from movie and TV subtitles** (`tools/data/en_50k.txt`, FrequencyWords from OpenSubtitles 2018, CC BY-SA 4.0). Emily downloaded it, because this workspace can't reach GitHub.
 - **Never flagged:**
-  - standards vocabulary: every word in the ELAR and Math TEKS PDFs (`teks-words.json`, built automatically) plus about 330 Science and Social Studies terms by grade (`standards-vocab.txt`, hand-kept; add to it freely);
+  - standards vocabulary: every word in the ELAR and Math TEKS PDFs (`teks-words.json`, built automatically) plus about 540 Science, Social Studies and cross-subject terms by grade (`standards-vocab.txt`, hand-kept; add to it freely);
   - names and numbers;
   - `kid-words.txt`: everyday words the subtitle list ranks low (*crayon, recess, puddle, cafeteria*).
 - The checker also handles word endings, irregular verbs (*shrank → shrink*) and closed compounds (*rainstorm* = rain + storm).
