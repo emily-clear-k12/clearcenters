@@ -6,7 +6,7 @@ import {engineInfo,subjectStyle,assignmentBoard} from '../../lib/teacherBridge';
 import {rememberedTeacherClass,rememberTeacherClass} from '../../lib/teacherClass';
 import {missionMapTeksCode} from '../../lib/cases/mission-map/teksLabels';
 
-function topicOf(standard){return missionMapTeksCode(standard||'')||String(standard||'').replace(/-(?:SC|GC|FR|SL|SD|AD|RS|MM).*$/i,'');}
+function topicOf(standard){return missionMapTeksCode(standard||'')||String(standard||'').replace(/-(?:SC|GC|FR|SL|SD|AD|RS|MM|CL|EX).*$/i,'');}
 function scoreColor(pct){if(pct<=50)return '#d64545';if(pct<70)return '#e8943a';if(pct<80)return '#c8960a';if(pct<90)return '#1f8a4d';return '#3d84f5';}
 function scoreWord(pct){if(pct>=90)return 'Excellent';if(pct>=80)return 'Proficient';if(pct>=60)return 'Developing';return 'Needs support';}
 
