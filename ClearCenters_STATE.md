@@ -1,5 +1,9 @@
 # ClearCenters — STATE
-**Current truth. Start here.** · Last updated: September 24, 2026, afternoon (**Reconciled with the app folder: Assembly Deck is now 66 cases and Classification Lab is built with 8 cases, both from other sessions that STATE never logged. Their SQL run status is UNKNOWN**) · Sept 24 midday: (**Maker Studio designed: the next new center, merging Museum Exhibit/Field Dispatch into it; design only, nothing built. New site-wide rule: a confidence check on every submit (§9 rule 21)**) · Sept 23 afternoon: (**Signal Check re-leveled: all 108 registered cases now read on grade — written to the app folder, NOT yet committed or pushed; no SQL needed**) · earlier Sept 23: Mission Map ELAR 12 authored and all 49 Mission Map cases re-leveled; Assembly Deck's first pilot and its fixes; Math 12 authored · *state updated at session end*
+<<<<<<< HEAD
+**Current truth. Start here.** · Last updated: September 24, 2026, near midnight (**Classification Lab: 73 new cases written, checked and wired into the code (8 → 81); SQL written, not run; not pushed; images come tomorrow**) · earlier late night: (**Assembly Deck grade 5 re-leveled, 16 cases, awaiting review**) · earlier: (**Word-choice check added to the reading-level tools (advisory)**) · earlier: (**Cleanup pass: audit extended to all new engines; Assembly Deck grade 5 reads too easy; Exhibit Hall found built**) · earlier: (**Frequency Rush step 6 built: Daily Warm-up + beat-your-best; 3 case rows of SQL to run**) · earlier Sept 24 afternoon: (**Reconciled with the app folder: Assembly Deck is now 66 cases and Classification Lab is built with 8 cases, both from other sessions that STATE never logged. Their SQL run status is UNKNOWN**) · Sept 24 midday: (**Maker Studio designed: the next new center, merging Museum Exhibit/Field Dispatch into it; design only, nothing built. New site-wide rule: a confidence check on every submit (§9 rule 21)**) · Sept 23 afternoon: (**Signal Check re-leveled: all 108 registered cases now read on grade — written to the app folder, NOT yet committed or pushed; no SQL needed**) · earlier Sept 23: Mission Map ELAR 12 authored and all 49 Mission Map cases re-leveled; Assembly Deck's first pilot and its fixes; Math 12 authored · *state updated at session end*
+=======
+**Current truth. Start here.** · Last updated: September 24, 2026, night (**Simulation Lab rebuilt in the new animated design for all 10 cases; old layout banned by §9 rule 22; PR #23, not merged**) · earlier late night: (**Assembly Deck grade 5 re-leveled, 16 cases, awaiting review**) · earlier: (**Word-choice check added to the reading-level tools (advisory)**) · earlier: (**Cleanup pass: audit extended to all new engines; Assembly Deck grade 5 reads too easy; Exhibit Hall found built**) · earlier: (**Frequency Rush step 6 built: Daily Warm-up + beat-your-best; 3 case rows of SQL to run**) · earlier Sept 24 afternoon: (**Reconciled with the app folder: Assembly Deck is now 66 cases and Classification Lab is built with 8 cases, both from other sessions that STATE never logged. Their SQL run status is UNKNOWN**) · Sept 24 midday: (**Maker Studio designed: the next new center, merging Museum Exhibit/Field Dispatch into it; design only, nothing built. New site-wide rule: a confidence check on every submit (§9 rule 21)**) · Sept 23 afternoon: (**Signal Check re-leveled: all 108 registered cases now read on grade — written to the app folder, NOT yet committed or pushed; no SQL needed**) · earlier Sept 23: Mission Map ELAR 12 authored and all 49 Mission Map cases re-leveled; Assembly Deck's first pilot and its fixes; Math 12 authored · *state updated at session end*
+>>>>>>> 568739341a1347a858dcbe055112e66151489951
 
 *Reconciled from four sources: the Claude project · `ClearCenters_Project_Files.zip` · `ClearCenters_MANIFEST.md` · and both device folders.*
 *Supersedes `ClearCenters_PROJECT_SPRINGBOARD_v4.md` (stale — predates Newsroom).*
@@ -55,6 +59,187 @@ Nothing else. This file is a status document, not a design document — design n
 ---
 
 ## 0.5 · SESSION LOG
+
+<<<<<<< HEAD
+**Sept 24, 2026 (near midnight) — Classification Lab goes from 8 cases to 81. 73 new cases are written, measured on grade, reviewed for accuracy and wired into the code. Nothing is pushed, the SQL has not been run, and there are no images yet.**
+
+*What changed*
+- **73 new cases**, from `ClassificationLab_CaseMap_v1.md`. Emily said to "just start going down the list… on grade level… keeping the rigor." That covers all 4 subjects in grades 3–5, 40 of them Emily's own ideas. Every TEKS code was checked against her PDFs first.
+  - **Left out on purpose:** 3.6B (a `3.6B-CL` row already sits in the database), 4.11D(v) (it would collide with `ELAR-4.11D-CL`), 5.9A data and 5.5 shape family (both need Emily's design call), and correct/incorrect computation (the spec says no computation).
+- **Reading level is now measured for this engine.** The new `tools/classification-lab-gradecheck.cjs` uses the same bands and the same `tools/lib/wordcheck.cjs` as the other gradechecks. It measures Flesch-Kincaid only on real sentences (at least 4 words, ending in punctuation); rule 17 applied, because the first run was counting short answer choices as sentences.
+  - **The first honest run found the same problem as Assembly Deck:** Grade 4 read at FK ~2.4 and Grade 5 at ~3.0. All 31 low cases were rewritten, with wording changed only: keys, groups and traps were checked unchanged by script.
+  - **Now 73/73 are on grade, with 0 word-choice warnings.** Mean FK is g3 2.5, g4 4.4, g5 6.0, so the grades separate.
+- `tools/classification-lab-casecheck.py` enforces the content spec: page and Venn counts, Neither rules, all four Venn regions, no item named in a definition or notThis line, grade length caps, and definition terms matching labels.
+- **Independent expert review:** four reviewers, one per subject, who didn't write the cases, checked every key and fact. They found 37 must-fix items and all were applied. Examples:
+  - a false cactus fact
+  - the bee waggle dance (now known to be partly learned)
+  - a chrysalis described as "spun"
+  - Coyote stealing fire "from the gods"
+  - Johnny Appleseed keyed as a legend
+  - the ambiguous "the 1900s"
+  - a Texas sales-tax overstatement
+  - several notThis lines and definitions that gave away an item
+- **Wired into the code:**
+  - `lib/cases/classification-lab/catalog.js` (keys) and `index.public.js` (no keys; checked by script that no `group`, `sets` or `answer` leaked) now hold **81 cases**.
+  - A grading test put perfect answers through `gradeClassificationPage` for all 73 on all 3 pages: 0 misses.
+  - **`add_classification_lab_batch2.sql`** adds 73 `cases` rows plus learning_target and lesson_summary. Run it after `add_classification_lab.sql`. It's safe to run twice.
+- **Images:** none yet (Emily adds them tomorrow). `ClassificationLab_Cases/ClassificationLab_ImageList.csv` lists **398 photos**, each with a suggested file path (`/lab/<case>-<item>.jpg`) and what the photo must show. Items have no `image` field yet, so photo items appear as word cards until an image is added. After the photos are saved, a script adds the `image` fields.
+- Source files: `ClassificationLab_Cases/ClassificationLab_Cases_JSON.zip` (the 73 case JSONs) and `ClassificationLab_73_Review.docx` (169 pages, readable review). **`ClassificationLab_Batch1/` is superseded:** its 4 cases are in the new set, reworded to grade level.
+
+*What is now true*
+- Classification Lab has 81 cases in the code, and 8 in the database for certain (73 more once the SQL runs).
+- 5 cases have a Venn or Neither that differs from the case map, each for a stated reason (for example SCI-5.6A's Neither is "energy, not matter"; SS-3.15C uses exact year spans).
+
+*What is still open*
+- **Emily's read as author of record.** `ClassificationLab_73_Review.docx` is the review copy.
+- **Run `add_classification_lab.sql` (if not already run), then `add_classification_lab_batch2.sql`.** Then extend and re-run `audit_production_readonly.sql`.
+- **Commit and push:** catalog.js, index.public.js, the SQL, the two tools and the `ClassificationLab_Cases/` folder.
+- **Photos (398):** generate them, save to `public/lab/`, then add the `image` fields.
+- `lib/gradeFromStandard.js` reads `SCI-3.10C-CL`-style codes as grade 5, because it strips only `XX.` prefixes. This affects any AI prompt that uses it for Classification Lab codes, the original 8 included. Check whether Classification Lab calls it before fixing.
+- The engine has a per-page `hint` field that the new cases don't fill. It isn't used by grading. Confirm whether the client shows it.
+- The confidence check (rule 21) still isn't in Classification Lab.
+=======
+**Sept 24, 2026 (night, Simulation Lab) — Simulation Lab rebuilt in the new animated design for all 10 live cases. The old layout is gone for good (new §9 rule 22). On branch `sl-rebuild`, PR #23. Not merged. No SQL needed.**
+
+*What changed*
+- **New animated Simulation Lab** (`components/simulation-lab/`), from the prototype Emily approved. Each case is a real animated experiment with S.A.M. talking the student through it:
+  - 5.7B balloon (twist: added weight)
+  - 3.8B ramp (twist: carpet)
+  - 3.6A boat and washers
+  - 3.6C melting ice
+  - 3.7A magnet and paper clips
+  - 4.6B dissolving sugar
+  - 4.7 surfaces and a sliding block
+  - 4.8C battery and bulb
+  - 5.8B battery and fan motor
+  - 5.9 sun and shadow
+- **The same flow for every case:** 3 runs with a prediction flag → pattern check → **new fair-test check** → twist → 2 runs → explain → self-check → confidence (rule 21, saved as `self_confidence`).
+- **Scoring is shared** (`lib/simulationLabScoring.js`). The twist *prediction* is recorded but no longer graded, so a wrong guess about the new condition doesn't count against a clean run.
+- **The old `SimulationLabClient` layout was deleted.** The file is now a thin wrapper. Rule 22 forbids bringing the old layout back.
+- **Each case file gained** a `scene` block and a `fair` checkpoint. The fair-test answer key and all feedback are in the `.server.js` files only.
+- **Drafts save on the device automatically, and to the server with Save.** Resume puts the student back on the step they left.
+- **A local-only test page** at `/simulation-lab/dev?case=<code>` (404 in production).
+
+*What is now true*
+- **All 10 live Simulation Lab cases run in the new design**, walked end to end by script with no errors. Also tested: reduced motion, iPad and Chromebook screen sizes, real pointer input on every control, resume after reload, Save, and the submitted screen.
+- 5.7B, 5.8B and 5.9 (the writing-answer cases) finish and score through the new explain step.
+- **No SQL** (rule 16): same case codes, same `submissions` columns.
+
+*What is still open*
+- **Merge PR #23 once Emily reviews it.** Vercel preview deploys fail for every PR (#19–23) while production builds fine, most likely missing preview environment variables. So the new design has only been tested locally, never on a preview URL.
+- **Live-test with a student** (rule 20). Anchor art is no longer needed: the scenes are drawn in code.
+- Reading level is still unmeasured on Simulation Lab.
+
+---
+>>>>>>> 568739341a1347a858dcbe055112e66151489951
+
+**Sept 24, 2026 (late night, Assembly Deck re-level) — 15 grade 5 Assembly Deck cases rewritten to read at grade 5, and SS.4.3D-AD brought down to grade 4. On disk for Emily's review; not pushed; no SQL.**
+
+*What changed*
+- **Cases re-leveled (FK before → after):** 5.6B 4.2→6.4, 5.8C 2.3→5.7, 5.9 2.9→6.5, 5.10A 4.0→6.2, 5.10C 4.0→6.7, 5.12A 4.7→6.6, 5.12B 3.4→5.9, SS.5.2A 3.7→6.4, SS.5.12B 3.3→6.0, SS.5.14A 4.6→6.3, SS.5.15B 3.3→6.3, ELA.5.7D 2.4→6.0, ELA.5.12B 2.4→6.1, ELA.5.12D 3.0→6.3, ELA.5.13D 3.5→6.2, and SS.4.3D 6.0→5.1 (it was too hard).
+- **How:** grade 5 sentence structure (because, although, which, if…then) plus richer words, not just longer sentences (rule 17b). Decoys were rewritten to be as well written as the correct sentences. Standards vocabulary was kept.
+- **Only student-facing text changed.** A script confirmed every id, answer key, decoy category, pinpoint answer and piece order is the same as before. Seven cases gained 1–3 lines of source notes so the richer sentences are backed up. The notes panel lists every line.
+- **Checks:** all 16 pass the reading-level gate with no word-choice warnings, and all 66 still pass the case checker. **Grade separation is back:** grade 3 / 4 / 5 read at 1.8 / 3.3 / 5.2 (grade 5 was 3.3). The gate is down from 45 problems to 28: 16 grade 3–4 cases below their floors and the 12 Math cases (the numerals effect).
+- Done with 4 parallel rewriters and one shared brief (`/home/claude/ad_brief.md`, summarized in the review sheet). Claude checked structure, line endings (CRLF restored on 10 files) and sample cases.
+- **Review sheet:** `AssemblyDeck_Grade5_Relevel_Review_v1.md` (app root and project). It has every card before → after, notes before and after, and the judgment calls.
+
+*Content fixes made along the way (Emily to confirm)*
+- SS.5.12B r3p5 was tagged "unsupported" but contradicted the notes. It's now a claim the notes never make.
+- 5.10A's tap question matched two sentences; it now points only to r1p4.
+- 5.6B, 5.8C and 5.12B had an "offtopic" decoy that was really false. Each is now a true fact that's off topic.
+- Facts added to notes: 5.10A (condensation), 5.12A (oxygen, algae), SS.5.12B (canal and railroad, Pawtucket Falls), SS.5.14A (Jefferson's draft, taxes without consent) and SS.5.15B (branch names, veto, check).
+
+*Pre-existing issues found, not changed*
+- ELA.5.7D's tap question accepts only r2p2, but r3p3 says nearly the same thing.
+- 5.10C's written question and its third grading point don't match.
+- Some decoy tags are arguable: 5.6B r2p6/r3p6 and ELA.5.13D r1p6.
+- ELA.5.12B's repair model answer uses "unsupported" wording for a decoy tagged "contradicts".
+- (Checked, not a problem: the repair prompt copies the picture question in all 60 cases. That's by design, because RepairRound shows the picture question.)
+
+*What is still open*
+- **Emily reviews the sheet, then commits and pushes.**
+- The 16 grade 3–4 cases below their floors and the Math numerals effect are still open. Should grades 3 and 4 get the same treatment?
+
+---
+
+**Sept 24, 2026 (late night, word choice) — The reading-level checkers now look at word choice, not just sentence length. Tools only; no content changed.**
+
+*Why:* Emily asked whether leveling was only sentence length. It mostly was: Flesch-Kincaid sees sentence length and syllables, so it can't tell that *fen* or *yield* is hard, or that *everybody* is easy.
+
+*What changed*
+- **New shared checker `tools/lib/wordcheck.cjs`**, used by the Assembly Deck, Mission Map, Signal Check and Relay Station gradechecks. Each case now shows two more numbers:
+  - **uncommon %:** words outside the most common 12,000 / 16,000 / 20,000 for grades 3 / 4 / 5;
+  - **rich %:** words past the basic 2,000, like *supplied* instead of *gave*. A low rich % at grade 5 means the words read young.
+  - `--words` lists the flagged words.
+- **Word frequency comes from movie and TV subtitles** (`tools/data/en_50k.txt`, FrequencyWords from OpenSubtitles 2018, CC BY-SA 4.0). Emily downloaded it, because this workspace can't reach GitHub.
+- **Never flagged:**
+  - standards vocabulary: every word in the ELAR and Math TEKS PDFs (`teks-words.json`, built automatically) plus about 540 Science, Social Studies and cross-subject terms by grade (`standards-vocab.txt`, hand-kept; add to it freely);
+  - names and numbers;
+  - `kid-words.txt`: everyday words the subtitle list ranks low (*crayon, recess, puddle, cafeteria*).
+- The checker also handles word endings, irregular verbs (*shrank → shrink*) and closed compounds (*rainstorm* = rain + storm).
+- **Thresholds were set from content already leveled by hand.** Mission Map has 1 warning, Signal Check 7, Relay Station 0. The first run (rule 17) flagged 351 words, mostly kid words and compounds the list ranked low. After the fixes, what's left are real review words (*recital, auditorium, sectionalism, crumbly, visibly*).
+- **Word-choice results are warnings only for now.** Pass/fail is unchanged: Assembly Deck still has 45 problems, Mission Map is on grade, Signal Check is 108/108.
+
+*What it found*
+- **Assembly Deck's word choice is mostly fine.** Only 7 of the 66 cases warn, all for too few richer words (4.9A, 4.10C, 5.10C, MA.4.5A, MA.4.5B, MA.5.4B, MA.5.3L). So the grade 5 "too easy" problem is mainly **sentence structure** (short, simple sentences), not vocabulary. A rewrite pass should aim at sentence structure first.
+
+*What is still open*
+- **Emily confirms the thresholds** (or adjusts them). Then word choice can become pass/fail.
+- The Frequency Rush skillcheck and Classification Lab / Exhibit Hall have no word-choice check yet.
+
+---
+
+**Sept 24, 2026 (late night, cleanup) — Checks and cleanup pass. The production audit now covers every engine built this week, the 66 Assembly Deck cases were run through both checkers, and Exhibit Hall was found built. Nothing in the content was changed.**
+
+*What changed*
+- **`audit_production_readonly.sql` extended** (app root; still read-only). It now checks:
+  - all 66 Assembly Deck codes (was 10), the 8 Classification Lab codes, Exhibit Hall `3.13A-EX`, and the 6 Frequency Rush fact sets;
+  - the columns `submissions.classification_lab_data`, `submissions.exhibit_hall_data`, `assignments.question_seconds` and `frequency_rush_attempts.item_key`;
+  - **new "6 ORPHAN" rows:** a case row with no case file behind it, for Assembly Deck, Classification Lab, Exhibit Hall, Mission Map, Simulation Lab, Signal Defense and Signal Check. This catches rows like `3.6B-CL`.
+  - **new "7 PENDING" rows:** SQL Emily hasn't run yet on purpose (the ELAR skills, the Daily Warm-up and the word-list table). They're labeled expected and disappear once run.
+  - Tested on a local Postgres, clean and deliberately broken; it caught a missing row, a wrong engine, a missing column and an orphan.
+- **Every one of the 66 Assembly Deck codes has an INSERT in one of the `add_assembly_deck_*.sql` files** (script check).
+- **`assembly-deck-casecheck.cjs`: all 66 cases are internally consistent.**
+- **`assembly-deck-gradecheck.cjs`: 45 problems.** The rule-17 check was done first by reading real pieces; the sentences are real, so the measurement stands.
+  - **Almost all are "too easy," not "too hard."** Only one is over a ceiling: `SS.4.3D-AD` at 6.0 (grade 4 max 5.6).
+  - **Grade 5 doesn't read harder than grade 4** (3.3 vs 3.3 overall). By subject, grade 3 / 4 / 5: Science 2.4 / 3.8 / 3.9 · Social Studies 1.8 / 4.1 / 4.3 · ELAR 2.1 / 3.5 / 3.5. 15 of the 18 grade 5 Science, SS and ELAR cases are below the 5.0 floor.
+  - **The 6 original cases all still pass.** The misses are in the 60 cases added since Sept 23.
+  - **Math reads 0.0 / 1.1 / 0.6.** That's the known numerals-and-equations effect (pieces like "248 - 175 = b."), not a real reading level. Not acted on, same as Mission Map Math.
+- **Exhibit Hall is built** (from another session; STATE never logged it). Engine `exhibit_hall`, `lib/cases/exhibit-hall/`, `ExhibitHallClient.js`, and one case, `3.13A-EX` "Built for the desert". `add_exhibit_hall.sql` adds `submissions.exhibit_hall_data` and the case row. **Its SQL run status is unknown.** It looks like Maker Studio's exhibit mode, built under its own name.
+
+*Checked and still true*
+- `DEV_FORCE_UNLOCK_ALL` is **true** in `lib/devFlags.js`. It now controls both the Galaxy Hub map and the world reward pages.
+- The 3 unregistered Signal Check files (`3-6E-SC`, `4-7B-SC`, `5-10D-SC`) are still in the folder and still not imported. 344 retired Weigh-In/Thread files (`-SC-WI`, `-SC-TH`) also still sit in `lib/cases/signal-check/`, none imported.
+- The old Glow Garden files are still there: `app/gear-locker/glow-garden/` (3 files) and `app/api/planets/discover/`.
+- The four grade 4 Assembly Deck rows that were "ahead of the code" on Sept 23 (`4.8B`, `4.9B`, `4.11B`, `4.12B-AD`) now have case files. That item is resolved.
+
+*What is still open*
+- **Emily runs the extended audit** in Supabase and shares any rows that aren't INFO or PENDING.
+- **Decide on the Assembly Deck reading levels:** raise grade 5 (and a few grade 4) cases, fix `SS.4.3D-AD`, or accept as is.
+- Decisions: flip `DEV_FORCE_UNLOCK_ALL`; delete or archive the 3 unregistered Signal Check files, the 344 WI/TH files and the Glow Garden leftovers.
+- Classification Lab and Exhibit Hall have no content checker yet.
+
+---
+
+**Sept 24, 2026 (late night, later) — Frequency Rush step 6: Daily Warm-up + beat-your-best. Built; needs 3 case rows of SQL; not pushed.**
+
+*What changed*
+- **Daily Warm-up** (Emily's picks: Daily Mix, 8 questions, beat-your-best now and the racing ghost later). A teacher assigns "Frequency Rush: Daily Warm-up" once (cases `FR.3/4/5.DAILY`). It shows under **every** subject tile on the assign page, as the topic "Daily Warm-up".
+  - Each student gets **8 questions picked for them** from all the Frequency Rush activities they can see: missed questions first (shown as SECOND CHANCE), then their lowest scores, then 2 they already know (to keep those stars lit), then untried ones. No activity gives more than 3 while others still have questions. A new mix is built every run.
+  - **Answers count where they came from.** A daily answer is saved as `item_key = "dm|<case>|<key>"`, and the Star Chart and My Missed Words count it toward that activity. So a warm-up can light a star or clear a missed word.
+  - **Streak and crystals match Relay's Daily Transmission:** +1 💎 for the first warm-up each day, +3 more every 5 days in a row, and weekends never break a streak. A warm-up counts once at least 4 questions are answered. The streak is worked out from finished warm-up runs, so **no new column**.
+  - The warm-up's submission stays a draft (`submitted_at` null), so it stays on the mission list every day. The teacher sees "Daily Warm-up: N days done, current streak X (best Y). Last warm-up: a/b correct."
+- **Beat-your-best on every Frequency Rush run**, not just the warm-up. Above the game: "🏆 Your best: 184 points · streak 7. Beat it!" After a run: "🌟 New personal best! 212 points (was 184)", or "12 more to beat your best!". The daily adds "☀️ Warm-up done! 🔥 4-day streak · +1 💎".
+- **Tested:** the mix for 3 students against a mock database (8 unique questions each, every one re-graded by the server's logic, forged or unassigned ids rejected); daily answers moving a Star Chart star and clearing a missed word; streak math over weekends, a skipped weekday and the 5th-day bonus; and a real 8-question warm-up played through Asteroid Run ("SIGNAL 04 / 8", DAILY WARM-UP and SECOND CHANCE headers, all ids passed through). The SQL was tested on a local Postgres. **Not tested:** the React banners render (syntax-checked only).
+- Files: `lib/frequencyRushDaily.js` (new). Updated: `lib/starChart.js`, `lib/frequencyRushMissed.js`, `app/api/frequency-rush/start/route.js`, `app/api/frequency-rush/submit/route.js`, `app/activity/[assignmentId]/FrequencyRushClient.js`, `app/teacher/assign/new/page.js` (merged onto the version with Exhibit Hall; CRLF kept). SQL: `add_frequency_rush_daily.sql`.
+
+*What is still open*
+- **Run `add_frequency_rush_daily.sql` before pushing (rule 16).** It needs `item_key`, which "FR update 1.2" already added.
+- Assign the Daily Warm-up to a test class that already has a Frequency Rush activity, and play it twice: the second run should say today's warm-up is done.
+- Still waiting from earlier steps: the ELAR review, `add_frequency_rush_word_lists.sql`, and a live look at the Word Lists and Star Chart pages.
+- **Step 7 reframed and parked (Emily, same night).** Emily is building new game *modes* (not just skins) in her generator, so step 7 becomes a **game mode contract**: the calls every mode must support (`setQuestionBank`, `configure`, `onComplete`, `getCapabilities`), per-question labels and retry flags instead of the site rewriting the screen, a "played inside ClearCenters" flag instead of hiding controls by id, and optional features (pictures, read-aloud, typed answers, ghost). **Frequency Rush is tabled** until her modes are further along; then Claude writes the contract and checks a real mode against it.
+
+---
 
 **Sept 24, 2026 (late night) — Frequency Rush step 5: the Star Chart (the Living Word Wall). Built; no SQL needed; not pushed.**
 
@@ -512,10 +697,10 @@ Nothing else. This file is a status document, not a design document — design n
 | Group Chat | Live. 8 published, 19 built and content/TEKS-verified, formatting pending (old-era paper, largely moot for the current app). |
 | Signal Check | Live. 84 standards across grades 3-5 (108 cases). **Re-leveled Sept 23: all 108 on grade, not yet pushed.** 3 dead files await manual deletion; the Social Studies batch's SQL/images still pending — **re-verify, don't assume.** |
 | Mission Map/Evidence Quest | **Complete: 49 cases**: Science 13, Social Studies 12, Math 12, **ELAR 12 (authored Sept 23, later session; SQL delivered, not run; not pushed)**. Everything up to the Math batch is run and deployed. `tools/mission-map-gradecheck.cjs` gates reading level. Map art is missing for the 24 Math/ELAR cases. `tools/mission-map-casecheck.cjs` now guards the engine's client/server answer-key agreement across all 49. Still not live-tested since the Sept 2 batch. |
-| Simulation Lab | 10 cases across Grades 3-5 Science, all to the documented rigor rubric. Two bugs found and fixed in live-testing. Not live-tested since; SQL run status unconfirmed. Anchor art still needed for all 10. |
+| Simulation Lab | 10 cases across Grades 3-5 Science, all to the documented rigor rubric. **Sept 24: rebuilt in the new animated design, one scene per case, all 10 done (PR #23, not merged; no SQL). The old layout is gone for good (§9 rule 22).** Not yet tested with a student. The case SQL is from Sept 4 and confirmed live. |
 | **Relay Station** | **Live through Wave 3; Wave 3 SQL now run and deployed.** A typing center that doubles as reading practice: a 20-level auto-advancing Foundations Track (rising pass bar 90/95/100%) with placement and teacher override, a 72-reading library across 6 topic families, ghost racer, Repair Drills, a class trouble-key heatmap, per-student Supports, Dictation and Corrupted Transmission modes, Copy → Compose (AI-first-read), a Daily Transmission with weekday streaks, 7 rank-unlocked keyboard skins, S.A.M. on every screen, and a whole-class Relay Race with a projector board. Teacher surfaces: Typing Track, Typing Texts, Relay Race Board, Distress Call, standards report. Waves 2-3 still not live-tested. |
 | **Assembly Deck** | **Live, Wave 1 (paragraph mode). Piloted with a real student Sept 23.** Students build three paragraphs sentence by sentence, name what each leftover sentence actually was, order the finished paragraphs, answer the two **Chief's Debrief** questions about the report they built, and write a short explanation S.A.M. reads first. A **Case File** is reachable from every screen. ~20 minutes per case. **66 cases** (Science 26, ELAR 14, SS 14, Math 12 in word-problem mode), all registered. They were authored in other sessions and discovered Sept 24; **their SQL run status is unknown.** Includes protest lines, a requester who writes back, the Editor's Trap and Chief's Challenge, plus the Sentence Sort teacher board. **Territory Builder retired into this engine** (its map mode). **SQL run and deployed.** Not re-piloted since the debrief was added. Its own tile art still does not exist — it borrows the Repair Desk image. |
-| Frequency Rush / Signal Ops | Live. Vocabulary engine plus the whole-class Signal Ops board. **Sept 24: becoming the fluency center** (`FrequencyRush_Fluency_Expansion_v1.md`). Six Math fact sets are built (SQL not run, not pushed). ELAR word study is next. |
+| Frequency Rush / Signal Ops | Live. Vocabulary engine plus the whole-class Signal Ops board. **Sept 24: becoming the fluency center** (`FrequencyRush_Fluency_Expansion_v1.md`). Steps 1–6 built: Math facts (pushed), ELAR word study (awaiting review), teacher word lists, My Missed Words, the Star Chart, and the Daily Warm-up with beat-your-best. Step 7 (game re-export spec) is next. |
 | Galaxy Hub (Gear Locker) | Per-world "World Reward Station" pages. **Lumara and Mechara** are real reference builds with story + self-hosted game (Mechara: Word Blaster added Sept 22); Frostveil/Cindara/Solara/Cloudreach still "coming soon." `DEV_FORCE_UNLOCK_ALL` still `true` — must be turned off before real use. |
 | Home dashboard | 6 free rotating backgrounds plus per-world earned backgrounds and S.A.M. trails via the Settings panel. All backing SQL confirmed run. |
 | **Classification Lab** | **Built (another session, found Sept 24).** Three pages per case: Sort, Harder sort with Neither, and Venn plus 3 questions. 8 cases are in `catalog.js`. Batch 1 (4 cases) is authored as JSON and awaiting review. There's a content spec and a case map at the app root. **SQL (`add_classification_lab.sql`) run status is unknown. Not live-tested.** |
@@ -550,7 +735,7 @@ A shippable engine needs: a case schema (`public.js`/`server.js` pair), a client
 | Group Chat | ● | ● | ● | ● | ● | Live |
 | Signal Check | ● | ● | ● | ● | ● | Live, 84 standards |
 | Mission Map | ● | ● | ● | ● | ● | 49 cases, complete. ELAR SQL still to run |
-| Simulation Lab | ● | ● | ● | ● | ● | 10 cases — needs live-test; SQL unconfirmed |
+| Simulation Lab | ● | ● | ● | ● | ● | 10 cases, new animated design (PR #23 awaiting merge). Needs a student live-test |
 | **Relay Station** | ● | ● | ● | ● | ● | 94 lessons — SQL run; Waves 2-3 still untested |
 | **Assembly Deck** | ● | ● | ● | ● | ● | 66 cases — SQL for the 60 new cases unconfirmed; piloted once; own tile art missing |
 | **Classification Lab** | ● | ● | ● | ● | ● | 8 cases in code — SQL unconfirmed; not live-tested |
@@ -575,7 +760,7 @@ The old-era 5.6A "Creek Sensor Mix-Up" packet had strong reasoning design underm
 
 ## 6 · THE PLAN
 
-**Current-app build order (confirmed Aug 29, amended since):** Mission Map ✓ → Simulation Lab ✓ (10 cases) → *(inserted by Emily's call: Frequency Rush/Signal Ops ✓, Relay Station ✓, Assembly Deck ✓ 66 cases)* → Classification Lab ✓ (built, 8 cases) → Repair Desk → **Maker Studio** (replaces Field Dispatch, Sept 24; its exact place in line is not yet set) → The Tribunal → Newsroom. **Sector Survey is no longer in the order** — retired into Assembly Deck.
+**Current-app build order (confirmed Aug 29, amended since):** Mission Map ✓ → Simulation Lab ✓ (10 cases) → *(inserted by Emily's call: Frequency Rush/Signal Ops ✓, Relay Station ✓, Assembly Deck ✓ 66 cases)* → Classification Lab ✓ (built; 81 cases in code as of Sept 24 midnight) → Repair Desk → **Maker Studio** (replaces Field Dispatch, Sept 24; its exact place in line is not yet set) → The Tribunal → Newsroom. **Sector Survey is no longer in the order** — retired into Assembly Deck.
 
 **Immediate next steps:**
 0a. ~~Run `add_frequency_rush_skills.sql` and push~~ **Committed as "FR update 1.2".** Next: Emily reviews `FrequencyRush_ELAR_WordStudy_Review_v1.md`, then runs `add_frequency_rush_elar_skills.sql` and pushes.
@@ -584,7 +769,7 @@ The old-era 5.6A "Creek Sensor Mix-Up" packet had strong reasoning design underm
 2. **Re-pilot `3.6A-AD` with a student**, now that the Case File and the Chief's Debrief are in it. Twenty minutes, and it is the cheapest de-risking available before 48 more cases are written against that ending.
 3. ~~Author Mission Map's ELAR 12~~ **Done Sept 23 (later session).** The ELAR SQL has been run (the audit shows 49 rows) and the code was pushed at 12:39. Still to do: map art for the 24 Math/ELAR cases. Math hints are done.
 4. ~~Emily reviews `AssemblyDeck_CaseMap_v1.md`, then author the 48~~ **Authored (Sept 24, found in the folder); Assembly Deck is at 66.** Still open: Emily's read of the authored cases as author of record, and a checker run across all 66.
-4b. **(Sept 24) Emily reviews `ClassificationLab_Batch1_Review.docx`**, then the 4 cases get wired into `catalog.js` with their SQL.
+4b. ~~Emily reviews Batch 1, then wire the 4 cases~~ **Superseded, midnight Sept 24:** 73 cases (Batch 1 included) are wired into the code. Next: Emily reviews `ClassificationLab_Cases/ClassificationLab_73_Review.docx`, runs `add_classification_lab_batch2.sql`, pushes, and adds the 398 photos from `ClassificationLab_ImageList.csv`.
 5. **Generate `assembly_deck.jpg`** so Assembly Deck stops borrowing the Repair Desk artwork, and tell Claude where the rest of the generated art landed (Relay rank badges, skin previews, posture/hands diagrams).
 6. ~~SQL sweep~~ **Done Sept 23 via `audit_production_readonly.sql` — schema clean; only 3 Assembly Deck rows outstanding.**
 7. Turn `DEV_FORCE_UNLOCK_ALL` back to `false` before real classroom use.
@@ -617,7 +802,7 @@ The old-era 5.6A "Creek Sensor Mix-Up" packet had strong reasoning design underm
 - Two orphaned pieces from the old Glow Garden system; old per-planet `.png` art.
 - **`DEV_FORCE_UNLOCK_ALL`** still `true`.
 - Galaxy Hub planet `description` text not updated to match the renames.
-- Simulation Lab anchor/thumbnail art for all 10 cases.
+- ~~Simulation Lab anchor/thumbnail art for all 10 cases.~~ Sept 24: the scenes are drawn in code, so no anchor art is needed.
 - 7 of the original 9 uploaded background images not wired into their engines.
 - Images for the Sept 2 Mission Map batches and Signal Check's 27 field reports.
 - 3 dead Signal Check files still need Emily's manual deletion.
@@ -675,6 +860,23 @@ The old-era 5.6A "Creek Sensor Mix-Up" packet had strong reasoning design underm
     - "Very sure, but Level 0" is the flag that matters: that student believes something wrong.
     - It never affects the score or the Crystal Points, and students never see it used against them.
     - New engines include it from the start. Existing engines get audited and backfilled (§6 step 13). Which ones already have it has not been checked; Group Chat's is the model.
+
+22. **(Sept 24, 2026, new — PROJECT RULE, Emily's call) The animated Simulation Lab design is the only Simulation Lab. Never restore or revert to the old `SimulationLabClient` layout.**
+    - **Canonical:** `components/simulation-lab/` (`SimLabStudio.js`, `engine.js`, the scenes in `scenes/`, the kit parts in `kit/`). `app/activity/[assignmentId]/SimulationLabClient.js` is only a thin wrapper that renders it.
+    - **The old form-style client (the 1,515-line `SimulationLabClient.js` with sliders, a trial table and a text box) was deleted on purpose.** Do not bring it back from git history, rebuild it, or add it as a "fallback", "classic mode" or "simple mode". This holds even if a scene has a bug. Fix the scene instead.
+    - **Every live Simulation Lab case must have a registered scene.** A case without one shows "This lab isn't ready yet", not the old screen. So a new case is not live until its scene exists.
+    - **The flow and grading are the same for every case:** 3 runs → pattern → fair test → twist → 2 runs → explain → self-check → confidence (rule 21). A scene changes the experiment, not the steps or the scoring. Answer keys stay in the `.server.js` files.
+    - **To add a scene:**
+      1. Author and TEKS-check the case pair first (rules 11, 14).
+      2. Add a `scene` block and a `fair` checkpoint to the public file, and the fair key plus `feedback` to the server file.
+      3. Write `components/simulation-lab/scenes/<id>.js` from the kit parts, in the prototype look.
+      4. Register the id in BOTH `sceneIds.js` and `scenes/index.js`.
+      5. Walk the full flow in `/simulation-lab/dev?case=<code>&fresh=1` (it returns 404 in production), plus reduced motion and a Chromebook-size screen.
+
+      Step-by-step: `components/simulation-lab/README.md`.
+    - Changes to the look should keep matching the approved prototype (screenshots in the Sept 24 PR). A new look is Emily's call, never a session's.
+
+17b. **(Sept 24, 2026, new) Reading level is sentence length AND word choice.** Every gradecheck now reports both. When a case reads too hard, check which one is the cause before rewriting: long sentences get split, uncommon words get swapped (unless the standard names them). When a case reads too young, the fix is usually richer sentence structure (cause and effect, contrast, *because*/*although*) and a few richer words, never just longer sentences.
 
 18. **(Sept 22, 2026) Vocabulary that a standard names is not "too hard."** When a reading scores above grade because of *conductors*, *deposition* or *Reconstruction*, the sentence around the word is the lever — not the word. `tools/relay-station-readingcheck.cjs` exists to tell those two cases apart.
 

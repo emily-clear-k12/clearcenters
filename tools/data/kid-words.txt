@@ -1,0 +1,35 @@
+# Everyday words children know that the subtitle frequency list ranks low
+# (TV dialogue rarely says "crayon" or "recess"). The word-choice check treats
+# these as common at every grade. Only concrete, everyday words belong here:
+# school, home, food, play, animals, plants, weather, places, jobs, and plain
+# story words. A word a child would have to learn from a lesson does NOT
+# belong here: put a standards word in standards-vocab.txt instead, or let the
+# checker flag it.
+#
+# One word per line or several per line; the checker handles -s, -ed, -ing.
+
+# school
+recess cafeteria lunchroom playground classroom crayon crayons marker glue scissors backpack lunchbox locker hallway principal librarian custodian nurse homework worksheet notebook folder textbook spelling eraser pencil sharpener ruler chalkboard whiteboard calendar field trip bus gym bleachers
+graders grader teammate teammates tryout tryouts poster sticker stickers checklist clipboard diagram caption captions label labels glossary chart page chapter paragraph sentence summary
+
+# home and family
+kitchen bedroom bathroom closet attic garage porch driveway backyard mailbox doorway doorbell fence yard couch pillow blanket mitten mittens scarf scarves sweater jacket raincoat boots sneakers pajamas bandage bandages toothbrush laundry chores allowance sibling siblings grandma grandpa cousin
+
+# food
+muffin muffins brownie brownies pretzel pretzels cracker crackers raisin raisins cereal pancake pancakes sandwich popcorn cupcake cupcakes cookie cookies pizza spaghetti noodles oatmeal oats yogurt carrot carrots celery lettuce broccoli banana bananas grape grapes berry berries strawberry strawberries blueberries watermelon pumpkin pecan pecans peanut peanuts juice lemonade snack snacks lunch dinnertime picnic
+
+# play and things
+kite kites puzzle puzzles marble marbles maze wagon scooter skateboard bike tricycle swing slide sandbox seesaw trampoline balloon balloons toy toys game board dice crate flashlight magnifying glass telescope rocket robot robotics sandcastle bucket shovel wand foam foil tape string yarn knitting button zipper zip unzipped
+
+# animals
+ladybug ladybugs grasshopper grasshoppers caterpillar caterpillars butterfly butterflies beetle beetles ant ants bee bees honeybee honeybees beehive honeycomb spider spiders worm worms snail snails frog frogs toad tadpole turtle turtles lizard lizards snake snakes owl owls hawk hawks eagle eagles sparrow sparrows robin cardinal mockingbird heron herons duck ducks goose geese pigeon parrot penguin penguins squirrel squirrels rabbit rabbits bunny raccoon raccoons deer fox foxes wolf wolves bear bears beaver beavers otter otters skunk possum armadillo coyote bison buffalo cow cows horse horses pony goat goats sheep pig pigs chicken chickens hen rooster puppy puppies kitten kittens hamster goldfish minnow minnows shark sharks whale whales dolphin dolphins octopus jellyfish crab crabs lobster starfish seal seals cheetah cheetahs leopard lion lions tiger tigers zebra giraffe elephant monkey gorilla camel camels kangaroo koala panda polar longhorn longhorns cattle
+
+# plants and nature
+tree trees leaf leaves branch twig twigs root roots seed seeds sprout sprouts stem flower flowers petal petals bud buds blossom grass weeds bush bushes vine vines moss mushroom mushrooms acorn acorns pinecone cactus bluebonnet bluebonnets marigold marigolds sunflower daisy rose garden gardener gardeners pollen nectar mulch pebble pebbles rock rocks stone stones sand mud dirt puddle puddles pond ponds creek creeks stream lake lakes river beach shore hill hills hillside mountain mountains valley cliff cave caves meadow field fields forest woods prairie desert island
+rain rainy raindrop raindrops rainstorm rainbow cloud clouds cloudy sunny windy snowy foggy stormy storm storms thunder lightning snow snowflake hail sleet fog breeze gust gusts gusty tornado hurricane flood rainfall sunrise sunset sunshine sunlight moonlight nighttime daytime
+
+# places and town
+town city street streets sidewalk crosswalk curb corner park library museum zoo farm farmer farmers barn ranch rancher ranchers store shop market bakery restaurant hospital post office bank station airport bridge road roads highway map maps building buildings rooftop tower flagpole streetlight streetlights parking lot pothole
+
+# jobs and people
+firefighter firefighters police officer doctor dentist vet pilot astronaut scientist baker cook mail carrier builder builders helper helpers coach driver neighbor neighbors captain cadet cadets crew

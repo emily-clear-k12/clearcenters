@@ -9,6 +9,7 @@ import { getSignalDefensePublicCase } from "../../../lib/cases/signal-defense/in
 import { getAssemblyDeckPublicCase } from "../../../lib/cases/assembly-deck/index.public";
 import { getClassificationLabPublicCase } from "../../../lib/cases/classification-lab/index.public";
 import { getExhibitHallPublicCase } from "../../../lib/cases/exhibit-hall/index.public";
+import { getExpeditionStationPublicCase } from "../../../lib/cases/expedition-station/index.public";
 import { resolveRelayStationLesson } from "../../../lib/relayStationServer";
 import { centralDateKey, dailyTextFor, continuesStreak } from "../../../lib/cases/relay-station";
 import ActivityClient from "./ActivityClient";
@@ -16,11 +17,13 @@ import SignalCheckClient from "./SignalCheckClient";
 import MissionMapClient from "./MissionMapClient";
 import SimulationLabClient from "./SimulationLabClient";
 import FrequencyRushClient from "./FrequencyRushClient";
+import CrystalDiveClient from "./CrystalDiveClient";
 import SignalDefenseClient from "./SignalDefenseClient";
 import RelayStationClient from "./RelayStationClient";
 import AssemblyDeckClient from "./AssemblyDeckClient";
 import ClassificationLabClient from "./ClassificationLabClient";
 import ExhibitHallClient from "./ExhibitHallClient";
+import ExpeditionStationClient from "./ExpeditionStationClient";
 
 export default async function ActivityPage({ params }) {
   const { assignmentId } = params;
@@ -43,7 +46,7 @@ export default async function ActivityPage({ params }) {
 
   const { data: assignment } = await supabaseAdmin
     .from("assignments")
-    .select("id, class_id, case_standard, due_date, pacing_mode")
+    .select("id, class_id, case_standard, due_date, pacing_mode, game_skin")
     .eq("id", assignmentId)
     .single();
 
@@ -91,6 +94,7 @@ export default async function ActivityPage({ params }) {
   // go to Share" state here the way every other engine has one.
   const isFrequencyRush = engine === "frequency_rush";
   if (isFrequencyRush) {
+    if (assignment.game_skin === "crystal_dive") return <CrystalDiveClient assignmentId={assignmentId} caseTitle={caseRow?.title || null} />;
     return (
       <FrequencyRushClient
         assignmentId={assignmentId}
@@ -218,14 +222,16 @@ export default async function ActivityPage({ params }) {
   const isAssemblyDeck = engine === "assembly_deck";
   const isClassificationLab = engine === "classification_lab";
   const isExhibitHall = engine === "exhibit_hall";
-  const caseEntry = isSignalCheck || isMissionMap || isSimulationLab || isAssemblyDeck || isClassificationLab || isExhibitHall ? null : getPublicCase(assignment.case_standard);
+  const isExpeditionStation = engine === "expedition_station";
+  const caseEntry = isSignalCheck || isMissionMap || isSimulationLab || isAssemblyDeck || isClassificationLab || isExhibitHall || isExpeditionStation ? null : getPublicCase(assignment.case_standard);
   const signalCheckCase = isSignalCheck ? getSignalCheckPublicCase(assignment.case_standard) : null;
   const missionMapCase = isMissionMap ? getMissionMapPublicCase(assignment.case_standard) : null;
   const simulationLabCase = isSimulationLab ? getSimulationLabPublicCase(assignment.case_standard) : null;
   const assemblyDeckCase = isAssemblyDeck ? getAssemblyDeckPublicCase(assignment.case_standard) : null;
   const classificationLabCase = isClassificationLab ? getClassificationLabPublicCase(assignment.case_standard) : null;
   const exhibitHallCase = isExhibitHall ? getExhibitHallPublicCase(assignment.case_standard) : null;
-  if (!caseEntry && !signalCheckCase && !missionMapCase && !simulationLabCase && !assemblyDeckCase && !classificationLabCase && !exhibitHallCase) {
+  const expeditionStationCase = isExpeditionStation ? getExpeditionStationPublicCase(assignment.case_standard) : null;
+  if (!caseEntry && !signalCheckCase && !missionMapCase && !simulationLabCase && !assemblyDeckCase && !classificationLabCase && !exhibitHallCase && !expeditionStationCase) {
     return (
       <div style={{ minHeight: "100vh", background: "#16243F", display: "flex", alignItems: "center", justifyContent: "center", color: "#FFFFFF", fontFamily: "sans-serif", textAlign: "center", padding: 20 }}>
         <div>
@@ -317,12 +323,28 @@ export default async function ActivityPage({ params }) {
     );
   }
 
+  if (isExpeditionStation) {
+    const raw = (existingSubmission && existingSubmission.expedition_station_data) || null;
+    return (
+      <ExpeditionStationClient
+        assignmentId={assignmentId}
+        publicCase={expeditionStationCase}
+        studentFirstName={student.first_name || null}
+        existingData={raw}
+        alreadySubmitted={alreadySubmitted}
+        samSkin={student.equipped_sam_skin}
+      />
+    );
+  }
+
   if (isExhibitHall) {
     return (
       <ExhibitHallClient
         assignmentId={assignmentId}
         publicCase={exhibitHallCase}
         alreadySubmitted={alreadySubmitted}
+        samSkin={student.equipped_sam_skin}
+        samNickname={student.sam_nickname}
       />
     );
   }

@@ -2,8 +2,11 @@
 // in its grade's band before it can ship. Grade 3 must read like grade 3.
 const ts=require("/opt/node22/lib/node_modules/typescript"),fs=require("fs");
 require.extensions[".js"]=(m,f)=>m._compile(ts.transpileModule(fs.readFileSync(f,"utf8"),{compilerOptions:{module:1,target:7,esModuleInterop:true},fileName:f+"x"}).outputText,f);
-const CC="/home/claude/cc/lib/cases/assembly-deck";
+const CC=__dirname+"/../lib/cases/assembly-deck";
 const PUB=require(CC+"/index.public.js"), SRV=require(CC+"/index.server.js");
+// Sept 24, 2026 — word choice, not just sentence length (tools/lib/wordcheck.cjs).
+const { checkWords, wordProblems } = require("./lib/wordcheck.cjs");
+const SHOW_WORDS = process.argv.includes("--words");
 
 // Bands: Flesch-Kincaid on the sentences a student reads and sorts, the
 // average sentence length, and the longest single sentence allowed.
@@ -24,8 +27,8 @@ function fkOf(texts){
   return { fk:+(0.39*(W/S)+11.8*(syl/W)-15.59).toFixed(1), avg:+(W/S).toFixed(1),
     longest:sentences.map(s=>({s,n:s.split(/\s+/).length})).sort((a,b)=>b.n-a.n)[0] };
 }
-let fails=0; const bad=(m)=>{console.log("  ✗",m);fails++;};
-console.log("case          grade   FK    avg   longest   band");
+let WARN=0; let fails=0; const bad=(m)=>{console.log("  ✗",m);fails++;};
+console.log("case          grade   FK    avg   longest   band                         uncommon  rich");
 for(const p of PUB.listAssemblyDeckCases()){
   const s=SRV.getAssemblyDeckServerCase(p.standard);
   const b=BAND[p.grade];
@@ -48,7 +51,11 @@ for(const p of PUB.listAssemblyDeckCases()){
   ].filter(Boolean);
   const P=fkOf(pieces), A=fkOf(around);
   const ok = P.fk>=b.fk[0] && P.fk<=b.fk[1] && P.avg<=b.avg && P.longest.n<=b.max && A.fk<=b.fk[1]+0.8;
-  console.log(`${p.standard.padEnd(13)} ${p.grade}     ${String(P.fk).padStart(4)}  ${String(P.avg).padStart(5)}  ${String(P.longest.n).padStart(3)}w     ${b.fk[0]}-${b.fk[1]}, avg<=${b.avg}, max ${b.max}w ${ok?"✓":"✗"}`);
+  const W=checkWords([...pieces,...around],p.grade,{allow:p.vocab||[]});
+  const wp=wordProblems(W,p.grade,p.standard);
+  console.log(`${p.standard.padEnd(13)} ${p.grade}     ${String(P.fk).padStart(4)}  ${String(P.avg).padStart(5)}  ${String(P.longest.n).padStart(3)}w     ${b.fk[0]}-${b.fk[1]}, avg<=${b.avg}, max ${b.max}w ${ok?"✓":"✗"}   ${(W.uncommonShare*100).toFixed(1).padStart(5)}%  ${(W.richShare*100).toFixed(1).padStart(5)}% ${wp.length?"⚠":"✓"}`);
+  if(SHOW_WORDS && W.uncommon.length) console.log("     uncommon:", W.uncommon.map(u=>u.word+(u.count>1?"×"+u.count:"")).join(", "));
+  wp.forEach(m=>{console.log("  ⚠ word choice —",m);WARN++;});
   if(P.fk>b.fk[1]) bad(`${p.standard}: sentences read at ${P.fk}, above the grade-${p.grade} ceiling of ${b.fk[1]}`);
   if(P.fk<b.fk[0]) bad(`${p.standard}: sentences read at ${P.fk}, below the grade-${p.grade} floor of ${b.fk[0]} — too easy to be on grade`);
   if(P.avg>b.avg) bad(`${p.standard}: average sentence ${P.avg} words, over ${b.avg}`);
@@ -65,4 +72,4 @@ const avg=(a)=>a.reduce((x,y)=>x+y,0)/a.length;
 const g=Object.keys(byGrade).sort().map(k=>({k,v:+avg(byGrade[k]).toFixed(1)}));
 console.log("\nseparation:", g.map(x=>`g${x.k}=${x.v}`).join("  "));
 for(let i=1;i<g.length;i++) if(g[i].v-g[i-1].v<0.8) bad(`grade ${g[i].k} (${g[i].v}) does not read meaningfully harder than grade ${g[i-1].k} (${g[i-1].v})`);
-console.log(fails?`\n${fails} PROBLEMS`:"\nALL CASES ON GRADE"); process.exit(fails?1:0);
+console.log(fails?`\n${fails} PROBLEMS`:"\nALL CASES ON GRADE"); if(WARN) console.log(`${WARN} word-choice warnings (advisory until the thresholds are confirmed)`); process.exit(fails?1:0);
