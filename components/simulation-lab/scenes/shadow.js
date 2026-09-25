@@ -3,6 +3,9 @@
 // the Sun brightens and the stick's shadow sweeps out along a ruler on the
 // ground. Shadow length (feet) is read at the shadow's tip.
 // Twist: "flagpole" — the robot arm swaps the stick for a tall flagpole.
+//        "tallerPole" (4.9A seasons case) — Round 1 is already a flagpole; the
+//        arm swaps in a taller one. With scene.opts.useNames the presets and
+//        the chip show the case's valueNames (months) instead of "9:00".
 import { el, set, lerp, clamp, ease, addDefs, svgPoint } from "../kit/core";
 import { ground, meterTrack, robotArm, lockBadge, metalDefs } from "../kit/parts";
 import { armSwap, armSwapInstant } from "../kit/controls";
@@ -44,6 +47,9 @@ function create(stage, cfg, api) {
   const { defs, layers, anim, svg } = stage;
   const { tween, RM } = anim;
   const V = cfg.variable, MAX = cfg.outcome.max;
+  const opts = cfg.sceneOpts || {};
+  const twistType = (cfg.twist && cfg.twist.type) || "flagpole";
+  const label = (h) => (opts.useNames ? V.name(h) : `${h}:00`);
   const S = { hour: null, pos: V.min - 0.6, chosen: false, enabled: true, locked: false, busy: false, round: 1, len: 0, lit: 0, dragging: false };
   metalDefs(defs);
   addDefs(defs, "shDefs", `
@@ -58,7 +64,7 @@ function create(stage, cfg, api) {
     </linearGradient>`);
   const st = layers.static;
   ground(st, defs, TY);
-  meterTrack(st, defs, { x0: X0, px: PX, TY, max: MAX, major: 2, minor: 1, fine: 0.5, unitLabel: "ft" });
+  meterTrack(st, defs, { x0: X0, px: PX, TY, max: MAX, major: 2, minor: 1, fine: 0.5, unitLabel: cfg.outcome.short || "ft" });
   const hours = [];
   for (let h = V.min; h <= V.max; h += V.step) hours.push(h);
   const angFor = (pos) => lerp(ARC.a0, ARC.a1, (pos - V.min) / (V.max - V.min));
@@ -66,13 +72,14 @@ function create(stage, cfg, api) {
   // sun path
   const p0 = ptFor(V.min - 0.35), p1 = ptFor(V.max + 0.2);
   el("path", { d: `M${p0.x} ${p0.y} A${ARC.r} ${ARC.r} 0 0 1 ${p1.x} ${p1.y}`, fill: "none", stroke: "#f0b429", "stroke-width": 3, "stroke-dasharray": "2 10", "stroke-linecap": "round", opacity: 0.8 }, st);
+  if (opts.arcLabel) { el("text", { x: p0.x - 22, y: p0.y + 44, class: "tile-caption", text: opts.arcLabel }, st); }
   const A = layers.actors;
   const presets = el("g", {}, A);
   const marks = hours.map((h) => {
     const p = ptFor(h);
     const g = el("g", { class: "preset" }, presets);
     const c = el("circle", { cx: p.x, cy: p.y, r: 17, fill: "#ffffff", stroke: "#f0b429", "stroke-width": 2 }, g);
-    el("text", { x: p.x, y: p.y + 5, "text-anchor": "middle", text: String(h), style: "font-size:13px" }, g);
+    el("text", { x: p.x, y: p.y + 5, "text-anchor": "middle", text: opts.useNames ? V.name(h) : String(h), style: `font-size:${opts.useNames ? 11 : 13}px` }, g);
     const hit = el("circle", { cx: p.x, cy: p.y, r: 24, fill: "transparent", class: "hit" }, g);
     hit.addEventListener("pointerdown", (e) => { e.preventDefault(); e.stopPropagation(); choose(h, true); });
     return { g, c };
@@ -93,8 +100,9 @@ function create(stage, cfg, api) {
     }
     el("rect", { x: X0 - 12, y: GROUND - 3, width: 24, height: 6, rx: 3, fill: "#5b5378" }, g);
   }
-  const H1 = 104, H2 = 176;
-  stick(stickA, H1, false);
+  const tall = twistType === "tallerPole";
+  const H1 = tall ? 140 : 104, H2 = tall ? 220 : 176;
+  stick(stickA, H1, tall);
   stick(stickB, H2, true);
   // the Sun (draggable)
   const sun = el("g", { class: "ctl" }, A);
@@ -120,7 +128,7 @@ function create(stage, cfg, api) {
     // time chip sits just inside the arc (toward its centre) so it never covers an hour preset
     const ux = (ARC.cx - p.x) / ARC.r, uy = (ARC.cy - p.y) / ARC.r;
     set(clock, { opacity: show ? 1 : 0, transform: `translate(${(p.x + ux * 80 - 36).toFixed(1)},${(p.y + uy * 80 - 15).toFixed(1)})` });
-    clockT.textContent = show ? `${S.hour}:00` : "";
+    clockT.textContent = show ? label(S.hour) : "";
     marks.forEach((m, i) => set(m.c, { fill: hours[i] === S.hour ? "#ffe9a8" : "#ffffff" }));
     set(lock, { opacity: S.locked ? 1 : 0 });
     const L = S.len * PX, h = hNow();

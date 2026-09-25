@@ -12,6 +12,10 @@ import { magnetScene } from "./magnet";
 import { dissolveScene } from "./dissolve";
 import { frictionScene } from "./friction";
 import { shadowScene } from "./shadow";
+import { dissolveRaceScene } from "./dissolveRace";
+import { tugScene } from "./tug";
+import { cupsScene } from "./cups";
+import { marketScene } from "./market";
 
 const SCENES = {
   [balloonScene.id]: balloonScene,
@@ -24,6 +28,10 @@ const SCENES = {
   [dissolveScene.id]: dissolveScene,
   [frictionScene.id]: frictionScene,
   [shadowScene.id]: shadowScene,
+  [dissolveRaceScene.id]: dissolveRaceScene,
+  [tugScene.id]: tugScene,
+  [cupsScene.id]: cupsScene,
+  [marketScene.id]: marketScene,
 };
 
 export function getScene(id) {

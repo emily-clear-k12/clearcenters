@@ -11,7 +11,7 @@ import DevHarness from "./DevHarness";
 //   /simulation-lab/dev?case=3.8B-SL      (optional &rm=1 for reduced motion)
 export const dynamic = "force-dynamic";
 
-const STANDARDS = ["3.6A-SL", "3.6C-SL", "3.7A-SL", "3.8B-SL", "4.6B-SL", "4.7-SL", "4.8C-SL", "5.7B-SL", "5.8B-SL", "5.9-SL"];
+const STANDARDS = ["3.6A-SL", "3.6C-SL", "3.7A-SL", "3.7B-SL", "3.8A-SL", "3.8B-SL", "4.6B-SL", "4.7-SL", "4.8B-SL", "4.8C-SL", "4.9A-SL", "5.6C-SL", "5.7A-SL", "5.7B-SL", "5.8B-SL", "5.9-SL", "SS.3.6A-SL", "SS.4.7A-SL", "SS.5.11B-SL", "MA.5.8C-SL"];
 
 export default function SimLabDevPage({ searchParams }) {
   if (process.env.VERCEL_ENV === "production") notFound();
