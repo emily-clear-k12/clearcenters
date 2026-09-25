@@ -6,17 +6,55 @@ import BackToHubButton from "../../../components/BackToHubButton";
 import SamGuide from "../../../components/SamGuide";
 import "./exhibit-hall.css";
 
+function ModelFace({ model }) {
+  if (!model) return null;
+  if (model.type === "fraction") {
+    const parts = model.parts || 1;
+    return (
+      <div className="ms-model">
+        <div className="ms-frac" aria-hidden="true">
+          {Array.from({ length: parts }, (_, index) => <i key={index} className={index < model.shaded ? "on" : ""} />)}
+        </div>
+        {model.note ? <small>{model.note}</small> : null}
+      </div>
+    );
+  }
+  if (model.type === "array") {
+    const cols = model.cols || 1;
+    return (
+      <div className="ms-model">
+        <div className="ms-array" style={{ gridTemplateColumns: `repeat(${cols}, 18px)` }}>
+          {Array.from({ length: (model.rows || 1) * cols }, (_, index) => <i key={index} />)}
+        </div>
+      </div>
+    );
+  }
+  if (model.type === "shape") return <div className={`ms-model ms-shape is-${model.shape || "square"}`} />;
+  if (model.type === "place") {
+    return (
+      <div className="ms-model ms-place">
+        {(model.cells || []).map((cell) => (
+          <div key={cell.label}><b>{cell.value}</b><small>{cell.label}</small></div>
+        ))}
+      </div>
+    );
+  }
+  return null;
+}
+
 function ChoiceFace({ cards, title }) {
   const card = cards.find((item) => item.title === title);
   if (!card) return null;
   if (card.kind === "graph") return <span className="ms-choice-tag">Graph</span>;
   if (card.kind === "text") return <span className="ms-choice-tag">Note</span>;
+  if (card.kind === "model") return <span className="ms-choice-tag">Model</span>;
   if (!card.image) return null;
   return <img className="ms-choice-pic" src={card.image} alt="" />;
 }
 
 function CardFace({ card }) {
   if (card.kind === "text") return <p className="ms-quote">{card.text}</p>;
+  if (card.kind === "model") return <ModelFace model={card.model} />;
   if (card.kind === "graph" || card.kind === "chart") {
     const bars = card.bars || [];
     return (

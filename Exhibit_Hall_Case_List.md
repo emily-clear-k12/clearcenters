@@ -1,6 +1,8 @@
 # Exhibit Hall case list
 
-**Updated Sept 24, 2026.** This wall gets **4 cases per subject per grade** (48). Check this file before writing one. If a code is already here, do not write it again.
+**Locked Sept 24, 2026.** This wall is **4 cases per subject per grade** (48). All 48 are in the engine. The first 8 were already live. The other 40 are in the code and need the SQL in `add_exhibit_hall_locked.sql` before they show on Assign.
+
+Do not add a fifth case to a grade and subject on this wall. Do not rewrite a code that is already in the grid.
 
 Science codes have no prefix (`3.13A-EX`). ELAR uses `ELA.` and Social Studies uses `SS.`, so `ELA.3.8A-EX` is not science `3.8A-EX`.
 
@@ -8,7 +10,7 @@ This wall is four spots. Each spot is one job. A card is right when its job matc
 
 Side-by-side, timelines, and drawn math stay off this wall. They are the next walls.
 
-**Built: 8. Mapped and not built: 40.** Math is mapped, but do not generate those as photos.
+**In the engine: 48.** Eight were already assignable. The other 40 show up on Assign after `add_exhibit_hall_locked.sql` is run. Math pieces are drawn in the activity, not generated as photos.
 
 ## Grade 3
 
