@@ -4,6 +4,18 @@
 
 Do not add a fifth case to a grade and subject on this wall. Do not rewrite a code that is already in the grid.
 
+## Side-by-side wall
+
+**Started Sept 24, 2026.** Left, right, and a both strip. One case per subject per grade (12). They use the same activity, with `layout: "split"`. Run `add_exhibit_hall_split.sql` before they show on Assign.
+
+| Grade | Science | ELAR | Social Studies | Math |
+|---|---|---|---|---|
+| 3 | 3.10B Sand or clay | ELA.3.9A Fable or fairy tale | SS.3.10B Two Texas celebrations | 3.7D Pour it or weigh it |
+| 4 | 4.13B Born with it or picked it up | ELA.4.7B Two views of the storm | SS.4.6B Coast or mountains | 4.10A Same every month? |
+| 5 | 5.13B Born knowing or taught | ELA.5.13D There or later | SS.5.9A North or south colonies | 5.4D Plus or times |
+
+Timelines are still later. Do not turn a side-by-side code into a four-spot case.
+
 Science codes have no prefix (`3.13A-EX`). ELAR uses `ELA.` and Social Studies uses `SS.`, so `ELA.3.8A-EX` is not science `3.8A-EX`.
 
 This wall is four spots. Each spot is one job. A card is right when its job matches that spot. One myth. One late note. Photos, short text, or a bar graph.
@@ -61,11 +73,9 @@ Side-by-side, timelines, and drawn math stay off this wall. They are the next wa
 
 **Social Studies 5.** Road to revolution: four causes, not the Declaration itself. Rights: four real protections. Lady Liberty: four true things she stands for. Four problems to solve: four compromises at the Constitutional Convention.
 
-## Next wall, not this one
+## Next wall
 
-Do not turn these into four-spot cases.
-
-**Side by side:** Science 3.10B sand vs clay · Science 4.13B inherited vs acquired · Science 5.13B instinct vs learned · Social Studies 3.10B two celebrations · Social Studies 4.6B coast vs mountains · Social Studies 5.9A north vs south colonies · ELAR 3.9A fable vs fairy tale · ELAR 4.7B two views of the storm · ELAR 5.13D primary vs secondary · Math 3.7D capacity vs weight · Math 4.10A fixed vs variable · Math 5.4D plus or times
+Side by side is in the engine (12 cases). Timelines are still later. Do not turn a timeline into a side-by-side case, and do not add a fifth four-spot case.
 
 **Timeline:** Science 3.13B a beetle's year · Science 4.9B moon phases · Science 5.10B mud to stone · Social Studies 3.1A how our town grew · Social Studies 4.4B longhorn boom · Social Studies 5.4C growing west · ELAR 3.8C the lemonade plan · ELAR 4.8C the science fair · ELAR 5.8C the library play · Math 3.9E Maya's bike fund · Math 4.5B the growing tower · Math 5.10E the family budget
 

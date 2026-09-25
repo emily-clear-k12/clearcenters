@@ -80,6 +80,7 @@ export default function ExhibitHallClient({ assignmentId, publicCase, alreadySub
   const [picked, setPicked] = useState(null);
   const [landed, setLanded] = useState(null);
   const [wall, setWall] = useState([null, null, null, null]);
+  const [groups, setGroups] = useState({ left: [], right: [], both: [] });
   const [bin, setBin] = useState(null);
   const [reason, setReason] = useState(null);
   const [look, setLook] = useState(null);
@@ -99,14 +100,17 @@ export default function ExhibitHallClient({ assignmentId, publicCase, alreadySub
   const [status, setStatus] = useState("Tap a picture. Mark what kind of source it is, then tap the spot it belongs on.");
   const [busy, setBusy] = useState(false);
 
-  const used = new Set([...wall.filter(Boolean), bin].filter(Boolean));
+  const split = exhibit.layout === "split";
+  const splitIds = [...groups.left, ...groups.right, ...groups.both];
+  const used = new Set([...(split ? splitIds : wall.filter(Boolean)), bin].filter(Boolean));
   const loose = cards.filter((card) => !used.has(card.id));
   const wallIds = wall.filter(Boolean);
-  const heldCard = cards.find((card) => !wall.includes(card.id) && card.id !== bin);
+  const placedIds = split ? splitIds : wall;
+  const heldCards = cards.filter((card) => !placedIds.includes(card.id) && card.id !== bin);
 
   function payload(kind) {
     return {
-      assignmentId, kind, wall, bin, reason, stamps, lines, plaque, best, fooled, leftOut, held, finding, heatPick, sandPicks, daysFalse, notePick,
+      assignmentId, kind, wall, groups, bin, reason, stamps, lines, plaque, best, fooled, leftOut, held, finding, heatPick, sandPicks, daysFalse, notePick,
     };
   }
 
@@ -134,8 +138,29 @@ export default function ExhibitHallClient({ assignmentId, publicCase, alreadySub
     }
   }
 
+  function putOnSide(id, side) {
+    setGroups((prev) => {
+      const next = {
+        left: prev.left.filter((item) => item !== id),
+        right: prev.right.filter((item) => item !== id),
+        both: prev.both.filter((item) => item !== id),
+      };
+      next[side] = [...next[side], id];
+      return next;
+    });
+    if (bin === id) {
+      setBin(null);
+      setReason(null);
+    }
+  }
+
   function putInBin(id) {
     setWall((prev) => prev.map((item) => (item === id ? null : item)));
+    setGroups((prev) => ({
+      left: prev.left.filter((item) => item !== id),
+      right: prev.right.filter((item) => item !== id),
+      both: prev.both.filter((item) => item !== id),
+    }));
     setBin(id);
     setReason(null);
   }
@@ -146,6 +171,19 @@ export default function ExhibitHallClient({ assignmentId, publicCase, alreadySub
       setBin(null);
       setReason(null);
     }
+  }
+
+  function trySide(id, side) {
+    if (!stamps[id]) {
+      setLook(id);
+      setStatus("Look at it and choose what kind of source it is.");
+      return;
+    }
+    putOnSide(id, side);
+    setLook(null);
+    setPicked(null);
+    setLanded(id);
+    setStatus("It is on the wall.");
   }
 
   function trySpot(id, slot) {
@@ -193,13 +231,14 @@ export default function ExhibitHallClient({ assignmentId, publicCase, alreadySub
   }
 
   async function check() {
-    if (wallIds.length < 4 || !bin || !reason) {
-      setStatus("Use all 4 spots, and put one piece in the bin with a reason.");
+    const splitReady = groups.left.length && groups.right.length && groups.both.length && bin && reason;
+    if (split ? !splitReady : (wallIds.length < 4 || !bin || !reason)) {
+      setStatus(split ? "Put at least one piece on each side, one in both, and one in the bin with a reason." : "Use all 4 spots, and put one piece in the bin with a reason.");
       return;
     }
     const data = await send("wall");
     if (data.need === "wall") {
-      setStatus("Use all 4 spots, and put one piece in the bin with a reason.");
+      setStatus(split ? "Put at least one piece on each side, one in both, and one in the bin with a reason." : "Use all 4 spots, and put one piece in the bin with a reason.");
       return;
     }
     setChecks(1);
@@ -235,9 +274,9 @@ export default function ExhibitHallClient({ assignmentId, publicCase, alreadySub
         alt={samNickname || "S.A.M."}
         size={96}
         anchors={{ home: { right: 16, bottom: 16 } }}
-        line={step === "build" ? "Tap a picture, then tap a glowing spot." : step === "write" ? "Say what you see, then why you used it." : step === "open" ? "Look at the wall you already built." : "Head back to the hub when you are ready."}
+        line={step === "build" ? (split ? "Tap a picture, then tap the side it belongs on." : "Tap a picture, then tap a glowing spot.") : step === "write" ? "Say what you see, then why you used it." : step === "open" ? "Look at the wall you already built." : "Head back to the hub when you are ready."}
         state={step === "done" ? "celebrating" : "helping"}
-        tipOnTap={step === "build" ? "One picture for each problem. One picture does not belong." : "Use what you can see on the wall."}
+        tipOnTap={step === "build" ? (split ? "Some pieces belong on both sides." : "One picture for each problem. One picture does not belong.") : "Use what you can see on the wall."}
         zIndex={40}
       />
       <div className="ms-shell">
@@ -259,7 +298,7 @@ export default function ExhibitHallClient({ assignmentId, publicCase, alreadySub
           <div className="ms-layout">
             <section className="ms-panel">
               <h2>Storage room</h2>
-              <p className="ms-quiet">{loose.length} pictures left. Tap one, then tap the spot it belongs on.</p>
+              <p className="ms-quiet">{loose.length} left. {split ? "Tap one, then tap the side it belongs on." : "Tap one, then tap the spot it belongs on."}</p>
               <div className="ms-cards">
                 {loose.map((card) => (
                   <div key={card.id}>{piece(card.id)}</div>
@@ -268,7 +307,26 @@ export default function ExhibitHallClient({ assignmentId, publicCase, alreadySub
             </section>
             <div>
               <section className="ms-panel">
-                <h2>Your wall · one problem each</h2>
+                <h2>{split ? "Your wall · two sides" : "Your wall · one problem each"}</h2>
+                {split ? (
+                  <div className="ms-split">
+                    {["left", "right"].map((side) => {
+                      const spot = spots.find((item) => item.id === side);
+                      return (
+                        <div key={side} className={`ms-slot ms-side${picked ? " is-ready" : ""}${groups[side].includes(landed) ? " is-landed" : ""}`}>
+                          <b>{spot ? spot.label : side}</b>
+                          {groups[side].map((id) => <div key={id} className="ms-placed">{piece(id)}</div>)}
+                          <button type="button" className="ms-drop" aria-label={spot ? spot.label : side} onClick={() => picked && trySide(picked, side)} />
+                        </div>
+                      );
+                    })}
+                    <div className={`ms-slot ms-both${picked ? " is-ready" : ""}${groups.both.includes(landed) ? " is-landed" : ""}`}>
+                      <b>{(spots.find((item) => item.id === "both") || {}).label || "Both"}</b>
+                      {groups.both.map((id) => <div key={id} className="ms-placed">{piece(id)}</div>)}
+                      <button type="button" className="ms-drop" aria-label="Both" onClick={() => picked && trySide(picked, "both")} />
+                    </div>
+                  </div>
+                ) : (
                 <div className="ms-wall">
                   {wall.map((id, index) => (
                     <div key={spots[index].id} className={`ms-slot${!id && picked ? " is-ready" : ""}${id && landed === id ? " is-landed" : ""}`}>
@@ -277,6 +335,7 @@ export default function ExhibitHallClient({ assignmentId, publicCase, alreadySub
                     </div>
                   ))}
                 </div>
+                )}
                 <div className={`ms-bin${!bin && picked ? " is-ready" : ""}${bin && landed === bin ? " is-landed" : ""}`}>
                   <b>Not in this exhibit</b>
                   {bin ? piece(bin) : null}
@@ -300,8 +359,19 @@ export default function ExhibitHallClient({ assignmentId, publicCase, alreadySub
             <p className="ms-sentence">This exhibit shows <input aria-label="What the exhibit shows" value={plaque} onChange={(event) => setPlaque(event.target.value)} />.</p>
             <p className="ms-sentence">The two pieces a visitor should look at first are <input aria-label="First piece" value={best.one} onChange={(event) => setBest((prev) => ({ ...prev, one: event.target.value }))} /> and <input aria-label="Second piece" value={best.two} onChange={(event) => setBest((prev) => ({ ...prev, two: event.target.value }))} />.</p>
             <p className="ms-kicker">2 · The labels</p>
-            <div className="ms-labels">
-              {wall.map((id, index) => (
+            <div className={split ? "ms-split" : "ms-labels"}>
+              {split ? ["left", "right", "both"].map((side) => {
+                const spot = spots.find((item) => item.id === side);
+                return (
+                  <div key={side} className={side === "both" ? "ms-slot ms-both" : "ms-slot"}>
+                    <b>{spot ? spot.label : side}</b>
+                    {groups[side].map((id) => (
+                      <div key={id} className="ms-frame"><CardFace card={cardBy(id)} /><strong>{cardBy(id).title}</strong></div>
+                    ))}
+                    <p className="ms-sentence">This side shows <input aria-label={`What ${spot ? spot.label : side} shows`} value={lines[side]?.what || ""} onChange={(event) => setLines((prev) => ({ ...prev, [side]: { what: event.target.value, why: "" } }))} />.</p>
+                  </div>
+                );
+              }) : wall.map((id, index) => (
                 <div key={spots[index].id} className="ms-slot">
                   <b>{spots[index].label}</b>
                   {id ? (
@@ -326,13 +396,17 @@ export default function ExhibitHallClient({ assignmentId, publicCase, alreadySub
                 </>
               ) : <p className="ms-quiet">Nothing was left out.</p>}
             </div>
-            {heldCard && (
+            {heldCards.length > 0 && (
               <>
                 <p className="ms-kicker">4 · Still in storage</p>
                 <div className="ms-bin">
-                  <div className="ms-frame"><CardFace card={heldCard} /></div>
-                  <strong>{heldCard.title}</strong>
-                  <p className="ms-sentence">I did not use this because <input aria-label="Why it stayed in storage" value={held} onChange={(event) => setHeld(event.target.value)} />.</p>
+                  {heldCards.map((card) => (
+                    <div key={card.id}>
+                      <div className="ms-frame"><CardFace card={card} /></div>
+                      <strong>{card.title}</strong>
+                    </div>
+                  ))}
+                  <p className="ms-sentence">I did not use {heldCards.length > 1 ? "these" : "this"} because <input aria-label="Why they stayed in storage" value={held} onChange={(event) => setHeld(event.target.value)} />.</p>
                 </div>
               </>
             )}
@@ -344,8 +418,18 @@ export default function ExhibitHallClient({ assignmentId, publicCase, alreadySub
             <section className="ms-gallery">
               <p className="ms-kicker">Your exhibit</p>
               <h2>{plaque || exhibit.title}</h2>
-              <div className="ms-hang">
-                {wall.map((id, index) => (
+              <div className={split ? "ms-split" : "ms-hang"}>
+                {split ? ["left", "right", "both"].map((side) => {
+                  const spot = spots.find((item) => item.id === side);
+                  return (
+                    <div key={side} className={side === "both" ? "ms-slot ms-both" : "ms-slot"}>
+                      <b>{spot ? spot.label : side}</b>
+                      {groups[side].map((id) => (
+                        <button key={id} type="button" className="ms-frame" onClick={() => setLook(id)}><CardFace card={cardBy(id)} /><strong>{cardBy(id).title}</strong></button>
+                      ))}
+                    </div>
+                  );
+                }) : wall.map((id, index) => (
                   <div key={spots[index].id} className="ms-slot">
                     <b>{spots[index].label}</b>
                     {id ? (

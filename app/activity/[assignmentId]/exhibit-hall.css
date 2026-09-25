@@ -194,7 +194,7 @@
 .ms-actions { display: flex; gap: 8px; flex-wrap: wrap; }
 .ms-foot { padding: 14px 16px; }
 @media (max-width: 800px) {
-  .ms-layout, .ms-open, .ms-cards, .ms-ask { grid-template-columns: 1fr; }
+  .ms-layout, .ms-open, .ms-cards, .ms-ask, .ms-split { grid-template-columns: 1fr; }
   .ms-top, .ms-foot { flex-direction: column; align-items: flex-start; }
 }
 .ms-model { background: #fff; border-radius: 12px; padding: 12px; min-height: 110px; }
@@ -214,3 +214,9 @@
 .ms-shape.is-rectangle { width: 130px; height: 70px; margin: 22px auto; background: #1aa7b5; }
 .ms-shape.is-circle { width: 90px; height: 90px; margin: 12px auto; border-radius: 50%; background: #6d45c8; }
 .ms-shape.is-rhombus { width: 70px; height: 70px; margin: 24px auto; background: #6d45c8; transform: rotate(45deg); }
+.ms-split { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.ms-both { grid-column: 1 / -1; }
+.ms-split .ms-slot { position: relative; min-height: 150px; }
+.ms-split .ms-drop { position: absolute; inset: 0; z-index: 1; min-height: 0; }
+.ms-split .ms-placed { position: relative; z-index: 2; }
+.ms-side .ms-piece, .ms-both .ms-piece { margin-top: 8px; }
