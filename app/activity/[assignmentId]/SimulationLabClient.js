@@ -6,7 +6,7 @@
 // Sept 24, 2026 — the animated scene design (components/simulation-lab/) is
 // the ONLY Simulation Lab experience. The old console/dial layout that used
 // to live in this file was removed on purpose and must not be restored (see
-// ClearCenters_STATE.md, rule 22). Every live case has a scene; a new case
+// ClearCenters_STATE.md §9 rule 22). Every live case has a scene; a new case
 // needs one before it can go live (components/simulation-lab/README.md).
 import React from "react";
 import SimLabStudio from "../../../components/simulation-lab/SimLabStudio";

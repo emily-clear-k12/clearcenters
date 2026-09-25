@@ -1,4 +1,4 @@
-// Simulation Lab case validator (§9 rules 19 and 22).
+// Simulation Lab case validator (ClearCenters_STATE.md §9 rules 19 and 22).
 //   node tools/simulation-lab-casecheck.cjs
 // Every live case must run in the animated design: it needs a registered
 // scene, the scene flow's checkpoints must exist in both the public and the
