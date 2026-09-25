@@ -1,7 +1,19 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
+import BackToHubButton from "../../../components/BackToHubButton";
+import SamGuide from "../../../components/SamGuide";
 import "./exhibit-hall.css";
+
+function ChoiceFace({ cards, title }) {
+  const card = cards.find((item) => item.title === title);
+  if (!card) return null;
+  if (card.kind === "graph") return <span className="ms-choice-tag">Graph</span>;
+  if (card.kind === "text") return <span className="ms-choice-tag">Note</span>;
+  if (!card.image) return null;
+  return <img className="ms-choice-pic" src={card.image} alt="" />;
+}
 
 function CardFace({ card }) {
   if (card.kind === "text") return <p className="ms-quote">{card.text}</p>;
@@ -19,13 +31,16 @@ function CardFace({ card }) {
   return <img src={card.image} alt="" />;
 }
 
-export default function ExhibitHallClient({ assignmentId, publicCase, alreadySubmitted }) {
+export default function ExhibitHallClient({ assignmentId, publicCase, alreadySubmitted, samSkin, samNickname }) {
+  const router = useRouter();
   const exhibit = publicCase;
   const cards = exhibit.cards;
   const spots = exhibit.spots;
   const cardBy = (id) => cards.find((card) => card.id === id);
 
   const [step, setStep] = useState(alreadySubmitted ? "done" : "build");
+  const [picked, setPicked] = useState(null);
+  const [landed, setLanded] = useState(null);
   const [wall, setWall] = useState([null, null, null, null]);
   const [bin, setBin] = useState(null);
   const [reason, setReason] = useState(null);
@@ -43,7 +58,7 @@ export default function ExhibitHallClient({ assignmentId, publicCase, alreadySub
   const [daysFalse, setDaysFalse] = useState(null);
   const [notePick, setNotePick] = useState(null);
   const [stamps, setStamps] = useState({});
-  const [status, setStatus] = useState("Open a card. The picture is inside.");
+  const [status, setStatus] = useState("Tap a picture. Mark what kind of source it is, then tap the spot it belongs on.");
   const [busy, setBusy] = useState(false);
 
   const used = new Set([...wall.filter(Boolean), bin].filter(Boolean));
@@ -103,6 +118,9 @@ export default function ExhibitHallClient({ assignmentId, publicCase, alreadySub
     }
     putOnSpot(id, slot);
     setLook(null);
+    setPicked(null);
+    setLanded(id);
+    setStatus("It is on the wall.");
   }
 
   function tryBin(id) {
@@ -113,12 +131,27 @@ export default function ExhibitHallClient({ assignmentId, publicCase, alreadySub
     }
     putInBin(id);
     setLook(null);
+    setPicked(null);
+    setLanded(id);
+    setStatus("Set aside.");
   }
 
   function chooseStamp(kind) {
     if (!look) return;
     setStamps((prev) => ({ ...prev, [look]: kind }));
-    setStatus("Now choose where it goes.");
+    setPicked(look);
+    setLook(null);
+    setStatus("Now tap a glowing spot.");
+  }
+
+  function openCard(id) {
+    setPicked(id);
+    if (!stamps[id]) {
+      setLook(id);
+      setStatus("Look at the whole picture. What kind of source is it?");
+      return;
+    }
+    setStatus("Tap a glowing spot.");
   }
 
   async function check() {
@@ -147,16 +180,28 @@ export default function ExhibitHallClient({ assignmentId, publicCase, alreadySub
   function piece(id) {
     const card = cardBy(id);
     return (
-      <button type="button" className="ms-piece" onClick={() => setLook(id)}>
+      <button type="button" className={picked === id ? "ms-piece is-on" : "ms-piece"} onClick={() => openCard(id)}>
+        <span className="ms-thumb"><CardFace card={card} /></span>
         <b>{card.title}</b>
         <span>{card.tag}</span>
-        {stamps[id] ? <span>{stamps[id]}</span> : <span>Tap to open</span>}
+        {stamps[id] ? <span>{stamps[id]}</span> : null}
       </button>
     );
   }
 
   return (
     <div className="ms-page">
+      <BackToHubButton />
+      <SamGuide
+        skinKey={samSkin}
+        alt={samNickname || "S.A.M."}
+        size={96}
+        anchors={{ home: { right: 16, bottom: 16 } }}
+        line={step === "build" ? "Tap a picture, then tap a glowing spot." : step === "write" ? "Say what you see, then why you used it." : step === "open" ? "Look at the wall you already built." : "Head back to the hub when you are ready."}
+        state={step === "done" ? "celebrating" : "helping"}
+        tipOnTap={step === "build" ? "One picture for each problem. One picture does not belong." : "Use what you can see on the wall."}
+        zIndex={40}
+      />
       <div className="ms-shell">
         <header className="ms-top">
           <div>
@@ -176,7 +221,7 @@ export default function ExhibitHallClient({ assignmentId, publicCase, alreadySub
           <div className="ms-layout">
             <section className="ms-panel">
               <h2>Storage room</h2>
-              <p className="ms-quiet">{loose.length} cards left. A card shows its name. Tap it to see the picture.</p>
+              <p className="ms-quiet">{loose.length} pictures left. Tap one, then tap the spot it belongs on.</p>
               <div className="ms-cards">
                 {loose.map((card) => (
                   <div key={card.id}>{piece(card.id)}</div>
@@ -188,15 +233,15 @@ export default function ExhibitHallClient({ assignmentId, publicCase, alreadySub
                 <h2>Your wall · one problem each</h2>
                 <div className="ms-wall">
                   {wall.map((id, index) => (
-                    <div key={spots[index].id} className="ms-slot">
+                    <div key={spots[index].id} className={`ms-slot${!id && picked ? " is-ready" : ""}${id && landed === id ? " is-landed" : ""}`}>
                       <b>{spots[index].label}</b>
-                      {id ? piece(id) : <p className="ms-quiet">Empty spot</p>}
+                      {id ? piece(id) : <button type="button" className="ms-drop" aria-label={spots[index].label} onClick={() => picked && trySpot(picked, index)} />}
                     </div>
                   ))}
                 </div>
-                <div className="ms-bin">
+                <div className={`ms-bin${!bin && picked ? " is-ready" : ""}${bin && landed === bin ? " is-landed" : ""}`}>
                   <b>Not in this exhibit</b>
-                  {bin ? piece(bin) : <p className="ms-quiet">Put one piece here that does not belong.</p>}
+                  {bin ? piece(bin) : null}
                   {bin && (
                     <div className="ms-reasons">
                       {exhibit.reasons.map((item) => (
@@ -204,13 +249,9 @@ export default function ExhibitHallClient({ assignmentId, publicCase, alreadySub
                       ))}
                     </div>
                   )}
-                  {!bin && <p className="ms-quiet">Open a card, then choose this if it does not belong.</p>}
+                  {!bin && <button type="button" className="ms-drop" aria-label="Not in this exhibit" onClick={() => picked && tryBin(picked)} />}
                 </div>
               </section>
-              <aside className="ms-panel ms-sam">
-                <p className="ms-kicker">SAM</p>
-                <p>The four spots are four different problems.</p>
-              </aside>
             </div>
           </div>
         )}
@@ -257,58 +298,75 @@ export default function ExhibitHallClient({ assignmentId, publicCase, alreadySub
                 </div>
               </>
             )}
-            <aside className="ms-panel ms-sam">
-              <p className="ms-kicker">SAM</p>
-              <p>Say what you see, then say why you used it. Use your own words.</p>
-            </aside>
           </section>
         )}
 
         {step === "open" && (
-          <section className="ms-panel">
-            <p className="ms-kicker">A note just came in</p>
-            <h2>Read it, then see what your sources can answer.</h2>
-            <div className="ms-bin">
-              <b>{exhibit.lateTitle}</b>
-              <p className="ms-quote">{exhibit.late}</p>
-              <p className="ms-sentence">This source shows <input aria-label="What the new source shows" value={finding} onChange={(event) => setFinding(event.target.value)} />.</p>
-            </div>
-            <div className="ms-bin">
-              <p>{exhibit.mcPrompt}</p>
-              <div className="ms-reasons">
-                {exhibit.mc.map((choice) => (
-                  <button key={choice} type="button" aria-pressed={heatPick === choice} onClick={() => setHeatPick(choice)}>{choice}</button>
+          <div className="ms-ask">
+            <section className="ms-gallery">
+              <p className="ms-kicker">Your exhibit</p>
+              <h2>{plaque || exhibit.title}</h2>
+              <div className="ms-hang">
+                {wall.map((id, index) => (
+                  <div key={spots[index].id} className="ms-slot">
+                    <b>{spots[index].label}</b>
+                    {id ? (
+                      <>
+                        <button type="button" className="ms-frame" onClick={() => setLook(id)}><CardFace card={cardBy(id)} /></button>
+                        <strong>{cardBy(id).title}</strong>
+                      </>
+                    ) : <p className="ms-quiet">Empty spot</p>}
+                  </div>
                 ))}
               </div>
-            </div>
-            <div className="ms-bin">
-              <p>{exhibit.msPrompt}</p>
-              <div className="ms-reasons">
-                {exhibit.ms.map((choice) => (
-                  <button key={choice} type="button" aria-pressed={sandPicks.includes(choice)} onClick={() => setSandPicks((prev) => prev.includes(choice) ? prev.filter((item) => item !== choice) : [...prev, choice])}>{choice}</button>
-                ))}
+              <div className="ms-placard">
+                <b>{exhibit.lateTitle}</b>
+                <p className="ms-quote">{exhibit.late}</p>
+                <p className="ms-sentence">This source shows <input aria-label="What the new source shows" value={finding} onChange={(event) => setFinding(event.target.value)} />.</p>
               </div>
-            </div>
-            <div className="ms-bin">
-              <p>{exhibit.tfPrompt}</p>
-              <div className="ms-reasons">
-                <button type="button" aria-pressed={daysFalse === false} onClick={() => setDaysFalse(false)}>True</button>
-                <button type="button" aria-pressed={daysFalse === true} onClick={() => setDaysFalse(true)}>False</button>
+            </section>
+            <section className="ms-panel">
+              <p className="ms-kicker">What can these sources answer?</p>
+              <p>Use your exhibit and the new note. A wrong answer can stay.</p>
+              <div className="ms-bin">
+                <p>{exhibit.mcPrompt}</p>
+                <div className="ms-reasons">
+                  {exhibit.mc.map((choice) => (
+                    <button key={choice} type="button" className="ms-choice" aria-pressed={heatPick === choice} onClick={() => setHeatPick(choice)}>
+                      <ChoiceFace cards={cards} title={choice} />
+                      {choice}
+                    </button>
+                  ))}
+                </div>
               </div>
-            </div>
-            <div className="ms-bin">
-              <p className="ms-sentence">{exhibit.icLead}{" "}
-                <select aria-label="What the new source helps with" value={notePick || ""} onChange={(event) => setNotePick(event.target.value)}>
-                  <option value="">choose</option>
-                  {exhibit.ic.map((choice) => <option key={choice}>{choice}</option>)}
-                </select>.
-              </p>
-            </div>
-            <aside className="ms-panel ms-sam">
-              <p className="ms-kicker">SAM</p>
-              <p>Answer each one. A wrong answer can stay.</p>
-            </aside>
-          </section>
+              <div className="ms-bin">
+                <p>{exhibit.msPrompt}</p>
+                <div className="ms-reasons">
+                  {exhibit.ms.map((choice) => (
+                    <button key={choice} type="button" className="ms-choice" aria-pressed={sandPicks.includes(choice)} onClick={() => setSandPicks((prev) => prev.includes(choice) ? prev.filter((item) => item !== choice) : [...prev, choice])}>
+                      <ChoiceFace cards={cards} title={choice} />
+                      {choice}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div className="ms-bin">
+                <p>{exhibit.tfPrompt}</p>
+                <div className="ms-reasons">
+                  <button type="button" aria-pressed={daysFalse === false} onClick={() => setDaysFalse(false)}>True</button>
+                  <button type="button" aria-pressed={daysFalse === true} onClick={() => setDaysFalse(true)}>False</button>
+                </div>
+              </div>
+              <div className="ms-bin">
+                <p className="ms-sentence">{exhibit.icLead}{" "}
+                  <select aria-label="What the new source helps with" value={notePick || ""} onChange={(event) => setNotePick(event.target.value)}>
+                    <option value="">choose</option>
+                    {exhibit.ic.map((choice) => <option key={choice}>{choice}</option>)}
+                  </select>.
+                </p>
+              </div>
+            </section>
+          </div>
         )}
 
         {step === "done" && (
@@ -316,6 +374,7 @@ export default function ExhibitHallClient({ assignmentId, publicCase, alreadySub
             <p className="ms-kicker">The Nature Deck</p>
             <h2>{plaque || exhibit.title}</h2>
             <p>The cadets can walk through tomorrow. Your teacher will read what your sources could answer.</p>
+            <button type="button" className="ms-next" onClick={() => router.push("/home")}>Back to Hub</button>
           </section>
         )}
 
@@ -345,18 +404,6 @@ export default function ExhibitHallClient({ assignmentId, publicCase, alreadySub
                       <button key={kind} type="button" aria-pressed={stamps[look] === kind} onClick={() => chooseStamp(kind)}>{kind}</button>
                     ))}
                   </div>
-                  {stamps[look] && (
-                    <>
-                      <p>Where does it go?</p>
-                      <div className="ms-reasons">
-                        {spots.map((spot, index) => (
-                          <button key={spot.id} type="button" onClick={() => trySpot(look, index)}>{spot.label}</button>
-                        ))}
-                        <button type="button" onClick={() => tryBin(look)}>Not in this exhibit</button>
-                        <button type="button" onClick={() => { putAway(look); setLook(null); }}>Back to storage</button>
-                      </div>
-                    </>
-                  )}
                 </>
               )}
               <button type="button" className="ms-ghost" onClick={() => setLook(null)}>Close</button>

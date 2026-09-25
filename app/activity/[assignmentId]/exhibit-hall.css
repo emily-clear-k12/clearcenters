@@ -1,6 +1,6 @@
 .ms-page {
   min-height: calc(100vh - 46px);
-  padding: 18px 16px 32px;
+  padding: 64px 16px 32px;
   background: #120c28 url("/maker/hall.jpg") center / cover no-repeat fixed;
   color: #2a2350;
   font-family: Inter, sans-serif;
@@ -48,7 +48,8 @@
   background: #fff; text-align: left; color: inherit; font: inherit;
   box-shadow: inset 0 0 0 1px #e3dcf3; min-width: 0;
 }
-.ms-piece img { display: none; }
+.ms-piece img { display: block; width: 100%; height: 120px; object-fit: contain; background: #120c28; border-radius: 10px; }
+.ms-thumb { display: block; height: 120px; border-radius: 10px; overflow: hidden; background: #120c28; }
 .ms-quote {
   margin: 0; min-height: 84px; padding: 10px; border-radius: 12px;
   background: #f7fbff; border: 1px solid #e3dcf3; font-size: 14px; line-height: 1.45;
@@ -70,7 +71,32 @@
 .ms-piece b { font-size: 14px; }
 .ms-piece span, .ms-quiet { color: #6b6491; font-size: 13px; }
 .ms-piece.is-on { box-shadow: inset 0 0 0 3px #6d45c8; }
-.ms-wall, .ms-labels { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 8px; }
+.ms-wall, .ms-labels, .ms-hang { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 8px; }
+.ms-ask { display: grid; grid-template-columns: 1.25fr 0.75fr; gap: 14px; align-items: start; }
+.ms-gallery {
+  padding: 16px;
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  box-shadow: 0 18px 44px rgba(12, 18, 48, 0.28);
+  backdrop-filter: blur(8px);
+  color: #2a2350;
+}
+.ms-gallery h2 { margin: 0; color: #2a2350; font-family: Poppins, sans-serif; text-shadow: none; }
+.ms-hang .ms-slot {
+  background: rgba(255, 255, 255, 0.96);
+  border: 8px solid #efe8fb;
+  box-shadow: inset 0 0 0 2px #6d45c8, 0 0 0 1px #1aa7b5, 0 12px 24px rgba(26, 167, 181, 0.18);
+}
+.ms-hang .ms-frame { height: 168px; }
+.ms-placard {
+  margin-top: 14px; padding: 12px 14px; border-radius: 16px;
+  background: #fff; color: #2a2350; border: 1px solid #e3dcf3;
+}
+.ms-choice { display: flex; align-items: center; gap: 8px; }
+.ms-choice-pic { width: 54px; height: 40px; object-fit: contain; background: #120c28; border-radius: 6px; }
+.ms-choice-tag { font-size: 11px; font-weight: 700; color: #6d45c8; }
+.ms-frame { border: 0; padding: 0; cursor: pointer; }
 .ms-frame {
   height: 230px; display: flex; align-items: center; justify-content: center;
   background: #120c28; border-radius: 12px; overflow: hidden;
@@ -95,7 +121,23 @@
   text-transform: uppercase;
 }
 .ms-bin { margin-top: 8px; border: 1px solid #e3dcf3; }
-.ms-bin.is-on, .ms-slot.is-on { box-shadow: inset 0 0 0 3px #1aa7b5; }
+.ms-slot.is-ready, .ms-bin.is-ready {
+  box-shadow: inset 0 0 0 3px #1aa7b5, 0 0 0 4px rgba(26, 167, 181, 0.35), 0 0 22px rgba(26, 167, 181, 0.55);
+  animation: ms-ready 1.1s ease-in-out infinite;
+}
+.ms-slot.is-landed, .ms-bin.is-landed {
+  animation: ms-snap 420ms ease;
+  box-shadow: inset 0 0 0 3px #1aa7b5, 0 0 18px rgba(26, 167, 181, 0.65);
+}
+.ms-drop { min-height: 92px; width: 100%; border: 0; border-radius: 12px; background: transparent; }
+@keyframes ms-ready {
+  50% { box-shadow: inset 0 0 0 3px #1aa7b5, 0 0 0 7px rgba(26, 167, 181, 0.2), 0 0 28px rgba(26, 167, 181, 0.85); }
+}
+@keyframes ms-snap {
+  0% { transform: scale(0.94); }
+  60% { transform: scale(1.03); }
+  100% { transform: scale(1); }
+}
 .ms-reasons { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
 .ms-reasons button {
   border: 1px solid #e3dcf3; border-radius: 999px; padding: 8px 12px;
@@ -138,7 +180,7 @@
 .ms-float img, .ms-float .ms-graph, .ms-float .ms-quote { height: 72px; }
 .ms-look {
   position: fixed; inset: 0; z-index: 30; display: flex; align-items: flex-start; justify-content: center;
-  padding: 24px 16px; background: rgba(18, 12, 40, 0.55); overflow: auto;
+  padding: 24px 16px; background: rgba(18, 12, 40, 0.28); overflow: auto;
 }
 .ms-sheet {
   background: #fff; border-radius: 24px; padding: 16px; max-width: 680px; width: 100%;
@@ -152,6 +194,6 @@
 .ms-actions { display: flex; gap: 8px; flex-wrap: wrap; }
 .ms-foot { padding: 14px 16px; }
 @media (max-width: 800px) {
-  .ms-layout, .ms-open, .ms-cards { grid-template-columns: 1fr 1fr; }
+  .ms-layout, .ms-open, .ms-cards, .ms-ask { grid-template-columns: 1fr; }
   .ms-top, .ms-foot { flex-direction: column; align-items: flex-start; }
 }
