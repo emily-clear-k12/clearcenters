@@ -105,7 +105,7 @@ function create(stage, cfg, api) {
   const board = iconCounter(A, anim, { x: 380, y: 224, cols: 10, rows: 4, cell: 19, draw: smallPerson, title: "BUYERS THIS HOUR" });
   const pad = countPad(A, { x: 483, y: 380, unit: "", width: 210, onStep: (d) => ctl.step(d) });
   const lock = lockBadge(A, 483 + 114, 366, 16);
-  const pointer = livePointer(layers.over, anim, { trackX: (v) => X0 + v * PX, TY, color: "#7b6cd9", fmt: (v) => `${Math.round(v)} buyers` });
+  const pointer = livePointer(layers.over, anim, { trackX: (v) => X0 + v * PX, TY, color: "#7b6cd9", fmt: (v) => `${Math.round(v)} ${Math.round(v) === 1 ? "buyer" : "buyers"}` });
 
   const tick = (dt) => {
     if (!S.rain || RM) return;

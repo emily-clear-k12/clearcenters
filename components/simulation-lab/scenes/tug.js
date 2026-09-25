@@ -127,6 +127,7 @@ function create(stage, cfg, api) {
       await tween(T, (u) => {
         S.x = lerp(x0, dist, u); S.wheel = (S.x * PX) / 11 * 57.3;
         draw(Math.min(1, u * 3), Math.min(1, u * 3));
+        showArrow(d);
         if (!RM && u < 0.85 && Math.random() < 0.25) dust.emit(cx() - 30, LANE - 2, -20, -8, 3, 0.5);
       }, ease.outCubic);
       S.x = dist; draw(1, 1);

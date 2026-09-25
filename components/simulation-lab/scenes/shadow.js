@@ -72,7 +72,7 @@ function create(stage, cfg, api) {
   // sun path
   const p0 = ptFor(V.min - 0.35), p1 = ptFor(V.max + 0.2);
   el("path", { d: `M${p0.x} ${p0.y} A${ARC.r} ${ARC.r} 0 0 1 ${p1.x} ${p1.y}`, fill: "none", stroke: "#f0b429", "stroke-width": 3, "stroke-dasharray": "2 10", "stroke-linecap": "round", opacity: 0.8 }, st);
-  if (opts.arcLabel) { el("text", { x: p0.x - 22, y: p0.y + 44, class: "tile-caption", text: opts.arcLabel }, st); }
+  if (opts.arcLabel) { el("text", { x: 40, y: 218, class: "tile-caption", text: opts.arcLabel }, st); }
   const A = layers.actors;
   const presets = el("g", {}, A);
   const marks = hours.map((h) => {

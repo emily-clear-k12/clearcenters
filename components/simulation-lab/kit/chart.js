@@ -26,7 +26,7 @@ export function createChart(host, { variable: V, outcome: O }, anim) {
   const nTicks = Math.round((V.max - V.min) / V.step) + 1;
   const longest = Math.max(...Array.from({ length: nTicks }, (_, i) => tickText(V.min + i * V.step).length));
   // long labels (e.g. "125¢") on many ticks: label every other tick so they don't collide
-  const every = nTicks * longest * 7.2 > W - m.l - m.r ? 2 : 1;
+  const every = nTicks * (longest * 8 + 8) > W - m.l - m.r ? 2 : 1;
   for (let i = 0, x = V.min; x <= V.max + 1e-9; i++, x += V.step) {
     el("line", { x1: xs(x), x2: xs(x), y1: ys(0), y2: ys(0) + 5, stroke: "#bdb5dc", "stroke-width": 1.5 }, grid);
     if (i % every === 0) el("text", { x: xs(x), y: ys(0) + 19, "text-anchor": "middle", class: "axis", text: tickText(x) }, grid);
