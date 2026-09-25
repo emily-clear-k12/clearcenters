@@ -16,7 +16,8 @@ export function createChart(host, { variable: V, outcome: O }, anim) {
   host.innerHTML = "";
   const svg = el("svg", { viewBox: `0 0 ${W} ${H}`, class: "chart-svg" }, host);
   const grid = el("g", {}, svg);
-  const yStep = O.max > 12 ? 2 : O.max > 6 ? 2 : 1;
+  // a "nice" gridline step giving at most ~7 lines (10 → 2, 70 → 10, 900 → 200)
+  const yStep = [1, 2, 5, 10, 20, 25, 50, 100, 200, 250, 500].find((s) => O.max / s <= 7) || Math.ceil(O.max / 7);
   for (let y = 0; y <= O.max; y += yStep) {
     el("line", { x1: m.l, x2: W - m.r, y1: ys(y), y2: ys(y), stroke: y === 0 ? "#bdb5dc" : "#ebe7f6", "stroke-width": y === 0 ? 2 : 1 }, grid);
     el("text", { x: m.l - 8, y: ys(y) + 4.5, "text-anchor": "end", class: "axis", text: String(y) }, grid);

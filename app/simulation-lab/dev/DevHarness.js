@@ -10,7 +10,8 @@ function installShim() {
   const real = window.fetch.bind(window);
   window.__slxCalls = [];
   window.fetch = async (url, opts) => {
-    const u = typeof url === "string" ? url : url.url;
+    const u = typeof url === "string" ? url : url instanceof URL ? url.pathname : (url && url.url) || "";
+    if (!u.startsWith("/")) return real(url, opts);
     if (u.startsWith("/api/submission/save")) {
       window.__slxCalls.push({ url: u, body: opts && opts.body ? JSON.parse(opts.body) : null });
       return new Response(JSON.stringify({ success: true }), { status: 200, headers: { "Content-Type": "application/json" } });

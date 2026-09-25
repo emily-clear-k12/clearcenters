@@ -291,3 +291,21 @@
 .slx .bn-actions { margin-top: 16px; display: flex; justify-content: center; gap: 10px; }
 .slx .banner.interactive { pointer-events: auto; }
 .slx .bn-clean { display: inline-block; margin-top: 10px; padding: 6px 14px; border-radius: 999px; background: #fff4e6; color: #b3620f; font-weight: 800; font-size: 15px; }
+
+/* ---- shared scene controls (kit/controls.js) ---- */
+.slx .slx-pad .pad-btn { cursor: pointer; transition: opacity .2s; }
+.slx .slx-pad.attention .plus > circle:first-child { animation: slx-padPulse 1.2s ease-in-out infinite; transform-box: fill-box; transform-origin: center; }
+.slx.rm .slx-pad.attention .plus > circle:first-child { stroke: #1d8c80; stroke-width: 5; }
+@keyframes slx-padPulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.16); } }
+.slx .ctl-glow { opacity: 0; transition: opacity .3s; pointer-events: none; }
+.slx .attention .ctl-glow { animation: slx-glow 1.4s ease-in-out infinite; }
+.slx.rm .attention .ctl-glow { opacity: .2; }
+.slx .ctl.disabled, .slx .ctl.disabled .hit { pointer-events: none; }
+.slx .live-pointer { pointer-events: none; }
+.slx .fb-bracket { pointer-events: none; transition: opacity .2s; }
+.slx .scene-label { font: 900 12px var(--font); fill: var(--ink2); letter-spacing: .08em; }
+.slx .scene-big { font: 600 22px var(--display); fill: var(--ink); }
+.slx .scene-num { font: 600 16px var(--display); fill: #5b5378; }
+.slx .preset { cursor: pointer; }
+.slx .preset text { font: 600 14px var(--display); fill: #5b5378; pointer-events: none; }
+.slx .preset.on text { fill: #fff; }

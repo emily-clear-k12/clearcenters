@@ -215,7 +215,9 @@ export function createGap({ over, under, geom, anim, unitTxt, onBullseye }) {
     const gg = g;
     await anim.tween(anim.RM ? 0 : 420, (u) => { set(line, { x2: lerp(fx, lx, u) }); set(band, { opacity: 0.16 * u }); }, ease.outCubic);
     set(endTick, { opacity: 1 });
-    const txt = diff > 0 ? `Your flag was ${unitTxt(diff)} short` : `Your flag was ${unitTxt(-diff)} too far`;
+    // Scenes whose track is a gauge (grams, RPM...) say "too low / too high".
+    const words = geom.gapWords || { under: "short", over: "too far" };
+    const txt = diff > 0 ? `Your flag was ${unitTxt(diff)} ${words.under}` : `Your flag was ${unitTxt(-diff)} ${words.over}`;
     const cx = (fx + lx) / 2;
     const c = chip(gg, cx, y - 26, txt, "#ffffff", "#5a4bb8", "gap-chip pop-in");
     const half = c._w / 2;

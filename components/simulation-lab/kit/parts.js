@@ -31,9 +31,10 @@ export function ground(parent, defs, TY) {
   el("path", { d: `M40 ${top + 5} H1326`, stroke: "#ffffff", "stroke-width": 2, opacity: 0.9 }, parent);
 }
 
-// A measuring track laid on the floor: major ticks + numbers every 1 unit,
-// minor ticks every `minor`, fine ticks every `fine`. x = x0 + value * px.
-export function meterTrack(parent, defs, { x0, px, TY, max, minor = 0.5, fine = 0.1, unitLabel = "m" }) {
+// A measuring track laid on the floor: labelled ticks every `major` units
+// (default 1), minor ticks every `minor`, fine ticks every `fine` (0 = none).
+// x = x0 + value * px. The last label carries the unit ("10 m", "70 g").
+export function meterTrack(parent, defs, { x0, px, TY, max, major = 1, minor = 0.5, fine = 0.1, unitLabel = "m" }) {
   addDefs(defs, "slxRulerFace", `
     <linearGradient id="slxRulerFace" x1="0" y1="0" x2="0" y2="1">
       <stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#f1eefa"/>
@@ -43,17 +44,21 @@ export function meterTrack(parent, defs, { x0, px, TY, max, minor = 0.5, fine = 
   el("rect", { x: RL, y: TY + 6, width: RR - RL, height: 44, rx: 14, fill: "#2a2440", opacity: 0.08 }, g);
   el("rect", { x: RL, y: TY, width: RR - RL, height: 44, rx: 14, fill: "url(#slxRulerFace)", stroke: "#d8d0f0", "stroke-width": 1.5 }, g);
   el("rect", { x: RL + 10, y: TY + 40, width: RR - RL - 20, height: 3, rx: 1.5, fill: "#2bb3a3", opacity: 0.45 }, g);
+  const near = (a, b) => Math.abs(a / b - Math.round(a / b)) < 1e-6;
   const steps = Math.round(max / minor);
   for (let i = 0; i <= steps; i++) {
-    const m = i * minor, x = x0 + m * px, major = Math.abs(m - Math.round(m)) < 1e-6;
-    el("rect", { x: x - (major ? 1.5 : 1), y: TY, width: major ? 3 : 2, height: major ? 15 : 8, rx: 1, fill: major ? "#5b5378" : "#aaa2c8" }, g);
-    if (major) el("text", { x, y: TY + 34, class: "ruler-num", "text-anchor": "middle", text: Math.round(m) === max ? `${max} ${unitLabel}` : String(Math.round(m)) }, g);
+    const m = i * minor, x = x0 + m * px, isMajor = near(m, major);
+    el("rect", { x: x - (isMajor ? 1.5 : 1), y: TY, width: isMajor ? 3 : 2, height: isMajor ? 15 : 8, rx: 1, fill: isMajor ? "#5b5378" : "#aaa2c8" }, g);
+    if (isMajor) {
+      const n = Math.round(m * 100) / 100;
+      el("text", { x, y: TY + 34, class: "ruler-num", "text-anchor": "middle", text: Math.abs(n - max) < 1e-6 ? `${max} ${unitLabel}` : String(n) }, g);
+    }
   }
   if (fine) {
     const n = Math.round(max / fine);
     for (let i = 0; i < n; i++) {
       const m = i * fine;
-      if (Math.abs(m / minor - Math.round(m / minor)) < 0.01) continue;
+      if (near(m, minor)) continue;
       el("rect", { x: x0 + m * px - 0.5, y: TY, width: 1, height: 5, fill: "#cfc8e6" }, g);
     }
   }

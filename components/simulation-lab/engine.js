@@ -76,7 +76,10 @@ export function createEngine({ svg, chartHost, cfg, sceneModule, rm, ui }) {
     const setupish = state.phase === "setup";
     scene.setAttention(setupish && !scene.hasSetting());
     flag.setAttention(setupish && scene.hasSetting() && state.flagRequired && !flag.placed);
-    flag.setVisible(state.flagRequired);
+    // keep the flag (and its gap bracket) on screen after the given-setting
+    // Round 2 prediction until the student resets for the free run
+    const last = state.runs[state.runs.length - 1];
+    flag.setVisible(state.flagRequired || (landed && !!last && last.pred != null));
     ui.update({
       round: state.round,
       phase: state.phase,
@@ -121,7 +124,7 @@ export function createEngine({ svg, chartHost, cfg, sceneModule, rm, ui }) {
     scene.setEnabled(true);
     const n = roundRuns(state.round);
     let msg = "";
-    if (diff != null) msg = Math.abs(diff) < 0.01 ? "Bullseye! You predicted it exactly. " : diff > 0 ? `It went ${unitTxt(diff)} past your flag. ` : `It stopped ${unitTxt(-diff)} before your flag. `;
+    if (diff != null) msg = Math.abs(diff) < 0.01 ? "Bullseye! You predicted it exactly. " : (diff > 0 ? cfg.sam.pastFlag(unitTxt(diff)) : cfg.sam.beforeFlag(unitTxt(-diff))) + " ";
     if (state.round === 1) {
       if (n >= cfg.round1.runs) {
         say(cfg.sam.toPattern());
@@ -137,7 +140,7 @@ export function createEngine({ svg, chartHost, cfg, sceneModule, rm, ui }) {
       say(msg + cfg.sam.next());
     } else if (n === 1 && cfg.round2.runs > 1) {
       const r1 = state.runs.find((r) => r.round === 1 && r.setting === v);
-      say(msg + (r1 ? `In Round 1 the same setting went ${unitTxt(r1.dist)}!` : ""));
+      say(msg + (r1 ? cfg.sam.compareR1(unitTxt(r1.dist)) : ""));
       state.flagRequired = false;
       scene.setLocked(false);
     } else if (n >= cfg.round2.runs) {

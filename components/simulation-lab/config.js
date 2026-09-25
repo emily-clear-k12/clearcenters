@@ -27,9 +27,10 @@ export function buildSceneConfig(publicCase, sceneModule) {
     max: v0.max,
     step: v0.step,
     axis: sc.variableAxis || v0.label,
-    tickSuffix: unitRaw.trim() === "°" ? "°" : "",
-    unitWord: unitRaw.trim(),
-    ghost: (v) => `${v}${unitRaw}`,
+    tickSuffix: sc.tickSuffix != null ? sc.tickSuffix : unitRaw.trim() === "°" ? "°" : "",
+    unitWord: sc.unitWord || unitRaw.trim(),
+    // label on the faded marker of an earlier run, e.g. "10 breaths", "Level 5"
+    ghost: (v) => (sc.ghostFormat ? sc.ghostFormat.replace("{v}", v) : `${v}${unitRaw}`),
   };
   const outcome = {
     id: out.id,
@@ -53,7 +54,12 @@ export function buildSceneConfig(publicCase, sceneModule) {
   Object.keys(templates).forEach((k) => {
     sam[k] = (v) => fill(templates[k], { v, min: variable.min, max: variable.max });
   });
-  sam.toPattern = sam.toPattern || (() => `${sc.r1Runs || 3} runs done! Look at your dots on the chart →`);
+  sam.toPattern = sam.toPattern || (() => "Three runs done! Look at your dots on the chart →");
+  // How a run compares with the flag, e.g. "It went 1.5 m past your flag."
+  // Gauge-style scenes override these ("It read 5 g higher than your flag.").
+  sam.pastFlag = sam.pastFlag || ((t) => `It went ${t} past your flag.`);
+  sam.beforeFlag = sam.beforeFlag || ((t) => `It stopped ${t} before your flag.`);
+  sam.compareR1 = sam.compareR1 || ((t) => `In Round 1 the same setting went ${t}!`);
   sam.twistDone = sam.twistDone || (() => "See your orange dots? Compare them with the teal ones from Round 1.");
 
   const byId = {};
