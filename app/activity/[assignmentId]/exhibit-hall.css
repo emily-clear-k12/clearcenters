@@ -195,6 +195,7 @@
 .ms-foot { padding: 14px 16px; }
 @media (max-width: 800px) {
   .ms-layout, .ms-open, .ms-cards, .ms-ask, .ms-split { grid-template-columns: 1fr; }
+  .ms-kinds { grid-template-columns: 1fr; }
   .ms-portrait { grid-template-columns: 1fr 1fr; grid-template-areas: "center center" "n e" "w s"; }
   .ms-top, .ms-foot { flex-direction: column; align-items: flex-start; }
 }
@@ -240,6 +241,8 @@
 .ms-portrait .is-e { grid-area: e; }
 .ms-portrait .is-s { grid-area: s; }
 .ms-portrait .is-w { grid-area: w; }
+.ms-kinds { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-top: 8px; }
+.ms-kinds .is-edge { grid-column: 1 / -1; box-shadow: inset 0 0 0 3px #1aa7b5; background: rgba(26, 167, 181, 0.08); }
 .ms-center {
   grid-area: center;
   padding: 10px;

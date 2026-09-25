@@ -97,9 +97,21 @@ Do not turn a timeline code into a four-spot or side-by-side case.
 
 The old portrait titles (Meet water, Rosa, Franklin, 4,352, and the rest) stay on the four-spot wall. Do not reuse those codes here.
 
-## Next wall
+## Every Kind wall
 
-Side by side, timelines, and portraits are in the engine (12 cases each). Every Kind is still later. Do not add a fifth four-spot case.
+**Started Sept 24, 2026.** A gallery of clear examples, plus one spot for the tricky example that still belongs. One case per subject per grade (12). They use the same activity, with `layout: "kinds"`. Run `add_exhibit_hall_kinds.sql` before they show on Assign.
+
+| Grade | Science | ELAR | Social Studies | Math |
+|---|---|---|---|---|
+| 3 | 3.11C Every careful use | ELA.3.10A Every kind of purpose | SS.3.5A Every kind of money choice | 3.3C Every kind of unit fraction |
+| 4 | 4.7 Every kind of force | ELA.4.9E Every piece of the argument | SS.4.6A Every kind of Texas region | 4.2B Every way to show 3 tenths |
+| 5 | 5.6A Every kind of test | ELA.5.10D Every kind of feature | SS.5.15A Every kind of branch | 5.4A Prime or composite |
+
+Grade 4 science is `4.7-EX` with no letter. The real force standard has no sub-letter. Do not turn these codes into another wall.
+
+## All five walls
+
+Four-spot, side by side, timeline, portrait, and Every Kind are in the engine. Do not add a sixth case to a grade and subject on the four-spot wall.
 
 ## When a case ships
 
