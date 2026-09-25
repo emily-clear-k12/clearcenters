@@ -12,6 +12,7 @@ import {
   FROZEN_RELAY_STANDARD,
   FROZEN_RELAY_ASSIGN_FALLBACK,
   normalizeCaseRow,
+  isPlayableFrozenRelayRow,
 } from "../../../../lib/cases/expedition-station/assignFallback";
 
 // Sept 24, 2026 — teacher-set Frequency Rush question timer. The game
@@ -112,10 +113,9 @@ const CHALLENGE_TYPES = [
     description: "Students sort by the rule on the card, not the obvious clue. Three pages: a sort, a harder sort, and a Venn. A miss says how many are wrong, not which ones. About 20 minutes." },
   { key: "exhibit_hall", label: "Exhibit Hall", image: "/maker/hall.jpg", real: true,
     description: "Students stamp each source, choose what belongs on a four-spot exhibit, and write the labels. A wrong piece stays. About 20 minutes." },
-  // Sept 25, 2026 — Expedition Station intentionally hidden from Assign until
-  // the quest is finished. Engine/catalog/fallback/client/SQL remain in repo;
-  // catalog merge below stays dormant (cases filtered out without a real:true
-  // CHALLENGE_TYPES entry). Re-add ENGINES + this CHALLENGE_TYPES row to show.
+  // Sept 25, 2026 — Expedition Station Act 1 (Frozen Relay MA.4.3E-XP) is live.
+  { key: "expedition_station", label: "Expedition Station", image: "/teacher/challenges/mission_map.jpg", real: true,
+    description: "A 15-task quest on one planet. Station mode: four cards, then a challenge. About 15–20 minutes per act." },
   // Coming soon — kept below live tiles (Assign library sorts real:true first as well).
   { key: "repair_desk", label: "Repair Desk", image: "/teacher/challenges/repair_desk.jpg", real: false,
     description: "A broken ticket arrives — a flawed diagram, model, or work sample. Students diagnose what's wrong, fix it, and explain the fix to whoever sent it in." },
@@ -150,8 +150,11 @@ function matchesChallenge(caseEngine, challengeKey) {
 
 // Sept 25, 2026 — Catalog fallback for Expedition Station. Supabase may omit
 // the row (RLS / select / project mismatch) even when the case exists for
-// assign FK; merge catalog quests so Assign still lists them. Prefer the DB
-// row when present; only add catalog rows whose standard is missing.
+// assign FK; merge catalog quests so Assign still lists them.
+// Prefer DB copy fields when present, but ALWAYS take engine/grade/subject
+// from the catalog for known expedition standards — a broken DB row that
+// only matches on `standard` used to block catalog+fallback insert and
+// leave Assign at 0 activities (root cause after 14ae5b2).
 const CASES_SELECT_FULL =
   "standard, title, grade, subject, engine, learning_target, lesson_summary, misconception_note";
 const CASES_SELECT_MINIMAL = "standard, title, grade, subject, engine";
@@ -174,22 +177,41 @@ function expeditionStationLibraryRows() {
   );
 }
 
-// Merge order: normalize DB rows -> catalog rows for missing standards ->
-// hardcoded MA.4.3E-XP fallback if still missing (does not depend on catalog).
+// Merge order: normalize DB → overlay catalog filter fields for known XP
+// standards → ensure hardcoded MA.4.3E-XP is playable (engine/grade/subject).
 function mergeExpeditionStationCatalog(rows) {
   const list = (Array.isArray(rows) ? rows : []).map(normalizeCaseRow);
-  const byStandard = new Set(list.map((r) => r.standard));
-  const missing = expeditionStationLibraryRows().filter(
-    (row) => !byStandard.has(row.standard)
-  );
-  let merged = missing.length ? [...list, ...missing] : list;
-  if (!merged.some((r) => r.standard === FROZEN_RELAY_STANDARD)) {
-    merged = [...merged, normalizeCaseRow(FROZEN_RELAY_ASSIGN_FALLBACK)];
+  const byStandard = new Map();
+  for (const row of list) {
+    if (row && row.standard) byStandard.set(row.standard, row);
+  }
+  for (const cat of expeditionStationLibraryRows()) {
+    const existing = byStandard.get(cat.standard);
+    if (!existing) {
+      byStandard.set(cat.standard, cat);
+      continue;
+    }
+    byStandard.set(
+      cat.standard,
+      normalizeCaseRow({
+        ...existing,
+        engine: cat.engine,
+        grade: cat.grade,
+        subject: cat.subject,
+        title: existing.title || cat.title,
+        learning_target: existing.learning_target || cat.learning_target,
+        lesson_summary: existing.lesson_summary || cat.lesson_summary,
+      })
+    );
+  }
+  let merged = Array.from(byStandard.values());
+  const fallback = normalizeCaseRow(FROZEN_RELAY_ASSIGN_FALLBACK);
+  if (!merged.some(isPlayableFrozenRelayRow)) {
+    merged = merged.filter((r) => r.standard !== FROZEN_RELAY_STANDARD);
+    merged = [...merged, fallback];
   }
   return merged;
 }
-
-
 // Sept 16, 2026 — Signal Check used to ship each TEKS standard in three
 // formats (Verdict, Weigh-In, Thread), so this file grouped its cases into
 // one card per standard with a chip per format, instead of the plain tile
