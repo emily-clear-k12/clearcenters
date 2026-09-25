@@ -7,6 +7,7 @@ import { supabase } from "../../../../lib/supabaseClient";
 import { engineSupportsDistressCall, distressCallUnit } from "../../../../lib/distressCallEngines";
 import { isCustomCode, customCodeOwnerPrefix } from "../../../../lib/cases/relay-station";
 import { GAME_SKINS, DEFAULT_GAME_SKIN } from "../../../../lib/frequencyRushSkins";
+import { QUESTS as EXPEDITION_QUESTS } from "../../../../lib/cases/expedition-station/catalog";
 
 // Sept 24, 2026 — teacher-set Frequency Rush question timer. The game
 // accepts 0-60 seconds; 0 means no timer.
@@ -129,6 +130,39 @@ function matchesChallenge(caseEngine, challengeKey) {
   if (!challengeKey) return false;
   if (challengeKey === "newsroom") return (caseEngine || "").startsWith("newsroom");
   return (caseEngine || "group_chat") === challengeKey;
+}
+
+// Sept 25, 2026 — Catalog fallback for Expedition Station. Supabase may omit
+// the row (RLS / select / project mismatch) even when the case exists for
+// assign FK; merge catalog quests so Assign still lists them. Prefer the DB
+// row when present; only add catalog rows whose standard is missing.
+const CASES_SELECT_FULL =
+  "standard, title, grade, subject, engine, learning_target, lesson_summary, misconception_note";
+const CASES_SELECT_MINIMAL = "standard, title, grade, subject, engine";
+
+function expeditionStationLibraryRows() {
+  return Object.values(EXPEDITION_QUESTS).map((quest) => ({
+    standard: quest.standard || quest.id,
+    title:
+      typeof quest.title === "string" && quest.title.startsWith("Expedition Station:")
+        ? quest.title
+        : `Expedition Station: ${quest.title}`,
+    engine: "expedition_station",
+    grade: quest.grade,
+    subject: quest.subject,
+    learning_target: quest.iCan || null,
+    lesson_summary: quest.blurb || quest.mission || null,
+    misconception_note: null,
+  }));
+}
+
+function mergeExpeditionStationCatalog(rows) {
+  const list = Array.isArray(rows) ? rows : [];
+  const byStandard = new Set(list.map((r) => r.standard));
+  const missing = expeditionStationLibraryRows().filter(
+    (row) => !byStandard.has(row.standard)
+  );
+  return missing.length ? [...list, ...missing] : list;
 }
 
 
@@ -264,7 +298,35 @@ function NewAssignmentContent() {
   }, [assignClassId]);
 
   useEffect(() => {
-    supabase.from("cases").select("standard, title, grade, subject, engine, learning_target, lesson_summary, misconception_note").then(({ data,error:loadError }) => {setCases(data || []);setCasesLoading(false);if(loadError)setError("Could not load activities. Please refresh to try again.")});
+    let cancelled = false;
+    (async () => {
+      setCasesLoading(true);
+      let { data, error: loadError } = await supabase.from("cases").select(CASES_SELECT_FULL);
+      // Optional columns / schema drift can fail the full select — retry minimal
+      // fields so the library still loads instead of staying empty.
+      if (loadError) {
+        const retry = await supabase.from("cases").select(CASES_SELECT_MINIMAL);
+        if (!retry.error) {
+          data = retry.data;
+          loadError = null;
+          if (!cancelled) {
+            setError("Some activity details could not load. Showing a simplified library — refresh to try the full list again.");
+          }
+        }
+      }
+      if (cancelled) return;
+      const merged = mergeExpeditionStationCatalog(data || []);
+      setCases(merged);
+      setCasesLoading(false);
+      if (loadError) {
+        setError(
+          merged.length
+            ? "Could not load the full activity library. Showing catalog activities that are available offline — refresh to try again."
+            : "Could not load activities. Please refresh to try again."
+        );
+      }
+    })();
+    return () => { cancelled = true; };
   }, []);
 
   function topicCode(c){if(FR_CUSTOM_LIST_RE.test(c.standard))return MY_WORD_LISTS;if(isFrDailyCase(c.standard))return FR_DAILY_TOPIC;return missionMapTeksCode(c.standard)||c.standard.replace(/-(?:SC|GC|FR|SL|SD|AD|RS|MM|CL|EX|XP).*$/i,'');}
