@@ -16,3 +16,6 @@ UPDATE cases SET
   learning_target = 'I can add and subtract fractions that have the same bottom number. I can show how with pictures, a number line, and by adding in a different order.',
   lesson_summary = 'Act 1 station visit on Frostveil: four fraction cards in any order, then Challenge 1 (the cold snap). About 15–20 minutes. Autosave after every card. Full quest is 15 tasks; Acts 2–3 ship next.'
 WHERE standard = 'MA.4.3E-XP';
+
+-- Verify the row is present (run in Supabase SQL editor):
+-- SELECT standard, title, engine, grade, subject FROM cases WHERE engine = 'expedition_station' OR standard = 'MA.4.3E-XP';
