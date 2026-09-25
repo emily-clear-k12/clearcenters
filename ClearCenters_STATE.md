@@ -1,5 +1,9 @@
 # ClearCenters — STATE
+<<<<<<< HEAD
 **Current truth. Start here.** · Last updated: September 24, 2026, near midnight (**Classification Lab: 73 new cases written, checked and wired into the code (8 → 81); SQL written, not run; not pushed; images come tomorrow**) · earlier late night: (**Assembly Deck grade 5 re-leveled, 16 cases, awaiting review**) · earlier: (**Word-choice check added to the reading-level tools (advisory)**) · earlier: (**Cleanup pass: audit extended to all new engines; Assembly Deck grade 5 reads too easy; Exhibit Hall found built**) · earlier: (**Frequency Rush step 6 built: Daily Warm-up + beat-your-best; 3 case rows of SQL to run**) · earlier Sept 24 afternoon: (**Reconciled with the app folder: Assembly Deck is now 66 cases and Classification Lab is built with 8 cases, both from other sessions that STATE never logged. Their SQL run status is UNKNOWN**) · Sept 24 midday: (**Maker Studio designed: the next new center, merging Museum Exhibit/Field Dispatch into it; design only, nothing built. New site-wide rule: a confidence check on every submit (§9 rule 21)**) · Sept 23 afternoon: (**Signal Check re-leveled: all 108 registered cases now read on grade — written to the app folder, NOT yet committed or pushed; no SQL needed**) · earlier Sept 23: Mission Map ELAR 12 authored and all 49 Mission Map cases re-leveled; Assembly Deck's first pilot and its fixes; Math 12 authored · *state updated at session end*
+=======
+**Current truth. Start here.** · Last updated: September 24, 2026, night (**Simulation Lab rebuilt in the new animated design for all 10 cases; old layout banned by §9 rule 22; PR #23, not merged**) · earlier late night: (**Assembly Deck grade 5 re-leveled, 16 cases, awaiting review**) · earlier: (**Word-choice check added to the reading-level tools (advisory)**) · earlier: (**Cleanup pass: audit extended to all new engines; Assembly Deck grade 5 reads too easy; Exhibit Hall found built**) · earlier: (**Frequency Rush step 6 built: Daily Warm-up + beat-your-best; 3 case rows of SQL to run**) · earlier Sept 24 afternoon: (**Reconciled with the app folder: Assembly Deck is now 66 cases and Classification Lab is built with 8 cases, both from other sessions that STATE never logged. Their SQL run status is UNKNOWN**) · Sept 24 midday: (**Maker Studio designed: the next new center, merging Museum Exhibit/Field Dispatch into it; design only, nothing built. New site-wide rule: a confidence check on every submit (§9 rule 21)**) · Sept 23 afternoon: (**Signal Check re-leveled: all 108 registered cases now read on grade — written to the app folder, NOT yet committed or pushed; no SQL needed**) · earlier Sept 23: Mission Map ELAR 12 authored and all 49 Mission Map cases re-leveled; Assembly Deck's first pilot and its fixes; Math 12 authored · *state updated at session end*
+>>>>>>> 568739341a1347a858dcbe055112e66151489951
 
 *Reconciled from four sources: the Claude project · `ClearCenters_Project_Files.zip` · `ClearCenters_MANIFEST.md` · and both device folders.*
 *Supersedes `ClearCenters_PROJECT_SPRINGBOARD_v4.md` (stale — predates Newsroom).*
@@ -56,6 +60,7 @@ Nothing else. This file is a status document, not a design document — design n
 
 ## 0.5 · SESSION LOG
 
+<<<<<<< HEAD
 **Sept 24, 2026 (near midnight) — Classification Lab goes from 8 cases to 81. 73 new cases are written, measured on grade, reviewed for accuracy and wired into the code. Nothing is pushed, the SQL has not been run, and there are no images yet.**
 
 *What changed*
@@ -93,6 +98,40 @@ Nothing else. This file is a status document, not a design document — design n
 - `lib/gradeFromStandard.js` reads `SCI-3.10C-CL`-style codes as grade 5, because it strips only `XX.` prefixes. This affects any AI prompt that uses it for Classification Lab codes, the original 8 included. Check whether Classification Lab calls it before fixing.
 - The engine has a per-page `hint` field that the new cases don't fill. It isn't used by grading. Confirm whether the client shows it.
 - The confidence check (rule 21) still isn't in Classification Lab.
+=======
+**Sept 24, 2026 (night, Simulation Lab) — Simulation Lab rebuilt in the new animated design for all 10 live cases. The old layout is gone for good (new §9 rule 22). On branch `sl-rebuild`, PR #23. Not merged. No SQL needed.**
+
+*What changed*
+- **New animated Simulation Lab** (`components/simulation-lab/`), from the prototype Emily approved. Each case is a real animated experiment with S.A.M. talking the student through it:
+  - 5.7B balloon (twist: added weight)
+  - 3.8B ramp (twist: carpet)
+  - 3.6A boat and washers
+  - 3.6C melting ice
+  - 3.7A magnet and paper clips
+  - 4.6B dissolving sugar
+  - 4.7 surfaces and a sliding block
+  - 4.8C battery and bulb
+  - 5.8B battery and fan motor
+  - 5.9 sun and shadow
+- **The same flow for every case:** 3 runs with a prediction flag → pattern check → **new fair-test check** → twist → 2 runs → explain → self-check → confidence (rule 21, saved as `self_confidence`).
+- **Scoring is shared** (`lib/simulationLabScoring.js`). The twist *prediction* is recorded but no longer graded, so a wrong guess about the new condition doesn't count against a clean run.
+- **The old `SimulationLabClient` layout was deleted.** The file is now a thin wrapper. Rule 22 forbids bringing the old layout back.
+- **Each case file gained** a `scene` block and a `fair` checkpoint. The fair-test answer key and all feedback are in the `.server.js` files only.
+- **Drafts save on the device automatically, and to the server with Save.** Resume puts the student back on the step they left.
+- **A local-only test page** at `/simulation-lab/dev?case=<code>` (404 in production).
+
+*What is now true*
+- **All 10 live Simulation Lab cases run in the new design**, walked end to end by script with no errors. Also tested: reduced motion, iPad and Chromebook screen sizes, real pointer input on every control, resume after reload, Save, and the submitted screen.
+- 5.7B, 5.8B and 5.9 (the writing-answer cases) finish and score through the new explain step.
+- **No SQL** (rule 16): same case codes, same `submissions` columns.
+
+*What is still open*
+- **Merge PR #23 once Emily reviews it.** Vercel preview deploys fail for every PR (#19–23) while production builds fine, most likely missing preview environment variables. So the new design has only been tested locally, never on a preview URL.
+- **Live-test with a student** (rule 20). Anchor art is no longer needed: the scenes are drawn in code.
+- Reading level is still unmeasured on Simulation Lab.
+
+---
+>>>>>>> 568739341a1347a858dcbe055112e66151489951
 
 **Sept 24, 2026 (late night, Assembly Deck re-level) — 15 grade 5 Assembly Deck cases rewritten to read at grade 5, and SS.4.3D-AD brought down to grade 4. On disk for Emily's review; not pushed; no SQL.**
 
@@ -658,7 +697,7 @@ Nothing else. This file is a status document, not a design document — design n
 | Group Chat | Live. 8 published, 19 built and content/TEKS-verified, formatting pending (old-era paper, largely moot for the current app). |
 | Signal Check | Live. 84 standards across grades 3-5 (108 cases). **Re-leveled Sept 23: all 108 on grade, not yet pushed.** 3 dead files await manual deletion; the Social Studies batch's SQL/images still pending — **re-verify, don't assume.** |
 | Mission Map/Evidence Quest | **Complete: 49 cases**: Science 13, Social Studies 12, Math 12, **ELAR 12 (authored Sept 23, later session; SQL delivered, not run; not pushed)**. Everything up to the Math batch is run and deployed. `tools/mission-map-gradecheck.cjs` gates reading level. Map art is missing for the 24 Math/ELAR cases. `tools/mission-map-casecheck.cjs` now guards the engine's client/server answer-key agreement across all 49. Still not live-tested since the Sept 2 batch. |
-| Simulation Lab | 10 cases across Grades 3-5 Science, all to the documented rigor rubric. Two bugs found and fixed in live-testing. Not live-tested since; SQL run status unconfirmed. Anchor art still needed for all 10. |
+| Simulation Lab | 10 cases across Grades 3-5 Science, all to the documented rigor rubric. **Sept 24: rebuilt in the new animated design, one scene per case, all 10 done (PR #23, not merged; no SQL). The old layout is gone for good (§9 rule 22).** Not yet tested with a student. The case SQL is from Sept 4 and confirmed live. |
 | **Relay Station** | **Live through Wave 3; Wave 3 SQL now run and deployed.** A typing center that doubles as reading practice: a 20-level auto-advancing Foundations Track (rising pass bar 90/95/100%) with placement and teacher override, a 72-reading library across 6 topic families, ghost racer, Repair Drills, a class trouble-key heatmap, per-student Supports, Dictation and Corrupted Transmission modes, Copy → Compose (AI-first-read), a Daily Transmission with weekday streaks, 7 rank-unlocked keyboard skins, S.A.M. on every screen, and a whole-class Relay Race with a projector board. Teacher surfaces: Typing Track, Typing Texts, Relay Race Board, Distress Call, standards report. Waves 2-3 still not live-tested. |
 | **Assembly Deck** | **Live, Wave 1 (paragraph mode). Piloted with a real student Sept 23.** Students build three paragraphs sentence by sentence, name what each leftover sentence actually was, order the finished paragraphs, answer the two **Chief's Debrief** questions about the report they built, and write a short explanation S.A.M. reads first. A **Case File** is reachable from every screen. ~20 minutes per case. **66 cases** (Science 26, ELAR 14, SS 14, Math 12 in word-problem mode), all registered. They were authored in other sessions and discovered Sept 24; **their SQL run status is unknown.** Includes protest lines, a requester who writes back, the Editor's Trap and Chief's Challenge, plus the Sentence Sort teacher board. **Territory Builder retired into this engine** (its map mode). **SQL run and deployed.** Not re-piloted since the debrief was added. Its own tile art still does not exist — it borrows the Repair Desk image. |
 | Frequency Rush / Signal Ops | Live. Vocabulary engine plus the whole-class Signal Ops board. **Sept 24: becoming the fluency center** (`FrequencyRush_Fluency_Expansion_v1.md`). Steps 1–6 built: Math facts (pushed), ELAR word study (awaiting review), teacher word lists, My Missed Words, the Star Chart, and the Daily Warm-up with beat-your-best. Step 7 (game re-export spec) is next. |
@@ -696,7 +735,7 @@ A shippable engine needs: a case schema (`public.js`/`server.js` pair), a client
 | Group Chat | ● | ● | ● | ● | ● | Live |
 | Signal Check | ● | ● | ● | ● | ● | Live, 84 standards |
 | Mission Map | ● | ● | ● | ● | ● | 49 cases, complete. ELAR SQL still to run |
-| Simulation Lab | ● | ● | ● | ● | ● | 10 cases — needs live-test; SQL unconfirmed |
+| Simulation Lab | ● | ● | ● | ● | ● | 10 cases, new animated design (PR #23 awaiting merge). Needs a student live-test |
 | **Relay Station** | ● | ● | ● | ● | ● | 94 lessons — SQL run; Waves 2-3 still untested |
 | **Assembly Deck** | ● | ● | ● | ● | ● | 66 cases — SQL for the 60 new cases unconfirmed; piloted once; own tile art missing |
 | **Classification Lab** | ● | ● | ● | ● | ● | 8 cases in code — SQL unconfirmed; not live-tested |
@@ -763,7 +802,7 @@ The old-era 5.6A "Creek Sensor Mix-Up" packet had strong reasoning design underm
 - Two orphaned pieces from the old Glow Garden system; old per-planet `.png` art.
 - **`DEV_FORCE_UNLOCK_ALL`** still `true`.
 - Galaxy Hub planet `description` text not updated to match the renames.
-- Simulation Lab anchor/thumbnail art for all 10 cases.
+- ~~Simulation Lab anchor/thumbnail art for all 10 cases.~~ Sept 24: the scenes are drawn in code, so no anchor art is needed.
 - 7 of the original 9 uploaded background images not wired into their engines.
 - Images for the Sept 2 Mission Map batches and Signal Check's 27 field reports.
 - 3 dead Signal Check files still need Emily's manual deletion.
@@ -821,6 +860,21 @@ The old-era 5.6A "Creek Sensor Mix-Up" packet had strong reasoning design underm
     - "Very sure, but Level 0" is the flag that matters: that student believes something wrong.
     - It never affects the score or the Crystal Points, and students never see it used against them.
     - New engines include it from the start. Existing engines get audited and backfilled (§6 step 13). Which ones already have it has not been checked; Group Chat's is the model.
+
+22. **(Sept 24, 2026, new — PROJECT RULE, Emily's call) The animated Simulation Lab design is the only Simulation Lab. Never restore or revert to the old `SimulationLabClient` layout.**
+    - **Canonical:** `components/simulation-lab/` (`SimLabStudio.js`, `engine.js`, the scenes in `scenes/`, the kit parts in `kit/`). `app/activity/[assignmentId]/SimulationLabClient.js` is only a thin wrapper that renders it.
+    - **The old form-style client (the 1,515-line `SimulationLabClient.js` with sliders, a trial table and a text box) was deleted on purpose.** Do not bring it back from git history, rebuild it, or add it as a "fallback", "classic mode" or "simple mode". This holds even if a scene has a bug. Fix the scene instead.
+    - **Every live Simulation Lab case must have a registered scene.** A case without one shows "This lab isn't ready yet", not the old screen. So a new case is not live until its scene exists.
+    - **The flow and grading are the same for every case:** 3 runs → pattern → fair test → twist → 2 runs → explain → self-check → confidence (rule 21). A scene changes the experiment, not the steps or the scoring. Answer keys stay in the `.server.js` files.
+    - **To add a scene:**
+      1. Author and TEKS-check the case pair first (rules 11, 14).
+      2. Add a `scene` block and a `fair` checkpoint to the public file, and the fair key plus `feedback` to the server file.
+      3. Write `components/simulation-lab/scenes/<id>.js` from the kit parts, in the prototype look.
+      4. Register the id in BOTH `sceneIds.js` and `scenes/index.js`.
+      5. Walk the full flow in `/simulation-lab/dev?case=<code>&fresh=1` (it returns 404 in production), plus reduced motion and a Chromebook-size screen.
+
+      Step-by-step: `components/simulation-lab/README.md`.
+    - Changes to the look should keep matching the approved prototype (screenshots in the Sept 24 PR). A new look is Emily's call, never a session's.
 
 17b. **(Sept 24, 2026, new) Reading level is sentence length AND word choice.** Every gradecheck now reports both. When a case reads too hard, check which one is the cause before rewriting: long sentences get split, uncommon words get swapped (unless the standard names them). When a case reads too young, the fix is usually richer sentence structure (cause and effect, contrast, *because*/*although*) and a few richer words, never just longer sentences.
 

@@ -4,6 +4,18 @@
 
 Do not add a fifth case to a grade and subject on this wall. Do not rewrite a code that is already in the grid.
 
+## Side-by-side wall
+
+**Started Sept 24, 2026.** Left, right, and a both strip. One case per subject per grade (12). They use the same activity, with `layout: "split"`. Run `add_exhibit_hall_split.sql` before they show on Assign.
+
+| Grade | Science | ELAR | Social Studies | Math |
+|---|---|---|---|---|
+| 3 | 3.10B Sand or clay | ELA.3.9A Fable or fairy tale | SS.3.10B Two Texas celebrations | 3.7D Pour it or weigh it |
+| 4 | 4.13B Born with it or picked it up | ELA.4.7B Two views of the storm | SS.4.6B Coast or mountains | 4.10A Same every month? |
+| 5 | 5.13B Born knowing or taught | ELA.5.13D There or later | SS.5.9A North or south colonies | 5.4D Plus or times |
+
+Timelines are still later. Do not turn a side-by-side code into a four-spot case.
+
 Science codes have no prefix (`3.13A-EX`). ELAR uses `ELA.` and Social Studies uses `SS.`, so `ELA.3.8A-EX` is not science `3.8A-EX`.
 
 This wall is four spots. Each spot is one job. A card is right when its job matches that spot. One myth. One late note. Photos, short text, or a bar graph.
@@ -61,13 +73,45 @@ Side-by-side, timelines, and drawn math stay off this wall. They are the next wa
 
 **Social Studies 5.** Road to revolution: four causes, not the Declaration itself. Rights: four real protections. Lady Liberty: four true things she stands for. Four problems to solve: four compromises at the Constitutional Convention.
 
-## Next wall, not this one
+## Timeline wall
 
-Do not turn these into four-spot cases.
+**Started Sept 24, 2026.** Numbered steps, in order. One case per subject per grade (12). They use the same activity, with `layout: "line"`. Run `add_exhibit_hall_line.sql` before they show on Assign.
 
-**Side by side:** Science 3.10B sand vs clay · Science 4.13B inherited vs acquired · Science 5.13B instinct vs learned · Social Studies 3.10B two celebrations · Social Studies 4.6B coast vs mountains · Social Studies 5.9A north vs south colonies · ELAR 3.9A fable vs fairy tale · ELAR 4.7B two views of the storm · ELAR 5.13D primary vs secondary · Math 3.7D capacity vs weight · Math 4.10A fixed vs variable · Math 5.4D plus or times
+| Grade | Science | ELAR | Social Studies | Math |
+|---|---|---|---|---|
+| 3 | 3.13B A beetle's year | ELA.3.8C The lemonade plan | SS.3.1A How our town grew | 3.9E Maya's bike fund |
+| 4 | 4.9B 29 nights | ELA.4.8C The science fair disaster | SS.4.4B Longhorn boom | 4.5B The growing tower |
+| 5 | 5.10B From mud to stone | ELA.5.8C Lost in the library | SS.5.4C Growing west | 5.10E The family budget |
 
-**Timeline:** Science 3.13B a beetle's year · Science 4.9B moon phases · Science 5.10B mud to stone · Social Studies 3.1A how our town grew · Social Studies 4.4B longhorn boom · Social Studies 5.4C growing west · ELAR 3.8C the lemonade plan · ELAR 4.8C the science fair · ELAR 5.8C the library play · Math 3.9E Maya's bike fund · Math 4.5B the growing tower · Math 5.10E the family budget
+Do not turn a timeline code into a four-spot or side-by-side case.
+
+## Portrait wall
+
+**Started Sept 24, 2026.** A center subject, with true and important pieces around it. Order does not matter. One case per subject per grade (12). They use the same activity, with `layout: "portrait"`. Run `add_exhibit_hall_portrait.sql` before they show on Assign.
+
+| Grade | Science | ELAR | Social Studies | Math |
+|---|---|---|---|---|
+| 3 | 3.9A Portrait of a day | ELA.3.10C Portrait of a poster | SS.3.4C Portrait of a map | 3.6C Portrait of this rectangle |
+| 4 | 4.10B Portrait of a canyon | ELA.4.7D Portrait of a summary | SS.4.14A Portrait of the Texas flag | 4.6A Portrait of a ray |
+| 5 | 5.8B Portrait of a circuit | ELA.5.8A Portrait of a theme | SS.5.14B Portrait of the Preamble | 5.6B Portrait of this box |
+
+The old portrait titles (Meet water, Rosa, Franklin, 4,352, and the rest) stay on the four-spot wall. Do not reuse those codes here.
+
+## Every Kind wall
+
+**Started Sept 24, 2026.** A gallery of clear examples, plus one spot for the tricky example that still belongs. One case per subject per grade (12). They use the same activity, with `layout: "kinds"`. Run `add_exhibit_hall_kinds.sql` before they show on Assign.
+
+| Grade | Science | ELAR | Social Studies | Math |
+|---|---|---|---|---|
+| 3 | 3.11C Every careful use | ELA.3.10A Every kind of purpose | SS.3.5A Every kind of money choice | 3.3C Every kind of unit fraction |
+| 4 | 4.7 Every kind of force | ELA.4.9E Every piece of the argument | SS.4.6A Every kind of Texas region | 4.2B Every way to show 3 tenths |
+| 5 | 5.6A Every kind of test | ELA.5.10D Every kind of feature | SS.5.15A Every kind of branch | 5.4A Prime or composite |
+
+Grade 4 science is `4.7-EX` with no letter. The real force standard has no sub-letter. Do not turn these codes into another wall.
+
+## All five walls
+
+Four-spot, side by side, timeline, portrait, and Every Kind are in the engine. Do not add a sixth case to a grade and subject on the four-spot wall.
 
 ## When a case ships
 

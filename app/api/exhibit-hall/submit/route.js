@@ -10,6 +10,8 @@ const REASON = {
   myth: "A myth or mistake",
   picture: "Misleading picture",
   topic: "True but off-topic",
+  side: "Wrong side",
+  order: "Out of order",
 };
 
 async function awardCrystals(studentId, amount) {
@@ -38,7 +40,11 @@ export async function POST(request) {
   const exhibit = getExhibitCase(assignment.case_standard);
   if (!exhibit) return NextResponse.json({ error: "That case isn't wired up yet." }, { status: 404 });
 
-  const filled = Array.isArray(body.wall) && body.wall.filter(Boolean).length === 4 && body.bin && body.reason;
+  const split = exhibit.layout === "split";
+  const groups = body.groups || { left: [], right: [], both: [] };
+  const splitFilled = ["left", "right", "both"].every((zone) => (groups[zone] || []).length > 0) && body.bin && body.reason;
+  const count = exhibit.spots.length;
+  const filled = split ? splitFilled : Array.isArray(body.wall) && body.wall.filter(Boolean).length === count && body.bin && body.reason;
   if (!filled) return NextResponse.json({ need: "wall" });
 
   const { data: existing } = await supabaseAdmin
@@ -49,17 +55,27 @@ export async function POST(request) {
     .maybeSingle();
 
   const prior = (existing && existing.exhibit_hall_data) || {};
-  const first = prior.firstWall || { wall: body.wall, bin: body.bin, reason: body.reason, stamps: body.stamps || {} };
-  const graded = gradeExhibit(assignment.case_standard, { ...body, wall: first.wall, bin: first.bin, reason: first.reason });
+  const first = prior.firstWall || (split
+    ? { groups, bin: body.bin, reason: body.reason, stamps: body.stamps || {} }
+    : { wall: body.wall, bin: body.bin, reason: body.reason, stamps: body.stamps || {} });
+  const graded = gradeExhibit(assignment.case_standard, { ...body, wall: first.wall, groups: first.groups, bin: first.bin, reason: first.reason });
   const name = (id) => (exhibit.cards.find((item) => item.id === id) || {}).title || "empty";
   const lines = body.lines || {};
+  const sideLines = split
+    ? ["left", "right", "both"].map((zone) => {
+      const spot = exhibit.spots.find((item) => item.id === zone);
+      const titles = (first.groups[zone] || []).map(name).join(", ") || "empty";
+      const line = lines[zone] || {};
+      return `${spot ? spot.label : zone}: ${titles}. This side shows ${line.what || "___"}.`;
+    })
+    : first.wall.map((id, index) => {
+      const line = id ? lines[id] || {} : {};
+      return `${exhibit.spots[index].label}: ${id ? name(id) : "empty"}${id ? `. I notice ${line.what || "___"}. This helps because ${line.why || "___"}.` : ""}`;
+    });
   const exhibitText = [
     body.plaque || "No plaque yet",
     `Look first at ${body.best?.one || "___"} and ${body.best?.two || "___"}.`,
-    ...first.wall.map((id, index) => {
-      const line = id ? lines[id] || {} : {};
-      return `${exhibit.spots[index].label}: ${id ? name(id) : "empty"}${id ? `. I notice ${line.what || "___"}. This helps because ${line.why || "___"}.` : ""}`;
-    }),
+    ...sideLines,
     `Left out: ${first.bin ? name(first.bin) : "nothing"} · ${REASON[first.reason] || "no reason"}. Someone might think ${body.fooled || "___"}. This stays out because ${body.leftOut || "___"}.`,
     `Still in storage: ${body.held || "(nothing written)"}`,
     `Wall: ${graded.wallLevel}. ${graded.wallNote}`,
