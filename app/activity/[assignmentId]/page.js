@@ -11,6 +11,8 @@ import { getClassificationLabPublicCase } from "../../../lib/cases/classificatio
 import { getExhibitHallPublicCase } from "../../../lib/cases/exhibit-hall/index.public";
 import { getExpeditionStationPublicCase } from "../../../lib/cases/expedition-station/index.public";
 import { getMakerStudioPublicCase } from "../../../lib/cases/maker-studio/index.public";
+import { resolveMakerConfig } from "../../../lib/cases/maker-studio/catalog";
+import { MAKER_MODES } from "../../../lib/cases/maker-studio/modes";
 import { resolveRelayStationLesson } from "../../../lib/relayStationServer";
 import { centralDateKey, dailyTextFor, continuesStreak } from "../../../lib/cases/relay-station";
 import ActivityClient from "./ActivityClient";
@@ -48,7 +50,7 @@ export default async function ActivityPage({ params }) {
 
   const { data: assignment } = await supabaseAdmin
     .from("assignments")
-    .select("id, class_id, case_standard, due_date, pacing_mode, game_skin")
+    .select("id, class_id, case_standard, due_date, pacing_mode, game_skin, maker_studio_config")
     .eq("id", assignmentId)
     .single();
 
@@ -235,7 +237,7 @@ export default async function ActivityPage({ params }) {
   const exhibitHallCase = isExhibitHall ? getExhibitHallPublicCase(assignment.case_standard) : null;
   const expeditionStationCase = isExpeditionStation ? getExpeditionStationPublicCase(assignment.case_standard) : null;
   const makerStudioCase = isMakerStudio ? getMakerStudioPublicCase(assignment.case_standard) : null;
-  if (!caseEntry && !signalCheckCase && !missionMapCase && !simulationLabCase && !assemblyDeckCase && !classificationLabCase && !exhibitHallCase && !expeditionStationCase && !makerStudioCase) {
+  if (!caseEntry && !signalCheckCase && !missionMapCase && !simulationLabCase && !assemblyDeckCase && !classificationLabCase && !exhibitHallCase && !expeditionStationCase && !isMakerStudio) {
     return (
       <div style={{ minHeight: "100vh", background: "#16243F", display: "flex", alignItems: "center", justifyContent: "center", color: "#FFFFFF", fontFamily: "sans-serif", textAlign: "center", padding: 20 }}>
         <div>
@@ -343,10 +345,29 @@ export default async function ActivityPage({ params }) {
 
   if (isMakerStudio) {
     const raw = (existingSubmission && existingSubmission.maker_studio_data) || null;
+    const makerConfig = resolveMakerConfig(assignment.case_standard, assignment.maker_studio_config);
+    // Synthetic public case when catalog miss but config exists (should not happen for Quick Maker).
+    const pub = makerStudioCase || {
+      standard: assignment.case_standard,
+      title: caseRow?.title || "Maker Studio",
+      kicker: "Maker Studio",
+      samOpen: "Read the prompt, tap Write, and make your piece.",
+      modes: MAKER_MODES.map((m) => ({
+        id: m.id,
+        label: m.label,
+        blurb: m.blurb,
+        icon: m.icon,
+        available: !!m.live,
+        instructions: m.instructions || null,
+        doneHint: m.doneHint || null,
+      })),
+      config: makerConfig,
+    };
     return (
       <MakerStudioClient
         assignmentId={assignmentId}
-        publicCase={makerStudioCase}
+        publicCase={pub}
+        config={makerConfig}
         existingData={raw}
         alreadySubmitted={alreadySubmitted}
         revisionFeedback={revisionFeedback}

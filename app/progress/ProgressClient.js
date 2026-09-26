@@ -108,7 +108,7 @@ function DetailModal({ entry, onClose }) {
   );
 }
 
-export default function ProgressClient({ student, missions, badgeTiers, pastDue = [] }) {
+export default function ProgressClient({ student, missions, badgeTiers, pastDue = [], journalEntries = [] }) {
   const router = useRouter();
   const [selected, setSelected] = useState(null);
 
@@ -312,6 +312,48 @@ export default function ProgressClient({ student, missions, badgeTiers, pastDue 
           </section>
         )}
       </div>
+
+
+        {journalEntries.length > 0 && (
+          <section style={{ ...card, background: "rgba(255,255,255,.92)", backdropFilter: "blur(8px)", padding: "18px 22px 16px", marginTop: 16 }}>
+            <h2 style={{ fontFamily: "'Poppins', sans-serif", fontSize: 18, margin: "0 0 4px 0" }}>Journal shelf</h2>
+            <p style={{ margin: "0 0 12px 0", color: COLORS.textMuted, fontSize: 13 }}>Maker pieces your teacher kept for you.</p>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", gap: 12 }}>
+              {journalEntries.map((entry) => (
+                <button
+                  key={entry.id}
+                  type="button"
+                  onClick={() => setSelected({
+                    id: entry.id,
+                    caseStandard: entry.caseStandard,
+                    caseTitle: entry.caseTitle,
+                    attempt1: entry.text,
+                    attempt2: entry.text,
+                    released: entry.released,
+                    grade: entry.grade,
+                    feedback: entry.feedback,
+                    selfConfidence: null,
+                  })}
+                  style={{
+                    textAlign: "left",
+                    border: "none",
+                    background: COLORS.cream,
+                    borderRadius: 14,
+                    padding: 14,
+                    cursor: "pointer",
+                    boxShadow: "inset 0 0 0 1px #e3dcf3",
+                  }}
+                >
+                  <div style={{ fontSize: 11, fontWeight: 700, color: COLORS.violet, textTransform: "uppercase", marginBottom: 4 }}>Maker · kept</div>
+                  <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 6 }}>{entry.caseTitle}</div>
+                  <div style={{ fontSize: 12.5, color: COLORS.textMuted, lineHeight: 1.4 }}>
+                    {(entry.text || "").trim().slice(0, 110) || "(empty)"}{(entry.text || "").trim().length > 110 ? "…" : ""}
+                  </div>
+                </button>
+              ))}
+            </div>
+          </section>
+        )}
 
       <DetailModal entry={selected} onClose={() => setSelected(null)} />
     </div>

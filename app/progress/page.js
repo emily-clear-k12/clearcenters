@@ -44,7 +44,7 @@ export default async function ProgressPage() {
   const { data: submissions } = await supabaseAdmin
     .from("submissions")
     .select(
-      "id, assignment_id, attempt1, attempt2, self_confidence, submitted_at, released, released_at, teacher_grade, teacher_feedback, revision_requested, assignments(case_standard, cases(title, learning_target))"
+      "id, assignment_id, attempt1, attempt2, self_confidence, submitted_at, released, released_at, teacher_grade, teacher_feedback, revision_requested, maker_studio_data, assignments(case_standard, cases(title, learning_target, engine))"
     )
     .eq("student_id", studentId)
     .not("submitted_at", "is", null)
@@ -102,6 +102,24 @@ export default async function ProgressPage() {
     }
   }
 
+  const journalEntries = subs
+    .filter((s) => s.maker_studio_data && s.maker_studio_data.version === 2 && s.maker_studio_data.journalKept)
+    .map((s) => {
+      const caseStandard = s.assignments?.case_standard || null;
+      const caseTitle = s.assignments?.cases?.title || caseStandard || "Maker piece";
+      const write = (s.maker_studio_data.modes && s.maker_studio_data.modes.write) || {};
+      return {
+        id: s.id,
+        caseStandard,
+        caseTitle,
+        text: write.text || s.attempt2 || s.attempt1 || "",
+        released: !!s.released,
+        grade: s.teacher_grade,
+        feedback: s.teacher_feedback || null,
+        keptAt: s.released_at || s.submitted_at,
+      };
+    });
+
   const missions = subs.map((s) => {
     const caseStandard = s.assignments?.case_standard || null;
     const caseTitle = s.assignments?.cases?.title || caseStandard || "Mission";
@@ -129,6 +147,7 @@ export default async function ProgressPage() {
 
   return (
     <ProgressClient
+      journalEntries={journalEntries}
       student={student}
       missions={missions}
       badgeTiers={badgeTiers || []}

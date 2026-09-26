@@ -1,23 +1,30 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { supabaseAdmin } from "../../../../lib/supabaseAdmin";
-import { getMakerStudioCase } from "../../../../lib/cases/maker-studio/catalog";
-import {
-  gradeMakerWall,
-  gradeMakerStudio,
-  makerExhibitText,
-} from "../../../../lib/cases/maker-studio/index.server";
+import { getMakerStudioCase, resolveMakerConfig } from "../../../../lib/cases/maker-studio/catalog";
+import { makerAttemptText, summarizeMakerPieces } from "../../../../lib/cases/maker-studio/index.server";
+import { sanitizeEnabledModes } from "../../../../lib/cases/maker-studio/modes";
 
-async function awardCrystals(studentId, amount) {
-  if (!amount) return;
-  try {
-    await supabaseAdmin.rpc("increment_crystal_points", {
-      p_student_id: studentId,
-      p_amount: amount,
-    });
-  } catch (err) {
-    // a missed reward is never worth failing the turn-in over
+function normalizeModes(raw, writeText) {
+  const modes = raw && typeof raw === "object" ? { ...raw } : {};
+  if (typeof writeText === "string") {
+    const prev = modes.write || {};
+    const status =
+      prev.status === "done" && writeText.trim()
+        ? "done"
+        : writeText.trim()
+          ? prev.status === "done"
+            ? "done"
+            : "in_progress"
+          : "empty";
+    modes.write = {
+      status,
+      text: writeText,
+      updatedAt: new Date().toISOString(),
+    };
   }
+  // Drop legacy exhibit fields if a student somehow still has them.
+  return modes;
 }
 
 export async function POST(request) {
@@ -35,15 +42,20 @@ export async function POST(request) {
     .single();
   const { data: assignment } = await supabaseAdmin
     .from("assignments")
-    .select("id, class_id, case_standard")
+    .select("id, class_id, case_standard, maker_studio_config")
     .eq("id", assignmentId)
     .single();
   if (!student || !assignment || assignment.class_id !== student.class_id) {
     return NextResponse.json({ error: "That assignment is not yours." }, { status: 403 });
   }
 
-  const exhibit = getMakerStudioCase(assignment.case_standard);
-  if (!exhibit) return NextResponse.json({ error: "That case isn't wired up yet." }, { status: 404 });
+  // Config can come from assignment JSON even if the case file is missing
+  // (teacher-built Quick Maker). Fall back to catalog when present.
+  const caseRow = getMakerStudioCase(assignment.case_standard);
+  const config = resolveMakerConfig(assignment.case_standard, assignment.maker_studio_config);
+  if (!caseRow && !(assignment.maker_studio_config && assignment.maker_studio_config.prompt)) {
+    // Still allow MS.QUICK-WRITE defaults from resolveMakerConfig
+  }
 
   const { data: existing } = await supabaseAdmin
     .from("submissions")
@@ -53,26 +65,36 @@ export async function POST(request) {
     .maybeSingle();
 
   const prior = (existing && existing.maker_studio_data) || {};
+  // Ignore legacy exhibit payloads (version !== 2)
+  const priorModes = prior.version === 2 ? prior.modes || {} : {};
   const kind = body.kind || "save";
 
-  // Autosave hall / title / color / draft wall (never grades)
+  if (existing && existing.submitted_at && !existing.revision_requested && kind !== "save") {
+    return NextResponse.json({ error: "Already submitted." }, { status: 400 });
+  }
+
+  const incomingModes = normalizeModes(
+    body.modes && typeof body.modes === "object" ? body.modes : priorModes,
+    typeof body.writeText === "string" ? body.writeText : undefined
+  );
+
+  // Keep only enabled mode slots + any prior enabled work
+  const enabled = sanitizeEnabledModes(config.enabledModes);
+  const modes = {};
+  enabled.forEach((id) => {
+    modes[id] = incomingModes[id] || priorModes[id] || { status: "empty", text: "", updatedAt: null };
+  });
+
   if (kind === "save") {
     const payload = {
-      ...prior,
-      hallId: body.hallId || prior.hallId || null,
-      wallColor: body.wallColor || prior.wallColor || null,
-      exhibitTitle: body.exhibitTitle || prior.exhibitTitle || "",
-      wall: Array.isArray(body.wall) ? body.wall : prior.wall || [],
-      bin: body.bin ?? prior.bin ?? null,
-      reason: body.reason ?? prior.reason ?? null,
-      placards: body.placards || prior.placards || {},
-      plaque: body.plaque ?? prior.plaque ?? "",
-      confidence: body.confidence ?? prior.confidence ?? null,
-      openedCards: body.openedCards || prior.openedCards || [],
-      checkAttempts: prior.checkAttempts || 0,
+      version: 2,
+      modes,
+      journalKept: prior.journalKept === true,
+      teacherLevel: prior.teacherLevel || null,
       savedAt: new Date().toISOString(),
     };
     const row = { maker_studio_data: payload };
+    // Draft autosaves must NOT set submitted_at
     if (existing) await supabaseAdmin.from("submissions").update(row).eq("id", existing.id);
     else {
       await supabaseAdmin.from("submissions").insert({
@@ -84,115 +106,33 @@ export async function POST(request) {
     return NextResponse.json({ ok: true, data: payload });
   }
 
-  // Wall check (attempt 1 or 2) — bounce wrong pieces with one-line reasons
-  if (kind === "check") {
-    const need = exhibit.wallSize || 4;
-    const filled = (Array.isArray(body.wall) ? body.wall : []).filter(Boolean);
-    if (filled.length !== need || !body.bin || !body.reason) {
-      return NextResponse.json({
-        need: "wall",
-        message: `Fill all ${need} spots, put one card in Not in this exhibit, and pick a reason.`,
-      });
-    }
-    const graded = gradeMakerWall(assignment.case_standard, body);
-    const attempts = (prior.checkAttempts || 0) + 1;
-    const forceStrongest = attempts >= 2 && graded.bounce.length > 0;
-    const payload = {
-      ...prior,
-      hallId: body.hallId || prior.hallId,
-      wallColor: body.wallColor || prior.wallColor,
-      exhibitTitle: body.exhibitTitle || prior.exhibitTitle || "",
-      wall: forceStrongest ? graded.strongest : body.wall,
-      bin: body.bin,
-      reason: body.reason,
-      checkAttempts: attempts,
-      lastCheck: {
-        wallLevel: graded.wallLevel,
-        wallNote: graded.wallNote,
-        bounce: graded.bounce,
-        rejectNote: graded.rejectNote,
-        mythBuster: graded.mythBuster,
-        forced: forceStrongest,
-      },
-      savedAt: new Date().toISOString(),
-    };
-    const row = { maker_studio_data: payload };
-    if (existing) await supabaseAdmin.from("submissions").update(row).eq("id", existing.id);
-    else {
-      await supabaseAdmin.from("submissions").insert({
-        assignment_id: assignmentId,
-        student_id: studentId,
-        ...row,
-      });
-    }
-    return NextResponse.json({
-      ok: true,
-      wallLevel: graded.wallLevel,
-      wallNote: graded.wallNote,
-      bounce: graded.bounce,
-      rejectOk: graded.rejectOk,
-      rejectNote: graded.rejectNote,
-      mythBuster: graded.mythBuster,
-      checkAttempts: attempts,
-      forced: forceStrongest,
-      wall: payload.wall,
-      strongest: graded.strongest,
-    });
-  }
-
-  // Final turn-in
   if (kind === "turnin") {
-    const need = exhibit.wallSize || 4;
-    const filled = (Array.isArray(body.wall) ? body.wall : []).filter(Boolean);
-    if (filled.length !== need || !body.bin || !body.reason) {
-      return NextResponse.json({ need: "wall" });
+    const summary = summarizeMakerPieces({ modes }, config);
+    if (summary.doneCount < summary.finishN) {
+      return NextResponse.json({
+        need: "finish",
+        message: `Finish ${summary.finishN} mode${summary.finishN === 1 ? "" : "s"} before you submit. You have ${summary.doneCount} done.`,
+      });
     }
-    if (!(prior.checkAttempts > 0 || body.checkAttempts > 0)) {
-      return NextResponse.json({ need: "check", message: "Check the wall before you turn it in." });
-    }
-
-    const graded = gradeMakerStudio(assignment.case_standard, body);
-    const exhibitText = makerExhibitText(assignment.case_standard, body, graded);
-    const writeBack =
-      graded.level >= 2
-        ? exhibit.writeBack.strong
-        : graded.level === 1
-          ? exhibit.writeBack.middle
-          : exhibit.writeBack.rough;
-
     const payload = {
-      hallId: body.hallId || prior.hallId,
-      wallColor: body.wallColor || prior.wallColor,
-      exhibitTitle: body.exhibitTitle || prior.exhibitTitle || exhibit.title,
-      wall: body.wall,
-      bin: body.bin,
-      reason: body.reason,
-      placards: body.placards || {},
-      plaque: body.plaque || "",
-      confidence: body.confidence || null,
-      openedCards: body.openedCards || prior.openedCards || [],
-      checkAttempts: Math.max(prior.checkAttempts || 0, body.checkAttempts || 0),
-      wallLevel: graded.wallLevel,
-      wallNote: graded.wallNote,
-      mythBuster: graded.mythBuster,
-      level: graded.level,
-      writeBack,
-      title: exhibit.title,
+      version: 2,
+      modes,
+      journalKept: prior.journalKept === true,
+      teacherLevel: prior.teacherLevel || null,
+      turnedInAt: new Date().toISOString(),
       savedAt: new Date().toISOString(),
     };
-
-    const turningIn = true;
-    const already = !!(existing && existing.submitted_at) && !existing.revision_requested;
+    const attempt = makerAttemptText(payload, config);
     const row = {
       maker_studio_data: payload,
-      attempt1: exhibitText,
-      ai_score: graded.level,
-      ai_rationale: `Maker Studio. Wall ${graded.wallLevel}. Suggested level ${graded.level}. The teacher releases the grade.`,
-      submitted_at: already ? existing.submitted_at : new Date().toISOString(),
+      attempt1: attempt,
+      attempt2: attempt,
+      submitted_at: new Date().toISOString(),
       revision_requested: false,
-      self_confidence: body.confidence || null,
+      // Teacher-reviewed — no AI score
+      ai_score: null,
+      ai_rationale: null,
     };
-
     if (existing) await supabaseAdmin.from("submissions").update(row).eq("id", existing.id);
     else {
       await supabaseAdmin.from("submissions").insert({
@@ -201,22 +141,7 @@ export async function POST(request) {
         ...row,
       });
     }
-
-    let crystals = 0;
-    if (!already) {
-      crystals = 3 + (graded.mythBuster ? 1 : 0);
-      await awardCrystals(studentId, crystals);
-    }
-
-    return NextResponse.json({
-      ok: true,
-      done: turningIn,
-      crystals,
-      level: graded.level,
-      writeBack,
-      wallNote: graded.wallNote,
-      mythBuster: graded.mythBuster,
-    });
+    return NextResponse.json({ ok: true, data: payload });
   }
 
   return NextResponse.json({ error: "Unknown action." }, { status: 400 });

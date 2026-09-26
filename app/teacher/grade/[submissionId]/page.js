@@ -42,6 +42,11 @@ const ACCENT = "#7541cf";
 const BG = PAGE_BACKGROUNDS["/teacher/grade"];
 
 const GRADE_LABELS = { 0: "Level 0", 1: "Level 1", 2: "Level 2" };
+const MAKER_GRADE_LABELS = { 0: "Still working", 1: "On track", 2: "Strong" };
+function gradeLabelFor(engine, grade) {
+  if (engine === "maker_studio") return MAKER_GRADE_LABELS[grade] || GRADE_LABELS[grade];
+  return GRADE_LABELS[grade];
+}
 // Crystal Points awarded when a grade is released, scaled to score so effort
 // still earns something even at Level 0. Easy to retune later — just these
 // three numbers.
@@ -76,15 +81,16 @@ function ScorePill({ label, value, color, sublabel }) {
   );
 }
 
-function ReleaseConfirmModal({ open, studentName, grade, onCancel, onConfirm }) {
+function ReleaseConfirmModal({ open, studentName, grade, gradeLabel, onCancel, onConfirm }) {
   if (!open) return null;
+  const label = gradeLabel || GRADE_LABELS[grade];
   return (
     <div style={{ position: "fixed", inset: 0, background: "rgba(13,20,35,.65)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 100, padding: 20 }}>
       <div style={{ background: COLORS.white, borderRadius: 18, width: "min(420px, 100%)", padding: 24, boxShadow: "0 24px 60px rgba(0,0,0,.4)", textAlign: "center" }}>
         <div style={{ fontSize: 36, marginBottom: 10 }}>📤</div>
         <div style={{ fontWeight: 700, fontSize: 17, color: COLORS.textDark, marginBottom: 8 }}>Release this grade to {studentName}?</div>
         <div style={{ fontSize: 13.5, color: COLORS.textMuted, lineHeight: 1.5, marginBottom: 6 }}>
-          They'll see <strong>{GRADE_LABELS[grade]}</strong> and your feedback. They will not see the AI's score or rationale.
+          They'll see <strong>{label}</strong> and your feedback. They will not see the AI's score or rationale.
         </div>
         <div style={{ display: "flex", gap: 10, justifyContent: "center", marginTop: 18 }}>
           <button onClick={onCancel} style={{ background: COLORS.canvas, color: COLORS.textDark, border: "none", borderRadius: 999, padding: "11px 22px", fontWeight: 700, fontSize: 14, cursor: "pointer" }}>Not yet</button>
@@ -128,6 +134,7 @@ export default function TeacherGradeDetailPage() {
 
   const [finalGrade, setFinalGrade] = useState(0);
   const [feedback, setFeedback] = useState("");
+  const [journalKeep, setJournalKeep] = useState(true);
   const [showConfirm, setShowConfirm] = useState(false);
   const [saving, setSaving] = useState(false);
   const [pointsAwarded, setPointsAwarded] = useState(null);
@@ -185,6 +192,12 @@ export default function TeacherGradeDetailPage() {
     setSubmission(merged);
     setFinalGrade(merged.teacher_grade !== null && merged.teacher_grade !== undefined ? merged.teacher_grade : (merged.ai_score !== null ? merged.ai_score : 0));
     setFeedback(merged.teacher_feedback || "");
+    const md = merged.maker_studio_data;
+    if (md && md.version === 2) {
+      setJournalKeep(md.journalKept !== false);
+    } else {
+      setJournalKeep(true);
+    }
     setLoading(false);
   }, [submissionId]);
 
@@ -195,9 +208,19 @@ export default function TeacherGradeDetailPage() {
   async function handleRelease() {
     setSaving(true);
     setShowConfirm(false);
+    const releasePatch = { teacher_grade: finalGrade, teacher_feedback: feedback, released: true, released_at: new Date().toISOString() };
+    if (submission?.caseEngine === "maker_studio") {
+      const prior = submission.maker_studio_data && typeof submission.maker_studio_data === "object" ? submission.maker_studio_data : { version: 2, modes: {} };
+      releasePatch.maker_studio_data = {
+        ...prior,
+        version: 2,
+        teacherLevel: finalGrade,
+        journalKept: !!journalKeep,
+      };
+    }
     const { error: updateError } = await supabase
       .from("submissions")
-      .update({ teacher_grade: finalGrade, teacher_feedback: feedback, released: true, released_at: new Date().toISOString() })
+      .update(releasePatch)
       .eq("id", submissionId);
     if (updateError) {
       setSaving(false);
@@ -370,13 +393,43 @@ export default function TeacherGradeDetailPage() {
           <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
             {isMakerStudio && makerData ? (
               <div style={panelStyle(ACCENT, { padding: 16 })}>
-                <div style={{ fontWeight: 700, fontSize: 12.5, color: COLORS.textMuted, marginBottom: 10, textTransform: "uppercase", letterSpacing: 0.5 }}>Maker Studio exhibit</div>
-                <div style={{ fontSize: 14, marginBottom: 8 }}><b>{makerData.exhibitTitle || makerData.title || "Exhibit"}</b></div>
-                <div style={{ whiteSpace: "pre-wrap", fontSize: 14, lineHeight: 1.5 }}>{submission.attempt1}</div>
-                <div style={{ marginTop: 12, fontWeight: 700 }}>Suggested level: {makerData.level ?? "—"}</div>
-                <div style={{ color: COLORS.textMuted, fontSize: 13 }}>{makerData.wallNote}</div>
-                {makerData.mythBuster ? <div style={{ marginTop: 8, color: COLORS.success, fontWeight: 700 }}>Myth buster bonus</div> : null}
-                {makerData.confidence ? <div style={{ marginTop: 6, color: COLORS.textMuted, fontSize: 13 }}>Confidence: {makerData.confidence}</div> : null}
+                <div style={{ fontWeight: 700, fontSize: 12.5, color: COLORS.textMuted, marginBottom: 10, textTransform: "uppercase", letterSpacing: 0.5 }}>Maker Studio pieces</div>
+                {makerData.version === 2 ? (
+                  <>
+                    {Object.entries(makerData.modes || {}).map(([modeId, slot]) => (
+                      <div key={modeId} style={{ marginBottom: 14, background: COLORS.canvas, borderRadius: 12, padding: 12 }}>
+                        <div style={{ fontWeight: 700, fontSize: 13, marginBottom: 6, textTransform: "capitalize" }}>{modeId.replace(/_/g, " ")} · {slot?.status || "empty"}</div>
+                        <div style={{ whiteSpace: "pre-wrap", fontSize: 14, lineHeight: 1.5 }}>{(slot && slot.text) || "(empty)"}</div>
+                      </div>
+                    ))}
+                    {!Object.keys(makerData.modes || {}).length && (
+                      <div style={{ whiteSpace: "pre-wrap", fontSize: 14, lineHeight: 1.5 }}>{submission.attempt1 || "(no pieces)"}</div>
+                    )}
+                  </>
+                ) : (
+                  <>
+                    <div style={{ fontSize: 14, marginBottom: 8 }}><b>{makerData.exhibitTitle || makerData.title || "Legacy exhibit"}</b></div>
+                    <div style={{ whiteSpace: "pre-wrap", fontSize: 14, lineHeight: 1.5 }}>{submission.attempt1}</div>
+                  </>
+                )}
+                <label style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 8, fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
+                  <input
+                    type="checkbox"
+                    checked={journalKeep}
+                    onChange={async (e) => {
+                      const next = e.target.checked;
+                      setJournalKeep(next);
+                      const prior = makerData && typeof makerData === "object" ? makerData : { version: 2, modes: {} };
+                      const { error: jErr } = await supabase
+                        .from("submissions")
+                        .update({ maker_studio_data: { ...prior, version: 2, journalKept: next } })
+                        .eq("id", submissionId);
+                      if (jErr) setError("Couldn't update Journal keep: " + jErr.message);
+                      else await loadSubmission();
+                    }}
+                  />
+                  Keep in Journal {submission.released ? "(saved)" : "(on release)"}
+                </label>
               </div>
             ) : isExhibitHall && hallData ? (
               <div style={panelStyle(ACCENT, { padding: 16 })}>
@@ -619,7 +672,7 @@ export default function TeacherGradeDetailPage() {
                     disabled={submission.released || submission.revision_requested}
                     style={{ padding: "12px 8px", borderRadius: 10, fontWeight: 700, fontSize: 14, border: finalGrade === g ? `2px solid ${COLORS.gold}` : "2px solid transparent", background: finalGrade === g ? "#FFF7E6" : "rgba(255,255,255,.55)", color: COLORS.textDark }}
                   >
-                    {GRADE_LABELS[g]}
+                    {gradeLabelFor(submission.caseEngine, g)}
                   </button>
                 ))}
               </div>
@@ -669,7 +722,7 @@ export default function TeacherGradeDetailPage() {
         </div>
       </div>
 
-      <ReleaseConfirmModal open={showConfirm} studentName={studentName} grade={finalGrade} onCancel={() => setShowConfirm(false)} onConfirm={handleRelease} />
+      <ReleaseConfirmModal open={showConfirm} studentName={studentName} grade={finalGrade} gradeLabel={gradeLabelFor(submission?.caseEngine, finalGrade)} onCancel={() => setShowConfirm(false)} onConfirm={handleRelease} />
       <SendBackConfirmModal open={showSendBackConfirm} studentName={studentName} feedback={feedback} onCancel={() => setShowSendBackConfirm(false)} onConfirm={handleSendBack} />
     </BridgePage>
   );

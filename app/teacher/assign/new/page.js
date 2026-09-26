@@ -15,11 +15,16 @@ import {
   isPlayableFrozenRelayRow,
 } from "../../../../lib/cases/expedition-station/assignFallback";
 import {
+  QUICK_MS_STANDARD,
+  QUICK_MS_ASSIGN_FALLBACK,
   DESERT_MS_STANDARD,
   DESERT_MS_ASSIGN_FALLBACK,
   normalizeMakerCaseRow,
+  isPlayableQuickMsRow,
   isPlayableDesertMsRow,
 } from "../../../../lib/cases/maker-studio/assignFallback";
+import { MAKER_MENUS } from "../../../../lib/cases/maker-studio/menus";
+import { MAKER_MODES } from "../../../../lib/cases/maker-studio/modes";
 
 // Sept 24, 2026 — teacher-set Frequency Rush question timer. The game
 // accepts 0-60 seconds; 0 means no timer.
@@ -122,7 +127,9 @@ const CHALLENGE_TYPES = [
   // Sept 25, 2026 — Expedition Station Act 1 (Frozen Relay MA.4.3E-XP) is live.
   { key: "expedition_station", label: "Expedition Station", image: "/teacher/challenges/mission_map.jpg", real: true,
     description: "A 15-task quest on one planet. Station mode: four cards, then a challenge. About 15–20 minutes per act." },
-  // Maker Studio intentionally hidden pending redesign; too similar to Exhibit Hall.
+  // Sept 26, 2026 — Maker Studio Wave 0 (prompt + mode grid; Write live).
+  { key: "maker_studio", label: "Maker Studio", image: "/teacher/challenges/museum_exhibit.jpg", real: true,
+    description: "Students get a prompt, finish make modes (Write is live in Wave 0), and submit for teacher review — not AI-graded. About 10–15 minutes." },
   // Coming soon — kept below live tiles (Assign library sorts real:true first as well).
   { key: "repair_desk", label: "Repair Desk", image: "/teacher/challenges/repair_desk.jpg", real: false,
     description: "A broken ticket arrives — a flawed diagram, model, or work sample. Students diagnose what's wrong, fix it, and explain the fix to whoever sent it in." },
@@ -222,8 +229,8 @@ function mergeExpeditionStationCatalog(rows) {
 
 // Sept 25, 2026 — Maker Studio catalog fallback (same pattern as Expedition Station).
 function makerStudioLibraryRows() {
-  // Wave-1: one seed. Catalog stays server-side so answer keys never hit the browser.
-  return [normalizeMakerCaseRow(DESERT_MS_ASSIGN_FALLBACK)];
+  // Wave 0: Quick Maker (Write). Catalog stays light — menus live in assign UI.
+  return [normalizeMakerCaseRow(QUICK_MS_ASSIGN_FALLBACK)];
 }
 
 function mergeMakerStudioCatalog(rows) {
@@ -252,11 +259,13 @@ function mergeMakerStudioCatalog(rows) {
     );
   }
   let merged = Array.from(byStandard.values());
-  const fallback = normalizeMakerCaseRow(DESERT_MS_ASSIGN_FALLBACK);
-  if (!merged.some(isPlayableDesertMsRow)) {
-    merged = merged.filter((r) => r.standard !== DESERT_MS_STANDARD);
+  const fallback = normalizeMakerCaseRow(QUICK_MS_ASSIGN_FALLBACK);
+  if (!merged.some(isPlayableQuickMsRow)) {
+    merged = merged.filter((r) => r.standard !== QUICK_MS_STANDARD && r.standard !== DESERT_MS_STANDARD);
     merged = [...merged, fallback];
   }
+  // Hide the retired desert exhibit seed if it still exists in Supabase.
+  merged = merged.filter((r) => !(r.standard === "SCI.3.13A-MS" && r.engine === "maker_studio"));
   return merged;
 }
 // Sept 16, 2026 — Signal Check used to ship each TEKS standard in three
@@ -364,6 +373,26 @@ function NewAssignmentContent() {
   // Students can no longer turn the game's own timer on or off.
   const [questionSeconds, setQuestionSeconds] = useState(0);
 
+  // Maker Studio Wave 0 — teacher sets prompt, finish N, journal toggle, loads a menu.
+  const [makerPrompt, setMakerPrompt] = useState("Write about today's idea in your own words. What do you understand, and what makes you think that?");
+  const [makerTopic, setMakerTopic] = useState("");
+  const [makerFinishN, setMakerFinishN] = useState(1);
+  const [makerEveryday, setMakerEveryday] = useState("1");
+  const [makerChallenge, setMakerChallenge] = useState("0");
+  const [makerJournalOnRelease, setMakerJournalOnRelease] = useState(true);
+  const [makerEnabledModes, setMakerEnabledModes] = useState(["write"]);
+
+  function applyMakerMenu(menu) {
+    if (!menu) return;
+    setMakerPrompt(menu.prompt || "");
+    setMakerTopic(menu.topic || "");
+    setMakerFinishN(Math.max(1, Number(menu.finishN) || 1));
+    setMakerEveryday(menu.everydayCount == null ? "" : String(menu.everydayCount));
+    setMakerChallenge(menu.challengeCount == null ? "" : String(menu.challengeCount));
+    setMakerJournalOnRelease(menu.journalOnRelease !== false);
+    setMakerEnabledModes(Array.isArray(menu.enabledModes) && menu.enabledModes.length ? menu.enabledModes : ["write"]);
+  }
+
   const [challengeStep, setChallengeStep] = useState("library");
   const [selectedChallenge, setSelectedChallenge] = useState(null);
   const [browseGrade, setBrowseGrade] = useState("5");
@@ -432,7 +461,10 @@ function NewAssignmentContent() {
   const topics=[...new Set(cases.map(normalizeCaseRow).filter(c=>c.engine!=='relay_station'&&Number(c.grade)===Number(browseGrade)&&(c.subject===browseSubject||isFrDailyCase(c.standard))&&(typeFilter==='all'||matchesChallenge(c.engine,typeFilter))&&!isRetiredSignalCheckCase(c.standard)&&!((FR_CUSTOM_LIST_RE.exec(c.standard)||[])[1]&&FR_CUSTOM_LIST_RE.exec(c.standard)[1]!==String(teacherId||"").replace(/-/g,"").slice(0,8).toLowerCase())).map(topicCode))].sort((a,b)=>a.localeCompare(b,undefined,{numeric:true}));
   const searchQ = caseSearch.trim().toLowerCase();
   const filteredCases = cases.map(normalizeCaseRow).filter((c) => {
-    if (Number(c.grade) !== Number(browseGrade)) return false;
+    const isQuickMaker = c.engine === "maker_studio" && (c.standard === "MS.QUICK-WRITE" || c.standard === QUICK_MS_STANDARD);
+    const makerBrowse = typeFilter === "maker_studio" && isQuickMaker;
+    // Quick Maker is one seed usable at any grade/subject once Maker is selected.
+    if (!makerBrowse && Number(c.grade) !== Number(browseGrade)) return false;
     if(!CHALLENGE_TYPES.some(t=>t.real&&matchesChallenge(c.engine,t.key)))return false;
     if (product !== "keys" && matchesChallenge(c.engine, "relay_station")) return false;
     if (product === "keys" && !matchesChallenge(c.engine, "relay_station")) return false;
@@ -441,7 +473,7 @@ function NewAssignmentContent() {
       if (readingSubject !== "all" && c.subject !== readingSubject) return false;
     } else {
     const specialTile = RELAY_SPECIAL_TILES.find((t) => t.key === browseSubject);
-    if (!specialTile && c.subject !== browseSubject && !isFrDailyCase(c.standard)) return false;
+    if (!makerBrowse && !specialTile && c.subject !== browseSubject && !isFrDailyCase(c.standard)) return false;
     if (typeFilter!=="all" && !matchesChallenge(c.engine,typeFilter)) return false;
     if(topic!=="all" && topicCode(c)!==topic)return false;
     if (isRetiredSignalCheckCase(c.standard)) return false;
@@ -502,6 +534,23 @@ function NewAssignmentContent() {
       assignmentFields.question_seconds = questionSeconds;
       if (gameSkin === "crystal_dive") assignmentFields.crystal_dive_minutes = crystalDiveMinutes;
     }
+    if (selectedCase.engine === "maker_studio") {
+      const prompt = (makerPrompt || "").trim();
+      if (!prompt) {
+        setError("Add a prompt for Maker Studio before assigning.");
+        setAssigning(false);
+        return;
+      }
+      assignmentFields.maker_studio_config = {
+        prompt,
+        topic: (makerTopic || "").trim(),
+        enabledModes: makerEnabledModes.includes("write") ? ["write"] : ["write"],
+        finishN: Math.max(1, Number(makerFinishN) || 1),
+        everydayCount: makerEveryday === "" ? null : Number(makerEveryday),
+        challengeCount: makerChallenge === "" ? null : Number(makerChallenge),
+        journalOnRelease: !!makerJournalOnRelease,
+      };
+    }
 
     let { data: newAssignment, error: insertError } = await supabase
       .from("assignments")
@@ -518,6 +567,17 @@ function NewAssignmentContent() {
         .insert(withoutTimer)
         .select()
         .single());
+    }
+    if (insertError && /maker_studio_config/i.test(insertError.message || "")) {
+      const { maker_studio_config, ...withoutMaker } = assignmentFields;
+      ({ data: newAssignment, error: insertError } = await supabase
+        .from("assignments")
+        .insert(withoutMaker)
+        .select()
+        .single());
+      if (!insertError) {
+        setError("Assigned, but run add_maker_studio.sql so the prompt and Maker settings save next time.");
+      }
     }
     if (insertError) {
       setAssigning(false);
@@ -555,6 +615,13 @@ function NewAssignmentContent() {
     setDistressCallRewardPoints("");
     setGameSkin(DEFAULT_GAME_SKIN);
     setCrystalDiveMinutes(10);
+    setMakerPrompt("Write about today's idea in your own words. What do you understand, and what makes you think that?");
+    setMakerTopic("");
+    setMakerFinishN(1);
+    setMakerEveryday("1");
+    setMakerChallenge("0");
+    setMakerJournalOnRelease(true);
+    setMakerEnabledModes(["write"]);
   }
 
   if (loadingAuth) {
@@ -757,6 +824,92 @@ function NewAssignmentContent() {
                           ? `Students get ${questionSeconds} seconds per question. Running out of time counts as a miss.`
                           : "No clock. Faster answers still earn a speed bonus."}
                       </p>
+                    </div>
+                  )}
+
+
+                  {selectedCase?.engine === "maker_studio" && (
+                    <div style={{ marginBottom: 14, border: `1.5px solid ${COLORS.border}`, borderRadius: 12, padding: 12, background: COLORS.white }}>
+                      <div style={{ fontWeight: 700, fontSize: 13, marginBottom: 8, color: COLORS.textDark }}>Ready-made menus</div>
+                      <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 12 }}>
+                        {MAKER_MENUS.map((menu) => (
+                          <button
+                            key={menu.id}
+                            type="button"
+                            className="cc-btn"
+                            onClick={() => applyMakerMenu(menu)}
+                            style={{ background: COLORS.white, color: COLORS.textDark, border: `1.5px solid ${COLORS.border}`, borderRadius: 999, padding: "7px 12px", fontWeight: 700, fontSize: 12 }}
+                            title={menu.blurb}
+                          >
+                            {menu.title}
+                          </button>
+                        ))}
+                      </div>
+                      <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: COLORS.textMuted, marginBottom: 4 }}>Prompt / topic for students</label>
+                      <textarea
+                        value={makerPrompt}
+                        onChange={(e) => setMakerPrompt(e.target.value)}
+                        rows={3}
+                        style={{ width: "100%", border: "2px solid #ECEAF5", borderRadius: 10, padding: 10, fontSize: 13, boxSizing: "border-box", marginBottom: 10, fontFamily: "inherit" }}
+                        placeholder="What should students make / write about?"
+                      />
+                      <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: COLORS.textMuted, marginBottom: 4 }}>Short topic label (optional)</label>
+                      <input
+                        value={makerTopic}
+                        onChange={(e) => setMakerTopic(e.target.value)}
+                        style={{ width: "100%", border: "2px solid #ECEAF5", borderRadius: 10, padding: "8px 10px", fontSize: 13, boxSizing: "border-box", marginBottom: 10 }}
+                        placeholder="e.g. Desert adaptations"
+                      />
+                      <div style={{ fontWeight: 700, fontSize: 13, marginBottom: 6, color: COLORS.textDark }}>Modes enabled</div>
+                      <p style={{ fontSize: 11.5, color: COLORS.textMuted, margin: "0 0 8px 0" }}>Wave 0: Write is live. Other modes show on the student grid but stay quietly off.</p>
+                      <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 12 }}>
+                        {MAKER_MODES.map((mode) => {
+                          const on = makerEnabledModes.includes(mode.id);
+                          const locked = !mode.live;
+                          return (
+                            <button
+                              key={mode.id}
+                              type="button"
+                              disabled={locked}
+                              onClick={() => {
+                                if (locked) return;
+                                setMakerEnabledModes(on ? ["write"] : ["write"]);
+                              }}
+                              style={{
+                                opacity: locked ? 0.55 : 1,
+                                background: on && !locked ? ACCENT : COLORS.white,
+                                color: on && !locked ? COLORS.white : COLORS.textDark,
+                                border: `1.5px solid ${on && !locked ? ACCENT : COLORS.border}`,
+                                borderRadius: 999,
+                                padding: "6px 10px",
+                                fontWeight: 700,
+                                fontSize: 11.5,
+                                cursor: locked ? "default" : "pointer",
+                              }}
+                            >
+                              {mode.label}
+                            </button>
+                          );
+                        })}
+                      </div>
+                      <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginBottom: 10 }}>
+                        <div style={{ flex: "1 1 90px" }}>
+                          <label style={{ fontSize: 11, fontWeight: 700, color: COLORS.textMuted }}>Finish N</label>
+                          <input type="number" min="1" max="1" value={makerFinishN} onChange={(e) => setMakerFinishN(Math.max(1, Number(e.target.value) || 1))} style={{ width: "100%", border: "2px solid #ECEAF5", borderRadius: 10, padding: "7px 10px", fontSize: 13, boxSizing: "border-box", marginTop: 3 }} />
+                        </div>
+                        <div style={{ flex: "1 1 90px" }}>
+                          <label style={{ fontSize: 11, fontWeight: 700, color: COLORS.textMuted }}>Everyday (optional)</label>
+                          <input type="number" min="0" value={makerEveryday} onChange={(e) => setMakerEveryday(e.target.value)} style={{ width: "100%", border: "2px solid #ECEAF5", borderRadius: 10, padding: "7px 10px", fontSize: 13, boxSizing: "border-box", marginTop: 3 }} />
+                        </div>
+                        <div style={{ flex: "1 1 90px" }}>
+                          <label style={{ fontSize: 11, fontWeight: 700, color: COLORS.textMuted }}>Challenge (optional)</label>
+                          <input type="number" min="0" value={makerChallenge} onChange={(e) => setMakerChallenge(e.target.value)} style={{ width: "100%", border: "2px solid #ECEAF5", borderRadius: 10, padding: "7px 10px", fontSize: 13, boxSizing: "border-box", marginTop: 3 }} />
+                        </div>
+                      </div>
+                      <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, fontWeight: 600, color: COLORS.textDark, cursor: "pointer" }}>
+                        <input type="checkbox" checked={makerJournalOnRelease} onChange={(e) => setMakerJournalOnRelease(e.target.checked)} />
+                        Keep in Journal when released
+                      </label>
                     </div>
                   )}
 

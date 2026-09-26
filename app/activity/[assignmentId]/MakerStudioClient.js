@@ -1,24 +1,26 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import BackToHubButton from "../../../components/BackToHubButton";
 import SamGuide from "../../../components/SamGuide";
+import { MAKER_MODES } from "../../../lib/cases/maker-studio/modes";
 import "./maker-studio.css";
 
-function CardFace({ card }) {
-  if (!card) return null;
-  if (card.kind === "text" || !card.image) return <p className="mk-quote">{card.text}</p>;
-  return <img src={card.image} alt={card.text || card.title} />;
+function modeStatus(modes, id) {
+  const slot = (modes && modes[id]) || null;
+  if (!slot) return "empty";
+  return slot.status || "empty";
 }
 
-function emptyPlacard() {
-  return { animal: "", part: "", because: "" };
+function countDone(modes, enabled) {
+  return (enabled || []).filter((id) => modeStatus(modes, id) === "done").length;
 }
 
 export default function MakerStudioClient({
   assignmentId,
   publicCase,
+  config: configProp,
   existingData,
   alreadySubmitted,
   revisionFeedback,
@@ -26,566 +28,374 @@ export default function MakerStudioClient({
   samNickname,
 }) {
   const router = useRouter();
-  const exhibit = publicCase;
-  const cards = exhibit.cards || [];
-  const reasons = exhibit.reasons || [];
-  const halls = exhibit.halls || [];
-  const need = exhibit.wallSize || 4;
-  const cardBy = (id) => cards.find((c) => c.id === id);
+  const config = configProp || (publicCase && publicCase.config) || {
+    prompt: "Write about today's idea.",
+    topic: "",
+    enabledModes: ["write"],
+    finishN: 1,
+    journalOnRelease: true,
+  };
+  const modesMeta = (publicCase && publicCase.modes && publicCase.modes.length)
+    ? publicCase.modes
+    : MAKER_MODES.map((m) => ({
+        id: m.id,
+        label: m.label,
+        blurb: m.blurb,
+        icon: m.icon,
+        available: !!m.live,
+        instructions: m.instructions || null,
+        doneHint: m.doneHint || null,
+      }));
+  const enabled = config.enabledModes || ["write"];
+  const finishN = Math.max(1, Number(config.finishN) || 1);
 
-  const saved = existingData || {};
-  const startStep = alreadySubmitted ? "done" : saved.hallId ? (saved.checkAttempts > 0 ? "write" : "build") : "commission";
-
-  const [step, setStep] = useState(startStep);
-  const [hallId, setHallId] = useState(saved.hallId || null);
-  const [wallColor, setWallColor] = useState(saved.wallColor || "#f4f1fb");
-  const [exhibitTitle, setExhibitTitle] = useState(saved.exhibitTitle || "");
-  const [wall, setWall] = useState(() => {
-    const w = Array.isArray(saved.wall) ? saved.wall.slice(0, need) : [];
-    while (w.length < need) w.push(null);
-    return w;
-  });
-  const [bin, setBin] = useState(saved.bin || null);
-  const [reason, setReason] = useState(saved.reason || null);
-  const [picked, setPicked] = useState(null);
-  const [look, setLook] = useState(null);
-  const [openedCards, setOpenedCards] = useState(() => new Set(saved.openedCards || []));
-  const [placards, setPlacards] = useState(() => saved.placards || {});
-  const [plaque, setPlaque] = useState(saved.plaque || "");
-  const [confidence, setConfidence] = useState(saved.confidence || null);
-  const [checkAttempts, setCheckAttempts] = useState(saved.checkAttempts || 0);
-  const [bounce, setBounce] = useState((saved.lastCheck && saved.lastCheck.bounce) || []);
-  const [rejectNote, setRejectNote] = useState((saved.lastCheck && saved.lastCheck.rejectNote) || "");
-  const [wallNote, setWallNote] = useState((saved.lastCheck && saved.lastCheck.wallNote) || "");
-  const [status, setStatus] = useState("Read the job, then pick your hall.");
+  const saved = existingData && existingData.version === 2 ? existingData : { version: 2, modes: {} };
+  const [view, setView] = useState(alreadySubmitted ? "done" : "main");
+  const [modes, setModes] = useState(() => saved.modes || {});
+  const [writeText, setWriteText] = useState(() => ((saved.modes || {}).write || {}).text || "");
+  const [status, setStatus] = useState("Pick Write to start your piece.");
   const [busy, setBusy] = useState(false);
-  const [writeBack, setWriteBack] = useState((saved && saved.writeBack) || null);
-  const [crystals, setCrystals] = useState(0);
+  const [saveState, setSaveState] = useState("saved");
+  const [submitted, setSubmitted] = useState(!!alreadySubmitted);
+  const autosaveTimer = useRef(null);
+  const writeDirty = useRef(false);
 
-  const hall = halls.find((h) => h.id === hallId) || halls[0];
-  const used = useMemo(() => new Set([...wall.filter(Boolean), bin].filter(Boolean)), [wall, bin]);
-  const loose = cards.filter((c) => !used.has(c.id));
-  const wallReady = wall.filter(Boolean).length === need && bin && reason;
+  const doneCount = useMemo(() => countDone(modes, enabled), [modes, enabled]);
+  const canSubmit = doneCount >= finishN && !submitted;
 
-  function markOpened(id) {
-    setOpenedCards((prev) => {
-      const next = new Set(prev);
-      next.add(id);
-      return next;
-    });
-  }
+  const send = useCallback(
+    async (kind, extra = {}) => {
+      setBusy(true);
+      try {
+        const response = await fetch("/api/maker-studio/submit", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            assignmentId,
+            kind,
+            modes,
+            writeText,
+            ...extra,
+          }),
+        });
+        return await response.json().catch(() => ({}));
+      } finally {
+        setBusy(false);
+      }
+    },
+    [assignmentId, modes, writeText]
+  );
 
-  function payload(kind) {
-    return {
-      assignmentId,
-      kind,
-      hallId,
-      wallColor,
-      exhibitTitle,
-      wall,
-      bin,
-      reason,
-      placards,
-      plaque,
-      confidence,
-      openedCards: [...openedCards],
-      checkAttempts,
-    };
-  }
-
-  async function send(kind) {
-    setBusy(true);
-    try {
-      const response = await fetch("/api/maker-studio/submit", {
+  // Autosave while on Write page
+  useEffect(() => {
+    if (view !== "write" || submitted) return undefined;
+    if (!writeDirty.current) return undefined;
+    setSaveState("saving");
+    if (autosaveTimer.current) clearTimeout(autosaveTimer.current);
+    autosaveTimer.current = setTimeout(async () => {
+      const nextModes = {
+        ...modes,
+        write: {
+          status: writeText.trim() ? "in_progress" : "empty",
+          text: writeText,
+          updatedAt: new Date().toISOString(),
+        },
+      };
+      setModes(nextModes);
+      const data = await fetch("/api/maker-studio/submit", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload(kind)),
-      });
-      return await response.json().catch(() => ({}));
-    } finally {
-      setBusy(false);
+        body: JSON.stringify({
+          assignmentId,
+          kind: "save",
+          modes: nextModes,
+          writeText,
+        }),
+      }).then((r) => r.json().catch(() => ({})));
+      if (data && data.ok) {
+        writeDirty.current = false;
+        setSaveState("saved");
+      } else {
+        setSaveState("error");
+      }
+    }, 900);
+    return () => {
+      if (autosaveTimer.current) clearTimeout(autosaveTimer.current);
+    };
+  }, [writeText, view, submitted, assignmentId, modes]);
+
+  function openMode(id) {
+    if (submitted) return;
+    const meta = modesMeta.find((m) => m.id === id);
+    const isEnabled = enabled.includes(id);
+    const isLive = meta && meta.available;
+    if (!isEnabled || !isLive) return;
+    if (id === "write") {
+      setWriteText(((modes.write || {}).text) || "");
+      writeDirty.current = false;
+      setSaveState("saved");
+      setView("write");
+      setStatus("Write your answer. It saves as you go.");
     }
   }
 
-  function putOnSpot(id, slot) {
-    setWall((prev) => {
-      const next = prev.map((item) => (item === id ? null : item));
-      next[slot] = id;
-      return next;
-    });
-    if (bin === id) {
-      setBin(null);
-      setReason(null);
+  async function markWriteDone() {
+    if (!writeText.trim()) {
+      setStatus("Write something first, then tap Done.");
+      return;
     }
-    setPicked(null);
-    setStatus("On the wall.");
+    const nextModes = {
+      ...modes,
+      write: {
+        status: "done",
+        text: writeText,
+        updatedAt: new Date().toISOString(),
+      },
+    };
+    setModes(nextModes);
+    writeDirty.current = false;
+    const data = await send("save", { modes: nextModes, writeText });
+    if (data && data.ok === false) {
+      setStatus(data.message || "Could not save. Try again.");
+      return;
+    }
+    setView("main");
+    setStatus("Write is done. Head back when you are ready to submit.");
   }
 
-  function putInBin(id) {
-    setWall((prev) => prev.map((item) => (item === id ? null : item)));
-    setBin(id);
-    setReason(null);
-    setPicked(null);
-    setStatus("Not in this exhibit — pick why.");
+  async function saveWriteDraft() {
+    const nextModes = {
+      ...modes,
+      write: {
+        status: writeText.trim() ? "in_progress" : "empty",
+        text: writeText,
+        updatedAt: new Date().toISOString(),
+      },
+    };
+    setModes(nextModes);
+    writeDirty.current = false;
+    await send("save", { modes: nextModes, writeText });
+    setView("main");
+    setStatus(writeText.trim() ? "Saved. You can finish Write anytime." : "Back to your studio.");
   }
 
-  function putAway(id) {
-    setWall((prev) => prev.map((item) => (item === id ? null : item)));
-    if (bin === id) {
-      setBin(null);
-      setReason(null);
-    }
-    setPicked(null);
-  }
-
-  function openCard(id) {
-    markOpened(id);
-    setLook(id);
-    setPicked(id);
-  }
-
-  async function checkWall() {
-    if (!wallReady) {
-      setStatus(`Fill all ${need} spots, put one card aside, and pick a reason.`);
-      return;
-    }
-    const data = await send("check");
-    if (data.need === "wall") {
-      setStatus(data.message || "Finish the wall first.");
-      return;
-    }
-    setCheckAttempts(data.checkAttempts || checkAttempts + 1);
-    setBounce(data.bounce || []);
-    setRejectNote(data.rejectNote || "");
-    setWallNote(data.wallNote || "");
-    if (data.forced && Array.isArray(data.wall)) {
-      const next = data.wall.slice(0, need);
-      while (next.length < need) next.push(null);
-      setWall(next);
-      setStatus("Take a look at a strong set. Now write the placards.");
-      setStep("write");
-      return;
-    }
-    if ((data.bounce || []).length) {
-      const bad = new Set((data.bounce || []).map((b) => b.id));
-      setWall((prev) => prev.map((id) => (bad.has(id) ? null : id)));
-      setStatus("Some pieces came back. Read why, then try again.");
-      return;
-    }
-    if (data.rejectOk === false) {
-      setStatus(data.rejectNote || "Check the reason for the card you left out.");
-      return;
-    }
-    setStatus(data.mythBuster ? "Myth busted! Great eye. Write the placards." : "Wall looks solid. Write the placards.");
-    setStep("write");
-  }
-
-  async function turnIn() {
-    const missing = wall.filter(Boolean).some((id) => {
-      const p = placards[id] || emptyPlacard();
-      return !(p.animal && p.part && p.because);
-    });
-    if (missing || plaque.trim().length < 20) {
-      setStatus("Finish every placard and the plaque before you turn it in.");
-      return;
-    }
-    if (!confidence) {
-      setStatus("How sure are you? Tap a face, then turn in.");
+  async function submitAll() {
+    if (!canSubmit) {
+      setStatus(`Finish ${finishN} mode${finishN === 1 ? "" : "s"} before you submit.`);
       return;
     }
     const data = await send("turnin");
-    if (data.need) {
-      setStatus(data.message || "Check the wall before you turn it in.");
-      if (data.need === "check") setStep("build");
+    if (data && data.need) {
+      setStatus(data.message || "Finish a few more pieces first.");
       return;
     }
-    if (data.ok) {
-      setWriteBack(data.writeBack || null);
-      setCrystals(data.crystals || 0);
-      setWallNote(data.wallNote || wallNote);
-      setStep("done");
+    if (data && data.error) {
+      setStatus(data.error);
+      return;
     }
+    setSubmitted(true);
+    setView("done");
+    setStatus("Submitted. Your teacher will read your work.");
   }
 
-  function updatePlacard(id, key, value) {
-    setPlacards((prev) => ({
-      ...prev,
-      [id]: { ...(prev[id] || emptyPlacard()), [key]: value },
-    }));
-  }
+  const title = (publicCase && publicCase.title) || "Maker Studio";
+  const topicLine = config.topic ? config.topic : null;
 
-  const samLine =
-    step === "commission"
-      ? exhibit.samOpen
-      : step === "hall"
-        ? "Pick a hall, name your exhibit, and choose a wall color."
-        : step === "build"
-          ? "Tap a card, then tap a spot — or Not in this exhibit."
-          : step === "write"
-            ? "Why did each piece earn its spot? Then write the plaque."
-            : "Grand opening! Head back to the hub when you are ready.";
-
-  if (!exhibit) {
+  if (view === "done" || submitted) {
     return (
       <div className="mk-page">
+        <BackToHubButton />
         <div className="mk-shell">
-          <div className="mk-card"><h2>This exhibit is not ready yet.</h2></div>
+          <div className="mk-top">
+            <div>
+              <p className="mk-kicker">Maker Studio</p>
+              <h1>{title}</h1>
+            </div>
+            <span className="mk-progress">
+              {doneCount}/{finishN} done
+            </span>
+          </div>
+          <div className="mk-panel mk-done-banner">
+            <h2>Nice work — it is in.</h2>
+            <p className="mk-quiet">Your teacher will look at your pieces. This is not scored by a robot.</p>
+            {revisionFeedback ? (
+              <p className="mk-quiet" style={{ marginTop: 12 }}>
+                Teacher note: {revisionFeedback}
+              </p>
+            ) : null}
+            <div style={{ marginTop: 18 }}>
+              <button type="button" className="mk-next" onClick={() => router.push("/home")}>
+                Back to hub
+              </button>
+            </div>
+          </div>
+          <SamGuide
+            skinKey={samSkin}
+            alt={samNickname || "S.A.M."}
+            size={96}
+            anchors={{ home: { right: 16, bottom: 16 } }}
+            line={"Your teacher gets your pieces next. Proud of you."}
+            state={submitted || view === "done" ? "celebrating" : "helping"}
+          />
         </div>
       </div>
     );
   }
 
-  return (
-    <div className="mk-page" style={hall ? { backgroundImage: `url(${hall.image})` } : undefined}>
-      <BackToHubButton />
-      <SamGuide
-        skinKey={samSkin}
-        alt={samNickname || "S.A.M."}
-        size={96}
-        anchors={{ home: { right: 16, bottom: 16 } }}
-        line={samLine}
-        state={step === "done" ? "celebrating" : "helping"}
-        tipOnTap={exhibit.hints?.[0] || "Body part. Desert. Prove it."}
-      />
-
-      <div className="mk-shell">
-        <header className="mk-top">
-          <div>
-            <p className="mk-kicker">{exhibit.kicker}</p>
-            <h1>{exhibitTitle || exhibit.title}</h1>
-            <p className="mk-quiet">{exhibit.drivingQuestion}</p>
-          </div>
-          <div className="mk-quiet">{need} pieces · ~{exhibit.estimatedMinutes} min</div>
-        </header>
-
-        {revisionFeedback ? (
-          <div className="mk-bounce">Teacher note: {revisionFeedback}</div>
-        ) : null}
-
-        {step === "commission" && (
-          <>
-            <section className="mk-card">
-              <h2>From: {exhibit.commission.from}</h2>
-              {(exhibit.commission.lines || []).map((line) => (
-                <p key={line}>{line}</p>
-              ))}
-            </section>
-            <footer className="mk-foot">
-              <span className="mk-quiet">The plaque will answer the question above.</span>
-              <button type="button" className="mk-next" onClick={() => setStep("hall")}>Pick my hall</button>
-            </footer>
-          </>
-        )}
-
-        {step === "hall" && (
-          <>
-            <section className="mk-panel">
-              <h2>Pick your hall</h2>
-              <p className="mk-quiet">Same number of spots. Only the look changes.</p>
-              <div className="mk-halls">
-                {halls.map((h) => (
-                  <button
-                    key={h.id}
-                    type="button"
-                    className={hallId === h.id ? "mk-hall is-on" : "mk-hall"}
-                    onClick={() => {
-                      setHallId(h.id);
-                      setWallColor((h.wallColors && h.wallColors[0]) || "#f4f1fb");
-                    }}
-                  >
-                    <img src={h.image} alt="" />
-                    <b>{h.name}</b>
-                    <span className="mk-quiet">{h.tag}</span>
-                  </button>
-                ))}
-              </div>
-              <label className="mk-field">
-                Name your exhibit
-                <input
-                  value={exhibitTitle}
-                  onChange={(e) => setExhibitTitle(e.target.value)}
-                  placeholder={exhibit.title}
-                  maxLength={60}
-                />
-              </label>
-              <div className="mk-quiet" style={{ marginTop: 10 }}>Wall color</div>
-              <div className="mk-colors">
-                {(hall?.wallColors || ["#f4f1fb", "#e8f4fb", "#fff4e6"]).map((c) => (
-                  <button
-                    key={c}
-                    type="button"
-                    className={wallColor === c ? "mk-color is-on" : "mk-color"}
-                    style={{ background: c }}
-                    aria-label={`Wall color ${c}`}
-                    onClick={() => setWallColor(c)}
-                  />
-                ))}
-              </div>
-            </section>
-            <footer className="mk-foot">
-              <button type="button" className="mk-ghost" onClick={() => setStep("commission")}>Back</button>
-              <button
-                type="button"
-                className="mk-next"
-                disabled={!hallId}
-                onClick={async () => {
-                  await send("save");
-                  setStep("build");
-                  setStatus("Tap a card, then tap a spot on the wall.");
-                }}
-              >
-                Open storage room
-              </button>
-            </footer>
-          </>
-        )}
-
-        {step === "build" && (
-          <>
-            <section className="mk-card">
-              <h2>The job</h2>
-              <p>{(exhibit.commission.lines || []).slice(-2).join(" ")}</p>
-            </section>
-            <div className="mk-layout">
-              <section className="mk-panel">
-                <h2>Storage room</h2>
-                <p className="mk-quiet">Tap a card to look. Then tap a wall spot — or Not in this exhibit.</p>
-                <div className="mk-cards">
-                  {loose.map((card) => (
-                    <button
-                      key={card.id}
-                      type="button"
-                      className={picked === card.id ? "mk-piece is-on" : "mk-piece"}
-                      onClick={() => openCard(card.id)}
-                    >
-                      <span className="mk-thumb"><CardFace card={card} /></span>
-                      <b>{card.title}</b>
-                      <span>{card.tag}</span>
-                    </button>
-                  ))}
-                </div>
-              </section>
-              <section className="mk-panel">
-                <h2>Your wall</h2>
-                <div className="mk-wall" style={{ backgroundColor: wallColor }}>
-                  <div className="mk-wall-spots">
-                    {wall.map((id, slot) => {
-                      const card = id ? cardBy(id) : null;
-                      return (
-                        <button
-                          key={slot}
-                          type="button"
-                          className={picked && !id ? "mk-spot is-on" : "mk-spot"}
-                          onClick={() => {
-                            if (picked) putOnSpot(picked, slot);
-                            else if (id) {
-                              setPicked(id);
-                              setStatus("Tap another spot, the bin, or tap again to put it back.");
-                            }
-                          }}
-                          onDoubleClick={() => id && putAway(id)}
-                        >
-                          <span className="mk-quiet">Spot {slot + 1}</span>
-                          {card ? (
-                            <>
-                              <CardFace card={card} />
-                              <b>{card.title}</b>
-                            </>
-                          ) : (
-                            <span className="mk-quiet">{picked ? "Tap to place" : "Empty"}</span>
-                          )}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-                <div className="mk-bin-row">
-                  <button
-                    type="button"
-                    className={bin ? "mk-bin is-on" : "mk-bin"}
-                    onClick={() => {
-                      if (picked) putInBin(picked);
-                      else setStatus("Pick a card first, then tap here.");
-                    }}
-                  >
-                    <b>Not in this exhibit</b>
-                    <div className="mk-quiet">{bin ? cardBy(bin)?.title : "Put one card here on purpose"}</div>
-                  </button>
-                </div>
-                {bin ? (
-                  <>
-                    <p className="mk-quiet" style={{ marginTop: 10 }}>Why does it stay out?</p>
-                    <div className="mk-reasons">
-                      {reasons.map((r) => (
-                        <button
-                          key={r.id}
-                          type="button"
-                          className={reason === r.id ? "mk-reason is-on" : "mk-reason"}
-                          onClick={() => setReason(r.id)}
-                        >
-                          {r.label}
-                        </button>
-                      ))}
-                    </div>
-                  </>
-                ) : null}
-                {bounce.length ? (
-                  <div className="mk-bounce">
-                    {bounce.map((b) => (
-                      <div key={b.id}><b>{cardBy(b.id)?.title || b.id}:</b> {b.why}</div>
-                    ))}
-                    {rejectNote ? <div style={{ marginTop: 6 }}>{rejectNote}</div> : null}
-                  </div>
-                ) : null}
-                {wallNote && !bounce.length ? <div className="mk-bounce mk-ok">{wallNote}</div> : null}
-              </section>
+  if (view === "write") {
+    const writeMeta = modesMeta.find((m) => m.id === "write") || {};
+    return (
+      <div className="mk-page">
+        <BackToHubButton />
+        <div className="mk-shell">
+          <div className="mk-top">
+            <div>
+              <p className="mk-kicker">Write</p>
+              <h1>Make your piece</h1>
             </div>
-            <footer className="mk-foot">
-              <span className="mk-quiet">{status}</span>
+            <button type="button" className="mk-ghost" onClick={saveWriteDraft} disabled={busy}>
+              Back to studio
+            </button>
+          </div>
+
+          <div className="mk-card">
+            <h2>Your prompt</h2>
+            <p>{config.prompt}</p>
+          </div>
+
+          <div className="mk-panel mk-write">
+            <h2>Write</h2>
+            <p className="mk-quiet">{writeMeta.instructions || "Write your answer in your own words."}</p>
+            <div className="mk-field">
+              <label htmlFor="mk-write-box">Your writing</label>
+              <textarea
+                id="mk-write-box"
+                value={writeText}
+                onChange={(e) => {
+                  writeDirty.current = true;
+                  setWriteText(e.target.value);
+                }}
+                placeholder="Start writing here…"
+                disabled={busy}
+              />
+            </div>
+            <div className="mk-save-row">
+              <span className={`mk-pill${saveState === "error" ? " warn" : ""}`}>
+                {saveState === "saving" ? "Saving…" : saveState === "error" ? "Save failed — keep typing" : "Saved"}
+              </span>
               <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-                <button type="button" className="mk-ghost" onClick={() => setStep("hall")}>Hall</button>
-                <button type="button" className="mk-check" disabled={busy || !wallReady} onClick={checkWall}>
-                  {checkAttempts ? "Check again" : "Check the wall"}
+                <button type="button" className="mk-ghost" onClick={saveWriteDraft} disabled={busy}>
+                  Save & back
+                </button>
+                <button type="button" className="mk-next" onClick={markWriteDone} disabled={busy || !writeText.trim()}>
+                  Done
                 </button>
               </div>
-            </footer>
-          </>
-        )}
-
-        {step === "write" && (
-          <>
-            <section className="mk-panel">
-              <h2>Placards</h2>
-              <p className="mk-quiet">{exhibit.placardStem}</p>
-              <ul className="mk-quiet">
-                {(exhibit.placardLooksFor || []).map((line) => (
-                  <li key={line}>{line}</li>
-                ))}
-              </ul>
-              {wall.filter(Boolean).map((id) => {
-                const card = cardBy(id);
-                const p = placards[id] || emptyPlacard();
-                return (
-                  <div key={id} className="mk-card" style={{ marginTop: 12 }}>
-                    <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
-                      <div style={{ width: 88 }}><CardFace card={card} /></div>
-                      <div>
-                        <b>{card.title}</b>
-                        <div className="mk-quiet">{card.tag}</div>
-                      </div>
-                    </div>
-                    <div className="mk-stem">
-                      <label>The
-                        <input value={p.animal} onChange={(e) => updatePlacard(id, "animal", e.target.value)} placeholder="animal" />
-                      </label>
-                      <label>has
-                        <input value={p.part} onChange={(e) => updatePlacard(id, "part", e.target.value)} placeholder="body part" />
-                      </label>
-                      <label>This helps it live in the desert because
-                        <input value={p.because} onChange={(e) => updatePlacard(id, "because", e.target.value)} placeholder="heat, sand, or little water" />
-                      </label>
-                    </div>
-                  </div>
-                );
-              })}
-            </section>
-            <section className="mk-panel">
-              <h2>The plaque</h2>
-              <p className="mk-quiet">{exhibit.plaquePrompt}</p>
-              <p className="mk-quiet">Start with: {exhibit.plaqueStarter}</p>
-              <label className="mk-field">
-                Exhibit sign
-                <textarea
-                  value={plaque}
-                  onChange={(e) => setPlaque(e.target.value)}
-                  placeholder={exhibit.plaqueStarter}
-                />
-              </label>
-              <p className="mk-quiet" style={{ marginTop: 12 }}>How sure are you?</p>
-              <div className="mk-conf">
-                {[
-                  { id: "shaky", face: "😕" },
-                  { id: "okay", face: "🙂" },
-                  { id: "strong", face: "😄" },
-                ].map((c) => (
-                  <button
-                    key={c.id}
-                    type="button"
-                    className={confidence === c.id ? "is-on" : ""}
-                    onClick={() => setConfidence(c.id)}
-                    aria-label={c.id}
-                  >
-                    {c.face}
-                  </button>
-                ))}
-              </div>
-            </section>
-            <footer className="mk-foot">
-              <button type="button" className="mk-ghost" onClick={() => setStep("build")}>Back to wall</button>
-              <button type="button" className="mk-next" disabled={busy} onClick={turnIn}>Grand opening</button>
-            </footer>
-            <p className="mk-quiet" style={{ textAlign: "center" }}>{status}</p>
-          </>
-        )}
-
-        {step === "done" && (
-          <section className="mk-panel mk-opening">
-            <p className="mk-kicker">Grand opening</p>
-            <h2>{exhibitTitle || exhibit.title}</h2>
-            <p className="mk-quiet">From {exhibit.commission.from}</p>
-            <p style={{ marginTop: 12, fontSize: 16 }}>{writeBack || "Your exhibit is turned in."}</p>
-            {wallNote ? <p className="mk-quiet">{wallNote}</p> : null}
-            {crystals ? <p style={{ fontWeight: 700, marginTop: 8 }}>+{crystals} crystal points</p> : null}
-            <div className="mk-gallery-wall" style={{ background: wallColor, padding: 12, borderRadius: 16 }}>
-              {wall.filter(Boolean).map((id) => {
-                const card = cardBy(id);
-                const p = placards[id] || emptyPlacard();
-                return (
-                  <div key={id} className="mk-gallery-piece">
-                    <CardFace card={card} />
-                    <b>{card.title}</b>
-                    <p className="mk-quiet">
-                      The {p.animal || "___"} has {p.part || "___"}. This helps it live in the desert because {p.because || "___"}.
-                    </p>
-                  </div>
-                );
-              })}
             </div>
-            <div className="mk-card" style={{ marginTop: 14, textAlign: "left" }}>
-              <h2>Plaque</h2>
-              <p>{plaque}</p>
-            </div>
-            <button type="button" className="mk-next" style={{ marginTop: 16 }} onClick={() => router.push("/student")}>
-              Back to hub
-            </button>
-          </section>
-        )}
+            <p className="mk-quiet" style={{ marginTop: 10 }}>
+              {writeMeta.doneHint || "Tap Done when this piece feels finished."}
+            </p>
+          </div>
+
+          <p className="mk-quiet">{status}</p>
+          <SamGuide
+            skinKey={samSkin}
+            alt={samNickname || "S.A.M."}
+            size={96}
+            anchors={{ home: { right: 16, bottom: 16 } }}
+            line={"Write it like you would tell a friend. Clear beats fancy."}
+            state={submitted || view === "done" ? "celebrating" : "helping"}
+          />
+        </div>
       </div>
+    );
+  }
 
-      {look ? (
-        <div className="mk-look" onClick={() => setLook(null)}>
-          <div className="mk-look-card" onClick={(e) => e.stopPropagation()}>
-            <CardFace card={cardBy(look)} />
-            <h2 style={{ margin: "10px 0 4px" }}>{cardBy(look)?.title}</h2>
-            <p className="mk-quiet">{cardBy(look)?.tag}</p>
-            <p>{cardBy(look)?.text}</p>
-            <div style={{ display: "flex", gap: 8, marginTop: 12, flexWrap: "wrap" }}>
-              <button type="button" className="mk-ghost" onClick={() => setLook(null)}>Close</button>
-              <button
-                type="button"
-                className="mk-next"
-                onClick={() => {
-                  setPicked(look);
-                  setLook(null);
-                  setStatus("Now tap a wall spot — or Not in this exhibit.");
-                }}
-              >
-                Use this card
-              </button>
-            </div>
+  // Main studio page
+  return (
+    <div className="mk-page">
+      <BackToHubButton />
+      <div className="mk-shell">
+        <div className="mk-top">
+          <div>
+            <p className="mk-kicker">{(publicCase && publicCase.kicker) || "Maker Studio"}</p>
+            <h1>{title}</h1>
+            {topicLine ? <p className="mk-quiet" style={{ marginTop: 4 }}>{topicLine}</p> : null}
+          </div>
+          <span className="mk-progress">
+            {doneCount}/{finishN} done
+          </span>
+        </div>
+
+        {revisionFeedback ? (
+          <div className="mk-card" style={{ borderLeftColor: "#f97316" }}>
+            <h2>Teacher sent this back</h2>
+            <p>{revisionFeedback}</p>
+          </div>
+        ) : null}
+
+        <div className="mk-card">
+          <h2>Your job</h2>
+          <p>{config.prompt}</p>
+          <p className="mk-quiet" style={{ marginTop: 10 }}>
+            Finish {finishN} mode{finishN === 1 ? "" : "s"}, then tap Submit. Your teacher reads your work.
+          </p>
+        </div>
+
+        <div className="mk-panel">
+          <h2>Make modes</h2>
+          <p className="mk-quiet">Tap Write to begin. Other modes are ready for later.</p>
+          <div className="mk-grid" role="list">
+            {modesMeta.map((m) => {
+              const isEnabled = enabled.includes(m.id) && m.available;
+              const st = modeStatus(modes, m.id);
+              const className = [
+                "mk-mode",
+                st === "done" ? "is-done" : "",
+                st === "in_progress" ? "is-progress" : "",
+              ]
+                .filter(Boolean)
+                .join(" ");
+              return (
+                <button
+                  key={m.id}
+                  type="button"
+                  className={className}
+                  disabled={!isEnabled || submitted}
+                  onClick={() => openMode(m.id)}
+                  aria-label={isEnabled ? m.label : `${m.label} (not open yet)`}
+                >
+                  <span className="mk-mode-icon" aria-hidden>
+                    {m.icon || "•"}
+                  </span>
+                  <b>{m.label}</b>
+                  <span>{m.blurb}</span>
+                  {st === "done" ? <span className="mk-mode-status">Done</span> : null}
+                  {st === "in_progress" ? <span className="mk-mode-status">Started</span> : null}
+                </button>
+              );
+            })}
           </div>
         </div>
-      ) : null}
+
+        <div className="mk-foot">
+          <p className="mk-quiet" style={{ margin: 0 }}>
+            {status}
+          </p>
+          <button type="button" className="mk-check" disabled={!canSubmit || busy} onClick={submitAll}>
+            Submit
+          </button>
+        </div>
+
+        <SamGuide
+            skinKey={samSkin}
+            alt={samNickname || "S.A.M."}
+            size={96}
+            anchors={{ home: { right: 16, bottom: 16 } }}
+            line={(publicCase && publicCase.samOpen) || "Tap Write. Make your piece. Submit when the counter says you are ready."}
+            state={submitted || view === "done" ? "celebrating" : "helping"}
+          />
+      </div>
     </div>
   );
 }
