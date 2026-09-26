@@ -185,7 +185,10 @@ const CASES_SELECT_FULL =
 const CASES_SELECT_MINIMAL = "standard, title, grade, subject, engine";
 
 function expeditionStationLibraryRows() {
-  return Object.values(EXPEDITION_QUESTS || {}).map((quest) =>
+  // Sept 26, 2026: only list quests that have at least one playable act.
+  // ELAR and science quests are written ahead of their task types and stay
+  // hidden until the build session opens an act (adds it to playableActs).
+  return Object.values(EXPEDITION_QUESTS || {}).filter((quest) => Array.isArray(quest.playableActs) && quest.playableActs.length > 0).map((quest) =>
     normalizeCaseRow({
       standard: quest.standard || quest.id,
       title:
