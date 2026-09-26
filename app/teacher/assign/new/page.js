@@ -396,6 +396,8 @@ function NewAssignmentContent() {
   const [caseSearch, setCaseSearch] = useState("");
   const [topic,setTopic]=useState(searchParams.get('standard')||'all');
   const [typeFilter,setTypeFilter]=useState(searchParams.get('engine')||'all');
+  const [browseMode,setBrowseMode]=useState(searchParams.get('standard')?'standards':'activities');
+  const [pickedStandard,setPickedStandard]=useState(searchParams.get('standard')||null);
   const [lane,setLane]=useState('standard');
   const [product,setProduct]=useState('centers');
   const [followClass,setFollowClass]=useState(true);
@@ -539,8 +541,10 @@ function NewAssignmentContent() {
     } else {
     const specialTile = RELAY_SPECIAL_TILES.find((t) => t.key === browseSubject);
     if (!makerBrowse && !specialTile && c.subject !== browseSubject && !isFrDailyCase(c.standard)) return false;
-    if (typeFilter!=="all" && !matchesChallenge(c.engine,typeFilter)) return false;
-    if(topic!=="all" && topicCode(c)!==topic)return false;
+    if (browseMode==='standards' && product!=='keys') {
+      if (!pickedStandard || topicCode(c)!==pickedStandard) return false;
+    } else if (typeFilter!=="all" && !matchesChallenge(c.engine,typeFilter)) return false;
+    if (product==='keys' && topic!=="all" && topicCode(c)!==topic) return false;
     if (isRetiredSignalCheckCase(c.standard)) return false;
     // Relay Station's Foundations Track has its own 5th tile (FOUNDATIONS
     // below) instead of hiding among the ELAR readings.
@@ -560,7 +564,21 @@ function NewAssignmentContent() {
       (missionMapTeksLabel(c.standard) || "").toLowerCase().includes(searchQ)
     );
   });
-
+  const standardGroups = product==='keys' || browseMode!=='standards' ? [] : Object.values(cases.map(normalizeCaseRow).reduce((groups, c) => {
+    if (Number(c.grade)!==Number(browseGrade) || (c.subject!==browseSubject && !isFrDailyCase(c.standard))) return groups;
+    if (!CHALLENGE_TYPES.some((t) => t.real && matchesChallenge(c.engine, t.key)) || matchesChallenge(c.engine, 'relay_station') || isRetiredSignalCheckCase(c.standard)) return groups;
+    const code = topicCode(c);
+    if (!/\d/.test(code) || /^(MS\.|FR\.|RS\.)/i.test(code)) return groups;
+    if (!groups[code]) {
+      const label = missionMapTeksLabel(c.standard) || '';
+      groups[code] = { code, title: label.includes('—') ? label.split('—').slice(1).join('—').trim() : (c.learning_target || ''), count: 0 };
+    }
+    if (!groups[code].title && c.learning_target) groups[code].title = c.learning_target;
+    groups[code].count += 1;
+    return groups;
+  }, {})).sort((a, b) => a.code.localeCompare(b.code, undefined, { numeric: true }));
+  const visibleGroups = standardGroups.filter((group) => !searchQ || group.code.toLowerCase().includes(searchQ) || group.title.toLowerCase().includes(searchQ));
+  const showList = product==='keys' || (browseMode==='activities' && typeFilter!=='all') || (browseMode==='standards' && !!pickedStandard);
 
   const targetClass = classes.find((c) => c.id === assignClassId);
   useEffect(()=>{
@@ -699,7 +717,7 @@ function NewAssignmentContent() {
     return <div style={{ minHeight: "100vh", background: COLORS.canvas, display: "flex", alignItems: "center", justifyContent: "center", color: COLORS.textMuted, fontFamily: "'Inter', sans-serif" }}>Loading...</div>;
   }
 
-  function resetBrowse(){setSelectedCase(null);setTopic('all');setLimit(12);setDistressCallEnabled(false);setDistressCallTarget('');setDistressCallDeadline('');setDistressCallRewardPoints('');}
+  function resetBrowse(){setSelectedCase(null);setTopic('all');setPickedStandard(null);setLimit(12);setDistressCallEnabled(false);setDistressCallTarget('');setDistressCallDeadline('');setDistressCallRewardPoints('');}
   function openProduct(key){
     setProduct(key);
     setSelectedCase(null);
@@ -770,16 +788,20 @@ function NewAssignmentContent() {
       <Link className="cc-text-button" href="/teacher/typing-texts">Paste your own passage</Link>
     </section>}
     {product === "centers" && <>
-    <div className="cc-toolbar cc-browse-filters">
-      <label className="cc-field">Grade<select value={browseGrade} onChange={e=>{setFollowClass(false);setBrowseGrade(e.target.value);resetBrowse();setCaseSearch('')}}>{['3','4','5'].map(g=><option key={g} value={g}>Grade {g}</option>)}</select></label>
-      <label className="cc-field">Subject<select value={lane==='relay'?'ELAR':browseSubject} onChange={e=>{setFollowClass(false);setLane('standard');setBrowseSubject(e.target.value);setTypeFilter('all');resetBrowse();setCaseSearch('')}}>{Object.keys(SUBJECTS).map(subject=><option key={subject}>{subject}</option>)}</select></label>
-      {lane==='standard'&&<label className="cc-field cc-search">Standard<select value={topic} onChange={e=>{setTopic(e.target.value);setSelectedCase(null);setLimit(12)}}><option value="all">All standards</option>{topics.map(t=><option key={t} value={t}>{t}</option>)}</select></label>}
+    <div className="cc-find-bar">
+      <div className="cc-mode" role="group" aria-label="Find activities by">
+        <button type="button" aria-pressed={browseMode==='activities'} onClick={()=>{setBrowseMode('activities');setPickedStandard(null);setSelectedCase(null);}}>Activities</button>
+        <button type="button" aria-pressed={browseMode==='standards'} onClick={()=>{setBrowseMode('standards');setTypeFilter('all');setTopic('all');setSelectedCase(null);}}>Standards</button>
+      </div>
+      <label>Grade<select value={browseGrade} onChange={e=>{setFollowClass(false);setBrowseGrade(e.target.value);resetBrowse();setCaseSearch('')}}>{['3','4','5'].map(g=><option key={g} value={g}>Grade {g}</option>)}</select></label>
+      <label>Subject<select value={browseSubject} onChange={e=>{setFollowClass(false);setLane('standard');setBrowseSubject(e.target.value);setTypeFilter('all');resetBrowse();setCaseSearch('')}}>{Object.keys(SUBJECTS).map(subject=><option key={subject}>{subject}</option>)}</select></label>
     </div>
-    {(typeFilter!=='all')&&<div className="cc-row" style={{marginBottom:16,flexWrap:'wrap',gap:8,alignItems:'center'}}><button className="cc-text-button" onClick={()=>{setLane('standard');setTypeFilter('all');setTopic('all');setSelectedCase(null);setBrowseSubject(targetClass?.subject||'Science');setFollowClass(true)}}>← All activity types</button><span className="cc-badge">{engineInfo(typeFilter).label}</span>{CHALLENGE_TYPES.filter(t=>t.real&&t.key!=='relay_station').map(t=><button key={t.key} type="button" className="cc-badge" style={{cursor:'pointer',border:typeFilter===t.key?'2px solid '+ACCENT:'1px solid transparent',opacity:typeFilter===t.key?1:0.7}} aria-pressed={typeFilter===t.key} onClick={()=>{setSelectedCase(null);setCaseSearch('');setTopic('all');setTypeFilter(t.key);setLane('standard')}}>{t.label}</button>)}</div>}
-    {topic==='all'&&typeFilter==='all'&&<section className="cc-panel"><h2>Explore a learning experience</h2><p className="cc-muted">Choose an activity type to see its lessons. Filtering by standard is optional.</p><div className="cc-type-grid">{Object.entries(ENGINES).filter(([key])=>key!=='relay_station').map(([key,art])=><button key={key} className="cc-activity cc-frame" style={subjectStyle(browseSubject)} aria-pressed={typeFilter===key} onClick={()=>{setSelectedCase(null);setCaseSearch('');setTypeFilter(key);setTopic('all')}}><img src={art.image} alt=""/><div><h3>{art.label}</h3><p>{art.description}</p></div></button>)}</div></section>}
+    {browseMode==='activities' && typeFilter!=='all' && <button className="cc-text-button" onClick={()=>{setTypeFilter('all');setSelectedCase(null);setCaseSearch('');}}>← All activity types</button>}
+    {browseMode==='activities' && typeFilter==='all' && <section className="cc-panel"><h2>Choose an activity type</h2><p className="cc-muted">Then pick the lesson. The standard name is on each one.</p><div className="cc-type-grid">{Object.entries(ENGINES).filter(([key])=>key!=='relay_station').map(([key,art])=><button key={key} className="cc-activity cc-frame" style={subjectStyle(browseSubject)} onClick={()=>{setSelectedCase(null);setCaseSearch('');setTypeFilter(key);setTopic('all')}}><img src={art.image} alt=""/><div><h3>{art.label}</h3><p>{art.description}</p></div></button>)}</div></section>}
+    {browseMode==='standards' && !pickedStandard && <section className="cc-panel"><h2>Choose a standard</h2><p className="cc-muted">{browseSubject} · Grade {browseGrade}. Open a standard to see its activities.</p><label className="cc-field">Find a standard<input className="cc-input" type="search" placeholder="Search by code or topic" value={caseSearch} onChange={e=>setCaseSearch(e.target.value)}/></label><div className="cc-standard-grid">{visibleGroups.map((group)=><button key={group.code} type="button" className="cc-standard-tile" onClick={()=>{setPickedStandard(group.code);setSelectedCase(null);setCaseSearch('');setLimit(12)}}><b>{group.code}</b><span>{group.title||'Activities for this standard'}</span><small>{group.count} {group.count===1?'activity':'activities'}</small></button>)}</div>{!visibleGroups.length&&<Empty>No standards for this grade and subject yet.</Empty>}</section>}
     </>}
-    {(product==='keys'||topic!=='all'||typeFilter!=='all')&&<div className={"cc-two"+((typeFilter==="maker_studio"||selectedCase?.engine==="maker_studio")?" cc-two-maker":"")}><section className="cc-panel"><h2>{product==='keys'?(browseSubject===READINGS?'Readings':(RELAY_SPECIAL_TILES.find(t=>t.key===browseSubject)?.title||'ClearKeys')):(topic!=='all'?topic:(typeFilter!=='all'?engineInfo(typeFilter).label:'Choose a learning experience'))}</h2><p className="cc-muted">{product==='keys'?'ClearKeys':browseSubject} · Grade {browseGrade} · {filteredCases.length} activities{typeFilter!=='all'&&topic==='all'&&product!=='keys'?' · showing all standards for this type':''}</p><label className="cc-field">Find an activity<input className="cc-input" type="search" placeholder="Search these activities" value={caseSearch} onChange={e=>{setCaseSearch(e.target.value);setLimit(12)}}/></label><div className={"cc-gallery cc-compact-gallery"+(typeFilter==='maker_studio'?' cc-maker-gallery':'')+(product==='keys'&&browseSubject===READINGS?' cc-readings':'')}>{filteredCases.slice(0,limit).map(c=>{const e=engineInfo(c.engine);return <button key={c.standard} className="cc-activity" style={subjectStyle(c.subject)} aria-pressed={selectedCase?.standard===c.standard} onClick={()=>{setStudentInfo(false);setSelectedCase(c);if(/^FR\.[345]\.DAILY$/.test(c.standard))setGameSkin(DEFAULT_GAME_SKIN);setSelectedChallenge(CHALLENGE_TYPES.find(t=>matchesChallenge(c.engine,t.key)))}}><img src={e.image} alt="" onError={thumbFallback}/><div><div className="cc-eyebrow cc-subject-label">{e.label}</div><h3>{product==='keys'?(c.title||'').replace(/^Relay Station:\s*/i,''):c.title}</h3><p>{c.learning_target||e.description}</p><small>{missionMapTeksCode(c.standard)||c.standard}</small></div></button>})}</div>{casesLoading?<Empty>Loading activities…</Empty>:!filteredCases.length&&<Empty>{typeFilter!=='all'?'No activities for this type at Grade '+browseGrade+' · '+browseSubject+'. Try another grade or subject.':'No activities match these filters. Try another topic, grade, or format.'}</Empty>}{filteredCases.length>limit&&<button className="cc-btn secondary" style={{marginTop:18}} onClick={()=>setLimit(limit+12)}>Show more activities</button>}</section>
-    <aside className="cc-stack">{selectedCase?<section className="cc-panel cc-frame" style={subjectStyle(selectedCase.subject)}><div className="cc-eyebrow cc-subject-label">SELECTED · {engineInfo(selectedCase.engine).label}</div><h2>{product==='keys'?(selectedCase.title||'').replace(/^Relay Station:\s*/i,''):selectedCase.title}</h2><p className="cc-muted">{missionMapTeksLabel(selectedCase.standard)||selectedCase.standard}</p><button type="button" className="cc-student-info" aria-expanded={studentInfo} onClick={()=>setStudentInfo((open)=>!open)}>What students do</button>{studentInfo&&<div className="cc-student-pop"><img className="cc-preview-image" src={engineInfo(selectedCase.engine).image} alt="" onError={thumbFallback}/><h3>What students will do</h3><p className="cc-muted">{selectedCase.lesson_summary||engineInfo(selectedCase.engine).description}</p>{selectedCase.learning_target&&<div className="cc-panel" style={{background:'#f5f0fc',padding:14}}>{selectedCase.learning_target}</div>}{selectedCase.misconception_note&&<div><h3>Teaching notes</h3><p className="cc-muted">{selectedCase.misconception_note}</p></div>}</div>}
+    {showList&&<div className={"cc-two"+(product!=='keys'?" cc-two-maker":"")}><section className="cc-panel">{browseMode==='standards'&&pickedStandard&&<button className="cc-text-button" onClick={()=>{setPickedStandard(null);setSelectedCase(null);setCaseSearch('');}}>← All standards</button>}<h2>{product==='keys'?(browseSubject===READINGS?'Readings':(RELAY_SPECIAL_TILES.find(t=>t.key===browseSubject)?.title||'ClearKeys')):(browseMode==='standards'?pickedStandard:(typeFilter!=='all'?engineInfo(typeFilter).label:'Activities'))}</h2><p className="cc-muted">{browseMode==='standards'?(standardGroups.find(group=>group.code===pickedStandard)?.title||'Activities for this standard'):`${browseSubject} · Grade ${browseGrade} · ${filteredCases.length} activities`}</p><label className="cc-field">Find an activity<input className="cc-input" type="search" placeholder="Search these activities" value={caseSearch} onChange={e=>{setCaseSearch(e.target.value);setLimit(12)}}/></label><div className={"cc-gallery cc-compact-gallery"+(product!=='keys'?' cc-maker-gallery':'')+(product==='keys'&&browseSubject===READINGS?' cc-readings':'')}>{filteredCases.slice(0,limit).map(c=>{const e=engineInfo(c.engine);const standardLabel=missionMapTeksLabel(c.standard)||missionMapTeksCode(c.standard)||topicCode(c);return <button key={c.standard} className="cc-activity" style={subjectStyle(c.subject)} aria-pressed={selectedCase?.standard===c.standard} onClick={()=>{setStudentInfo(false);setSelectedCase(c);if(/^FR\.[345]\.DAILY$/.test(c.standard))setGameSkin(DEFAULT_GAME_SKIN);setSelectedChallenge(CHALLENGE_TYPES.find(t=>matchesChallenge(c.engine,t.key)))}}><img src={e.image} alt="" onError={thumbFallback}/><div><div className="cc-eyebrow cc-subject-label">{product==='keys'?e.label:standardLabel}</div><h3>{product==='keys'?(c.title||'').replace(/^Relay Station:\s*/i,''):c.title}</h3><p>{e.label}</p></div></button>})}</div>{casesLoading?<Empty>Loading activities…</Empty>:!filteredCases.length&&<Empty>{typeFilter!=='all'?'No activities for this type at Grade '+browseGrade+' · '+browseSubject+'. Try another grade or subject.':'No activities match these filters. Try another topic, grade, or format.'}</Empty>}{filteredCases.length>limit&&<button className="cc-btn secondary" style={{marginTop:18}} onClick={()=>setLimit(limit+12)}>Show more activities</button>}</section>
+    <aside className="cc-stack">{selectedCase?<section className="cc-panel cc-frame" style={subjectStyle(selectedCase.subject)}><div className="cc-assign-read"><div className="cc-eyebrow cc-subject-label">{engineInfo(selectedCase.engine).label}</div><h2>{product==='keys'?(selectedCase.title||'').replace(/^Relay Station:\s*/i,''):selectedCase.title}</h2><p className="cc-assign-standard">{missionMapTeksLabel(selectedCase.standard)||missionMapTeksCode(selectedCase.standard)||topicCode(selectedCase)}</p><p>{selectedCase.lesson_summary||selectedCase.learning_target||engineInfo(selectedCase.engine).description}</p></div>{(selectedCase.misconception_note||(selectedCase.lesson_summary&&selectedCase.learning_target))&&<button type="button" className="cc-student-info" aria-expanded={studentInfo} onClick={()=>setStudentInfo((open)=>!open)}>More for the teacher</button>}{studentInfo&&<div className="cc-student-pop">{selectedCase.lesson_summary&&selectedCase.learning_target&&<><h3>Learning target</h3><p className="cc-muted">{selectedCase.learning_target}</p></>}{selectedCase.misconception_note&&<><h3>Teaching notes</h3><p className="cc-muted">{selectedCase.misconception_note}</p></>}</div>}
     <div className="cc-assignment-form"><h3>Assign to {targetClass?.name||'your class'}</h3>
                   {assignClassId && (
                     <>
