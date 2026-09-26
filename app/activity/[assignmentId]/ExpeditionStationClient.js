@@ -325,9 +325,15 @@ export default function ExpeditionStationClient({
           <div className="es-dial" aria-hidden="true">
             <div className="es-needle" style={{ transform: `rotate(${angle}deg)` }} />
           </div>
-          <p style={{ textAlign: "center", color: "var(--es-muted)" }}>
-            Started at {fracLabel(task.tune.start.n, denom)}. Cold used {fracLabel(task.tune.used.n, denom)}.
-          </p>
+          {task.tune.used ? (
+            <p style={{ textAlign: "center", color: "var(--es-muted)" }}>
+              Started at {fracLabel(task.tune.start.n, denom)}. Cold used {fracLabel(task.tune.used.n, denom)}.
+            </p>
+          ) : (
+            <p style={{ textAlign: "center", color: "var(--es-muted)" }}>
+              The dial goes from 0 to 1 in {denom} equal jumps of {fracLabel(1, denom)}.
+            </p>
+          )}
           <FracPicker denom={denom} value={pickN} onPick={(n, d) => { setPickN(n); setPickD(d); }} max={denom + 2} />
           <SureRow />
           <div className="es-row">
@@ -357,7 +363,7 @@ export default function ExpeditionStationClient({
         return (
           <>
             <div className="es-line">{task.line}</div>
-            <p>How much more fuel does the sled need?</p>
+            <p>{task.missingPrompt || "How much more fuel does the sled need?"}</p>
             <TankVisual denom={denom} filled={start} />
             <FracPicker denom={denom} value={pickN} onPick={(n, d) => { setPickN(n); setPickD(d); }} />
             <SureRow />
@@ -380,7 +386,11 @@ export default function ExpeditionStationClient({
       return (
         <>
           <div className="es-line">{task.line}</div>
-          <p>Fill to {fracLabel(target, denom)} two different ways with 1/10 and 2/10 scoops.</p>
+          <p>
+            Fill to {fracLabel(target, denom)}{" "}
+            {task.scoops.waysNeeded > 1 ? "two different ways" : ""} with{" "}
+            {(task.scoops.scoopSizes || [1, 2]).map((size) => fracLabel(size, denom)).join(" and ")} scoops.
+          </p>
           <div className="es-scoop-bar" aria-hidden="true">
             {Array.from({ length: denom }, (_, i) => (
               <div
@@ -448,18 +458,23 @@ export default function ExpeditionStationClient({
         <div className="es-line">{task.line}</div>
         <p>
           {task.challenge
-            ? challengeStep === 1
-              ? "Step 1: What is the tank level now?"
-              : "Step 2: How far above the safe line is the fuel?"
+            ? (task.stepPrompts && task.stepPrompts[challengeStep - 1]) ||
+              (challengeStep === 1
+                ? "Step 1: What is the tank level now?"
+                : "Step 2: How far above the safe line is the fuel?")
             : task.question}
         </p>
-        <TankVisual denom={denom} filled={challengeStep === 2 && pickN == null ? 6 : filled} safe={safe} />
+        <TankVisual
+          denom={denom}
+          filled={challengeStep === 2 && pickN == null && task.fill && task.fill.burn != null ? 6 : filled}
+          safe={safe}
+        />
         {task.fill && task.fill.pours ? (
           <p style={{ color: "var(--es-muted)" }}>
             Pours: {task.fill.pours.map((p) => fracLabel(p.n, p.d)).join(" + ")}
           </p>
         ) : null}
-        {task.challenge && task.fill ? (
+        {task.challenge && task.fill && task.fill.burn != null ? (
           <p style={{ color: "var(--es-muted)" }}>
             Story: start {fracLabel(task.fill.start, denom)}, burn {fracLabel(task.fill.burn, denom)} ×{" "}
             {task.fill.nights} nights, then add {fracLabel(task.fill.refill, denom)}. Safe line{" "}
@@ -490,7 +505,10 @@ export default function ExpeditionStationClient({
               )
             }
           >
-            {task.challenge ? (challengeStep === 1 ? "Check level" : "Check gap") : "Pour"}
+            {task.challenge
+              ? (task.stepButtons && task.stepButtons[challengeStep - 1]) ||
+                (challengeStep === 1 ? "Check level" : "Check gap")
+              : task.pourLabel || "Pour"}
           </button>
         </div>
       </>
@@ -510,12 +528,14 @@ export default function ExpeditionStationClient({
         </div>
         <div className="es-meters">
           <div className="es-meter">
-            <b>Heat</b>
+            <b>{(quest.meterLabels && quest.meterLabels.heat) || "Heat"}</b>
             <span>{meters.heat}%</span>
           </div>
           <div className="es-meter">
-            <b>Supplies</b>
-            <span>{meters.supplies} days</span>
+            <b>{(quest.meterLabels && quest.meterLabels.supplies) || "Supplies"}</b>
+            <span>
+              {meters.supplies} {(quest.meterLabels && quest.meterLabels.suppliesUnit) || "days"}
+            </span>
           </div>
           <div className="es-meter">
             <b>Journal</b>
@@ -644,7 +664,9 @@ export default function ExpeditionStationClient({
             Stars this act: <span className="es-stars">{totalStars}</span>
           </p>
           <p className="es-blurb">
-            Heat {meters.heat}% · Supplies {meters.supplies} days · Journal {meters.journal}/{quest.journalMax}
+            {(quest.meterLabels && quest.meterLabels.heat) || "Heat"} {meters.heat}% ·{" "}
+            {(quest.meterLabels && quest.meterLabels.supplies) || "Supplies"} {meters.supplies}{" "}
+            {(quest.meterLabels && quest.meterLabels.suppliesUnit) || "days"} · Journal {meters.journal}/{quest.journalMax}
           </p>
           <div className="es-row">
             <button type="button" className="es-btn good" onClick={() => setScreen("board")}>
