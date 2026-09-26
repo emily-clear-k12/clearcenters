@@ -5,14 +5,22 @@ import {BridgePage,ClassTabs,PageHeading,Empty} from './BridgeUI';
 import {engineInfo,subjectStyle,assignmentBoard} from '../../lib/teacherBridge';
 import {rememberedTeacherClass,rememberTeacherClass} from '../../lib/teacherClass';
 import {missionMapTeksCode} from '../../lib/cases/mission-map/teksLabels';
+import {supabase} from '../../lib/supabaseClient';
 
-function topicOf(standard){return missionMapTeksCode(standard||'')||String(standard||'').replace(/-(?:SC|GC|FR|SL|SD|AD|RS|MM|CL|EX).*$/i,'');}
+function teksKeys(standard){
+ const raw=String(standard||'');
+ if(/^(MS|RS|FR)\./i.test(raw))return [];
+ const mapped=missionMapTeksCode(raw);
+ const source=(mapped||raw.replace(/-(?:SC|GC|FR|SL|SD|AD|RS|MM|CL|EX|XP|MS).*$/i,'')).replace(/(\d+)-(\d+[A-Z]?)/gi,'$1.$2');
+ return [...new Set((source.match(/\d+\.\d+[A-Z]?/gi)||[]).map(code=>code.toUpperCase()))];
+}
 function scoreColor(pct){if(pct<=50)return '#d64545';if(pct<70)return '#e8943a';if(pct<80)return '#c8960a';if(pct<90)return '#1f8a4d';return '#3d84f5';}
 function scoreWord(pct){if(pct>=90)return 'Excellent';if(pct>=80)return 'Proficient';if(pct>=60)return 'Developing';return 'Needs support';}
 
 export default function TodayBridge({teacherName,teacherEmail,classes,students,assignments,submissions,hints,caseDetails,targets,targetsError,error,onRewards,children}){
  const [classId,setClassId]=useState(''),[selected,setSelected]=useState({}),[progressFilter,setProgressFilter]=useState(null);
  const [showAll,setShowAll]=useState(false);
+ const [library,setLibrary]=useState([]);
  const dialog=useRef(null);
  useEffect(()=>setShowAll(false),[classId]);
  useEffect(()=>{if(classes.length){const id=rememberedTeacherClass(classes,classes[0].id);setClassId(id);rememberTeacherClass(id)}},[classes]);
@@ -35,18 +43,29 @@ export default function TodayBridge({teacherName,teacherEmail,classes,students,a
  const requests=roster.map(s=>{const mine=hints.filter(h=>h.student_id===s.id&&byId[h.assignment_id]);const standard=byId[mine[0]?.assignment_id]?.case_standard;return {...s,count:mine.length,standard};}).filter(s=>s.count>0).sort((a,b)=>b.count-a.count);
  const released=submissions.filter(s=>s.assignment_id===current?.id&&s.released&&s.teacher_grade!=null);
  const pct=released.length?Math.round(released.reduce((sum,s)=>sum+Number(s.teacher_grade),0)/released.length/2*100):null;
- const currentTopic=topicOf(current?.case_standard);
- const shelf=others.filter(a=>topicOf(a.case_standard)===currentTopic).slice(0,3);
+ const currentKeys=teksKeys(current?.case_standard);
+ const currentTopic=currentKeys.join(' & ');
+ const ideas=library.filter(item=>{
+  if(item.standard===current?.case_standard||item.engine==='relay_station'||list.some(a=>a.case_standard===item.standard))return false;
+  if(info.subject&&item.subject&&item.subject!==info.subject)return false;
+  const keys=teksKeys(item.standard);
+  return currentKeys.some(code=>keys.includes(code));
+ }).sort((a,b)=>Number(a.engine===info.engine)-Number(b.engine===info.engine)).slice(0,2);
+ useEffect(()=>{
+  const grade=Number(info.grade||cls?.grade);
+  if(!grade||!currentTopic){setLibrary([]);return}
+  let ignore=false;
+  supabase.from('cases').select('standard, title, engine, subject, grade').eq('grade',grade).then(({data})=>{if(!ignore)setLibrary(data||[])});
+  return ()=>{ignore=true};
+ },[info.grade,cls?.grade,current?.case_standard,currentTopic]);
  const struggling=roster.map(s=>{const grades=submissions.filter(x=>x.student_id===s.id&&list.some(a=>a.id===x.assignment_id)&&x.released&&x.teacher_grade!=null).map(x=>Number(x.teacher_grade));const avg=grades.length?grades.reduce((a,b)=>a+b,0)/grades.length:null;const hintCount=hints.filter(h=>h.student_id===s.id&&byId[h.assignment_id]).length;return {student:s,avg,hintCount};}).filter(x=>(x.avg!=null&&x.avg<1.4)||x.hintCount>=2).sort((a,b)=>b.hintCount-a.hintCount||((a.avg??9)-(b.avg??9))).slice(0,3);
+ const play=list.find(a=>(caseDetails[a.case_standard]?.engine)==='frequency_rush');
  const signal=list.find(a=>(caseDetails[a.case_standard]?.engine)==='signal_defense');
  const distress=list.find(a=>a.distress_call);
- const relayItems=list.filter(a=>(caseDetails[a.case_standard]?.engine)==='relay_station');
- const race=relayItems.find(a=>/\.RACE$/i.test(a.case_standard||''));
- const track=relayItems.find(a=>/\.TRACK$/i.test(a.case_standard||''));
  const boards=[];
- if(signal)boards.push({key:'signal',name:'Signal Ops',button:'Open the class screen',href:`/teacher/signal-ops-board?assignmentId=${signal.id}`,image:'/teacher/challenges/signal_defense.jpg'});
+ const game=play||signal;
+ if(game)boards.push({key:'play',name:'Frequency Rush',button:'Open the game',href:assignmentBoard(game,caseDetails[game.case_standard]?.engine),image:'/teacher/challenges/frequency_rush.jpg',also:play&&signal?`/teacher/signal-ops-board?assignmentId=${signal.id}`:null,alsoLabel:'Class screen'});
  if(distress)boards.push({key:'live',name:'Distress call',button:'Open the live board',href:`/teacher/live-ops-board?assignmentId=${distress.id}`,image:'/teacher/live_ops_board_bg.jpg',focus:'68% 18%'});
- if(relayItems.length)boards.push({key:'relay',name:'Relay',button:'Open Relay',href:race?`/teacher/relay-race?classId=${cls.id}`:`/teacher/typing-track?classId=${cls.id}`,image:'/teacher/challenges/relay_station.jpg',also:race&&track?`/teacher/typing-track?classId=${cls.id}`:null});
  const actualTeks=missionMapTeksCode(current?.case_standard||'')||current?.case_standard;
  const displayName=teacherName?.split(' ')[0]||teacherEmail?.split('@')[0]||'teacher';
  function showProgress(key){setProgressFilter(key);dialog.current?.showModal()}
@@ -74,10 +93,10 @@ export default function TodayBridge({teacherName,teacherEmail,classes,students,a
  </>:<p className="cc-muted">No follow-up signals yet. Suggestions appear as reviewed work and hint requests arrive.</p>}
  </section>
  </aside></div>
- {current&&<section className="cc-panel cc-library-strip"><div className="cc-row cc-between"><div><h2>Other ways to teach {info.title||currentTopic}</h2><p className="cc-muted" style={{margin:'0 0 16px'}}>Same standard as the activity on screen. {currentTopic}</p></div><Link className="cc-link" href={`/teacher/assign/new?classId=${cls.id}&standard=${encodeURIComponent(currentTopic||'')}`}>Browse all activities →</Link></div>
- {shelf.length>0&&<div className="cc-three">{shelf.map(item=>{const itemInfo=caseDetails[item.case_standard]||{};const itemEngine=engineInfo(itemInfo.engine);return <button key={item.id} className="cc-mini cc-frame" style={{...style,textAlign:'left'}} onClick={()=>focus(item.id)}><img src={itemEngine.image} alt=""/><div><strong>{itemEngine.label}</strong><p>{itemInfo.title||item.case_standard}</p></div></button>})}</div>}
+ {currentTopic&&<section className="cc-panel cc-library-strip"><div className="cc-row cc-between"><div><h2>Other ways to teach {currentTopic}</h2><p className="cc-muted" style={{margin:'0 0 16px'}}>Two other activities for this standard.</p></div><Link className="cc-link" href={`/teacher/assign/new?classId=${cls.id}&standard=${encodeURIComponent(teksKeys(current?.case_standard)[0]||'')}`}>Browse all activities →</Link></div>
+ {ideas.length>0?<div className="cc-three">{ideas.map(item=>{const itemEngine=engineInfo(item.engine);return <Link key={item.standard} className="cc-mini cc-frame" style={{...style,textAlign:'left'}} href={`/teacher/assign/new?classId=${cls.id}&standard=${encodeURIComponent(teksKeys(item.standard)[0]||'')}`}><img src={itemEngine.image} alt=""/><div><strong>{itemEngine.label}</strong><p>{item.title||item.standard}</p></div></Link>})}</div>:<p className="cc-muted">No other activities for this standard yet.</p>}
  </section>}
- {boards.length>0&&<div className="cc-board-grid">{boards.map(board=><div key={board.key} className="cc-board-tile cc-frame" style={style}><Link href={board.href}><img src={board.image} alt="" style={board.focus?{objectPosition:board.focus}:undefined}/></Link><strong>{board.name}</strong><Link className="cc-link" href={board.href}>{board.button}</Link>{board.also&&<Link className="cc-link" href={board.also}>Foundations track</Link>}</div>)}</div>}
+ {boards.length>0&&<div className="cc-board-grid">{boards.map(board=><div key={board.key} className="cc-board-tile cc-frame" style={style}><Link href={board.href}><img src={board.image} alt="" style={board.focus?{objectPosition:board.focus}:undefined}/></Link><strong>{board.name}</strong><Link className="cc-link" href={board.href}>{board.button}</Link>{board.also&&<Link className="cc-link" href={board.also}>{board.alsoLabel||'Open'}</Link>}</div>)}</div>}
  <div className="cc-row cc-between" style={{marginTop:20}}><Link className="cc-link" href={`/teacher/roster/${cls.id}`}>Class code & roster</Link><button className="cc-btn quiet" onClick={()=>onRewards(cls.id)}>Give crystals & rewards</button></div>
  </>}
  <dialog ref={dialog}><div className="cc-row cc-between"><h2>{progressFilter==='all'?'Activity progress':progressFilter}</h2><button className="cc-btn secondary" onClick={()=>dialog.current?.close()}>Close</button></div>{applicable.filter(s=>progressFilter==='all'||statusFor(s)===progressFilter).map(s=><div className="cc-person" key={s.id}><div className="cc-avatar">{s.first_name[0]}</div><div><strong>{s.first_name}</strong><p>{statusFor(s)}</p></div><Link className="cc-link" href={`/teacher/students/${s.id}`}>View student</Link></div>)}</dialog>{children}
