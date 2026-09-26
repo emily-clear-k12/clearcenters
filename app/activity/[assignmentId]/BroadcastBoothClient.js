@@ -2,7 +2,13 @@
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import "./broadcast-booth.css";
-import { CLIP_CAP_SEC, MIN_CLIP_SEC } from "../../../lib/cases/broadcast-booth/catalog";
+import {
+  CLIP_CAP_SEC,
+  MIN_CLIP_SEC,
+  BRAINSTORM_MIN_EXPLAIN,
+  normalizeBrainstormMap,
+  brainstormMeetsMinimum,
+} from "../../../lib/cases/broadcast-booth/catalog";
 
 function emptyBeat() {
   return {
@@ -34,6 +40,10 @@ function firstOpenBeatIndex(beats, beatDefs) {
   return beatDefs.length;
 }
 
+function placementKey(beatId, chipId, idx) {
+  return `${beatId}::${chipId}::${idx}`;
+}
+
 export default function BroadcastBoothClient({
   assignmentId,
   publicCase,
@@ -47,26 +57,48 @@ export default function BroadcastBoothClient({
     return list.length ? list : [];
   }, [publicCase]);
 
+  const brainstormMin = (publicCase && publicCase.brainstormMin) || BRAINSTORM_MIN_EXPLAIN;
+  const stimulusChips = useMemo(
+    () => (publicCase && Array.isArray(publicCase.brainstormChips) ? publicCase.brainstormChips : []),
+    [publicCase]
+  );
+  const beatStems = useMemo(
+    () => (publicCase && publicCase.beatStems && typeof publicCase.beatStems === "object" ? publicCase.beatStems : {}),
+    [publicCase]
+  );
+  const topicLabel = (publicCase && (publicCase.topic || publicCase.title)) || "Topic";
+
   const clipCap = (publicCase && publicCase.clipCapSec) || CLIP_CAP_SEC;
   const minClip = (publicCase && publicCase.minClipSec) || MIN_CLIP_SEC;
 
   const [view, setView] = useState(() => {
     if (alreadySubmitted) return "done";
-    if (existingData && existingData.stimulusReady) {
+    if (existingData && existingData.brainstormReady && existingData.stimulusReady) {
       const defs = beatDefs.length ? beatDefs : [{ id: "hook" }];
       const beats0 = hydrateBeats(existingData, defs);
       const idx = firstOpenBeatIndex(beats0, defs);
       if (idx >= defs.length) return "playback";
       return "beat";
     }
+    if (existingData && existingData.stimulusReady) return "brainstorm";
     if (publicCase && publicCase.cover) return "cover";
     return "stimulus";
   });
 
   const [stimulusReady, setStimulusReady] = useState(!!(existingData && existingData.stimulusReady));
+  const [brainstormReady, setBrainstormReady] = useState(!!(existingData && existingData.brainstormReady));
+  const [brainstormMap, setBrainstormMap] = useState(() =>
+    normalizeBrainstormMap(existingData && existingData.brainstormMap, beatDefs)
+  );
+  const [selectedBubble, setSelectedBubble] = useState(() => {
+    const required = (brainstormMin && brainstormMin.requiredBeatIds) || ["big_idea", "show_me"];
+    return required[0] || (beatDefs[0] && beatDefs[0].id) || "big_idea";
+  });
+  const [dragChip, setDragChip] = useState(null);
+
   const [beats, setBeats] = useState(() => hydrateBeats(existingData, beatDefs));
   const [beatIndex, setBeatIndex] = useState(() => {
-    if (!existingData || !existingData.stimulusReady) return 0;
+    if (!existingData || !existingData.stimulusReady || !existingData.brainstormReady) return 0;
     const hydrated = hydrateBeats(existingData, beatDefs);
     const last = beatDefs.length > 0 ? beatDefs.length - 1 : 0;
     return Math.min(
@@ -90,6 +122,17 @@ export default function BroadcastBoothClient({
   const recordTimer = useRef(null);
   const dirty = useRef(false);
   const saveTimer = useRef(null);
+  const brainstormMapRef = useRef(brainstormMap);
+  const brainstormReadyRef = useRef(brainstormReady);
+  const stimulusReadyRef = useRef(stimulusReady);
+  const beatsRef = useRef(beats);
+  const beatIndexRef = useRef(beatIndex);
+
+  useEffect(() => { brainstormMapRef.current = brainstormMap; }, [brainstormMap]);
+  useEffect(() => { brainstormReadyRef.current = brainstormReady; }, [brainstormReady]);
+  useEffect(() => { stimulusReadyRef.current = stimulusReady; }, [stimulusReady]);
+  useEffect(() => { beatsRef.current = beats; }, [beats]);
+  useEffect(() => { beatIndexRef.current = beatIndex; }, [beatIndex]);
 
   useEffect(() => {
     if (!beatDefs.length) return;
@@ -100,6 +143,7 @@ export default function BroadcastBoothClient({
       }
       return next;
     });
+    setBrainstormMap((prev) => normalizeBrainstormMap(prev, beatDefs));
   }, [beatDefs]);
 
   useEffect(() => {
@@ -113,10 +157,16 @@ export default function BroadcastBoothClient({
   const currentSlot = currentBeat ? beats[currentBeat.id] || emptyBeat() : emptyBeat();
   const doneCount = beatDefs.filter((b) => beats[b.id] && beats[b.id].status === "done" && beats[b.id].audioDataUrl).length;
   const allDone = beatDefs.length > 0 && doneCount >= beatDefs.length;
+  const mapMeetsMin = brainstormMeetsMinimum(brainstormMap, publicCase, beatDefs);
+  const emptyHint = (brainstormMin && brainstormMin.emptyHint) || BRAINSTORM_MIN_EXPLAIN.emptyHint;
+  const activePlanChips = currentBeat && Array.isArray(brainstormMap[currentBeat.id])
+    ? brainstormMap[currentBeat.id]
+    : [];
 
-  async function persist(kind) {
+  async function persist(kind, overrides) {
     setSaving(true);
     setStatus(kind === "turnin" ? "Submitting..." : "");
+    const o = overrides || {};
     try {
       const res = await fetch("/api/broadcast-booth/submit", {
         method: "POST",
@@ -124,9 +174,11 @@ export default function BroadcastBoothClient({
         body: JSON.stringify({
           assignmentId,
           kind,
-          stimulusReady,
-          currentBeatIndex: beatIndex,
-          beats,
+          stimulusReady: o.stimulusReady !== undefined ? o.stimulusReady : stimulusReadyRef.current,
+          brainstormReady: o.brainstormReady !== undefined ? o.brainstormReady : brainstormReadyRef.current,
+          brainstormMap: o.brainstormMap !== undefined ? o.brainstormMap : brainstormMapRef.current,
+          currentBeatIndex: o.currentBeatIndex !== undefined ? o.currentBeatIndex : beatIndexRef.current,
+          beats: o.beats !== undefined ? o.beats : beatsRef.current,
         }),
       });
       const data = await res.json().catch(() => ({}));
@@ -148,7 +200,6 @@ export default function BroadcastBoothClient({
     }, 900);
   }
 
-
   function speakStimulus() {
     if (typeof window === "undefined" || !window.speechSynthesis) {
       setStatus("Read aloud is not available on this device.");
@@ -167,7 +218,76 @@ export default function BroadcastBoothClient({
   }
 
   function markReady() {
+    stimulusReadyRef.current = true;
     setStimulusReady(true);
+    setView("brainstorm");
+    dirty.current = true;
+    scheduleSave();
+  }
+
+  function addChipToBubble(beatId, chip) {
+    if (!beatId || !chip || !chip.label || submitted) return;
+    setBrainstormMap((prev) => {
+      const list = Array.isArray(prev[beatId]) ? prev[beatId] : [];
+      if (list.length >= 8) return prev;
+      // Avoid exact duplicate of same chip id on same bubble
+      if (list.some((c) => c.id === chip.id)) return prev;
+      return {
+        ...prev,
+        [beatId]: [...list, { id: chip.id, label: chip.label, source: chip.source || "stimulus" }],
+      };
+    });
+    brainstormReadyRef.current = false;
+    setBrainstormReady(false);
+    dirty.current = true;
+    scheduleSave();
+  }
+
+  function removeChipFromBubble(beatId, index) {
+    if (submitted) return;
+    setBrainstormMap((prev) => {
+      const list = Array.isArray(prev[beatId]) ? [...prev[beatId]] : [];
+      if (index < 0 || index >= list.length) return prev;
+      list.splice(index, 1);
+      return { ...prev, [beatId]: list };
+    });
+    brainstormReadyRef.current = false;
+    setBrainstormReady(false);
+    dirty.current = true;
+    scheduleSave();
+  }
+
+  function moveChip(fromBeatId, fromIndex, toBeatId) {
+    if (!fromBeatId || !toBeatId || fromBeatId === toBeatId || submitted) return;
+    setBrainstormMap((prev) => {
+      const fromList = Array.isArray(prev[fromBeatId]) ? [...prev[fromBeatId]] : [];
+      if (fromIndex < 0 || fromIndex >= fromList.length) return prev;
+      const [chip] = fromList.splice(fromIndex, 1);
+      const toList = Array.isArray(prev[toBeatId]) ? [...prev[toBeatId]] : [];
+      if (toList.length >= 8) return prev;
+      if (toList.some((c) => c.id === chip.id)) {
+        return { ...prev, [fromBeatId]: fromList };
+      }
+      return {
+        ...prev,
+        [fromBeatId]: fromList,
+        [toBeatId]: [...toList, chip],
+      };
+    });
+    brainstormReadyRef.current = false;
+    setBrainstormReady(false);
+    dirty.current = true;
+    scheduleSave();
+  }
+
+  function finishBrainstorm() {
+    if (!mapMeetsMin) {
+      setStatus(emptyHint);
+      return;
+    }
+    brainstormReadyRef.current = true;
+    brainstormMapRef.current = brainstormMap;
+    setBrainstormReady(true);
     setView("beat");
     setBeatIndex(0);
     dirty.current = true;
@@ -179,6 +299,11 @@ export default function BroadcastBoothClient({
     setShortClipWarn(false);
     if (!stimulusReady) {
       setMicError("Finish the field notes and tap I'm ready before recording.");
+      return;
+    }
+    if (!brainstormReady || !mapMeetsMin) {
+      setMicError(emptyHint);
+      setView("brainstorm");
       return;
     }
     if (typeof window === "undefined" || !navigator.mediaDevices || !window.MediaRecorder) {
@@ -318,7 +443,7 @@ export default function BroadcastBoothClient({
   }
 
   function goToBeat(i) {
-    if (submitted || !stimulusReady) return;
+    if (submitted || !stimulusReady || !brainstormReady) return;
     setBeatIndex(i);
     setView("beat");
     setStatus("");
@@ -329,6 +454,11 @@ export default function BroadcastBoothClient({
   async function handleSubmit() {
     if (!allDone) {
       setStatus("Record all " + beatDefs.length + " beats before you submit.");
+      return;
+    }
+    if (!brainstormReady || !mapMeetsMin) {
+      setStatus(emptyHint);
+      setView("brainstorm");
       return;
     }
     const missing = beatDefs.filter(
@@ -348,6 +478,36 @@ export default function BroadcastBoothClient({
     setStatus("Submitted. Your teacher will listen to your broadcast.");
   }
 
+  function onTrayChipClick(chip) {
+    if (!selectedBubble) {
+      setStatus("Tap a bubble on the map first, then tap a chip.");
+      return;
+    }
+    addChipToBubble(selectedBubble, chip);
+    setStatus("");
+  }
+
+  function onBubbleDragOver(e) {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "copy";
+  }
+
+  function onBubbleDrop(e, beatId) {
+    e.preventDefault();
+    if (submitted) return;
+    try {
+      const raw = e.dataTransfer.getData("application/json") || e.dataTransfer.getData("text/plain");
+      const payload = JSON.parse(raw);
+      if (payload && payload.move && payload.fromBeatId != null) {
+        moveChip(payload.fromBeatId, payload.fromIndex, beatId);
+      } else if (payload && payload.label) {
+        addChipToBubble(beatId, payload);
+      }
+    } catch (_) {
+      /* ignore bad drag data */
+    }
+    setDragChip(null);
+  }
 
   if (!publicCase || !beatDefs.length) {
     return (
@@ -364,6 +524,10 @@ export default function BroadcastBoothClient({
 
   const prompt = (config && config.prompt) || publicCase.prompt || "";
   const stim = publicCase.stimulus;
+  const selectedStems = selectedBubble && Array.isArray(beatStems[selectedBubble])
+    ? beatStems[selectedBubble]
+    : [];
+  const requiredSet = new Set((brainstormMin && brainstormMin.requiredBeatIds) || []);
 
   return (
     <div className="bb-root">
@@ -392,7 +556,7 @@ export default function BroadcastBoothClient({
         {view === "stimulus" ? (
           <div className="bb-card">
             <div className="bb-cue">{(stim && stim.title) || "Field notes"}</div>
-            <p className="bb-muted">Read these notes (or tap Read aloud). Recorder stays locked until you are ready.</p>
+            <p className="bb-muted">Read these notes (or tap Read aloud). Next you will plan a circle map — recorder stays locked until then.</p>
             {stim && Array.isArray(stim.bullets) ? (
               <ul className="bb-bullets">
                 {stim.bullets.map((line, i) => (
@@ -411,12 +575,160 @@ export default function BroadcastBoothClient({
               <button type="button" className="bb-btn teal" onClick={markReady}>I&apos;m ready</button>
             </div>
             {!stimulusReady ? (
-              <p className="bb-muted" style={{ marginTop: 10 }}>Recorder is locked until you tap I&apos;m ready.</p>
+              <p className="bb-muted" style={{ marginTop: 10 }}>Recorder is locked until you plan your map and meet the minimum.</p>
             ) : null}
           </div>
         ) : null}
 
-        {(view === "beat" || view === "playback") && stimulusReady ? (
+        {view === "brainstorm" && stimulusReady ? (
+          <div className="bb-card">
+            <div className="bb-cue">Plan your broadcast · circle map</div>
+            <p className="bb-muted">
+              No typing. Tap a bubble, then tap chips to fill it — or drag chips onto bubbles. Tap a chip on a bubble to remove it.
+            </p>
+            {!mapMeetsMin ? (
+              <div className="bb-warn">{emptyHint}</div>
+            ) : (
+              <div className="bb-muted" style={{ marginBottom: 8 }}>Looks good — you can start recording when ready.</div>
+            )}
+
+            <div className="bb-map" aria-label="Brainstorm circle map">
+              <div className="bb-map-center">
+                <div className="bb-map-center-label">Topic</div>
+                <div className="bb-map-center-topic">{topicLabel}</div>
+              </div>
+              {beatDefs.map((b) => {
+                const chips = Array.isArray(brainstormMap[b.id]) ? brainstormMap[b.id] : [];
+                const isSel = selectedBubble === b.id;
+                const isReq = requiredSet.has(b.id);
+                const filled = chips.length > 0;
+                return (
+                  <button
+                    key={b.id}
+                    type="button"
+                    className={
+                      "bb-bubble bb-bubble--" + b.id +
+                      (isSel ? " is-selected" : "") +
+                      (filled ? " is-filled" : "") +
+                      (isReq ? " is-required" : "")
+                    }
+                    onClick={() => setSelectedBubble(b.id)}
+                    onDragOver={onBubbleDragOver}
+                    onDrop={(e) => onBubbleDrop(e, b.id)}
+                    aria-pressed={isSel}
+                  >
+                    <div className="bb-bubble-title">
+                      {b.label}{isReq ? " *" : ""}
+                    </div>
+                    <div className="bb-bubble-chips">
+                      {chips.length === 0 ? (
+                        <span className="bb-bubble-empty">Tap chips →</span>
+                      ) : (
+                        chips.map((c, idx) => (
+                          <span
+                            key={placementKey(b.id, c.id, idx)}
+                            className="bb-chip on-map"
+                            draggable={!submitted}
+                            onDragStart={(e) => {
+                              e.stopPropagation();
+                              const payload = JSON.stringify({ move: true, fromBeatId: b.id, fromIndex: idx, ...c });
+                              e.dataTransfer.setData("application/json", payload);
+                              e.dataTransfer.setData("text/plain", payload);
+                              setDragChip(c);
+                            }}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              removeChipFromBubble(b.id, idx);
+                            }}
+                            title="Tap to remove · drag to move"
+                          >
+                            {c.label} ×
+                          </span>
+                        ))
+                      )}
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+
+            <div className="bb-tray">
+              <div className="bb-tray-label">
+                Idea chips{selectedBubble ? ` → ${beatDefs.find((x) => x.id === selectedBubble)?.label || ""}` : ""}
+              </div>
+              <div className="bb-chip-row">
+                {stimulusChips.map((chip) => (
+                  <button
+                    key={chip.id}
+                    type="button"
+                    className="bb-chip"
+                    disabled={submitted}
+                    draggable={!submitted}
+                    onDragStart={(e) => {
+                      const payload = JSON.stringify(chip);
+                      e.dataTransfer.setData("application/json", payload);
+                      e.dataTransfer.setData("text/plain", payload);
+                      setDragChip(chip);
+                    }}
+                    onClick={() => onTrayChipClick(chip)}
+                  >
+                    {chip.label}
+                  </button>
+                ))}
+              </div>
+              {selectedStems.length ? (
+                <>
+                  <div className="bb-tray-label" style={{ marginTop: 12 }}>
+                    Pick-stems for {beatDefs.find((x) => x.id === selectedBubble)?.label || "this beat"}
+                  </div>
+                  <div className="bb-chip-row">
+                    {selectedStems.map((chip) => (
+                      <button
+                        key={chip.id}
+                        type="button"
+                        className="bb-chip stem"
+                        disabled={submitted}
+                        draggable={!submitted}
+                        onDragStart={(e) => {
+                          const payload = JSON.stringify({ ...chip, source: "stem" });
+                          e.dataTransfer.setData("application/json", payload);
+                          e.dataTransfer.setData("text/plain", payload);
+                          setDragChip(chip);
+                        }}
+                        onClick={() => onTrayChipClick({ ...chip, source: "stem" })}
+                      >
+                        {chip.label}
+                      </button>
+                    ))}
+                  </div>
+                </>
+              ) : null}
+            </div>
+
+            <div className="bb-row" style={{ marginTop: 14 }}>
+              <button
+                type="button"
+                className="bb-btn teal"
+                onClick={finishBrainstorm}
+                disabled={!mapMeetsMin || submitted}
+              >
+                Map ready · Start recording
+              </button>
+              <button
+                type="button"
+                className="bb-btn secondary"
+                onClick={() => setView("stimulus")}
+                disabled={submitted}
+              >
+                Back to notes
+              </button>
+            </div>
+            {status ? <p className="bb-muted" style={{ marginTop: 10 }}>{status}</p> : null}
+            {saving ? <p className="bb-muted">Saving...</p> : null}
+          </div>
+        ) : null}
+
+        {(view === "beat" || view === "playback") && stimulusReady && brainstormReady ? (
           <div className="bb-beat-rail" role="list">
             {beatDefs.map((b, i) => {
               const slot = beats[b.id];
@@ -438,10 +750,24 @@ export default function BroadcastBoothClient({
           </div>
         ) : null}
 
-        {view === "beat" && currentBeat ? (
+        {view === "beat" && currentBeat && brainstormReady ? (
           <div className="bb-card">
             <div className="bb-cue">Beat {beatIndex + 1}: {currentBeat.label}</div>
             <p className="bb-muted">{currentBeat.cue}</p>
+
+            {activePlanChips.length ? (
+              <div className="bb-plan-cue" aria-label="Your plan for this beat">
+                <div className="bb-plan-cue-label">Your plan (silent cue)</div>
+                <div className="bb-chip-row">
+                  {activePlanChips.map((c, idx) => (
+                    <span key={placementKey(currentBeat.id, c.id, idx)} className="bb-chip on-cue">{c.label}</span>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <p className="bb-muted" style={{ marginTop: 6 }}>No chips on this bubble — you can still record.</p>
+            )}
+
             <p className="bb-muted" style={{ marginTop: 6 }}>Up to {clipCap} seconds. Re-record anytime before you submit.</p>
 
             {micError ? <div className="bb-err">{micError}</div> : null}
@@ -454,7 +780,12 @@ export default function BroadcastBoothClient({
 
             <div className="bb-row" style={{ marginTop: 12 }}>
               {!recording ? (
-                <button type="button" className="bb-btn" onClick={startRecording} disabled={!stimulusReady || submitted}>
+                <button
+                  type="button"
+                  className="bb-btn"
+                  onClick={startRecording}
+                  disabled={!stimulusReady || !brainstormReady || submitted}
+                >
                   {currentSlot.audioDataUrl ? "Record again" : "Record"}
                 </button>
               ) : (
@@ -472,6 +803,14 @@ export default function BroadcastBoothClient({
                   onChange={(e) => onStillUpload(e.target.files && e.target.files[0])}
                 />
               </label>
+              <button
+                type="button"
+                className="bb-btn secondary"
+                onClick={() => { setView("brainstorm"); setStatus(""); }}
+                disabled={recording || submitted}
+              >
+                Edit map
+              </button>
             </div>
 
             {currentSlot.audioDataUrl ? <audio className="bb-audio" controls src={currentSlot.audioDataUrl} /> : null}
@@ -503,11 +842,19 @@ export default function BroadcastBoothClient({
             <p className="bb-muted">Listen to your whole broadcast. Re-record any beat, then submit.</p>
             {beatDefs.map((b, i) => {
               const slot = beats[b.id] || emptyBeat();
+              const plan = Array.isArray(brainstormMap[b.id]) ? brainstormMap[b.id] : [];
               return (
                 <div key={b.id} style={{ marginTop: 14, paddingTop: 12, borderTop: "1px solid rgba(140,82,242,.15)" }}>
                   <div style={{ fontWeight: 700, marginBottom: 4 }}>
                     {i + 1}. {b.label}{slot.audioDataUrl ? "" : " — missing"}
                   </div>
+                  {plan.length ? (
+                    <div className="bb-chip-row" style={{ marginBottom: 6 }}>
+                      {plan.map((c, idx) => (
+                        <span key={placementKey(b.id, c.id, idx)} className="bb-chip on-cue">{c.label}</span>
+                      ))}
+                    </div>
+                  ) : null}
                   {slot.audioDataUrl ? <audio className="bb-audio" controls src={slot.audioDataUrl} /> : null}
                   {slot.stillDataUrl ? <img className="bb-still" src={slot.stillDataUrl} alt="" /> : null}
                   <button type="button" className="bb-btn secondary" style={{ marginTop: 8 }} onClick={() => goToBeat(i)} disabled={submitted}>
@@ -532,9 +879,17 @@ export default function BroadcastBoothClient({
             {beatDefs.map((b) => {
               const slot = beats[b.id];
               if (!slot || !slot.audioDataUrl) return null;
+              const plan = Array.isArray(brainstormMap[b.id]) ? brainstormMap[b.id] : [];
               return (
                 <div key={b.id} style={{ marginTop: 10, textAlign: "left" }}>
                   <div style={{ fontWeight: 700, fontSize: 13 }}>{b.label}</div>
+                  {plan.length ? (
+                    <div className="bb-chip-row" style={{ margin: "4px 0 6px" }}>
+                      {plan.map((c, idx) => (
+                        <span key={placementKey(b.id, c.id, idx)} className="bb-chip on-cue">{c.label}</span>
+                      ))}
+                    </div>
+                  ) : null}
                   <audio className="bb-audio" controls src={slot.audioDataUrl} />
                 </div>
               );

@@ -407,6 +407,17 @@ export default function TeacherGradeDetailPage() {
                     Needs a look (keyword stub): {(broadcastData.safety.hits || []).join(", ") || "flagged"}
                   </div>
                 ) : null}
+                {broadcastData.brainstormMap ? (
+                  <div style={{ marginBottom: 14, padding: 12, background: COLORS.canvas, borderRadius: 12 }}>
+                    <div style={{ fontWeight: 700, fontSize: 12, color: COLORS.textMuted, marginBottom: 8, textTransform: "uppercase", letterSpacing: 0.4 }}>What they planned</div>
+                    {["hook","big_idea","show_me","sign_off","where","what_noticed","why_matters","side_a","side_b","what_i_think"].filter((id) => Array.isArray(broadcastData.brainstormMap[id]) && broadcastData.brainstormMap[id].length).map((id) => (
+                      <div key={"plan-"+id} style={{ marginBottom: 6, fontSize: 13 }}>
+                        <span style={{ fontWeight: 700, textTransform: "capitalize" }}>{id.replace(/_/g, " ")}: </span>
+                        {(broadcastData.brainstormMap[id] || []).map((c) => c && c.label).filter(Boolean).join(" · ") || "—"}
+                      </div>
+                    ))}
+                  </div>
+                ) : null}
                 {["hook","big_idea","show_me","sign_off","where","what_noticed","why_matters","side_a","side_b","what_i_think"].filter((id) => broadcastData.beats && broadcastData.beats[id]).map((id) => {
                   const s = broadcastData.beats[id] || {};
                   const label = id.replace(/_/g, " ");

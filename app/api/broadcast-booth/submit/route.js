@@ -7,6 +7,8 @@ import {
   labeledBeats,
   CLIP_CAP_SEC,
   MIN_CLIP_SEC,
+  normalizeBrainstormMap,
+  brainstormMeetsMinimum,
 } from "../../../../lib/cases/broadcast-booth/catalog";
 import {
   emptyBeatSlot,
@@ -98,6 +100,16 @@ export async function POST(request) {
     beatDefs
   );
   const stimulusReady = body.stimulusReady !== undefined ? !!body.stimulusReady : !!prior.stimulusReady;
+  const brainstormMap = normalizeBrainstormMap(
+    body.brainstormMap !== undefined ? body.brainstormMap : prior.brainstormMap,
+    beatDefs
+  );
+  const mapOk = brainstormMeetsMinimum(brainstormMap, caseRow || { segmentType: config.segmentType }, beatDefs);
+  let brainstormReady =
+    body.brainstormReady !== undefined ? !!body.brainstormReady : !!prior.brainstormReady;
+  // Never mark ready if map no longer meets minimum
+  if (!mapOk) brainstormReady = false;
+
   const currentBeatIndex = Math.max(
     0,
     Math.min(beatDefs.length - 1, Number(body.currentBeatIndex ?? prior.currentBeatIndex ?? 0) || 0)
@@ -108,6 +120,8 @@ export async function POST(request) {
     segmentType: config.segmentType,
     config,
     stimulusReady,
+    brainstormReady,
+    brainstormMap,
     currentBeatIndex,
     beats,
     savedAt: new Date().toISOString(),
@@ -137,6 +151,12 @@ export async function POST(request) {
       return NextResponse.json({
         need: "stimulus",
         message: "Read the field notes and tap I’m ready before you submit.",
+      });
+    }
+    if (!brainstormReady || !mapOk) {
+      return NextResponse.json({
+        need: "brainstorm",
+        message: "Add ideas to Big idea and Show me before you submit.",
       });
     }
     if (!summary.complete) {
