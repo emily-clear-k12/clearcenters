@@ -32,7 +32,7 @@ function walk(dir, acc = []) {
     const abs = path.join(dir, name);
     const stat = fs.statSync(abs);
     if (stat.isDirectory()) walk(abs, acc);
-    else if (/\.(js|json)$/.test(name) && !/^index\.(public|server)\.js$/.test(name) && name !== "index.js") acc.push(abs);
+    else if (/\.(js|json)$/.test(name) && !/^index\.(public|server)\.js$/.test(name) && !(name === "index.js" && !abs.includes(`${path.sep}relay-station${path.sep}`))) acc.push(abs);
   }
   return acc;
 }
@@ -58,21 +58,24 @@ function engineFor(file) {
 }
 
 function isCaseId(value, fromId) {
-  if (!/\d/.test(value) || value.length > 80 || value.includes("_")) return false;
+  if (!value || value.length > 80 || /[\s()]/.test(value)) return false;
+  if (/^(MS|RS)\./.test(value)) return true;
+  if (value.includes("_") || !/\d/.test(value)) return false;
   if (!fromId) return true;
   if (/-\d+$/.test(value)) return false;
-  return /-(CL|EX|AD|SC|SD|GC|FR|MM|SL|XP|MS|WI|TH)$/i.test(value) || /\.FR\./.test(value) || /^(ELA|ELAR|MA|SS|SCI|FR)\./.test(value);
+  return /-(CL|EX|AD|SC|SD|GC|FR|MM|SL|XP|MS|WI|TH)$/i.test(value) || /\.FR\./.test(value) || /^(ELA|ELAR|MA|SS|SCI|FR|RS)\./.test(value);
 }
 
 function recordsFromFile(file) {
   const text = fs.readFileSync(file, "utf8");
   const { engine, kind } = engineFor(file);
   const found = [];
-  const re = /(?:\bstandard\b|"standard"|\bid\b)\s*[:=]\s*["']([^"']+)["']/g;
+  const re = /(?:"(?:standard|id|code)"|(?:standard|id|code))\s*[:=]\s*(?:"([^"]+)"|'([^']+)')/g;
   let match;
   while ((match = re.exec(text))) {
-    const standard = match[1];
-    const fromId = /^\s*id\b/i.test(match[0]) || match[0].trim().startsWith("id");
+    const standard = match[1] || match[2];
+    const kind = (match[0].match(/"?(standard|id|code)"?/i) || [])[1] || "";
+    const fromId = kind.toLowerCase() === "id" || kind.toLowerCase() === "code";
     if (!isCaseId(standard, fromId)) continue;
     const window = text.slice(Math.max(0, match.index - 80), match.index + 500);
     const title = field(window, ["title"]);
@@ -107,7 +110,7 @@ function sqlRows() {
     if (!/insert\s+into\s+cases/i.test(text)) continue;
     let match;
     while ((match = tuple.exec(text))) {
-      if (!/\d/.test(match[1])) continue;
+      if (!/\d/.test(match[1]) && !/^(MS|RS)\./.test(match[1])) continue;
       rows.set(match[1], {
         standard: match[1],
         title: match[2].replace(/''/g, "'"),
@@ -215,18 +218,20 @@ const inserts = missingSql
   .filter((row) => row.engineKey && row.grade && row.subject && row.title)
   .sort((a, b) => a.engine.localeCompare(b.engine) || a.standard.localeCompare(b.standard));
 
-const sqlLines = [];
-sqlLines.push("-- Banks that are on disk but had no cases row.");
-sqlLines.push("-- Safe to run more than once. Does not change a row that already exists.");
-sqlLines.push("INSERT INTO cases (standard, title, engine, grade, subject, unit) VALUES");
-sqlLines.push(inserts.map((row) => {
-  const unit = row.engine === "Frequency Rush" && row.standard.includes(".")
-    ? row.standard.split(".").slice(0, -1).join(".")
-    : "";
-  const title = row.engine === "Frequency Rush" && !/^Frequency Rush:/i.test(row.title) ? `Frequency Rush: ${row.title}` : row.title;
-  return `  (${sqlString(row.standard)}, ${sqlString(title)}, ${sqlString(row.engineKey)}, ${row.grade}, ${sqlString(row.subject)}, ${unit ? sqlString(unit) : "NULL"})`;
-}).join(",\n"));
-sqlLines.push("ON CONFLICT (standard) DO NOTHING;");
-sqlLines.push("");
-fs.writeFileSync(path.join(root, "add_content_library_cases.sql"), sqlLines.join("\n"));
+if (inserts.length) {
+  const sqlLines = [];
+  sqlLines.push("-- Banks that are on disk but had no cases row.");
+  sqlLines.push("-- Safe to run more than once. Does not change a row that already exists.");
+  sqlLines.push("INSERT INTO cases (standard, title, engine, grade, subject, unit) VALUES");
+  sqlLines.push(inserts.map((row) => {
+    const unit = row.engine === "Frequency Rush" && row.standard.includes(".")
+      ? row.standard.split(".").slice(0, -1).join(".")
+      : "";
+    const title = row.engine === "Frequency Rush" && !/^Frequency Rush:/i.test(row.title) ? `Frequency Rush: ${row.title}` : row.title;
+    return `  (${sqlString(row.standard)}, ${sqlString(title)}, ${sqlString(row.engineKey)}, ${row.grade}, ${sqlString(row.subject)}, ${unit ? sqlString(unit) : "NULL"})`;
+  }).join(",\n"));
+  sqlLines.push("ON CONFLICT (standard) DO NOTHING;");
+  sqlLines.push("");
+  fs.writeFileSync(path.join(root, "add_content_library_cases.sql"), sqlLines.join("\n"));
+}
 console.log(`Wrote ${code.size} banks. Missing SQL: ${missingSql.length}. Insert rows: ${inserts.length}. SQL without a file: ${missingCode.length}.`);
