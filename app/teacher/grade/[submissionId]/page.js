@@ -396,12 +396,58 @@ export default function TeacherGradeDetailPage() {
                 <div style={{ fontWeight: 700, fontSize: 12.5, color: COLORS.textMuted, marginBottom: 10, textTransform: "uppercase", letterSpacing: 0.5 }}>Maker Studio pieces</div>
                 {makerData.version === 2 ? (
                   <>
-                    {Object.entries(makerData.modes || {}).map(([modeId, slot]) => (
-                      <div key={modeId} style={{ marginBottom: 14, background: COLORS.canvas, borderRadius: 12, padding: 12 }}>
-                        <div style={{ fontWeight: 700, fontSize: 13, marginBottom: 6, textTransform: "capitalize" }}>{modeId.replace(/_/g, " ")} · {slot?.status || "empty"}</div>
-                        <div style={{ whiteSpace: "pre-wrap", fontSize: 14, lineHeight: 1.5 }}>{(slot && slot.text) || "(empty)"}</div>
-                      </div>
-                    ))}
+                    {Object.entries(makerData.modes || {}).map(([modeId, slot]) => {
+                      const s = slot || {};
+                      return (
+                        <div key={modeId} style={{ marginBottom: 14, background: COLORS.canvas, borderRadius: 12, padding: 12 }}>
+                          <div style={{ fontWeight: 700, fontSize: 13, marginBottom: 6, textTransform: "capitalize" }}>{modeId.replace(/_/g, " ")} · {s.status || "empty"}</div>
+                          {modeId === "write" ? (
+                            <div style={{ whiteSpace: "pre-wrap", fontSize: 14, lineHeight: 1.5 }}>{s.text || "(empty)"}</div>
+                          ) : null}
+                          {modeId === "sketch" ? (
+                            s.imageDataUrl ? <img src={s.imageDataUrl} alt="Student sketch" style={{ maxWidth: "100%", borderRadius: 10, border: `1px solid ${COLORS.border}` }} /> : <div style={{ color: COLORS.textMuted, fontSize: 13 }}>(no drawing)</div>
+                          ) : null}
+                          {modeId === "diagram" ? (
+                            <>
+                              {s.imageDataUrl ? <img src={s.imageDataUrl} alt="Student diagram" style={{ maxWidth: "100%", borderRadius: 10, border: `1px solid ${COLORS.border}`, marginBottom: 8 }} /> : null}
+                              <div style={{ whiteSpace: "pre-wrap", fontSize: 14, lineHeight: 1.5 }}>{s.caption || (s.imageDataUrl ? "" : "(empty)")}</div>
+                            </>
+                          ) : null}
+                          {modeId === "poster" ? (
+                            <>
+                              {s.title ? <div style={{ fontWeight: 700, fontSize: 16, marginBottom: 4 }}>{s.title}</div> : null}
+                              {s.caption ? <div style={{ fontSize: 13.5, color: COLORS.textMuted, marginBottom: 8 }}>{s.caption}</div> : null}
+                              {s.imageDataUrl ? <img src={s.imageDataUrl} alt="Poster art" style={{ maxWidth: "100%", borderRadius: 10, border: `1px solid ${COLORS.border}` }} /> : <div style={{ color: COLORS.textMuted, fontSize: 13 }}>(no picture)</div>}
+                            </>
+                          ) : null}
+                          {modeId === "comic" ? (
+                            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: 10 }}>
+                              {(Array.isArray(s.panels) ? s.panels : []).map((panel, idx) => (
+                                <div key={idx} style={{ background: COLORS.white, borderRadius: 10, padding: 8, border: `1px solid ${COLORS.border}` }}>
+                                  <div style={{ fontSize: 11, fontWeight: 700, color: COLORS.textMuted, marginBottom: 4 }}>Panel {idx + 1}</div>
+                                  {panel && panel.imageDataUrl ? <img src={panel.imageDataUrl} alt={`Panel ${idx + 1}`} style={{ width: "100%", borderRadius: 8, marginBottom: 6 }} /> : null}
+                                  <div style={{ fontSize: 13, lineHeight: 1.4 }}>{(panel && panel.text) || "—"}</div>
+                                </div>
+                              ))}
+                              {!(Array.isArray(s.panels) && s.panels.length) ? <div style={{ color: COLORS.textMuted, fontSize: 13 }}>(no panels)</div> : null}
+                            </div>
+                          ) : null}
+                          {modeId === "voice" ? (
+                            s.audioDataUrl ? (
+                              <div>
+                                <audio controls src={s.audioDataUrl} style={{ width: "100%" }} />
+                                {s.durationSec ? <div style={{ fontSize: 12, color: COLORS.textMuted, marginTop: 4 }}>~{Math.round(s.durationSec)}s</div> : null}
+                              </div>
+                            ) : (
+                              <div style={{ color: COLORS.textMuted, fontSize: 13 }}>(no audio)</div>
+                            )
+                          ) : null}
+                          {!["write", "sketch", "diagram", "poster", "comic", "voice"].includes(modeId) ? (
+                            <div style={{ whiteSpace: "pre-wrap", fontSize: 14, lineHeight: 1.5 }}>{s.text || "(empty)"}</div>
+                          ) : null}
+                        </div>
+                      );
+                    })}
                     {!Object.keys(makerData.modes || {}).length && (
                       <div style={{ whiteSpace: "pre-wrap", fontSize: 14, lineHeight: 1.5 }}>{submission.attempt1 || "(no pieces)"}</div>
                     )}

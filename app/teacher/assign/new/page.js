@@ -372,7 +372,7 @@ function NewAssignmentContent() {
   // Students can no longer turn the game's own timer on or off.
   const [questionSeconds, setQuestionSeconds] = useState(0);
 
-  // Maker Studio — quieter Assign: menus + prompt + finish N + journal. Modes come from menus (Wave 0 = Write only).
+  // Maker Studio — quieter Assign: menus + prompt + finish N + journal. Modes come from menus (Wave 1 live modes).
   const [makerPrompt, setMakerPrompt] = useState("Write about today's idea in your own words. What do you understand, and what makes you think that?");
   const [makerFinishN, setMakerFinishN] = useState(1);
   const [makerJournalOnRelease, setMakerJournalOnRelease] = useState(true);
@@ -843,9 +843,25 @@ function NewAssignmentContent() {
                         style={{ width: "100%", border: "2px solid #ECEAF5", borderRadius: 10, padding: 10, fontSize: 13, boxSizing: "border-box", marginBottom: 10, fontFamily: "inherit" }}
                         placeholder="What should students make / write about?"
                       />
+                      <div style={{ marginBottom: 10, fontSize: 12, color: COLORS.textMuted }}>
+                        Modes in this menu:{" "}
+                        <strong style={{ color: COLORS.textDark }}>
+                          {(Array.isArray(makerEnabledModes) ? makerEnabledModes : ["write"]).join(", ")}
+                        </strong>
+                      </div>
                       <div style={{ marginBottom: 10, maxWidth: 140 }}>
                         <label style={{ fontSize: 11, fontWeight: 700, color: COLORS.textMuted }}>Finish N</label>
-                        <input type="number" min="1" max="1" value={makerFinishN} onChange={(e) => setMakerFinishN(Math.max(1, Number(e.target.value) || 1))} style={{ width: "100%", border: "2px solid #ECEAF5", borderRadius: 10, padding: "7px 10px", fontSize: 13, boxSizing: "border-box", marginTop: 3 }} />
+                        <input
+                          type="number"
+                          min="1"
+                          max={Math.max(1, (Array.isArray(makerEnabledModes) ? makerEnabledModes : ["write"]).length)}
+                          value={makerFinishN}
+                          onChange={(e) => {
+                            const cap = Math.max(1, (Array.isArray(makerEnabledModes) ? makerEnabledModes : ["write"]).length);
+                            setMakerFinishN(Math.min(cap, Math.max(1, Number(e.target.value) || 1)));
+                          }}
+                          style={{ width: "100%", border: "2px solid #ECEAF5", borderRadius: 10, padding: "7px 10px", fontSize: 13, boxSizing: "border-box", marginTop: 3 }}
+                        />
                       </div>
                       <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, fontWeight: 600, color: COLORS.textDark, cursor: "pointer" }}>
                         <input type="checkbox" checked={makerJournalOnRelease} onChange={(e) => setMakerJournalOnRelease(e.target.checked)} />

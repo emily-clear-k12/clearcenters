@@ -107,12 +107,30 @@ export default async function ProgressPage() {
     .map((s) => {
       const caseStandard = s.assignments?.case_standard || null;
       const caseTitle = s.assignments?.cases?.title || caseStandard || "Maker piece";
-      const write = (s.maker_studio_data.modes && s.maker_studio_data.modes.write) || {};
+      const modeSlots = (s.maker_studio_data.modes && typeof s.maker_studio_data.modes === "object")
+        ? s.maker_studio_data.modes
+        : {};
+      const bits = [];
+      Object.entries(modeSlots).forEach(([id, slot]) => {
+        if (!slot || slot.status === "empty") return;
+        if (id === "write" && slot.text) bits.push(slot.text);
+        else if (id === "diagram" && slot.caption) bits.push(slot.caption);
+        else if (id === "poster") {
+          const line = [slot.title, slot.caption].filter(Boolean).join(" — ");
+          if (line) bits.push(line);
+          else if (slot.imageDataUrl) bits.push("(poster)");
+        } else if (id === "comic" && Array.isArray(slot.panels)) {
+          const lines = slot.panels.map((pn) => (pn && pn.text) || "").filter(Boolean);
+          if (lines.length) bits.push(lines.join(" / "));
+          else bits.push("(comic)");
+        } else if (id === "sketch" && slot.imageDataUrl) bits.push("(sketch)");
+        else if (id === "voice" && slot.audioDataUrl) bits.push("(voice note)");
+      });
       return {
         id: s.id,
         caseStandard,
         caseTitle,
-        text: write.text || s.attempt2 || s.attempt1 || "",
+        text: bits.join("\n\n") || s.attempt2 || s.attempt1 || "",
         released: !!s.released,
         grade: s.teacher_grade,
         feedback: s.teacher_feedback || null,

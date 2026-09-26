@@ -7,8 +7,9 @@ import { sanitizeEnabledModes } from "../../../../lib/cases/maker-studio/modes";
 
 function normalizeModes(raw, writeText) {
   const modes = raw && typeof raw === "object" ? { ...raw } : {};
+  // Legacy clients may still send writeText separately.
   if (typeof writeText === "string") {
-    const prev = modes.write || {};
+    const prev = modes.write && typeof modes.write === "object" ? modes.write : {};
     const status =
       prev.status === "done" && writeText.trim()
         ? "done"
@@ -18,13 +19,27 @@ function normalizeModes(raw, writeText) {
             : "in_progress"
           : "empty";
     modes.write = {
+      ...prev,
       status,
       text: writeText,
       updatedAt: new Date().toISOString(),
     };
   }
-  // Drop legacy exhibit fields if a student somehow still has them.
   return modes;
+}
+
+function emptySlotFor(id) {
+  if (id === "write") return { status: "empty", text: "", updatedAt: null };
+  if (id === "sketch") return { status: "empty", imageDataUrl: null, updatedAt: null };
+  if (id === "diagram") return { status: "empty", imageDataUrl: null, caption: "", updatedAt: null };
+  if (id === "poster") {
+    return { status: "empty", title: "", caption: "", imageDataUrl: null, updatedAt: null };
+  }
+  if (id === "comic") return { status: "empty", panels: [], panelCount: 0, updatedAt: null };
+  if (id === "voice") {
+    return { status: "empty", audioDataUrl: null, mimeType: null, durationSec: 0, updatedAt: null };
+  }
+  return { status: "empty", updatedAt: null };
 }
 
 export async function POST(request) {
@@ -49,8 +64,6 @@ export async function POST(request) {
     return NextResponse.json({ error: "That assignment is not yours." }, { status: 403 });
   }
 
-  // Config can come from assignment JSON even if the case file is missing
-  // (teacher-built Quick Maker). Fall back to catalog when present.
   const caseRow = getMakerStudioCase(assignment.case_standard);
   const config = resolveMakerConfig(assignment.case_standard, assignment.maker_studio_config);
   if (!caseRow && !(assignment.maker_studio_config && assignment.maker_studio_config.prompt)) {
@@ -82,7 +95,15 @@ export async function POST(request) {
   const enabled = sanitizeEnabledModes(config.enabledModes);
   const modes = {};
   enabled.forEach((id) => {
-    modes[id] = incomingModes[id] || priorModes[id] || { status: "empty", text: "", updatedAt: null };
+    const incoming = incomingModes[id];
+    const priorSlot = priorModes[id];
+    if (incoming && typeof incoming === "object") {
+      modes[id] = { ...emptySlotFor(id), ...incoming };
+    } else if (priorSlot && typeof priorSlot === "object") {
+      modes[id] = { ...emptySlotFor(id), ...priorSlot };
+    } else {
+      modes[id] = emptySlotFor(id);
+    }
   });
 
   if (kind === "save") {
