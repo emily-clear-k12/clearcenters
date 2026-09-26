@@ -11,6 +11,8 @@ import { getClassificationLabPublicCase } from "../../../lib/cases/classificatio
 import { getExhibitHallPublicCase } from "../../../lib/cases/exhibit-hall/index.public";
 import { getExpeditionStationPublicCase } from "../../../lib/cases/expedition-station/index.public";
 import { getMakerStudioPublicCase } from "../../../lib/cases/maker-studio/index.public";
+import { getBroadcastBoothPublicCase } from "../../../lib/cases/broadcast-booth/index.public";
+import { resolveBroadcastConfig } from "../../../lib/cases/broadcast-booth/catalog";
 import { resolveMakerConfig } from "../../../lib/cases/maker-studio/catalog";
 import { MAKER_MODES } from "../../../lib/cases/maker-studio/modes";
 import { resolveRelayStationLesson } from "../../../lib/relayStationServer";
@@ -28,6 +30,7 @@ import ClassificationLabClient from "./ClassificationLabClient";
 import ExhibitHallClient from "./ExhibitHallClient";
 import ExpeditionStationClient from "./ExpeditionStationClient";
 import MakerStudioClient from "./MakerStudioClient";
+import BroadcastBoothClient from "./BroadcastBoothClient";
 
 export default async function ActivityPage({ params }) {
   const { assignmentId } = params;
@@ -228,7 +231,8 @@ export default async function ActivityPage({ params }) {
   const isExhibitHall = engine === "exhibit_hall";
   const isExpeditionStation = engine === "expedition_station";
   const isMakerStudio = engine === "maker_studio";
-  const caseEntry = isSignalCheck || isMissionMap || isSimulationLab || isAssemblyDeck || isClassificationLab || isExhibitHall || isExpeditionStation || isMakerStudio ? null : getPublicCase(assignment.case_standard);
+  const isBroadcastBooth = engine === "broadcast_booth";
+  const caseEntry = isSignalCheck || isMissionMap || isSimulationLab || isAssemblyDeck || isClassificationLab || isExhibitHall || isExpeditionStation || isMakerStudio || isBroadcastBooth ? null : getPublicCase(assignment.case_standard);
   const signalCheckCase = isSignalCheck ? getSignalCheckPublicCase(assignment.case_standard) : null;
   const missionMapCase = isMissionMap ? getMissionMapPublicCase(assignment.case_standard) : null;
   const simulationLabCase = isSimulationLab ? getSimulationLabPublicCase(assignment.case_standard) : null;
@@ -237,7 +241,8 @@ export default async function ActivityPage({ params }) {
   const exhibitHallCase = isExhibitHall ? getExhibitHallPublicCase(assignment.case_standard) : null;
   const expeditionStationCase = isExpeditionStation ? getExpeditionStationPublicCase(assignment.case_standard) : null;
   const makerStudioCase = isMakerStudio ? getMakerStudioPublicCase(assignment.case_standard) : null;
-  if (!caseEntry && !signalCheckCase && !missionMapCase && !simulationLabCase && !assemblyDeckCase && !classificationLabCase && !exhibitHallCase && !expeditionStationCase && !isMakerStudio) {
+  const broadcastBoothCase = isBroadcastBooth ? getBroadcastBoothPublicCase(assignment.case_standard) : null;
+  if (!caseEntry && !signalCheckCase && !missionMapCase && !simulationLabCase && !assemblyDeckCase && !classificationLabCase && !exhibitHallCase && !expeditionStationCase && !isMakerStudio && !isBroadcastBooth) {
     return (
       <div style={{ minHeight: "100vh", background: "#16243F", display: "flex", alignItems: "center", justifyContent: "center", color: "#FFFFFF", fontFamily: "sans-serif", textAlign: "center", padding: 20 }}>
         <div>
@@ -368,6 +373,36 @@ export default async function ActivityPage({ params }) {
         assignmentId={assignmentId}
         publicCase={pub}
         config={makerConfig}
+        existingData={raw}
+        alreadySubmitted={alreadySubmitted}
+        revisionFeedback={revisionFeedback}
+        samSkin={student.equipped_sam_skin}
+        samNickname={student.sam_nickname}
+      />
+    );
+  }
+
+
+  if (isBroadcastBooth) {
+    const raw = (existingSubmission && existingSubmission.broadcast_booth_data) || null;
+    const bbConfig = resolveBroadcastConfig(assignment.case_standard, null);
+    const pub = broadcastBoothCase || {
+      standard: assignment.case_standard,
+      title: caseRow?.title || "Broadcast Booth",
+      kicker: "Broadcast Booth",
+      segmentType: bbConfig.segmentType,
+      segmentLabel: "Broadcast",
+      prompt: bbConfig.prompt,
+      beats: [],
+      clipCapSec: 20,
+      minClipSec: 2,
+      config: bbConfig,
+    };
+    return (
+      <BroadcastBoothClient
+        assignmentId={assignmentId}
+        publicCase={pub}
+        config={bbConfig}
         existingData={raw}
         alreadySubmitted={alreadySubmitted}
         revisionFeedback={revisionFeedback}

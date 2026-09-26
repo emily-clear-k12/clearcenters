@@ -43,8 +43,12 @@ const BG = PAGE_BACKGROUNDS["/teacher/grade"];
 
 const GRADE_LABELS = { 0: "Level 0", 1: "Level 1", 2: "Level 2" };
 const MAKER_GRADE_LABELS = { 0: "Still working", 1: "On track", 2: "Strong" };
+const BB_GRADE_LABELS = { 0: "Still working", 1: "On track", 2: "Strong" };
 function gradeLabelFor(engine, grade) {
-  if (engine === "maker_studio") return MAKER_GRADE_LABELS[grade] || GRADE_LABELS[grade];
+  if (engine === "maker_studio" || engine === "broadcast_booth") {
+    const map = engine === "broadcast_booth" ? BB_GRADE_LABELS : MAKER_GRADE_LABELS;
+    return map[grade] || GRADE_LABELS[grade];
+  }
   return GRADE_LABELS[grade];
 }
 // Crystal Points awarded when a grade is released, scaled to score so effort
@@ -302,9 +306,11 @@ export default function TeacherGradeDetailPage() {
   const isClassificationLab = submission.caseEngine === "classification_lab";
   const isExhibitHall = submission.caseEngine === "exhibit_hall";
   const isMakerStudio = submission.caseEngine === "maker_studio";
+  const isBroadcastBooth = submission.caseEngine === "broadcast_booth";
   const labData = submission.classification_lab_data || null;
   const hallData = submission.exhibit_hall_data || null;
   const makerData = submission.maker_studio_data || null;
+  const broadcastData = submission.broadcast_booth_data || null;
   const caseEntry = isSignalCheck ? null : getPublicCase(submission.caseStandard);
   const signalCheckCase = isSignalCheck ? getSignalCheckPublicCase(submission.caseStandard) : null;
   const isNewsroom = (submission.caseEngine || "").startsWith("newsroom");
@@ -391,6 +397,41 @@ export default function TeacherGradeDetailPage() {
         <div style={{ display: "flex", justifyContent: "center" }}>
         <div style={{ width: "100%", maxWidth: 1000, display: "grid", gridTemplateColumns: "1.3fr 1fr", gap: 18 }}>
           <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+            {isBroadcastBooth && broadcastData ? (
+              <div style={panelStyle(ACCENT, { padding: 16 })}>
+                <div style={{ fontWeight: 700, fontSize: 12.5, color: COLORS.textMuted, marginBottom: 10, textTransform: "uppercase", letterSpacing: 0.5 }}>
+                  Broadcast Booth · visual voicemail
+                </div>
+                {broadcastData.safety && broadcastData.safety.flagged ? (
+                  <div style={{ background: "#FFF7E6", border: `1px solid ${COLORS.warning}`, borderRadius: 10, padding: "8px 10px", marginBottom: 10, fontSize: 13, color: COLORS.textDark }}>
+                    Needs a look (keyword stub): {(broadcastData.safety.hits || []).join(", ") || "flagged"}
+                  </div>
+                ) : null}
+                {["hook","big_idea","show_me","sign_off","where","what_noticed","why_matters","side_a","side_b","what_i_think"].filter((id) => broadcastData.beats && broadcastData.beats[id]).map((id) => {
+                  const s = broadcastData.beats[id] || {};
+                  const label = id.replace(/_/g, " ");
+                  return (
+                    <div key={id} style={{ marginBottom: 14, paddingBottom: 12, borderBottom: `1px solid ${COLORS.border}` }}>
+                      <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 6, textTransform: "capitalize" }}>{label}</div>
+                      {s.audioDataUrl ? (
+                        <audio controls src={s.audioDataUrl} style={{ width: "100%" }} />
+                      ) : (
+                        <div style={{ color: COLORS.textMuted, fontSize: 13 }}>(no audio)</div>
+                      )}
+                      {s.stillDataUrl ? (
+                        <img src={s.stillDataUrl} alt="" style={{ maxWidth: "100%", maxHeight: 140, marginTop: 8, borderRadius: 10 }} />
+                      ) : null}
+                      <div style={{ marginTop: 8, fontSize: 13, color: COLORS.textDark, background: COLORS.canvas, borderRadius: 10, padding: "8px 10px" }}>
+                        <div style={{ fontWeight: 700, fontSize: 11, color: COLORS.textMuted, marginBottom: 4 }}>TRANSCRIPT</div>
+                        {(s.transcript && String(s.transcript).trim())
+                          ? s.transcript
+                          : "Transcript coming soon — play the audio above."}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : null}
             {isMakerStudio && makerData ? (
               <div style={panelStyle(ACCENT, { padding: 16 })}>
                 <div style={{ fontWeight: 700, fontSize: 12.5, color: COLORS.textMuted, marginBottom: 10, textTransform: "uppercase", letterSpacing: 0.5 }}>Maker Studio pieces</div>

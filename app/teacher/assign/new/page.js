@@ -23,6 +23,12 @@ import {
   isPlayableQuickMsRow,
   isPlayableDesertMsRow,
 } from "../../../../lib/cases/maker-studio/assignFallback";
+import {
+  DESERT_BB_STANDARD,
+  DESERT_BB_ASSIGN_FALLBACK,
+  normalizeBroadcastCaseRow,
+  isPlayableDesertBbRow,
+} from "../../../../lib/cases/broadcast-booth/assignFallback";
 import { promptCardsForCase } from "../../../../lib/cases/maker-studio/menus";
 import { MAKER_MODES, sanitizeEnabledModes } from "../../../../lib/cases/maker-studio/modes";
 
@@ -141,7 +147,10 @@ const CHALLENGE_TYPES = [
   // Sept 26, 2026 — Maker Studio: full-width Assign setup (prompt chips + modes; no Finish N).
   { key: "maker_studio", label: "Maker Studio", image: "/teacher/challenges/museum_exhibit.jpg", real: true,
     description: "Students get a prompt, finish every make mode you turn on (15 live modes through Postcard from then), and submit for teacher review — not AI-graded. About 10–20 minutes." },
-  // Coming soon — kept below live tiles (Assign library sorts real:true first as well).
+    // Sept 26, 2026 — Broadcast Booth Wave 0 (Explain seed: Desert Radio).
+  { key: "broadcast_booth", label: "Broadcast Booth", image: "/teacher/challenges/newsroom.jpg", real: true,
+    description: "Voice-first Field Radio. Students record four short beats (Explain / Correspondent / Debate) with optional stills. Teacher listens — not AI-graded. About 25–30 minutes." },
+// Coming soon — kept below live tiles (Assign library sorts real:true first as well).
   { key: "repair_desk", label: "Repair Desk", image: "/teacher/challenges/repair_desk.jpg", real: false,
     description: "A broken ticket arrives — a flawed diagram, model, or work sample. Students diagnose what's wrong, fix it, and explain the fix to whoever sent it in." },
   { key: "museum_exhibit", label: "Museum Exhibit Builder", image: "/teacher/challenges/museum_exhibit.jpg", real: false,
@@ -280,6 +289,45 @@ function mergeMakerStudioCatalog(rows) {
   }
   // Hide the retired desert exhibit seed if it still exists in Supabase.
   merged = merged.filter((r) => !(r.standard === "SCI.3.13A-MS" && r.engine === "maker_studio"));
+  return merged;
+}
+
+// Sept 26, 2026 — Broadcast Booth catalog fallback (same pattern as Maker Studio).
+function broadcastBoothLibraryRows() {
+  return [normalizeBroadcastCaseRow(DESERT_BB_ASSIGN_FALLBACK)];
+}
+
+function mergeBroadcastBoothCatalog(rows) {
+  const list = (Array.isArray(rows) ? rows : []).map(normalizeCaseRow);
+  const byStandard = new Map();
+  for (const row of list) {
+    if (row && row.standard) byStandard.set(row.standard, row);
+  }
+  for (const cat of broadcastBoothLibraryRows()) {
+    const existing = byStandard.get(cat.standard);
+    if (!existing) {
+      byStandard.set(cat.standard, cat);
+      continue;
+    }
+    byStandard.set(
+      cat.standard,
+      normalizeBroadcastCaseRow({
+        ...existing,
+        engine: cat.engine,
+        grade: cat.grade,
+        subject: cat.subject,
+        title: existing.title || cat.title,
+        learning_target: existing.learning_target || cat.learning_target,
+        lesson_summary: existing.lesson_summary || cat.lesson_summary,
+      })
+    );
+  }
+  let merged = Array.from(byStandard.values());
+  const fallback = normalizeBroadcastCaseRow(DESERT_BB_ASSIGN_FALLBACK);
+  if (!merged.some(isPlayableDesertBbRow)) {
+    merged = merged.filter((r) => r.standard !== DESERT_BB_STANDARD);
+    merged = [...merged, fallback];
+  }
   return merged;
 }
 // Sept 16, 2026 — Signal Check used to ship each TEKS standard in three
@@ -526,7 +574,7 @@ function NewAssignmentContent() {
         }
       }
       if (cancelled) return;
-      const merged = mergeMakerStudioCatalog(mergeExpeditionStationCatalog(data || []));
+      const merged = mergeBroadcastBoothCatalog(mergeMakerStudioCatalog(mergeExpeditionStationCatalog(data || [])));
       setCases(merged);
       setCasesLoading(false);
       if (loadError) {
@@ -540,7 +588,7 @@ function NewAssignmentContent() {
     return () => { cancelled = true; };
   }, []);
 
-  function topicCode(c){const standard=String(c?.standard||"");if(FR_CUSTOM_LIST_RE.test(standard))return MY_WORD_LISTS;if(isFrDailyCase(standard))return FR_DAILY_TOPIC;return missionMapTeksCode(standard)||standard.replace(/-(?:SC|GC|FR|SL|SD|AD|RS|MM|CL|EX|XP|MS).*$/i,'');}
+  function topicCode(c){const standard=String(c?.standard||"");if(FR_CUSTOM_LIST_RE.test(standard))return MY_WORD_LISTS;if(isFrDailyCase(standard))return FR_DAILY_TOPIC;return missionMapTeksCode(standard)||standard.replace(/-(?:SC|GC|FR|SL|SD|AD|RS|MM|CL|EX|XP|MS|BB).*$/i,'');}
 function displayCode(code){return String(code||'').replace(/^TEKS\s+/i,'').replace(/^(MA|ELA|ELAR|SS|SCI)\./i,'');}
   const topics=[...new Set(cases.map(normalizeCaseRow).filter(c=>c.engine!=='relay_station'&&Number(c.grade)===Number(browseGrade)&&(c.subject===browseSubject||isFrDailyCase(c.standard))&&(typeFilter==='all'||matchesChallenge(c.engine,typeFilter))&&!isRetiredSignalCheckCase(c.standard)&&!((FR_CUSTOM_LIST_RE.exec(c.standard)||[])[1]&&FR_CUSTOM_LIST_RE.exec(c.standard)[1]!==String(teacherId||"").replace(/-/g,"").slice(0,8).toLowerCase())).map(topicCode))].sort((a,b)=>a.localeCompare(b,undefined,{numeric:true}));
   const searchQ = caseSearch.trim().toLowerCase();
@@ -676,6 +724,12 @@ function displayCode(code){return String(code||'').replace(/^TEKS\s+/i,'').repla
       assignmentFields.question_seconds = questionSeconds;
       if (gameSkin === "crystal_dive") assignmentFields.crystal_dive_minutes = crystalDiveMinutes;
     }
+    if (selectedCase.engine === "broadcast_booth") {
+      assignmentFields.broadcast_booth_config = {
+        prompt: "",
+        segmentType: "explain",
+      };
+    }
     if (selectedCase.engine === "maker_studio") {
       const prompt = (makerPrompt || "").trim();
       if (!prompt) {
@@ -718,6 +772,17 @@ function displayCode(code){return String(code||'').replace(/^TEKS\s+/i,'').repla
         .insert(withoutTimer)
         .select()
         .single());
+    }
+    if (insertError && /broadcast_booth_config/i.test(insertError.message || "")) {
+      const { broadcast_booth_config, ...withoutBb } = assignmentFields;
+      ({ data: newAssignment, error: insertError } = await supabase
+        .from("assignments")
+        .insert(withoutBb)
+        .select()
+        .single());
+      if (!insertError) {
+        setError("Assigned, but run add_broadcast_booth.sql so Broadcast Booth settings save next time.");
+      }
     }
     if (insertError && /maker_studio_config/i.test(insertError.message || "")) {
       const { maker_studio_config, ...withoutMaker } = assignmentFields;
@@ -943,6 +1008,17 @@ function displayCode(code){return String(code||'').replace(/^TEKS\s+/i,'').repla
                   )}
 
 
+                  {selectedCase?.engine === "broadcast_booth" && (
+                    <div className="cc-maker-assign" style={{ marginBottom: 12 }}>
+                      <div className="cc-maker-assign-title">Broadcast Booth</div>
+                      <p className="cc-maker-assign-lead">
+                        Field Radio — four fixed beats. Students hear the stimulus, record one beat at a time, then submit. You listen to review (not AI-graded).
+                      </p>
+                      <p className="cc-muted" style={{ marginTop: 8 }}>
+                        Wave 0 seed uses the Explain path (Hook → Big idea → Show me → Sign off). Prompt and stimulus come from the case.
+                      </p>
+                    </div>
+                  )}
                   {selectedCase?.engine === "maker_studio" && (() => {
                     const promptCards = promptCardsForCase(selectedCase.standard);
                     const enabled = Array.isArray(makerEnabledModes) ? makerEnabledModes : [];
