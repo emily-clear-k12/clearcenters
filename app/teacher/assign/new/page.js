@@ -127,7 +127,7 @@ const CHALLENGE_TYPES = [
   // Sept 25, 2026 — Expedition Station Act 1 (Frozen Relay MA.4.3E-XP) is live.
   { key: "expedition_station", label: "Expedition Station", image: "/teacher/challenges/mission_map.jpg", real: true,
     description: "A 15-task quest on one planet. Station mode: four cards, then a challenge. About 15–20 minutes per act." },
-  // Sept 26, 2026 — Maker Studio: two-pane Assign (prompt cards + mode toggles; no Finish N).
+  // Sept 26, 2026 — Maker Studio: full-width Assign setup (prompt chips + modes; no Finish N).
   { key: "maker_studio", label: "Maker Studio", image: "/teacher/challenges/museum_exhibit.jpg", real: true,
     description: "Students get a prompt, finish every make mode you turn on (Write, Sketch, Diagram, Poster, Comic, Voice are live), and submit for teacher review — not AI-graded. About 10–20 minutes." },
   // Coming soon — kept below live tiles (Assign library sorts real:true first as well).
@@ -434,7 +434,7 @@ function NewAssignmentContent() {
   // Students can no longer turn the game's own timer on or off.
   const [questionSeconds, setQuestionSeconds] = useState(0);
 
-  // Maker Studio — two-pane Assign: prompt cards (left) + mode toggles (right). No Finish N UI.
+  // Maker Studio — full-width Assign setup (prompt chips + modes). No Finish N UI.
   const [makerPrompt, setMakerPrompt] = useState("Write about today's idea in your own words. What do you understand, and what makes you think that?");
   const [makerPromptCardId, setMakerPromptCardId] = useState("quick-default");
   const [makerJournalOnRelease, setMakerJournalOnRelease] = useState(true);
@@ -778,7 +778,7 @@ function NewAssignmentContent() {
     {(typeFilter!=='all')&&<div className="cc-row" style={{marginBottom:16,flexWrap:'wrap',gap:8,alignItems:'center'}}><button className="cc-text-button" onClick={()=>{setLane('standard');setTypeFilter('all');setTopic('all');setSelectedCase(null);setBrowseSubject(targetClass?.subject||'Science');setFollowClass(true)}}>← All activity types</button><span className="cc-badge">{engineInfo(typeFilter).label}</span>{CHALLENGE_TYPES.filter(t=>t.real&&t.key!=='relay_station').map(t=><button key={t.key} type="button" className="cc-badge" style={{cursor:'pointer',border:typeFilter===t.key?'2px solid '+ACCENT:'1px solid transparent',opacity:typeFilter===t.key?1:0.7}} aria-pressed={typeFilter===t.key} onClick={()=>{setSelectedCase(null);setCaseSearch('');setTopic('all');setTypeFilter(t.key);setLane('standard')}}>{t.label}</button>)}</div>}
     {topic==='all'&&typeFilter==='all'&&<section className="cc-panel"><h2>Explore a learning experience</h2><p className="cc-muted">Choose an activity type to see its lessons. Filtering by standard is optional.</p><div className="cc-type-grid">{Object.entries(ENGINES).filter(([key])=>key!=='relay_station').map(([key,art])=><button key={key} className="cc-activity cc-frame" style={subjectStyle(browseSubject)} aria-pressed={typeFilter===key} onClick={()=>{setSelectedCase(null);setCaseSearch('');setTypeFilter(key);setTopic('all')}}><img src={art.image} alt=""/><div><h3>{art.label}</h3><p>{art.description}</p></div></button>)}</div></section>}
     </>}
-    {(product==='keys'||topic!=='all'||typeFilter!=='all')&&<div className="cc-two"><section className="cc-panel"><h2>{product==='keys'?(browseSubject===READINGS?'Readings':(RELAY_SPECIAL_TILES.find(t=>t.key===browseSubject)?.title||'ClearKeys')):(topic!=='all'?topic:(typeFilter!=='all'?engineInfo(typeFilter).label:'Choose a learning experience'))}</h2><p className="cc-muted">{product==='keys'?'ClearKeys':browseSubject} · Grade {browseGrade} · {filteredCases.length} activities{typeFilter!=='all'&&topic==='all'&&product!=='keys'?' · showing all standards for this type':''}</p><label className="cc-field">Find an activity<input className="cc-input" type="search" placeholder="Search these activities" value={caseSearch} onChange={e=>{setCaseSearch(e.target.value);setLimit(12)}}/></label><div className={"cc-gallery cc-compact-gallery"+(product==='keys'&&browseSubject===READINGS?' cc-readings':'')}>{filteredCases.slice(0,limit).map(c=>{const e=engineInfo(c.engine);return <button key={c.standard} className="cc-activity" style={subjectStyle(c.subject)} aria-pressed={selectedCase?.standard===c.standard} onClick={()=>{setStudentInfo(false);setSelectedCase(c);if(/^FR\.[345]\.DAILY$/.test(c.standard))setGameSkin(DEFAULT_GAME_SKIN);setSelectedChallenge(CHALLENGE_TYPES.find(t=>matchesChallenge(c.engine,t.key)))}}><img src={e.image} alt="" onError={thumbFallback}/><div><div className="cc-eyebrow cc-subject-label">{e.label}</div><h3>{product==='keys'?(c.title||'').replace(/^Relay Station:\s*/i,''):c.title}</h3><p>{c.learning_target||e.description}</p><small>{missionMapTeksCode(c.standard)||c.standard}</small></div></button>})}</div>{casesLoading?<Empty>Loading activities…</Empty>:!filteredCases.length&&<Empty>{typeFilter!=='all'?'No activities for this type at Grade '+browseGrade+' · '+browseSubject+'. Try another grade or subject.':'No activities match these filters. Try another topic, grade, or format.'}</Empty>}{filteredCases.length>limit&&<button className="cc-btn secondary" style={{marginTop:18}} onClick={()=>setLimit(limit+12)}>Show more activities</button>}</section>
+    {(product==='keys'||topic!=='all'||typeFilter!=='all')&&<div className={"cc-two"+(selectedCase?.engine==="maker_studio"?" cc-two-maker":"")}><section className="cc-panel"><h2>{product==='keys'?(browseSubject===READINGS?'Readings':(RELAY_SPECIAL_TILES.find(t=>t.key===browseSubject)?.title||'ClearKeys')):(topic!=='all'?topic:(typeFilter!=='all'?engineInfo(typeFilter).label:'Choose a learning experience'))}</h2><p className="cc-muted">{product==='keys'?'ClearKeys':browseSubject} · Grade {browseGrade} · {filteredCases.length} activities{typeFilter!=='all'&&topic==='all'&&product!=='keys'?' · showing all standards for this type':''}</p><label className="cc-field">Find an activity<input className="cc-input" type="search" placeholder="Search these activities" value={caseSearch} onChange={e=>{setCaseSearch(e.target.value);setLimit(12)}}/></label><div className={"cc-gallery cc-compact-gallery"+(product==='keys'&&browseSubject===READINGS?' cc-readings':'')}>{filteredCases.slice(0,limit).map(c=>{const e=engineInfo(c.engine);return <button key={c.standard} className="cc-activity" style={subjectStyle(c.subject)} aria-pressed={selectedCase?.standard===c.standard} onClick={()=>{setStudentInfo(false);setSelectedCase(c);if(/^FR\.[345]\.DAILY$/.test(c.standard))setGameSkin(DEFAULT_GAME_SKIN);setSelectedChallenge(CHALLENGE_TYPES.find(t=>matchesChallenge(c.engine,t.key)))}}><img src={e.image} alt="" onError={thumbFallback}/><div><div className="cc-eyebrow cc-subject-label">{e.label}</div><h3>{product==='keys'?(c.title||'').replace(/^Relay Station:\s*/i,''):c.title}</h3><p>{c.learning_target||e.description}</p><small>{missionMapTeksCode(c.standard)||c.standard}</small></div></button>})}</div>{casesLoading?<Empty>Loading activities…</Empty>:!filteredCases.length&&<Empty>{typeFilter!=='all'?'No activities for this type at Grade '+browseGrade+' · '+browseSubject+'. Try another grade or subject.':'No activities match these filters. Try another topic, grade, or format.'}</Empty>}{filteredCases.length>limit&&<button className="cc-btn secondary" style={{marginTop:18}} onClick={()=>setLimit(limit+12)}>Show more activities</button>}</section>
     <aside className="cc-stack">{selectedCase?<section className="cc-panel cc-frame" style={subjectStyle(selectedCase.subject)}><div className="cc-eyebrow cc-subject-label">SELECTED · {engineInfo(selectedCase.engine).label}</div><h2>{product==='keys'?(selectedCase.title||'').replace(/^Relay Station:\s*/i,''):selectedCase.title}</h2><p className="cc-muted">{missionMapTeksLabel(selectedCase.standard)||selectedCase.standard}</p><button type="button" className="cc-student-info" aria-expanded={studentInfo} onClick={()=>setStudentInfo((open)=>!open)}>What students do</button>{studentInfo&&<div className="cc-student-pop"><img className="cc-preview-image" src={engineInfo(selectedCase.engine).image} alt="" onError={thumbFallback}/><h3>What students will do</h3><p className="cc-muted">{selectedCase.lesson_summary||engineInfo(selectedCase.engine).description}</p>{selectedCase.learning_target&&<div className="cc-panel" style={{background:'#f5f0fc',padding:14}}>{selectedCase.learning_target}</div>}{selectedCase.misconception_note&&<div><h3>Teaching notes</h3><p className="cc-muted">{selectedCase.misconception_note}</p></div>}</div>}
     <div className="cc-assignment-form"><h3>Assign to {targetClass?.name||'your class'}</h3>
                   {assignClassId && (
@@ -893,101 +893,75 @@ function NewAssignmentContent() {
                     const promptCards = promptCardsForCase(selectedCase.standard);
                     const enabled = Array.isArray(makerEnabledModes) ? makerEnabledModes : [];
                     return (
-                    <div style={{ marginBottom: 14, border: `1.5px solid ${COLORS.border}`, borderRadius: 12, padding: 12, background: COLORS.white }}>
-                      <div style={{ fontWeight: 700, fontSize: 13, marginBottom: 6, color: COLORS.textDark }}>Maker Studio setup</div>
-                      <p style={{ fontSize: 11.5, color: COLORS.textMuted, margin: "0 0 10px 0" }}>
-                        Pick a prompt, turn on the modes students must finish, then Assign. Students submit when every enabled mode is Done.
-                      </p>
-                      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, alignItems: "start" }}>
-                        <div>
-                          <div style={{ fontWeight: 700, fontSize: 12, marginBottom: 8, color: COLORS.textMuted }}>Prompt cards</div>
-                          <div style={{ display: "grid", gap: 6, maxHeight: 220, overflowY: "auto", marginBottom: 10 }}>
-                            {promptCards.map((card) => {
-                              const on = makerPromptCardId === card.id;
-                              return (
-                                <button
-                                  key={card.id}
-                                  type="button"
-                                  className="cc-btn"
-                                  onClick={() => applyMakerPromptCard(card)}
-                                  style={{
-                                    textAlign: "left",
-                                    background: on ? `${ACCENT}18` : COLORS.white,
-                                    color: COLORS.textDark,
-                                    border: `1.5px solid ${on ? ACCENT : COLORS.border}`,
-                                    borderRadius: 10,
-                                    padding: "8px 10px",
-                                    fontWeight: 700,
-                                    fontSize: 12.5,
-                                  }}
-                                >
-                                  {card.title || card.label}
-                                </button>
-                              );
-                            })}
-                          </div>
-                          <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: COLORS.textMuted, marginBottom: 4 }}>Prompt (editable)</label>
-                          <textarea
-                            value={makerPrompt}
-                            onChange={(e) => setMakerPrompt(e.target.value)}
-                            rows={4}
-                            style={{ width: "100%", border: "2px solid #ECEAF5", borderRadius: 10, padding: 10, fontSize: 13, boxSizing: "border-box", fontFamily: "inherit" }}
-                            placeholder="What should students make / write about?"
-                          />
-                        </div>
-                        <div>
-                          <div style={{ fontWeight: 700, fontSize: 12, marginBottom: 8, color: COLORS.textMuted }}>Make modes</div>
-                          <div style={{ display: "grid", gap: 6, maxHeight: 280, overflowY: "auto", marginBottom: 10 }}>
-                            {MAKER_MODES.map((mode) => {
-                              const on = enabled.includes(mode.id);
-                              const live = !!mode.live;
-                              return (
-                                <button
-                                  key={mode.id}
-                                  type="button"
-                                  className="cc-btn"
-                                  disabled={!live}
-                                  aria-pressed={on}
-                                  onClick={() => toggleMakerMode(mode.id, live)}
-                                  title={live ? mode.blurb : "Coming soon — not selectable yet"}
-                                  style={{
-                                    display: "flex",
-                                    alignItems: "center",
-                                    gap: 8,
-                                    textAlign: "left",
-                                    background: !live ? "#F3F1F8" : on ? `${ACCENT}18` : COLORS.white,
-                                    color: !live ? "#9A94AE" : COLORS.textDark,
-                                    border: `1.5px solid ${!live ? "#E4E0EF" : on ? ACCENT : COLORS.border}`,
-                                    borderRadius: 10,
-                                    padding: "8px 10px",
-                                    fontWeight: 700,
-                                    fontSize: 12.5,
-                                    cursor: live ? "pointer" : "not-allowed",
-                                    opacity: live ? 1 : 0.72,
-                                  }}
-                                >
-                                  <span style={{
-                                    width: 16, height: 16, borderRadius: 4, flexShrink: 0,
-                                    background: on && live ? ACCENT : COLORS.white,
-                                    border: `1.5px solid ${on && live ? ACCENT : COLORS.border}`,
-                                    display: "flex", alignItems: "center", justifyContent: "center",
-                                    color: COLORS.white, fontSize: 11,
-                                  }}>{on && live ? "✓" : ""}</span>
-                                  <span style={{ flex: 1 }}>{mode.icon} {mode.label}</span>
-                                  {!live ? <span style={{ fontSize: 10, fontWeight: 700, color: "#9A94AE" }}>Soon</span> : null}
-                                </button>
-                              );
-                            })}
-                          </div>
-                          <p style={{ fontSize: 11.5, color: COLORS.textMuted, margin: "0 0 10px 0" }}>
-                            Students finish every mode you turn on ({enabled.length || 0} selected). Grey modes are not live yet.
-                          </p>
-                          <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, fontWeight: 600, color: COLORS.textDark, cursor: "pointer" }}>
-                            <input type="checkbox" checked={makerJournalOnRelease} onChange={(e) => setMakerJournalOnRelease(e.target.checked)} />
-                            Keep in Journal when released
-                          </label>
-                        </div>
+                    <div className="cc-maker-assign">
+                      <div className="cc-maker-assign-head">
+                        <div className="cc-maker-assign-title">Maker Studio setup</div>
+                        <p className="cc-maker-assign-lead">
+                          Pick a prompt, turn on the modes students must finish, then Assign. Students submit when every enabled mode is Done.
+                        </p>
                       </div>
+
+                      <div className="cc-maker-assign-label">Prompt cards</div>
+                      <div className="cc-maker-prompt-chips" role="list">
+                        {promptCards.map((card) => {
+                          const on = makerPromptCardId === card.id;
+                          return (
+                            <button
+                              key={card.id}
+                              type="button"
+                              role="listitem"
+                              className={"cc-maker-chip" + (on ? " is-on" : "")}
+                              aria-pressed={on}
+                              onClick={() => applyMakerPromptCard(card)}
+                            >
+                              {card.title || card.label}
+                            </button>
+                          );
+                        })}
+                      </div>
+
+                      <label className="cc-maker-assign-label" htmlFor="maker-prompt-text">Prompt (editable)</label>
+                      <textarea
+                        id="maker-prompt-text"
+                        className="cc-maker-prompt-text"
+                        value={makerPrompt}
+                        onChange={(e) => setMakerPrompt(e.target.value)}
+                        rows={6}
+                        placeholder="What should students make / write about?"
+                      />
+
+                      <div className="cc-maker-assign-label">Make modes</div>
+                      <div className="cc-maker-mode-grid" role="list">
+                        {MAKER_MODES.map((mode) => {
+                          const on = enabled.includes(mode.id);
+                          const live = !!mode.live;
+                          return (
+                            <button
+                              key={mode.id}
+                              type="button"
+                              role="listitem"
+                              className={"cc-maker-mode" + (on && live ? " is-on" : "") + (!live ? " is-soon" : "")}
+                              disabled={!live}
+                              aria-pressed={on}
+                              onClick={() => toggleMakerMode(mode.id, live)}
+                              title={live ? mode.blurb : "Coming soon — not selectable yet"}
+                            >
+                              <span className="cc-maker-mode-check" aria-hidden="true">{on && live ? "✓" : ""}</span>
+                              <span className="cc-maker-mode-label">{mode.icon} {mode.label}</span>
+                              {!live ? <span className="cc-maker-mode-soon">Soon</span> : null}
+                            </button>
+                          );
+                        })}
+                      </div>
+
+                      <p className="cc-maker-assign-help">
+                        Students finish every mode you turn on ({enabled.length || 0} selected). Grey modes are not live yet.
+                      </p>
+
+                      <label className="cc-maker-journal">
+                        <input type="checkbox" checked={makerJournalOnRelease} onChange={(e) => setMakerJournalOnRelease(e.target.checked)} />
+                        Keep in Journal when released
+                      </label>
                     </div>
                     );
                   })()}
