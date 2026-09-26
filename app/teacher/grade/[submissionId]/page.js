@@ -442,7 +442,103 @@ export default function TeacherGradeDetailPage() {
                               <div style={{ color: COLORS.textMuted, fontSize: 13 }}>(no audio)</div>
                             )
                           ) : null}
-                          {!["write", "sketch", "diagram", "poster", "comic", "voice"].includes(modeId) ? (
+                          {modeId === "before_after" ? (
+                            <>
+                              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 8 }}>
+                                {["before", "after"].map((side) => {
+                                  const img = s[side] && s[side].imageDataUrl;
+                                  return (
+                                    <div key={side} style={{ background: COLORS.white, borderRadius: 10, padding: 8, border: `1px solid ${COLORS.border}` }}>
+                                      <div style={{ fontSize: 11, fontWeight: 700, color: COLORS.textMuted, marginBottom: 4, textTransform: "capitalize" }}>{side}</div>
+                                      {img ? <img src={img} alt={side} style={{ width: "100%", borderRadius: 8 }} /> : <div style={{ color: COLORS.textMuted, fontSize: 13 }}>(no picture)</div>}
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                              {s.caption ? <div style={{ fontSize: 13.5, color: COLORS.textMuted }}>{s.caption}</div> : null}
+                            </>
+                          ) : null}
+                          {modeId === "map_it" ? (
+                            <>
+                              {s.imageDataUrl ? (
+                                <div style={{ position: "relative", borderRadius: 10, overflow: "hidden", border: `1px solid ${COLORS.border}`, marginBottom: 8 }}>
+                                  <img src={s.imageDataUrl} alt="Map" style={{ width: "100%", display: "block" }} />
+                                  {(Array.isArray(s.pins) ? s.pins : []).map((pin, idx) => (
+                                    <span
+                                      key={(pin && pin.id) || idx}
+                                      style={{
+                                        position: "absolute",
+                                        left: `${(pin && pin.x) || 50}%`,
+                                        top: `${(pin && pin.y) || 50}%`,
+                                        transform: "translate(-50%, -50%)",
+                                        width: 24,
+                                        height: 24,
+                                        borderRadius: 999,
+                                        background: "#6d45c8",
+                                        color: "#fff",
+                                        fontSize: 11,
+                                        fontWeight: 700,
+                                        display: "grid",
+                                        placeItems: "center",
+                                      }}
+                                      title={(pin && pin.label) || `Pin ${idx + 1}`}
+                                    >
+                                      {idx + 1}
+                                    </span>
+                                  ))}
+                                </div>
+                              ) : (
+                                <div style={{ color: COLORS.textMuted, fontSize: 13 }}>(no map)</div>
+                              )}
+                              <div style={{ fontSize: 13, lineHeight: 1.45 }}>
+                                {(Array.isArray(s.pins) ? s.pins : []).map((pin, idx) => (
+                                  <div key={(pin && pin.id) || idx}>{idx + 1}. {(pin && pin.label) || "—"}</div>
+                                ))}
+                              </div>
+                              {s.caption ? <div style={{ fontSize: 13.5, color: COLORS.textMuted, marginTop: 6 }}>{s.caption}</div> : null}
+                            </>
+                          ) : null}
+                          {modeId === "math_story" ? (
+                            <>
+                              {s.story ? <div style={{ whiteSpace: "pre-wrap", fontSize: 14, lineHeight: 1.5, marginBottom: 8 }}>{s.story}</div> : null}
+                              {s.workText ? (
+                                <div style={{ whiteSpace: "pre-wrap", fontSize: 13.5, lineHeight: 1.45, fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace", background: COLORS.white, borderRadius: 10, padding: 10, border: `1px solid ${COLORS.border}`, marginBottom: 8 }}>
+                                  {s.workText}
+                                </div>
+                              ) : null}
+                              {s.imageDataUrl ? <img src={s.imageDataUrl} alt="Math work" style={{ maxWidth: "100%", borderRadius: 10, border: `1px solid ${COLORS.border}` }} /> : null}
+                              {!s.story && !s.workText && !s.imageDataUrl ? <div style={{ color: COLORS.textMuted, fontSize: 13 }}>(empty)</div> : null}
+                            </>
+                          ) : null}
+                          {modeId === "interview" ? (
+                            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                              {(Array.isArray(s.rows) ? s.rows : []).map((row, idx) => (
+                                <div key={idx} style={{ background: COLORS.white, borderRadius: 10, padding: 10, border: `1px solid ${COLORS.border}` }}>
+                                  <div style={{ fontSize: 12, fontWeight: 700, color: COLORS.textMuted, marginBottom: 4 }}>Q{idx + 1}</div>
+                                  <div style={{ fontWeight: 600, fontSize: 13.5, marginBottom: 6 }}>{(row && row.question) || "—"}</div>
+                                  <div style={{ whiteSpace: "pre-wrap", fontSize: 14, lineHeight: 1.45 }}>{(row && row.answer) || "(no answer)"}</div>
+                                </div>
+                              ))}
+                              {!(Array.isArray(s.rows) && s.rows.length) ? <div style={{ color: COLORS.textMuted, fontSize: 13 }}>(no questions)</div> : null}
+                            </div>
+                          ) : null}
+                          {modeId === "sort_of_my_own" ? (
+                            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: 10 }}>
+                              {(Array.isArray(s.categories) ? s.categories : []).map((cat, idx) => {
+                                const members = (Array.isArray(s.items) ? s.items : []).filter((it) => Number(it && it.categoryIndex) === idx);
+                                return (
+                                  <div key={idx} style={{ background: COLORS.white, borderRadius: 10, padding: 10, border: `1px solid ${COLORS.border}` }}>
+                                    <div style={{ fontWeight: 700, fontSize: 13, marginBottom: 6 }}>{(cat || "").trim() || `Category ${idx + 1}`}</div>
+                                    {members.length ? members.map((it) => (
+                                      <div key={it.id || it.label} style={{ fontSize: 13, lineHeight: 1.4 }}>• {(it && it.label) || "—"}</div>
+                                    )) : <div style={{ color: COLORS.textMuted, fontSize: 12 }}>(empty)</div>}
+                                  </div>
+                                );
+                              })}
+                              {!(Array.isArray(s.categories) && s.categories.length) ? <div style={{ color: COLORS.textMuted, fontSize: 13 }}>(no categories)</div> : null}
+                            </div>
+                          ) : null}
+                          {!["write", "sketch", "diagram", "poster", "comic", "voice", "before_after", "map_it", "math_story", "interview", "sort_of_my_own"].includes(modeId) ? (
                             <div style={{ whiteSpace: "pre-wrap", fontSize: 14, lineHeight: 1.5 }}>{s.text || "(empty)"}</div>
                           ) : null}
                         </div>

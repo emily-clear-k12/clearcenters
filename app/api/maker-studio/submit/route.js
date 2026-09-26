@@ -39,6 +39,33 @@ function emptySlotFor(id) {
   if (id === "voice") {
     return { status: "empty", audioDataUrl: null, mimeType: null, durationSec: 0, updatedAt: null };
   }
+  if (id === "before_after") {
+    return {
+      status: "empty",
+      before: { imageDataUrl: null },
+      after: { imageDataUrl: null },
+      caption: "",
+      updatedAt: null,
+    };
+  }
+  if (id === "map_it") {
+    return { status: "empty", imageDataUrl: null, pins: [], caption: "", updatedAt: null };
+  }
+  if (id === "math_story") {
+    return {
+      status: "empty",
+      story: "",
+      workText: "",
+      imageDataUrl: null,
+      updatedAt: null,
+    };
+  }
+  if (id === "interview") {
+    return { status: "empty", rows: [], updatedAt: null };
+  }
+  if (id === "sort_of_my_own") {
+    return { status: "empty", categories: [], items: [], updatedAt: null };
+  }
   return { status: "empty", updatedAt: null };
 }
 

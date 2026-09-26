@@ -129,7 +129,7 @@ const CHALLENGE_TYPES = [
     description: "A 15-task quest on one planet. Station mode: four cards, then a challenge. About 15–20 minutes per act." },
   // Sept 26, 2026 — Maker Studio: full-width Assign setup (prompt chips + modes; no Finish N).
   { key: "maker_studio", label: "Maker Studio", image: "/teacher/challenges/museum_exhibit.jpg", real: true,
-    description: "Students get a prompt, finish every make mode you turn on (Write, Sketch, Diagram, Poster, Comic, Voice are live), and submit for teacher review — not AI-graded. About 10–20 minutes." },
+    description: "Students get a prompt, finish every make mode you turn on (11 live modes through Sort of my own), and submit for teacher review — not AI-graded. About 10–20 minutes." },
   // Coming soon — kept below live tiles (Assign library sorts real:true first as well).
   { key: "repair_desk", label: "Repair Desk", image: "/teacher/challenges/repair_desk.jpg", real: false,
     description: "A broken ticket arrives — a flawed diagram, model, or work sample. Students diagnose what's wrong, fix it, and explain the fix to whoever sent it in." },

@@ -6,11 +6,19 @@ import BackToHubButton from "../../../components/BackToHubButton";
 import SamGuide from "../../../components/SamGuide";
 import { MAKER_MODES } from "../../../lib/cases/maker-studio/modes";
 import MakerDrawPad from "./MakerDrawPad";
+import LibraryPicker from "../../../components/maker/LibraryPicker";
 import "./maker-studio.css";
 
 const VOICE_CAP_SEC = 90;
 const DIAGRAM_CHIPS = ["Part", "Step 1", "Step 2", "Cause", "Effect", "Result"];
-const LIVE_MODE_IDS = new Set(["write", "sketch", "diagram", "poster", "comic", "voice"]);
+const LIVE_MODE_IDS = new Set(MAKER_MODES.filter((m) => m.live).map((m) => m.id));
+const DEFAULT_INTERVIEW_QUESTIONS = [
+  "What is the main idea?",
+  "Why does it matter?",
+  "What is one example?",
+  "What else should someone know?",
+];
+const DEFAULT_SORT_ITEMS = ["Item 1", "Item 2", "Item 3", "Item 4"];
 
 function modeStatus(modes, id) {
   const slot = (modes && modes[id]) || null;
@@ -26,6 +34,29 @@ function emptyComicPanels(n) {
   return Array.from({ length: n }, () => ({ imageDataUrl: null, text: "" }));
 }
 
+function emptyInterviewRows(n) {
+  const count = Math.max(3, Math.min(5, n || 4));
+  return Array.from({ length: count }, (_, i) => ({
+    question: DEFAULT_INTERVIEW_QUESTIONS[i] || `Question ${i + 1}`,
+    answer: "",
+  }));
+}
+
+function emptySortDraft() {
+  return {
+    categories: ["Group A", "Group B"],
+    items: DEFAULT_SORT_ITEMS.map((label, i) => ({
+      id: `item-${i + 1}`,
+      label,
+      categoryIndex: null,
+    })),
+  };
+}
+
+function newPinId() {
+  return `pin-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+}
+
 function isLibraryPath(src) {
   return typeof src === "string" && src.startsWith("/") && !src.startsWith("//");
 }
@@ -34,6 +65,9 @@ function isPlacedImage(src) {
   return typeof src === "string" && src.length > 0;
 }
 
+function panelImage(panel) {
+  return panel && panel.imageDataUrl ? panel.imageDataUrl : null;
+}
 
 function modeHasContent(id, draft) {
   if (!draft) return false;
@@ -53,6 +87,40 @@ function modeHasContent(id, draft) {
     );
   }
   if (id === "voice") return !!draft.audioDataUrl;
+  if (id === "before_after") {
+    return !!(
+      panelImage(draft.before) ||
+      panelImage(draft.after) ||
+      (draft.caption || "").trim()
+    );
+  }
+  if (id === "map_it") {
+    return !!(
+      draft.imageDataUrl ||
+      (draft.caption || "").trim() ||
+      (draft.pins || []).some((p) => p && (p.label || "").trim())
+    );
+  }
+  if (id === "math_story") {
+    return !!(
+      (draft.story || "").trim() ||
+      (draft.workText || "").trim() ||
+      draft.imageDataUrl
+    );
+  }
+  if (id === "interview") {
+    return (draft.rows || []).some(
+      (r) => r && ((r.answer || "").trim() || (r.question || "").trim())
+    );
+  }
+  if (id === "sort_of_my_own") {
+    return (
+      (draft.categories || []).some((c) => (c || "").trim()) ||
+      (draft.items || []).some(
+        (it) => it && ((it.label || "").trim() || it.categoryIndex != null)
+      )
+    );
+  }
   return false;
 }
 
@@ -71,6 +139,49 @@ function modeReadyForDone(id, draft) {
     );
   }
   if (id === "voice") return !!draft.audioDataUrl;
+  if (id === "before_after") {
+    return !!(panelImage(draft.before) && panelImage(draft.after));
+  }
+  if (id === "map_it") {
+    const pins = draft.pins || [];
+    const labeled = pins.filter((p) => p && (p.label || "").trim());
+    return !!draft.imageDataUrl && labeled.length >= 2 && labeled.length <= 6;
+  }
+  if (id === "math_story") {
+    return !!(draft.story || "").trim() && !!(
+      (draft.workText || "").trim() || draft.imageDataUrl
+    );
+  }
+  if (id === "interview") {
+    const rows = draft.rows || [];
+    return (
+      rows.length >= 3 &&
+      rows.length <= 5 &&
+      rows.every((r) => r && (r.question || "").trim() && (r.answer || "").trim())
+    );
+  }
+  if (id === "sort_of_my_own") {
+    const rawCats = draft.categories || [];
+    const namedCount = rawCats.filter((c) => (c || "").trim()).length;
+    const items = draft.items || [];
+    return (
+      namedCount >= 2 &&
+      rawCats.length >= 2 &&
+      rawCats.length <= 4 &&
+      items.length >= 1 &&
+      items.every((it) => {
+        const idx = Number(it && it.categoryIndex);
+        return (
+          it &&
+          (it.label || "").trim() &&
+          Number.isInteger(idx) &&
+          idx >= 0 &&
+          idx < rawCats.length &&
+          !!(rawCats[idx] || "").trim()
+        );
+      })
+    );
+  }
   return false;
 }
 
@@ -116,6 +227,63 @@ function buildSlot(id, draft, status) {
       audioDataUrl: draft.audioDataUrl || null,
       mimeType: draft.mimeType || null,
       durationSec: draft.durationSec || 0,
+      updatedAt,
+    };
+  }
+  if (id === "before_after") {
+    return {
+      status,
+      before: { imageDataUrl: panelImage(draft.before) },
+      after: { imageDataUrl: panelImage(draft.after) },
+      caption: draft.caption || "",
+      updatedAt,
+    };
+  }
+  if (id === "map_it") {
+    return {
+      status,
+      imageDataUrl: draft.imageDataUrl || null,
+      pins: (draft.pins || []).slice(0, 6).map((p) => ({
+        id: (p && p.id) || newPinId(),
+        x: Math.max(0, Math.min(100, Number(p && p.x) || 50)),
+        y: Math.max(0, Math.min(100, Number(p && p.y) || 50)),
+        label: (p && p.label) || "",
+      })),
+      caption: draft.caption || "",
+      updatedAt,
+    };
+  }
+  if (id === "math_story") {
+    return {
+      status,
+      story: draft.story || "",
+      workText: draft.workText || "",
+      imageDataUrl: draft.imageDataUrl || null,
+      updatedAt,
+    };
+  }
+  if (id === "interview") {
+    return {
+      status,
+      rows: (draft.rows || []).map((r) => ({
+        question: (r && r.question) || "",
+        answer: (r && r.answer) || "",
+      })),
+      updatedAt,
+    };
+  }
+  if (id === "sort_of_my_own") {
+    return {
+      status,
+      categories: (draft.categories || []).map((c) => (typeof c === "string" ? c : "")),
+      items: (draft.items || []).map((it, i) => ({
+        id: (it && it.id) || `item-${i + 1}`,
+        label: (it && it.label) || "",
+        categoryIndex:
+          it && it.categoryIndex != null && Number.isFinite(Number(it.categoryIndex))
+            ? Number(it.categoryIndex)
+            : null,
+      })),
       updatedAt,
     };
   }
@@ -169,8 +337,10 @@ export default function MakerStudioClient({
   const [saveState, setSaveState] = useState("saved");
   const [submitted, setSubmitted] = useState(!!alreadySubmitted);
   const [voiceError, setVoiceError] = useState(null);
-  /** null | { kind: "poster"|"diagram"|"sketch" } | { kind: "comic", index: number } */
+  /** null | { kind } with optional index/side for library target */
   const [libraryPicker, setLibraryPicker] = useState(null);
+  const [pinPlaceMode, setPinPlaceMode] = useState(false);
+  const [sortActiveItem, setSortActiveItem] = useState(null);
   const [recording, setRecording] = useState(false);
   const [recordSec, setRecordSec] = useState(0);
   const autosaveTimer = useRef(null);
@@ -301,6 +471,59 @@ export default function MakerStudioClient({
       setVoiceError(null);
       setRecording(false);
       setRecordSec(0);
+    } else if (id === "before_after") {
+      nextDraft = {
+        before: { imageDataUrl: (slot.before && slot.before.imageDataUrl) || null },
+        after: { imageDataUrl: (slot.after && slot.after.imageDataUrl) || null },
+        caption: slot.caption || "",
+      };
+    } else if (id === "map_it") {
+      nextDraft = {
+        imageDataUrl: slot.imageDataUrl || null,
+        pins: Array.isArray(slot.pins)
+          ? slot.pins.map((p) => ({
+              id: (p && p.id) || newPinId(),
+              x: Number(p && p.x) || 50,
+              y: Number(p && p.y) || 50,
+              label: (p && p.label) || "",
+            }))
+          : [],
+        caption: slot.caption || "",
+      };
+      setPinPlaceMode(false);
+    } else if (id === "math_story") {
+      nextDraft = {
+        story: slot.story || "",
+        workText: slot.workText || "",
+        imageDataUrl: slot.imageDataUrl || null,
+      };
+    } else if (id === "interview") {
+      const rows =
+        Array.isArray(slot.rows) && slot.rows.length >= 3
+          ? slot.rows.map((r) => ({
+              question: (r && r.question) || "",
+              answer: (r && r.answer) || "",
+            }))
+          : emptyInterviewRows(4);
+      nextDraft = { rows };
+    } else if (id === "sort_of_my_own") {
+      const base = emptySortDraft();
+      nextDraft = {
+        categories:
+          Array.isArray(slot.categories) && slot.categories.length >= 2
+            ? slot.categories.map((c) => (typeof c === "string" ? c : ""))
+            : base.categories,
+        items:
+          Array.isArray(slot.items) && slot.items.length
+            ? slot.items.map((it, i) => ({
+                id: (it && it.id) || `item-${i + 1}`,
+                label: (it && it.label) || "",
+                categoryIndex:
+                  it && it.categoryIndex != null ? Number(it.categoryIndex) : null,
+              }))
+            : base.items,
+      };
+      setSortActiveItem(null);
     } else {
       return;
     }
@@ -373,6 +596,11 @@ export default function MakerStudioClient({
     if (id === "poster") return "Add a title and a picture, then tap Done.";
     if (id === "comic") return "Fill each panel with a drawing or a line, then tap Done.";
     if (id === "voice") return "Record a voice note first, then tap Done.";
+    if (id === "before_after") return "Add a picture in Before and After, then tap Done.";
+    if (id === "map_it") return "Add a map background and at least 2 labeled pins, then tap Done.";
+    if (id === "math_story") return "Write your story and show your work, then tap Done.";
+    if (id === "interview") return "Answer every question (3–5), then tap Done.";
+    if (id === "sort_of_my_own") return "Name 2–4 categories and sort every item, then tap Done.";
     return "Finish this piece, then tap Done.";
   }
 
@@ -508,11 +736,40 @@ export default function MakerStudioClient({
         );
         return { ...(prev || {}), panels };
       });
+    } else if (libraryPicker.kind === "before" || libraryPicker.kind === "after") {
+      const side = libraryPicker.kind;
+      setDraft((prev) => ({
+        ...(prev || {}),
+        [side]: { imageDataUrl: url },
+      }));
     } else {
       setDraft((prev) => ({ ...(prev || {}), imageDataUrl: url }));
     }
     setLibraryPicker(null);
     setStatus("Picture placed from the library.");
+  }
+
+  function placeMapPin(e) {
+    if (!pinPlaceMode || !draft) return;
+    const pins = draft.pins || [];
+    if (pins.length >= 6) {
+      setStatus("You can place up to 6 pins.");
+      setPinPlaceMode(false);
+      return;
+    }
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = ((e.clientX - rect.left) / Math.max(1, rect.width)) * 100;
+    const y = ((e.clientY - rect.top) / Math.max(1, rect.height)) * 100;
+    dirty.current = true;
+    setDraft((prev) => ({
+      ...(prev || {}),
+      pins: [
+        ...((prev && prev.pins) || []),
+        { id: newPinId(), x, y, label: `Place ${pins.length + 1}` },
+      ],
+    }));
+    setPinPlaceMode(false);
+    setStatus("Pin placed — edit its label below.");
   }
 
   const title = (publicCase && publicCase.title) || "Maker Studio";
@@ -880,6 +1137,459 @@ export default function MakerStudioClient({
                   <p className="mk-quiet">Tap Record, say your idea, then Stop. Replay to check it.</p>
                 )}
               </div>
+            ) : null}
+
+            {activeMode === "before_after" ? (
+              <>
+                <div className="mk-ba-grid">
+                  {["before", "after"].map((side) => {
+                    const panel = draft[side] || {};
+                    const img = panel.imageDataUrl;
+                    const title = side === "before" ? "Before" : "After";
+                    return (
+                      <div key={side} className="mk-ba-panel">
+                        <div className="mk-comic-label">{title}</div>
+                        <div className="mk-upload-row">
+                          <button
+                            type="button"
+                            className="mk-tool"
+                            disabled={busy}
+                            onClick={() => setLibraryPicker({ kind: side })}
+                          >
+                            Pick from library
+                          </button>
+                          {isPlacedImage(img) ? (
+                            <button
+                              type="button"
+                              className="mk-tool"
+                              disabled={busy}
+                              onClick={() => patchDraft({ [side]: { imageDataUrl: null } })}
+                            >
+                              Clear
+                            </button>
+                          ) : null}
+                        </div>
+                        {isLibraryPath(img) ? (
+                          <div className="mk-poster-preview">
+                            <img src={img} alt={title} />
+                          </div>
+                        ) : (
+                          <MakerDrawPad
+                            initialImage={img}
+                            onChange={(url) => patchDraft({ [side]: { imageDataUrl: url } })}
+                            disabled={busy}
+                            height={200}
+                          />
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+                <div className="mk-field">
+                  <label htmlFor="mk-ba-cap">What changed? (optional)</label>
+                  <input
+                    id="mk-ba-cap"
+                    className="mk-input"
+                    value={draft.caption || ""}
+                    onChange={(e) => patchDraft({ caption: e.target.value })}
+                    placeholder="One line about what changed…"
+                    disabled={busy}
+                    maxLength={160}
+                  />
+                </div>
+              </>
+            ) : null}
+
+            {activeMode === "map_it" ? (
+              <>
+                <div className="mk-upload-row">
+                  <button
+                    type="button"
+                    className="mk-next"
+                    disabled={busy}
+                    onClick={() => setLibraryPicker({ kind: "map" })}
+                  >
+                    Pick map background
+                  </button>
+                  {isPlacedImage(draft.imageDataUrl) ? (
+                    <button
+                      type="button"
+                      className="mk-ghost"
+                      disabled={busy}
+                      onClick={() => {
+                        patchDraft({ imageDataUrl: null, pins: [] });
+                        setPinPlaceMode(false);
+                      }}
+                    >
+                      Clear background
+                    </button>
+                  ) : null}
+                </div>
+                {!isPlacedImage(draft.imageDataUrl) ? (
+                  <MakerDrawPad
+                    initialImage={null}
+                    onChange={(url) => patchDraft({ imageDataUrl: url })}
+                    disabled={busy}
+                    height={260}
+                  />
+                ) : (
+                  <>
+                    <div className="mk-upload-row">
+                      <button
+                        type="button"
+                        className={`mk-tool${pinPlaceMode ? " on" : ""}`}
+                        disabled={busy || (draft.pins || []).length >= 6}
+                        onClick={() => setPinPlaceMode((v) => !v)}
+                      >
+                        {pinPlaceMode ? "Tap the map…" : "Add pin"}
+                      </button>
+                      <span className="mk-quiet">
+                        {(draft.pins || []).length}/6 pins · tap Add pin, then tap the map
+                      </span>
+                    </div>
+                    <div
+                      className={`mk-map-stage${pinPlaceMode ? " is-placing" : ""}`}
+                      onClick={placeMapPin}
+                      role="presentation"
+                    >
+                      <img src={draft.imageDataUrl} alt="Map background" />
+                      {(draft.pins || []).map((pin, idx) => (
+                        <span
+                          key={pin.id || idx}
+                          className="mk-map-pin"
+                          style={{ left: `${pin.x}%`, top: `${pin.y}%` }}
+                          title={pin.label || `Pin ${idx + 1}`}
+                        >
+                          {idx + 1}
+                        </span>
+                      ))}
+                    </div>
+                    <div className="mk-pin-list">
+                      {(draft.pins || []).map((pin, idx) => (
+                        <div key={pin.id || idx} className="mk-pin-row">
+                          <span className="mk-pin-num">{idx + 1}</span>
+                          <input
+                            className="mk-input"
+                            value={pin.label || ""}
+                            onChange={(e) => {
+                              const next = (draft.pins || []).map((p, i) =>
+                                i === idx ? { ...p, label: e.target.value } : p
+                              );
+                              patchDraft({ pins: next });
+                            }}
+                            placeholder="Place label…"
+                            disabled={busy}
+                            maxLength={40}
+                          />
+                          <button
+                            type="button"
+                            className="mk-tool"
+                            disabled={busy}
+                            onClick={() => {
+                              patchDraft({
+                                pins: (draft.pins || []).filter((_, i) => i !== idx),
+                              });
+                            }}
+                          >
+                            Remove
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </>
+                )}
+                <div className="mk-field">
+                  <label htmlFor="mk-map-cap">Caption (optional)</label>
+                  <input
+                    id="mk-map-cap"
+                    className="mk-input"
+                    value={draft.caption || ""}
+                    onChange={(e) => patchDraft({ caption: e.target.value })}
+                    placeholder="How does this map show the idea?"
+                    disabled={busy}
+                    maxLength={160}
+                  />
+                </div>
+              </>
+            ) : null}
+
+            {activeMode === "math_story" ? (
+              <>
+                <div className="mk-field">
+                  <label htmlFor="mk-math-story">Your story</label>
+                  <textarea
+                    id="mk-math-story"
+                    value={draft.story || ""}
+                    onChange={(e) => patchDraft({ story: e.target.value })}
+                    placeholder="Tell the math story in a few sentences…"
+                    disabled={busy}
+                  />
+                </div>
+                <div className="mk-field">
+                  <label htmlFor="mk-math-work">Work / equation</label>
+                  <textarea
+                    id="mk-math-work"
+                    className="mk-work-box"
+                    value={draft.workText || ""}
+                    onChange={(e) => patchDraft({ workText: e.target.value })}
+                    placeholder="Show the numbers and steps…"
+                    disabled={busy}
+                  />
+                </div>
+                <div className="mk-upload-row">
+                  <button
+                    type="button"
+                    className="mk-tool"
+                    disabled={busy}
+                    onClick={() => setLibraryPicker({ kind: "math" })}
+                  >
+                    Optional library picture
+                  </button>
+                  {isPlacedImage(draft.imageDataUrl) ? (
+                    <button
+                      type="button"
+                      className="mk-tool"
+                      disabled={busy}
+                      onClick={() => patchDraft({ imageDataUrl: null })}
+                    >
+                      Clear picture
+                    </button>
+                  ) : null}
+                </div>
+                {isLibraryPath(draft.imageDataUrl) ? (
+                  <div className="mk-poster-preview">
+                    <img src={draft.imageDataUrl} alt="Math story picture" />
+                  </div>
+                ) : (
+                  <MakerDrawPad
+                    initialImage={draft.imageDataUrl}
+                    onChange={(url) => patchDraft({ imageDataUrl: url })}
+                    disabled={busy}
+                    height={180}
+                  />
+                )}
+              </>
+            ) : null}
+
+            {activeMode === "interview" ? (
+              <>
+                <div className="mk-comic-count">
+                  <span className="mk-quiet">Questions:</span>
+                  {[3, 4, 5].map((n) => (
+                    <button
+                      key={n}
+                      type="button"
+                      className={`mk-tool${(draft.rows || []).length === n ? " on" : ""}`}
+                      disabled={busy}
+                      onClick={() => {
+                        const cur = draft.rows || [];
+                        if (cur.length === n) return;
+                        let next;
+                        if (cur.length < n) {
+                          next = [
+                            ...cur,
+                            ...emptyInterviewRows(n).slice(cur.length, n),
+                          ];
+                        } else {
+                          next = cur.slice(0, n);
+                        }
+                        patchDraft({ rows: next });
+                      }}
+                    >
+                      {n}
+                    </button>
+                  ))}
+                </div>
+                <div className="mk-interview-list">
+                  {(draft.rows || []).map((row, idx) => (
+                    <div key={idx} className="mk-interview-row">
+                      <div className="mk-field">
+                        <label htmlFor={`mk-iq-${idx}`}>Question {idx + 1}</label>
+                        <input
+                          id={`mk-iq-${idx}`}
+                          className="mk-input"
+                          value={row.question || ""}
+                          onChange={(e) => {
+                            const next = (draft.rows || []).map((r, i) =>
+                              i === idx ? { ...r, question: e.target.value } : r
+                            );
+                            patchDraft({ rows: next });
+                          }}
+                          placeholder="Question…"
+                          disabled={busy}
+                          maxLength={160}
+                        />
+                      </div>
+                      <div className="mk-field">
+                        <label htmlFor={`mk-ia-${idx}`}>Your answer</label>
+                        <textarea
+                          id={`mk-ia-${idx}`}
+                          value={row.answer || ""}
+                          onChange={(e) => {
+                            const next = (draft.rows || []).map((r, i) =>
+                              i === idx ? { ...r, answer: e.target.value } : r
+                            );
+                            patchDraft({ rows: next });
+                          }}
+                          placeholder="Answer in your own words…"
+                          disabled={busy}
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </>
+            ) : null}
+
+            {activeMode === "sort_of_my_own" ? (
+              <>
+                <div className="mk-field">
+                  <label>Your categories (2–4)</label>
+                  <div className="mk-sort-cats">
+                    {(draft.categories || []).map((cat, idx) => (
+                      <div key={idx} className="mk-sort-cat-row">
+                        <input
+                          className="mk-input"
+                          value={cat || ""}
+                          onChange={(e) => {
+                            const next = (draft.categories || []).map((c, i) =>
+                              i === idx ? e.target.value : c
+                            );
+                            patchDraft({ categories: next });
+                          }}
+                          placeholder={`Category ${idx + 1}`}
+                          disabled={busy}
+                          maxLength={40}
+                        />
+                        {(draft.categories || []).length > 2 ? (
+                          <button
+                            type="button"
+                            className="mk-tool"
+                            disabled={busy}
+                            onClick={() => {
+                              const nextCats = (draft.categories || []).filter((_, i) => i !== idx);
+                              const nextItems = (draft.items || []).map((it) => {
+                                if (it.categoryIndex == null) return it;
+                                if (Number(it.categoryIndex) === idx) {
+                                  return { ...it, categoryIndex: null };
+                                }
+                                if (Number(it.categoryIndex) > idx) {
+                                  return { ...it, categoryIndex: Number(it.categoryIndex) - 1 };
+                                }
+                                return it;
+                              });
+                              patchDraft({ categories: nextCats, items: nextItems });
+                            }}
+                          >
+                            Remove
+                          </button>
+                        ) : null}
+                      </div>
+                    ))}
+                  </div>
+                  {(draft.categories || []).length < 4 ? (
+                    <button
+                      type="button"
+                      className="mk-tool"
+                      style={{ marginTop: 8 }}
+                      disabled={busy}
+                      onClick={() =>
+                        patchDraft({
+                          categories: [
+                            ...(draft.categories || []),
+                            `Group ${String.fromCharCode(65 + (draft.categories || []).length)}`,
+                          ],
+                        })
+                      }
+                    >
+                      Add category
+                    </button>
+                  ) : null}
+                </div>
+
+                <div className="mk-field">
+                  <label>Items — tap one, then tap a category to sort</label>
+                  <div className="mk-sort-items">
+                    {(draft.items || []).map((it) => {
+                      const assigned =
+                        it.categoryIndex != null &&
+                        (draft.categories || [])[Number(it.categoryIndex)];
+                      const active = sortActiveItem === it.id;
+                      return (
+                        <button
+                          key={it.id}
+                          type="button"
+                          className={`mk-sort-chip${active ? " is-active" : ""}${
+                            assigned ? " is-sorted" : ""
+                          }`}
+                          disabled={busy}
+                          onClick={() => setSortActiveItem(active ? null : it.id)}
+                        >
+                          <input
+                            className="mk-sort-chip-input"
+                            value={it.label || ""}
+                            onClick={(e) => e.stopPropagation()}
+                            onChange={(e) => {
+                              const next = (draft.items || []).map((row) =>
+                                row.id === it.id ? { ...row, label: e.target.value } : row
+                              );
+                              patchDraft({ items: next });
+                            }}
+                            disabled={busy}
+                            maxLength={40}
+                          />
+                          <span className="mk-quiet">
+                            {assigned ? String(assigned) : "Unsorted"}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                  <div className="mk-upload-row" style={{ marginTop: 8 }}>
+                    <button
+                      type="button"
+                      className="mk-tool"
+                      disabled={busy || (draft.items || []).length >= 12}
+                      onClick={() => {
+                        const n = (draft.items || []).length + 1;
+                        patchDraft({
+                          items: [
+                            ...(draft.items || []),
+                            { id: `item-${Date.now()}`, label: `Item ${n}`, categoryIndex: null },
+                          ],
+                        });
+                      }}
+                    >
+                      Add item
+                    </button>
+                  </div>
+                </div>
+
+                <div className="mk-sort-targets">
+                  {(draft.categories || []).map((cat, idx) => (
+                    <button
+                      key={idx}
+                      type="button"
+                      className="mk-sort-target"
+                      disabled={busy || !sortActiveItem}
+                      onClick={() => {
+                        if (!sortActiveItem) return;
+                        const next = (draft.items || []).map((it) =>
+                          it.id === sortActiveItem ? { ...it, categoryIndex: idx } : it
+                        );
+                        patchDraft({ items: next });
+                        setSortActiveItem(null);
+                      }}
+                    >
+                      <b>{(cat || "").trim() || `Category ${idx + 1}`}</b>
+                      <span className="mk-quiet">
+                        {(draft.items || []).filter((it) => Number(it.categoryIndex) === idx).length}{" "}
+                        items
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              </>
             ) : null}
 
             <div className="mk-save-row">
