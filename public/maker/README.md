@@ -2,6 +2,10 @@
 
 For new kid-facing ClearCenters product illustrations and photos, save the files under `public/maker/` (preferred) or `public/lab/`.
 
-Maker Studio’s student library scans these living folders. New `.jpg`, `.jpeg`, `.png`, `.webp`, and `.gif` files become searchable automatically — do not hand-edit JSON or add a Maker-only step.
+Maker Studio's student library scans these living folders. New `.jpg`, `.jpeg`, `.png`, `.webp`, and `.gif` files become searchable automatically - do not hand-edit JSON or add a Maker-only step.
 
 Do not put Maker-usable art only in Downloads, chat attachments, or random paths. Exclude UI chrome, icons, and badges. `public/cases/` is case-card chrome, not part of the kid library unless the scanner roots are widened.
+
+## Chrome (not library)
+
+`public/maker/_chrome/` holds Maker Studio UI chrome (e.g. `crew-room-bg.png` Soft Crystal ship crew-room background). The library scanner skips underscore-prefixed paths and `crew-room-bg` - these are not student library picks.

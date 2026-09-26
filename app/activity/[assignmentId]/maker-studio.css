@@ -13,7 +13,7 @@
   --mk-text: #2A2350;
   --mk-muted: #6B6491;
   --mk-success: #22C55E;
-  --mk-glass: rgba(255, 255, 255, 0.78);
+  --mk-glass: rgba(255, 255, 255, 0.62);
   --mk-glass-border: rgba(140, 82, 242, 0.28);
   --mk-glow: 0 0 0 1px rgba(140, 82, 242, 0.18), 0 12px 36px rgba(88, 52, 180, 0.12), 0 0 40px rgba(111, 216, 245, 0.08);
 
@@ -22,12 +22,16 @@
   min-height: calc(100vh - 46px);
   padding: 56px 16px 120px;
   background-color: var(--mk-canvas);
+  background-image: url(/maker/_chrome/crew-room-bg.png);
+  background-size: cover;
+  background-position: center top;
+  background-repeat: no-repeat;
   color: var(--mk-text);
   font-family: Inter, system-ui, sans-serif;
   overflow-x: hidden;
 }
 
-/* Panoramic viewport: soft nebula / planet limb behind glass panels */
+/* Soft vignette only — real Soft Crystal crew-room photo is the page bg */
 .mk-page::before {
   content: "";
   position: absolute;
@@ -35,71 +39,13 @@
   z-index: -2;
   pointer-events: none;
   background:
-    radial-gradient(ellipse 90% 55% at 50% -8%, rgba(140, 82, 242, 0.22), transparent 58%),
-    radial-gradient(ellipse 70% 50% at 88% 18%, rgba(111, 216, 245, 0.28), transparent 52%),
-    radial-gradient(ellipse 55% 40% at 8% 30%, rgba(255, 196, 77, 0.12), transparent 50%),
-    radial-gradient(ellipse 120% 70% at 50% 110%, rgba(74, 40, 140, 0.10), transparent 55%),
-    linear-gradient(180deg, #ebe4fb 0%, #F3EFFC 42%, #e8f6fb 100%);
+    radial-gradient(ellipse 95% 75% at 50% 35%, transparent 42%, rgba(243, 239, 252, 0.28) 100%),
+    linear-gradient(180deg, rgba(243, 239, 252, 0.18) 0%, transparent 22%, transparent 72%, rgba(243, 239, 252, 0.32) 100%);
 }
 
-/* Starfield / window dots */
+/* No CSS starfield — photo carries the window / nebula */
 .mk-page::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  z-index: -1;
-  pointer-events: none;
-  opacity: 0.55;
-  background-image:
-    radial-gradient(1.5px 1.5px at 12% 18%, rgba(255, 255, 255, 0.9), transparent),
-    radial-gradient(1.5px 1.5px at 28% 12%, rgba(255, 255, 255, 0.7), transparent),
-    radial-gradient(1px 1px at 44% 22%, rgba(255, 255, 255, 0.85), transparent),
-    radial-gradient(1.5px 1.5px at 62% 10%, rgba(255, 255, 255, 0.65), transparent),
-    radial-gradient(1px 1px at 78% 20%, rgba(255, 255, 255, 0.8), transparent),
-    radial-gradient(1.5px 1.5px at 90% 14%, rgba(255, 255, 255, 0.7), transparent),
-    radial-gradient(1px 1px at 18% 40%, rgba(255, 255, 255, 0.55), transparent),
-    radial-gradient(1px 1px at 55% 8%, rgba(255, 255, 255, 0.75), transparent),
-    radial-gradient(2px 2px at 70% 28%, rgba(111, 216, 245, 0.55), transparent),
-    radial-gradient(ellipse 42% 18% at 70% 8%, rgba(255, 196, 77, 0.18), transparent);
-}
-
-/* Slight per-mode window tint */
-.mk-page[data-mode="write"]::before {
-  background:
-    radial-gradient(ellipse 90% 55% at 50% -8%, rgba(140, 82, 242, 0.28), transparent 58%),
-    radial-gradient(ellipse 70% 50% at 80% 20%, rgba(111, 216, 245, 0.18), transparent 52%),
-    linear-gradient(180deg, #ebe4fb 0%, #F3EFFC 45%, #eef0ff 100%);
-}
-.mk-page[data-mode="sketch"]::before,
-.mk-page[data-mode="diagram"]::before {
-  background:
-    radial-gradient(ellipse 90% 55% at 50% -8%, rgba(77, 214, 255, 0.22), transparent 58%),
-    radial-gradient(ellipse 60% 45% at 15% 25%, rgba(140, 82, 242, 0.2), transparent 50%),
-    linear-gradient(180deg, #e6f4fb 0%, #F3EFFC 45%, #ebe6fb 100%);
-}
-.mk-page[data-mode="poster"]::before {
-  background:
-    radial-gradient(ellipse 80% 50% at 30% -5%, rgba(255, 196, 77, 0.22), transparent 55%),
-    radial-gradient(ellipse 70% 50% at 90% 20%, rgba(140, 82, 242, 0.22), transparent 52%),
-    linear-gradient(180deg, #f5ecff 0%, #F3EFFC 45%, #fff6e8 100%);
-}
-.mk-page[data-mode="voice"]::before {
-  background:
-    radial-gradient(ellipse 70% 50% at 50% 0%, rgba(140, 82, 242, 0.26), transparent 55%),
-    radial-gradient(ellipse 50% 40% at 20% 40%, rgba(111, 216, 245, 0.2), transparent 50%),
-    linear-gradient(180deg, #ebe4fb 0%, #F3EFFC 50%, #e6f0fb 100%);
-}
-.mk-page[data-mode="map_it"]::before {
-  background:
-    radial-gradient(ellipse 90% 55% at 50% -8%, rgba(77, 214, 255, 0.3), transparent 58%),
-    radial-gradient(ellipse 50% 40% at 85% 30%, rgba(140, 82, 242, 0.16), transparent 50%),
-    linear-gradient(180deg, #dff6fb 0%, #F3EFFC 45%, #e8eefb 100%);
-}
-.mk-page[data-mode="comic"]::before {
-  background:
-    radial-gradient(ellipse 80% 50% at 60% -5%, rgba(140, 82, 242, 0.24), transparent 55%),
-    radial-gradient(ellipse 50% 40% at 10% 20%, rgba(255, 196, 77, 0.14), transparent 50%),
-    linear-gradient(180deg, #f0e8ff 0%, #F3EFFC 45%, #f7f0ff 100%);
+  content: none;
 }
 
 .mk-shell {
@@ -109,6 +55,7 @@
   flex-direction: column;
   gap: 14px;
   position: relative;
+  z-index: 1;
 }
 
 .mk-top, .mk-card, .mk-panel, .mk-foot {
@@ -193,7 +140,7 @@
   padding: 14px 14px 12px;
   border: 0;
   border-radius: 18px;
-  background: rgba(255, 255, 255, 0.92);
+  background: rgba(255, 255, 255, 0.72);
   box-shadow: inset 0 0 0 1px rgba(140, 82, 242, 0.18), 0 6px 18px rgba(88, 52, 180, 0.06);
   text-align: left;
   color: inherit;
