@@ -68,11 +68,24 @@ export async function POST(request) {
     return NextResponse.json({ error: "Missing the task." }, { status: 400 });
   }
 
+  // Sept 26, 2026: acts open in order. A task in act 2 or 3 is only gradable
+  // once the act before it is finished (and the act is playable).
+  const task = quest.tasks[taskId];
+  const priorCards = prior.cards || {};
+  const actDoneIn = (cardMap, actNum) => {
+    const act = quest.acts && quest.acts[actNum];
+    if (!act) return false;
+    return [...act.tasks, act.challenge].every((id) => cardMap[id] && cardMap[id].done);
+  };
+  const playable = Array.isArray(quest.playableActs) ? quest.playableActs : [];
+  if (!playable.includes(task.act) || (task.act > 1 && !actDoneIn(priorCards, task.act - 1))) {
+    return NextResponse.json({ error: "That part of the quest isn't open yet." }, { status: 403 });
+  }
+
   const graded = gradeExpeditionTask(assignment.case_standard, taskId, body);
   if (!graded) return NextResponse.json({ error: "That task isn't ready yet." }, { status: 404 });
 
-  const cards = { ...(prior.cards || {}) };
-  const task = quest.tasks[taskId];
+  const cards = { ...priorCards };
 
   if (!graded.ok) {
     return NextResponse.json({
@@ -81,10 +94,11 @@ export async function POST(request) {
       feedback: graded.feedback,
       needsWritten: graded.needsWritten || false,
       step: graded.step || null,
+      wrongItems: graded.wrongItems || null,
     });
   }
 
-  // Partial multi-step (scoops missing, challenge step 1): don't mark done yet
+  // Partial multi-step (scoops, steps, parts): don't mark done yet
   if (graded.next) {
     return NextResponse.json({
       ok: true,
@@ -97,6 +111,7 @@ export async function POST(request) {
 
   const stars = graded.stars || 1;
   const sure = body.sure || null;
+  const wasDone = !!(cards[taskId] && cards[taskId].done);
   cards[taskId] = {
     done: true,
     stars,
@@ -107,27 +122,31 @@ export async function POST(request) {
     usedHint: !!body.usedHint,
   };
 
-  // Recompute meters from completed Act 1 cards in number order (end totals match)
+  // Recompute meters from every completed card, in task order
   const meters = { ...quest.meterStart };
-  [1, 2, 3, 4, 5].forEach((id) => {
-    if (!cards[id] || !cards[id].done) return;
-    const t = quest.tasks[id];
-    if (!t || !t.meter) return;
-    if (t.meter.heat) meters.heat = Math.min(100, meters.heat + t.meter.heat);
-    if (t.meter.supplies) meters.supplies += t.meter.supplies;
-    if (t.discovery) meters.journal += 1;
-  });
+  Object.keys(quest.tasks)
+    .map(Number)
+    .sort((x, y) => x - y)
+    .forEach((id) => {
+      if (!cards[id] || !cards[id].done) return;
+      const t = quest.tasks[id];
+      if (!t || !t.meter) return;
+      if (t.meter.heat) meters.heat = Math.min(100, meters.heat + t.meter.heat);
+      if (t.meter.supplies) meters.supplies += t.meter.supplies;
+      if (t.discovery) meters.journal += 1;
+    });
 
-  const act1Cards = [1, 2, 3, 4];
-  const act1Done = act1Cards.every((id) => cards[id] && cards[id].done);
-  const challengeDone = !!(cards[5] && cards[5].done);
-  const actComplete = act1Done && challengeDone;
+  const actsDone = [1, 2, 3].filter((n) => actDoneIn(cards, n));
+  const actComplete = !wasDone && actDoneIn(cards, task.act) && !actDoneIn(priorCards, task.act);
+  const questDone = playable.length > 0 && playable.every((n) => actsDone.includes(n));
 
   const payload = {
     briefed: true,
     cards,
     meters,
-    act1Done: actComplete,
+    act1Done: actsDone.includes(1),
+    actsDone,
+    questDone,
     savedAt: new Date().toISOString(),
     title: quest.title,
   };
@@ -136,10 +155,12 @@ export async function POST(request) {
   const row = {
     expedition_station_data: payload,
     attempt1: summary.text,
-    ai_score: actComplete ? summary.score : null,
+    ai_score: questDone ? summary.score : null,
   };
 
-  if (actComplete && !(existing && existing.submitted_at)) {
+  // Turned in only when every open act is finished, so the quest stays on the
+  // student's mission list until then.
+  if (questDone && !(existing && existing.submitted_at)) {
     row.submitted_at = new Date().toISOString();
   }
 
@@ -153,7 +174,7 @@ export async function POST(request) {
     });
   }
 
-  if (actComplete && !(existing && existing.submitted_at)) {
+  if (actComplete) {
     await awardCrystals(studentId, Math.max(5, stars * 2));
   }
 
@@ -165,6 +186,8 @@ export async function POST(request) {
     meter: task.meter || null,
     meters,
     actComplete,
+    completedAct: actComplete ? task.act : null,
+    questDone,
     data: payload,
   });
 }
