@@ -59,12 +59,8 @@ export default function TodayBridge({teacherName,teacherEmail,classes,students,a
   return ()=>{ignore=true};
  },[info.grade,cls?.grade,current?.case_standard,currentTopic]);
  const struggling=roster.map(s=>{const grades=submissions.filter(x=>x.student_id===s.id&&list.some(a=>a.id===x.assignment_id)&&x.released&&x.teacher_grade!=null).map(x=>Number(x.teacher_grade));const avg=grades.length?grades.reduce((a,b)=>a+b,0)/grades.length:null;const hintCount=hints.filter(h=>h.student_id===s.id&&byId[h.assignment_id]).length;return {student:s,avg,hintCount};}).filter(x=>(x.avg!=null&&x.avg<1.4)||x.hintCount>=2).sort((a,b)=>b.hintCount-a.hintCount||((a.avg??9)-(b.avg??9))).slice(0,3);
- const play=list.find(a=>(caseDetails[a.case_standard]?.engine)==='frequency_rush');
- const signal=list.find(a=>(caseDetails[a.case_standard]?.engine)==='signal_defense');
  const distress=list.find(a=>a.distress_call);
  const boards=[];
- const game=play||signal;
- if(game)boards.push({key:'play',name:'Frequency Rush',button:'Open the game',href:assignmentBoard(game,caseDetails[game.case_standard]?.engine),image:'/teacher/challenges/frequency_rush.jpg',also:play&&signal?`/teacher/signal-ops-board?assignmentId=${signal.id}`:null,alsoLabel:'Class screen'});
  if(distress)boards.push({key:'live',name:'Distress call',button:'Open the live board',href:`/teacher/live-ops-board?assignmentId=${distress.id}`,image:'/teacher/live_ops_board_bg.jpg',focus:'68% 18%'});
  const actualTeks=missionMapTeksCode(current?.case_standard||'')||current?.case_standard;
  const displayName=teacherName?.split(' ')[0]||teacherEmail?.split('@')[0]||'teacher';
