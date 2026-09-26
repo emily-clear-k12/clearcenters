@@ -44,7 +44,17 @@ function placementKey(beatId, chipId, idx) {
   return `${beatId}::${chipId}::${idx}`;
 }
 
-
+function ChipFace({ chip, removeLabel }) {
+  if (chip.imageUrl) {
+    return (
+      <>
+        <img className="bb-chip-img" src={chip.imageUrl} alt="" draggable={false} />
+        <span className="bb-chip-caption">{chip.label}{removeLabel || ""}</span>
+      </>
+    );
+  }
+  return <>{chip.label}{removeLabel || ""}</>;
+}
 
 export default function BroadcastBoothClient({
   assignmentId,
@@ -68,7 +78,19 @@ export default function BroadcastBoothClient({
     () => (publicCase && publicCase.beatStems && typeof publicCase.beatStems === "object" ? publicCase.beatStems : {}),
     [publicCase]
   );
-  const topicLabel = (publicCase && (publicCase.topic || publicCase.title)) || "Topic";
+  const allStemChips = useMemo(() => {
+    const out = [];
+    const seen = new Set();
+    for (const b of beatDefs) {
+      const stems = Array.isArray(beatStems[b.id]) ? beatStems[b.id] : [];
+      for (const s of stems) {
+        if (!s || !s.id || seen.has(s.id)) continue;
+        seen.add(s.id);
+        out.push({ ...s, source: s.source || "stem" });
+      }
+    }
+    return out;
+  }, [beatDefs, beatStems]);
 
   const clipCap = (publicCase && publicCase.clipCapSec) || CLIP_CAP_SEC;
   const minClip = (publicCase && publicCase.minClipSec) || MIN_CLIP_SEC;
@@ -82,20 +104,24 @@ export default function BroadcastBoothClient({
       if (idx >= defs.length) return "playback";
       return "beat";
     }
+    // Merged plan page: after cover (or immediately if no cover)
     if (existingData && existingData.stimulusReady) return "brainstorm";
     if (publicCase && publicCase.cover) return "cover";
-    return "stimulus";
+    return "brainstorm";
   });
 
-  const [stimulusReady, setStimulusReady] = useState(!!(existingData && existingData.stimulusReady));
+  const [stimulusReady, setStimulusReady] = useState(() => {
+    if (existingData && existingData.stimulusReady) return true;
+    // No cover → land on plan with stimulus already available
+    if (!(publicCase && publicCase.cover)) return true;
+    return false;
+  });
   const [brainstormReady, setBrainstormReady] = useState(!!(existingData && existingData.brainstormReady));
   const [brainstormMap, setBrainstormMap] = useState(() =>
     normalizeBrainstormMap(existingData && existingData.brainstormMap, beatDefs)
   );
-  const [selectedBubble, setSelectedBubble] = useState(() => {
-    const required = (brainstormMin && brainstormMin.requiredBeatIds) || ["big_idea", "show_me"];
-    return required[0] || (beatDefs[0] && beatDefs[0].id) || "big_idea";
-  });
+  /** Pending chip from ideas bank (tap chip → tap tray). */
+  const [selectedChip, setSelectedChip] = useState(null);
   const [dragChip, setDragChip] = useState(null);
 
   const [beats, setBeats] = useState(() => hydrateBeats(existingData, beatDefs));
@@ -164,6 +190,7 @@ export default function BroadcastBoothClient({
   const activePlanChips = currentBeat && Array.isArray(brainstormMap[currentBeat.id])
     ? brainstormMap[currentBeat.id]
     : [];
+  const requiredSet = new Set((brainstormMin && brainstormMin.requiredBeatIds) || []);
 
   async function persist(kind, overrides) {
     setSaving(true);
@@ -219,20 +246,21 @@ export default function BroadcastBoothClient({
     window.speechSynthesis.speak(u);
   }
 
-  function markReady() {
+  /** Cover → combined plan page (stimulus stays visible while placing). */
+  function enterPlan() {
     stimulusReadyRef.current = true;
     setStimulusReady(true);
     setView("brainstorm");
+    setStatus("");
     dirty.current = true;
     scheduleSave();
   }
 
-  function addChipToBubble(beatId, chip) {
+  function addChipToTray(beatId, chip) {
     if (!beatId || !chip || !chip.label || submitted) return;
     setBrainstormMap((prev) => {
       const list = Array.isArray(prev[beatId]) ? prev[beatId] : [];
       if (list.length >= 8) return prev;
-      // Avoid exact duplicate of same chip id on same bubble
       if (list.some((c) => c.id === chip.id)) return prev;
       const nextChip = {
         id: chip.id,
@@ -252,7 +280,7 @@ export default function BroadcastBoothClient({
     scheduleSave();
   }
 
-  function removeChipFromBubble(beatId, index) {
+  function removeChipFromTray(beatId, index) {
     if (submitted) return;
     setBrainstormMap((prev) => {
       const list = Array.isArray(prev[beatId]) ? [...prev[beatId]] : [];
@@ -294,9 +322,14 @@ export default function BroadcastBoothClient({
       setStatus(emptyHint);
       return;
     }
+    if (!stimulusReady) {
+      stimulusReadyRef.current = true;
+      setStimulusReady(true);
+    }
     brainstormReadyRef.current = true;
     brainstormMapRef.current = brainstormMap;
     setBrainstormReady(true);
+    setSelectedChip(null);
     setView("beat");
     setBeatIndex(0);
     dirty.current = true;
@@ -307,7 +340,7 @@ export default function BroadcastBoothClient({
     setMicError(null);
     setShortClipWarn(false);
     if (!stimulusReady) {
-      setMicError("Finish the field notes and tap I'm ready before recording.");
+      setMicError("Finish planning your storyboard before recording.");
       return;
     }
     if (!brainstormReady || !mapMeetsMin) {
@@ -487,21 +520,34 @@ export default function BroadcastBoothClient({
     setStatus("Submitted. Your teacher will listen to your broadcast.");
   }
 
-  function onTrayChipClick(chip) {
-    if (!selectedBubble) {
-      setStatus("Tap a bubble on the map first, then tap a chip.");
+  function onIdeaChipClick(chip) {
+    if (submitted) return;
+    if (selectedChip && selectedChip.id === chip.id && selectedChip.source === (chip.source || "stimulus")) {
+      setSelectedChip(null);
+      setStatus("");
       return;
     }
-    addChipToBubble(selectedBubble, chip);
+    setSelectedChip({ ...chip, source: chip.source || "stimulus" });
+    setStatus("Now tap a beat tray to place it.");
+  }
+
+  function onShelfClick(beatId) {
+    if (submitted) return;
+    if (!selectedChip) {
+      setStatus("Tap a chip in the Ideas bank first, then tap a tray.");
+      return;
+    }
+    addChipToTray(beatId, selectedChip);
+    setSelectedChip(null);
     setStatus("");
   }
 
-  function onBubbleDragOver(e) {
+  function onShelfDragOver(e) {
     e.preventDefault();
     e.dataTransfer.dropEffect = "copy";
   }
 
-  function onBubbleDrop(e, beatId) {
+  function onShelfDrop(e, beatId) {
     e.preventDefault();
     if (submitted) return;
     try {
@@ -510,12 +556,21 @@ export default function BroadcastBoothClient({
       if (payload && payload.move && payload.fromBeatId != null) {
         moveChip(payload.fromBeatId, payload.fromIndex, beatId);
       } else if (payload && payload.label) {
-        addChipToBubble(beatId, payload);
+        addChipToTray(beatId, payload);
       }
     } catch (_) {
       /* ignore bad drag data */
     }
     setDragChip(null);
+    setSelectedChip(null);
+    setStatus("");
+  }
+
+  function startIdeaDrag(e, chip) {
+    const payload = JSON.stringify(chip);
+    e.dataTransfer.setData("application/json", payload);
+    e.dataTransfer.setData("text/plain", payload);
+    setDragChip(chip);
   }
 
   if (!publicCase || !beatDefs.length) {
@@ -533,14 +588,11 @@ export default function BroadcastBoothClient({
 
   const prompt = (config && config.prompt) || publicCase.prompt || "";
   const stim = publicCase.stimulus;
-  const selectedStems = selectedBubble && Array.isArray(beatStems[selectedBubble])
-    ? beatStems[selectedBubble]
-    : [];
-  const requiredSet = new Set((brainstormMin && brainstormMin.requiredBeatIds) || []);
+  const planWide = view === "brainstorm" || view === "beat";
 
   return (
     <div className="bb-root">
-      <div className="bb-shell">
+      <div className={"bb-shell" + (planWide ? " bb-shell-wide" : "")}>
         <div className="bb-kicker">{publicCase.kicker || "Broadcast Booth"}</div>
         <h1 className="bb-title">{publicCase.title}</h1>
         <p className="bb-progress">
@@ -557,43 +609,16 @@ export default function BroadcastBoothClient({
               No student faces. No video editor. Just your voice and optional stills.
             </p>
             <div className="bb-row" style={{ marginTop: 14 }}>
-              <button type="button" className="bb-btn" onClick={() => setView("stimulus")}>Open field kit</button>
+              <button type="button" className="bb-btn" onClick={enterPlan}>Open field kit</button>
             </div>
           </div>
         ) : null}
 
-        {view === "stimulus" ? (
-          <div className="bb-card">
-            <div className="bb-cue">{(stim && stim.title) || "Field notes"}</div>
-            <p className="bb-muted">Read these notes (or tap Read aloud). Next you will plan a circle map — recorder stays locked until then.</p>
-            {stim && Array.isArray(stim.bullets) ? (
-              <ul className="bb-bullets">
-                {stim.bullets.map((line, i) => (
-                  <li key={i}>{line}</li>
-                ))}
-              </ul>
-            ) : (
-              <p className="bb-muted">No stimulus bullets on this case.</p>
-            )}
-            <div className="bb-card" style={{ marginTop: 12, background: "#F3EFFC" }}>
-              <div style={{ fontWeight: 700, fontSize: 13, marginBottom: 4 }}>Your prompt</div>
-              <p className="bb-muted" style={{ margin: 0 }}>{prompt}</p>
-            </div>
-            <div className="bb-row" style={{ marginTop: 14 }}>
-              <button type="button" className="bb-btn secondary" onClick={speakStimulus}>Read aloud</button>
-              <button type="button" className="bb-btn teal" onClick={markReady}>I&apos;m ready</button>
-            </div>
-            {!stimulusReady ? (
-              <p className="bb-muted" style={{ marginTop: 10 }}>Recorder is locked until you plan your map and meet the minimum.</p>
-            ) : null}
-          </div>
-        ) : null}
-
-        {view === "brainstorm" && stimulusReady ? (
-          <div className="bb-card">
-            <div className="bb-cue">Plan your broadcast · circle map</div>
+        {view === "brainstorm" ? (
+          <div className="bb-card bb-plan-card">
+            <div className="bb-cue">Plan your broadcast · storyboard</div>
             <p className="bb-muted">
-              No typing. Tap a bubble, then tap picture chips to fill it — or drag chips onto bubbles. Tap a chip on a bubble to remove it.
+              Field notes stay on the left. Tap a chip, then tap a beat tray — or drag chips onto trays. Tap × to remove. No typing.
             </p>
             {!mapMeetsMin ? (
               <div className="bb-warn">{emptyHint}</div>
@@ -601,138 +626,168 @@ export default function BroadcastBoothClient({
               <div className="bb-muted" style={{ marginBottom: 8 }}>Looks good — you can start recording when ready.</div>
             )}
 
-            <div className="bb-map" aria-label="Brainstorm circle map">
-              <div className="bb-map-center">
-                <div className="bb-map-center-label">Topic</div>
-                <div className="bb-map-center-topic">{topicLabel}</div>
-              </div>
-              {beatDefs.map((b) => {
-                const chips = Array.isArray(brainstormMap[b.id]) ? brainstormMap[b.id] : [];
-                const isSel = selectedBubble === b.id;
-                const isReq = requiredSet.has(b.id);
-                const filled = chips.length > 0;
-                return (
-                  <button
-                    key={b.id}
-                    type="button"
-                    className={
-                      "bb-bubble bb-bubble--" + b.id +
-                      (isSel ? " is-selected" : "") +
-                      (filled ? " is-filled" : "") +
-                      (isReq ? " is-required" : "")
-                    }
-                    onClick={() => setSelectedBubble(b.id)}
-                    onDragOver={onBubbleDragOver}
-                    onDrop={(e) => onBubbleDrop(e, b.id)}
-                    aria-pressed={isSel}
-                  >
-                    <div className="bb-bubble-title">
-                      {b.label}{isReq ? " *" : ""}
-                    </div>
-                    <div className="bb-bubble-chips">
-                      {chips.length === 0 ? (
-                        <span className="bb-bubble-empty">Tap chips →</span>
-                      ) : (
-                        chips.map((c, idx) => (
-                          <span
-                            key={placementKey(b.id, c.id, idx)}
-                            className={"bb-chip on-map" + (c.imageUrl ? " has-image" : "")}
-                            draggable={!submitted}
-                            onDragStart={(e) => {
-                              e.stopPropagation();
-                              const payload = JSON.stringify({ move: true, fromBeatId: b.id, fromIndex: idx, ...c });
-                              e.dataTransfer.setData("application/json", payload);
-                              e.dataTransfer.setData("text/plain", payload);
-                              setDragChip(c);
-                            }}
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              removeChipFromBubble(b.id, idx);
-                            }}
-                            title="Tap to remove · drag to move"
-                          >
-                            {c.imageUrl ? (
-                              <>
-                                <img className="bb-chip-img" src={c.imageUrl} alt="" draggable={false} />
-                                <span className="bb-chip-caption">{c.label} ×</span>
-                              </>
-                            ) : (
-                              <>{c.label} ×</>
-                            )}
-                          </span>
-                        ))
-                      )}
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
-
-            <div className="bb-tray">
-              <div className="bb-tray-label">
-                Idea chips{selectedBubble ? ` → ${beatDefs.find((x) => x.id === selectedBubble)?.label || ""}` : ""}
-              </div>
-              <div className="bb-chip-row">
-                {stimulusChips.map((chip) => (
-                  <button
-                    key={chip.id}
-                    type="button"
-                    className={"bb-chip" + (chip.imageUrl ? " has-image" : "")}
-                    disabled={submitted}
-                    draggable={!submitted}
-                    onDragStart={(e) => {
-                      const payload = JSON.stringify(chip);
-                      e.dataTransfer.setData("application/json", payload);
-                      e.dataTransfer.setData("text/plain", payload);
-                      setDragChip(chip);
-                    }}
-                    onClick={() => onTrayChipClick(chip)}
-                  >
-                    {chip.imageUrl ? (
-                      <>
-                        <img className="bb-chip-img" src={chip.imageUrl} alt="" draggable={false} />
-                        <span className="bb-chip-caption">{chip.label}</span>
-                      </>
-                    ) : (
-                      chip.label
-                    )}
-                  </button>
-                ))}
-              </div>
-              {selectedStems.length ? (
-                <>
-                  <div className="bb-tray-label" style={{ marginTop: 12 }}>
-                    Pick-stems for {beatDefs.find((x) => x.id === selectedBubble)?.label || "this beat"}
-                  </div>
-                  <div className="bb-chip-row">
-                    {selectedStems.map((chip) => (
-                      <button
-                        key={chip.id}
-                        type="button"
-                        className={"bb-chip stem" + (chip.imageUrl ? " has-image" : "")}
-                        disabled={submitted}
-                        draggable={!submitted}
-                        onDragStart={(e) => {
-                          const payload = JSON.stringify({ ...chip, source: "stem" });
-                          e.dataTransfer.setData("application/json", payload);
-                          e.dataTransfer.setData("text/plain", payload);
-                          setDragChip(chip);
-                        }}
-                        onClick={() => onTrayChipClick({ ...chip, source: "stem" })}
-                      >
-                        {chip.imageUrl ? (
-                          <>
-                            <img className="bb-chip-img" src={chip.imageUrl} alt="" draggable={false} />
-                            <span className="bb-chip-caption">{chip.label}</span>
-                          </>
-                        ) : (
-                          chip.label
-                        )}
-                      </button>
+            <div className="bb-plan-layout">
+              <aside className="bb-plan-stimulus" aria-label="Field notes">
+                <div className="bb-plan-col-label">Field notes</div>
+                <div className="bb-cue" style={{ fontSize: 15 }}>{(stim && stim.title) || "Field notes"}</div>
+                {stim && Array.isArray(stim.bullets) ? (
+                  <ul className="bb-bullets">
+                    {stim.bullets.map((line, i) => (
+                      <li key={i}>{line}</li>
                     ))}
+                  </ul>
+                ) : (
+                  <p className="bb-muted">No stimulus bullets on this case.</p>
+                )}
+                <div className="bb-prompt-box">
+                  <div style={{ fontWeight: 700, fontSize: 12, marginBottom: 4 }}>Your prompt</div>
+                  <p className="bb-muted" style={{ margin: 0 }}>{prompt}</p>
+                </div>
+                <div className="bb-row" style={{ marginTop: 12 }}>
+                  <button type="button" className="bb-btn secondary" onClick={speakStimulus}>Read aloud</button>
+                </div>
+              </aside>
+
+              <div className="bb-plan-right">
+                <div className="bb-ideas-bank" aria-label="Ideas bank">
+                  <div className="bb-plan-col-label">Ideas bank</div>
+                  <div className="bb-tray-label">Picture chips</div>
+                  <div className="bb-chip-row">
+                    {stimulusChips.map((chip) => {
+                      const isSel = selectedChip && selectedChip.id === chip.id && (selectedChip.source || "stimulus") !== "stem";
+                      return (
+                        <button
+                          key={chip.id}
+                          type="button"
+                          className={
+                            "bb-chip" +
+                            (chip.imageUrl ? " has-image" : "") +
+                            (isSel ? " is-picked" : "")
+                          }
+                          disabled={submitted}
+                          draggable={!submitted}
+                          onDragStart={(e) => startIdeaDrag(e, chip)}
+                          onClick={() => onIdeaChipClick(chip)}
+                        >
+                          <ChipFace chip={chip} />
+                        </button>
+                      );
+                    })}
                   </div>
-                </>
-              ) : null}
+                  {allStemChips.length ? (
+                    <>
+                      <div className="bb-tray-label" style={{ marginTop: 12 }}>Pick-stems</div>
+                      <div className="bb-chip-row">
+                        {allStemChips.map((chip) => {
+                          const isSel = selectedChip && selectedChip.id === chip.id && selectedChip.source === "stem";
+                          return (
+                            <button
+                              key={chip.id}
+                              type="button"
+                              className={
+                                "bb-chip stem" +
+                                (chip.imageUrl ? " has-image" : "") +
+                                (isSel ? " is-picked" : "")
+                              }
+                              disabled={submitted}
+                              draggable={!submitted}
+                              onDragStart={(e) => startIdeaDrag(e, { ...chip, source: "stem" })}
+                              onClick={() => onIdeaChipClick({ ...chip, source: "stem" })}
+                            >
+                              <ChipFace chip={chip} />
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </>
+                  ) : null}
+                  {selectedChip ? (
+                    <p className="bb-muted" style={{ marginTop: 8 }}>
+                      Selected: <strong>{selectedChip.label}</strong> — tap a tray below
+                      {" · "}
+                      <button type="button" className="bb-text-btn" onClick={() => { setSelectedChip(null); setStatus(""); }}>
+                        Clear
+                      </button>
+                    </p>
+                  ) : null}
+                </div>
+
+                <div className="bb-shelves" aria-label="Storyboard beat trays">
+                  {beatDefs.map((b) => {
+                    const chips = Array.isArray(brainstormMap[b.id]) ? brainstormMap[b.id] : [];
+                    const isReq = requiredSet.has(b.id);
+                    const filled = chips.length > 0;
+                    const awaiting = !!selectedChip;
+                    return (
+                      <div
+                        key={b.id}
+                        role="button"
+                        tabIndex={0}
+                        className={
+                          "bb-shelf" +
+                          (filled ? " is-filled" : "") +
+                          (isReq ? " is-required" : "") +
+                          (awaiting ? " is-awaiting" : "") +
+                          (dragChip ? " is-droppable" : "")
+                        }
+                        onClick={() => onShelfClick(b.id)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" || e.key === " ") {
+                            e.preventDefault();
+                            onShelfClick(b.id);
+                          }
+                        }}
+                        onDragOver={onShelfDragOver}
+                        onDrop={(e) => onShelfDrop(e, b.id)}
+                        aria-label={b.label + " tray"}
+                      >
+                        <div className="bb-shelf-title">
+                          {b.label}{isReq ? " *" : ""}
+                        </div>
+                        <div className="bb-shelf-chips">
+                          {chips.length === 0 ? (
+                            <span className="bb-shelf-empty">
+                              {awaiting ? "Tap to place" : "Drop or tap here"}
+                            </span>
+                          ) : (
+                            chips.map((c, idx) => (
+                              <span
+                                key={placementKey(b.id, c.id, idx)}
+                                className={"bb-chip on-map" + (c.imageUrl ? " has-image" : "")}
+                                draggable={!submitted}
+                                onDragStart={(e) => {
+                                  e.stopPropagation();
+                                  const payload = JSON.stringify({ move: true, fromBeatId: b.id, fromIndex: idx, ...c });
+                                  e.dataTransfer.setData("application/json", payload);
+                                  e.dataTransfer.setData("text/plain", payload);
+                                  setDragChip(c);
+                                }}
+                                onClick={(e) => e.stopPropagation()}
+                                title={c.label}
+                              >
+                                <ChipFace chip={c} />
+                                {!submitted ? (
+                                  <button
+                                    type="button"
+                                    className="bb-chip-x"
+                                    aria-label={"Remove " + c.label}
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      removeChipFromTray(b.id, idx);
+                                    }}
+                                  >
+                                    ×
+                                  </button>
+                                ) : null}
+                              </span>
+                            ))
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
             </div>
 
             <div className="bb-row" style={{ marginTop: 14 }}>
@@ -743,14 +798,6 @@ export default function BroadcastBoothClient({
                 disabled={!mapMeetsMin || submitted}
               >
                 Map ready · Start recording
-              </button>
-              <button
-                type="button"
-                className="bb-btn secondary"
-                onClick={() => setView("stimulus")}
-                disabled={submitted}
-              >
-                Back to notes
               </button>
             </div>
             {status ? <p className="bb-muted" style={{ marginTop: 10 }}>{status}</p> : null}
@@ -783,7 +830,7 @@ export default function BroadcastBoothClient({
         {view === "beat" && currentBeat && brainstormReady ? (
           <div className="bb-record-layout">
             <div className="bb-compact-map" aria-label="Your plan — glance while you record">
-              <div className="bb-compact-map-label">Your map - current beat highlighted</div>
+              <div className="bb-compact-map-label">Your storyboard · current beat highlighted</div>
               <div className="bb-compact-map-grid">
                 {beatDefs.map((b) => {
                   const chips = Array.isArray(brainstormMap[b.id]) ? brainstormMap[b.id] : [];
@@ -793,18 +840,18 @@ export default function BroadcastBoothClient({
                     <div
                       key={"compact-" + b.id}
                       className={
-                        "bb-compact-bubble" +
+                        "bb-compact-tray" +
                         (isCurrent ? " is-current" : "") +
                         (chips.length ? " is-filled" : "") +
                         (isReq ? " is-required" : "")
                       }
                     >
-                      <div className="bb-compact-bubble-title">
+                      <div className="bb-compact-tray-title">
                         {b.label}{isReq ? " *" : ""}{isCurrent ? " · recording" : ""}
                       </div>
-                      <div className="bb-compact-bubble-chips">
+                      <div className="bb-compact-tray-chips">
                         {chips.length === 0 ? (
-                          <span className="bb-bubble-empty">—</span>
+                          <span className="bb-shelf-empty">—</span>
                         ) : (
                           chips.map((c, idx) => (
                             <span
@@ -812,14 +859,7 @@ export default function BroadcastBoothClient({
                               className={"bb-chip on-map compact" + (c.imageUrl ? " has-image" : "")}
                               title={c.label}
                             >
-                              {c.imageUrl ? (
-                                <>
-                                  <img className="bb-chip-img" src={c.imageUrl} alt="" draggable={false} />
-                                  <span className="bb-chip-caption">{c.label}</span>
-                                </>
-                              ) : (
-                                c.label
-                              )}
+                              <ChipFace chip={c} />
                             </span>
                           ))
                         )}
@@ -842,20 +882,13 @@ export default function BroadcastBoothClient({
                       key={placementKey(currentBeat.id, c.id, idx)}
                       className={"bb-chip on-cue" + (c.imageUrl ? " has-image" : "")}
                     >
-                      {c.imageUrl ? (
-                        <>
-                          <img className="bb-chip-img" src={c.imageUrl} alt="" draggable={false} />
-                          <span className="bb-chip-caption">{c.label}</span>
-                        </>
-                      ) : (
-                        c.label
-                      )}
+                      <ChipFace chip={c} />
                     </span>
                   ))}
                 </div>
               </div>
             ) : (
-              <p className="bb-muted" style={{ marginTop: 6 }}>No chips on this bubble — you can still record.</p>
+              <p className="bb-muted" style={{ marginTop: 6 }}>No chips on this beat — you can still record.</p>
             )}
 
             <p className="bb-muted" style={{ marginTop: 6 }}>Up to {clipCap} seconds. Re-record anytime before you submit.</p>
@@ -899,7 +932,7 @@ export default function BroadcastBoothClient({
                 onClick={() => { setView("brainstorm"); setStatus(""); }}
                 disabled={recording || submitted}
               >
-                Edit map
+                Edit plan
               </button>
             </div>
 
@@ -946,14 +979,7 @@ export default function BroadcastBoothClient({
                           key={placementKey(b.id, c.id, idx)}
                           className={"bb-chip on-cue" + (c.imageUrl ? " has-image" : "")}
                         >
-                          {c.imageUrl ? (
-                            <>
-                              <img className="bb-chip-img" src={c.imageUrl} alt="" draggable={false} />
-                              <span className="bb-chip-caption">{c.label}</span>
-                            </>
-                          ) : (
-                            c.label
-                          )}
+                          <ChipFace chip={c} />
                         </span>
                       ))}
                     </div>
@@ -993,14 +1019,7 @@ export default function BroadcastBoothClient({
                           key={placementKey(b.id, c.id, idx)}
                           className={"bb-chip on-cue" + (c.imageUrl ? " has-image" : "")}
                         >
-                          {c.imageUrl ? (
-                            <>
-                              <img className="bb-chip-img" src={c.imageUrl} alt="" draggable={false} />
-                              <span className="bb-chip-caption">{c.label}</span>
-                            </>
-                          ) : (
-                            c.label
-                          )}
+                          <ChipFace chip={c} />
                         </span>
                       ))}
                     </div>
