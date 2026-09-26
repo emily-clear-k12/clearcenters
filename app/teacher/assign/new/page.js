@@ -616,16 +616,7 @@ function displayCode(code){return String(code||'').replace(/^TEKS\s+/i,'').repla
     } else if (inRush && rushMode==='crew') {
       if (!matchesChallenge(c.engine, 'signal_defense')) return false;
     } else if (typeFilter!=="all" && !matchesChallenge(c.engine,typeFilter)) return false;
-    if (inRush && rushStandard) {
-      const unit = frUnitKey(c.standard);
-      if (unit) {
-        if (unit !== rushStandard) return false;
-      } else {
-        const codes = codesFor(c.standard);
-        const keys = codes.length ? codes : [String(c.standard)];
-        if (!keys.includes(rushStandard)) return false;
-      }
-    }
+    if (inRush && rushStandard && c.standard !== rushStandard) return false;
     if (!inRush && matchesChallenge(c.engine, 'signal_defense')) return false;
     if (product==='keys' && topic!=="all" && topicCode(c)!==topic) return false;
     if (isRetiredSignalCheckCase(c.standard)) return false;
@@ -672,16 +663,14 @@ function displayCode(code){return String(code||'').replace(/^TEKS\s+/i,'').repla
     if (!matchesChallenge(c.engine, rushMode==='crew' ? 'signal_defense' : 'frequency_rush')) return groups;
     const unit = frUnitKey(c.standard);
     const codes = codesFor(c.standard);
-    const key = unit || codes[0] || String(c.standard);
-    const name = unit ? frTopicName(c.standard) : String(c.title || "").replace(/^(Frequency Rush|Signal Defense):\s*/i, "");
+    const key = String(c.standard);
+    let name = String(c.title || "").replace(/^(Frequency Rush|Signal Defense):\s*/i, "");
+    if (!name) name = frTopicName(c.standard) || displayCode(key);
+    if (/bonus/i.test(key) && !/bonus/i.test(name)) name = `${frTopicName(c.standard) || name} bonus`;
     if (!groups[key]) {
       const images = caseImageCandidates(unit || c.standard, unit ? "" : c.engine).filter((url) => !url.includes("frequency_rush.jpg"));
-      groups[key] = { key, code: codes.join(" & ") || displayCode(key), name, kind: isVocabSet(c.standard) ? "Vocab" : "Topic questions", image: images[0] || "", images, count: 0, seen: new Set() };
+      groups[key] = { key, code: codes.join(" & ") || displayCode(key), name, kind: isVocabSet(c.standard) ? "Vocab" : "Topic questions", image: images[0] || "", images, count: 1, seen: new Set([key]) };
     }
-    if (groups[key].seen.has(c.standard)) return groups;
-    groups[key].seen.add(c.standard);
-    groups[key].count += 1;
-    if (!unit && name && name.length > groups[key].name.length) groups[key].name = name;
     return groups;
   }, {})).sort((a, b) => a.code.localeCompare(b.code, undefined, { numeric: true }) || a.name.localeCompare(b.name));
   const rushPick = rushTopics.find((topic) => topic.key === rushStandard);
