@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Search, Calendar, ChevronLeft } from "lucide-react";
 import { supabase } from "../../../../lib/supabaseClient";
 import { engineSupportsDistressCall, distressCallUnit } from "../../../../lib/distressCallEngines";
-import { isCustomCode, customCodeOwnerPrefix } from "../../../../lib/cases/relay-station";
+import { isCustomCode, customCodeOwnerPrefix, TRACK_LEVELS, dailyTextFor, centralDateKey } from "../../../../lib/cases/relay-station";
 import { GAME_SKINS, DEFAULT_GAME_SKIN } from "../../../../lib/frequencyRushSkins";
 import { QUESTS as EXPEDITION_QUESTS } from "../../../../lib/cases/expedition-station/catalog";
 import {
@@ -319,6 +319,66 @@ const RELAY_SPECIAL_TILES = [
   { key: DAILY, match: isTypingDailyCase, icon: "📅", title: "Daily Transmission", blurb: "Assign once — a short new warm-up every school day, the same for the whole class, with streaks and crystals.", bg: "linear-gradient(120deg, #0D1B2A 0%, #16243F 55%, #00C2C7 140%)" },
 ];
 
+function shiftDateKey(key, days) {
+  const [y, m, d] = key.split("-").map(Number);
+  const date = new Date(Date.UTC(y, m - 1, d + days));
+  return date.toISOString().slice(0, 10);
+}
+function isSchoolDay(key) {
+  const day = new Date(`${key}T12:00:00Z`).getUTCDay();
+  return day !== 0 && day !== 6;
+}
+function nextSchoolDay(key) {
+  let cursor = shiftDateKey(key, 1);
+  while (!isSchoolDay(cursor)) cursor = shiftDateKey(cursor, 1);
+  return cursor;
+}
+function schoolDayLabel(key) {
+  return new Date(`${key}T12:00:00Z`).toLocaleDateString("en-US", { weekday: "long", timeZone: "UTC" });
+}
+function clipLine(text) {
+  const line = String(text || "").split("\n")[0];
+  return line.length > 72 ? `${line.slice(0, 69)}…` : line;
+}
+
+const KEY_STATIONS = [
+  { key: FOUNDATIONS, title: "Foundations", line: "Assign once. Twenty levels. Students move up on their own." },
+  { key: "Race", title: "Class Relay", line: "Assign once. Start a live race from the board." },
+  { key: DAILY, title: "Daily", line: "Assign once. A short warm-up every school day." },
+  { key: READINGS, title: "Readings", line: "A paragraph, a thank-you letter, a conversation, or a word list for students to type." },
+];
+
+function KeyStationBody({ id }) {
+  if (id === FOUNDATIONS) {
+    return (
+      <div className="cc-key-detail">
+        {TRACK_LEVELS.slice(0, 3).map((level, index) => <p key={level.title}><b>{index + 1}</b> {level.title}</p>)}
+        <p>17 more after these</p>
+      </div>
+    );
+  }
+  if (id === "Race") {
+    return (
+      <div className="cc-key-detail">
+        <p><b>On your board</b> The race waits there after you assign it.</p>
+        <p>Press Start when the class is ready.</p>
+      </div>
+    );
+  }
+  if (id === DAILY) {
+    const today = centralDateKey();
+    const first = isSchoolDay(today) ? today : nextSchoolDay(today);
+    const second = nextSchoolDay(first);
+    return (
+      <div className="cc-key-detail">
+        <p><b>{isSchoolDay(today) ? "Today" : schoolDayLabel(first)}</b> {clipLine(dailyTextFor(first))}</p>
+        <p><b>{schoolDayLabel(second)}</b> {clipLine(dailyTextFor(second))}</p>
+      </div>
+    );
+  }
+  return null;
+}
+
 import {rememberedTeacherClass,rememberTeacherClass} from "../../../../lib/teacherClass";
 
 function NewAssignmentContent() {
@@ -342,6 +402,7 @@ function NewAssignmentContent() {
   const [limit,setLimit]=useState(12);
   const [casesLoading,setCasesLoading]=useState(true);
   const [selectedCase, setSelectedCase] = useState(null);
+  const [studentInfo, setStudentInfo] = useState(false);
   const [dueDate, setDueDate] = useState("");
   const [assigning, setAssigning] = useState(false);
   const [assignedSuccess, setAssignedSuccess] = useState(false);
@@ -653,16 +714,13 @@ function NewAssignmentContent() {
     {error&&<div role="alert" className="cc-error">{error}</div>}
     <div className="cc-products" role="list">
       {PRODUCTS.map((item) => item.soon ? (
-        <div key={item.key} className="cc-product" role="listitem" aria-disabled="true">
-          <img className="cc-product-mark" src={item.image} alt="" />
+        <div key={item.key} className="cc-product is-soon" role="listitem" aria-disabled="true">
           <span className="cc-product-name">{item.label}</span>
-          <span className="cc-product-soon">Coming soon</span>
+          <span className="cc-product-soon">Soon</span>
         </div>
       ) : (
         <button key={item.key} type="button" className="cc-product is-ready" aria-pressed={product === item.key} onClick={() => openProduct(item.key)}>
-          <img className="cc-product-mark" src={item.image} alt="" />
           <span className="cc-product-name">{item.label}</span>
-          <span className="cc-product-line">{item.line}</span>
         </button>
       ))}
     </div>
@@ -696,27 +754,20 @@ function NewAssignmentContent() {
               </div>
             </div>): (product === "centers" || product === "keys") ? <>
     {product === "keys" && <section className="cc-panel cc-keys">
-      <div className="cc-keys-lead">
-        <img src="/teacher/products/keys.jpg" alt="" />
-        <div>
-          <h2>ClearKeys</h2>
-          <p className="cc-muted">Typing on the same ship. Students relay a message one letter at a time. The track, the class race, and the daily warm-up are each assigned once. Readings are passages you assign when you want them.</p>
-        </div>
-      </div>
-      <div className="cc-keys-facts">
-        <div><strong>Assign once</strong><span>The track, the race, and the daily warm-up stay with the student.</span></div>
-        <div><strong>Their own pace</strong><span>The track has 20 levels, from home row to capitals and numbers. Students move up when they are ready.</span></div>
-        <div><strong>Readings</strong><span>Short passages in science, math, reading, and social studies. Launch is shorter. Orbit is longer.</span></div>
-      </div>
       <div className="cc-toolbar cc-browse-filters">
         <label className="cc-field">Grade<select value={browseGrade} onChange={e=>{setFollowClass(false);setBrowseGrade(e.target.value);setSelectedCase(null);setCaseSearch('');}}>{['3','4','5'].map(g=><option key={g} value={g}>Grade {g}</option>)}</select></label>
       </div>
-      <div className="cc-keys-choices">
-        {RELAY_SPECIAL_TILES.map(t=><button key={t.key} type="button" className="cc-activity cc-frame" style={subjectStyle('ELAR')} aria-pressed={browseSubject===t.key} onClick={()=>{setBrowseSubject(t.key);setTopic('all');setSelectedCase(null);setCaseSearch('');}}><div><h3>{t.title}</h3><p>{t.blurb}</p></div></button>)}
-        <button type="button" className="cc-activity cc-frame" style={subjectStyle('ELAR')} aria-pressed={browseSubject===READINGS} onClick={()=>{setBrowseSubject(READINGS);setReadingSubject('all');setTopic('all');setSelectedCase(null);setCaseSearch('');}}><div><h3>Readings</h3><p>A passage to relay letter for letter. Science, math, reading, and social studies, in three lengths.</p></div></button>
-        <Link className="cc-activity cc-frame" style={subjectStyle('ELAR')} href="/teacher/typing-texts"><div><h3>Your own passage</h3><p>Paste a text for this class. It stays private to you.</p></div></Link>
+      <div className="cc-key-stations">
+        {KEY_STATIONS.map((item) => (
+          <button key={item.key} type="button" className="cc-key-station" aria-pressed={browseSubject===item.key} onClick={()=>{setBrowseSubject(item.key);if(item.key===READINGS)setReadingSubject('all');setTopic('all');setSelectedCase(null);setCaseSearch('');}}>
+            <b>{item.title}</b>
+            <span>{item.line}</span>
+            {browseSubject===item.key && <KeyStationBody id={item.key} />}
+          </button>
+        ))}
       </div>
       {browseSubject===READINGS && <div className="cc-keys-subjects">{['all','Science','Math','ELAR','Social Studies'].map(subject=><button key={subject} type="button" className="cc-btn" aria-pressed={readingSubject===subject} onClick={()=>{setReadingSubject(subject);setSelectedCase(null);}}>{subject==='all'?'All subjects':subject}</button>)}</div>}
+      <Link className="cc-text-button" href="/teacher/typing-texts">Paste your own passage</Link>
     </section>}
     {product === "centers" && <>
     <div className="cc-toolbar cc-browse-filters">
@@ -727,8 +778,8 @@ function NewAssignmentContent() {
     {(typeFilter!=='all')&&<div className="cc-row" style={{marginBottom:16,flexWrap:'wrap',gap:8,alignItems:'center'}}><button className="cc-text-button" onClick={()=>{setLane('standard');setTypeFilter('all');setTopic('all');setSelectedCase(null);setBrowseSubject(targetClass?.subject||'Science');setFollowClass(true)}}>← All activity types</button><span className="cc-badge">{engineInfo(typeFilter).label}</span>{CHALLENGE_TYPES.filter(t=>t.real&&t.key!=='relay_station').map(t=><button key={t.key} type="button" className="cc-badge" style={{cursor:'pointer',border:typeFilter===t.key?'2px solid '+ACCENT:'1px solid transparent',opacity:typeFilter===t.key?1:0.7}} aria-pressed={typeFilter===t.key} onClick={()=>{setSelectedCase(null);setCaseSearch('');setTopic('all');setTypeFilter(t.key);setLane('standard')}}>{t.label}</button>)}</div>}
     {topic==='all'&&typeFilter==='all'&&<section className="cc-panel"><h2>Explore a learning experience</h2><p className="cc-muted">Choose an activity type to see its lessons. Filtering by standard is optional.</p><div className="cc-type-grid">{Object.entries(ENGINES).filter(([key])=>key!=='relay_station').map(([key,art])=><button key={key} className="cc-activity cc-frame" style={subjectStyle(browseSubject)} aria-pressed={typeFilter===key} onClick={()=>{setSelectedCase(null);setCaseSearch('');setTypeFilter(key);setTopic('all')}}><img src={art.image} alt=""/><div><h3>{art.label}</h3><p>{art.description}</p></div></button>)}</div></section>}
     </>}
-    {(product==='keys'||topic!=='all'||typeFilter!=='all')&&<div className="cc-two"><section className="cc-panel"><h2>{product==='keys'?(browseSubject===READINGS?'Readings':(RELAY_SPECIAL_TILES.find(t=>t.key===browseSubject)?.title||'ClearKeys')):(topic!=='all'?topic:(typeFilter!=='all'?engineInfo(typeFilter).label:'Choose a learning experience'))}</h2><p className="cc-muted">{product==='keys'?'ClearKeys':browseSubject} · Grade {browseGrade} · {filteredCases.length} activities{typeFilter!=='all'&&topic==='all'&&product!=='keys'?' · showing all standards for this type':''}</p><label className="cc-field">Find an activity<input className="cc-input" type="search" placeholder="Search these activities" value={caseSearch} onChange={e=>{setCaseSearch(e.target.value);setLimit(12)}}/></label><div className="cc-gallery cc-compact-gallery">{filteredCases.slice(0,limit).map(c=>{const e=engineInfo(c.engine);return <button key={c.standard} className="cc-activity cc-frame" style={subjectStyle(c.subject)} aria-pressed={selectedCase?.standard===c.standard} onClick={()=>{setSelectedCase(c);if(/^FR\.[345]\.DAILY$/.test(c.standard))setGameSkin(DEFAULT_GAME_SKIN);setSelectedChallenge(CHALLENGE_TYPES.find(t=>matchesChallenge(c.engine,t.key)))}}><img src={e.image} alt="" onError={thumbFallback}/><div><div className="cc-eyebrow cc-subject-label">{e.label}</div><h3>{product==='keys'?(c.title||'').replace(/^Relay Station:\s*/i,''):c.title}</h3><p>{c.learning_target||e.description}</p><small>{missionMapTeksCode(c.standard)||c.standard}</small></div></button>})}</div>{casesLoading?<Empty>Loading activities…</Empty>:!filteredCases.length&&<Empty>{typeFilter!=='all'?'No activities for this type at Grade '+browseGrade+' · '+browseSubject+'. Try another grade or subject.':'No activities match these filters. Try another topic, grade, or format.'}</Empty>}{filteredCases.length>limit&&<button className="cc-btn secondary" style={{marginTop:18}} onClick={()=>setLimit(limit+12)}>Show more activities</button>}</section>
-    <aside className="cc-stack">{selectedCase?<section className="cc-panel cc-frame" style={subjectStyle(selectedCase.subject)}><div className="cc-eyebrow cc-subject-label">SELECTED · {engineInfo(selectedCase.engine).label}</div><h2>{product==='keys'?(selectedCase.title||'').replace(/^Relay Station:\s*/i,''):selectedCase.title}</h2><p className="cc-muted">{missionMapTeksLabel(selectedCase.standard)||selectedCase.standard}</p><img className="cc-preview-image" src={engineInfo(selectedCase.engine).image} alt="" onError={thumbFallback}/><h3>What students will do</h3><p className="cc-muted">{selectedCase.lesson_summary||engineInfo(selectedCase.engine).description}</p>{selectedCase.learning_target&&<div className="cc-panel" style={{background:'#f5f0fc',padding:14}}>{selectedCase.learning_target}</div>}{selectedCase.misconception_note&&<details><summary>Teaching notes</summary><p className="cc-muted">{selectedCase.misconception_note}</p></details>}
+    {(product==='keys'||topic!=='all'||typeFilter!=='all')&&<div className="cc-two"><section className="cc-panel"><h2>{product==='keys'?(browseSubject===READINGS?'Readings':(RELAY_SPECIAL_TILES.find(t=>t.key===browseSubject)?.title||'ClearKeys')):(topic!=='all'?topic:(typeFilter!=='all'?engineInfo(typeFilter).label:'Choose a learning experience'))}</h2><p className="cc-muted">{product==='keys'?'ClearKeys':browseSubject} · Grade {browseGrade} · {filteredCases.length} activities{typeFilter!=='all'&&topic==='all'&&product!=='keys'?' · showing all standards for this type':''}</p><label className="cc-field">Find an activity<input className="cc-input" type="search" placeholder="Search these activities" value={caseSearch} onChange={e=>{setCaseSearch(e.target.value);setLimit(12)}}/></label><div className={"cc-gallery cc-compact-gallery"+(product==='keys'&&browseSubject===READINGS?' cc-readings':'')}>{filteredCases.slice(0,limit).map(c=>{const e=engineInfo(c.engine);return <button key={c.standard} className="cc-activity" style={subjectStyle(c.subject)} aria-pressed={selectedCase?.standard===c.standard} onClick={()=>{setStudentInfo(false);setSelectedCase(c);if(/^FR\.[345]\.DAILY$/.test(c.standard))setGameSkin(DEFAULT_GAME_SKIN);setSelectedChallenge(CHALLENGE_TYPES.find(t=>matchesChallenge(c.engine,t.key)))}}><img src={e.image} alt="" onError={thumbFallback}/><div><div className="cc-eyebrow cc-subject-label">{e.label}</div><h3>{product==='keys'?(c.title||'').replace(/^Relay Station:\s*/i,''):c.title}</h3><p>{c.learning_target||e.description}</p><small>{missionMapTeksCode(c.standard)||c.standard}</small></div></button>})}</div>{casesLoading?<Empty>Loading activities…</Empty>:!filteredCases.length&&<Empty>{typeFilter!=='all'?'No activities for this type at Grade '+browseGrade+' · '+browseSubject+'. Try another grade or subject.':'No activities match these filters. Try another topic, grade, or format.'}</Empty>}{filteredCases.length>limit&&<button className="cc-btn secondary" style={{marginTop:18}} onClick={()=>setLimit(limit+12)}>Show more activities</button>}</section>
+    <aside className="cc-stack">{selectedCase?<section className="cc-panel cc-frame" style={subjectStyle(selectedCase.subject)}><div className="cc-eyebrow cc-subject-label">SELECTED · {engineInfo(selectedCase.engine).label}</div><h2>{product==='keys'?(selectedCase.title||'').replace(/^Relay Station:\s*/i,''):selectedCase.title}</h2><p className="cc-muted">{missionMapTeksLabel(selectedCase.standard)||selectedCase.standard}</p><button type="button" className="cc-student-info" aria-expanded={studentInfo} onClick={()=>setStudentInfo((open)=>!open)}>What students do</button>{studentInfo&&<div className="cc-student-pop"><img className="cc-preview-image" src={engineInfo(selectedCase.engine).image} alt="" onError={thumbFallback}/><h3>What students will do</h3><p className="cc-muted">{selectedCase.lesson_summary||engineInfo(selectedCase.engine).description}</p>{selectedCase.learning_target&&<div className="cc-panel" style={{background:'#f5f0fc',padding:14}}>{selectedCase.learning_target}</div>}{selectedCase.misconception_note&&<div><h3>Teaching notes</h3><p className="cc-muted">{selectedCase.misconception_note}</p></div>}</div>}
     <div className="cc-assignment-form"><h3>Assign to {targetClass?.name||'your class'}</h3>
                   {assignClassId && (
                     <>
