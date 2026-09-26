@@ -48,6 +48,8 @@ export default function MakerStudioClient({
       }));
   const enabled = config.enabledModes || ["write"];
   const finishN = Math.max(1, Number(config.finishN) || 1);
+  // Quieter studio: show only modes the teacher assigned — do not render the rest as disabled.
+  const visibleModes = modesMeta.filter((m) => enabled.includes(m.id));
 
   const saved = existingData && existingData.version === 2 ? existingData : { version: 2, modes: {} };
   const [view, setView] = useState(alreadySubmitted ? "done" : "main");
@@ -344,10 +346,14 @@ export default function MakerStudioClient({
 
         <div className="mk-panel">
           <h2>Make modes</h2>
-          <p className="mk-quiet">Tap Write to begin. Other modes are ready for later.</p>
+          <p className="mk-quiet">
+            {visibleModes.length === 1 && visibleModes[0].id === "write"
+              ? "Tap Write to begin."
+              : "Tap a mode to begin."}
+          </p>
           <div className="mk-grid" role="list">
-            {modesMeta.map((m) => {
-              const isEnabled = enabled.includes(m.id) && m.available;
+            {visibleModes.map((m) => {
+              const isLive = !!m.available;
               const st = modeStatus(modes, m.id);
               const className = [
                 "mk-mode",
@@ -361,9 +367,9 @@ export default function MakerStudioClient({
                   key={m.id}
                   type="button"
                   className={className}
-                  disabled={!isEnabled || submitted}
+                  disabled={!isLive || submitted}
                   onClick={() => openMode(m.id)}
-                  aria-label={isEnabled ? m.label : `${m.label} (not open yet)`}
+                  aria-label={m.label}
                 >
                   <span className="mk-mode-icon" aria-hidden>
                     {m.icon || "•"}

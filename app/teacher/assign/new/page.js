@@ -24,7 +24,6 @@ import {
   isPlayableDesertMsRow,
 } from "../../../../lib/cases/maker-studio/assignFallback";
 import { MAKER_MENUS } from "../../../../lib/cases/maker-studio/menus";
-import { MAKER_MODES } from "../../../../lib/cases/maker-studio/modes";
 
 // Sept 24, 2026 — teacher-set Frequency Rush question timer. The game
 // accepts 0-60 seconds; 0 means no timer.
@@ -373,22 +372,16 @@ function NewAssignmentContent() {
   // Students can no longer turn the game's own timer on or off.
   const [questionSeconds, setQuestionSeconds] = useState(0);
 
-  // Maker Studio Wave 0 — teacher sets prompt, finish N, journal toggle, loads a menu.
+  // Maker Studio — quieter Assign: menus + prompt + finish N + journal. Modes come from menus (Wave 0 = Write only).
   const [makerPrompt, setMakerPrompt] = useState("Write about today's idea in your own words. What do you understand, and what makes you think that?");
-  const [makerTopic, setMakerTopic] = useState("");
   const [makerFinishN, setMakerFinishN] = useState(1);
-  const [makerEveryday, setMakerEveryday] = useState("1");
-  const [makerChallenge, setMakerChallenge] = useState("0");
   const [makerJournalOnRelease, setMakerJournalOnRelease] = useState(true);
   const [makerEnabledModes, setMakerEnabledModes] = useState(["write"]);
 
   function applyMakerMenu(menu) {
     if (!menu) return;
     setMakerPrompt(menu.prompt || "");
-    setMakerTopic(menu.topic || "");
     setMakerFinishN(Math.max(1, Number(menu.finishN) || 1));
-    setMakerEveryday(menu.everydayCount == null ? "" : String(menu.everydayCount));
-    setMakerChallenge(menu.challengeCount == null ? "" : String(menu.challengeCount));
     setMakerJournalOnRelease(menu.journalOnRelease !== false);
     setMakerEnabledModes(Array.isArray(menu.enabledModes) && menu.enabledModes.length ? menu.enabledModes : ["write"]);
   }
@@ -543,11 +536,11 @@ function NewAssignmentContent() {
       }
       assignmentFields.maker_studio_config = {
         prompt,
-        topic: (makerTopic || "").trim(),
-        enabledModes: makerEnabledModes.includes("write") ? ["write"] : ["write"],
+        topic: "",
+        enabledModes: Array.isArray(makerEnabledModes) && makerEnabledModes.length ? makerEnabledModes : ["write"],
         finishN: Math.max(1, Number(makerFinishN) || 1),
-        everydayCount: makerEveryday === "" ? null : Number(makerEveryday),
-        challengeCount: makerChallenge === "" ? null : Number(makerChallenge),
+        everydayCount: 0,
+        challengeCount: 0,
         journalOnRelease: !!makerJournalOnRelease,
       };
     }
@@ -616,10 +609,7 @@ function NewAssignmentContent() {
     setGameSkin(DEFAULT_GAME_SKIN);
     setCrystalDiveMinutes(10);
     setMakerPrompt("Write about today's idea in your own words. What do you understand, and what makes you think that?");
-    setMakerTopic("");
     setMakerFinishN(1);
-    setMakerEveryday("1");
-    setMakerChallenge("0");
     setMakerJournalOnRelease(true);
     setMakerEnabledModes(["write"]);
   }
@@ -845,7 +835,7 @@ function NewAssignmentContent() {
                           </button>
                         ))}
                       </div>
-                      <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: COLORS.textMuted, marginBottom: 4 }}>Prompt / topic for students</label>
+                      <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: COLORS.textMuted, marginBottom: 4 }}>Prompt</label>
                       <textarea
                         value={makerPrompt}
                         onChange={(e) => setMakerPrompt(e.target.value)}
@@ -853,58 +843,9 @@ function NewAssignmentContent() {
                         style={{ width: "100%", border: "2px solid #ECEAF5", borderRadius: 10, padding: 10, fontSize: 13, boxSizing: "border-box", marginBottom: 10, fontFamily: "inherit" }}
                         placeholder="What should students make / write about?"
                       />
-                      <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: COLORS.textMuted, marginBottom: 4 }}>Short topic label (optional)</label>
-                      <input
-                        value={makerTopic}
-                        onChange={(e) => setMakerTopic(e.target.value)}
-                        style={{ width: "100%", border: "2px solid #ECEAF5", borderRadius: 10, padding: "8px 10px", fontSize: 13, boxSizing: "border-box", marginBottom: 10 }}
-                        placeholder="e.g. Desert adaptations"
-                      />
-                      <div style={{ fontWeight: 700, fontSize: 13, marginBottom: 6, color: COLORS.textDark }}>Modes enabled</div>
-                      <p style={{ fontSize: 11.5, color: COLORS.textMuted, margin: "0 0 8px 0" }}>Wave 0: Write is live. Other modes show on the student grid but stay quietly off.</p>
-                      <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 12 }}>
-                        {MAKER_MODES.map((mode) => {
-                          const on = makerEnabledModes.includes(mode.id);
-                          const locked = !mode.live;
-                          return (
-                            <button
-                              key={mode.id}
-                              type="button"
-                              disabled={locked}
-                              onClick={() => {
-                                if (locked) return;
-                                setMakerEnabledModes(on ? ["write"] : ["write"]);
-                              }}
-                              style={{
-                                opacity: locked ? 0.55 : 1,
-                                background: on && !locked ? ACCENT : COLORS.white,
-                                color: on && !locked ? COLORS.white : COLORS.textDark,
-                                border: `1.5px solid ${on && !locked ? ACCENT : COLORS.border}`,
-                                borderRadius: 999,
-                                padding: "6px 10px",
-                                fontWeight: 700,
-                                fontSize: 11.5,
-                                cursor: locked ? "default" : "pointer",
-                              }}
-                            >
-                              {mode.label}
-                            </button>
-                          );
-                        })}
-                      </div>
-                      <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginBottom: 10 }}>
-                        <div style={{ flex: "1 1 90px" }}>
-                          <label style={{ fontSize: 11, fontWeight: 700, color: COLORS.textMuted }}>Finish N</label>
-                          <input type="number" min="1" max="1" value={makerFinishN} onChange={(e) => setMakerFinishN(Math.max(1, Number(e.target.value) || 1))} style={{ width: "100%", border: "2px solid #ECEAF5", borderRadius: 10, padding: "7px 10px", fontSize: 13, boxSizing: "border-box", marginTop: 3 }} />
-                        </div>
-                        <div style={{ flex: "1 1 90px" }}>
-                          <label style={{ fontSize: 11, fontWeight: 700, color: COLORS.textMuted }}>Everyday (optional)</label>
-                          <input type="number" min="0" value={makerEveryday} onChange={(e) => setMakerEveryday(e.target.value)} style={{ width: "100%", border: "2px solid #ECEAF5", borderRadius: 10, padding: "7px 10px", fontSize: 13, boxSizing: "border-box", marginTop: 3 }} />
-                        </div>
-                        <div style={{ flex: "1 1 90px" }}>
-                          <label style={{ fontSize: 11, fontWeight: 700, color: COLORS.textMuted }}>Challenge (optional)</label>
-                          <input type="number" min="0" value={makerChallenge} onChange={(e) => setMakerChallenge(e.target.value)} style={{ width: "100%", border: "2px solid #ECEAF5", borderRadius: 10, padding: "7px 10px", fontSize: 13, boxSizing: "border-box", marginTop: 3 }} />
-                        </div>
+                      <div style={{ marginBottom: 10, maxWidth: 140 }}>
+                        <label style={{ fontSize: 11, fontWeight: 700, color: COLORS.textMuted }}>Finish N</label>
+                        <input type="number" min="1" max="1" value={makerFinishN} onChange={(e) => setMakerFinishN(Math.max(1, Number(e.target.value) || 1))} style={{ width: "100%", border: "2px solid #ECEAF5", borderRadius: 10, padding: "7px 10px", fontSize: 13, boxSizing: "border-box", marginTop: 3 }} />
                       </div>
                       <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, fontWeight: 600, color: COLORS.textDark, cursor: "pointer" }}>
                         <input type="checkbox" checked={makerJournalOnRelease} onChange={(e) => setMakerJournalOnRelease(e.target.checked)} />
