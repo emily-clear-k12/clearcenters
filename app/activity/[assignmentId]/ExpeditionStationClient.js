@@ -327,7 +327,8 @@ export default function ExpeditionStationClient({
           </div>
           {task.tune.used ? (
             <p style={{ textAlign: "center", color: "var(--es-muted)" }}>
-              Started at {fracLabel(task.tune.start.n, denom)}. Cold used {fracLabel(task.tune.used.n, denom)}.
+              {task.tune.startLabel || "Started at"} {fracLabel(task.tune.start.n, denom)}.{" "}
+              {task.tune.usedLabel || "Cold used"} {fracLabel(task.tune.used.n, denom)}.
             </p>
           ) : (
             <p style={{ textAlign: "center", color: "var(--es-muted)" }}>
