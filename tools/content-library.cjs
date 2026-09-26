@@ -39,8 +39,10 @@ function walk(dir, acc = []) {
 
 function field(window, keys) {
   for (const key of keys) {
-    const match = window.match(new RegExp(`(?:${key}|"${key}")\\s*[:=]\\s*["']([^"']+)["']`));
-    if (match) return match[1];
+    const quoted = window.match(new RegExp(`(?:${key}|"${key}")\\s*[:=]\\s*"([^"]*)"`));
+    if (quoted) return quoted[1];
+    const single = window.match(new RegExp(`(?:${key}|"${key}")\\s*[:=]\\s*'([^']*)'`));
+    if (single) return single[1];
     const num = window.match(new RegExp(`(?:${key}|"${key}")\\s*[:=]\\s*(\\d)\\b`));
     if (num) return num[1];
   }
@@ -99,18 +101,16 @@ function recordsFromFile(file) {
 function sqlRows() {
   const rows = new Map();
   const files = fs.readdirSync(root).filter((name) => name.endsWith(".sql"));
-  const tuple = /\(\s*'([^']+)'\s*,\s*'((?:''|[^'])*)'\s*,\s*'([^']+)'\s*,\s*(\d)\s*,\s*'([^']+)'/g;
+  const tuple = /\(\s*'([^']+)'\s*,\s*'((?:''|[^'])*)'/g;
   for (const name of files) {
     const text = fs.readFileSync(path.join(root, name), "utf8");
     if (!/insert\s+into\s+cases/i.test(text)) continue;
     let match;
     while ((match = tuple.exec(text))) {
+      if (!/\d/.test(match[1])) continue;
       rows.set(match[1], {
         standard: match[1],
         title: match[2].replace(/''/g, "'"),
-        engine: match[3],
-        grade: match[4],
-        subject: match[5],
         file: name,
       });
     }
@@ -177,4 +177,56 @@ fs.writeFileSync(path.join(outDir, "catalog.json"), JSON.stringify({
   inSql: sql.size,
   items: [...code.values()].sort((a, b) => a.engine.localeCompare(b.engine) || String(a.grade).localeCompare(String(b.grade)) || a.standard.localeCompare(b.standard)),
 }, null, 2));
-console.log(`Wrote ${code.size} banks. Missing SQL: ${missingSql.length}. SQL without a file: ${missingCode.length}.`);
+
+const ENGINE_KEY = {
+  "Signal Check": "fact_check_desk",
+  "Group Chat": "group_chat",
+  "Frequency Rush": "frequency_rush",
+  "Mission Map": "mission_map",
+  "Simulation Lab": "simulation_lab",
+  "Expedition Station": "expedition_station",
+  "Crew": "signal_defense",
+  "Assembly Deck": "assembly_deck",
+  "Classification Lab": "classification_lab",
+  "Exhibit Hall": "exhibit_hall",
+};
+
+function inferGrade(row) {
+  if (row.grade) return row.grade;
+  const match = String(row.standard).match(/(?:^|[^0-9])([345])(?:\.|-)/);
+  return match ? match[1] : "";
+}
+
+function inferSubject(row) {
+  if (row.subject) return row.subject;
+  const standard = String(row.standard);
+  if (/^(ELA|ELAR)\./i.test(standard)) return "ELAR";
+  if (/^(MA|MATH)\./i.test(standard)) return "Math";
+  if (/^SS\./i.test(standard)) return "Social Studies";
+  return "Science";
+}
+
+function sqlString(value) {
+  return `'${String(value).replace(/'/g, "''")}'`;
+}
+
+const inserts = missingSql
+  .map((row) => ({ ...row, grade: inferGrade(row), subject: inferSubject(row), engineKey: ENGINE_KEY[row.engine] }))
+  .filter((row) => row.engineKey && row.grade && row.subject && row.title)
+  .sort((a, b) => a.engine.localeCompare(b.engine) || a.standard.localeCompare(b.standard));
+
+const sqlLines = [];
+sqlLines.push("-- Banks that are on disk but had no cases row.");
+sqlLines.push("-- Safe to run more than once. Does not change a row that already exists.");
+sqlLines.push("INSERT INTO cases (standard, title, engine, grade, subject, unit) VALUES");
+sqlLines.push(inserts.map((row) => {
+  const unit = row.engine === "Frequency Rush" && row.standard.includes(".")
+    ? row.standard.split(".").slice(0, -1).join(".")
+    : "";
+  const title = row.engine === "Frequency Rush" && !/^Frequency Rush:/i.test(row.title) ? `Frequency Rush: ${row.title}` : row.title;
+  return `  (${sqlString(row.standard)}, ${sqlString(title)}, ${sqlString(row.engineKey)}, ${row.grade}, ${sqlString(row.subject)}, ${unit ? sqlString(unit) : "NULL"})`;
+}).join(",\n"));
+sqlLines.push("ON CONFLICT (standard) DO NOTHING;");
+sqlLines.push("");
+fs.writeFileSync(path.join(root, "add_content_library_cases.sql"), sqlLines.join("\n"));
+console.log(`Wrote ${code.size} banks. Missing SQL: ${missingSql.length}. Insert rows: ${inserts.length}. SQL without a file: ${missingCode.length}.`);

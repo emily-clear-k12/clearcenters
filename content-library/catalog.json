@@ -1,7 +1,7 @@
 {
   "generatedFrom": "lib/cases and add_*.sql",
   "onDisk": 793,
-  "inSql": 599,
+  "inSql": 689,
   "items": [
     {
       "standard": "3.10C-AD",
@@ -203,7 +203,7 @@
     },
     {
       "standard": "4.10A-AD",
-      "title": "The Puddle",
+      "title": "The Puddle's Trip",
       "grade": "4",
       "subject": "Science",
       "engine": "Assembly Deck",
@@ -572,7 +572,7 @@
     },
     {
       "standard": "SS.5.15B-AD",
-      "title": "The Bill That Didn",
+      "title": "The Bill That Didn't Pass",
       "grade": "5",
       "subject": "Social Studies",
       "engine": "Assembly Deck",
@@ -698,7 +698,7 @@
     },
     {
       "standard": "3.10C-SD",
-      "title": "Changes to Earth",
+      "title": "Changes to Earth's Surface",
       "grade": "",
       "subject": "",
       "engine": "Crew",
@@ -860,7 +860,7 @@
     },
     {
       "standard": "3.9A-SD",
-      "title": "Earth",
+      "title": "Earth's Rotation (Day & Night)",
       "grade": "",
       "subject": "",
       "engine": "Crew",
@@ -1031,7 +1031,7 @@
     },
     {
       "standard": "3.13B-EX",
-      "title": "A beetle",
+      "title": "A beetle's year",
       "grade": "3",
       "subject": "Science",
       "engine": "Exhibit Hall",
@@ -1121,7 +1121,7 @@
     },
     {
       "standard": "3.9E-EX",
-      "title": "Maya",
+      "title": "Maya's bike fund",
       "grade": "3",
       "subject": "Math",
       "engine": "Exhibit Hall",
@@ -1166,7 +1166,7 @@
     },
     {
       "standard": "ELA.3.8B-EX",
-      "title": "The sister",
+      "title": "The sister's part",
       "grade": "3",
       "subject": "ELAR",
       "engine": "Exhibit Hall",
@@ -3083,7 +3083,7 @@
     },
     {
       "standard": "ELA.4.11D",
-      "title": "It",
+      "title": "It's All One Trip",
       "grade": "",
       "subject": "",
       "engine": "Group Chat",
@@ -3128,7 +3128,7 @@
     },
     {
       "standard": "ELA.5.8A",
-      "title": "That",
+      "title": "That's Just the Plot",
       "grade": "",
       "subject": "",
       "engine": "Group Chat",
@@ -4199,7 +4199,7 @@
     },
     {
       "standard": "4.1-MM",
-      "title": "Chart the Moon",
+      "title": "Chart the Moon's Pattern",
       "grade": "4",
       "subject": "Science",
       "engine": "Mission Map",
@@ -4253,7 +4253,7 @@
     },
     {
       "standard": "4.15-MM",
-      "title": "Author",
+      "title": "Author's Choice Labyrinth",
       "grade": "4",
       "subject": "ELAR",
       "engine": "Mission Map",
@@ -4415,7 +4415,7 @@
     },
     {
       "standard": "5.16-MM",
-      "title": "Author",
+      "title": "Author's Purpose Control Room",
       "grade": "5",
       "subject": "ELAR",
       "engine": "Mission Map",
@@ -5126,7 +5126,7 @@
     },
     {
       "standard": "SS.3.3C-SC",
-      "title": "Who Changed Miller",
+      "title": "Who Changed Miller's Creek?",
       "grade": "3",
       "subject": "Social Studies",
       "engine": "Signal Check",
@@ -5153,7 +5153,7 @@
     },
     {
       "standard": "SS.3.5B-SC",
-      "title": "Maya",
+      "title": "Maya's $40",
       "grade": "3",
       "subject": "Social Studies",
       "engine": "Signal Check",
@@ -5423,7 +5423,7 @@
     },
     {
       "standard": "4.11B-SC",
-      "title": "One Battery Won",
+      "title": "One Battery Won't Make a Difference?",
       "grade": "4",
       "subject": "Science",
       "engine": "Signal Check",
@@ -6728,7 +6728,7 @@
     },
     {
       "standard": "ELA.5.8B-SC",
-      "title": "What",
+      "title": "What's Really the Conflict?",
       "grade": "5",
       "subject": "ELAR",
       "engine": "Signal Check",
