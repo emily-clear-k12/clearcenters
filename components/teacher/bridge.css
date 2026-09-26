@@ -108,6 +108,14 @@
 .cc-assign-read h2{margin:0}
 .cc-assign-standard{margin:0;font-weight:750;color:#241b50}
 .cc-assign-read p{margin:0;line-height:1.5;color:#3d4a63}
+.cc-maker-gallery{gap:12px}
+.cc-maker-gallery .cc-activity{display:flex;align-items:center;gap:12px;min-height:0;padding:10px;border:0;border-radius:16px;background:#f7f8fd;box-shadow:inset 5px 0 0 var(--subject,#6d45c8),0 8px 0 #d9deee}
+.cc-maker-gallery .cc-activity[aria-pressed=true]{background:#f3fbf6;border-color:transparent;box-shadow:inset 5px 0 0 var(--subject,#6d45c8),0 0 0 3px #2f9e62,0 8px 0 #d7efe4}
+.cc-maker-gallery .cc-activity>img{width:72px;height:72px;min-width:72px;flex:0 0 72px;border-radius:12px;object-fit:cover}
+.cc-maker-gallery .cc-activity small{display:block;color:var(--subject-ink,#165bab);font-size:12px;font-weight:800;letter-spacing:.04em}
+.cc-maker-gallery .cc-activity b{display:-webkit-box;margin-top:2px;font-size:15px;font-weight:750;line-height:1.3;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.cc-maker-gallery .cc-activity strong{display:block;margin-top:2px;font-size:14px;font-weight:650}
+.cc-maker-gallery .cc-activity em{display:block;margin-top:2px;color:#6b6491;font-size:12px;font-style:normal}
 @media(max-width:900px){.cc-key-stations{grid-template-columns:1fr 1fr}}
 
 
