@@ -116,3 +116,13 @@
 .cc-maker-mode-soon{font-size:10px;font-weight:700;color:#9a94ae;text-transform:uppercase;letter-spacing:.04em}
 .cc-maker-journal{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:#241b50;cursor:pointer;margin:2px 0 0}
 @media(max-width:760px){.cc-two.cc-two-maker{grid-template-columns:1fr}}
+
+/* Maker Studio Assign list: use the full left column with a compact horizontal card. */
+.cc-maker-gallery{grid-template-columns:1fr}
+.cc-maker-gallery .cc-activity{display:flex;align-items:stretch;min-width:0;min-height:112px}
+.cc-maker-gallery .cc-activity>img{width:96px;height:112px;min-width:96px;flex:0 0 96px;object-fit:cover}
+.cc-maker-gallery .cc-activity>div{flex:1;min-width:0;padding:14px}
+.cc-maker-gallery .cc-activity h3{margin-bottom:6px}
+.cc-maker-gallery .cc-activity p{margin:0 0 8px}
+.cc-maker-gallery .cc-activity[aria-pressed=true]{border-width:3px;box-shadow:0 0 0 1px #2f9e62}
+@media(max-width:540px){.cc-maker-gallery .cc-activity>img{width:78px;min-width:78px;flex-basis:78px;height:104px}.cc-maker-gallery .cc-activity>div{padding:12px}}
