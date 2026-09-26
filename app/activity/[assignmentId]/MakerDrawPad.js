@@ -2,9 +2,27 @@
 
 import { useEffect, useRef, useState } from "react";
 
+const SURFACES = {
+  whiteboard: {
+    fill: "#ffffff",
+    stroke: "#1f2a44",
+    className: "is-whiteboard",
+  },
+  light_table: {
+    fill: "#e4f4fb",
+    stroke: "#3a2a7a",
+    className: "is-light-table",
+  },
+};
+
+function surfaceConfig(surface) {
+  return SURFACES[surface] || SURFACES.whiteboard;
+}
+
 /**
- * Simple pen/eraser canvas. Reports PNG data URLs via onChange.
+ * Simple pen/eraser canvas. Reports JPEG data URLs via onChange.
  * initialImage: optional existing data URL to restore.
+ * surface: "whiteboard" | "light_table" — fill/stroke + CSS class (keeps ink when switching).
  */
 export default function MakerDrawPad({
   initialImage = null,
@@ -12,6 +30,7 @@ export default function MakerDrawPad({
   height = 280,
   labelChips = null,
   disabled = false,
+  surface = "whiteboard",
 }) {
   const canvasRef = useRef(null);
   const drawing = useRef(false);
@@ -19,6 +38,7 @@ export default function MakerDrawPad({
   const [tool, setTool] = useState("pen");
   const [hasInk, setHasInk] = useState(!!initialImage);
   const restored = useRef(false);
+  const cfg = surfaceConfig(surface);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -31,7 +51,8 @@ export default function MakerDrawPad({
     canvas.width = Math.floor(w * dpr);
     canvas.height = Math.floor(h * dpr);
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    ctx.fillStyle = "#ffffff";
+    const fill = surfaceConfig(surface).fill;
+    ctx.fillStyle = fill;
     ctx.fillRect(0, 0, w, h);
     if (initialImage && !restored.current) {
       const img = new Image();
@@ -74,14 +95,18 @@ export default function MakerDrawPad({
     const canvas = canvasRef.current;
     const ctx = canvas.getContext("2d");
     const p = pos(e);
+    const stroke = surfaceConfig(surface).stroke;
+    const fill = surfaceConfig(surface).fill;
     ctx.lineCap = "round";
     ctx.lineJoin = "round";
     if (tool === "eraser") {
-      ctx.globalCompositeOperation = "destination-out";
+      // Paint surface fill so erase matches current canvas look (opaque JPEG).
+      ctx.globalCompositeOperation = "source-over";
+      ctx.strokeStyle = fill;
       ctx.lineWidth = 18;
     } else {
       ctx.globalCompositeOperation = "source-over";
-      ctx.strokeStyle = "#1f2a44";
+      ctx.strokeStyle = stroke;
       ctx.lineWidth = 3;
     }
     ctx.beginPath();
@@ -110,7 +135,7 @@ export default function MakerDrawPad({
     const ctx = canvas.getContext("2d");
     const rect = canvas.getBoundingClientRect();
     ctx.globalCompositeOperation = "source-over";
-    ctx.fillStyle = "#ffffff";
+    ctx.fillStyle = surfaceConfig(surface).fill;
     ctx.fillRect(0, 0, rect.width, height);
     setHasInk(false);
     if (onChange) onChange(null);
@@ -126,14 +151,13 @@ export default function MakerDrawPad({
     ctx.globalCompositeOperation = "source-over";
     ctx.fillStyle = "#ede6ff";
     const padX = 10;
-    const padY = 6;
     ctx.font = "700 13px Inter, system-ui, sans-serif";
     const tw = ctx.measureText(text).width;
     const bw = tw + padX * 2;
     const bh = 26;
     roundRect(ctx, x, y - bh + 4, bw, bh, 8);
     ctx.fill();
-    ctx.strokeStyle = "#7b5dff";
+    ctx.strokeStyle = "#8C52F2";
     ctx.lineWidth = 1.5;
     ctx.stroke();
     ctx.fillStyle = "#2a2350";
@@ -143,7 +167,7 @@ export default function MakerDrawPad({
   }
 
   return (
-    <div className="mk-draw">
+    <div className={`mk-draw mk-draw-surface ${cfg.className}`}>
       <div className="mk-draw-tools" role="toolbar" aria-label="Drawing tools">
         <button type="button" className={`mk-tool${tool === "pen" ? " on" : ""}`} disabled={disabled} onClick={() => setTool("pen")}>
           Pen
@@ -169,8 +193,8 @@ export default function MakerDrawPad({
       ) : null}
       <canvas
         ref={canvasRef}
-        className="mk-canvas"
-        style={{ height }}
+        className={`mk-canvas ${cfg.className}`}
+        style={{ height, background: cfg.fill }}
         onMouseDown={start}
         onMouseMove={move}
         onMouseUp={end}

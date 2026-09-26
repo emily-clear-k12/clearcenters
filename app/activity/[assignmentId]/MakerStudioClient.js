@@ -265,7 +265,12 @@ function buildSlot(id, draft, status) {
     return { status, text: draft.text || "", updatedAt };
   }
   if (id === "sketch") {
-    return { status, imageDataUrl: draft.imageDataUrl || null, updatedAt };
+    return {
+      status,
+      imageDataUrl: draft.imageDataUrl || null,
+      canvasSurface: draft.canvasSurface === "light_table" ? "light_table" : "whiteboard",
+      updatedAt,
+    };
   }
   if (id === "diagram") {
     return {
@@ -560,7 +565,10 @@ export default function MakerStudioClient({
     if (id === "write") {
       nextDraft = { text: slot.text || "" };
     } else if (id === "sketch") {
-      nextDraft = { imageDataUrl: slot.imageDataUrl || null };
+      nextDraft = {
+        imageDataUrl: slot.imageDataUrl || null,
+        canvasSurface: slot.canvasSurface === "light_table" ? "light_table" : "whiteboard",
+      };
     } else if (id === "diagram") {
       nextDraft = {
         imageDataUrl: slot.imageDataUrl || null,
@@ -1153,7 +1161,7 @@ export default function MakerStudioClient({
 
   if (view === "done" || submitted) {
     return (
-      <div className="mk-page">
+      <div className="mk-page" data-mode="done">
         <BackToHubButton />
         <div className="mk-shell">
           <div className="mk-top">
@@ -1194,8 +1202,9 @@ export default function MakerStudioClient({
 
   if (view === "mode" && activeMode && draft) {
     const meta = modesMeta.find((m) => m.id === activeMode) || {};
+    const sketchSurface = draft.canvasSurface === "light_table" ? "light_table" : "whiteboard";
     return (
-      <div className="mk-page">
+      <div className="mk-page" data-mode={activeMode}>
         <BackToHubButton />
         <div className="mk-shell">
           <div className="mk-top">
@@ -1213,7 +1222,7 @@ export default function MakerStudioClient({
             <p>{config.prompt}</p>
           </div>
 
-          <div className="mk-panel mk-write">
+          <div className={`mk-panel mk-write mk-stage mk-stage-${activeMode}`}>
             <h2>{meta.label || activeMode}</h2>
             <p className="mk-quiet">{meta.instructions || "Make your piece."}</p>
 
@@ -1232,6 +1241,25 @@ export default function MakerStudioClient({
 
             {activeMode === "sketch" ? (
               <>
+                <div className="mk-surface-toggle" role="group" aria-label="Canvas surface">
+                  <span className="mk-quiet">Canvas</span>
+                  <button
+                    type="button"
+                    className={`mk-tool${sketchSurface === "whiteboard" ? " on" : ""}`}
+                    disabled={busy}
+                    onClick={() => patchDraft({ canvasSurface: "whiteboard" })}
+                  >
+                    Whiteboard
+                  </button>
+                  <button
+                    type="button"
+                    className={`mk-tool${sketchSurface === "light_table" ? " on" : ""}`}
+                    disabled={busy}
+                    onClick={() => patchDraft({ canvasSurface: "light_table" })}
+                  >
+                    Light table
+                  </button>
+                </div>
                 <div className="mk-upload-row">
                   <button
                     type="button"
@@ -1262,6 +1290,7 @@ export default function MakerStudioClient({
                     onChange={(url) => patchDraft({ imageDataUrl: url })}
                     disabled={busy}
                     height={300}
+                    surface={sketchSurface}
                   />
                 )}
               </>
@@ -1318,81 +1347,85 @@ export default function MakerStudioClient({
             ) : null}
 
             {activeMode === "poster" ? (
-              <>
-                <div className="mk-field">
-                  <label htmlFor="mk-poster-title">Title</label>
-                  <input
-                    id="mk-poster-title"
-                    className="mk-input"
-                    value={draft.title || ""}
-                    onChange={(e) => patchDraft({ title: e.target.value })}
-                    placeholder="Big headline…"
-                    disabled={busy}
-                    maxLength={80}
-                  />
-                </div>
-                <div className="mk-field">
-                  <label htmlFor="mk-poster-cap">Caption</label>
-                  <input
-                    id="mk-poster-cap"
-                    className="mk-input"
-                    value={draft.caption || ""}
-                    onChange={(e) => patchDraft({ caption: e.target.value })}
-                    placeholder="One short line about the idea…"
-                    disabled={busy}
-                    maxLength={160}
-                  />
-                </div>
-                <div className="mk-field">
-                  <label>Picture — pick from library</label>
-                  <div className="mk-upload-row">
-                    <button
-                      type="button"
-                      className="mk-next"
+              <div className="mk-broadcast-frame">
+                <div className="mk-broadcast-preview">
+                  {isPlacedImage(draft.imageDataUrl) ? (
+                    <div className="mk-poster-preview">
+                      <img src={draft.imageDataUrl} alt="Poster artwork" />
+                    </div>
+                  ) : (
+                    <MakerDrawPad
+                      initialImage={null}
+                      onChange={(url) => patchDraft({ imageDataUrl: url })}
                       disabled={busy}
-                      onClick={() => setLibraryPicker({ kind: "poster" })}
-                    >
-                      Pick from library
-                    </button>
-                    <label className="mk-ghost mk-file-btn">
-                      Upload
-                      <input
-                        type="file"
-                        accept="image/*"
-                        hidden
-                        disabled={busy}
-                        onChange={(e) => {
-                          const f = e.target.files && e.target.files[0];
-                          onPosterUpload(f);
-                          e.target.value = "";
-                        }}
-                      />
-                    </label>
-                    {isPlacedImage(draft.imageDataUrl) ? (
+                      height={260}
+                    />
+                  )}
+                </div>
+                <div className="mk-broadcast-controls">
+                  <div className="mk-field">
+                    <label htmlFor="mk-poster-title">Title</label>
+                    <input
+                      id="mk-poster-title"
+                      className="mk-input"
+                      value={draft.title || ""}
+                      onChange={(e) => patchDraft({ title: e.target.value })}
+                      placeholder="Big headline…"
+                      disabled={busy}
+                      maxLength={80}
+                    />
+                  </div>
+                  <div className="mk-field">
+                    <label htmlFor="mk-poster-cap">Caption</label>
+                    <input
+                      id="mk-poster-cap"
+                      className="mk-input"
+                      value={draft.caption || ""}
+                      onChange={(e) => patchDraft({ caption: e.target.value })}
+                      placeholder="One short line about the idea…"
+                      disabled={busy}
+                      maxLength={160}
+                    />
+                  </div>
+                  <div className="mk-field">
+                    <label>Picture — pick from library</label>
+                    <div className="mk-upload-row">
                       <button
                         type="button"
-                        className="mk-ghost"
+                        className="mk-next"
                         disabled={busy}
-                        onClick={() => patchDraft({ imageDataUrl: null })}
+                        onClick={() => setLibraryPicker({ kind: "poster" })}
                       >
-                        Clear picture
+                        Pick from library
                       </button>
-                    ) : null}
+                      <label className="mk-ghost mk-file-btn">
+                        Upload
+                        <input
+                          type="file"
+                          accept="image/*"
+                          hidden
+                          disabled={busy}
+                          onChange={(e) => {
+                            const f = e.target.files && e.target.files[0];
+                            onPosterUpload(f);
+                            e.target.value = "";
+                          }}
+                        />
+                      </label>
+                      {isPlacedImage(draft.imageDataUrl) ? (
+                        <button
+                          type="button"
+                          className="mk-ghost"
+                          disabled={busy}
+                          onClick={() => patchDraft({ imageDataUrl: null })}
+                        >
+                          Clear picture
+                        </button>
+                      ) : null}
+                    </div>
                   </div>
                 </div>
-                {isPlacedImage(draft.imageDataUrl) ? (
-                  <div className="mk-poster-preview">
-                    <img src={draft.imageDataUrl} alt="Poster artwork" />
-                  </div>
-                ) : (
-                  <MakerDrawPad
-                    initialImage={null}
-                    onChange={(url) => patchDraft({ imageDataUrl: url })}
-                    disabled={busy}
-                    height={260}
-                  />
-                )}
-              </>
+              </div>
             ) : null}
 
             {activeMode === "comic" ? (
@@ -1691,26 +1724,32 @@ export default function MakerStudioClient({
 
             {activeMode === "math_story" ? (
               <>
-                <div className="mk-field">
-                  <label htmlFor="mk-math-story">Your story</label>
-                  <textarea
-                    id="mk-math-story"
-                    value={draft.story || ""}
-                    onChange={(e) => patchDraft({ story: e.target.value })}
-                    placeholder="Tell the math story in a few sentences…"
-                    disabled={busy}
-                  />
-                </div>
-                <div className="mk-field">
-                  <label htmlFor="mk-math-work">Work / equation</label>
-                  <textarea
-                    id="mk-math-work"
-                    className="mk-work-box"
-                    value={draft.workText || ""}
-                    onChange={(e) => patchDraft({ workText: e.target.value })}
-                    placeholder="Show the numbers and steps…"
-                    disabled={busy}
-                  />
+                <div className="mk-math-bench">
+                  <div className="mk-math-bench-col">
+                    <div className="mk-field">
+                      <label htmlFor="mk-math-story">Your story</label>
+                      <textarea
+                        id="mk-math-story"
+                        value={draft.story || ""}
+                        onChange={(e) => patchDraft({ story: e.target.value })}
+                        placeholder="Tell the math story in a few sentences…"
+                        disabled={busy}
+                      />
+                    </div>
+                  </div>
+                  <div className="mk-math-bench-col">
+                    <div className="mk-field">
+                      <label htmlFor="mk-math-work">Work / equation</label>
+                      <textarea
+                        id="mk-math-work"
+                        className="mk-work-box"
+                        value={draft.workText || ""}
+                        onChange={(e) => patchDraft({ workText: e.target.value })}
+                        placeholder="Show the numbers and steps…"
+                        disabled={busy}
+                      />
+                    </div>
+                  </div>
                 </div>
                 <div className="mk-upload-row">
                   <button
@@ -2343,7 +2382,7 @@ export default function MakerStudioClient({
 
   // Main studio page
   return (
-    <div className="mk-page">
+    <div className="mk-page" data-mode="home">
       <BackToHubButton />
       <div className="mk-shell">
         <div className="mk-top">
