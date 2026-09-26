@@ -122,9 +122,7 @@ const CHALLENGE_TYPES = [
   // Sept 25, 2026 — Expedition Station Act 1 (Frozen Relay MA.4.3E-XP) is live.
   { key: "expedition_station", label: "Expedition Station", image: "/teacher/challenges/mission_map.jpg", real: true,
     description: "A 15-task quest on one planet. Station mode: four cards, then a challenge. About 15–20 minutes per act." },
-  // Sept 25, 2026 — Maker Studio Wave-1 seed (SCI.3.13A-MS Built for the Desert).
-  { key: "maker_studio", label: "Maker Studio", image: "/maker/hall.jpg", real: true,
-    description: "Students get a job, curate a wall from a storage room, reject one piece on purpose, and write placards plus a plaque. About 20 minutes." },
+  // Maker Studio intentionally hidden pending redesign; too similar to Exhibit Hall.
   // Coming soon — kept below live tiles (Assign library sorts real:true first as well).
   { key: "repair_desk", label: "Repair Desk", image: "/teacher/challenges/repair_desk.jpg", real: false,
     description: "A broken ticket arrives — a flawed diagram, model, or work sample. Students diagnose what's wrong, fix it, and explain the fix to whoever sent it in." },
