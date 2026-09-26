@@ -26,6 +26,15 @@ function emptyComicPanels(n) {
   return Array.from({ length: n }, () => ({ imageDataUrl: null, text: "" }));
 }
 
+function isLibraryPath(src) {
+  return typeof src === "string" && src.startsWith("/") && !src.startsWith("//");
+}
+
+function isPlacedImage(src) {
+  return typeof src === "string" && src.length > 0;
+}
+
+
 function modeHasContent(id, draft) {
   if (!draft) return false;
   if (id === "write") return !!(draft.text || "").trim();
@@ -160,6 +169,8 @@ export default function MakerStudioClient({
   const [saveState, setSaveState] = useState("saved");
   const [submitted, setSubmitted] = useState(!!alreadySubmitted);
   const [voiceError, setVoiceError] = useState(null);
+  /** null | { kind: "poster"|"diagram"|"sketch" } | { kind: "comic", index: number } */
+  const [libraryPicker, setLibraryPicker] = useState(null);
   const [recording, setRecording] = useState(false);
   const [recordSec, setRecordSec] = useState(0);
   const autosaveTimer = useRef(null);
@@ -357,8 +368,8 @@ export default function MakerStudioClient({
 
   function doneBlockMessage(id) {
     if (id === "write") return "Write something first, then tap Done.";
-    if (id === "sketch") return "Draw something first, then tap Done.";
-    if (id === "diagram") return "Draw your diagram first, then tap Done.";
+    if (id === "sketch") return "Draw or pick a picture first, then tap Done.";
+    if (id === "diagram") return "Add a picture or drawing first, then tap Done.";
     if (id === "poster") return "Add a title and a picture, then tap Done.";
     if (id === "comic") return "Fill each panel with a drawing or a line, then tap Done.";
     if (id === "voice") return "Record a voice note first, then tap Done.";
@@ -484,6 +495,26 @@ export default function MakerStudioClient({
     reader.readAsDataURL(file);
   }
 
+
+  function placeLibraryImage(item) {
+    if (!item || !item.url || !libraryPicker) return;
+    dirty.current = true;
+    const url = item.url;
+    if (libraryPicker.kind === "comic") {
+      const idx = libraryPicker.index;
+      setDraft((prev) => {
+        const panels = ((prev && prev.panels) || []).map((p, i) =>
+          i === idx ? { ...p, imageDataUrl: url } : p
+        );
+        return { ...(prev || {}), panels };
+      });
+    } else {
+      setDraft((prev) => ({ ...(prev || {}), imageDataUrl: url }));
+    }
+    setLibraryPicker(null);
+    setStatus("Picture placed from the library.");
+  }
+
   const title = (publicCase && publicCase.title) || "Maker Studio";
   const topicLine = config.topic ? config.topic : null;
 
@@ -567,23 +598,77 @@ export default function MakerStudioClient({
             ) : null}
 
             {activeMode === "sketch" ? (
-              <MakerDrawPad
-                initialImage={draft.imageDataUrl}
-                onChange={(url) => patchDraft({ imageDataUrl: url })}
-                disabled={busy}
-                height={300}
-              />
+              <>
+                <div className="mk-upload-row">
+                  <button
+                    type="button"
+                    className="mk-next"
+                    disabled={busy}
+                    onClick={() => setLibraryPicker({ kind: "sketch" })}
+                  >
+                    Pick from library
+                  </button>
+                  {isPlacedImage(draft.imageDataUrl) ? (
+                    <button
+                      type="button"
+                      className="mk-ghost"
+                      disabled={busy}
+                      onClick={() => patchDraft({ imageDataUrl: null })}
+                    >
+                      Clear picture
+                    </button>
+                  ) : null}
+                </div>
+                {isLibraryPath(draft.imageDataUrl) ? (
+                  <div className="mk-poster-preview">
+                    <img src={draft.imageDataUrl} alt="Sketch from library" />
+                  </div>
+                ) : (
+                  <MakerDrawPad
+                    initialImage={draft.imageDataUrl}
+                    onChange={(url) => patchDraft({ imageDataUrl: url })}
+                    disabled={busy}
+                    height={300}
+                  />
+                )}
+              </>
             ) : null}
 
             {activeMode === "diagram" ? (
               <>
-                <MakerDrawPad
-                  initialImage={draft.imageDataUrl}
-                  onChange={(url) => patchDraft({ imageDataUrl: url })}
-                  disabled={busy}
-                  height={280}
-                  labelChips={DIAGRAM_CHIPS}
-                />
+                <div className="mk-upload-row">
+                  <button
+                    type="button"
+                    className="mk-next"
+                    disabled={busy}
+                    onClick={() => setLibraryPicker({ kind: "diagram" })}
+                  >
+                    Pick from library
+                  </button>
+                  {isPlacedImage(draft.imageDataUrl) ? (
+                    <button
+                      type="button"
+                      className="mk-ghost"
+                      disabled={busy}
+                      onClick={() => patchDraft({ imageDataUrl: null })}
+                    >
+                      Clear picture
+                    </button>
+                  ) : null}
+                </div>
+                {isLibraryPath(draft.imageDataUrl) ? (
+                  <div className="mk-poster-preview">
+                    <img src={draft.imageDataUrl} alt="Diagram from library" />
+                  </div>
+                ) : (
+                  <MakerDrawPad
+                    initialImage={draft.imageDataUrl}
+                    onChange={(url) => patchDraft({ imageDataUrl: url })}
+                    disabled={busy}
+                    height={280}
+                    labelChips={DIAGRAM_CHIPS}
+                  />
+                )}
                 <div className="mk-field">
                   <label htmlFor="mk-diagram-cap">Caption (optional)</label>
                   <input
@@ -626,10 +711,18 @@ export default function MakerStudioClient({
                   />
                 </div>
                 <div className="mk-field">
-                  <label>Picture — draw or upload</label>
+                  <label>Picture — pick from library</label>
                   <div className="mk-upload-row">
+                    <button
+                      type="button"
+                      className="mk-next"
+                      disabled={busy}
+                      onClick={() => setLibraryPicker({ kind: "poster" })}
+                    >
+                      Pick from library
+                    </button>
                     <label className="mk-ghost mk-file-btn">
-                      Upload image
+                      Upload
                       <input
                         type="file"
                         accept="image/*"
@@ -642,7 +735,7 @@ export default function MakerStudioClient({
                         }}
                       />
                     </label>
-                    {draft.imageDataUrl ? (
+                    {isPlacedImage(draft.imageDataUrl) ? (
                       <button
                         type="button"
                         className="mk-ghost"
@@ -654,7 +747,7 @@ export default function MakerStudioClient({
                     ) : null}
                   </div>
                 </div>
-                {draft.imageDataUrl ? (
+                {isPlacedImage(draft.imageDataUrl) ? (
                   <div className="mk-poster-preview">
                     <img src={draft.imageDataUrl} alt="Poster artwork" />
                   </div>
@@ -699,17 +792,48 @@ export default function MakerStudioClient({
                   {(draft.panels || []).map((panel, idx) => (
                     <div key={idx} className="mk-comic-panel">
                       <div className="mk-comic-label">Panel {idx + 1}</div>
-                      <MakerDrawPad
-                        initialImage={panel.imageDataUrl}
-                        onChange={(url) => {
-                          const next = (draft.panels || []).map((p, i) =>
-                            i === idx ? { ...p, imageDataUrl: url } : p
-                          );
-                          patchDraft({ panels: next });
-                        }}
-                        disabled={busy}
-                        height={160}
-                      />
+                      <div className="mk-upload-row">
+                        <button
+                          type="button"
+                          className="mk-tool"
+                          disabled={busy}
+                          onClick={() => setLibraryPicker({ kind: "comic", index: idx })}
+                        >
+                          Pick from library
+                        </button>
+                        {isPlacedImage(panel.imageDataUrl) ? (
+                          <button
+                            type="button"
+                            className="mk-tool"
+                            disabled={busy}
+                            onClick={() => {
+                              const next = (draft.panels || []).map((p, i) =>
+                                i === idx ? { ...p, imageDataUrl: null } : p
+                              );
+                              patchDraft({ panels: next });
+                            }}
+                          >
+                            Clear
+                          </button>
+                        ) : null}
+                      </div>
+                      {isLibraryPath(panel.imageDataUrl) ? (
+                        <div className="mk-poster-preview">
+                          <img src={panel.imageDataUrl} alt={`Panel ${idx + 1}`} />
+                        </div>
+                      ) : (
+                        <MakerDrawPad
+                          initialImage={panel.imageDataUrl}
+                          onChange={(url) => {
+                            const next = (draft.panels || []).map((p, i) =>
+                              i === idx ? { ...p, imageDataUrl: url } : p
+                            );
+                            patchDraft({ panels: next });
+                          }}
+                          disabled={busy}
+                          height={160}
+                        />
+                      )}
                       <input
                         className="mk-input"
                         value={panel.text || ""}
@@ -782,6 +906,13 @@ export default function MakerStudioClient({
           </div>
 
           <p className="mk-quiet">{status}</p>
+
+          <LibraryPicker
+            open={!!libraryPicker}
+            title="Pick a picture"
+            onClose={() => setLibraryPicker(null)}
+            onSelect={placeLibraryImage}
+          />
           <SamGuide
             skinKey={samSkin}
             alt={samNickname || "S.A.M."}
