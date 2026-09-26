@@ -45,6 +45,15 @@ const QUESTION_SECONDS_OPTIONS = [
   { value: 30, label: "30 sec" },
 ];
 const CRYSTAL_DIVE_MINUTES = [5, 10, 15, 20];
+const RUSH_MODES = [
+  { id: "run", title: "Run", line: "Same solo game. Pick a world.", note: "Each student plays alone." },
+  { id: "dive", title: "Dive", line: "Crystal Dive. One game for now.", note: "Each student plays alone." },
+  { id: "crew", title: "Crew", line: "One whole-class game for now.", note: "The class plays together." },
+];
+const RUN_SKINS = GAME_SKINS.filter((skin) => skin.id !== "crystal_dive");
+function isVocabSet(standard) {
+  return /-FR-[A-Z0-9]{2,6}$/i.test(String(standard || "")) || FR_CUSTOM_LIST_RE.test(String(standard || ""));
+}
 import Link from 'next/link';
 import {BridgePage,PageHeading,ClassTabs,Empty} from '../../../../components/teacher/BridgeUI';
 import {subjectStyle,engineInfo,SUBJECTS,ENGINES} from '../../../../lib/teacherBridge';
@@ -106,7 +115,7 @@ const CHALLENGE_TYPES = [
   { key: "simulation_lab", label: "Simulation Lab", image: "/teacher/challenges/simulation_lab.jpg", real: true,
     description: "Students adjust real variables with sliders and dials, watch the results happen live, and explain the pattern using data they generated themselves." },
   { key: "frequency_rush", label: "Frequency Rush", image: "/teacher/challenges/frequency_rush.jpg", real: true,
-    description: "Students race the clock to lock onto the right definition before the signal scrambles — fast vocabulary review with streaks and speed bonuses, replayable anytime as practice." },
+    description: "Three games in one room. Run and Dive are solo. Crew is the whole class." },
   { key: "signal_defense", label: "Signal Ops", image: "/teacher/challenges/signal_defense.jpg", real: true,
     description: "The whole class defends one shared base together — answering review questions to keep power, health, and salvage up before the next wave hits." },
   // Sept 22, 2026 — Relay Station, the typing center (design doc:
@@ -437,6 +446,8 @@ function NewAssignmentContent() {
   // the whole assignment (assignments.question_seconds). 0 = no timer.
   // Students can no longer turn the game's own timer on or off.
   const [questionSeconds, setQuestionSeconds] = useState(0);
+  const [rushMode, setRushMode] = useState(null);
+  const [rushStandard, setRushStandard] = useState(null);
 
   // Maker Studio — full-width Assign setup (prompt chips + modes). No Finish N UI.
   const [makerPrompt, setMakerPrompt] = useState("Write about today's idea in your own words. What do you understand, and what makes you think that?");
@@ -530,6 +541,7 @@ function NewAssignmentContent() {
 function displayCode(code){return String(code||'').replace(/^TEKS\s+/i,'').replace(/^(MA|ELA|ELAR|SS|SCI)\./i,'');}
   const topics=[...new Set(cases.map(normalizeCaseRow).filter(c=>c.engine!=='relay_station'&&Number(c.grade)===Number(browseGrade)&&(c.subject===browseSubject||isFrDailyCase(c.standard))&&(typeFilter==='all'||matchesChallenge(c.engine,typeFilter))&&!isRetiredSignalCheckCase(c.standard)&&!((FR_CUSTOM_LIST_RE.exec(c.standard)||[])[1]&&FR_CUSTOM_LIST_RE.exec(c.standard)[1]!==String(teacherId||"").replace(/-/g,"").slice(0,8).toLowerCase())).map(topicCode))].sort((a,b)=>a.localeCompare(b,undefined,{numeric:true}));
   const searchQ = caseSearch.trim().toLowerCase();
+  const inRush = product==='centers' && browseMode==='activities' && typeFilter==='frequency_rush';
   const filteredCases = cases.map(normalizeCaseRow).filter((c) => {
     if (!c || typeof c.standard !== "string") return false;
     const isQuickMaker = c.engine === "maker_studio" && (c.standard === "MS.QUICK-WRITE" || c.standard === QUICK_MS_STANDARD);
@@ -546,10 +558,15 @@ function displayCode(code){return String(code||'').replace(/^TEKS\s+/i,'').repla
     const specialTile = RELAY_SPECIAL_TILES.find((t) => t.key === browseSubject);
     if (!makerBrowse && !specialTile && c.subject !== browseSubject && !isFrDailyCase(c.standard)) return false;
     if (browseMode==='standards' && product!=='keys') {
+      if (matchesChallenge(c.engine, 'signal_defense')) return false;
       if (!c || !pickedStandard || !codesFor(c.standard).includes(pickedStandard)) return false;
       if (!searchQ) return true;
       return [c.title, c.standard, c.learning_target, missionMapTeksLabel(c.standard)].some((value) => String(value || "").toLowerCase().includes(searchQ));
+    } else if (inRush && rushMode==='crew') {
+      if (!matchesChallenge(c.engine, 'signal_defense')) return false;
     } else if (typeFilter!=="all" && !matchesChallenge(c.engine,typeFilter)) return false;
+    if (inRush && rushStandard && !codesFor(c.standard).includes(rushStandard)) return false;
+    if (!inRush && matchesChallenge(c.engine, 'signal_defense')) return false;
     if (product==='keys' && topic!=="all" && topicCode(c)!==topic) return false;
     if (isRetiredSignalCheckCase(c.standard)) return false;
     // Relay Station's Foundations Track has its own 5th tile (FOUNDATIONS
@@ -568,7 +585,7 @@ function displayCode(code){return String(code||'').replace(/^TEKS\s+/i,'').repla
   const standardGroups = product==='keys' || browseMode!=='standards' ? [] : Object.values(cases.map(normalizeCaseRow).reduce((groups, c) => {
     if (!c || typeof c !== "object") return groups;
     if (Number(c.grade)!==Number(browseGrade) || (c.subject!==browseSubject && !isFrDailyCase(c.standard))) return groups;
-    if (!CHALLENGE_TYPES.some((t) => t.real && matchesChallenge(c.engine, t.key)) || matchesChallenge(c.engine, 'relay_station') || isRetiredSignalCheckCase(c.standard)) return groups;
+    if (!CHALLENGE_TYPES.some((t) => t.real && matchesChallenge(c.engine, t.key)) || matchesChallenge(c.engine, 'relay_station') || matchesChallenge(c.engine, 'signal_defense') || isRetiredSignalCheckCase(c.standard)) return groups;
     const codes = codesFor(c.standard);
     const title = coverLine(c.standard, c.learning_target);
     for (const code of codes) {
@@ -589,7 +606,28 @@ function displayCode(code){return String(code||'').replace(/^TEKS\s+/i,'').repla
     family.items.push(group);
     return list;
   }, []);
-  const showList = product==='keys' || (browseMode==='activities' && typeFilter!=='all') || (browseMode==='standards' && !!pickedStandard);
+  const showList = product==='keys' || (browseMode==='activities' && typeFilter!=='all' && !(inRush && !rushStandard)) || (browseMode==='standards' && !!pickedStandard);
+  const rushStandards = !inRush || !rushMode ? [] : Object.values(cases.map(normalizeCaseRow).reduce((groups, c) => {
+    if (!c || Number(c.grade)!==Number(browseGrade) || (c.subject!==browseSubject && !isFrDailyCase(c.standard))) return groups;
+    if (!matchesChallenge(c.engine, rushMode==='crew' ? 'signal_defense' : 'frequency_rush')) return groups;
+    const title = coverLine(c.standard, c.learning_target);
+    for (const code of codesFor(c.standard)) {
+      if (!groups[code]) groups[code] = { code, title: title || "", count: 0, seen: new Set() };
+      if (groups[code].seen.has(c.standard)) continue;
+      groups[code].seen.add(c.standard);
+      groups[code].count += 1;
+      if (title && title.length > groups[code].title.length) groups[code].title = title;
+    }
+    return groups;
+  }, {})).sort((a, b) => a.code.localeCompare(b.code, undefined, { numeric: true }));
+  const rushFamilies = rushStandards.reduce((list, group) => {
+    const name = (String(group.code).match(/^(\d+\.\d+)/) || [null, group.code])[1];
+    let family = list.find((item) => item.name === name);
+    if (!family) { family = { name, items: [] }; list.push(family); }
+    family.items.push(group);
+    return list;
+  }, []);
+  const rushTitle = RUSH_MODES.find((mode) => mode.id === rushMode)?.title || "Frequency Rush";
 
   const targetClass = classes.find((c) => c.id === assignClassId);
   useEffect(()=>{
@@ -728,7 +766,7 @@ function displayCode(code){return String(code||'').replace(/^TEKS\s+/i,'').repla
     return <div style={{ minHeight: "100vh", background: COLORS.canvas, display: "flex", alignItems: "center", justifyContent: "center", color: COLORS.textMuted, fontFamily: "'Inter', sans-serif" }}>Loading...</div>;
   }
 
-  function resetBrowse(){setSelectedCase(null);setTopic('all');setPickedStandard(null);setLimit(12);setDistressCallEnabled(false);setDistressCallTarget('');setDistressCallDeadline('');setDistressCallRewardPoints('');}
+  function resetBrowse(){setSelectedCase(null);setTopic('all');setPickedStandard(null);setRushStandard(null);setLimit(12);setDistressCallEnabled(false);setDistressCallTarget('');setDistressCallDeadline('');setDistressCallRewardPoints('');}
   function openProduct(key){
     setProduct(key);
     setSelectedCase(null);
@@ -776,7 +814,7 @@ function displayCode(code){return String(code||'').replace(/^TEKS\s+/i,'').repla
                   <button onClick={() => router.push(`/teacher/typing-track?classId=${assignClassId}`)} className="gc-btn" style={{ background: "#0D1B2A", color: COLORS.white, borderRadius: 999, padding: "11px 20px", fontWeight: 700, fontSize: 13.5 }}>⌨️ Open Typing Track Board</button>
                 )}
                 {selectedCase?.engine === "signal_defense" && newAssignmentId && (
-                  <button onClick={() => router.push(`/teacher/signal-ops-board?assignmentId=${newAssignmentId}`)} className="gc-btn" style={{ background: "#0D1B2A", color: COLORS.white, borderRadius: 999, padding: "11px 20px", fontWeight: 700, fontSize: 13.5 }}>Open Signal Ops Board</button>
+                  <button onClick={() => router.push(`/teacher/signal-ops-board?assignmentId=${newAssignmentId}`)} className="gc-btn" style={{ background: "#0D1B2A", color: COLORS.white, borderRadius: 999, padding: "11px 20px", fontWeight: 700, fontSize: 13.5 }}>Open the Crew board</button>
                 )}
                 <button onClick={assignAnother} className="gc-btn" style={{ background: `${ACCENT}22`, color: ACCENT, borderRadius: 999, padding: "11px 20px", fontWeight: 700, fontSize: 13.5 }}>Assign Another</button>
                 <button onClick={() => router.push("/teacher/assign")} className="gc-btn" style={{ background: ACCENT, color: COLORS.white, borderRadius: 999, padding: "11px 20px", fontWeight: 700, fontSize: 13.5 }}>Back to My Classes</button>
@@ -807,12 +845,14 @@ function displayCode(code){return String(code||'').replace(/^TEKS\s+/i,'').repla
       <label>Grade<select value={browseGrade} onChange={e=>{setFollowClass(false);setBrowseGrade(e.target.value);resetBrowse();setCaseSearch('')}}>{['3','4','5'].map(g=><option key={g} value={g}>Grade {g}</option>)}</select></label>
       <label>Subject<select value={browseSubject} onChange={e=>{setFollowClass(false);setLane('standard');setBrowseSubject(e.target.value);setTypeFilter('all');resetBrowse();setCaseSearch('')}}>{Object.keys(SUBJECTS).map(subject=><option key={subject}>{subject}</option>)}</select></label>
     </div>
-    {browseMode==='activities' && typeFilter!=='all' && <button className="cc-text-button" onClick={()=>{setTypeFilter('all');setSelectedCase(null);setCaseSearch('');}}>← All activity types</button>}
-    {browseMode==='activities' && typeFilter==='all' && <section className="cc-panel"><h2>Choose an activity type</h2><p className="cc-muted">Then pick the lesson. The standard name is on each one.</p><div className="cc-type-grid">{Object.entries(ENGINES).filter(([key])=>key!=='relay_station').map(([key,art])=><button key={key} className="cc-activity cc-frame" style={subjectStyle(browseSubject)} onClick={()=>{setSelectedCase(null);setCaseSearch('');setTypeFilter(key);setTopic('all')}}><img src={art.image} alt=""/><div><h3>{art.label}</h3><p>{art.description}</p></div></button>)}</div></section>}
+    {browseMode==='activities' && typeFilter!=='all' && !inRush && <button className="cc-text-button" onClick={()=>{setTypeFilter('all');setSelectedCase(null);setCaseSearch('');}}>← All activity types</button>}
+    {inRush && !rushMode && <section className="cc-panel"><button className="cc-text-button" onClick={()=>{setTypeFilter('all');setRushMode(null);setRushStandard(null);setSelectedCase(null);}}>← All activity types</button><h2>Frequency Rush</h2><p className="cc-muted">Choose a game first.</p><div className="cc-rush-modes">{RUSH_MODES.map((mode)=><button key={mode.id} type="button" className="cc-rush-mode" onClick={()=>{setRushMode(mode.id);setRushStandard(null);setSelectedCase(null);setCaseSearch(''); if(mode.id==='dive')setGameSkin('crystal_dive'); if(mode.id==='run')setGameSkin(DEFAULT_GAME_SKIN); if(mode.id==='crew')setTargetMode('whole');}}><b>{mode.title}</b><span>{mode.line}</span><small>{mode.note}</small></button>)}</div></section>}
+    {inRush && rushMode && !rushStandard && <section className="cc-panel"><button className="cc-text-button" onClick={()=>{setRushMode(null);setSelectedCase(null);setCaseSearch('');}}>← Run, Dive, Crew</button><h2>{rushTitle}</h2><p className="cc-muted">{browseSubject} · Grade {browseGrade}. Choose a standard.</p><div className="cc-standard-list" style={subjectStyle(browseSubject)}>{rushFamilies.map((family)=><section key={family.name}><h3>{family.name}</h3>{family.items.map((group)=><button key={group.code} type="button" className="cc-standard-row" onClick={()=>{setRushStandard(group.code);setSelectedCase(null);setCaseSearch('');setLimit(12)}}><b>{displayCode(group.code)}</b>{group.title&&<span>{group.title}</span>}<small>{group.count} {group.count===1?'set':'sets'}</small></button>)}</section>)}</div>{!rushStandards.length&&<Empty>No {rushTitle} sets for this grade and subject yet.</Empty>}</section>}
+    {browseMode==='activities' && typeFilter==='all' && <section className="cc-panel"><h2>Choose an activity type</h2><p className="cc-muted">Then pick the lesson. The standard name is on each one.</p><div className="cc-type-grid">{Object.entries(ENGINES).filter(([key])=>key!=='relay_station'&&key!=='signal_defense').map(([key,art])=><button key={key} className="cc-activity cc-frame" style={subjectStyle(browseSubject)} onClick={()=>{setSelectedCase(null);setCaseSearch('');setTypeFilter(key);setTopic('all');setRushMode(null);setRushStandard(null);}}><img src={art.image} alt=""/><div><h3>{art.label}</h3><p>{art.description}</p></div></button>)}</div></section>}
     {browseMode==='standards' && !pickedStandard && <section className="cc-panel"><h2>Choose a standard</h2><p className="cc-muted">{browseSubject} · Grade {browseGrade}. Open a standard to see its activities.</p><label className="cc-field">Find a standard<input className="cc-input" type="search" placeholder="Search by code or topic" value={caseSearch} onChange={e=>setCaseSearch(e.target.value)}/></label><div className="cc-standard-list" style={subjectStyle(browseSubject)}>{standardFamilies.map((family)=><section key={family.name}><h3>{family.name}</h3>{family.items.map((group)=><button key={group.code} type="button" className="cc-standard-row" onClick={()=>{setPickedStandard(group.code);setSelectedCase(null);setCaseSearch('');setLimit(12)}}><b>{displayCode(group.code)}</b>{group.title&&<span>{group.title}</span>}<small>{group.count} {group.count===1?'activity':'activities'}</small></button>)}</section>)}</div>{!visibleGroups.length&&<Empty>No standards for this grade and subject yet.</Empty>}</section>}
     </>}
-    {showList&&<div className={"cc-two"+(product!=='keys'?" cc-two-maker":"")}><section className="cc-panel">{browseMode==='standards'&&pickedStandard&&<button className="cc-text-button" onClick={()=>{setPickedStandard(null);setSelectedCase(null);setCaseSearch('');}}>← All standards</button>}<h2>{product==='keys'?(browseSubject===READINGS?'Readings':(RELAY_SPECIAL_TILES.find(t=>t.key===browseSubject)?.title||'ClearKeys')):(browseMode==='standards'?displayCode(pickedStandard):(typeFilter!=='all'?engineInfo(typeFilter).label:'Activities'))}</h2><p className="cc-muted">{browseMode==='standards'?(standardGroups.find(group=>group.code===pickedStandard)?.title||'Activities for this standard'):`${browseSubject} · Grade ${browseGrade} · ${filteredCases.length} activities`}</p><label className="cc-field">Find an activity<input className="cc-input" type="search" placeholder="Search these activities" value={caseSearch} onChange={e=>{setCaseSearch(e.target.value);setLimit(12)}}/></label><div className={"cc-gallery cc-compact-gallery"+(product!=='keys'?' cc-maker-gallery':'')+(product==='keys'&&browseSubject===READINGS?' cc-readings':'')}>{filteredCases.slice(0,limit).map((c,index)=>{const e=engineInfo(c.engine);const code=codesFor(c.standard)[0]||displayCode(String(c.standard||""));const topic=topicForCase(c.standard,typeof c.learning_target==="string"?c.learning_target:"");const title=String(c.title||"");const thumb=caseImageCandidates(c.standard,c.engine);return <button key={`${c.standard}-${c.engine}-${index}`} className={"cc-activity"+(c.engine==="frequency_rush"?" is-rush":"")} style={subjectStyle(c.subject)} aria-pressed={selectedCase?.standard===c.standard} onClick={()=>{setStudentInfo(false);setSelectedCase(c);if(/^FR\.[345]\.DAILY$/.test(String(c.standard||"")))setGameSkin(DEFAULT_GAME_SKIN);setSelectedChallenge(CHALLENGE_TYPES.find(t=>matchesChallenge(c.engine,t.key)))}}><img src={thumb[0]} alt="" onError={(event)=>{const img=event.currentTarget;const step=Number(img.dataset.step||0)+1;if(step>=thumb.length)return;img.dataset.step=String(step);img.src=thumb[step];}}/><div><small>{product==='keys'?e.label:code}</small>{topic&&<b>{topic}</b>}<strong>{product==='keys'?title.replace(/^Relay Station:\s*/i,''):title}</strong><em>{e.label}</em></div></button>})}</div>{casesLoading?<Empty>Loading activities…</Empty>:!filteredCases.length&&<Empty>{typeFilter!=='all'?'No activities for this type at Grade '+browseGrade+' · '+browseSubject+'. Try another grade or subject.':'No activities match these filters. Try another topic, grade, or format.'}</Empty>}{filteredCases.length>limit&&<button className="cc-btn secondary" style={{marginTop:18}} onClick={()=>setLimit(limit+12)}>Show more activities</button>}</section>
-    <aside className="cc-stack">{selectedCase?<section className="cc-panel cc-frame" style={subjectStyle(selectedCase.subject)}><div className="cc-assign-read"><div className="cc-eyebrow cc-subject-label">{engineInfo(selectedCase.engine).label}</div><h2>{product==='keys'?(selectedCase.title||'').replace(/^Relay Station:\s*/i,''):selectedCase.title}</h2><p className="cc-assign-standard">{[codesFor(selectedCase.standard).join(' & ')||displayCode(topicCode(selectedCase)), topicForCase(selectedCase.standard, selectedCase.learning_target)].filter(Boolean).join(' — ')}</p><p>{selectedCase.lesson_summary||selectedCase.learning_target||engineInfo(selectedCase.engine).description}</p></div>{((selectedCase.lesson_summary&&selectedCase.learning_target)||selectedCase.misconception_note)&&<div className="cc-student-pop">{selectedCase.lesson_summary&&selectedCase.learning_target&&<><h3>Learning target</h3><p className="cc-muted">{selectedCase.learning_target}</p></>}{selectedCase.misconception_note&&<><h3>Teaching notes</h3><p className="cc-muted">{selectedCase.misconception_note}</p></>}</div>}
+    {showList&&<div className={"cc-two"+(product!=='keys'?" cc-two-maker":"")}><section className="cc-panel">{inRush&&rushStandard&&<button className="cc-text-button" onClick={()=>{setRushStandard(null);setSelectedCase(null);setCaseSearch('');}}>← Standards</button>}{browseMode==='standards'&&pickedStandard&&<button className="cc-text-button" onClick={()=>{setPickedStandard(null);setSelectedCase(null);setCaseSearch('');}}>← All standards</button>}<h2>{product==='keys'?(browseSubject===READINGS?'Readings':(RELAY_SPECIAL_TILES.find(t=>t.key===browseSubject)?.title||'ClearKeys')):(inRush?`${rushTitle} · ${displayCode(rushStandard)}`:(browseMode==='standards'?displayCode(pickedStandard):(typeFilter!=='all'?engineInfo(typeFilter).label:'Activities')))}</h2><p className="cc-muted">{browseMode==='standards'?(standardGroups.find(group=>group.code===pickedStandard)?.title||'Activities for this standard'):(inRush?(rushMode==='crew'?'Choose the question set. The class plays together.':'Choose a vocab list or a question set. Each student plays alone.'):`${browseSubject} · Grade ${browseGrade} · ${filteredCases.length} activities`)}</p><label className="cc-field">Find an activity<input className="cc-input" type="search" placeholder="Search these activities" value={caseSearch} onChange={e=>{setCaseSearch(e.target.value);setLimit(12)}}/></label><div className={"cc-gallery cc-compact-gallery"+(product!=='keys'?' cc-maker-gallery':'')+(product==='keys'&&browseSubject===READINGS?' cc-readings':'')}>{filteredCases.slice(0,limit).map((c,index)=>{const e=engineInfo(c.engine);const code=codesFor(c.standard)[0]||displayCode(String(c.standard||""));const topic=topicForCase(c.standard,typeof c.learning_target==="string"?c.learning_target:"");const title=String(c.title||"");const thumb=caseImageCandidates(c.standard,c.engine);return <button key={`${c.standard}-${c.engine}-${index}`} className={"cc-activity"+(c.engine==="frequency_rush"?" is-rush":"")} style={subjectStyle(c.subject)} aria-pressed={selectedCase?.standard===c.standard} onClick={()=>{setStudentInfo(false);setSelectedCase(c);if(rushMode==='dive'||c.engine==='signal_defense'){if(c.engine!=='signal_defense'&&rushMode==='dive')setGameSkin('crystal_dive');}else if(rushMode==='run'){if(gameSkin==='crystal_dive')setGameSkin(DEFAULT_GAME_SKIN);} if(/^FR\.[345]\.DAILY$/.test(String(c.standard||"")))setGameSkin(DEFAULT_GAME_SKIN); if(c.engine==='signal_defense')setTargetMode('whole'); setSelectedChallenge(CHALLENGE_TYPES.find(t=>matchesChallenge(c.engine,t.key)))}}><img src={thumb[0]} alt="" onError={(event)=>{const img=event.currentTarget;const step=Number(img.dataset.step||0)+1;if(step>=thumb.length)return;img.dataset.step=String(step);img.src=thumb[step];}}/><div><small>{product==='keys'?e.label:(inRush?(rushMode==='crew'||!isVocabSet(c.standard)?'Questions':'Vocab'):code)}</small>{topic&&!inRush&&<b>{topic}</b>}<strong>{product==='keys'?title.replace(/^Relay Station:\s*/i,''):title}</strong>{!inRush&&<em>{e.label}</em>}</div></button>})}</div>{casesLoading?<Empty>Loading activities…</Empty>:!filteredCases.length&&<Empty>{typeFilter!=='all'?'No activities for this type at Grade '+browseGrade+' · '+browseSubject+'. Try another grade or subject.':'No activities match these filters. Try another topic, grade, or format.'}</Empty>}{filteredCases.length>limit&&<button className="cc-btn secondary" style={{marginTop:18}} onClick={()=>setLimit(limit+12)}>Show more activities</button>}</section>
+    <aside className="cc-stack">{selectedCase?<section className="cc-panel cc-frame" style={subjectStyle(selectedCase.subject)}><div className="cc-assign-read"><div className="cc-eyebrow cc-subject-label">{selectedCase.engine==='signal_defense'?'Crew':selectedCase.engine==='frequency_rush'?(rushMode==='dive'||gameSkin==='crystal_dive'?'Dive':'Run'):engineInfo(selectedCase.engine).label}</div><h2>{product==='keys'?(selectedCase.title||'').replace(/^Relay Station:\s*/i,''):selectedCase.title}</h2><p className="cc-assign-standard">{[codesFor(selectedCase.standard).join(' & ')||displayCode(topicCode(selectedCase)), topicForCase(selectedCase.standard, selectedCase.learning_target)].filter(Boolean).join(' — ')}</p><p>{selectedCase.lesson_summary||selectedCase.learning_target||engineInfo(selectedCase.engine).description}</p></div>{((selectedCase.lesson_summary&&selectedCase.learning_target)||selectedCase.misconception_note)&&<div className="cc-student-pop">{selectedCase.lesson_summary&&selectedCase.learning_target&&<><h3>Learning target</h3><p className="cc-muted">{selectedCase.learning_target}</p></>}{selectedCase.misconception_note&&<><h3>Teaching notes</h3><p className="cc-muted">{selectedCase.misconception_note}</p></>}</div>}
     <div className="cc-assignment-form"><h3>Assign to {targetClass?.name||'your class'}</h3>
                   {assignClassId && (
                     <>
@@ -821,7 +861,7 @@ function displayCode(code){return String(code||'').replace(/^TEKS\s+/i,'').repla
                         <button className="cc-btn" onClick={() => setTargetMode("whole")} style={{ border: "none", padding: "7px 16px", borderRadius: 999, fontWeight: 700, fontSize: 12.5, background: targetMode === "whole" ? ACCENT : "transparent", color: targetMode === "whole" ? COLORS.white : COLORS.textMuted }}>
                           Whole Class
                         </button>
-                        <button className="cc-btn" onClick={() => setTargetMode("specific")} style={{ border: "none", padding: "7px 16px", borderRadius: 999, fontWeight: 700, fontSize: 12.5, background: targetMode === "specific" ? ACCENT : "transparent", color: targetMode === "specific" ? COLORS.white : COLORS.textMuted }}>
+                        <button className="cc-btn" onClick={() => setTargetMode("specific")} style={{ border: "none", padding: "7px 16px", borderRadius: 999, fontWeight: 700, fontSize: 12.5, background: targetMode === "specific" ? ACCENT : "transparent", color: targetMode === "specific" ? COLORS.white : COLORS.textMuted, display: selectedCase?.engine==='signal_defense'?'none':undefined }}>
                           Just Some Students
                         </button>
                       </div>
@@ -859,15 +899,17 @@ function displayCode(code){return String(code||'').replace(/^TEKS\s+/i,'').repla
 
                   {selectedCase?.engine === "frequency_rush" && (
                     <div className="cc-rush-setup">
-                      <div>
-                        <h3>Game world</h3>
-                        <div className="cc-rush-picks">
-                          {GAME_SKINS.filter((skin) => skin.id !== "crystal_dive" || !/^FR\.[345]\.DAILY$/.test(selectedCase.standard)).map((skin) => (
-                            <button key={skin.id} type="button" aria-pressed={gameSkin === skin.id} onClick={() => setGameSkin(skin.id)}>{skin.label.replace(/\s*\([^)]*\)/, "")}</button>
-                          ))}
+                      {(rushMode==='run' || (rushMode!=='dive' && gameSkin!=='crystal_dive')) && (
+                        <div>
+                          <h3>World</h3>
+                          <div className="cc-rush-picks">
+                            {RUN_SKINS.map((skin) => (
+                              <button key={skin.id} type="button" aria-pressed={gameSkin === skin.id} onClick={() => setGameSkin(skin.id)}>{skin.label.replace(/\s*\([^)]*\)/, "")}</button>
+                            ))}
+                          </div>
                         </div>
-                      </div>
-                      {gameSkin === "crystal_dive" && (
+                      )}
+                      {(rushMode==='dive' || gameSkin==='crystal_dive') && (
                         <div>
                           <h3>Session length</h3>
                           <div className="cc-rush-picks">
@@ -885,6 +927,9 @@ function displayCode(code){return String(code||'').replace(/^TEKS\s+/i,'').repla
                         <p>{questionSeconds ? `${questionSeconds} seconds per question. Running out of time counts as a miss.` : "No clock. Faster answers still earn a speed bonus."}</p>
                       </div>
                     </div>
+                  )}
+                  {selectedCase?.engine === "signal_defense" && (
+                    <p className="cc-muted">Crew is one game for now. The class plays it together.</p>
                   )}
 
 
