@@ -50,7 +50,7 @@ import {BridgePage,PageHeading,ClassTabs,Empty} from '../../../../components/tea
 import {subjectStyle,engineInfo,SUBJECTS,ENGINES} from '../../../../lib/teacherBridge';
 import { COLORS, PAGE_ACCENTS, PAGE_BACKGROUNDS, panelStyle } from "../../../../lib/teacherTheme";
 import { missionMapTeksLabel, missionMapTeksCode } from "../../../../lib/cases/mission-map/teksLabels";
-import { codesFor, topicForCase } from "../../../../lib/standardCodes";
+import { codesFor, topicForCase, coverLine } from "../../../../lib/standardCodes";
 
 // Sept 13 — moved to the console-interior look, same pattern as My Classes,
 // Reports, and Student Progress: TeacherSidebar+TeacherPageBanner swapped
@@ -570,14 +570,14 @@ function displayCode(code){return String(code||'').replace(/^TEKS\s+/i,'').repla
     if (Number(c.grade)!==Number(browseGrade) || (c.subject!==browseSubject && !isFrDailyCase(c.standard))) return groups;
     if (!CHALLENGE_TYPES.some((t) => t.real && matchesChallenge(c.engine, t.key)) || matchesChallenge(c.engine, 'relay_station') || isRetiredSignalCheckCase(c.standard)) return groups;
     const codes = codesFor(c.standard);
-    const title = topicForCase(c.standard, c.learning_target);
+    const title = coverLine(c.standard, c.learning_target);
     for (const code of codes) {
       if (!groups[code]) groups[code] = { code, title: title || "", count: 0 };
       if (!groups[code].seen) groups[code].seen = new Set();
       if (groups[code].seen.has(c.standard)) continue;
       groups[code].seen.add(c.standard);
       groups[code].count += 1;
-      if (title && (!groups[code].title || groups[code].title.length > title.length)) groups[code].title = title;
+      if (title && title.length > groups[code].title.length) groups[code].title = title;
     }
     return groups;
   }, {})).sort((a, b) => a.code.localeCompare(b.code, undefined, { numeric: true }));
