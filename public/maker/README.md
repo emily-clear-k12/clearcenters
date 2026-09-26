@@ -1,9 +1,7 @@
-# Maker Studio image library (living)
+# Maker Studio image library (living drop folders)
 
-Drop ClearCenters product art here (`.jpg` / `.png` / `.webp` / `.gif`).
+For new kid-facing ClearCenters product illustrations and photos, save the files under `public/maker/` (preferred) or `public/lab/`.
 
-**New files become searchable automatically** in Maker Studio’s “Pick from library” — no JSON edit, no Maker-only step.
+Maker Studio’s student library scans these living folders. New `.jpg`, `.jpeg`, `.png`, `.webp`, and `.gif` files become searchable automatically — do not hand-edit JSON or add a Maker-only step.
 
-Also scanned: `public/lab/` (lab / exhibit photos).
-
-Keep UI chrome icons out of these folders (`public/icons/`, badges, etc. are not scanned).
+Do not put Maker-usable art only in Downloads, chat attachments, or random paths. Exclude UI chrome, icons, and badges. `public/cases/` is case-card chrome, not part of the kid library unless the scanner roots are widened.
