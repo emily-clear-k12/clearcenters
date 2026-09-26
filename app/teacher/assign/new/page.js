@@ -24,10 +24,9 @@ import {
   isPlayableDesertMsRow,
 } from "../../../../lib/cases/maker-studio/assignFallback";
 import {
-  DESERT_BB_STANDARD,
-  DESERT_BB_ASSIGN_FALLBACK,
+  BROADCAST_BB_ASSIGN_FALLBACKS,
   normalizeBroadcastCaseRow,
-  isPlayableDesertBbRow,
+  isPlayableBroadcastBbRow,
 } from "../../../../lib/cases/broadcast-booth/assignFallback";
 import { promptCardsForCase } from "../../../../lib/cases/maker-studio/menus";
 import { MAKER_MODES, sanitizeEnabledModes } from "../../../../lib/cases/maker-studio/modes";
@@ -292,9 +291,9 @@ function mergeMakerStudioCatalog(rows) {
   return merged;
 }
 
-// Sept 26, 2026 — Broadcast Booth catalog fallback (same pattern as Maker Studio).
+// Sept 26, 2026 — Broadcast Booth catalog fallback (Explain + Correspondent + Debate seeds).
 function broadcastBoothLibraryRows() {
-  return [normalizeBroadcastCaseRow(DESERT_BB_ASSIGN_FALLBACK)];
+  return BROADCAST_BB_ASSIGN_FALLBACKS.map(normalizeBroadcastCaseRow);
 }
 
 function mergeBroadcastBoothCatalog(rows) {
@@ -323,10 +322,12 @@ function mergeBroadcastBoothCatalog(rows) {
     );
   }
   let merged = Array.from(byStandard.values());
-  const fallback = normalizeBroadcastCaseRow(DESERT_BB_ASSIGN_FALLBACK);
-  if (!merged.some(isPlayableDesertBbRow)) {
-    merged = merged.filter((r) => r.standard !== DESERT_BB_STANDARD);
-    merged = [...merged, fallback];
+  // Ensure every catalog seed is present even if Supabase omitted the row.
+  for (const seed of broadcastBoothLibraryRows()) {
+    if (!merged.some((r) => r && r.standard === seed.standard && isPlayableBroadcastBbRow(r))) {
+      merged = merged.filter((r) => r.standard !== seed.standard);
+      merged = [...merged, seed];
+    }
   }
   return merged;
 }
@@ -1001,10 +1002,10 @@ function displayCode(code){return String(code||'').replace(/^TEKS\s+/i,'').repla
                     <div className="cc-maker-assign" style={{ marginBottom: 12 }}>
                       <div className="cc-maker-assign-title">Broadcast Booth</div>
                       <p className="cc-maker-assign-lead">
-                        Field Radio — four fixed beats. Students hear the stimulus, record one beat at a time, then submit. You listen to review (not AI-graded).
+                        Field Radio — four fixed beats from the case segment type (Explain, Correspondent, or Debate). Students plan with chips, record one beat at a time, then submit. You listen to review (not AI-graded).
                       </p>
                       <p className="cc-muted" style={{ marginTop: 8 }}>
-                        Wave 0 seed uses the Explain path (Hook → Big idea → Show me → Sign off). Prompt and stimulus come from the case.
+                        Prompt, trays, stems, and unlock rules come from the case. Desert Radio stays Explain; Creek Desk is Correspondent; Schoolyard is Debate.
                       </p>
                     </div>
                   )}

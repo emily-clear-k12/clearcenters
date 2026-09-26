@@ -270,9 +270,21 @@ export default function BroadcastBoothClient({
     const stim = publicCase && publicCase.stimulus;
     const parts = [];
     if (stim && stim.title) parts.push(stim.title);
+    if (stim && stim.sceneSetter) parts.push(stim.sceneSetter);
+    if (stim && stim.placeStill && stim.placeStill.caption) parts.push(stim.placeStill.caption);
+    if (stim && stim.artifactCard) {
+      parts.push((stim.artifactCard.title || "Artifact") + ". " + (stim.artifactCard.body || ""));
+    }
+    if (stim && stim.sharedContext) parts.push(stim.sharedContext);
+    if (stim && stim.sideBriefs) {
+      const a = stim.sideBriefs.sideA;
+      const b = stim.sideBriefs.sideB;
+      if (a) parts.push((a.label || "Side A") + ". " + (Array.isArray(a.bullets) ? a.bullets.join(". ") : ""));
+      if (b) parts.push((b.label || "Side B") + ". " + (Array.isArray(b.bullets) ? b.bullets.join(". ") : ""));
+    }
     if (stim && Array.isArray(stim.bullets)) parts.push(...stim.bullets);
     if (config && config.prompt) parts.push("Your prompt: " + config.prompt);
-    speakText(parts.join(". "), unavailableSpeak);
+    speakText(parts.filter(Boolean).join(". "), unavailableSpeak);
   }
 
 
@@ -682,12 +694,106 @@ export default function BroadcastBoothClient({
                   <span>Field notes</span>
                   <SpeakButton showLabel={false} label="Read field notes" onUnavailable={unavailableSpeak} text={
                     ((stim && stim.title) || "Field notes") + ". " +
+                    ((stim && stim.sceneSetter) ? stim.sceneSetter + ". " : "") +
+                    ((stim && stim.sharedContext) ? stim.sharedContext + ". " : "") +
                     ((stim && Array.isArray(stim.bullets)) ? stim.bullets.join(". ") + ". " : "") +
                     "Your prompt: " + prompt
                   } />
                 </div>
                 <div className="bb-cue" style={{ fontSize: 15 }}>{(stim && stim.title) || "Field notes"}</div>
-                {stim && Array.isArray(stim.bullets) ? (
+
+                {stim && stim.sceneSetter ? (
+                  <div className="bb-scene-setter">
+                    <div className="bb-tray-label">You are here</div>
+                    <p className="bb-muted bb-inline-speak" style={{ margin: "4px 0 8px" }}>
+                      <span>{stim.sceneSetter}</span>
+                      <SpeakButton text={stim.sceneSetter} showLabel={false} label="Read scene setter" onUnavailable={unavailableSpeak} />
+                    </p>
+                  </div>
+                ) : null}
+
+                {stim && stim.placeStill && stim.placeStill.imageUrl ? (
+                  <figure className="bb-place-still">
+                    <img src={stim.placeStill.imageUrl} alt="" />
+                    {stim.placeStill.caption ? (
+                      <figcaption className="bb-inline-speak">
+                        <span>{stim.placeStill.caption}</span>
+                        <SpeakButton text={stim.placeStill.caption} showLabel={false} label="Read place caption" onUnavailable={unavailableSpeak} />
+                      </figcaption>
+                    ) : null}
+                  </figure>
+                ) : null}
+
+                {stim && stim.artifactCard ? (
+                  <div className="bb-artifact-card">
+                    <div className="bb-tray-label">Artifact</div>
+                    <div className="bb-artifact-inner">
+                      {stim.artifactCard.imageUrl ? (
+                        <img className="bb-artifact-img" src={stim.artifactCard.imageUrl} alt="" />
+                      ) : null}
+                      <div>
+                        <div className="bb-label-with-speak" style={{ fontWeight: 700, fontSize: 13 }}>
+                          <span>{stim.artifactCard.title || "Artifact card"}</span>
+                          <SpeakButton
+                            text={(stim.artifactCard.title || "Artifact") + ". " + (stim.artifactCard.body || "")}
+                            showLabel={false}
+                            label="Read artifact"
+                            onUnavailable={unavailableSpeak}
+                          />
+                        </div>
+                        {stim.artifactCard.body ? (
+                          <p className="bb-muted" style={{ margin: "4px 0 0", fontSize: 13 }}>{stim.artifactCard.body}</p>
+                        ) : null}
+                      </div>
+                    </div>
+                  </div>
+                ) : null}
+
+                {stim && stim.sharedContext ? (
+                  <div className="bb-shared-context">
+                    <div className="bb-tray-label">Shared context</div>
+                    <p className="bb-muted bb-inline-speak" style={{ margin: "4px 0 8px" }}>
+                      <span>{stim.sharedContext}</span>
+                      <SpeakButton text={stim.sharedContext} showLabel={false} label="Read shared context" onUnavailable={unavailableSpeak} />
+                    </p>
+                  </div>
+                ) : null}
+
+                {stim && stim.sideBriefs ? (
+                  <div className="bb-side-briefs">
+                    {["sideA", "sideB"].map((key) => {
+                      const brief = stim.sideBriefs[key];
+                      if (!brief) return null;
+                      const label = brief.label || (key === "sideA" ? "Side A" : "Side B");
+                      const bullets = Array.isArray(brief.bullets) ? brief.bullets : [];
+                      return (
+                        <div key={key} className="bb-side-brief">
+                          <div className="bb-label-with-speak" style={{ fontWeight: 700, fontSize: 13 }}>
+                            <span>{label}</span>
+                            <SpeakButton
+                              text={label + ". " + bullets.join(". ")}
+                              showLabel={false}
+                              label={"Read " + label}
+                              onUnavailable={unavailableSpeak}
+                            />
+                          </div>
+                          {bullets.length ? (
+                            <ul className="bb-bullets">
+                              {bullets.map((line, i) => (
+                                <li key={i} className="bb-bullet-with-speak">
+                                  <span>{line}</span>
+                                  <SpeakButton text={line} showLabel={false} label={"Read: " + line} onUnavailable={unavailableSpeak} />
+                                </li>
+                              ))}
+                            </ul>
+                          ) : null}
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : null}
+
+                {stim && Array.isArray(stim.bullets) && stim.bullets.length ? (
                   <ul className="bb-bullets">
                     {stim.bullets.map((line, i) => (
                       <li key={i} className="bb-bullet-with-speak">
@@ -696,12 +802,22 @@ export default function BroadcastBoothClient({
                       </li>
                     ))}
                   </ul>
-                ) : (
+                ) : null}
+
+                {!stim || (
+                  !stim.sceneSetter &&
+                  !stim.placeStill &&
+                  !stim.artifactCard &&
+                  !stim.sharedContext &&
+                  !stim.sideBriefs &&
+                  !(Array.isArray(stim.bullets) && stim.bullets.length)
+                ) ? (
                   <p className="bb-muted bb-inline-speak">
-                    <span>No stimulus bullets on this case.</span>
-                    <SpeakButton text="No stimulus bullets on this case." showLabel={false} label="Read empty message" onUnavailable={unavailableSpeak} />
+                    <span>No stimulus on this case.</span>
+                    <SpeakButton text="No stimulus on this case." showLabel={false} label="Read empty message" onUnavailable={unavailableSpeak} />
                   </p>
-                )}
+                ) : null}
+
                 <div className="bb-prompt-box">
                   <div className="bb-label-with-speak" style={{ fontWeight: 700, fontSize: 12, marginBottom: 4 }}>
                     <span>Your prompt</span>

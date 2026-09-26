@@ -572,3 +572,57 @@
 .bb-shelf-empty.bb-inline-speak {
   justify-content: center;
 }
+
+/* Correspondent / Debate stimulus blocks (catalog-driven) */
+.bb-scene-setter,
+.bb-shared-context,
+.bb-artifact-card,
+.bb-side-briefs {
+  margin-top: 10px;
+}
+.bb-place-still {
+  margin: 8px 0 10px;
+  padding: 0;
+}
+.bb-place-still img {
+  width: 100%;
+  max-height: 140px;
+  object-fit: cover;
+  border-radius: 12px;
+  display: block;
+  border: 1px solid rgba(140, 82, 242, 0.18);
+}
+.bb-place-still figcaption {
+  font-size: 12px;
+  color: #6B6491;
+  margin-top: 4px;
+}
+.bb-artifact-inner {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  background: #F7F4FF;
+  border: 1px solid rgba(140, 82, 242, 0.16);
+  border-radius: 12px;
+  padding: 10px;
+}
+.bb-artifact-img {
+  width: 56px;
+  height: 56px;
+  object-fit: cover;
+  border-radius: 10px;
+  flex-shrink: 0;
+}
+.bb-side-briefs {
+  display: grid;
+  gap: 10px;
+}
+.bb-side-brief {
+  background: #F7F4FF;
+  border: 1px solid rgba(140, 82, 242, 0.16);
+  border-radius: 12px;
+  padding: 10px 12px;
+}
+.bb-side-brief .bb-bullets {
+  margin-top: 6px;
+}
