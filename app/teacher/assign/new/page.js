@@ -127,7 +127,7 @@ const CHALLENGE_TYPES = [
   // Sept 25, 2026 — Expedition Station Act 1 (Frozen Relay MA.4.3E-XP) is live.
   { key: "expedition_station", label: "Expedition Station", image: "/teacher/challenges/mission_map.jpg", real: true,
     description: "A 15-task quest on one planet. Station mode: four cards, then a challenge. About 15–20 minutes per act." },
-  // Sept 26, 2026 — Maker Studio Wave 0 (prompt + mode grid; Write live).
+  // Sept 26, 2026 — Maker Studio: two-pane Assign (prompt cards + mode toggles; no Finish N).
   { key: "maker_studio", label: "Maker Studio", image: "/teacher/challenges/museum_exhibit.jpg", real: true,
     description: "Students get a prompt, finish every make mode you turn on (Write, Sketch, Diagram, Poster, Comic, Voice are live), and submit for teacher review — not AI-graded. About 10–20 minutes." },
   // Coming soon — kept below live tiles (Assign library sorts real:true first as well).
