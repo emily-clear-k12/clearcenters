@@ -568,7 +568,11 @@ function displayCode(code){return String(code||'').replace(/^TEKS\s+/i,'').repla
     } else if (inRush && rushMode==='crew') {
       if (!matchesChallenge(c.engine, 'signal_defense')) return false;
     } else if (typeFilter!=="all" && !matchesChallenge(c.engine,typeFilter)) return false;
-    if (inRush && rushStandard && !codesFor(c.standard).includes(rushStandard)) return false;
+    if (inRush && rushStandard) {
+      const codes = codesFor(c.standard);
+      const keys = codes.length ? codes : [String(c.standard)];
+      if (!keys.includes(rushStandard)) return false;
+    }
     if (!inRush && matchesChallenge(c.engine, 'signal_defense')) return false;
     if (product==='keys' && topic!=="all" && topicCode(c)!==topic) return false;
     if (isRetiredSignalCheckCase(c.standard)) return false;
@@ -614,7 +618,9 @@ function displayCode(code){return String(code||'').replace(/^TEKS\s+/i,'').repla
     if (!c || Number(c.grade)!==Number(browseGrade) || (c.subject!==browseSubject && !isFrDailyCase(c.standard))) return groups;
     if (!matchesChallenge(c.engine, rushMode==='crew' ? 'signal_defense' : 'frequency_rush')) return groups;
     const title = coverLine(c.standard, c.learning_target);
-    for (const code of codesFor(c.standard)) {
+    const codes = codesFor(c.standard);
+    const keys = codes.length ? codes : [String(c.standard)];
+    for (const code of keys) {
       if (!groups[code]) groups[code] = { code, title: title || "", count: 0, seen: new Set() };
       if (groups[code].seen.has(c.standard)) continue;
       groups[code].seen.add(c.standard);
@@ -850,7 +856,7 @@ function displayCode(code){return String(code||'').replace(/^TEKS\s+/i,'').repla
     </div>
     {browseMode==='activities' && typeFilter!=='all' && !inRush && <button className="cc-text-button" onClick={()=>{setTypeFilter('all');setSelectedCase(null);setCaseSearch('');}}>← All activity types</button>}
     {inRush && !rushMode && <section className="cc-panel"><button className="cc-text-button" onClick={()=>{setTypeFilter('all');setRushMode(null);setRushStandard(null);setSelectedCase(null);}}>← All activity types</button><h2>Frequency Rush</h2><p className="cc-muted">Choose a game first.</p><div className="cc-rush-modes">{RUSH_MODES.map((mode)=><button key={mode.id} type="button" className="cc-rush-mode" onClick={()=>{setRushMode(mode.id);setRushStandard(null);setSelectedCase(null);setCaseSearch(''); if(mode.id==='dive')setGameSkin('crystal_dive'); if(mode.id==='run')setGameSkin(DEFAULT_GAME_SKIN); if(mode.id==='crew')setTargetMode('whole');}}><b>{mode.title}</b><span>{mode.line}</span><small>{mode.note}</small></button>)}</div></section>}
-    {inRush && rushMode && !rushStandard && <section className="cc-panel"><button className="cc-text-button" onClick={()=>{setRushMode(null);setSelectedCase(null);setCaseSearch('');}}>← Run, Dive, Crew</button><h2>{rushTitle}</h2><p className="cc-muted">{browseSubject} · Grade {browseGrade}. Choose a standard.</p><div className="cc-standard-list" style={subjectStyle(browseSubject)}>{rushFamilies.map((family)=><section key={family.name}><h3>{family.name}</h3>{family.items.map((group)=><button key={group.code} type="button" className="cc-standard-row" onClick={()=>{setRushStandard(group.code);setSelectedCase(null);setCaseSearch('');setLimit(12)}}><b>{displayCode(group.code)}</b>{group.title&&<span>{group.title}</span>}<small>{group.count} {group.count===1?'set':'sets'}</small></button>)}</section>)}</div>{!rushStandards.length&&<Empty>No {rushTitle} sets for this grade and subject yet.</Empty>}</section>}
+    {inRush && rushMode && !rushStandard && <section className="cc-panel"><button className="cc-text-button" onClick={()=>{setRushMode(null);setSelectedCase(null);setCaseSearch('');}}>← Run, Dive, Crew</button><h2>{rushTitle}</h2><p className="cc-muted">{browseSubject} · Grade {browseGrade}. Choose a standard.</p><div className="cc-standard-list" style={subjectStyle(browseSubject)}>{rushFamilies.map((family)=><section key={family.name}><h3>{family.name}</h3>{family.items.map((group)=><button key={group.code} type="button" className="cc-standard-row" onClick={()=>{setRushStandard(group.code);setSelectedCase(null);setCaseSearch('');setLimit(12)}}><b>{displayCode(group.code)}</b>{group.title&&<span>{group.title}</span>}<small>{group.count} {group.count===1?'set':'sets'}</small></button>)}</section>)}</div>{!rushStandards.length&&<Empty>{casesLoading?'Loading games…':`No ${rushTitle} sets for this grade and subject yet.`}</Empty>}</section>}
     {browseMode==='activities' && typeFilter==='all' && <section className="cc-panel"><h2>Choose an activity type</h2><p className="cc-muted">Then pick the lesson. The standard name is on each one.</p><div className="cc-type-grid">{Object.entries(ENGINES).filter(([key])=>key!=='relay_station'&&key!=='signal_defense').map(([key,art])=><button key={key} className="cc-activity cc-frame" style={subjectStyle(browseSubject)} onClick={()=>{setSelectedCase(null);setCaseSearch('');setTypeFilter(key);setTopic('all');setRushMode(null);setRushStandard(null);}}><img src={art.image} alt=""/><div><h3>{art.label}</h3><p>{art.description}</p></div></button>)}</div></section>}
     {browseMode==='standards' && !pickedStandard && <section className="cc-panel"><h2>Choose a standard</h2><p className="cc-muted">{browseSubject} · Grade {browseGrade}. Open a standard to see its activities.</p><label className="cc-field">Find a standard<input className="cc-input" type="search" placeholder="Search by code or topic" value={caseSearch} onChange={e=>setCaseSearch(e.target.value)}/></label><div className="cc-standard-list" style={subjectStyle(browseSubject)}>{standardFamilies.map((family)=><section key={family.name}><h3>{family.name}</h3>{family.items.map((group)=><button key={group.code} type="button" className="cc-standard-row" onClick={()=>{setPickedStandard(group.code);setSelectedCase(null);setCaseSearch('');setLimit(12)}}><b>{displayCode(group.code)}</b>{group.title&&<span>{group.title}</span>}<small>{group.count} {group.count===1?'activity':'activities'}</small></button>)}</section>)}</div>{!visibleGroups.length&&<Empty>No standards for this grade and subject yet.</Empty>}</section>}
     </>}
