@@ -413,7 +413,16 @@ export default function TeacherGradeDetailPage() {
                     {["hook","big_idea","show_me","sign_off","where","what_noticed","why_matters","side_a","side_b","what_i_think"].filter((id) => Array.isArray(broadcastData.brainstormMap[id]) && broadcastData.brainstormMap[id].length).map((id) => (
                       <div key={"plan-"+id} style={{ marginBottom: 6, fontSize: 13 }}>
                         <span style={{ fontWeight: 700, textTransform: "capitalize" }}>{id.replace(/_/g, " ")}: </span>
-                        {(broadcastData.brainstormMap[id] || []).map((c) => c && c.label).filter(Boolean).join(" · ") || "—"}
+                        <span style={{ display: "inline-flex", flexWrap: "wrap", gap: 6, alignItems: "center", verticalAlign: "middle" }}>
+                          {(broadcastData.brainstormMap[id] || []).filter((c) => c && c.label).map((c, i) => (
+                            <span key={(c.id || c.label) + "-" + i} style={{ display: "inline-flex", alignItems: "center", gap: 4, background: "#fff", border: `1px solid ${COLORS.border}`, borderRadius: 8, padding: "2px 6px 2px 2px", fontSize: 12 }}>
+                              {c.imageUrl ? (
+                                <img src={c.imageUrl} alt="" width={28} height={28} style={{ borderRadius: 6, objectFit: "cover", background: COLORS.canvas }} />
+                              ) : null}
+                              <span>{c.label}</span>
+                            </span>
+                          ))}
+                        </span>
                       </div>
                     ))}
                   </div>

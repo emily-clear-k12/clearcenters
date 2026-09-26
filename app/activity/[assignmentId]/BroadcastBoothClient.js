@@ -44,6 +44,8 @@ function placementKey(beatId, chipId, idx) {
   return `${beatId}::${chipId}::${idx}`;
 }
 
+
+
 export default function BroadcastBoothClient({
   assignmentId,
   publicCase,
@@ -232,9 +234,16 @@ export default function BroadcastBoothClient({
       if (list.length >= 8) return prev;
       // Avoid exact duplicate of same chip id on same bubble
       if (list.some((c) => c.id === chip.id)) return prev;
+      const nextChip = {
+        id: chip.id,
+        label: chip.label,
+        source: chip.source || "stimulus",
+      };
+      if (chip.imageUrl) nextChip.imageUrl = chip.imageUrl;
+      if (chip.imageId) nextChip.imageId = chip.imageId;
       return {
         ...prev,
-        [beatId]: [...list, { id: chip.id, label: chip.label, source: chip.source || "stimulus" }],
+        [beatId]: [...list, nextChip],
       };
     });
     brainstormReadyRef.current = false;
@@ -584,7 +593,7 @@ export default function BroadcastBoothClient({
           <div className="bb-card">
             <div className="bb-cue">Plan your broadcast · circle map</div>
             <p className="bb-muted">
-              No typing. Tap a bubble, then tap chips to fill it — or drag chips onto bubbles. Tap a chip on a bubble to remove it.
+              No typing. Tap a bubble, then tap picture chips to fill it — or drag chips onto bubbles. Tap a chip on a bubble to remove it.
             </p>
             {!mapMeetsMin ? (
               <div className="bb-warn">{emptyHint}</div>
@@ -627,7 +636,7 @@ export default function BroadcastBoothClient({
                         chips.map((c, idx) => (
                           <span
                             key={placementKey(b.id, c.id, idx)}
-                            className="bb-chip on-map"
+                            className={"bb-chip on-map" + (c.imageUrl ? " has-image" : "")}
                             draggable={!submitted}
                             onDragStart={(e) => {
                               e.stopPropagation();
@@ -642,7 +651,14 @@ export default function BroadcastBoothClient({
                             }}
                             title="Tap to remove · drag to move"
                           >
-                            {c.label} ×
+                            {c.imageUrl ? (
+                              <>
+                                <img className="bb-chip-img" src={c.imageUrl} alt="" draggable={false} />
+                                <span className="bb-chip-caption">{c.label} ×</span>
+                              </>
+                            ) : (
+                              <>{c.label} ×</>
+                            )}
                           </span>
                         ))
                       )}
@@ -661,7 +677,7 @@ export default function BroadcastBoothClient({
                   <button
                     key={chip.id}
                     type="button"
-                    className="bb-chip"
+                    className={"bb-chip" + (chip.imageUrl ? " has-image" : "")}
                     disabled={submitted}
                     draggable={!submitted}
                     onDragStart={(e) => {
@@ -672,7 +688,14 @@ export default function BroadcastBoothClient({
                     }}
                     onClick={() => onTrayChipClick(chip)}
                   >
-                    {chip.label}
+                    {chip.imageUrl ? (
+                      <>
+                        <img className="bb-chip-img" src={chip.imageUrl} alt="" draggable={false} />
+                        <span className="bb-chip-caption">{chip.label}</span>
+                      </>
+                    ) : (
+                      chip.label
+                    )}
                   </button>
                 ))}
               </div>
@@ -686,7 +709,7 @@ export default function BroadcastBoothClient({
                       <button
                         key={chip.id}
                         type="button"
-                        className="bb-chip stem"
+                        className={"bb-chip stem" + (chip.imageUrl ? " has-image" : "")}
                         disabled={submitted}
                         draggable={!submitted}
                         onDragStart={(e) => {
@@ -697,7 +720,14 @@ export default function BroadcastBoothClient({
                         }}
                         onClick={() => onTrayChipClick({ ...chip, source: "stem" })}
                       >
-                        {chip.label}
+                        {chip.imageUrl ? (
+                          <>
+                            <img className="bb-chip-img" src={chip.imageUrl} alt="" draggable={false} />
+                            <span className="bb-chip-caption">{chip.label}</span>
+                          </>
+                        ) : (
+                          chip.label
+                        )}
                       </button>
                     ))}
                   </div>
@@ -751,6 +781,54 @@ export default function BroadcastBoothClient({
         ) : null}
 
         {view === "beat" && currentBeat && brainstormReady ? (
+          <div className="bb-record-layout">
+            <div className="bb-compact-map" aria-label="Your plan — glance while you record">
+              <div className="bb-compact-map-label">Your map - current beat highlighted</div>
+              <div className="bb-compact-map-grid">
+                {beatDefs.map((b) => {
+                  const chips = Array.isArray(brainstormMap[b.id]) ? brainstormMap[b.id] : [];
+                  const isCurrent = currentBeat && b.id === currentBeat.id;
+                  const isReq = requiredSet.has(b.id);
+                  return (
+                    <div
+                      key={"compact-" + b.id}
+                      className={
+                        "bb-compact-bubble" +
+                        (isCurrent ? " is-current" : "") +
+                        (chips.length ? " is-filled" : "") +
+                        (isReq ? " is-required" : "")
+                      }
+                    >
+                      <div className="bb-compact-bubble-title">
+                        {b.label}{isReq ? " *" : ""}{isCurrent ? " · recording" : ""}
+                      </div>
+                      <div className="bb-compact-bubble-chips">
+                        {chips.length === 0 ? (
+                          <span className="bb-bubble-empty">—</span>
+                        ) : (
+                          chips.map((c, idx) => (
+                            <span
+                              key={placementKey("c-" + b.id, c.id, idx)}
+                              className={"bb-chip on-map compact" + (c.imageUrl ? " has-image" : "")}
+                              title={c.label}
+                            >
+                              {c.imageUrl ? (
+                                <>
+                                  <img className="bb-chip-img" src={c.imageUrl} alt="" draggable={false} />
+                                  <span className="bb-chip-caption">{c.label}</span>
+                                </>
+                              ) : (
+                                c.label
+                              )}
+                            </span>
+                          ))
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
           <div className="bb-card">
             <div className="bb-cue">Beat {beatIndex + 1}: {currentBeat.label}</div>
             <p className="bb-muted">{currentBeat.cue}</p>
@@ -760,7 +838,19 @@ export default function BroadcastBoothClient({
                 <div className="bb-plan-cue-label">Your plan (silent cue)</div>
                 <div className="bb-chip-row">
                   {activePlanChips.map((c, idx) => (
-                    <span key={placementKey(currentBeat.id, c.id, idx)} className="bb-chip on-cue">{c.label}</span>
+                    <span
+                      key={placementKey(currentBeat.id, c.id, idx)}
+                      className={"bb-chip on-cue" + (c.imageUrl ? " has-image" : "")}
+                    >
+                      {c.imageUrl ? (
+                        <>
+                          <img className="bb-chip-img" src={c.imageUrl} alt="" draggable={false} />
+                          <span className="bb-chip-caption">{c.label}</span>
+                        </>
+                      ) : (
+                        c.label
+                      )}
+                    </span>
                   ))}
                 </div>
               </div>
@@ -834,6 +924,7 @@ export default function BroadcastBoothClient({
             {status ? <p className="bb-muted" style={{ marginTop: 10 }}>{status}</p> : null}
             {saving ? <p className="bb-muted">Saving...</p> : null}
           </div>
+          </div>
         ) : null}
 
         {view === "playback" ? (
@@ -851,7 +942,19 @@ export default function BroadcastBoothClient({
                   {plan.length ? (
                     <div className="bb-chip-row" style={{ marginBottom: 6 }}>
                       {plan.map((c, idx) => (
-                        <span key={placementKey(b.id, c.id, idx)} className="bb-chip on-cue">{c.label}</span>
+                        <span
+                          key={placementKey(b.id, c.id, idx)}
+                          className={"bb-chip on-cue" + (c.imageUrl ? " has-image" : "")}
+                        >
+                          {c.imageUrl ? (
+                            <>
+                              <img className="bb-chip-img" src={c.imageUrl} alt="" draggable={false} />
+                              <span className="bb-chip-caption">{c.label}</span>
+                            </>
+                          ) : (
+                            c.label
+                          )}
+                        </span>
                       ))}
                     </div>
                   ) : null}
@@ -886,7 +989,19 @@ export default function BroadcastBoothClient({
                   {plan.length ? (
                     <div className="bb-chip-row" style={{ margin: "4px 0 6px" }}>
                       {plan.map((c, idx) => (
-                        <span key={placementKey(b.id, c.id, idx)} className="bb-chip on-cue">{c.label}</span>
+                        <span
+                          key={placementKey(b.id, c.id, idx)}
+                          className={"bb-chip on-cue" + (c.imageUrl ? " has-image" : "")}
+                        >
+                          {c.imageUrl ? (
+                            <>
+                              <img className="bb-chip-img" src={c.imageUrl} alt="" draggable={false} />
+                              <span className="bb-chip-caption">{c.label}</span>
+                            </>
+                          ) : (
+                            c.label
+                          )}
+                        </span>
                       ))}
                     </div>
                   ) : null}
