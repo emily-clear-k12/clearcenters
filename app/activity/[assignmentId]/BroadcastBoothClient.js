@@ -56,6 +56,39 @@ function ChipFace({ chip, removeLabel }) {
   return <>{chip.label}{removeLabel || ""}</>;
 }
 
+
+function speakText(text, onUnavailable) {
+  if (typeof window === "undefined" || !window.speechSynthesis) {
+    if (typeof onUnavailable === "function") onUnavailable();
+    return;
+  }
+  const cleaned = String(text || "").replace(/\s+/g, " ").trim();
+  if (!cleaned) return;
+  window.speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(cleaned);
+  u.rate = 0.95;
+  window.speechSynthesis.speak(u);
+}
+
+/** Compact speaker control — icon-first, optional visible label. */
+function SpeakButton({ text, label = "Read aloud", showLabel = true, className = "", onUnavailable }) {
+  return (
+    <button
+      type="button"
+      className={"bb-speak" + (showLabel ? "" : " bb-speak-icon-only") + (className ? " " + className : "")}
+      aria-label={label}
+      title={label}
+      onClick={(e) => {
+        e.stopPropagation();
+        speakText(text, onUnavailable);
+      }}
+    >
+      <span className="bb-speak-glyph" aria-hidden="true">🔊</span>
+      {showLabel ? <span className="bb-speak-text">{label}</span> : null}
+    </button>
+  );
+}
+
 export default function BroadcastBoothClient({
   assignmentId,
   publicCase,
@@ -229,22 +262,19 @@ export default function BroadcastBoothClient({
     }, 900);
   }
 
+  function unavailableSpeak() {
+    setStatus("Read aloud is not available on this device.");
+  }
+
   function speakStimulus() {
-    if (typeof window === "undefined" || !window.speechSynthesis) {
-      setStatus("Read aloud is not available on this device.");
-      return;
-    }
     const stim = publicCase && publicCase.stimulus;
     const parts = [];
     if (stim && stim.title) parts.push(stim.title);
     if (stim && Array.isArray(stim.bullets)) parts.push(...stim.bullets);
     if (config && config.prompt) parts.push("Your prompt: " + config.prompt);
-    const text = parts.join(". ");
-    window.speechSynthesis.cancel();
-    const u = new SpeechSynthesisUtterance(text);
-    u.rate = 0.95;
-    window.speechSynthesis.speak(u);
+    speakText(parts.join(". "), unavailableSpeak);
   }
+
 
   /** Cover → combined plan page (stimulus stays visible while placing). */
   function enterPlan() {
@@ -579,7 +609,15 @@ export default function BroadcastBoothClient({
         <div className="bb-shell">
           <div className="bb-card bb-empty">
             <h1 className="bb-title">Broadcast case missing</h1>
-            <p className="bb-muted">This Broadcast Booth case is not loaded yet. Ask your teacher to check the assignment.</p>
+            <p className="bb-muted bb-inline-speak" style={{ justifyContent: "center" }}>
+              <span>This Broadcast Booth case is not loaded yet. Ask your teacher to check the assignment.</span>
+              <SpeakButton
+                text="This Broadcast Booth case is not loaded yet. Ask your teacher to check the assignment."
+                showLabel={false}
+                label="Read message"
+                onUnavailable={() => {}}
+              />
+            </p>
           </div>
         </div>
       </div>
@@ -603,7 +641,10 @@ export default function BroadcastBoothClient({
 
         {view === "cover" && publicCase.cover ? (
           <div className="bb-card">
-            <div className="bb-cue">{publicCase.cover.headline}</div>
+            <div className="bb-cue-row">
+              <div className="bb-cue">{publicCase.cover.headline}</div>
+              <SpeakButton text={(publicCase.cover.headline || "") + ". " + (publicCase.cover.line || "") + ". No student faces. No video editor. Just your voice and optional stills."} onUnavailable={unavailableSpeak} />
+            </div>
             <p className="bb-muted">{publicCase.cover.line}</p>
             <p className="bb-muted" style={{ marginTop: 10 }}>
               No student faces. No video editor. Just your voice and optional stills.
@@ -616,31 +657,56 @@ export default function BroadcastBoothClient({
 
         {view === "brainstorm" ? (
           <div className="bb-card bb-plan-card">
-            <div className="bb-cue">Plan your broadcast · storyboard</div>
+            <div className="bb-cue-row">
+              <div className="bb-cue">Plan your broadcast · storyboard</div>
+              <SpeakButton text="Plan your broadcast storyboard. Field notes stay on the left. Tap a chip, then tap a beat tray — or drag chips onto trays. Tap × to remove. No typing." onUnavailable={unavailableSpeak} />
+            </div>
             <p className="bb-muted">
               Field notes stay on the left. Tap a chip, then tap a beat tray — or drag chips onto trays. Tap × to remove. No typing.
             </p>
             {!mapMeetsMin ? (
-              <div className="bb-warn">{emptyHint}</div>
+              <div className="bb-warn bb-warn-with-speak">
+                <span>{emptyHint}</span>
+                <SpeakButton text={emptyHint} showLabel={false} label="Read empty hint" onUnavailable={unavailableSpeak} />
+              </div>
             ) : (
-              <div className="bb-muted" style={{ marginBottom: 8 }}>Looks good — you can start recording when ready.</div>
+              <div className="bb-muted bb-inline-speak" style={{ marginBottom: 8 }}>
+                <span>Looks good — you can start recording when ready.</span>
+                <SpeakButton text="Looks good — you can start recording when ready." showLabel={false} label="Read status" onUnavailable={unavailableSpeak} />
+              </div>
             )}
 
             <div className="bb-plan-layout">
               <aside className="bb-plan-stimulus" aria-label="Field notes">
-                <div className="bb-plan-col-label">Field notes</div>
+                <div className="bb-plan-col-label bb-label-with-speak">
+                  <span>Field notes</span>
+                  <SpeakButton showLabel={false} label="Read field notes" onUnavailable={unavailableSpeak} text={
+                    ((stim && stim.title) || "Field notes") + ". " +
+                    ((stim && Array.isArray(stim.bullets)) ? stim.bullets.join(". ") + ". " : "") +
+                    "Your prompt: " + prompt
+                  } />
+                </div>
                 <div className="bb-cue" style={{ fontSize: 15 }}>{(stim && stim.title) || "Field notes"}</div>
                 {stim && Array.isArray(stim.bullets) ? (
                   <ul className="bb-bullets">
                     {stim.bullets.map((line, i) => (
-                      <li key={i}>{line}</li>
+                      <li key={i} className="bb-bullet-with-speak">
+                        <span>{line}</span>
+                        <SpeakButton text={line} showLabel={false} label={"Read: " + line} onUnavailable={unavailableSpeak} />
+                      </li>
                     ))}
                   </ul>
                 ) : (
-                  <p className="bb-muted">No stimulus bullets on this case.</p>
+                  <p className="bb-muted bb-inline-speak">
+                    <span>No stimulus bullets on this case.</span>
+                    <SpeakButton text="No stimulus bullets on this case." showLabel={false} label="Read empty message" onUnavailable={unavailableSpeak} />
+                  </p>
                 )}
                 <div className="bb-prompt-box">
-                  <div style={{ fontWeight: 700, fontSize: 12, marginBottom: 4 }}>Your prompt</div>
+                  <div className="bb-label-with-speak" style={{ fontWeight: 700, fontSize: 12, marginBottom: 4 }}>
+                    <span>Your prompt</span>
+                    <SpeakButton text={"Your prompt: " + prompt} showLabel={false} label="Read prompt" onUnavailable={unavailableSpeak} />
+                  </div>
                   <p className="bb-muted" style={{ margin: 0 }}>{prompt}</p>
                 </div>
                 <div className="bb-row" style={{ marginTop: 12 }}>
@@ -650,7 +716,22 @@ export default function BroadcastBoothClient({
 
               <div className="bb-plan-right">
                 <div className="bb-ideas-bank" aria-label="Ideas bank">
-                  <div className="bb-plan-col-label">Ideas bank</div>
+                  <div className="bb-plan-col-label bb-label-with-speak">
+                    <span>Ideas bank</span>
+                    <SpeakButton
+                      showLabel={false}
+                      label="Read ideas bank"
+                      onUnavailable={unavailableSpeak}
+                      text={
+                        "Ideas bank. " +
+                        stimulusChips
+                          .map((c) => c.label)
+                          .concat(allStemChips.map((c) => c.label))
+                          .filter(Boolean)
+                          .join(". ")
+                      }
+                    />
+                  </div>
                   <div className="bb-tray-label">Picture chips</div>
                   <div className="bb-chip-row">
                     {stimulusChips.map((chip) => {
@@ -702,8 +783,11 @@ export default function BroadcastBoothClient({
                     </>
                   ) : null}
                   {selectedChip ? (
-                    <p className="bb-muted" style={{ marginTop: 8 }}>
-                      Selected: <strong>{selectedChip.label}</strong> — tap a tray below
+                    <p className="bb-muted bb-inline-speak" style={{ marginTop: 8 }}>
+                      <span>
+                        Selected: <strong>{selectedChip.label}</strong> — tap a tray below
+                      </span>
+                      <SpeakButton text={selectedChip.label} showLabel={false} label={"Read chip: " + selectedChip.label} onUnavailable={unavailableSpeak} />
                       {" · "}
                       <button type="button" className="bb-text-btn" onClick={() => { setSelectedChip(null); setStatus(""); }}>
                         Clear
@@ -741,13 +825,31 @@ export default function BroadcastBoothClient({
                         onDrop={(e) => onShelfDrop(e, b.id)}
                         aria-label={b.label + " tray"}
                       >
-                        <div className="bb-shelf-title">
-                          {b.label}{isReq ? " *" : ""}
+                        <div className="bb-shelf-title bb-label-with-speak">
+                          <span>{b.label}{isReq ? " *" : ""}</span>
+                          <SpeakButton
+                            showLabel={false}
+                            label={"Read " + b.label + " tray"}
+                            onUnavailable={unavailableSpeak}
+                            text={
+                              b.label + ". " + (b.cue || "") + ". " +
+                              (chips.length
+                                ? ("Chips: " + chips.map((c) => c.label).join(", ") + ".")
+                                : (awaiting ? "Tap to place." : "Drop or tap here.")) +
+                              (isReq && !chips.length ? " This tray needs at least one idea before recording." : "")
+                            }
+                          />
                         </div>
                         <div className="bb-shelf-chips">
                           {chips.length === 0 ? (
-                            <span className="bb-shelf-empty">
-                              {awaiting ? "Tap to place" : "Drop or tap here"}
+                            <span className="bb-shelf-empty bb-inline-speak">
+                              <span>{awaiting ? "Tap to place" : "Drop or tap here"}</span>
+                              <SpeakButton
+                                text={awaiting ? "Tap to place" : "Drop or tap here"}
+                                showLabel={false}
+                                label="Read empty tray hint"
+                                onUnavailable={unavailableSpeak}
+                              />
                             </span>
                           ) : (
                             chips.map((c, idx) => (
@@ -846,8 +948,17 @@ export default function BroadcastBoothClient({
                         (isReq ? " is-required" : "")
                       }
                     >
-                      <div className="bb-compact-tray-title">
-                        {b.label}{isReq ? " *" : ""}{isCurrent ? " · recording" : ""}
+                      <div className="bb-compact-tray-title bb-label-with-speak">
+                        <span>{b.label}{isReq ? " *" : ""}{isCurrent ? " · recording" : ""}</span>
+                        <SpeakButton
+                          showLabel={false}
+                          label={"Read " + b.label}
+                          onUnavailable={unavailableSpeak}
+                          text={
+                            b.label + (isCurrent ? ", recording now. " : ". ") +
+                            (chips.length ? ("Chips: " + chips.map((c) => c.label).join(", ")) : "Empty tray.")
+                          }
+                        />
                       </div>
                       <div className="bb-compact-tray-chips">
                         {chips.length === 0 ? (
@@ -870,12 +981,32 @@ export default function BroadcastBoothClient({
               </div>
             </div>
           <div className="bb-card">
-            <div className="bb-cue">Beat {beatIndex + 1}: {currentBeat.label}</div>
+            <div className="bb-cue-row">
+              <div className="bb-cue">Beat {beatIndex + 1}: {currentBeat.label}</div>
+              <SpeakButton
+                label="Read aloud"
+                onUnavailable={unavailableSpeak}
+                text={
+                  "Beat " + (beatIndex + 1) + ": " + currentBeat.label + ". " + (currentBeat.cue || "") + ". " +
+                  (activePlanChips.length
+                    ? ("Your plan chips: " + activePlanChips.map((c) => c.label).join(", ") + ".")
+                    : "No chips on this beat — you can still record.")
+                }
+              />
+            </div>
             <p className="bb-muted">{currentBeat.cue}</p>
 
             {activePlanChips.length ? (
               <div className="bb-plan-cue" aria-label="Your plan for this beat">
-                <div className="bb-plan-cue-label">Your plan (silent cue)</div>
+                <div className="bb-plan-cue-label bb-label-with-speak">
+                  <span>Your plan (silent cue)</span>
+                  <SpeakButton
+                    showLabel={false}
+                    label="Read plan chips"
+                    onUnavailable={unavailableSpeak}
+                    text={"Your plan chips: " + activePlanChips.map((c) => c.label).join(", ")}
+                  />
+                </div>
                 <div className="bb-chip-row">
                   {activePlanChips.map((c, idx) => (
                     <span
@@ -883,22 +1014,43 @@ export default function BroadcastBoothClient({
                       className={"bb-chip on-cue" + (c.imageUrl ? " has-image" : "")}
                     >
                       <ChipFace chip={c} />
+                      <SpeakButton
+                        text={c.label}
+                        showLabel={false}
+                        label={"Read chip: " + c.label}
+                        className="bb-speak-on-chip"
+                        onUnavailable={unavailableSpeak}
+                      />
                     </span>
                   ))}
                 </div>
               </div>
             ) : (
-              <p className="bb-muted" style={{ marginTop: 6 }}>No chips on this beat — you can still record.</p>
+              <p className="bb-muted bb-inline-speak" style={{ marginTop: 6 }}>
+                <span>No chips on this beat — you can still record.</span>
+                <SpeakButton text="No chips on this beat — you can still record." showLabel={false} label="Read empty beat message" onUnavailable={unavailableSpeak} />
+              </p>
             )}
 
             <p className="bb-muted" style={{ marginTop: 6 }}>Up to {clipCap} seconds. Re-record anytime before you submit.</p>
 
-            {micError ? <div className="bb-err">{micError}</div> : null}
+            {micError ? (
+              <div className="bb-err bb-warn-with-speak">
+                <span>{micError}</span>
+                <SpeakButton text={micError} showLabel={false} label="Read error" onUnavailable={unavailableSpeak} />
+              </div>
+            ) : null}
             {shortClipWarn ? (
-              <div className="bb-warn">That clip was too short or silent. Hold the mic closer and try a longer take.</div>
+              <div className="bb-warn bb-warn-with-speak">
+                <span>That clip was too short or silent. Hold the mic closer and try a longer take.</span>
+                <SpeakButton text="That clip was too short or silent. Hold the mic closer and try a longer take." showLabel={false} label="Read warning" onUnavailable={unavailableSpeak} />
+              </div>
             ) : null}
             {softStillWarn && currentBeat.stillRequired ? (
-              <div className="bb-warn">This beat usually needs a still (photo or drawing). You can add one or continue.</div>
+              <div className="bb-warn bb-warn-with-speak">
+                <span>This beat usually needs a still (photo or drawing). You can add one or continue.</span>
+                <SpeakButton text="This beat usually needs a still. You can add one or continue." showLabel={false} label="Read warning" onUnavailable={unavailableSpeak} />
+              </div>
             ) : null}
 
             <div className="bb-row" style={{ marginTop: 12 }}>
@@ -962,7 +1114,10 @@ export default function BroadcastBoothClient({
 
         {view === "playback" ? (
           <div className="bb-card">
-            <div className="bb-cue">Full playback</div>
+            <div className="bb-cue-row">
+              <div className="bb-cue">Full playback</div>
+              <SpeakButton text="Full playback. Listen to your whole broadcast. Re-record any beat, then submit." onUnavailable={unavailableSpeak} />
+            </div>
             <p className="bb-muted">Listen to your whole broadcast. Re-record any beat, then submit.</p>
             {beatDefs.map((b, i) => {
               const slot = beats[b.id] || emptyBeat();
@@ -1003,7 +1158,10 @@ export default function BroadcastBoothClient({
 
         {view === "done" ? (
           <div className="bb-card bb-empty">
-            <div className="bb-cue">Broadcast submitted</div>
+            <div className="bb-cue-row" style={{ justifyContent: "center" }}>
+              <div className="bb-cue">Broadcast submitted</div>
+              <SpeakButton text="Broadcast submitted. Nice work. Your teacher will listen to each beat." onUnavailable={unavailableSpeak} />
+            </div>
             <p className="bb-muted">Nice work. Your teacher will listen to each beat.</p>
             {beatDefs.map((b) => {
               const slot = beats[b.id];

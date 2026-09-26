@@ -487,3 +487,88 @@
     height: 48px;
   }
 }
+
+/* —— Read aloud (kid-facing) —— */
+.bb-speak {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  border: 1.5px solid rgba(140, 82, 242, 0.28);
+  background: #fff;
+  color: #5B35B0;
+  border-radius: 999px;
+  padding: 5px 10px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  line-height: 1;
+  flex-shrink: 0;
+}
+.bb-speak:hover {
+  border-color: #8C52F2;
+  background: #f5f0ff;
+}
+.bb-speak-icon-only {
+  padding: 4px 6px;
+  min-width: 28px;
+  min-height: 28px;
+  justify-content: center;
+}
+.bb-speak-glyph {
+  font-size: 13px;
+  line-height: 1;
+}
+.bb-speak-text {
+  font-size: 12px;
+}
+.bb-cue-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 6px;
+}
+.bb-cue-row .bb-cue {
+  margin: 0;
+}
+.bb-label-with-speak {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+}
+.bb-inline-speak {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.bb-warn-with-speak {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+}
+.bb-bullet-with-speak {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+}
+.bb-bullet-with-speak > span {
+  flex: 1 1 auto;
+}
+.bb-speak-on-chip {
+  position: absolute;
+  bottom: -6px;
+  left: -6px;
+  z-index: 2;
+  min-width: 22px !important;
+  min-height: 22px !important;
+  padding: 2px 4px !important;
+  background: #fff !important;
+  box-shadow: 0 1px 3px rgba(42, 35, 80, 0.15);
+}
+.bb-shelf-empty.bb-inline-speak {
+  justify-content: center;
+}
