@@ -1,0 +1,7144 @@
+{
+  "generatedFrom": "lib/cases and add_*.sql",
+  "onDisk": 793,
+  "inSql": 599,
+  "items": [
+    {
+      "standard": "3.10C-AD",
+      "title": "The Road That Moved",
+      "grade": "3",
+      "subject": "Science",
+      "engine": "Assembly Deck",
+      "kind": "",
+      "file": "lib/cases/assembly-deck/3-10C-AD.public.js"
+    },
+    {
+      "standard": "3.11B-AD",
+      "title": "The Water Bill",
+      "grade": "3",
+      "subject": "Science",
+      "engine": "Assembly Deck",
+      "kind": "",
+      "file": "lib/cases/assembly-deck/3-11B-AD.public.js"
+    },
+    {
+      "standard": "3.12B-AD",
+      "title": "The Pond That Went Quiet",
+      "grade": "3",
+      "subject": "Science",
+      "engine": "Assembly Deck",
+      "kind": "",
+      "file": "lib/cases/assembly-deck/3-12B-AD.public.js"
+    },
+    {
+      "standard": "3.12C-AD",
+      "title": "After the Flood",
+      "grade": "3",
+      "subject": "Science",
+      "engine": "Assembly Deck",
+      "kind": "",
+      "file": "lib/cases/assembly-deck/3-12C-AD.public.js"
+    },
+    {
+      "standard": "3.13A-AD",
+      "title": "Built for This",
+      "grade": "3",
+      "subject": "Science",
+      "engine": "Assembly Deck",
+      "kind": "",
+      "file": "lib/cases/assembly-deck/3-13A-AD.public.js"
+    },
+    {
+      "standard": "3.6A-AD",
+      "title": "The Sorting Bin Report",
+      "grade": "3",
+      "subject": "Science",
+      "engine": "Assembly Deck",
+      "kind": "",
+      "file": "lib/cases/assembly-deck/3-6A-AD.public.js"
+    },
+    {
+      "standard": "3.7B-AD",
+      "title": "The Wagon That Moved",
+      "grade": "3",
+      "subject": "Science",
+      "engine": "Assembly Deck",
+      "kind": "",
+      "file": "lib/cases/assembly-deck/3-7B-AD.public.js"
+    },
+    {
+      "standard": "3.8A-AD",
+      "title": "Four Kinds of Energy",
+      "grade": "3",
+      "subject": "Science",
+      "engine": "Assembly Deck",
+      "kind": "",
+      "file": "lib/cases/assembly-deck/3-8A-AD.public.js"
+    },
+    {
+      "standard": "3.9A-AD",
+      "title": "Who Goes Around Whom",
+      "grade": "3",
+      "subject": "Science",
+      "engine": "Assembly Deck",
+      "kind": "",
+      "file": "lib/cases/assembly-deck/3-9A-AD.public.js"
+    },
+    {
+      "standard": "ELA.3.12A-AD",
+      "title": "The Day the Bus Was Late",
+      "grade": "3",
+      "subject": "ELAR",
+      "engine": "Assembly Deck",
+      "kind": "",
+      "file": "lib/cases/assembly-deck/ELA-3-12A-AD.public.js"
+    },
+    {
+      "standard": "ELA.3.12B-AD",
+      "title": "The Lunchroom Recycling Report",
+      "grade": "3",
+      "subject": "ELAR",
+      "engine": "Assembly Deck",
+      "kind": "",
+      "file": "lib/cases/assembly-deck/ELA-3-12B-AD.public.js"
+    },
+    {
+      "standard": "ELA.3.12C-AD",
+      "title": "Keep the Library Open at Lunch",
+      "grade": "3",
+      "subject": "ELAR",
+      "engine": "Assembly Deck",
+      "kind": "",
+      "file": "lib/cases/assembly-deck/ELA-3-12C-AD.public.js"
+    },
+    {
+      "standard": "ELA.3.12D-AD",
+      "title": "The Letter to the Fire Station",
+      "grade": "3",
+      "subject": "ELAR",
+      "engine": "Assembly Deck",
+      "kind": "",
+      "file": "lib/cases/assembly-deck/ELA-3-12D-AD.public.js"
+    },
+    {
+      "standard": "ELA.3.7D-AD",
+      "title": "Say It Shorter",
+      "grade": "3",
+      "subject": "ELAR",
+      "engine": "Assembly Deck",
+      "kind": "",
+      "file": "lib/cases/assembly-deck/ELA-3-7D-AD.public.js"
+    },
+    {
+      "standard": "MA.3.4K-AD",
+      "title": "The Garden Beds",
+      "grade": "3",
+      "subject": "Math",
+      "engine": "Assembly Deck",
+      "kind": "",
+      "file": "lib/cases/assembly-deck/MA-3-4K-AD.public.js"
+    },
+    {
+      "standard": "MA.3.5A-AD",
+      "title": "The Book Drive",
+      "grade": "3",
+      "subject": "Math",
+      "engine": "Assembly Deck",
+      "kind": "",
+      "file": "lib/cases/assembly-deck/MA-3-5A-AD.public.js"
+    },
+    {
+      "standard": "MA.3.5B-AD",
+      "title": "Chairs for the Assembly",
+      "grade": "3",
+      "subject": "Math",
+      "engine": "Assembly Deck",
+      "kind": "",
+      "file": "lib/cases/assembly-deck/MA-3-5B-AD.public.js"
+    },
+    {
+      "standard": "MA.3.8B-AD",
+      "title": "The Pet Survey",
+      "grade": "3",
+      "subject": "Math",
+      "engine": "Assembly Deck",
+      "kind": "",
+      "file": "lib/cases/assembly-deck/MA-3-8B-AD.public.js"
+    },
+    {
+      "standard": "SS.3.14B-AD",
+      "title": "Two Accounts of the Same Day",
+      "grade": "3",
+      "subject": "Social Studies",
+      "engine": "Assembly Deck",
+      "kind": "",
+      "file": "lib/cases/assembly-deck/SS-3-14B-AD.public.js"
+    },
+    {
+      "standard": "SS.3.5B-AD",
+      "title": "The Field Trip Fund",
+      "grade": "3",
+      "subject": "Social Studies",
+      "engine": "Assembly Deck",
+      "kind": "",
+      "file": "lib/cases/assembly-deck/SS-3-5B-AD.public.js"
+    },
+    {
+      "standard": "SS.3.7C-AD",
+      "title": "Who Do You Call?",
+      "grade": "3",
+      "subject": "Social Studies",
+      "engine": "Assembly Deck",
+      "kind": "",
+      "file": "lib/cases/assembly-deck/SS-3-7C-AD.public.js"
+    },
+    {
+      "standard": "SS.3.9A-AD",
+      "title": "The Playground Rule",
+      "grade": "3",
+      "subject": "Social Studies",
+      "engine": "Assembly Deck",
+      "kind": "",
+      "file": "lib/cases/assembly-deck/SS-3-9A-AD.public.js"
+    },
+    {
+      "standard": "4.10A-AD",
+      "title": "The Puddle",
+      "grade": "4",
+      "subject": "Science",
+      "engine": "Assembly Deck",
+      "kind": "",
+      "file": "lib/cases/assembly-deck/4-10A-AD.public.js"
+    },
+    {
+      "standard": "4.10B-AD",
+      "title": "The Bend in Sandy Creek",
+      "grade": "4",
+      "subject": "Science",
+      "engine": "Assembly Deck",
+      "kind": "",
+      "file": "lib/cases/assembly-deck/4-10B-AD.public.js"
+    },
+    {
+      "standard": "4.10C-AD",
+      "title": "Tuesday Is Not the Climate",
+      "grade": "4",
+      "subject": "Science",
+      "engine": "Assembly Deck",
+      "kind": "",
+      "file": "lib/cases/assembly-deck/4-10C-AD.public.js"
+    },
+    {
+      "standard": "4.11B-AD",
+      "title": "Two Ways to Power the School",
+      "grade": "4",
+      "subject": "Science",
+      "engine": "Assembly Deck",
+      "kind": "",
+      "file": "lib/cases/assembly-deck/4-11B-AD.public.js"
+    },
+    {
+      "standard": "4.12B-AD",
+      "title": "When the Owls Left",
+      "grade": "4",
+      "subject": "Science",
+      "engine": "Assembly Deck",
+      "kind": "",
+      "file": "lib/cases/assembly-deck/4-12B-AD.public.js"
+    },
+    {
+      "standard": "4.8B-AD",
+      "title": "The Cold Lunchbox Job",
+      "grade": "4",
+      "subject": "Science",
+      "engine": "Assembly Deck",
+      "kind": "",
+      "file": "lib/cases/assembly-deck/4-8B-AD.public.js"
+    },
+    {
+      "standard": "4.8C-AD",
+      "title": "The Closed Path",
+      "grade": "4",
+      "subject": "Science",
+      "engine": "Assembly Deck",
+      "kind": "",
+      "file": "lib/cases/assembly-deck/4-8C-AD.public.js"
+    },
+    {
+      "standard": "4.9A-AD",
+      "title": "The Daylight Log",
+      "grade": "4",
+      "subject": "Science",
+      "engine": "Assembly Deck",
+      "kind": "",
+      "file": "lib/cases/assembly-deck/4-9A-AD.public.js"
+    },
+    {
+      "standard": "4.9B-AD",
+      "title": "Twenty-Eight Nights",
+      "grade": "4",
+      "subject": "Science",
+      "engine": "Assembly Deck",
+      "kind": "",
+      "file": "lib/cases/assembly-deck/4-9B-AD.public.js"
+    },
+    {
+      "standard": "ELA.4.12B-AD",
+      "title": "How the Cafeteria Line Works",
+      "grade": "4",
+      "subject": "ELAR",
+      "engine": "Assembly Deck",
+      "kind": "",
+      "file": "lib/cases/assembly-deck/ELA-4-12B-AD.public.js"
+    },
+    {
+      "standard": "ELA.4.12C-AD",
+      "title": "Later Recess",
+      "grade": "4",
+      "subject": "ELAR",
+      "engine": "Assembly Deck",
+      "kind": "",
+      "file": "lib/cases/assembly-deck/ELA-4-12C-AD.public.js"
+    },
+    {
+      "standard": "ELA.4.12D-AD",
+      "title": "The Letter to the Museum",
+      "grade": "4",
+      "subject": "ELAR",
+      "engine": "Assembly Deck",
+      "kind": "",
+      "file": "lib/cases/assembly-deck/ELA-4-12D-AD.public.js"
+    },
+    {
+      "standard": "ELA.4.7D-AD",
+      "title": "The Article and the Rumor",
+      "grade": "4",
+      "subject": "ELAR",
+      "engine": "Assembly Deck",
+      "kind": "",
+      "file": "lib/cases/assembly-deck/ELA-4-7D-AD.public.js"
+    },
+    {
+      "standard": "MA.4.4H-AD",
+      "title": "What the Remainder Means",
+      "grade": "4",
+      "subject": "Math",
+      "engine": "Assembly Deck",
+      "kind": "",
+      "file": "lib/cases/assembly-deck/MA-4-4H-AD.public.js"
+    },
+    {
+      "standard": "MA.4.5A-AD",
+      "title": "The Field Trip Buses",
+      "grade": "4",
+      "subject": "Math",
+      "engine": "Assembly Deck",
+      "kind": "",
+      "file": "lib/cases/assembly-deck/MA-4-5A-AD.public.js"
+    },
+    {
+      "standard": "MA.4.5B-AD",
+      "title": "The Sticker Machine",
+      "grade": "4",
+      "subject": "Math",
+      "engine": "Assembly Deck",
+      "kind": "",
+      "file": "lib/cases/assembly-deck/MA-4-5B-AD.public.js"
+    },
+    {
+      "standard": "MA.4.9B-AD",
+      "title": "Rainfall Week",
+      "grade": "4",
+      "subject": "Math",
+      "engine": "Assembly Deck",
+      "kind": "",
+      "file": "lib/cases/assembly-deck/MA-4-9B-AD.public.js"
+    },
+    {
+      "standard": "SS.4.11C-AD",
+      "title": "What Built This Town",
+      "grade": "4",
+      "subject": "Social Studies",
+      "engine": "Assembly Deck",
+      "kind": "",
+      "file": "lib/cases/assembly-deck/SS-4-11C-AD.public.js"
+    },
+    {
+      "standard": "SS.4.2C-AD",
+      "title": "Why Here?",
+      "grade": "4",
+      "subject": "Social Studies",
+      "engine": "Assembly Deck",
+      "kind": "",
+      "file": "lib/cases/assembly-deck/SS-4-2C-AD.public.js"
+    },
+    {
+      "standard": "SS.4.3D-AD",
+      "title": "A Country With No Money",
+      "grade": "4",
+      "subject": "Social Studies",
+      "engine": "Assembly Deck",
+      "kind": "",
+      "file": "lib/cases/assembly-deck/SS-4-3D-AD.public.js"
+    },
+    {
+      "standard": "SS.4.4B-AD",
+      "title": "The Price of a Longhorn",
+      "grade": "4",
+      "subject": "Social Studies",
+      "engine": "Assembly Deck",
+      "kind": "",
+      "file": "lib/cases/assembly-deck/SS-4-4B-AD.public.js"
+    },
+    {
+      "standard": "SS.4.6B-AD",
+      "title": "Two Regions, One Report",
+      "grade": "4",
+      "subject": "Social Studies",
+      "engine": "Assembly Deck",
+      "kind": "",
+      "file": "lib/cases/assembly-deck/SS-4-6B-AD.public.js"
+    },
+    {
+      "standard": "5.10A-AD",
+      "title": "Heat From the Ocean",
+      "grade": "5",
+      "subject": "Science",
+      "engine": "Assembly Deck",
+      "kind": "",
+      "file": "lib/cases/assembly-deck/5-10A-AD.public.js"
+    },
+    {
+      "standard": "5.10C-AD",
+      "title": "Reading a Canyon",
+      "grade": "5",
+      "subject": "Science",
+      "engine": "Assembly Deck",
+      "kind": "",
+      "file": "lib/cases/assembly-deck/5-10C-AD.public.js"
+    },
+    {
+      "standard": "5.12A-AD",
+      "title": "The Pond Tank",
+      "grade": "5",
+      "subject": "Science",
+      "engine": "Assembly Deck",
+      "kind": "",
+      "file": "lib/cases/assembly-deck/5-12A-AD.public.js"
+    },
+    {
+      "standard": "5.12B-AD",
+      "title": "The Bay After the Storm",
+      "grade": "5",
+      "subject": "Science",
+      "engine": "Assembly Deck",
+      "kind": "",
+      "file": "lib/cases/assembly-deck/5-12B-AD.public.js"
+    },
+    {
+      "standard": "5.6B-AD",
+      "title": "The Sorting Table",
+      "grade": "5",
+      "subject": "Science",
+      "engine": "Assembly Deck",
+      "kind": "",
+      "file": "lib/cases/assembly-deck/5-6B-AD.public.js"
+    },
+    {
+      "standard": "5.8B-AD",
+      "title": "The Spinning Motor",
+      "grade": "5",
+      "subject": "Science",
+      "engine": "Assembly Deck",
+      "kind": "",
+      "file": "lib/cases/assembly-deck/5-8B-AD.public.js"
+    },
+    {
+      "standard": "5.8C-AD",
+      "title": "The Bent Straw",
+      "grade": "5",
+      "subject": "Science",
+      "engine": "Assembly Deck",
+      "kind": "",
+      "file": "lib/cases/assembly-deck/5-8C-AD.public.js"
+    },
+    {
+      "standard": "5.9-AD",
+      "title": "Shadows Move",
+      "grade": "5",
+      "subject": "Science",
+      "engine": "Assembly Deck",
+      "kind": "",
+      "file": "lib/cases/assembly-deck/5-9-AD.public.js"
+    },
+    {
+      "standard": "ELA.5.12B-AD",
+      "title": "What a Watershed Is",
+      "grade": "5",
+      "subject": "ELAR",
+      "engine": "Assembly Deck",
+      "kind": "",
+      "file": "lib/cases/assembly-deck/ELA-5-12B-AD.public.js"
+    },
+    {
+      "standard": "ELA.5.12C-AD",
+      "title": "The Case for Later Practice",
+      "grade": "5",
+      "subject": "ELAR",
+      "engine": "Assembly Deck",
+      "kind": "",
+      "file": "lib/cases/assembly-deck/ELA-5-12C-AD.public.js"
+    },
+    {
+      "standard": "ELA.5.12D-AD",
+      "title": "The Request to the City Engineer",
+      "grade": "5",
+      "subject": "ELAR",
+      "engine": "Assembly Deck",
+      "kind": "",
+      "file": "lib/cases/assembly-deck/ELA-5-12D-AD.public.js"
+    },
+    {
+      "standard": "ELA.5.13D-AD",
+      "title": "Four Sources, One Question",
+      "grade": "5",
+      "subject": "ELAR",
+      "engine": "Assembly Deck",
+      "kind": "",
+      "file": "lib/cases/assembly-deck/ELA-5-13D-AD.public.js"
+    },
+    {
+      "standard": "ELA.5.7D-AD",
+      "title": "Two Summaries, One Article",
+      "grade": "5",
+      "subject": "ELAR",
+      "engine": "Assembly Deck",
+      "kind": "",
+      "file": "lib/cases/assembly-deck/ELA-5-7D-AD.public.js"
+    },
+    {
+      "standard": "MA.5.3K-AD",
+      "title": "The Relay Splits",
+      "grade": "5",
+      "subject": "Math",
+      "engine": "Assembly Deck",
+      "kind": "",
+      "file": "lib/cases/assembly-deck/MA-5-3K-AD.public.js"
+    },
+    {
+      "standard": "MA.5.3L-AD",
+      "title": "Cutting the Ribbon",
+      "grade": "5",
+      "subject": "Math",
+      "engine": "Assembly Deck",
+      "kind": "",
+      "file": "lib/cases/assembly-deck/MA-5-3L-AD.public.js"
+    },
+    {
+      "standard": "MA.5.4B-AD",
+      "title": "The Concession Stand",
+      "grade": "5",
+      "subject": "Math",
+      "engine": "Assembly Deck",
+      "kind": "",
+      "file": "lib/cases/assembly-deck/MA-5-4B-AD.public.js"
+    },
+    {
+      "standard": "MA.5.9C-AD",
+      "title": "The Science Fair Scores",
+      "grade": "5",
+      "subject": "Math",
+      "engine": "Assembly Deck",
+      "kind": "",
+      "file": "lib/cases/assembly-deck/MA-5-9C-AD.public.js"
+    },
+    {
+      "standard": "SS.5.12B-AD",
+      "title": "Why the Factory Is There",
+      "grade": "5",
+      "subject": "Social Studies",
+      "engine": "Assembly Deck",
+      "kind": "",
+      "file": "lib/cases/assembly-deck/SS-5-12B-AD.public.js"
+    },
+    {
+      "standard": "SS.5.14A-AD",
+      "title": "What the Document Actually Says",
+      "grade": "5",
+      "subject": "Social Studies",
+      "engine": "Assembly Deck",
+      "kind": "",
+      "file": "lib/cases/assembly-deck/SS-5-14A-AD.public.js"
+    },
+    {
+      "standard": "SS.5.15B-AD",
+      "title": "The Bill That Didn",
+      "grade": "5",
+      "subject": "Social Studies",
+      "engine": "Assembly Deck",
+      "kind": "",
+      "file": "lib/cases/assembly-deck/SS-5-15B-AD.public.js"
+    },
+    {
+      "standard": "SS.5.2A-AD",
+      "title": "Before the Shooting",
+      "grade": "5",
+      "subject": "Social Studies",
+      "engine": "Assembly Deck",
+      "kind": "",
+      "file": "lib/cases/assembly-deck/SS-5-2A-AD.public.js"
+    },
+    {
+      "standard": "SS.5.4C-AD",
+      "title": "What the Expedition Was For",
+      "grade": "5",
+      "subject": "Social Studies",
+      "engine": "Assembly Deck",
+      "kind": "",
+      "file": "lib/cases/assembly-deck/SS-5-4C-AD.public.js"
+    },
+    {
+      "standard": "SCI.3.13A-BB",
+      "title": "Broadcast Booth: Desert Radio (Explain)",
+      "grade": "3",
+      "subject": "Science",
+      "engine": "Broadcast Booth",
+      "kind": "",
+      "file": "lib/cases/broadcast-booth/assignFallback.js"
+    },
+    {
+      "standard": "ELAR-3.3C-CL",
+      "title": "The word part",
+      "grade": "3",
+      "subject": "ELAR",
+      "engine": "Classification Lab",
+      "kind": "",
+      "file": "lib/cases/classification-lab/catalog.js"
+    },
+    {
+      "standard": "MA-3.6B-CL",
+      "title": "Four sides",
+      "grade": "3",
+      "subject": "Math",
+      "engine": "Classification Lab",
+      "kind": "",
+      "file": "lib/cases/classification-lab/catalog.js"
+    },
+    {
+      "standard": "SS-3.7A-CL",
+      "title": "Who makes the rule",
+      "grade": "3",
+      "subject": "Social Studies",
+      "engine": "Classification Lab",
+      "kind": "",
+      "file": "lib/cases/classification-lab/catalog.js"
+    },
+    {
+      "standard": "ELAR-4.11D-CL",
+      "title": "One sentence or two",
+      "grade": "4",
+      "subject": "ELAR",
+      "engine": "Classification Lab",
+      "kind": "",
+      "file": "lib/cases/classification-lab/catalog.js"
+    },
+    {
+      "standard": "SCI-4.12B-CL",
+      "title": "What they eat",
+      "grade": "4",
+      "subject": "Science",
+      "engine": "Classification Lab",
+      "kind": "",
+      "file": "lib/cases/classification-lab/catalog.js"
+    },
+    {
+      "standard": "ELAR-5.11D-CL",
+      "title": "The joining word",
+      "grade": "5",
+      "subject": "ELAR",
+      "engine": "Classification Lab",
+      "kind": "",
+      "file": "lib/cases/classification-lab/catalog.js"
+    },
+    {
+      "standard": "MA-5.4A-CL",
+      "title": "Prime or composite",
+      "grade": "5",
+      "subject": "Math",
+      "engine": "Classification Lab",
+      "kind": "",
+      "file": "lib/cases/classification-lab/catalog.js"
+    },
+    {
+      "standard": "SCI-5.6B-CL",
+      "title": "Mixed or dissolved",
+      "grade": "5",
+      "subject": "Science",
+      "engine": "Classification Lab",
+      "kind": "",
+      "file": "lib/cases/classification-lab/catalog.js"
+    },
+    {
+      "standard": "3.10A-SD",
+      "title": "Weather Tools & Measurement",
+      "grade": "",
+      "subject": "",
+      "engine": "Crew",
+      "kind": "",
+      "file": "lib/cases/signal-defense/3-10A-SD.public.js"
+    },
+    {
+      "standard": "3.10B-SD",
+      "title": "Soil Composition",
+      "grade": "",
+      "subject": "",
+      "engine": "Crew",
+      "kind": "",
+      "file": "lib/cases/signal-defense/3-10B-SD.public.js"
+    },
+    {
+      "standard": "3.10C-SD",
+      "title": "Changes to Earth",
+      "grade": "",
+      "subject": "",
+      "engine": "Crew",
+      "kind": "",
+      "file": "lib/cases/signal-defense/3-10C-SD.public.js"
+    },
+    {
+      "standard": "3.11A-SD",
+      "title": "Natural Resources",
+      "grade": "",
+      "subject": "",
+      "engine": "Crew",
+      "kind": "",
+      "file": "lib/cases/signal-defense/3-11A-SD.public.js"
+    },
+    {
+      "standard": "3.11B-SD",
+      "title": "Conserving Natural Resources",
+      "grade": "",
+      "subject": "",
+      "engine": "Crew",
+      "kind": "",
+      "file": "lib/cases/signal-defense/3-11B-SD.public.js"
+    },
+    {
+      "standard": "3.11C-SD",
+      "title": "Reduce, Reuse, Recycle",
+      "grade": "",
+      "subject": "",
+      "engine": "Crew",
+      "kind": "",
+      "file": "lib/cases/signal-defense/3-11C-SD.public.js"
+    },
+    {
+      "standard": "3.12A-SD",
+      "title": "Animal Behaviors & Adaptation",
+      "grade": "",
+      "subject": "",
+      "engine": "Crew",
+      "kind": "",
+      "file": "lib/cases/signal-defense/3-12A-SD.public.js"
+    },
+    {
+      "standard": "3.12B-SD",
+      "title": "Food Chains & Energy Flow",
+      "grade": "",
+      "subject": "",
+      "engine": "Crew",
+      "kind": "",
+      "file": "lib/cases/signal-defense/3-12B-SD.public.js"
+    },
+    {
+      "standard": "3.12C-SD",
+      "title": "Environmental Changes",
+      "grade": "",
+      "subject": "",
+      "engine": "Crew",
+      "kind": "",
+      "file": "lib/cases/signal-defense/3-12C-SD.public.js"
+    },
+    {
+      "standard": "3.12D-SD",
+      "title": "Fossils as Evidence",
+      "grade": "",
+      "subject": "",
+      "engine": "Crew",
+      "kind": "",
+      "file": "lib/cases/signal-defense/3-12D-SD.public.js"
+    },
+    {
+      "standard": "3.13A-SD",
+      "title": "External Structures & Survival",
+      "grade": "",
+      "subject": "",
+      "engine": "Crew",
+      "kind": "",
+      "file": "lib/cases/signal-defense/3-13A-SD.public.js"
+    },
+    {
+      "standard": "3.13B-SD",
+      "title": "Life Cycles",
+      "grade": "",
+      "subject": "",
+      "engine": "Crew",
+      "kind": "",
+      "file": "lib/cases/signal-defense/3-13B-SD.public.js"
+    },
+    {
+      "standard": "3.6A-SD",
+      "title": "Physical Properties of Matter",
+      "grade": "",
+      "subject": "",
+      "engine": "Crew",
+      "kind": "",
+      "file": "lib/cases/signal-defense/3-6A-SD.public.js"
+    },
+    {
+      "standard": "3.6B-SD",
+      "title": "States of Matter",
+      "grade": "",
+      "subject": "",
+      "engine": "Crew",
+      "kind": "",
+      "file": "lib/cases/signal-defense/3-6B-SD.public.js"
+    },
+    {
+      "standard": "3.6C-SD",
+      "title": "Changes of State",
+      "grade": "",
+      "subject": "",
+      "engine": "Crew",
+      "kind": "",
+      "file": "lib/cases/signal-defense/3-6C-SD.public.js"
+    },
+    {
+      "standard": "3.6D-SD",
+      "title": "Matter & Material Properties",
+      "grade": "",
+      "subject": "",
+      "engine": "Crew",
+      "kind": "",
+      "file": "lib/cases/signal-defense/3-6D-SD.public.js"
+    },
+    {
+      "standard": "3.7A-SD",
+      "title": "Types of Forces",
+      "grade": "",
+      "subject": "",
+      "engine": "Crew",
+      "kind": "",
+      "file": "lib/cases/signal-defense/3-7A-SD.public.js"
+    },
+    {
+      "standard": "3.7B-SD",
+      "title": "Forces and Motion",
+      "grade": "",
+      "subject": "",
+      "engine": "Crew",
+      "kind": "",
+      "file": "lib/cases/signal-defense/3-7B-SD.public.js"
+    },
+    {
+      "standard": "3.8A-SD",
+      "title": "Forms of Energy",
+      "grade": "",
+      "subject": "",
+      "engine": "Crew",
+      "kind": "",
+      "file": "lib/cases/signal-defense/3-8A-SD.public.js"
+    },
+    {
+      "standard": "3.8B-SD",
+      "title": "Mechanical Energy",
+      "grade": "",
+      "subject": "",
+      "engine": "Crew",
+      "kind": "",
+      "file": "lib/cases/signal-defense/3-8B-SD.public.js"
+    },
+    {
+      "standard": "3.9A-SD",
+      "title": "Earth",
+      "grade": "",
+      "subject": "",
+      "engine": "Crew",
+      "kind": "",
+      "file": "lib/cases/signal-defense/3-9A-SD.public.js"
+    },
+    {
+      "standard": "3.9B-SD",
+      "title": "The Solar System",
+      "grade": "",
+      "subject": "",
+      "engine": "Crew",
+      "kind": "",
+      "file": "lib/cases/signal-defense/3-9B-SD.public.js"
+    },
+    {
+      "standard": "4.10A-SD",
+      "title": "The Water Cycle",
+      "grade": "",
+      "subject": "",
+      "engine": "Crew",
+      "kind": "",
+      "file": "lib/cases/signal-defense/4-10A-SD.public.js"
+    },
+    {
+      "standard": "4.10B-SD",
+      "title": "Weathering, Erosion & Deposition",
+      "grade": "",
+      "subject": "",
+      "engine": "Crew",
+      "kind": "",
+      "file": "lib/cases/signal-defense/4-10B-SD.public.js"
+    },
+    {
+      "standard": "4.10C-SD",
+      "title": "Weather vs. Climate",
+      "grade": "",
+      "subject": "",
+      "engine": "Crew",
+      "kind": "",
+      "file": "lib/cases/signal-defense/4-10C-SD.public.js"
+    },
+    {
+      "standard": "4.6A-SD",
+      "title": "Classifying Matter by Physical Properties",
+      "grade": "",
+      "subject": "",
+      "engine": "Crew",
+      "kind": "",
+      "file": "lib/cases/signal-defense/4-6A-SD.public.js"
+    },
+    {
+      "standard": "4.6B-SD",
+      "title": "Mixtures and Solutions",
+      "grade": "",
+      "subject": "",
+      "engine": "Crew",
+      "kind": "",
+      "file": "lib/cases/signal-defense/4-6B-SD.public.js"
+    },
+    {
+      "standard": "4.6C-SD",
+      "title": "Conservation of Matter in Mixtures",
+      "grade": "",
+      "subject": "",
+      "engine": "Crew",
+      "kind": "",
+      "file": "lib/cases/signal-defense/4-6C-SD.public.js"
+    },
+    {
+      "standard": "4.7A-SD",
+      "title": "Patterns of Forces",
+      "grade": "",
+      "subject": "",
+      "engine": "Crew",
+      "kind": "",
+      "file": "lib/cases/signal-defense/4-7A-SD.public.js"
+    },
+    {
+      "standard": "4.8A-SD",
+      "title": "Transfer of Energy",
+      "grade": "",
+      "subject": "",
+      "engine": "Crew",
+      "kind": "",
+      "file": "lib/cases/signal-defense/4-8A-SD.public.js"
+    },
+    {
+      "standard": "4.8B-SD",
+      "title": "Conductors and Insulators",
+      "grade": "",
+      "subject": "",
+      "engine": "Crew",
+      "kind": "",
+      "file": "lib/cases/signal-defense/4-8B-SD.public.js"
+    },
+    {
+      "standard": "4.8C-SD",
+      "title": "Electrical Energy in a Closed Path",
+      "grade": "",
+      "subject": "",
+      "engine": "Crew",
+      "kind": "",
+      "file": "lib/cases/signal-defense/4-8C-SD.public.js"
+    },
+    {
+      "standard": "4.9A-SD",
+      "title": "Patterns of Change in Seasons",
+      "grade": "",
+      "subject": "",
+      "engine": "Crew",
+      "kind": "",
+      "file": "lib/cases/signal-defense/4-9A-SD.public.js"
+    },
+    {
+      "standard": "4.9B-SD",
+      "title": "Patterns of Change in the Moon",
+      "grade": "",
+      "subject": "",
+      "engine": "Crew",
+      "kind": "",
+      "file": "lib/cases/signal-defense/4-9B-SD.public.js"
+    },
+    {
+      "standard": "3.10B-EX",
+      "title": "Sand or clay",
+      "grade": "3",
+      "subject": "Science",
+      "engine": "Exhibit Hall",
+      "kind": "",
+      "file": "lib/cases/exhibit-hall/split.js"
+    },
+    {
+      "standard": "3.11A-EX",
+      "title": "Meet water",
+      "grade": "3",
+      "subject": "Science",
+      "engine": "Exhibit Hall",
+      "kind": "",
+      "file": "lib/cases/exhibit-hall/locked.js"
+    },
+    {
+      "standard": "3.11C-EX",
+      "title": "Every careful use",
+      "grade": "3",
+      "subject": "Science",
+      "engine": "Exhibit Hall",
+      "kind": "",
+      "file": "lib/cases/exhibit-hall/kinds.js"
+    },
+    {
+      "standard": "3.12D-EX",
+      "title": "A plant in the rock",
+      "grade": "3",
+      "subject": "Science",
+      "engine": "Exhibit Hall",
+      "kind": "",
+      "file": "lib/cases/exhibit-hall/locked.js"
+    },
+    {
+      "standard": "3.13A-EX",
+      "title": "Built for the desert",
+      "grade": "3",
+      "subject": "Science",
+      "engine": "Exhibit Hall",
+      "kind": "",
+      "file": "lib/cases/exhibit-hall/catalog.js"
+    },
+    {
+      "standard": "3.13B-EX",
+      "title": "A beetle",
+      "grade": "3",
+      "subject": "Science",
+      "engine": "Exhibit Hall",
+      "kind": "",
+      "file": "lib/cases/exhibit-hall/timeline.js"
+    },
+    {
+      "standard": "3.2A-EX",
+      "title": "Portrait of 4,352",
+      "grade": "3",
+      "subject": "Math",
+      "engine": "Exhibit Hall",
+      "kind": "",
+      "file": "lib/cases/exhibit-hall/locked.js"
+    },
+    {
+      "standard": "3.3C-EX",
+      "title": "Every kind of unit fraction",
+      "grade": "3",
+      "subject": "Math",
+      "engine": "Exhibit Hall",
+      "kind": "",
+      "file": "lib/cases/exhibit-hall/kinds.js"
+    },
+    {
+      "standard": "3.3G-EX",
+      "title": "The same amount",
+      "grade": "3",
+      "subject": "Math",
+      "engine": "Exhibit Hall",
+      "kind": "",
+      "file": "lib/cases/exhibit-hall/locked.js"
+    },
+    {
+      "standard": "3.4E-EX",
+      "title": "Every way to show 4 × 6",
+      "grade": "3",
+      "subject": "Math",
+      "engine": "Exhibit Hall",
+      "kind": "",
+      "file": "lib/cases/exhibit-hall/locked.js"
+    },
+    {
+      "standard": "3.6A-EX",
+      "title": "Every kind of shape",
+      "grade": "3",
+      "subject": "Math",
+      "engine": "Exhibit Hall",
+      "kind": "",
+      "file": "lib/cases/exhibit-hall/locked.js"
+    },
+    {
+      "standard": "3.6C-EX",
+      "title": "Portrait of this rectangle",
+      "grade": "3",
+      "subject": "Math",
+      "engine": "Exhibit Hall",
+      "kind": "",
+      "file": "lib/cases/exhibit-hall/portrait.js"
+    },
+    {
+      "standard": "3.7D-EX",
+      "title": "Pour it or weigh it",
+      "grade": "3",
+      "subject": "Math",
+      "engine": "Exhibit Hall",
+      "kind": "",
+      "file": "lib/cases/exhibit-hall/split.js"
+    },
+    {
+      "standard": "3.8A-EX",
+      "title": "Energy all around us",
+      "grade": "3",
+      "subject": "Science",
+      "engine": "Exhibit Hall",
+      "kind": "",
+      "file": "lib/cases/exhibit-hall/catalog.js"
+    },
+    {
+      "standard": "3.9A-EX",
+      "title": "Portrait of a day",
+      "grade": "3",
+      "subject": "Science",
+      "engine": "Exhibit Hall",
+      "kind": "",
+      "file": "lib/cases/exhibit-hall/portrait.js"
+    },
+    {
+      "standard": "3.9E-EX",
+      "title": "Maya",
+      "grade": "3",
+      "subject": "Math",
+      "engine": "Exhibit Hall",
+      "kind": "",
+      "file": "lib/cases/exhibit-hall/timeline.js"
+    },
+    {
+      "standard": "ELA.3.10A-EX",
+      "title": "Every kind of purpose",
+      "grade": "3",
+      "subject": "ELAR",
+      "engine": "Exhibit Hall",
+      "kind": "",
+      "file": "lib/cases/exhibit-hall/kinds.js"
+    },
+    {
+      "standard": "ELA.3.10C-EX",
+      "title": "Portrait of a poster",
+      "grade": "3",
+      "subject": "ELAR",
+      "engine": "Exhibit Hall",
+      "kind": "",
+      "file": "lib/cases/exhibit-hall/portrait.js"
+    },
+    {
+      "standard": "ELA.3.7C-EX",
+      "title": "Meet Rosa",
+      "grade": "3",
+      "subject": "ELAR",
+      "engine": "Exhibit Hall",
+      "kind": "",
+      "file": "lib/cases/exhibit-hall/locked.js"
+    },
+    {
+      "standard": "ELA.3.8A-EX",
+      "title": "The lost kite",
+      "grade": "3",
+      "subject": "ELAR",
+      "engine": "Exhibit Hall",
+      "kind": "",
+      "file": "lib/cases/exhibit-hall/catalog.js"
+    },
+    {
+      "standard": "ELA.3.8B-EX",
+      "title": "The sister",
+      "grade": "3",
+      "subject": "ELAR",
+      "engine": "Exhibit Hall",
+      "kind": "",
+      "file": "lib/cases/exhibit-hall/locked.js"
+    },
+    {
+      "standard": "ELA.3.8C-EX",
+      "title": "The lemonade plan",
+      "grade": "3",
+      "subject": "ELAR",
+      "engine": "Exhibit Hall",
+      "kind": "",
+      "file": "lib/cases/exhibit-hall/timeline.js"
+    },
+    {
+      "standard": "ELA.3.9A-EX",
+      "title": "Fable or fairy tale",
+      "grade": "3",
+      "subject": "ELAR",
+      "engine": "Exhibit Hall",
+      "kind": "",
+      "file": "lib/cases/exhibit-hall/split.js"
+    },
+    {
+      "standard": "ELA.3.9D-EX",
+      "title": "Text feature hall",
+      "grade": "3",
+      "subject": "ELAR",
+      "engine": "Exhibit Hall",
+      "kind": "",
+      "file": "lib/cases/exhibit-hall/catalog.js"
+    },
+    {
+      "standard": "SS.3.10B-EX",
+      "title": "Two Texas celebrations",
+      "grade": "3",
+      "subject": "Social Studies",
+      "engine": "Exhibit Hall",
+      "kind": "",
+      "file": "lib/cases/exhibit-hall/split.js"
+    },
+    {
+      "standard": "SS.3.13A-EX",
+      "title": "Meet Benjamin Franklin",
+      "grade": "3",
+      "subject": "Social Studies",
+      "engine": "Exhibit Hall",
+      "kind": "",
+      "file": "lib/cases/exhibit-hall/locked.js"
+    },
+    {
+      "standard": "SS.3.1A-EX",
+      "title": "How our town grew",
+      "grade": "3",
+      "subject": "Social Studies",
+      "engine": "Exhibit Hall",
+      "kind": "",
+      "file": "lib/cases/exhibit-hall/timeline.js"
+    },
+    {
+      "standard": "SS.3.3C-EX",
+      "title": "People changed this place",
+      "grade": "3",
+      "subject": "Social Studies",
+      "engine": "Exhibit Hall",
+      "kind": "",
+      "file": "lib/cases/exhibit-hall/locked.js"
+    },
+    {
+      "standard": "SS.3.4C-EX",
+      "title": "Portrait of a map",
+      "grade": "3",
+      "subject": "Social Studies",
+      "engine": "Exhibit Hall",
+      "kind": "",
+      "file": "lib/cases/exhibit-hall/portrait.js"
+    },
+    {
+      "standard": "SS.3.5A-EX",
+      "title": "Every kind of money choice",
+      "grade": "3",
+      "subject": "Social Studies",
+      "engine": "Exhibit Hall",
+      "kind": "",
+      "file": "lib/cases/exhibit-hall/kinds.js"
+    },
+    {
+      "standard": "SS.3.7A-EX",
+      "title": "Who does this job?",
+      "grade": "3",
+      "subject": "Social Studies",
+      "engine": "Exhibit Hall",
+      "kind": "",
+      "file": "lib/cases/exhibit-hall/locked.js"
+    },
+    {
+      "standard": "SS.3.9A-EX",
+      "title": "Good citizens in action",
+      "grade": "3",
+      "subject": "Social Studies",
+      "engine": "Exhibit Hall",
+      "kind": "",
+      "file": "lib/cases/exhibit-hall/locked.js"
+    },
+    {
+      "standard": "4.10A-EX",
+      "title": "Same every month?",
+      "grade": "4",
+      "subject": "Math",
+      "engine": "Exhibit Hall",
+      "kind": "",
+      "file": "lib/cases/exhibit-hall/split.js"
+    },
+    {
+      "standard": "4.10B-EX",
+      "title": "Portrait of a canyon",
+      "grade": "4",
+      "subject": "Science",
+      "engine": "Exhibit Hall",
+      "kind": "",
+      "file": "lib/cases/exhibit-hall/portrait.js"
+    },
+    {
+      "standard": "4.12A-EX",
+      "title": "Food from light",
+      "grade": "4",
+      "subject": "Science",
+      "engine": "Exhibit Hall",
+      "kind": "",
+      "file": "lib/cases/exhibit-hall/catalog.js"
+    },
+    {
+      "standard": "4.12B-EX",
+      "title": "Who eats whom",
+      "grade": "4",
+      "subject": "Science",
+      "engine": "Exhibit Hall",
+      "kind": "",
+      "file": "lib/cases/exhibit-hall/locked.js"
+    },
+    {
+      "standard": "4.12C-EX",
+      "title": "When Texas was a sea",
+      "grade": "4",
+      "subject": "Science",
+      "engine": "Exhibit Hall",
+      "kind": "",
+      "file": "lib/cases/exhibit-hall/locked.js"
+    },
+    {
+      "standard": "4.13A-EX",
+      "title": "Built to live here",
+      "grade": "4",
+      "subject": "Science",
+      "engine": "Exhibit Hall",
+      "kind": "",
+      "file": "lib/cases/exhibit-hall/catalog.js"
+    },
+    {
+      "standard": "4.13B-EX",
+      "title": "Born with it or picked it up",
+      "grade": "4",
+      "subject": "Science",
+      "engine": "Exhibit Hall",
+      "kind": "",
+      "file": "lib/cases/exhibit-hall/split.js"
+    },
+    {
+      "standard": "4.2B-EX",
+      "title": "Every way to show 3 tenths",
+      "grade": "4",
+      "subject": "Math",
+      "engine": "Exhibit Hall",
+      "kind": "",
+      "file": "lib/cases/exhibit-hall/kinds.js"
+    },
+    {
+      "standard": "4.3D-EX",
+      "title": "Which is bigger",
+      "grade": "4",
+      "subject": "Math",
+      "engine": "Exhibit Hall",
+      "kind": "",
+      "file": "lib/cases/exhibit-hall/locked.js"
+    },
+    {
+      "standard": "4.5B-EX",
+      "title": "The growing tower",
+      "grade": "4",
+      "subject": "Math",
+      "engine": "Exhibit Hall",
+      "kind": "",
+      "file": "lib/cases/exhibit-hall/timeline.js"
+    },
+    {
+      "standard": "4.6A-EX",
+      "title": "Portrait of a ray",
+      "grade": "4",
+      "subject": "Math",
+      "engine": "Exhibit Hall",
+      "kind": "",
+      "file": "lib/cases/exhibit-hall/portrait.js"
+    },
+    {
+      "standard": "4.6B-EX",
+      "title": "Symmetry everywhere",
+      "grade": "4",
+      "subject": "Math",
+      "engine": "Exhibit Hall",
+      "kind": "",
+      "file": "lib/cases/exhibit-hall/locked.js"
+    },
+    {
+      "standard": "4.7-EX",
+      "title": "Every kind of force",
+      "grade": "4",
+      "subject": "Science",
+      "engine": "Exhibit Hall",
+      "kind": "",
+      "file": "lib/cases/exhibit-hall/kinds.js"
+    },
+    {
+      "standard": "4.7A-EX",
+      "title": "Portrait of a right angle",
+      "grade": "4",
+      "subject": "Math",
+      "engine": "Exhibit Hall",
+      "kind": "",
+      "file": "lib/cases/exhibit-hall/locked.js"
+    },
+    {
+      "standard": "4.9A-EX",
+      "title": "Four ways to show the data",
+      "grade": "4",
+      "subject": "Math",
+      "engine": "Exhibit Hall",
+      "kind": "",
+      "file": "lib/cases/exhibit-hall/locked.js"
+    },
+    {
+      "standard": "4.9B-EX",
+      "title": "29 nights",
+      "grade": "4",
+      "subject": "Science",
+      "engine": "Exhibit Hall",
+      "kind": "",
+      "file": "lib/cases/exhibit-hall/timeline.js"
+    },
+    {
+      "standard": "ELA.4.10B-EX",
+      "title": "How the article is built",
+      "grade": "4",
+      "subject": "ELAR",
+      "engine": "Exhibit Hall",
+      "kind": "",
+      "file": "lib/cases/exhibit-hall/locked.js"
+    },
+    {
+      "standard": "ELA.4.7B-EX",
+      "title": "Two views of the storm",
+      "grade": "4",
+      "subject": "ELAR",
+      "engine": "Exhibit Hall",
+      "kind": "",
+      "file": "lib/cases/exhibit-hall/split.js"
+    },
+    {
+      "standard": "ELA.4.7D-EX",
+      "title": "Portrait of a summary",
+      "grade": "4",
+      "subject": "ELAR",
+      "engine": "Exhibit Hall",
+      "kind": "",
+      "file": "lib/cases/exhibit-hall/portrait.js"
+    },
+    {
+      "standard": "ELA.4.8A-EX",
+      "title": "The cracked pot",
+      "grade": "4",
+      "subject": "ELAR",
+      "engine": "Exhibit Hall",
+      "kind": "",
+      "file": "lib/cases/exhibit-hall/locked.js"
+    },
+    {
+      "standard": "ELA.4.8B-EX",
+      "title": "Portrait of Leo",
+      "grade": "4",
+      "subject": "ELAR",
+      "engine": "Exhibit Hall",
+      "kind": "",
+      "file": "lib/cases/exhibit-hall/locked.js"
+    },
+    {
+      "standard": "ELA.4.8C-EX",
+      "title": "The science fair disaster",
+      "grade": "4",
+      "subject": "ELAR",
+      "engine": "Exhibit Hall",
+      "kind": "",
+      "file": "lib/cases/exhibit-hall/timeline.js"
+    },
+    {
+      "standard": "ELA.4.9B-EX",
+      "title": "Words that paint pictures",
+      "grade": "4",
+      "subject": "ELAR",
+      "engine": "Exhibit Hall",
+      "kind": "",
+      "file": "lib/cases/exhibit-hall/locked.js"
+    },
+    {
+      "standard": "ELA.4.9E-EX",
+      "title": "Every piece of the argument",
+      "grade": "4",
+      "subject": "ELAR",
+      "engine": "Exhibit Hall",
+      "kind": "",
+      "file": "lib/cases/exhibit-hall/kinds.js"
+    },
+    {
+      "standard": "SS.4.14A-EX",
+      "title": "Portrait of the Texas flag",
+      "grade": "4",
+      "subject": "Social Studies",
+      "engine": "Exhibit Hall",
+      "kind": "",
+      "file": "lib/cases/exhibit-hall/portrait.js"
+    },
+    {
+      "standard": "SS.4.1A-EX",
+      "title": "Four ways of living in Texas",
+      "grade": "4",
+      "subject": "Social Studies",
+      "engine": "Exhibit Hall",
+      "kind": "",
+      "file": "lib/cases/exhibit-hall/locked.js"
+    },
+    {
+      "standard": "SS.4.2E-EX",
+      "title": "Meet Stephen F. Austin",
+      "grade": "4",
+      "subject": "Social Studies",
+      "engine": "Exhibit Hall",
+      "kind": "",
+      "file": "lib/cases/exhibit-hall/locked.js"
+    },
+    {
+      "standard": "SS.4.3A-EX",
+      "title": "Why Texans fought",
+      "grade": "4",
+      "subject": "Social Studies",
+      "engine": "Exhibit Hall",
+      "kind": "",
+      "file": "lib/cases/exhibit-hall/catalog.js"
+    },
+    {
+      "standard": "SS.4.4B-EX",
+      "title": "Longhorn boom",
+      "grade": "4",
+      "subject": "Social Studies",
+      "engine": "Exhibit Hall",
+      "kind": "",
+      "file": "lib/cases/exhibit-hall/timeline.js"
+    },
+    {
+      "standard": "SS.4.6A-EX",
+      "title": "Every kind of Texas region",
+      "grade": "4",
+      "subject": "Social Studies",
+      "engine": "Exhibit Hall",
+      "kind": "",
+      "file": "lib/cases/exhibit-hall/kinds.js"
+    },
+    {
+      "standard": "SS.4.6B-EX",
+      "title": "Coast or mountains",
+      "grade": "4",
+      "subject": "Social Studies",
+      "engine": "Exhibit Hall",
+      "kind": "",
+      "file": "lib/cases/exhibit-hall/split.js"
+    },
+    {
+      "standard": "SS.4.8A-EX",
+      "title": "Changing Texas to live in it",
+      "grade": "4",
+      "subject": "Social Studies",
+      "engine": "Exhibit Hall",
+      "kind": "",
+      "file": "lib/cases/exhibit-hall/catalog.js"
+    },
+    {
+      "standard": "5.10B-EX",
+      "title": "From mud to stone",
+      "grade": "5",
+      "subject": "Science",
+      "engine": "Exhibit Hall",
+      "kind": "",
+      "file": "lib/cases/exhibit-hall/timeline.js"
+    },
+    {
+      "standard": "5.10C-EX",
+      "title": "Shaped by wind, water, and ice",
+      "grade": "5",
+      "subject": "Science",
+      "engine": "Exhibit Hall",
+      "kind": "",
+      "file": "lib/cases/exhibit-hall/locked.js"
+    },
+    {
+      "standard": "5.10E-EX",
+      "title": "The family budget",
+      "grade": "5",
+      "subject": "Math",
+      "engine": "Exhibit Hall",
+      "kind": "",
+      "file": "lib/cases/exhibit-hall/timeline.js"
+    },
+    {
+      "standard": "5.12A-EX",
+      "title": "Portrait of a healthy pond",
+      "grade": "5",
+      "subject": "Science",
+      "engine": "Exhibit Hall",
+      "kind": "",
+      "file": "lib/cases/exhibit-hall/locked.js"
+    },
+    {
+      "standard": "5.12B-EX",
+      "title": "When the wolves came back",
+      "grade": "5",
+      "subject": "Science",
+      "engine": "Exhibit Hall",
+      "kind": "",
+      "file": "lib/cases/exhibit-hall/locked.js"
+    },
+    {
+      "standard": "5.13A-EX",
+      "title": "Same job, different body",
+      "grade": "5",
+      "subject": "Science",
+      "engine": "Exhibit Hall",
+      "kind": "",
+      "file": "lib/cases/exhibit-hall/locked.js"
+    },
+    {
+      "standard": "5.13B-EX",
+      "title": "Born knowing or taught",
+      "grade": "5",
+      "subject": "Science",
+      "engine": "Exhibit Hall",
+      "kind": "",
+      "file": "lib/cases/exhibit-hall/split.js"
+    },
+    {
+      "standard": "5.2A-EX",
+      "title": "Portrait of 3.47",
+      "grade": "5",
+      "subject": "Math",
+      "engine": "Exhibit Hall",
+      "kind": "",
+      "file": "lib/cases/exhibit-hall/locked.js"
+    },
+    {
+      "standard": "5.3H-EX",
+      "title": "Not 2/5",
+      "grade": "5",
+      "subject": "Math",
+      "engine": "Exhibit Hall",
+      "kind": "",
+      "file": "lib/cases/exhibit-hall/locked.js"
+    },
+    {
+      "standard": "5.4A-EX",
+      "title": "Prime or composite",
+      "grade": "5",
+      "subject": "Math",
+      "engine": "Exhibit Hall",
+      "kind": "",
+      "file": "lib/cases/exhibit-hall/kinds.js"
+    },
+    {
+      "standard": "5.4D-EX",
+      "title": "Plus or times",
+      "grade": "5",
+      "subject": "Math",
+      "engine": "Exhibit Hall",
+      "kind": "",
+      "file": "lib/cases/exhibit-hall/split.js"
+    },
+    {
+      "standard": "5.5-EX",
+      "title": "Every kind of rectangle",
+      "grade": "5",
+      "subject": "Math",
+      "engine": "Exhibit Hall",
+      "kind": "",
+      "file": "lib/cases/exhibit-hall/locked.js"
+    },
+    {
+      "standard": "5.6A-EX",
+      "title": "Every kind of test",
+      "grade": "5",
+      "subject": "Science",
+      "engine": "Exhibit Hall",
+      "kind": "",
+      "file": "lib/cases/exhibit-hall/kinds.js"
+    },
+    {
+      "standard": "5.6B-EX",
+      "title": "Portrait of this box",
+      "grade": "5",
+      "subject": "Math",
+      "engine": "Exhibit Hall",
+      "kind": "",
+      "file": "lib/cases/exhibit-hall/portrait.js"
+    },
+    {
+      "standard": "5.8A-EX",
+      "title": "Portrait of the coordinate plane",
+      "grade": "5",
+      "subject": "Math",
+      "engine": "Exhibit Hall",
+      "kind": "",
+      "file": "lib/cases/exhibit-hall/locked.js"
+    },
+    {
+      "standard": "5.8B-EX",
+      "title": "Portrait of a circuit",
+      "grade": "5",
+      "subject": "Science",
+      "engine": "Exhibit Hall",
+      "kind": "",
+      "file": "lib/cases/exhibit-hall/portrait.js"
+    },
+    {
+      "standard": "ELA.5.10A-EX",
+      "title": "Save the monarchs",
+      "grade": "5",
+      "subject": "ELAR",
+      "engine": "Exhibit Hall",
+      "kind": "",
+      "file": "lib/cases/exhibit-hall/locked.js"
+    },
+    {
+      "standard": "ELA.5.10D-EX",
+      "title": "Every kind of feature",
+      "grade": "5",
+      "subject": "ELAR",
+      "engine": "Exhibit Hall",
+      "kind": "",
+      "file": "lib/cases/exhibit-hall/kinds.js"
+    },
+    {
+      "standard": "ELA.5.10G-EX",
+      "title": "Tricks writers use",
+      "grade": "5",
+      "subject": "ELAR",
+      "engine": "Exhibit Hall",
+      "kind": "",
+      "file": "lib/cases/exhibit-hall/locked.js"
+    },
+    {
+      "standard": "ELA.5.13C-EX",
+      "title": "Which sources belong",
+      "grade": "5",
+      "subject": "ELAR",
+      "engine": "Exhibit Hall",
+      "kind": "",
+      "file": "lib/cases/exhibit-hall/locked.js"
+    },
+    {
+      "standard": "ELA.5.13D-EX",
+      "title": "There or later",
+      "grade": "5",
+      "subject": "ELAR",
+      "engine": "Exhibit Hall",
+      "kind": "",
+      "file": "lib/cases/exhibit-hall/split.js"
+    },
+    {
+      "standard": "ELA.5.8A-EX",
+      "title": "Portrait of a theme",
+      "grade": "5",
+      "subject": "ELAR",
+      "engine": "Exhibit Hall",
+      "kind": "",
+      "file": "lib/cases/exhibit-hall/portrait.js"
+    },
+    {
+      "standard": "ELA.5.8C-EX",
+      "title": "Lost in the library",
+      "grade": "5",
+      "subject": "ELAR",
+      "engine": "Exhibit Hall",
+      "kind": "",
+      "file": "lib/cases/exhibit-hall/timeline.js"
+    },
+    {
+      "standard": "ELA.5.9B-EX",
+      "title": "Who is speaking?",
+      "grade": "5",
+      "subject": "ELAR",
+      "engine": "Exhibit Hall",
+      "kind": "",
+      "file": "lib/cases/exhibit-hall/locked.js"
+    },
+    {
+      "standard": "SS.5.14B-EX",
+      "title": "Portrait of the Preamble",
+      "grade": "5",
+      "subject": "Social Studies",
+      "engine": "Exhibit Hall",
+      "kind": "",
+      "file": "lib/cases/exhibit-hall/portrait.js"
+    },
+    {
+      "standard": "SS.5.15A-EX",
+      "title": "Every kind of branch",
+      "grade": "5",
+      "subject": "Social Studies",
+      "engine": "Exhibit Hall",
+      "kind": "",
+      "file": "lib/cases/exhibit-hall/kinds.js"
+    },
+    {
+      "standard": "SS.5.16D-EX",
+      "title": "Portrait of Lady Liberty",
+      "grade": "5",
+      "subject": "Social Studies",
+      "engine": "Exhibit Hall",
+      "kind": "",
+      "file": "lib/cases/exhibit-hall/locked.js"
+    },
+    {
+      "standard": "SS.5.19A-EX",
+      "title": "Rights in real life",
+      "grade": "5",
+      "subject": "Social Studies",
+      "engine": "Exhibit Hall",
+      "kind": "",
+      "file": "lib/cases/exhibit-hall/locked.js"
+    },
+    {
+      "standard": "SS.5.2A-EX",
+      "title": "Road to revolution",
+      "grade": "5",
+      "subject": "Social Studies",
+      "engine": "Exhibit Hall",
+      "kind": "",
+      "file": "lib/cases/exhibit-hall/locked.js"
+    },
+    {
+      "standard": "SS.5.4C-EX",
+      "title": "Growing west",
+      "grade": "5",
+      "subject": "Social Studies",
+      "engine": "Exhibit Hall",
+      "kind": "",
+      "file": "lib/cases/exhibit-hall/timeline.js"
+    },
+    {
+      "standard": "SS.5.5A-EX",
+      "title": "Four problems to solve",
+      "grade": "5",
+      "subject": "Social Studies",
+      "engine": "Exhibit Hall",
+      "kind": "",
+      "file": "lib/cases/exhibit-hall/locked.js"
+    },
+    {
+      "standard": "SS.5.9A-EX",
+      "title": "North or south colonies",
+      "grade": "5",
+      "subject": "Social Studies",
+      "engine": "Exhibit Hall",
+      "kind": "",
+      "file": "lib/cases/exhibit-hall/split.js"
+    },
+    {
+      "standard": "MA.3.3A-XP",
+      "title": "The Glow Garden Harvest",
+      "grade": "3",
+      "subject": "Math",
+      "engine": "Expedition Station",
+      "kind": "",
+      "file": "lib/cases/expedition-station/catalog.js"
+    },
+    {
+      "standard": "MA.3.3F-XP",
+      "title": "The Tide Pools",
+      "grade": "3",
+      "subject": "Math",
+      "engine": "Expedition Station",
+      "kind": "",
+      "file": "lib/cases/expedition-station/quests/tide-pools.js"
+    },
+    {
+      "standard": "ELA.4.6F-XP",
+      "title": "The Dark Canopy",
+      "grade": "4",
+      "subject": "ELAR",
+      "engine": "Expedition Station",
+      "kind": "",
+      "file": "lib/cases/expedition-station/quests/dark-canopy.js"
+    },
+    {
+      "standard": "MA.4.3C-XP",
+      "title": "The Lava Lock",
+      "grade": "4",
+      "subject": "Math",
+      "engine": "Expedition Station",
+      "kind": "",
+      "file": "lib/cases/expedition-station/quests/lava-lock.js"
+    },
+    {
+      "standard": "MA.4.3E-XP",
+      "title": "Expedition Station: The Frozen Relay",
+      "grade": "4",
+      "subject": "Math",
+      "engine": "Expedition Station",
+      "kind": "",
+      "file": "lib/cases/expedition-station/assignFallback.js"
+    },
+    {
+      "standard": "MA.5.3H-XP",
+      "title": "The Robot Rebuild",
+      "grade": "5",
+      "subject": "Math",
+      "engine": "Expedition Station",
+      "kind": "",
+      "file": "lib/cases/expedition-station/quests/robot-rebuild.js"
+    },
+    {
+      "standard": "MA.5.3I-XP",
+      "title": "The Canopy Supply Drop",
+      "grade": "5",
+      "subject": "Math",
+      "engine": "Expedition Station",
+      "kind": "",
+      "file": "lib/cases/expedition-station/quests/canopy-supply-drop.js"
+    },
+    {
+      "standard": "SCI.5.6A-XP",
+      "title": "The Cooling Core",
+      "grade": "5",
+      "subject": "Science",
+      "engine": "Expedition Station",
+      "kind": "",
+      "file": "lib/cases/expedition-station/quests/cooling-core.js"
+    },
+    {
+      "standard": "3.FR.Energy.forms",
+      "title": "Forms of Energy",
+      "grade": "3",
+      "subject": "Science",
+      "engine": "Frequency Rush",
+      "kind": "Topic questions",
+      "file": "lib/cases/frequency-rush/classify/3.FR.Energy.forms.js"
+    },
+    {
+      "standard": "3.FR.Force-Motion.push-pull",
+      "title": "Push or Pull?",
+      "grade": "3",
+      "subject": "Science",
+      "engine": "Frequency Rush",
+      "kind": "Topic questions",
+      "file": "lib/cases/frequency-rush/classify/3.FR.Force-Motion.push-pull.js"
+    },
+    {
+      "standard": "3.FR.Matter-Properties.magnetic",
+      "title": "Magnetic or Not Magnetic?",
+      "grade": "3",
+      "subject": "Science",
+      "engine": "Frequency Rush",
+      "kind": "Topic questions",
+      "file": "lib/cases/frequency-rush/classify/3.FR.Matter-Properties.magnetic.js"
+    },
+    {
+      "standard": "3.FR.Matter-Properties.sink-float",
+      "title": "Sink or Float?",
+      "grade": "3",
+      "subject": "Science",
+      "engine": "Frequency Rush",
+      "kind": "Topic questions",
+      "file": "lib/cases/frequency-rush/classify/3.FR.Matter-Properties.sink-float.js"
+    },
+    {
+      "standard": "3.FR.Matter-States.classify",
+      "title": "Solid, Liquid, or Gas?",
+      "grade": "3",
+      "subject": "Science",
+      "engine": "Frequency Rush",
+      "kind": "Topic questions",
+      "file": "lib/cases/frequency-rush/classify/3.FR.Matter-States.js"
+    },
+    {
+      "standard": "3.FR.Resources.reduce-reuse-recycle",
+      "title": "Reduce, Reuse, or Recycle?",
+      "grade": "3",
+      "subject": "Science",
+      "engine": "Frequency Rush",
+      "kind": "Topic questions",
+      "file": "lib/cases/frequency-rush/classify/3.FR.Resources.reduce-reuse-recycle.js"
+    },
+    {
+      "standard": "ELA.3.11D-FR-POS",
+      "title": "Parts of Speech",
+      "grade": "3",
+      "subject": "ELAR",
+      "engine": "Frequency Rush",
+      "kind": "Vocab",
+      "file": "lib/cases/frequency-rush/skills/ELA.3.11D-FR-POS.js"
+    },
+    {
+      "standard": "ELA.3.3C-FR-AFX",
+      "title": "Prefixes and Suffixes",
+      "grade": "3",
+      "subject": "ELAR",
+      "engine": "Frequency Rush",
+      "kind": "Vocab",
+      "file": "lib/cases/frequency-rush/skills/ELA.3.3C-FR-AFX.js"
+    },
+    {
+      "standard": "ELA.3.3D-FR-HOM",
+      "title": "Homophones",
+      "grade": "3",
+      "subject": "ELAR",
+      "engine": "Frequency Rush",
+      "kind": "Vocab",
+      "file": "lib/cases/frequency-rush/skills/ELA.3.3D-FR-HOM.js"
+    },
+    {
+      "standard": "ELA.3.3D-FR-SYN",
+      "title": "Synonyms, Antonyms, and Idioms",
+      "grade": "3",
+      "subject": "ELAR",
+      "engine": "Frequency Rush",
+      "kind": "Vocab",
+      "file": "lib/cases/frequency-rush/skills/ELA.3.3D-FR-SYN.js"
+    },
+    {
+      "standard": "SS.3.FR.Citizenship.civic-acts",
+      "title": "What Kind of Civic Act?",
+      "grade": "3",
+      "subject": "Social Studies",
+      "engine": "Frequency Rush",
+      "kind": "Topic questions",
+      "file": "lib/cases/frequency-rush/classify/SS.3.FR.Citizenship.civic-acts.js"
+    },
+    {
+      "standard": "SS.3.FR.Communities.needs",
+      "title": "How Communities Meet Needs",
+      "grade": "3",
+      "subject": "Social Studies",
+      "engine": "Frequency Rush",
+      "kind": "Topic questions",
+      "file": "lib/cases/frequency-rush/classify/SS.3.FR.Communities.needs.js"
+    },
+    {
+      "standard": "SS.3.FR.Economics.scarcity",
+      "title": "Scarce or Not Scarce?",
+      "grade": "3",
+      "subject": "Social Studies",
+      "engine": "Frequency Rush",
+      "kind": "Topic questions",
+      "file": "lib/cases/frequency-rush/classify/SS.3.FR.Economics.scarcity.js"
+    },
+    {
+      "standard": "SS.3.FR.Geography.environments",
+      "title": "Desert, Mountain, Wetland, or Plains?",
+      "grade": "3",
+      "subject": "Social Studies",
+      "engine": "Frequency Rush",
+      "kind": "Topic questions",
+      "file": "lib/cases/frequency-rush/classify/SS.3.FR.Geography.environments.js"
+    },
+    {
+      "standard": "SS.3.FR.Geography.map-elements",
+      "title": "Which Map Element?",
+      "grade": "3",
+      "subject": "Social Studies",
+      "engine": "Frequency Rush",
+      "kind": "Topic questions",
+      "file": "lib/cases/frequency-rush/classify/SS.3.FR.Geography.map-elements.js"
+    },
+    {
+      "standard": "SS.3.FR.Government.levels",
+      "title": "Local, State, or National?",
+      "grade": "3",
+      "subject": "Social Studies",
+      "engine": "Frequency Rush",
+      "kind": "Topic questions",
+      "file": "lib/cases/frequency-rush/classify/SS.3.FR.Government.levels.js"
+    },
+    {
+      "standard": "SS.3.FR.Government.services",
+      "title": "Whose Service Is It?",
+      "grade": "3",
+      "subject": "Social Studies",
+      "engine": "Frequency Rush",
+      "kind": "Topic questions",
+      "file": "lib/cases/frequency-rush/classify/SS.3.FR.Government.services.js"
+    },
+    {
+      "standard": "SS.3.FR.Money.earn-spend-save-donate",
+      "title": "Earn, Spend, Save, or Donate?",
+      "grade": "3",
+      "subject": "Social Studies",
+      "engine": "Frequency Rush",
+      "kind": "Topic questions",
+      "file": "lib/cases/frequency-rush/classify/SS.3.FR.Money.earn-spend-save-donate.js"
+    },
+    {
+      "standard": "4.FR.Ecosystems.roles",
+      "title": "Producer, Consumer, or Decomposer?",
+      "grade": "4",
+      "subject": "Science",
+      "engine": "Frequency Rush",
+      "kind": "Topic questions",
+      "file": "lib/cases/frequency-rush/classify/4.FR.Ecosystems.roles.js"
+    },
+    {
+      "standard": "4.FR.Energy.electrical-conductors",
+      "title": "Electrical Conductor or Insulator?",
+      "grade": "4",
+      "subject": "Science",
+      "engine": "Frequency Rush",
+      "kind": "Topic questions",
+      "file": "lib/cases/frequency-rush/classify/4.FR.Energy.electrical-conductors.js"
+    },
+    {
+      "standard": "4.FR.Energy.thermal-conductors",
+      "title": "Thermal Conductor or Insulator?",
+      "grade": "4",
+      "subject": "Science",
+      "engine": "Frequency Rush",
+      "kind": "Topic questions",
+      "file": "lib/cases/frequency-rush/classify/4.FR.Energy.thermal-conductors.js"
+    },
+    {
+      "standard": "4.FR.Matter-Mixtures.mixture-solution",
+      "title": "Mixture or Solution?",
+      "grade": "4",
+      "subject": "Science",
+      "engine": "Frequency Rush",
+      "kind": "Topic questions",
+      "file": "lib/cases/frequency-rush/classify/4.FR.Matter-Mixtures.mixture-solution.js"
+    },
+    {
+      "standard": "4.FR.Matter-Properties.magnetic",
+      "title": "Magnetic or Not Magnetic?",
+      "grade": "4",
+      "subject": "Science",
+      "engine": "Frequency Rush",
+      "kind": "Topic questions",
+      "file": "lib/cases/frequency-rush/classify/4.FR.Matter-Properties.magnetic.js"
+    },
+    {
+      "standard": "4.FR.Matter-Properties.sink-float",
+      "title": "Sink or Float?",
+      "grade": "4",
+      "subject": "Science",
+      "engine": "Frequency Rush",
+      "kind": "Topic questions",
+      "file": "lib/cases/frequency-rush/classify/4.FR.Matter-Properties.sink-float.js"
+    },
+    {
+      "standard": "4.FR.Matter-States.classify",
+      "title": "Solid, Liquid, or Gas?",
+      "grade": "4",
+      "subject": "Science",
+      "engine": "Frequency Rush",
+      "kind": "Topic questions",
+      "file": "lib/cases/frequency-rush/classify/4.FR.Matter-States.js"
+    },
+    {
+      "standard": "4.FR.Resources.renewable",
+      "title": "Renewable or Nonrenewable?",
+      "grade": "4",
+      "subject": "Science",
+      "engine": "Frequency Rush",
+      "kind": "Topic questions",
+      "file": "lib/cases/frequency-rush/classify/4.FR.Resources.renewable.js"
+    },
+    {
+      "standard": "ELA.4.11D-FR-IRV",
+      "title": "Irregular Past-Tense Verbs",
+      "grade": "4",
+      "subject": "ELAR",
+      "engine": "Frequency Rush",
+      "kind": "Vocab",
+      "file": "lib/cases/frequency-rush/skills/ELA.4.11D-FR-IRV.js"
+    },
+    {
+      "standard": "ELA.4.3C-FR-AFX",
+      "title": "Affixes and Roots",
+      "grade": "4",
+      "subject": "ELAR",
+      "engine": "Frequency Rush",
+      "kind": "Vocab",
+      "file": "lib/cases/frequency-rush/skills/ELA.4.3C-FR-AFX.js"
+    },
+    {
+      "standard": "ELA.4.3D-FR-HOM",
+      "title": "Homophones",
+      "grade": "4",
+      "subject": "ELAR",
+      "engine": "Frequency Rush",
+      "kind": "Vocab",
+      "file": "lib/cases/frequency-rush/skills/ELA.4.3D-FR-HOM.js"
+    },
+    {
+      "standard": "ELA.4.9B-FR-FIG",
+      "title": "Simile, Metaphor, and Personification",
+      "grade": "4",
+      "subject": "ELAR",
+      "engine": "Frequency Rush",
+      "kind": "Vocab",
+      "file": "lib/cases/frequency-rush/skills/ELA.4.9B-FR-FIG.js"
+    },
+    {
+      "standard": "SS.4.FR.American-Indians.cultural-regions",
+      "title": "Gulf, Plains, Puebloan, or Southeastern?",
+      "grade": "4",
+      "subject": "Social Studies",
+      "engine": "Frequency Rush",
+      "kind": "Topic questions",
+      "file": "lib/cases/frequency-rush/classify/SS.4.FR.American-Indians.cultural-regions.js"
+    },
+    {
+      "standard": "SS.4.FR.Economics.earning-living",
+      "title": "Past or Present Jobs in Texas?",
+      "grade": "4",
+      "subject": "Social Studies",
+      "engine": "Frequency Rush",
+      "kind": "Topic questions",
+      "file": "lib/cases/frequency-rush/classify/SS.4.FR.Economics.earning-living.js"
+    },
+    {
+      "standard": "SS.4.FR.Exploration.motivations",
+      "title": "Why Explore?",
+      "grade": "4",
+      "subject": "Social Studies",
+      "engine": "Frequency Rush",
+      "kind": "Topic questions",
+      "file": "lib/cases/frequency-rush/classify/SS.4.FR.Exploration.motivations.js"
+    },
+    {
+      "standard": "SS.4.FR.Geography.adapt-modify",
+      "title": "Adapt or Modify?",
+      "grade": "4",
+      "subject": "Social Studies",
+      "engine": "Frequency Rush",
+      "kind": "Topic questions",
+      "file": "lib/cases/frequency-rush/classify/SS.4.FR.Geography.adapt-modify.js"
+    },
+    {
+      "standard": "SS.4.FR.Regions.texas-physical",
+      "title": "Which Texas Region?",
+      "grade": "4",
+      "subject": "Social Studies",
+      "engine": "Frequency Rush",
+      "kind": "Topic questions",
+      "file": "lib/cases/frequency-rush/classify/SS.4.FR.Regions.texas-physical.js"
+    },
+    {
+      "standard": "SS.4.FR.Texas-Industries",
+      "title": "Cattle, Railroad, or Oil?",
+      "grade": "4",
+      "subject": "Social Studies",
+      "engine": "Frequency Rush",
+      "kind": "Topic questions",
+      "file": "lib/cases/frequency-rush/classify/SS.4.FR.Texas.industries.js"
+    },
+    {
+      "standard": "SS.4.FR.Texas.industries",
+      "title": "Cattle, Railroad, or Oil?",
+      "grade": "4",
+      "subject": "Social Studies",
+      "engine": "Frequency Rush",
+      "kind": "Topic questions",
+      "file": "lib/cases/frequency-rush/classify/SS.4.FR.Texas.industries.js"
+    },
+    {
+      "standard": "5.FR.Earth-Processes.landforms",
+      "title": "Which Landform?",
+      "grade": "5",
+      "subject": "Science",
+      "engine": "Frequency Rush",
+      "kind": "Topic questions",
+      "file": "lib/cases/frequency-rush/classify/5.FR.Earth-Processes.landforms.js"
+    },
+    {
+      "standard": "5.FR.Earth-Processes.weathering-erosion-deposition",
+      "title": "Weathering, Erosion, or Deposition?",
+      "grade": "5",
+      "subject": "Science",
+      "engine": "Frequency Rush",
+      "kind": "Topic questions",
+      "file": "lib/cases/frequency-rush/classify/5.FR.Earth-Processes.weathering-erosion-deposition.js"
+    },
+    {
+      "standard": "5.FR.Ecosystems.biotic-abiotic",
+      "title": "Biotic or Abiotic?",
+      "grade": "5",
+      "subject": "Science",
+      "engine": "Frequency Rush",
+      "kind": "Topic questions",
+      "file": "lib/cases/frequency-rush/classify/5.FR.Ecosystems.biotic-abiotic.js"
+    },
+    {
+      "standard": "5.FR.Energy.circuits-open-closed",
+      "title": "Open or Closed Circuit?",
+      "grade": "5",
+      "subject": "Science",
+      "engine": "Frequency Rush",
+      "kind": "Topic questions",
+      "file": "lib/cases/frequency-rush/classify/5.FR.Energy.circuits-open-closed.js"
+    },
+    {
+      "standard": "5.FR.Energy.circuits-series-parallel",
+      "title": "Series or Parallel Circuit?",
+      "grade": "5",
+      "subject": "Science",
+      "engine": "Frequency Rush",
+      "kind": "Topic questions",
+      "file": "lib/cases/frequency-rush/classify/5.FR.Energy.circuits-series-parallel.js"
+    },
+    {
+      "standard": "5.FR.Energy.light-reflection-refraction",
+      "title": "Reflection, Refraction, or Absorption?",
+      "grade": "5",
+      "subject": "Science",
+      "engine": "Frequency Rush",
+      "kind": "Topic questions",
+      "file": "lib/cases/frequency-rush/classify/5.FR.Energy.light-reflection-refraction.js"
+    },
+    {
+      "standard": "5.FR.Matter-Properties.electrical-conductors",
+      "title": "Electrical Conductor or Insulator?",
+      "grade": "5",
+      "subject": "Science",
+      "engine": "Frequency Rush",
+      "kind": "Topic questions",
+      "file": "lib/cases/frequency-rush/classify/5.FR.Matter-Properties.electrical-conductors.js"
+    },
+    {
+      "standard": "5.FR.Matter-Properties.magnetic",
+      "title": "Magnetic or Not Magnetic?",
+      "grade": "5",
+      "subject": "Science",
+      "engine": "Frequency Rush",
+      "kind": "Topic questions",
+      "file": "lib/cases/frequency-rush/classify/5.FR.Matter-Properties.magnetic.js"
+    },
+    {
+      "standard": "5.FR.Matter-Properties.sink-float",
+      "title": "Sink or Float?",
+      "grade": "5",
+      "subject": "Science",
+      "engine": "Frequency Rush",
+      "kind": "Topic questions",
+      "file": "lib/cases/frequency-rush/classify/5.FR.Matter-Properties.sink-float.js"
+    },
+    {
+      "standard": "5.FR.Matter-Properties.soluble",
+      "title": "Soluble or Insoluble in Water?",
+      "grade": "5",
+      "subject": "Science",
+      "engine": "Frequency Rush",
+      "kind": "Topic questions",
+      "file": "lib/cases/frequency-rush/classify/5.FR.Matter-Properties.soluble.js"
+    },
+    {
+      "standard": "5.FR.Matter-Properties.thermal-conductors",
+      "title": "Thermal Conductor or Insulator?",
+      "grade": "5",
+      "subject": "Science",
+      "engine": "Frequency Rush",
+      "kind": "Topic questions",
+      "file": "lib/cases/frequency-rush/classify/5.FR.Matter-Properties.thermal-conductors.js"
+    },
+    {
+      "standard": "5.FR.Matter-States.classify",
+      "title": "Solid, Liquid, or Gas?",
+      "grade": "5",
+      "subject": "Science",
+      "engine": "Frequency Rush",
+      "kind": "Topic questions",
+      "file": "lib/cases/frequency-rush/classify/5.FR.Matter-States.js"
+    },
+    {
+      "standard": "5.FR.Organisms.behaviors",
+      "title": "Instinctual or Learned?",
+      "grade": "5",
+      "subject": "Science",
+      "engine": "Frequency Rush",
+      "kind": "Topic questions",
+      "file": "lib/cases/frequency-rush/classify/5.FR.Organisms.behaviors.js"
+    },
+    {
+      "standard": "5.FR.Water-Weather.water-cycle",
+      "title": "Water Cycle Stage",
+      "grade": "5",
+      "subject": "Science",
+      "engine": "Frequency Rush",
+      "kind": "Topic questions",
+      "file": "lib/cases/frequency-rush/classify/5.FR.Water-Weather.water-cycle.js"
+    },
+    {
+      "standard": "ELA.5.11D-FR-GRM",
+      "title": "Grammar Fix-Ups",
+      "grade": "5",
+      "subject": "ELAR",
+      "engine": "Frequency Rush",
+      "kind": "Vocab",
+      "file": "lib/cases/frequency-rush/skills/ELA.5.11D-FR-GRM.js"
+    },
+    {
+      "standard": "ELA.5.2B-FR-SPL",
+      "title": "Spelling Changes",
+      "grade": "5",
+      "subject": "ELAR",
+      "engine": "Frequency Rush",
+      "kind": "Vocab",
+      "file": "lib/cases/frequency-rush/skills/ELA.5.2B-FR-SPL.js"
+    },
+    {
+      "standard": "ELA.5.3C-FR-AFX",
+      "title": "Affixes and Roots",
+      "grade": "5",
+      "subject": "ELAR",
+      "engine": "Frequency Rush",
+      "kind": "Vocab",
+      "file": "lib/cases/frequency-rush/skills/ELA.5.3C-FR-AFX.js"
+    },
+    {
+      "standard": "ELA.5.3D-FR-ADG",
+      "title": "Adages and Puns",
+      "grade": "5",
+      "subject": "ELAR",
+      "engine": "Frequency Rush",
+      "kind": "Vocab",
+      "file": "lib/cases/frequency-rush/skills/ELA.5.3D-FR-ADG.js"
+    },
+    {
+      "standard": "SS.5.FR.Colonial.reasons",
+      "title": "Religious Freedom or Economic Gain?",
+      "grade": "5",
+      "subject": "Social Studies",
+      "engine": "Frequency Rush",
+      "kind": "Topic questions",
+      "file": "lib/cases/frequency-rush/classify/SS.5.FR.Colonial.reasons.js"
+    },
+    {
+      "standard": "SS.5.FR.Economics.supply-demand",
+      "title": "Price Rises or Price Falls?",
+      "grade": "5",
+      "subject": "Social Studies",
+      "engine": "Frequency Rush",
+      "kind": "Topic questions",
+      "file": "lib/cases/frequency-rush/classify/SS.5.FR.Economics.supply-demand.js"
+    },
+    {
+      "standard": "SS.5.FR.Geography.adapt-modify",
+      "title": "Adapt or Modify the Environment?",
+      "grade": "5",
+      "subject": "Social Studies",
+      "engine": "Frequency Rush",
+      "kind": "Topic questions",
+      "file": "lib/cases/frequency-rush/classify/SS.5.FR.Geography.adapt-modify.js"
+    },
+    {
+      "standard": "SS.5.FR.Geography.human-environment",
+      "title": "Positive or Negative Consequence?",
+      "grade": "5",
+      "subject": "Social Studies",
+      "engine": "Frequency Rush",
+      "kind": "Topic questions",
+      "file": "lib/cases/frequency-rush/classify/SS.5.FR.Geography.human-environment.js"
+    },
+    {
+      "standard": "SS.5.FR.Geography.physical-regions",
+      "title": "Mountains, Plains, Rivers/Lakes, or Coasts?",
+      "grade": "5",
+      "subject": "Social Studies",
+      "engine": "Frequency Rush",
+      "kind": "Topic questions",
+      "file": "lib/cases/frequency-rush/classify/SS.5.FR.Geography.physical-regions.js"
+    },
+    {
+      "standard": "SS.5.FR.Geography.political-economic",
+      "title": "Political or Economic Region?",
+      "grade": "5",
+      "subject": "Social Studies",
+      "engine": "Frequency Rush",
+      "kind": "Topic questions",
+      "file": "lib/cases/frequency-rush/classify/SS.5.FR.Geography.political-economic.js"
+    },
+    {
+      "standard": "SS.5.FR.History.revolution-causes",
+      "title": "Revolution Cause or Effect?",
+      "grade": "5",
+      "subject": "Social Studies",
+      "engine": "Frequency Rush",
+      "kind": "Topic questions",
+      "file": "lib/cases/frequency-rush/classify/SS.5.FR.History.revolution-causes.js"
+    },
+    {
+      "standard": "SS.5.FR.Settlement.patterns",
+      "title": "Rural, Urban, or Suburban?",
+      "grade": "5",
+      "subject": "Social Studies",
+      "engine": "Frequency Rush",
+      "kind": "Topic questions",
+      "file": "lib/cases/frequency-rush/classify/SS.5.FR.Settlement.patterns.js"
+    },
+    {
+      "standard": "3.10A",
+      "title": "One of You Is Making This Up",
+      "grade": "",
+      "subject": "",
+      "engine": "Group Chat",
+      "kind": "",
+      "file": "lib/cases/3-10A.public.js"
+    },
+    {
+      "standard": "3.10B",
+      "title": "What Is Soil Even Made Of?",
+      "grade": "",
+      "subject": "",
+      "engine": "Group Chat",
+      "kind": "",
+      "file": "lib/cases/3-10B.public.js"
+    },
+    {
+      "standard": "3.10C",
+      "title": "That Cannot Be the Same Hill",
+      "grade": "",
+      "subject": "",
+      "engine": "Group Chat",
+      "kind": "",
+      "file": "lib/cases/3-10C.public.js"
+    },
+    {
+      "standard": "3.11A",
+      "title": "Nothing In This Room Came From Nature",
+      "grade": "",
+      "subject": "",
+      "engine": "Group Chat",
+      "kind": "",
+      "file": "lib/cases/3-11A.public.js"
+    },
+    {
+      "standard": "3.11B",
+      "title": "The Barrel Was Full in April",
+      "grade": "",
+      "subject": "",
+      "engine": "Group Chat",
+      "kind": "",
+      "file": "lib/cases/3-11B.public.js"
+    },
+    {
+      "standard": "3.11C",
+      "title": "It Is Fine, I Will Just Recycle It",
+      "grade": "",
+      "subject": "",
+      "engine": "Group Chat",
+      "kind": "",
+      "file": "lib/cases/3-11C.public.js"
+    },
+    {
+      "standard": "3.12A",
+      "title": "Cleo Says Everything Died in November",
+      "grade": "",
+      "subject": "",
+      "engine": "Group Chat",
+      "kind": "",
+      "file": "lib/cases/3-12A.public.js"
+    },
+    {
+      "standard": "3.12B",
+      "title": "The Herons Will Just Eat Something Else",
+      "grade": "",
+      "subject": "",
+      "engine": "Group Chat",
+      "kind": "",
+      "file": "lib/cases/3-12B.public.js"
+    },
+    {
+      "standard": "3.12C",
+      "title": "The Flood Ruined Everything",
+      "grade": "",
+      "subject": "",
+      "engine": "Group Chat",
+      "kind": "",
+      "file": "lib/cases/3-12C.public.js"
+    },
+    {
+      "standard": "3.12D",
+      "title": "Somebody Carved That",
+      "grade": "",
+      "subject": "",
+      "engine": "Group Chat",
+      "kind": "",
+      "file": "lib/cases/3-12D.public.js"
+    },
+    {
+      "standard": "3.13A",
+      "title": "Duck Wants Different Feet",
+      "grade": "",
+      "subject": "",
+      "engine": "Group Chat",
+      "kind": "",
+      "file": "lib/cases/3-13A.public.js"
+    },
+    {
+      "standard": "3.13B",
+      "title": "Pick Out the Grubs, Keep the Beetles",
+      "grade": "",
+      "subject": "",
+      "engine": "Group Chat",
+      "kind": "",
+      "file": "lib/cases/3-13B.public.js"
+    },
+    {
+      "standard": "3.6A",
+      "title": "The Raft Load",
+      "grade": "",
+      "subject": "",
+      "engine": "Group Chat",
+      "kind": "",
+      "file": "lib/cases/3-6A.public.js"
+    },
+    {
+      "standard": "3.6B",
+      "title": "Rice Thinks She Is a Liquid",
+      "grade": "",
+      "subject": "",
+      "engine": "Group Chat",
+      "kind": "",
+      "file": "lib/cases/3-6B.public.js"
+    },
+    {
+      "standard": "3.6C",
+      "title": "The Leaky Glasses",
+      "grade": "",
+      "subject": "",
+      "engine": "Group Chat",
+      "kind": "",
+      "file": "lib/cases/3-6C.public.js"
+    },
+    {
+      "standard": "3.6D",
+      "title": "The All-Steel Umbrella",
+      "grade": "",
+      "subject": "",
+      "engine": "Group Chat",
+      "kind": "",
+      "file": "lib/cases/3-6D.public.js"
+    },
+    {
+      "standard": "3.7A",
+      "title": "Feather Says Gravity Skips Her",
+      "grade": "",
+      "subject": "",
+      "engine": "Group Chat",
+      "kind": "",
+      "file": "lib/cases/3-7A.public.js"
+    },
+    {
+      "standard": "3.7B",
+      "title": "Wallop Only Knows One Setting",
+      "grade": "",
+      "subject": "",
+      "engine": "Group Chat",
+      "kind": "",
+      "file": "lib/cases/3-7B.public.js"
+    },
+    {
+      "standard": "3.8A",
+      "title": "Nothing Here Is Plugged In",
+      "grade": "",
+      "subject": "",
+      "engine": "Group Chat",
+      "kind": "",
+      "file": "lib/cases/3-8A.public.js"
+    },
+    {
+      "standard": "3.8B",
+      "title": "A Bigger Ball Will Not Fix It",
+      "grade": "",
+      "subject": "",
+      "engine": "Group Chat",
+      "kind": "",
+      "file": "lib/cases/3-8B.public.js"
+    },
+    {
+      "standard": "3.9A",
+      "title": "The Moon Is Tied to the Wrong Thing",
+      "grade": "",
+      "subject": "",
+      "engine": "Group Chat",
+      "kind": "",
+      "file": "lib/cases/3-9A.public.js"
+    },
+    {
+      "standard": "3.9B",
+      "title": "Jupiter Says He Should Be First",
+      "grade": "",
+      "subject": "",
+      "engine": "Group Chat",
+      "kind": "",
+      "file": "lib/cases/3-9B.public.js"
+    },
+    {
+      "standard": "4.10A",
+      "title": "The Puddle Mystery",
+      "grade": "",
+      "subject": "",
+      "engine": "Group Chat",
+      "kind": "",
+      "file": "lib/cases/4-10A.public.js"
+    },
+    {
+      "standard": "4.10B",
+      "title": "Where Is All This Sand Coming From?",
+      "grade": "",
+      "subject": "",
+      "engine": "Group Chat",
+      "kind": "",
+      "file": "lib/cases/4-10B.public.js"
+    },
+    {
+      "standard": "4.10C",
+      "title": "Packing on Seven Days of Evidence",
+      "grade": "",
+      "subject": "",
+      "engine": "Group Chat",
+      "kind": "",
+      "file": "lib/cases/4-10C.public.js"
+    },
+    {
+      "standard": "4.11A",
+      "title": "Wendy Says Just Use Wind",
+      "grade": "",
+      "subject": "",
+      "engine": "Group Chat",
+      "kind": "",
+      "file": "lib/cases/4-11A.public.js"
+    },
+    {
+      "standard": "4.11B",
+      "title": "Plug Says Nobody Would Miss Him",
+      "grade": "",
+      "subject": "",
+      "engine": "Group Chat",
+      "kind": "",
+      "file": "lib/cases/4-11B.public.js"
+    },
+    {
+      "standard": "4.11C",
+      "title": "Rigby Wants to Drill Here",
+      "grade": "",
+      "subject": "",
+      "engine": "Group Chat",
+      "kind": "",
+      "file": "lib/cases/4-11C.public.js"
+    },
+    {
+      "standard": "4.12A",
+      "title": "Soil Thinks They Eat Her",
+      "grade": "",
+      "subject": "",
+      "engine": "Group Chat",
+      "kind": "",
+      "file": "lib/cases/4-12A.public.js"
+    },
+    {
+      "standard": "4.12B",
+      "title": "Who Passes the Baton?",
+      "grade": "",
+      "subject": "",
+      "engine": "Group Chat",
+      "kind": "",
+      "file": "lib/cases/4-12B.public.js"
+    },
+    {
+      "standard": "4.12C",
+      "title": "The Seashell on the Hilltop",
+      "grade": "",
+      "subject": "",
+      "engine": "Group Chat",
+      "kind": "",
+      "file": "lib/cases/4-12C.public.js"
+    },
+    {
+      "standard": "4.13A",
+      "title": "The Ugly One in the Window Box",
+      "grade": "",
+      "subject": "",
+      "engine": "Group Chat",
+      "kind": "",
+      "file": "lib/cases/4-13A.public.js"
+    },
+    {
+      "standard": "4.13B",
+      "title": "What Nell Is About to Tell Her Class",
+      "grade": "",
+      "subject": "",
+      "engine": "Group Chat",
+      "kind": "",
+      "file": "lib/cases/4-13B.public.js"
+    },
+    {
+      "standard": "4.6A",
+      "title": "The Pen Pal Package",
+      "grade": "",
+      "subject": "",
+      "engine": "Group Chat",
+      "kind": "",
+      "file": "lib/cases/4-6A.public.js"
+    },
+    {
+      "standard": "4.6B",
+      "title": "Whisk Will Not Give Up",
+      "grade": "",
+      "subject": "",
+      "engine": "Group Chat",
+      "kind": "",
+      "file": "lib/cases/4-6B.public.js"
+    },
+    {
+      "standard": "4.6C",
+      "title": "The Fourth Do-Over",
+      "grade": "",
+      "subject": "",
+      "engine": "Group Chat",
+      "kind": "",
+      "file": "lib/cases/4-6C.public.js"
+    },
+    {
+      "standard": "4.7",
+      "title": "Somebody Is Tilting the Table",
+      "grade": "",
+      "subject": "",
+      "engine": "Group Chat",
+      "kind": "",
+      "file": "lib/cases/4-7.public.js"
+    },
+    {
+      "standard": "4.8A",
+      "title": "The Middle Marbles Quit",
+      "grade": "",
+      "subject": "",
+      "engine": "Group Chat",
+      "kind": "",
+      "file": "lib/cases/4-8A.public.js"
+    },
+    {
+      "standard": "4.8B",
+      "title": "The Coat on the Snowman",
+      "grade": "",
+      "subject": "",
+      "engine": "Group Chat",
+      "kind": "",
+      "file": "lib/cases/4-8B.public.js"
+    },
+    {
+      "standard": "4.8C",
+      "title": "The Warming Glove Demo",
+      "grade": "",
+      "subject": "",
+      "engine": "Group Chat",
+      "kind": "",
+      "file": "lib/cases/4-8C.public.js"
+    },
+    {
+      "standard": "4.9A",
+      "title": "Chill Takes Credit for Sunset",
+      "grade": "",
+      "subject": "",
+      "engine": "Group Chat",
+      "kind": "",
+      "file": "lib/cases/4-9A.public.js"
+    },
+    {
+      "standard": "4.9B",
+      "title": "Luna Thinks She Is Shrinking",
+      "grade": "",
+      "subject": "",
+      "engine": "Group Chat",
+      "kind": "",
+      "file": "lib/cases/4-9B.public.js"
+    },
+    {
+      "standard": "5.10A",
+      "title": "The Marine Fog Mystery",
+      "grade": "",
+      "subject": "",
+      "engine": "Group Chat",
+      "kind": "",
+      "file": "lib/cases/5-10A.public.js"
+    },
+    {
+      "standard": "5.10B",
+      "title": "The Viral Rock Video",
+      "grade": "",
+      "subject": "",
+      "engine": "Group Chat",
+      "kind": "",
+      "file": "lib/cases/5-10B.public.js"
+    },
+    {
+      "standard": "5.10C",
+      "title": "The Campfire Legend",
+      "grade": "",
+      "subject": "",
+      "engine": "Group Chat",
+      "kind": "",
+      "file": "lib/cases/5-10C.public.js"
+    },
+    {
+      "standard": "5.11A",
+      "title": "The Campaign Against Recycling",
+      "grade": "",
+      "subject": "",
+      "engine": "Group Chat",
+      "kind": "",
+      "file": "lib/cases/5-11A.public.js"
+    },
+    {
+      "standard": "5.12A",
+      "title": "The Backyard Bird Feeder",
+      "grade": "",
+      "subject": "",
+      "engine": "Group Chat",
+      "kind": "",
+      "file": "lib/cases/5-12A.public.js"
+    },
+    {
+      "standard": "5.12B",
+      "title": "The Bee Disappearance Mystery",
+      "grade": "",
+      "subject": "",
+      "engine": "Group Chat",
+      "kind": "",
+      "file": "lib/cases/5-12B.public.js"
+    },
+    {
+      "standard": "5.12C",
+      "title": "The Parking Lot Town Hall",
+      "grade": "",
+      "subject": "",
+      "engine": "Group Chat",
+      "kind": "",
+      "file": "lib/cases/5-12C.public.js"
+    },
+    {
+      "standard": "5.13A",
+      "title": "The Desert Survival Reality Show",
+      "grade": "",
+      "subject": "",
+      "engine": "Group Chat",
+      "kind": "",
+      "file": "lib/cases/5-13A.public.js"
+    },
+    {
+      "standard": "5.13B",
+      "title": "The Pet Talent Scout",
+      "grade": "",
+      "subject": "",
+      "engine": "Group Chat",
+      "kind": "",
+      "file": "lib/cases/5-13B.public.js"
+    },
+    {
+      "standard": "5.6A",
+      "title": "The Metal Detector Meltdown",
+      "grade": "",
+      "subject": "",
+      "engine": "Group Chat",
+      "kind": "",
+      "file": "lib/cases/5-6A.public.js"
+    },
+    {
+      "standard": "5.6B",
+      "title": "The Trail Mix Bar",
+      "grade": "",
+      "subject": "",
+      "engine": "Group Chat",
+      "kind": "",
+      "file": "lib/cases/5-6B.public.js"
+    },
+    {
+      "standard": "5.6C",
+      "title": "The Snow Cone Stand Mystery",
+      "grade": "",
+      "subject": "",
+      "engine": "Group Chat",
+      "kind": "",
+      "file": "lib/cases/5-6C.public.js"
+    },
+    {
+      "standard": "5.6D",
+      "title": "The Flat Soccer Ball Claim",
+      "grade": "",
+      "subject": "",
+      "engine": "Group Chat",
+      "kind": "",
+      "file": "lib/cases/5-6D.public.js"
+    },
+    {
+      "standard": "5.7A",
+      "title": "The Dog Walk Standoff",
+      "grade": "",
+      "subject": "",
+      "engine": "Group Chat",
+      "kind": "",
+      "file": "lib/cases/5-7A.public.js"
+    },
+    {
+      "standard": "5.7B",
+      "title": "The Paper Airplane Contest",
+      "grade": "",
+      "subject": "",
+      "engine": "Group Chat",
+      "kind": "",
+      "file": "lib/cases/5-7B.public.js"
+    },
+    {
+      "standard": "5.8A",
+      "title": "The Self-Powered Sneakers",
+      "grade": "",
+      "subject": "",
+      "engine": "Group Chat",
+      "kind": "",
+      "file": "lib/cases/5-8A.public.js"
+    },
+    {
+      "standard": "5.8B",
+      "title": "The Holiday Light String Mystery",
+      "grade": "",
+      "subject": "",
+      "engine": "Group Chat",
+      "kind": "",
+      "file": "lib/cases/5-8B.public.js"
+    },
+    {
+      "standard": "5.8C",
+      "title": "The Vanishing Trick",
+      "grade": "",
+      "subject": "",
+      "engine": "Group Chat",
+      "kind": "",
+      "file": "lib/cases/5-8C.public.js"
+    },
+    {
+      "standard": "5.9",
+      "title": "The Tournament-Day Shadow",
+      "grade": "",
+      "subject": "",
+      "engine": "Group Chat",
+      "kind": "",
+      "file": "lib/cases/5-9.public.js"
+    },
+    {
+      "standard": "ELA.3.3C",
+      "title": "Dis-Missed",
+      "grade": "",
+      "subject": "",
+      "engine": "Group Chat",
+      "kind": "",
+      "file": "lib/cases/ELA-3-3C.public.js"
+    },
+    {
+      "standard": "ELA.3.6F",
+      "title": "The Door Said It",
+      "grade": "",
+      "subject": "",
+      "engine": "Group Chat",
+      "kind": "",
+      "file": "lib/cases/ELA-3-6F.public.js"
+    },
+    {
+      "standard": "ELA.3.7C",
+      "title": "My Cousin Did That",
+      "grade": "",
+      "subject": "",
+      "engine": "Group Chat",
+      "kind": "",
+      "file": "lib/cases/ELA-3-7C.public.js"
+    },
+    {
+      "standard": "ELA.3.9D",
+      "title": "The First Sentence Rule",
+      "grade": "",
+      "subject": "",
+      "engine": "Group Chat",
+      "kind": "",
+      "file": "lib/cases/ELA-3-9D.public.js"
+    },
+    {
+      "standard": "ELA.4.10A",
+      "title": "It Was Just a Joke",
+      "grade": "",
+      "subject": "",
+      "engine": "Group Chat",
+      "kind": "",
+      "file": "lib/cases/ELA-4-10A.public.js"
+    },
+    {
+      "standard": "ELA.4.11D",
+      "title": "It",
+      "grade": "",
+      "subject": "",
+      "engine": "Group Chat",
+      "kind": "",
+      "file": "lib/cases/ELA-4-11D.public.js"
+    },
+    {
+      "standard": "ELA.4.8A",
+      "title": "The Theme Is Goats",
+      "grade": "",
+      "subject": "",
+      "engine": "Group Chat",
+      "kind": "",
+      "file": "lib/cases/ELA-4-8A.public.js"
+    },
+    {
+      "standard": "ELA.4.9E",
+      "title": "One True Fact",
+      "grade": "",
+      "subject": "",
+      "engine": "Group Chat",
+      "kind": "",
+      "file": "lib/cases/ELA-4-9E.public.js"
+    },
+    {
+      "standard": "ELA.5.10B",
+      "title": "First, Then, Why?",
+      "grade": "",
+      "subject": "",
+      "engine": "Group Chat",
+      "kind": "",
+      "file": "lib/cases/ELA-5-10B.public.js"
+    },
+    {
+      "standard": "ELA.5.10D",
+      "title": "The Hallway Was a River",
+      "grade": "",
+      "subject": "",
+      "engine": "Group Chat",
+      "kind": "",
+      "file": "lib/cases/ELA-5-10D.public.js"
+    },
+    {
+      "standard": "ELA.5.8A",
+      "title": "That",
+      "grade": "",
+      "subject": "",
+      "engine": "Group Chat",
+      "kind": "",
+      "file": "lib/cases/ELA-5-8A.public.js"
+    },
+    {
+      "standard": "ELA.5.9E",
+      "title": "The Loudest Evidence",
+      "grade": "",
+      "subject": "",
+      "engine": "Group Chat",
+      "kind": "",
+      "file": "lib/cases/ELA-5-9E.public.js"
+    },
+    {
+      "standard": "MA.3.3H",
+      "title": "More Slices, More Pizza",
+      "grade": "",
+      "subject": "",
+      "engine": "Group Chat",
+      "kind": "",
+      "file": "lib/cases/MA-3-3H.public.js"
+    },
+    {
+      "standard": "MA.3.5B",
+      "title": "The Altogether Rule",
+      "grade": "",
+      "subject": "",
+      "engine": "Group Chat",
+      "kind": "",
+      "file": "lib/cases/MA-3-5B.public.js"
+    },
+    {
+      "standard": "MA.3.5C",
+      "title": "Three Times as Many",
+      "grade": "",
+      "subject": "",
+      "engine": "Group Chat",
+      "kind": "",
+      "file": "lib/cases/MA-3-5C.public.js"
+    },
+    {
+      "standard": "MA.3.6C",
+      "title": "The Longer Fence",
+      "grade": "",
+      "subject": "",
+      "engine": "Group Chat",
+      "kind": "",
+      "file": "lib/cases/MA-3-6C.public.js"
+    },
+    {
+      "standard": "MA.4.2F",
+      "title": "The Frog Jump Final",
+      "grade": "",
+      "subject": "",
+      "engine": "Group Chat",
+      "kind": "",
+      "file": "lib/cases/MA-4-2F.public.js"
+    },
+    {
+      "standard": "MA.4.2G",
+      "title": "Point Five or One Fifth",
+      "grade": "",
+      "subject": "",
+      "engine": "Group Chat",
+      "kind": "",
+      "file": "lib/cases/MA-4-2G.public.js"
+    },
+    {
+      "standard": "MA.4.3E",
+      "title": "The Trail Math",
+      "grade": "",
+      "subject": "",
+      "engine": "Group Chat",
+      "kind": "",
+      "file": "lib/cases/MA-4-3E.public.js"
+    },
+    {
+      "standard": "MA.4.6B",
+      "title": "The Fold Test",
+      "grade": "",
+      "subject": "",
+      "engine": "Group Chat",
+      "kind": "",
+      "file": "lib/cases/MA-4-6B.public.js"
+    },
+    {
+      "standard": "MA.5.3E",
+      "title": "Just Add a Zero",
+      "grade": "",
+      "subject": "",
+      "engine": "Group Chat",
+      "kind": "",
+      "file": "lib/cases/MA-5-3E.public.js"
+    },
+    {
+      "standard": "MA.5.3I",
+      "title": "The Half-Batch Problem",
+      "grade": "",
+      "subject": "",
+      "engine": "Group Chat",
+      "kind": "",
+      "file": "lib/cases/MA-5-3I.public.js"
+    },
+    {
+      "standard": "MA.5.4F",
+      "title": "Left to Right",
+      "grade": "",
+      "subject": "",
+      "engine": "Group Chat",
+      "kind": "",
+      "file": "lib/cases/MA-5-4F.public.js"
+    },
+    {
+      "standard": "MA.5.5",
+      "title": "Not a Rectangle",
+      "grade": "",
+      "subject": "",
+      "engine": "Group Chat",
+      "kind": "",
+      "file": "lib/cases/MA-5-5.public.js"
+    },
+    {
+      "standard": "SS.3.10A",
+      "title": "It’s More Than a Party",
+      "grade": "",
+      "subject": "",
+      "engine": "Group Chat",
+      "kind": "",
+      "file": "lib/cases/SS-3-10A.public.js"
+    },
+    {
+      "standard": "SS.3.10B",
+      "title": "Same Celebration? Not Quite.",
+      "grade": "",
+      "subject": "",
+      "engine": "Group Chat",
+      "kind": "",
+      "file": "lib/cases/SS-3-10B.public.js"
+    },
+    {
+      "standard": "SS.3.12",
+      "title": "The Painting Is Telling Us Something",
+      "grade": "",
+      "subject": "",
+      "engine": "Group Chat",
+      "kind": "",
+      "file": "lib/cases/SS-3-12.public.js"
+    },
+    {
+      "standard": "SS.3.13B",
+      "title": "It Helped More Than One Person",
+      "grade": "",
+      "subject": "",
+      "engine": "Group Chat",
+      "kind": "",
+      "file": "lib/cases/SS-3-13B.public.js"
+    },
+    {
+      "standard": "SS.3.1A",
+      "title": "The Community Didn’t Change by Itself",
+      "grade": "",
+      "subject": "",
+      "engine": "Group Chat",
+      "kind": "",
+      "file": "lib/cases/SS-3-1A.public.js"
+    },
+    {
+      "standard": "SS.3.1C",
+      "title": "How Do You Build a Community?",
+      "grade": "",
+      "subject": "",
+      "engine": "Group Chat",
+      "kind": "",
+      "file": "lib/cases/SS-3-1C.public.js"
+    },
+    {
+      "standard": "SS.3.2A",
+      "title": "Why Live Together?",
+      "grade": "",
+      "subject": "",
+      "engine": "Group Chat",
+      "kind": "",
+      "file": "lib/cases/SS-3-2A.public.js"
+    },
+    {
+      "standard": "SS.3.2B",
+      "title": "Same Need, Different Solution",
+      "grade": "",
+      "subject": "",
+      "engine": "Group Chat",
+      "kind": "",
+      "file": "lib/cases/SS-3-2B.public.js"
+    },
+    {
+      "standard": "SS.3.3A",
+      "title": "Same Planet, Very Different Place",
+      "grade": "",
+      "subject": "",
+      "engine": "Group Chat",
+      "kind": "",
+      "file": "lib/cases/SS-3-3A.public.js"
+    },
+    {
+      "standard": "SS.3.3B",
+      "title": "Adapt or Change It?",
+      "grade": "",
+      "subject": "",
+      "engine": "Group Chat",
+      "kind": "",
+      "file": "lib/cases/SS-3-3B.public.js"
+    },
+    {
+      "standard": "SS.3.3C",
+      "title": "Who Changed the Landscape?",
+      "grade": "",
+      "subject": "",
+      "engine": "Group Chat",
+      "kind": "",
+      "file": "lib/cases/SS-3-3C.public.js"
+    },
+    {
+      "standard": "SS.3.5A",
+      "title": "What Should I Do With My Money?",
+      "grade": "",
+      "subject": "",
+      "engine": "Group Chat",
+      "kind": "",
+      "file": "lib/cases/SS-3-5A.public.js"
+    },
+    {
+      "standard": "SS.3.5B",
+      "title": "The $40 Budget Problem",
+      "grade": "",
+      "subject": "",
+      "engine": "Group Chat",
+      "kind": "",
+      "file": "lib/cases/SS-3-5B.public.js"
+    },
+    {
+      "standard": "SS.3.6A",
+      "title": "Why Did the Price Change?",
+      "grade": "",
+      "subject": "",
+      "engine": "Group Chat",
+      "kind": "",
+      "file": "lib/cases/SS-3-6A.public.js"
+    },
+    {
+      "standard": "SS.3.6B",
+      "title": "Everybody Wants One. There Aren’t Enough.",
+      "grade": "",
+      "subject": "",
+      "engine": "Group Chat",
+      "kind": "",
+      "file": "lib/cases/SS-3-6B.public.js"
+    },
+    {
+      "standard": "SS.3.6C",
+      "title": "The Store Sold Out… But Did It Make Money?",
+      "grade": "",
+      "subject": "",
+      "engine": "Group Chat",
+      "kind": "",
+      "file": "lib/cases/SS-3-6C.public.js"
+    },
+    {
+      "standard": "SS.3.7A",
+      "title": "Three Governments, Three Jobs?",
+      "grade": "",
+      "subject": "",
+      "engine": "Group Chat",
+      "kind": "",
+      "file": "lib/cases/SS-3-7A.public.js"
+    },
+    {
+      "standard": "SS.3.7B",
+      "title": "Who Actually Handles This?",
+      "grade": "",
+      "subject": "",
+      "engine": "Group Chat",
+      "kind": "",
+      "file": "lib/cases/SS-3-7B.public.js"
+    },
+    {
+      "standard": "SS.3.7C",
+      "title": "Whose Service Is It Anyway?",
+      "grade": "",
+      "subject": "",
+      "engine": "Group Chat",
+      "kind": "",
+      "file": "lib/cases/SS-3-7C.public.js"
+    },
+    {
+      "standard": "SS.3.8A",
+      "title": "The Museum Labels Got Mixed Up",
+      "grade": "",
+      "subject": "",
+      "engine": "Group Chat",
+      "kind": "",
+      "file": "lib/cases/SS-3-8A.public.js"
+    },
+    {
+      "standard": "SS.3.8B",
+      "title": "Who Gave Them Permission?",
+      "grade": "",
+      "subject": "",
+      "engine": "Group Chat",
+      "kind": "",
+      "file": "lib/cases/SS-3-8B.public.js"
+    },
+    {
+      "standard": "SS.3.9A",
+      "title": "Good Citizen or Just Being Nice?",
+      "grade": "",
+      "subject": "",
+      "engine": "Group Chat",
+      "kind": "",
+      "file": "lib/cases/SS-3-9A.public.js"
+    },
+    {
+      "standard": "SS.3.9C",
+      "title": "Is That Really Civic Responsibility?",
+      "grade": "",
+      "subject": "",
+      "engine": "Group Chat",
+      "kind": "",
+      "file": "lib/cases/SS-3-9C.public.js"
+    },
+    {
+      "standard": "SS.3.9D",
+      "title": "Who Helps When Government Doesn’t Do It All?",
+      "grade": "",
+      "subject": "",
+      "engine": "Group Chat",
+      "kind": "",
+      "file": "lib/cases/SS-3-9D.public.js"
+    },
+    {
+      "standard": "SS.3.9E",
+      "title": "The Class Vote Disaster",
+      "grade": "",
+      "subject": "",
+      "engine": "Group Chat",
+      "kind": "",
+      "file": "lib/cases/SS-3-9E.public.js"
+    },
+    {
+      "standard": "SS.4.10A",
+      "title": "The Lemonade Price Puzzle",
+      "grade": "",
+      "subject": "",
+      "engine": "Group Chat",
+      "kind": "",
+      "file": "lib/cases/SS-4-10A.public.js"
+    },
+    {
+      "standard": "SS.4.10B",
+      "title": "Why Choice Matters",
+      "grade": "",
+      "subject": "",
+      "engine": "Group Chat",
+      "kind": "",
+      "file": "lib/cases/SS-4-10B.public.js"
+    },
+    {
+      "standard": "SS.4.11B",
+      "title": "Where Should This Business Go?",
+      "grade": "",
+      "subject": "",
+      "engine": "Group Chat",
+      "kind": "",
+      "file": "lib/cases/SS-4-11B.public.js"
+    },
+    {
+      "standard": "SS.4.11C",
+      "title": "What Made Texas Grow?",
+      "grade": "",
+      "subject": "",
+      "engine": "Group Chat",
+      "kind": "",
+      "file": "lib/cases/SS-4-11C.public.js"
+    },
+    {
+      "standard": "SS.4.11D",
+      "title": "The Message That Changed the Market",
+      "grade": "",
+      "subject": "",
+      "engine": "Group Chat",
+      "kind": "",
+      "file": "lib/cases/SS-4-11D.public.js"
+    },
+    {
+      "standard": "SS.4.12A",
+      "title": "Who Makes the Rules?",
+      "grade": "",
+      "subject": "",
+      "engine": "Group Chat",
+      "kind": "",
+      "file": "lib/cases/SS-4-12A.public.js"
+    },
+    {
+      "standard": "SS.4.12B",
+      "title": "Same Texas, Different Governments",
+      "grade": "",
+      "subject": "",
+      "engine": "Group Chat",
+      "kind": "",
+      "file": "lib/cases/SS-4-12B.public.js"
+    },
+    {
+      "standard": "SS.4.13A",
+      "title": "Why Do We Need Both Documents?",
+      "grade": "",
+      "subject": "",
+      "engine": "Group Chat",
+      "kind": "",
+      "file": "lib/cases/SS-4-13A.public.js"
+    },
+    {
+      "standard": "SS.4.13B",
+      "title": "Everybody Wants to Run Texas",
+      "grade": "",
+      "subject": "",
+      "engine": "Group Chat",
+      "kind": "",
+      "file": "lib/cases/SS-4-13B.public.js"
+    },
+    {
+      "standard": "SS.4.13C",
+      "title": "Three Documents, Three Jobs",
+      "grade": "",
+      "subject": "",
+      "engine": "Group Chat",
+      "kind": "",
+      "file": "lib/cases/SS-4-13C.public.js"
+    },
+    {
+      "standard": "SS.4.15B",
+      "title": "Can One Citizen Make a Difference?",
+      "grade": "",
+      "subject": "",
+      "engine": "Group Chat",
+      "kind": "",
+      "file": "lib/cases/SS-4-15B.public.js"
+    },
+    {
+      "standard": "SS.4.15C",
+      "title": "Voting Is More Than Showing Up",
+      "grade": "",
+      "subject": "",
+      "engine": "Group Chat",
+      "kind": "",
+      "file": "lib/cases/SS-4-15C.public.js"
+    },
+    {
+      "standard": "SS.4.15E",
+      "title": "Dear... Who in Texas?",
+      "grade": "",
+      "subject": "",
+      "engine": "Group Chat",
+      "kind": "",
+      "file": "lib/cases/SS-4-15E.public.js"
+    },
+    {
+      "standard": "SS.4.17B",
+      "title": "What Sounds Like Texas?",
+      "grade": "",
+      "subject": "",
+      "engine": "Group Chat",
+      "kind": "",
+      "file": "lib/cases/SS-4-17B.public.js"
+    },
+    {
+      "standard": "SS.4.18B",
+      "title": "It Changed More Than One Thing",
+      "grade": "",
+      "subject": "",
+      "engine": "Group Chat",
+      "kind": "",
+      "file": "lib/cases/SS-4-18B.public.js"
+    },
+    {
+      "standard": "SS.4.1B",
+      "title": "Same State, Different Ways of Life",
+      "grade": "",
+      "subject": "",
+      "engine": "Group Chat",
+      "kind": "",
+      "file": "lib/cases/SS-4-1B.public.js"
+    },
+    {
+      "standard": "SS.4.1C",
+      "title": "Where You Live Changes What You Need",
+      "grade": "",
+      "subject": "",
+      "engine": "Group Chat",
+      "kind": "",
+      "file": "lib/cases/SS-4-1C.public.js"
+    },
+    {
+      "standard": "SS.4.2A",
+      "title": "Why Texas?",
+      "grade": "",
+      "subject": "",
+      "engine": "Group Chat",
+      "kind": "",
+      "file": "lib/cases/SS-4-2A.public.js"
+    },
+    {
+      "standard": "SS.4.2B",
+      "title": "The Explorer Report Card",
+      "grade": "",
+      "subject": "",
+      "engine": "Group Chat",
+      "kind": "",
+      "file": "lib/cases/SS-4-2B.public.js"
+    },
+    {
+      "standard": "SS.4.2C",
+      "title": "Why Build a Mission Here?",
+      "grade": "",
+      "subject": "",
+      "engine": "Group Chat",
+      "kind": "",
+      "file": "lib/cases/SS-4-2C.public.js"
+    },
+    {
+      "standard": "SS.4.2E",
+      "title": "The Empresario Deal",
+      "grade": "",
+      "subject": "",
+      "engine": "Group Chat",
+      "kind": "",
+      "file": "lib/cases/SS-4-2E.public.js"
+    },
+    {
+      "standard": "SS.4.3A",
+      "title": "What Really Pushed Texas to Revolution?",
+      "grade": "",
+      "subject": "",
+      "engine": "Group Chat",
+      "kind": "",
+      "file": "lib/cases/SS-4-3A.public.js"
+    },
+    {
+      "standard": "SS.4.3D",
+      "title": "Can a New Republic Survive?",
+      "grade": "",
+      "subject": "",
+      "engine": "Group Chat",
+      "kind": "",
+      "file": "lib/cases/SS-4-3D.public.js"
+    },
+    {
+      "standard": "SS.4.3E",
+      "title": "Texas Joins the United States — Problem Solved?",
+      "grade": "",
+      "subject": "",
+      "engine": "Group Chat",
+      "kind": "",
+      "file": "lib/cases/SS-4-3E.public.js"
+    },
+    {
+      "standard": "SS.4.4A",
+      "title": "The War Ended. Did Texas Change?",
+      "grade": "",
+      "subject": "",
+      "engine": "Group Chat",
+      "kind": "",
+      "file": "lib/cases/SS-4-4A.public.js"
+    },
+    {
+      "standard": "SS.4.4B",
+      "title": "The Cattle Trail Boom",
+      "grade": "",
+      "subject": "",
+      "engine": "Group Chat",
+      "kind": "",
+      "file": "lib/cases/SS-4-4B.public.js"
+    },
+    {
+      "standard": "SS.4.4C",
+      "title": "The Railroad Changed Everything?",
+      "grade": "",
+      "subject": "",
+      "engine": "Group Chat",
+      "kind": "",
+      "file": "lib/cases/SS-4-4C.public.js"
+    },
+    {
+      "standard": "SS.4.4D",
+      "title": "What Happened When the Buffalo Disappeared?",
+      "grade": "",
+      "subject": "",
+      "engine": "Group Chat",
+      "kind": "",
+      "file": "lib/cases/SS-4-4D.public.js"
+    },
+    {
+      "standard": "SS.4.6B",
+      "title": "Which Texas Region Fits?",
+      "grade": "",
+      "subject": "",
+      "engine": "Group Chat",
+      "kind": "",
+      "file": "lib/cases/SS-4-6B.public.js"
+    },
+    {
+      "standard": "SS.4.7A",
+      "title": "Why Did People Settle Here?",
+      "grade": "",
+      "subject": "",
+      "engine": "Group Chat",
+      "kind": "",
+      "file": "lib/cases/SS-4-7A.public.js"
+    },
+    {
+      "standard": "SS.4.7B",
+      "title": "Why Did the Town Grow There?",
+      "grade": "",
+      "subject": "",
+      "engine": "Group Chat",
+      "kind": "",
+      "file": "lib/cases/SS-4-7B.public.js"
+    },
+    {
+      "standard": "SS.4.8B",
+      "title": "Why Change the Land?",
+      "grade": "",
+      "subject": "",
+      "engine": "Group Chat",
+      "kind": "",
+      "file": "lib/cases/SS-4-8B.public.js"
+    },
+    {
+      "standard": "SS.4.8C",
+      "title": "Worth the Tradeoff?",
+      "grade": "",
+      "subject": "",
+      "engine": "Group Chat",
+      "kind": "",
+      "file": "lib/cases/SS-4-8C.public.js"
+    },
+    {
+      "standard": "SS.4.9A",
+      "title": "How Do We Meet Our Needs?",
+      "grade": "",
+      "subject": "",
+      "engine": "Group Chat",
+      "kind": "",
+      "file": "lib/cases/SS-4-9A.public.js"
+    },
+    {
+      "standard": "SS.5.11A",
+      "title": "The Sneaker Sellout",
+      "grade": "",
+      "subject": "",
+      "engine": "Group Chat",
+      "kind": "",
+      "file": "lib/cases/SS-5-11A.public.js"
+    },
+    {
+      "standard": "SS.5.11B",
+      "title": "The Strawberry Shortage",
+      "grade": "",
+      "subject": "",
+      "engine": "Group Chat",
+      "kind": "",
+      "file": "lib/cases/SS-5-11B.public.js"
+    },
+    {
+      "standard": "SS.5.12B",
+      "title": "Where Should We Build It?",
+      "grade": "",
+      "subject": "",
+      "engine": "Group Chat",
+      "kind": "",
+      "file": "lib/cases/SS-5-12B.public.js"
+    },
+    {
+      "standard": "SS.5.12C",
+      "title": "The City That Kept Growing",
+      "grade": "",
+      "subject": "",
+      "engine": "Group Chat",
+      "kind": "",
+      "file": "lib/cases/SS-5-12C.public.js"
+    },
+    {
+      "standard": "SS.5.12D",
+      "title": "The 500-Order Disaster",
+      "grade": "",
+      "subject": "",
+      "engine": "Group Chat",
+      "kind": "",
+      "file": "lib/cases/SS-5-12D.public.js"
+    },
+    {
+      "standard": "SS.5.13A",
+      "title": "Who Gets the Final Say?",
+      "grade": "",
+      "subject": "",
+      "engine": "Group Chat",
+      "kind": "",
+      "file": "lib/cases/SS-5-13A.public.js"
+    },
+    {
+      "standard": "SS.5.13B",
+      "title": "The Meeting Nobody Asked For",
+      "grade": "",
+      "subject": "",
+      "engine": "Group Chat",
+      "kind": "",
+      "file": "lib/cases/SS-5-13B.public.js"
+    },
+    {
+      "standard": "SS.5.14A",
+      "title": "The Breakup Letter",
+      "grade": "",
+      "subject": "",
+      "engine": "Group Chat",
+      "kind": "",
+      "file": "lib/cases/SS-5-14A.public.js"
+    },
+    {
+      "standard": "SS.5.14B",
+      "title": "Six Jobs, One Constitution",
+      "grade": "",
+      "subject": "",
+      "engine": "Group Chat",
+      "kind": "",
+      "file": "lib/cases/SS-5-14B.public.js"
+    },
+    {
+      "standard": "SS.5.14C",
+      "title": "Why Add Ten More?",
+      "grade": "",
+      "subject": "",
+      "engine": "Group Chat",
+      "kind": "",
+      "file": "lib/cases/SS-5-14C.public.js"
+    },
+    {
+      "standard": "SS.5.15A",
+      "title": "Everybody Wants the Gavel",
+      "grade": "",
+      "subject": "",
+      "engine": "Group Chat",
+      "kind": "",
+      "file": "lib/cases/SS-5-15A.public.js"
+    },
+    {
+      "standard": "SS.5.15B",
+      "title": "The President Said Yes. Case Closed?",
+      "grade": "",
+      "subject": "",
+      "engine": "Group Chat",
+      "kind": "",
+      "file": "lib/cases/SS-5-15B.public.js"
+    },
+    {
+      "standard": "SS.5.15C",
+      "title": "Whose Job Is This Anyway?",
+      "grade": "",
+      "subject": "",
+      "engine": "Group Chat",
+      "kind": "",
+      "file": "lib/cases/SS-5-15C.public.js"
+    },
+    {
+      "standard": "SS.5.17A",
+      "title": "Why Bother?",
+      "grade": "",
+      "subject": "",
+      "engine": "Group Chat",
+      "kind": "",
+      "file": "lib/cases/SS-5-17A.public.js"
+    },
+    {
+      "standard": "SS.5.17B",
+      "title": "Dear... Who?",
+      "grade": "",
+      "subject": "",
+      "engine": "Group Chat",
+      "kind": "",
+      "file": "lib/cases/SS-5-17B.public.js"
+    },
+    {
+      "standard": "SS.5.17C",
+      "title": "The Pizza Vote Disaster",
+      "grade": "",
+      "subject": "",
+      "engine": "Group Chat",
+      "kind": "",
+      "file": "lib/cases/SS-5-17C.public.js"
+    },
+    {
+      "standard": "SS.5.19A",
+      "title": "Can They Actually Do That?",
+      "grade": "",
+      "subject": "",
+      "engine": "Group Chat",
+      "kind": "",
+      "file": "lib/cases/SS-5-19A.public.js"
+    },
+    {
+      "standard": "SS.5.20B",
+      "title": "The Painting Is Not Just a Picture",
+      "grade": "",
+      "subject": "",
+      "engine": "Group Chat",
+      "kind": "",
+      "file": "lib/cases/SS-5-20B.public.js"
+    },
+    {
+      "standard": "SS.5.21B",
+      "title": "Who Gets to Be “American”?",
+      "grade": "",
+      "subject": "",
+      "engine": "Group Chat",
+      "kind": "",
+      "file": "lib/cases/SS-5-21B.public.js"
+    },
+    {
+      "standard": "SS.5.22B",
+      "title": "The Railroad Was Just Transportation",
+      "grade": "",
+      "subject": "",
+      "engine": "Group Chat",
+      "kind": "",
+      "file": "lib/cases/SS-5-22B.public.js"
+    },
+    {
+      "standard": "SS.5.22C",
+      "title": "It Only Changed One Thing",
+      "grade": "",
+      "subject": "",
+      "engine": "Group Chat",
+      "kind": "",
+      "file": "lib/cases/SS-5-22C.public.js"
+    },
+    {
+      "standard": "SS.5.2A",
+      "title": "The Tea Party Blame Game",
+      "grade": "",
+      "subject": "",
+      "engine": "Group Chat",
+      "kind": "",
+      "file": "lib/cases/SS-5-2A.public.js"
+    },
+    {
+      "standard": "SS.5.4A",
+      "title": "The One-Reason War",
+      "grade": "",
+      "subject": "",
+      "engine": "Group Chat",
+      "kind": "",
+      "file": "lib/cases/SS-5-4A.public.js"
+    },
+    {
+      "standard": "SS.5.4B",
+      "title": "Same Country, Different Future",
+      "grade": "",
+      "subject": "",
+      "engine": "Group Chat",
+      "kind": "",
+      "file": "lib/cases/SS-5-4B.public.js"
+    },
+    {
+      "standard": "SS.5.4D",
+      "title": "The Cause File",
+      "grade": "",
+      "subject": "",
+      "engine": "Group Chat",
+      "kind": "",
+      "file": "lib/cases/SS-5-4D.public.js"
+    },
+    {
+      "standard": "SS.5.4E",
+      "title": "Freedom: Case Closed?",
+      "grade": "",
+      "subject": "",
+      "engine": "Group Chat",
+      "kind": "",
+      "file": "lib/cases/SS-5-4E.public.js"
+    },
+    {
+      "standard": "SS.5.4F",
+      "title": "Opportunity for Who?",
+      "grade": "",
+      "subject": "",
+      "engine": "Group Chat",
+      "kind": "",
+      "file": "lib/cases/SS-5-4F.public.js"
+    },
+    {
+      "standard": "SS.5.7B",
+      "title": "The Town That Picked the Wrong Spot",
+      "grade": "",
+      "subject": "",
+      "engine": "Group Chat",
+      "kind": "",
+      "file": "lib/cases/SS-5-7B.public.js"
+    },
+    {
+      "standard": "SS.5.8A",
+      "title": "Adapt or Change It?",
+      "grade": "",
+      "subject": "",
+      "engine": "Group Chat",
+      "kind": "",
+      "file": "lib/cases/SS-5-8A.public.js"
+    },
+    {
+      "standard": "SS.5.8B",
+      "title": "The Dam Debate",
+      "grade": "",
+      "subject": "",
+      "engine": "Group Chat",
+      "kind": "",
+      "file": "lib/cases/SS-5-8B.public.js"
+    },
+    {
+      "standard": "3.1-MM",
+      "title": "Rescue the Pollination Path",
+      "grade": "3",
+      "subject": "Science",
+      "engine": "Mission Map",
+      "kind": "",
+      "file": "lib/cases/mission-map/3-1-MM.public.js"
+    },
+    {
+      "standard": "3.10-MM",
+      "title": "Array Door Challenge",
+      "grade": "3",
+      "subject": "Math",
+      "engine": "Mission Map",
+      "kind": "",
+      "file": "lib/cases/mission-map/3-10-MM.public.js"
+    },
+    {
+      "standard": "3.11-MM",
+      "title": "Fraction Path Unlock",
+      "grade": "3",
+      "subject": "Math",
+      "engine": "Mission Map",
+      "kind": "",
+      "file": "lib/cases/mission-map/3-11-MM.public.js"
+    },
+    {
+      "standard": "3.12-MM",
+      "title": "Data Clue Trail",
+      "grade": "3",
+      "subject": "Math",
+      "engine": "Mission Map",
+      "kind": "",
+      "file": "lib/cases/mission-map/3-12-MM.public.js"
+    },
+    {
+      "standard": "3.13-MM",
+      "title": "Unlock the Character Clue Door",
+      "grade": "3",
+      "subject": "ELAR",
+      "engine": "Mission Map",
+      "kind": "",
+      "file": "lib/cases/mission-map/3-13-MM.public.js"
+    },
+    {
+      "standard": "3.14-MM",
+      "title": "Main Idea Treasure Map",
+      "grade": "3",
+      "subject": "ELAR",
+      "engine": "Mission Map",
+      "kind": "",
+      "file": "lib/cases/mission-map/3-14-MM.public.js"
+    },
+    {
+      "standard": "3.15-MM",
+      "title": "Sequence Story Gate",
+      "grade": "3",
+      "subject": "ELAR",
+      "engine": "Mission Map",
+      "kind": "",
+      "file": "lib/cases/mission-map/3-15-MM.public.js"
+    },
+    {
+      "standard": "3.16-MM",
+      "title": "Text Feature Code Breaker",
+      "grade": "3",
+      "subject": "ELAR",
+      "engine": "Mission Map",
+      "kind": "",
+      "file": "lib/cases/mission-map/3-16-MM.public.js"
+    },
+    {
+      "standard": "3.2-MM",
+      "title": "Weather Station Lockdown",
+      "grade": "3",
+      "subject": "Science",
+      "engine": "Mission Map",
+      "kind": "",
+      "file": "lib/cases/mission-map/3-2-MM.public.js"
+    },
+    {
+      "standard": "3.3-MM",
+      "title": "Magnet Maze",
+      "grade": "3",
+      "subject": "Science",
+      "engine": "Mission Map",
+      "kind": "",
+      "file": "lib/cases/mission-map/3-3-MM.public.js"
+    },
+    {
+      "standard": "3.4-MM",
+      "title": "Unlock the Habitat Trail",
+      "grade": "3",
+      "subject": "Science",
+      "engine": "Mission Map",
+      "kind": "",
+      "file": "lib/cases/mission-map/3-4-MM.public.js"
+    },
+    {
+      "standard": "3.5-MM",
+      "title": "Community Helper Route",
+      "grade": "3",
+      "subject": "Social Studies",
+      "engine": "Mission Map",
+      "kind": "",
+      "file": "lib/cases/mission-map/3-5-MM.public.js"
+    },
+    {
+      "standard": "3.6-MM",
+      "title": "Map Key Quest",
+      "grade": "3",
+      "subject": "Social Studies",
+      "engine": "Mission Map",
+      "kind": "",
+      "file": "lib/cases/mission-map/3-6-MM.public.js"
+    },
+    {
+      "standard": "3.7-MM",
+      "title": "Past and Present Doorway",
+      "grade": "3",
+      "subject": "Social Studies",
+      "engine": "Mission Map",
+      "kind": "",
+      "file": "lib/cases/mission-map/3-7-MM.public.js"
+    },
+    {
+      "standard": "3.8-MM",
+      "title": "Market Price Mission",
+      "grade": "3",
+      "subject": "Social Studies",
+      "engine": "Mission Map",
+      "kind": "",
+      "file": "lib/cases/mission-map/3-8-MM.public.js"
+    },
+    {
+      "standard": "3.9-MM",
+      "title": "Open the Perimeter Gate",
+      "grade": "3",
+      "subject": "Math",
+      "engine": "Mission Map",
+      "kind": "",
+      "file": "lib/cases/mission-map/3-9-MM.public.js"
+    },
+    {
+      "standard": "4.1-MM",
+      "title": "Chart the Moon",
+      "grade": "4",
+      "subject": "Science",
+      "engine": "Mission Map",
+      "kind": "",
+      "file": "lib/cases/mission-map/4-1-MM.public.js"
+    },
+    {
+      "standard": "4.10-MM",
+      "title": "Fraction Comparison Castle",
+      "grade": "4",
+      "subject": "Math",
+      "engine": "Mission Map",
+      "kind": "",
+      "file": "lib/cases/mission-map/4-10-MM.public.js"
+    },
+    {
+      "standard": "4.11-MM",
+      "title": "Area and Perimeter Labyrinth",
+      "grade": "4",
+      "subject": "Math",
+      "engine": "Mission Map",
+      "kind": "",
+      "file": "lib/cases/mission-map/4-11-MM.public.js"
+    },
+    {
+      "standard": "4.12-MM",
+      "title": "Decimal Tenths Treasure",
+      "grade": "4",
+      "subject": "Math",
+      "engine": "Mission Map",
+      "kind": "",
+      "file": "lib/cases/mission-map/4-12-MM.public.js"
+    },
+    {
+      "standard": "4.13-MM",
+      "title": "Operation Key Quest",
+      "grade": "4",
+      "subject": "Math",
+      "engine": "Mission Map",
+      "kind": "",
+      "file": "lib/cases/mission-map/4-13-MM.public.js"
+    },
+    {
+      "standard": "4.14-MM",
+      "title": "Theme Vault",
+      "grade": "4",
+      "subject": "ELAR",
+      "engine": "Mission Map",
+      "kind": "",
+      "file": "lib/cases/mission-map/4-14-MM.public.js"
+    },
+    {
+      "standard": "4.15-MM",
+      "title": "Author",
+      "grade": "4",
+      "subject": "ELAR",
+      "engine": "Mission Map",
+      "kind": "",
+      "file": "lib/cases/mission-map/4-15-MM.public.js"
+    },
+    {
+      "standard": "4.16-MM",
+      "title": "Argument Aim Quest",
+      "grade": "4",
+      "subject": "ELAR",
+      "engine": "Mission Map",
+      "kind": "",
+      "file": "lib/cases/mission-map/4-16-MM.public.js"
+    },
+    {
+      "standard": "4.17-MM",
+      "title": "Summary Lock Path",
+      "grade": "4",
+      "subject": "ELAR",
+      "engine": "Mission Map",
+      "kind": "",
+      "file": "lib/cases/mission-map/4-17-MM.public.js"
+    },
+    {
+      "standard": "4.2-MM",
+      "title": "Open the Water Cycle Vault",
+      "grade": "4",
+      "subject": "Science",
+      "engine": "Mission Map",
+      "kind": "",
+      "file": "lib/cases/mission-map/4-2-MM.public.js"
+    },
+    {
+      "standard": "4.3-MM",
+      "title": "Erosion Bridge Mission",
+      "grade": "4",
+      "subject": "Science",
+      "engine": "Mission Map",
+      "kind": "",
+      "file": "lib/cases/mission-map/4-3-MM.public.js"
+    },
+    {
+      "standard": "4.4-MM",
+      "title": "Ecosystem Balance Path",
+      "grade": "4",
+      "subject": "Science",
+      "engine": "Mission Map",
+      "kind": "",
+      "file": "lib/cases/mission-map/4-4-MM.public.js"
+    },
+    {
+      "standard": "4.5-MM",
+      "title": "Weather Data Command Center",
+      "grade": "4",
+      "subject": "Science",
+      "engine": "Mission Map",
+      "kind": "",
+      "file": "lib/cases/mission-map/4-5-MM.public.js"
+    },
+    {
+      "standard": "4.6-MM",
+      "title": "Region Evidence Trail",
+      "grade": "4",
+      "subject": "Social Studies",
+      "engine": "Mission Map",
+      "kind": "",
+      "file": "lib/cases/mission-map/4-6-MM.public.js"
+    },
+    {
+      "standard": "4.7-MM",
+      "title": "Cause-and-Effect Chain Gate",
+      "grade": "4",
+      "subject": "Social Studies",
+      "engine": "Mission Map",
+      "kind": "",
+      "file": "lib/cases/mission-map/4-7-MM.public.js"
+    },
+    {
+      "standard": "4.8-MM",
+      "title": "Primary Source Lockbox",
+      "grade": "4",
+      "subject": "Social Studies",
+      "engine": "Mission Map",
+      "kind": "",
+      "file": "lib/cases/mission-map/4-8-MM.public.js"
+    },
+    {
+      "standard": "4.9-MM",
+      "title": "Civic Decision Map",
+      "grade": "4",
+      "subject": "Social Studies",
+      "engine": "Mission Map",
+      "kind": "",
+      "file": "lib/cases/mission-map/4-9-MM.public.js"
+    },
+    {
+      "standard": "5.1-MM",
+      "title": "Solve the Derby Track Mystery",
+      "grade": "5",
+      "subject": "Science",
+      "engine": "Mission Map",
+      "kind": "",
+      "file": "lib/cases/mission-map/5-1-MM.public.js"
+    },
+    {
+      "standard": "5.10-MM",
+      "title": "Volume Vault",
+      "grade": "5",
+      "subject": "Math",
+      "engine": "Mission Map",
+      "kind": "",
+      "file": "lib/cases/mission-map/5-10-MM.public.js"
+    },
+    {
+      "standard": "5.11-MM",
+      "title": "Graph Scale Escape",
+      "grade": "5",
+      "subject": "Math",
+      "engine": "Mission Map",
+      "kind": "",
+      "file": "lib/cases/mission-map/5-11-MM.public.js"
+    },
+    {
+      "standard": "5.12-MM",
+      "title": "Fraction Recipe Quest",
+      "grade": "5",
+      "subject": "Math",
+      "engine": "Mission Map",
+      "kind": "",
+      "file": "lib/cases/mission-map/5-12-MM.public.js"
+    },
+    {
+      "standard": "5.13-MM",
+      "title": "Inference Investigation",
+      "grade": "5",
+      "subject": "ELAR",
+      "engine": "Mission Map",
+      "kind": "",
+      "file": "lib/cases/mission-map/5-13-MM.public.js"
+    },
+    {
+      "standard": "5.14-MM",
+      "title": "Paired Text Portal",
+      "grade": "5",
+      "subject": "ELAR",
+      "engine": "Mission Map",
+      "kind": "",
+      "file": "lib/cases/mission-map/5-14-MM.public.js"
+    },
+    {
+      "standard": "5.15-MM",
+      "title": "Theme Evidence Escape",
+      "grade": "5",
+      "subject": "ELAR",
+      "engine": "Mission Map",
+      "kind": "",
+      "file": "lib/cases/mission-map/5-15-MM.public.js"
+    },
+    {
+      "standard": "5.16-MM",
+      "title": "Author",
+      "grade": "5",
+      "subject": "ELAR",
+      "engine": "Mission Map",
+      "kind": "",
+      "file": "lib/cases/mission-map/5-16-MM.public.js"
+    },
+    {
+      "standard": "5.2-MM",
+      "title": "Restore the Circuit Lab",
+      "grade": "5",
+      "subject": "Science",
+      "engine": "Mission Map",
+      "kind": "",
+      "file": "lib/cases/mission-map/5-2-MM.public.js"
+    },
+    {
+      "standard": "5.3-MM",
+      "title": "Matter Mystery Lockbox",
+      "grade": "5",
+      "subject": "Science",
+      "engine": "Mission Map",
+      "kind": "",
+      "file": "lib/cases/mission-map/5-3-MM.public.js"
+    },
+    {
+      "standard": "5.4-MM",
+      "title": "Food Web Rescue Route",
+      "grade": "5",
+      "subject": "Science",
+      "engine": "Mission Map",
+      "kind": "",
+      "file": "lib/cases/mission-map/5-4-MM.public.js"
+    },
+    {
+      "standard": "5.5-MM",
+      "title": "Rights Case File",
+      "grade": "5",
+      "subject": "Social Studies",
+      "engine": "Mission Map",
+      "kind": "",
+      "file": "lib/cases/mission-map/5-5-MM.public.js"
+    },
+    {
+      "standard": "5.6-MM",
+      "title": "Branch Checkpoint Mission",
+      "grade": "5",
+      "subject": "Social Studies",
+      "engine": "Mission Map",
+      "kind": "",
+      "file": "lib/cases/mission-map/5-6-MM.public.js"
+    },
+    {
+      "standard": "5.7-MM",
+      "title": "Settlement Site Quest",
+      "grade": "5",
+      "subject": "Social Studies",
+      "engine": "Mission Map",
+      "kind": "",
+      "file": "lib/cases/mission-map/5-7-MM.public.js"
+    },
+    {
+      "standard": "5.8-MM",
+      "title": "Historical Perspective Portal",
+      "grade": "5",
+      "subject": "Social Studies",
+      "engine": "Mission Map",
+      "kind": "",
+      "file": "lib/cases/mission-map/5-8-MM.public.js"
+    },
+    {
+      "standard": "5.9-MM",
+      "title": "Decimal Dungeon Escape",
+      "grade": "5",
+      "subject": "Math",
+      "engine": "Mission Map",
+      "kind": "",
+      "file": "lib/cases/mission-map/5-9-MM.public.js"
+    },
+    {
+      "standard": "5.6D-BN",
+      "title": "The Invisible Pressure Mystery",
+      "grade": "5",
+      "subject": "Science",
+      "engine": "Newsroom",
+      "kind": "",
+      "file": "lib/cases/newsroom-bn/5-6D-BN.public.js"
+    },
+    {
+      "standard": "3.10A-SC",
+      "title": "Just a Guess?",
+      "grade": "3",
+      "subject": "Science",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/3-10A-SC.public.js"
+    },
+    {
+      "standard": "3.10A-SC-TH",
+      "title": "Thread: Just Guessing?",
+      "grade": "3",
+      "subject": "Science",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/3-10A-SC-TH.public.js"
+    },
+    {
+      "standard": "3.10A-SC-WI",
+      "title": "Forecast Fight",
+      "grade": "3",
+      "subject": "Science",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/3-10A-SC-WI.public.js"
+    },
+    {
+      "standard": "3.10B-SC",
+      "title": "Just Dirt?",
+      "grade": "3",
+      "subject": "Science",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/3-10B-SC.public.js"
+    },
+    {
+      "standard": "3.10B-SC-TH",
+      "title": "Thread: Just Dirt?",
+      "grade": "3",
+      "subject": "Science",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/3-10B-SC-TH.public.js"
+    },
+    {
+      "standard": "3.10B-SC-WI",
+      "title": "Dirt Debate",
+      "grade": "3",
+      "subject": "Science",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/3-10B-SC-WI.public.js"
+    },
+    {
+      "standard": "3.10C-SC",
+      "title": "Sudden or Slow?",
+      "grade": "3",
+      "subject": "Science",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/3-10C-SC.public.js"
+    },
+    {
+      "standard": "3.10C-SC-TH",
+      "title": "Thread: Overnight Change?",
+      "grade": "3",
+      "subject": "Science",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/3-10C-SC-TH.public.js"
+    },
+    {
+      "standard": "3.10C-SC-WI",
+      "title": "Bank Change Weigh-In",
+      "grade": "3",
+      "subject": "Science",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/3-10C-SC-WI.public.js"
+    },
+    {
+      "standard": "3.11B-SC",
+      "title": "Does Water Ever Run Low?",
+      "grade": "3",
+      "subject": "Science",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/3-11B-SC.public.js"
+    },
+    {
+      "standard": "3.11B-SC-TH",
+      "title": "Thread: Unlimited Water?",
+      "grade": "3",
+      "subject": "Science",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/3-11B-SC-TH.public.js"
+    },
+    {
+      "standard": "3.11B-SC-WI",
+      "title": "Water Tank Weigh-In",
+      "grade": "3",
+      "subject": "Science",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/3-11B-SC-WI.public.js"
+    },
+    {
+      "standard": "3.12A-SC",
+      "title": "Where Do They Go in November?",
+      "grade": "3",
+      "subject": "Science",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/3-12A-SC.public.js"
+    },
+    {
+      "standard": "3.12A-SC-TH",
+      "title": "Thread: Die Till Spring?",
+      "grade": "3",
+      "subject": "Science",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/3-12A-SC-TH.public.js"
+    },
+    {
+      "standard": "3.12A-SC-WI",
+      "title": "Winter Vanish Weigh-In",
+      "grade": "3",
+      "subject": "Science",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/3-12A-SC-WI.public.js"
+    },
+    {
+      "standard": "3.12B-SC",
+      "title": "What Happens If the Frogs Disappear?",
+      "grade": "3",
+      "subject": "Science",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/3-12B-SC.public.js"
+    },
+    {
+      "standard": "3.12B-SC-TH",
+      "title": "Thread: Pond Stays Same?",
+      "grade": "3",
+      "subject": "Science",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/3-12B-SC-TH.public.js"
+    },
+    {
+      "standard": "3.12B-SC-WI",
+      "title": "Frog Drop Weigh-In",
+      "grade": "3",
+      "subject": "Science",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/3-12B-SC-WI.public.js"
+    },
+    {
+      "standard": "3.12C-SC",
+      "title": "Was the Pond Really Ruined?",
+      "grade": "3",
+      "subject": "Science",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/3-12C-SC.public.js"
+    },
+    {
+      "standard": "3.12C-SC-TH",
+      "title": "Thread: Pond Ruined?",
+      "grade": "3",
+      "subject": "Science",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/3-12C-SC-TH.public.js"
+    },
+    {
+      "standard": "3.12C-SC-WI",
+      "title": "Flood Pond Weigh-In",
+      "grade": "3",
+      "subject": "Science",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/3-12C-SC-WI.public.js"
+    },
+    {
+      "standard": "3.12D-SC",
+      "title": "Carved, or Always There?",
+      "grade": "3",
+      "subject": "Science",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/3-12D-SC.public.js"
+    },
+    {
+      "standard": "3.12D-SC-TH",
+      "title": "Thread: Someone Carved It?",
+      "grade": "3",
+      "subject": "Science",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/3-12D-SC-TH.public.js"
+    },
+    {
+      "standard": "3.12D-SC-WI",
+      "title": "Rock Shape Weigh-In",
+      "grade": "3",
+      "subject": "Science",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/3-12D-SC-WI.public.js"
+    },
+    {
+      "standard": "3.13A-SC",
+      "title": "Wrong Legs for the Job?",
+      "grade": "3",
+      "subject": "Science",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/3-13A-SC.public.js"
+    },
+    {
+      "standard": "3.13A-SC-TH",
+      "title": "Thread: Worse Legs?",
+      "grade": "3",
+      "subject": "Science",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/3-13A-SC-TH.public.js"
+    },
+    {
+      "standard": "3.13A-SC-WI",
+      "title": "Claw Clash",
+      "grade": "3",
+      "subject": "Science",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/3-13A-SC-WI.public.js"
+    },
+    {
+      "standard": "3.13B-SC",
+      "title": "Same Bug, or Two?",
+      "grade": "3",
+      "subject": "Science",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/3-13B-SC.public.js"
+    },
+    {
+      "standard": "3.13B-SC-TH",
+      "title": "Thread: Two Different Bugs?",
+      "grade": "3",
+      "subject": "Science",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/3-13B-SC-TH.public.js"
+    },
+    {
+      "standard": "3.13B-SC-WI",
+      "title": "Bug Twin Weigh-In",
+      "grade": "3",
+      "subject": "Science",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/3-13B-SC-WI.public.js"
+    },
+    {
+      "standard": "3.6A-SC",
+      "title": "Sticks to Some, Not All",
+      "grade": "3",
+      "subject": "Science",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/3-6A-SC.public.js"
+    },
+    {
+      "standard": "3.6A-SC-TH",
+      "title": "Thread: Every Metal?",
+      "grade": "3",
+      "subject": "Science",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/3-6A-SC-TH.public.js"
+    },
+    {
+      "standard": "3.6A-SC-WI",
+      "title": "Magnet Stick-Off",
+      "grade": "3",
+      "subject": "Science",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/3-6A-SC-WI.public.js"
+    },
+    {
+      "standard": "3.6B-SC",
+      "title": "Does It Pour Like Water?",
+      "grade": "3",
+      "subject": "Science",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/3-6B-SC.public.js"
+    },
+    {
+      "standard": "3.6B-SC-TH",
+      "title": "Thread: Sugar Is Liquid?",
+      "grade": "3",
+      "subject": "Science",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/3-6B-SC-TH.public.js"
+    },
+    {
+      "standard": "3.6B-SC-WI",
+      "title": "Sugar Showdown",
+      "grade": "3",
+      "subject": "Science",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/3-6B-SC-WI.public.js"
+    },
+    {
+      "standard": "3.6C-SC",
+      "title": "Leaky Can, or Something Else?",
+      "grade": "3",
+      "subject": "Science",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/3-6C-SC.public.js"
+    },
+    {
+      "standard": "3.6C-SC-TH",
+      "title": "Thread: Leaky Can?",
+      "grade": "3",
+      "subject": "Science",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/3-6C-SC-TH.public.js"
+    },
+    {
+      "standard": "3.6C-SC-WI",
+      "title": "Wet Can Weigh-In",
+      "grade": "3",
+      "subject": "Science",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/3-6C-SC-WI.public.js"
+    },
+    {
+      "standard": "3.6E-SC",
+      "title": "The Magnet Mystery Headline",
+      "grade": "3",
+      "subject": "Science",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/3-6E-SC.public.js"
+    },
+    {
+      "standard": "3.7A-SC",
+      "title": "Does Something Skip Gravity?",
+      "grade": "3",
+      "subject": "Science",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/3-7A-SC.public.js"
+    },
+    {
+      "standard": "3.7A-SC-TH",
+      "title": "Thread: Gravity Skips Light?",
+      "grade": "3",
+      "subject": "Science",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/3-7A-SC-TH.public.js"
+    },
+    {
+      "standard": "3.7A-SC-WI",
+      "title": "Filter Fall Weigh-In",
+      "grade": "3",
+      "subject": "Science",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/3-7A-SC-WI.public.js"
+    },
+    {
+      "standard": "3.7B-SC",
+      "title": "Win by Hitting Harder?",
+      "grade": "3",
+      "subject": "Science",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/3-7B-SC.public.js"
+    },
+    {
+      "standard": "3.7B-SC-TH",
+      "title": "Thread: Hit Harder Wins?",
+      "grade": "3",
+      "subject": "Science",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/3-7B-SC-TH.public.js"
+    },
+    {
+      "standard": "3.7B-SC-WI",
+      "title": "Hard Hit Weigh-In",
+      "grade": "3",
+      "subject": "Science",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/3-7B-SC-WI.public.js"
+    },
+    {
+      "standard": "3.8A-SC",
+      "title": "Does It Need a Plug?",
+      "grade": "3",
+      "subject": "Science",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/3-8A-SC.public.js"
+    },
+    {
+      "standard": "3.8A-SC-TH",
+      "title": "Thread: Needs a Plug?",
+      "grade": "3",
+      "subject": "Science",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/3-8A-SC-TH.public.js"
+    },
+    {
+      "standard": "3.8A-SC-WI",
+      "title": "Plug-Only Weigh-In",
+      "grade": "3",
+      "subject": "Science",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/3-8A-SC-WI.public.js"
+    },
+    {
+      "standard": "3.8B-SC",
+      "title": "Bigger Ball, Bigger Hit?",
+      "grade": "3",
+      "subject": "Science",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/3-8B-SC.public.js"
+    },
+    {
+      "standard": "3.8B-SC-TH",
+      "title": "Thread: Need a Heavy Ball?",
+      "grade": "3",
+      "subject": "Science",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/3-8B-SC-TH.public.js"
+    },
+    {
+      "standard": "3.8B-SC-WI",
+      "title": "Heavy Ball Weigh-In",
+      "grade": "3",
+      "subject": "Science",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/3-8B-SC-WI.public.js"
+    },
+    {
+      "standard": "3.9B-SC",
+      "title": "Who Goes First?",
+      "grade": "3",
+      "subject": "Science",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/3-9B-SC.public.js"
+    },
+    {
+      "standard": "3.9B-SC-TH",
+      "title": "Thread: Biggest Goes First?",
+      "grade": "3",
+      "subject": "Science",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/3-9B-SC-TH.public.js"
+    },
+    {
+      "standard": "3.9B-SC-WI",
+      "title": "Biggest Closest?",
+      "grade": "3",
+      "subject": "Science",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/3-9B-SC-WI.public.js"
+    },
+    {
+      "standard": "ELA.3.6F-SC",
+      "title": "Who Are These Two?",
+      "grade": "3",
+      "subject": "ELAR",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/ELA-3-6F-SC.public.js"
+    },
+    {
+      "standard": "ELA.3.7C-SC",
+      "title": "Why Ellie Left",
+      "grade": "3",
+      "subject": "ELAR",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/ELA-3-7C-SC.public.js"
+    },
+    {
+      "standard": "ELA.3.9D-SC",
+      "title": "The Title Says Honey",
+      "grade": "3",
+      "subject": "ELAR",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/ELA-3-9D-SC.public.js"
+    },
+    {
+      "standard": "ELA.3.9E-SC",
+      "title": "The Cereal Ad",
+      "grade": "3",
+      "subject": "ELAR",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/ELA-3-9E-SC.public.js"
+    },
+    {
+      "standard": "MA.3.2D-SC",
+      "title": "Town Sign Mix-Up",
+      "grade": "3",
+      "subject": "Math",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/MA-3-2D-SC.public.js"
+    },
+    {
+      "standard": "MA.3.4D-SC",
+      "title": "The Garden Rows",
+      "grade": "3",
+      "subject": "Math",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/MA-3-4D-SC.public.js"
+    },
+    {
+      "standard": "MA.3.8B-SC",
+      "title": "The Lunch Vote",
+      "grade": "3",
+      "subject": "Math",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/MA-3-8B-SC.public.js"
+    },
+    {
+      "standard": "MA.3.9C-SC",
+      "title": "The Snack Stop",
+      "grade": "3",
+      "subject": "Math",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/MA-3-9C-SC.public.js"
+    },
+    {
+      "standard": "SS.3.2B-SC",
+      "title": "Fix It the Same Way?",
+      "grade": "3",
+      "subject": "Social Studies",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/SS-3-2B-SC.public.js"
+    },
+    {
+      "standard": "SS.3.2B-SC-TH",
+      "title": "Thread: Same Stoplight?",
+      "grade": "3",
+      "subject": "Social Studies",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/SS-3-2B-SC-TH.public.js"
+    },
+    {
+      "standard": "SS.3.2B-SC-WI",
+      "title": "Same Fix Weigh-In",
+      "grade": "3",
+      "subject": "Social Studies",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/SS-3-2B-SC-WI.public.js"
+    },
+    {
+      "standard": "SS.3.3A-SC",
+      "title": "Same Weather, Same Place?",
+      "grade": "3",
+      "subject": "Social Studies",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/SS-3-3A-SC.public.js"
+    },
+    {
+      "standard": "SS.3.3A-SC-TH",
+      "title": "Thread: Same Land?",
+      "grade": "3",
+      "subject": "Social Studies",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/SS-3-3A-SC-TH.public.js"
+    },
+    {
+      "standard": "SS.3.3A-SC-WI",
+      "title": "Same Weather Weigh-In",
+      "grade": "3",
+      "subject": "Social Studies",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/SS-3-3A-SC-WI.public.js"
+    },
+    {
+      "standard": "SS.3.3C-SC",
+      "title": "Who Changed Miller",
+      "grade": "3",
+      "subject": "Social Studies",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/SS-3-3C-SC.public.js"
+    },
+    {
+      "standard": "SS.3.3C-SC-TH",
+      "title": "Thread: Just Nature?",
+      "grade": "3",
+      "subject": "Social Studies",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/SS-3-3C-SC-TH.public.js"
+    },
+    {
+      "standard": "SS.3.3C-SC-WI",
+      "title": "Creek Change Weigh-In",
+      "grade": "3",
+      "subject": "Social Studies",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/SS-3-3C-SC-WI.public.js"
+    },
+    {
+      "standard": "SS.3.5B-SC",
+      "title": "Maya",
+      "grade": "3",
+      "subject": "Social Studies",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/SS-3-5B-SC.public.js"
+    },
+    {
+      "standard": "SS.3.5B-SC-TH",
+      "title": "Thread: Just a Wish List?",
+      "grade": "3",
+      "subject": "Social Studies",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/SS-3-5B-SC-TH.public.js"
+    },
+    {
+      "standard": "SS.3.5B-SC-WI",
+      "title": "Budget Plan Weigh-In",
+      "grade": "3",
+      "subject": "Social Studies",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/SS-3-5B-SC-WI.public.js"
+    },
+    {
+      "standard": "SS.3.6A-SC",
+      "title": "Hot Day, Higher Price",
+      "grade": "3",
+      "subject": "Social Studies",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/SS-3-6A-SC.public.js"
+    },
+    {
+      "standard": "SS.3.6A-SC-TH",
+      "title": "Thread: Same Price Always?",
+      "grade": "3",
+      "subject": "Social Studies",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/SS-3-6A-SC-TH.public.js"
+    },
+    {
+      "standard": "SS.3.6A-SC-WI",
+      "title": "Lemonade Price Weigh-In",
+      "grade": "3",
+      "subject": "Social Studies",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/SS-3-6A-SC-WI.public.js"
+    },
+    {
+      "standard": "SS.3.6B-SC",
+      "title": "Three Left, Twenty-Five Want One",
+      "grade": "3",
+      "subject": "Social Studies",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/SS-3-6B-SC.public.js"
+    },
+    {
+      "standard": "SS.3.6B-SC-TH",
+      "title": "Thread: Only at Zero?",
+      "grade": "3",
+      "subject": "Social Studies",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/SS-3-6B-SC-TH.public.js"
+    },
+    {
+      "standard": "SS.3.6B-SC-WI",
+      "title": "Scarce Now Weigh-In",
+      "grade": "3",
+      "subject": "Social Studies",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/SS-3-6B-SC-WI.public.js"
+    },
+    {
+      "standard": "SS.3.6C-SC",
+      "title": "The Bake Sale Sold Out",
+      "grade": "3",
+      "subject": "Social Studies",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/SS-3-6C-SC.public.js"
+    },
+    {
+      "standard": "SS.3.6C-SC-TH",
+      "title": "Thread: Sold Out = Profit?",
+      "grade": "3",
+      "subject": "Social Studies",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/SS-3-6C-SC-TH.public.js"
+    },
+    {
+      "standard": "SS.3.6C-SC-WI",
+      "title": "Sold Out Weigh-In",
+      "grade": "3",
+      "subject": "Social Studies",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/SS-3-6C-SC-WI.public.js"
+    },
+    {
+      "standard": "SS.3.7C-SC",
+      "title": "Whose Job Is It?",
+      "grade": "3",
+      "subject": "Social Studies",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/SS-3-7C-SC.public.js"
+    },
+    {
+      "standard": "SS.3.7C-SC-TH",
+      "title": "Thread: Any Level?",
+      "grade": "3",
+      "subject": "Social Studies",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/SS-3-7C-SC-TH.public.js"
+    },
+    {
+      "standard": "SS.3.7C-SC-WI",
+      "title": "Whose Job Weigh-In",
+      "grade": "3",
+      "subject": "Social Studies",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/SS-3-7C-SC-WI.public.js"
+    },
+    {
+      "standard": "SS.3.8A-SC",
+      "title": "The Museum Mixed Up the Labels",
+      "grade": "3",
+      "subject": "Social Studies",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/SS-3-8A-SC.public.js"
+    },
+    {
+      "standard": "SS.3.8A-SC-TH",
+      "title": "Thread: Same Label?",
+      "grade": "3",
+      "subject": "Social Studies",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/SS-3-8A-SC-TH.public.js"
+    },
+    {
+      "standard": "SS.3.8A-SC-WI",
+      "title": "Label Mix Weigh-In",
+      "grade": "3",
+      "subject": "Social Studies",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/SS-3-8A-SC-WI.public.js"
+    },
+    {
+      "standard": "SS.3.9E-SC",
+      "title": "The Field Trip Vote",
+      "grade": "3",
+      "subject": "Social Studies",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/SS-3-9E-SC.public.js"
+    },
+    {
+      "standard": "SS.3.9E-SC-TH",
+      "title": "Thread: Loudest Wins?",
+      "grade": "3",
+      "subject": "Social Studies",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/SS-3-9E-SC-TH.public.js"
+    },
+    {
+      "standard": "SS.3.9E-SC-WI",
+      "title": "Loud Vote Weigh-In",
+      "grade": "3",
+      "subject": "Social Studies",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/SS-3-9E-SC-WI.public.js"
+    },
+    {
+      "standard": "4.10A-SC",
+      "title": "Did the Puddle Really Disappear?",
+      "grade": "4",
+      "subject": "Science",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/4-10A-SC.public.js"
+    },
+    {
+      "standard": "4.10A-SC-TH",
+      "title": "Thread: Water Gone Forever?",
+      "grade": "4",
+      "subject": "Science",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/4-10A-SC-TH.public.js"
+    },
+    {
+      "standard": "4.10A-SC-WI",
+      "title": "Puddle Gone Weigh-In",
+      "grade": "4",
+      "subject": "Science",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/4-10A-SC-WI.public.js"
+    },
+    {
+      "standard": "4.10B-SC",
+      "title": "Rocks on the Move",
+      "grade": "4",
+      "subject": "Science",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/4-10B-SC.public.js"
+    },
+    {
+      "standard": "4.10B-SC-TH",
+      "title": "Thread: New Rocks Appear?",
+      "grade": "4",
+      "subject": "Science",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/4-10B-SC-TH.public.js"
+    },
+    {
+      "standard": "4.10B-SC-WI",
+      "title": "Sediment Move Weigh-In",
+      "grade": "4",
+      "subject": "Science",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/4-10B-SC-WI.public.js"
+    },
+    {
+      "standard": "4.11A-SC",
+      "title": "Does the Wind Turbine Work Every Single Day?",
+      "grade": "4",
+      "subject": "Science",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/4-11A-SC.public.js"
+    },
+    {
+      "standard": "4.11A-SC-TH",
+      "title": "Thread: Power Every Day?",
+      "grade": "4",
+      "subject": "Science",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/4-11A-SC-TH.public.js"
+    },
+    {
+      "standard": "4.11A-SC-WI",
+      "title": "Turbine Every Day?",
+      "grade": "4",
+      "subject": "Science",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/4-11A-SC-WI.public.js"
+    },
+    {
+      "standard": "4.11B-SC",
+      "title": "One Battery Won",
+      "grade": "4",
+      "subject": "Science",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/4-11B-SC.public.js"
+    },
+    {
+      "standard": "4.11B-SC-TH",
+      "title": "Thread: Just One Battery?",
+      "grade": "4",
+      "subject": "Science",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/4-11B-SC-TH.public.js"
+    },
+    {
+      "standard": "4.11B-SC-WI",
+      "title": "One Battery Weigh-In",
+      "grade": "4",
+      "subject": "Science",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/4-11B-SC-WI.public.js"
+    },
+    {
+      "standard": "4.11C-SC",
+      "title": "Can Rock Really Hold Water Underground?",
+      "grade": "4",
+      "subject": "Science",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/4-11C-SC.public.js"
+    },
+    {
+      "standard": "4.11C-SC-TH",
+      "title": "Thread: Solid Rock Only?",
+      "grade": "4",
+      "subject": "Science",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/4-11C-SC-TH.public.js"
+    },
+    {
+      "standard": "4.11C-SC-WI",
+      "title": "Rock Water Weigh-In",
+      "grade": "4",
+      "subject": "Science",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/4-11C-SC-WI.public.js"
+    },
+    {
+      "standard": "4.12A-SC",
+      "title": "Do Plants Actually Eat Soil?",
+      "grade": "4",
+      "subject": "Science",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/4-12A-SC.public.js"
+    },
+    {
+      "standard": "4.12A-SC-TH",
+      "title": "Thread: Plants Eat Dirt?",
+      "grade": "4",
+      "subject": "Science",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/4-12A-SC-TH.public.js"
+    },
+    {
+      "standard": "4.12A-SC-WI",
+      "title": "Plant Soil Weigh-In",
+      "grade": "4",
+      "subject": "Science",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/4-12A-SC-WI.public.js"
+    },
+    {
+      "standard": "4.12B-SC",
+      "title": "Do Decomposers Even Matter?",
+      "grade": "4",
+      "subject": "Science",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/4-12B-SC.public.js"
+    },
+    {
+      "standard": "4.12B-SC-TH",
+      "title": "Thread: Just Tidying?",
+      "grade": "4",
+      "subject": "Science",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/4-12B-SC-TH.public.js"
+    },
+    {
+      "standard": "4.12B-SC-WI",
+      "title": "Decomposer Weigh-In",
+      "grade": "4",
+      "subject": "Science",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/4-12B-SC-WI.public.js"
+    },
+    {
+      "standard": "4.12C-SC",
+      "title": "Did Someone Just Drop a Seashell up Here?",
+      "grade": "4",
+      "subject": "Science",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/4-12C-SC.public.js"
+    },
+    {
+      "standard": "4.12C-SC-TH",
+      "title": "Thread: Dropped Shell?",
+      "grade": "4",
+      "subject": "Science",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/4-12C-SC-TH.public.js"
+    },
+    {
+      "standard": "4.12C-SC-WI",
+      "title": "Hilltop Shell Weigh-In",
+      "grade": "4",
+      "subject": "Science",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/4-12C-SC-WI.public.js"
+    },
+    {
+      "standard": "4.13A-SC",
+      "title": "Does the Waxy Coating Even Do Anything?",
+      "grade": "4",
+      "subject": "Science",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/4-13A-SC.public.js"
+    },
+    {
+      "standard": "4.13A-SC-TH",
+      "title": "Thread: Wax Does Nothing?",
+      "grade": "4",
+      "subject": "Science",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/4-13A-SC-TH.public.js"
+    },
+    {
+      "standard": "4.13A-SC-WI",
+      "title": "Waxy Leaf Weigh-In",
+      "grade": "4",
+      "subject": "Science",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/4-13A-SC-WI.public.js"
+    },
+    {
+      "standard": "4.13B-SC",
+      "title": "Will the Puppies Get the Same Scar?",
+      "grade": "4",
+      "subject": "Science",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/4-13B-SC.public.js"
+    },
+    {
+      "standard": "4.13B-SC-TH",
+      "title": "Thread: Same Scar?",
+      "grade": "4",
+      "subject": "Science",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/4-13B-SC-TH.public.js"
+    },
+    {
+      "standard": "4.13B-SC-WI",
+      "title": "Scar Trait Weigh-In",
+      "grade": "4",
+      "subject": "Science",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/4-13B-SC-WI.public.js"
+    },
+    {
+      "standard": "4.6B-SC",
+      "title": "Stir It Long Enough?",
+      "grade": "4",
+      "subject": "Science",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/4-6B-SC.public.js"
+    },
+    {
+      "standard": "4.6B-SC-TH",
+      "title": "Thread: One New Liquid?",
+      "grade": "4",
+      "subject": "Science",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/4-6B-SC-TH.public.js"
+    },
+    {
+      "standard": "4.6B-SC-WI",
+      "title": "Oil Mix Weigh-In",
+      "grade": "4",
+      "subject": "Science",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/4-6B-SC-WI.public.js"
+    },
+    {
+      "standard": "4.6C-SC",
+      "title": "Where Did the Volume Go?",
+      "grade": "4",
+      "subject": "Science",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/4-6C-SC.public.js"
+    },
+    {
+      "standard": "4.6C-SC-TH",
+      "title": "Thread: Something Spilled?",
+      "grade": "4",
+      "subject": "Science",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/4-6C-SC-TH.public.js"
+    },
+    {
+      "standard": "4.6C-SC-WI",
+      "title": "Volume Vanish Weigh-In",
+      "grade": "4",
+      "subject": "Science",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/4-6C-SC-WI.public.js"
+    },
+    {
+      "standard": "4.7-SC",
+      "title": "Moving on Its Own?",
+      "grade": "4",
+      "subject": "Science",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/4-7-SC.public.js"
+    },
+    {
+      "standard": "4.7-SC-TH",
+      "title": "Thread: Moved by Itself?",
+      "grade": "4",
+      "subject": "Science",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/4-7-SC-TH.public.js"
+    },
+    {
+      "standard": "4.7-SC-WI",
+      "title": "Cart Roll Weigh-In",
+      "grade": "4",
+      "subject": "Science",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/4-7-SC-WI.public.js"
+    },
+    {
+      "standard": "4.7B-SC",
+      "title": "The Erosion Photo Caption",
+      "grade": "4",
+      "subject": "Science",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/4-7B-SC.public.js"
+    },
+    {
+      "standard": "4.7B-SC-TH",
+      "title": "Thread: Brand-New Rocks?",
+      "grade": "4",
+      "subject": "Science",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/4-7B-SC-TH.public.js"
+    },
+    {
+      "standard": "4.7B-SC-WI",
+      "title": "Bank Rocks Weigh-In",
+      "grade": "4",
+      "subject": "Science",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/4-7B-SC-WI.public.js"
+    },
+    {
+      "standard": "4.8A-SC",
+      "title": "Do the Middle Ones Just Quit?",
+      "grade": "4",
+      "subject": "Science",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/4-8A-SC.public.js"
+    },
+    {
+      "standard": "4.8A-SC-TH",
+      "title": "Thread: Energy Skips?",
+      "grade": "4",
+      "subject": "Science",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/4-8A-SC-TH.public.js"
+    },
+    {
+      "standard": "4.8A-SC-WI",
+      "title": "Bell Jump Weigh-In",
+      "grade": "4",
+      "subject": "Science",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/4-8A-SC-WI.public.js"
+    },
+    {
+      "standard": "4.8B-SC",
+      "title": "Does the Towel Make Cold?",
+      "grade": "4",
+      "subject": "Science",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/4-8B-SC.public.js"
+    },
+    {
+      "standard": "4.8B-SC-TH",
+      "title": "Thread: Towel Makes Cold?",
+      "grade": "4",
+      "subject": "Science",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/4-8B-SC-TH.public.js"
+    },
+    {
+      "standard": "4.8B-SC-WI",
+      "title": "Towel Cold Weigh-In",
+      "grade": "4",
+      "subject": "Science",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/4-8B-SC-WI.public.js"
+    },
+    {
+      "standard": "4.8C-SC",
+      "title": "Used Up by the First Bulb?",
+      "grade": "4",
+      "subject": "Science",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/4-8C-SC.public.js"
+    },
+    {
+      "standard": "4.8C-SC-TH",
+      "title": "Thread: Power Used Up?",
+      "grade": "4",
+      "subject": "Science",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/4-8C-SC-TH.public.js"
+    },
+    {
+      "standard": "4.8C-SC-WI",
+      "title": "First Bulb Weigh-In",
+      "grade": "4",
+      "subject": "Science",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/4-8C-SC-WI.public.js"
+    },
+    {
+      "standard": "4.9A-SC",
+      "title": "Does Cold Cause Sunset?",
+      "grade": "4",
+      "subject": "Science",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/4-9A-SC.public.js"
+    },
+    {
+      "standard": "4.9A-SC-TH",
+      "title": "Thread: Cold Causes Sunset?",
+      "grade": "4",
+      "subject": "Science",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/4-9A-SC-TH.public.js"
+    },
+    {
+      "standard": "4.9A-SC-WI",
+      "title": "Sunset Cold Weigh-In",
+      "grade": "4",
+      "subject": "Science",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/4-9A-SC-WI.public.js"
+    },
+    {
+      "standard": "4.9B-SC",
+      "title": "Does the Moon Really Shrink?",
+      "grade": "4",
+      "subject": "Science",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/4-9B-SC.public.js"
+    },
+    {
+      "standard": "4.9B-SC-TH",
+      "title": "Thread: Moon Shrinks?",
+      "grade": "4",
+      "subject": "Science",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/4-9B-SC-TH.public.js"
+    },
+    {
+      "standard": "4.9B-SC-WI",
+      "title": "Moon Size Weigh-In",
+      "grade": "4",
+      "subject": "Science",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/4-9B-SC-WI.public.js"
+    },
+    {
+      "standard": "ELA.4.10A-SC",
+      "title": "All That Excitement",
+      "grade": "4",
+      "subject": "ELAR",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/ELA-4-10A-SC.public.js"
+    },
+    {
+      "standard": "ELA.4.13D-SC",
+      "title": "The Storm Diary",
+      "grade": "4",
+      "subject": "ELAR",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/ELA-4-13D-SC.public.js"
+    },
+    {
+      "standard": "ELA.4.8A-SC",
+      "title": "Only One of Them",
+      "grade": "4",
+      "subject": "ELAR",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/ELA-4-8A-SC.public.js"
+    },
+    {
+      "standard": "ELA.4.8B-SC",
+      "title": "Who Changed?",
+      "grade": "4",
+      "subject": "ELAR",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/ELA-4-8B-SC.public.js"
+    },
+    {
+      "standard": "MA.4.10B-SC",
+      "title": "The Car Wash Fundraiser",
+      "grade": "4",
+      "subject": "Math",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/MA-4-10B-SC.public.js"
+    },
+    {
+      "standard": "MA.4.3C-SC",
+      "title": "The Two Fish Tanks",
+      "grade": "4",
+      "subject": "Math",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/MA-4-3C-SC.public.js"
+    },
+    {
+      "standard": "MA.4.4G-SC",
+      "title": "Is $2,500 Enough?",
+      "grade": "4",
+      "subject": "Math",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/MA-4-4G-SC.public.js"
+    },
+    {
+      "standard": "MA.4.9B-SC",
+      "title": "The Shoe Size Survey",
+      "grade": "4",
+      "subject": "Math",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/MA-4-9B-SC.public.js"
+    },
+    {
+      "standard": "SS.4.11C-SC",
+      "title": "What Made Texas Grow?",
+      "grade": "4",
+      "subject": "Social Studies",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/SS-4-11C-SC.public.js"
+    },
+    {
+      "standard": "SS.4.11C-SC-TH",
+      "title": "Thread: Just Population?",
+      "grade": "4",
+      "subject": "Social Studies",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/SS-4-11C-SC-TH.public.js"
+    },
+    {
+      "standard": "SS.4.11C-SC-WI",
+      "title": "Texas Grow Weigh-In",
+      "grade": "4",
+      "subject": "Social Studies",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/SS-4-11C-SC-WI.public.js"
+    },
+    {
+      "standard": "SS.4.17B-SC",
+      "title": "What Sounds Like Texas?",
+      "grade": "4",
+      "subject": "Social Studies",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/SS-4-17B-SC.public.js"
+    },
+    {
+      "standard": "SS.4.17B-SC-TH",
+      "title": "Thread: One Style?",
+      "grade": "4",
+      "subject": "Social Studies",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/SS-4-17B-SC-TH.public.js"
+    },
+    {
+      "standard": "SS.4.17B-SC-WI",
+      "title": "Texas Sound Weigh-In",
+      "grade": "4",
+      "subject": "Social Studies",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/SS-4-17B-SC-WI.public.js"
+    },
+    {
+      "standard": "SS.4.1B-SC",
+      "title": "Same State, Different Ways of Life",
+      "grade": "4",
+      "subject": "Social Studies",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/SS-4-1B-SC.public.js"
+    },
+    {
+      "standard": "SS.4.1B-SC-TH",
+      "title": "Thread: Same Ways of Life?",
+      "grade": "4",
+      "subject": "Social Studies",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/SS-4-1B-SC-TH.public.js"
+    },
+    {
+      "standard": "SS.4.1B-SC-WI",
+      "title": "Same Ways Weigh-In",
+      "grade": "4",
+      "subject": "Social Studies",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/SS-4-1B-SC-WI.public.js"
+    },
+    {
+      "standard": "SS.4.2A-SC",
+      "title": "Why Texas?",
+      "grade": "4",
+      "subject": "Social Studies",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/SS-4-2A-SC.public.js"
+    },
+    {
+      "standard": "SS.4.2A-SC-TH",
+      "title": "Thread: Just Curious?",
+      "grade": "4",
+      "subject": "Social Studies",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/SS-4-2A-SC-TH.public.js"
+    },
+    {
+      "standard": "SS.4.2A-SC-WI",
+      "title": "Explorer Why Weigh-In",
+      "grade": "4",
+      "subject": "Social Studies",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/SS-4-2A-SC-WI.public.js"
+    },
+    {
+      "standard": "SS.4.2C-SC",
+      "title": "Why Build a Mission Here?",
+      "grade": "4",
+      "subject": "Social Studies",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/SS-4-2C-SC.public.js"
+    },
+    {
+      "standard": "SS.4.2C-SC-TH",
+      "title": "Thread: Empty Land Only?",
+      "grade": "4",
+      "subject": "Social Studies",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/SS-4-2C-SC-TH.public.js"
+    },
+    {
+      "standard": "SS.4.2C-SC-WI",
+      "title": "Mission Spot Weigh-In",
+      "grade": "4",
+      "subject": "Social Studies",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/SS-4-2C-SC-WI.public.js"
+    },
+    {
+      "standard": "SS.4.3A-SC",
+      "title": "Did Anyone Survive the Alamo?",
+      "grade": "4",
+      "subject": "Social Studies",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/SS-4-3A-SC.public.js"
+    },
+    {
+      "standard": "SS.4.3A-SC-TH",
+      "title": "Thread: No Survivors?",
+      "grade": "4",
+      "subject": "Social Studies",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/SS-4-3A-SC-TH.public.js"
+    },
+    {
+      "standard": "SS.4.3A-SC-WI",
+      "title": "Alamo Survive Weigh-In",
+      "grade": "4",
+      "subject": "Social Studies",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/SS-4-3A-SC-WI.public.js"
+    },
+    {
+      "standard": "SS.4.3D-SC",
+      "title": "Can a New Republic Survive?",
+      "grade": "4",
+      "subject": "Social Studies",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/SS-4-3D-SC.public.js"
+    },
+    {
+      "standard": "SS.4.3D-SC-TH",
+      "title": "Thread: Problems Solved?",
+      "grade": "4",
+      "subject": "Social Studies",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/SS-4-3D-SC-TH.public.js"
+    },
+    {
+      "standard": "SS.4.3D-SC-WI",
+      "title": "Republic Problems Weigh-In",
+      "grade": "4",
+      "subject": "Social Studies",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/SS-4-3D-SC-WI.public.js"
+    },
+    {
+      "standard": "SS.4.4B-SC",
+      "title": "The Cattle Trail Boom",
+      "grade": "4",
+      "subject": "Social Studies",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/SS-4-4B-SC.public.js"
+    },
+    {
+      "standard": "SS.4.4B-SC-TH",
+      "title": "Thread: Just Cows?",
+      "grade": "4",
+      "subject": "Social Studies",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/SS-4-4B-SC-TH.public.js"
+    },
+    {
+      "standard": "SS.4.4B-SC-WI",
+      "title": "Cattle Boom Weigh-In",
+      "grade": "4",
+      "subject": "Social Studies",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/SS-4-4B-SC-WI.public.js"
+    },
+    {
+      "standard": "SS.4.6B-SC",
+      "title": "Which Texas Region Fits?",
+      "grade": "4",
+      "subject": "Social Studies",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/SS-4-6B-SC.public.js"
+    },
+    {
+      "standard": "SS.4.6B-SC-TH",
+      "title": "Thread: Same Region?",
+      "grade": "4",
+      "subject": "Social Studies",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/SS-4-6B-SC-TH.public.js"
+    },
+    {
+      "standard": "SS.4.6B-SC-WI",
+      "title": "Region Match Weigh-In",
+      "grade": "4",
+      "subject": "Social Studies",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/SS-4-6B-SC-WI.public.js"
+    },
+    {
+      "standard": "SS.4.9A-SC",
+      "title": "How Do We Meet Our Needs?",
+      "grade": "4",
+      "subject": "Social Studies",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/SS-4-9A-SC.public.js"
+    },
+    {
+      "standard": "SS.4.9A-SC-TH",
+      "title": "Thread: Mostly Hunting?",
+      "grade": "4",
+      "subject": "Social Studies",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/SS-4-9A-SC-TH.public.js"
+    },
+    {
+      "standard": "SS.4.9A-SC-WI",
+      "title": "Needs Meet Weigh-In",
+      "grade": "4",
+      "subject": "Social Studies",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/SS-4-9A-SC-WI.public.js"
+    },
+    {
+      "standard": "5.10A-SC",
+      "title": "Does the Morning Fog Just Show Up for No Reason?",
+      "grade": "5",
+      "subject": "Science",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/5-10A-SC.public.js"
+    },
+    {
+      "standard": "5.10A-SC-TH",
+      "title": "Thread: Random Fog?",
+      "grade": "5",
+      "subject": "Science",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/5-10A-SC-TH.public.js"
+    },
+    {
+      "standard": "5.10A-SC-WI",
+      "title": "Coast Fog Weigh-In",
+      "grade": "5",
+      "subject": "Science",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/5-10A-SC-WI.public.js"
+    },
+    {
+      "standard": "5.10B-SC",
+      "title": "Can You Really Squish Dirt Into Rock in a Day?",
+      "grade": "5",
+      "subject": "Science",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/5-10B-SC.public.js"
+    },
+    {
+      "standard": "5.10B-SC-TH",
+      "title": "Thread: Rock in a Day?",
+      "grade": "5",
+      "subject": "Science",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/5-10B-SC-TH.public.js"
+    },
+    {
+      "standard": "5.10B-SC-WI",
+      "title": "Mud Rock Weigh-In",
+      "grade": "5",
+      "subject": "Science",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/5-10B-SC-WI.public.js"
+    },
+    {
+      "standard": "5.10C-SC",
+      "title": "Did the Canyon Really Form Overnight?",
+      "grade": "5",
+      "subject": "Science",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/5-10C-SC.public.js"
+    },
+    {
+      "standard": "5.10C-SC-TH",
+      "title": "Thread: Overnight Canyon?",
+      "grade": "5",
+      "subject": "Science",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/5-10C-SC-TH.public.js"
+    },
+    {
+      "standard": "5.10C-SC-WI",
+      "title": "Canyon Carve Weigh-In",
+      "grade": "5",
+      "subject": "Science",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/5-10C-SC-WI.public.js"
+    },
+    {
+      "standard": "5.10D-SC",
+      "title": "The Inherited Trait Post",
+      "grade": "5",
+      "subject": "Science",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/5-10D-SC.public.js"
+    },
+    {
+      "standard": "5.10D-SC-TH",
+      "title": "Thread: Born Knowing Sit?",
+      "grade": "5",
+      "subject": "Science",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/5-10D-SC-TH.public.js"
+    },
+    {
+      "standard": "5.10D-SC-WI",
+      "title": "Sit Trait Weigh-In",
+      "grade": "5",
+      "subject": "Science",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/5-10D-SC-WI.public.js"
+    },
+    {
+      "standard": "5.11-SC",
+      "title": "Does Turning Off the Faucet Actually Save Anything?",
+      "grade": "5",
+      "subject": "Science",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/5-11-SC.public.js"
+    },
+    {
+      "standard": "5.11-SC-TH",
+      "title": "Thread: Pointless Shutoff?",
+      "grade": "5",
+      "subject": "Science",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/5-11-SC-TH.public.js"
+    },
+    {
+      "standard": "5.11-SC-WI",
+      "title": "Faucet Save Weigh-In",
+      "grade": "5",
+      "subject": "Science",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/5-11-SC-WI.public.js"
+    },
+    {
+      "standard": "5.12A-SC",
+      "title": "Do Living Things Only Need Other Living Things?",
+      "grade": "5",
+      "subject": "Science",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/5-12A-SC.public.js"
+    },
+    {
+      "standard": "5.12A-SC-TH",
+      "title": "Thread: Skip Temp & Light?",
+      "grade": "5",
+      "subject": "Science",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/5-12A-SC-TH.public.js"
+    },
+    {
+      "standard": "5.12A-SC-WI",
+      "title": "Tank Factors Weigh-In",
+      "grade": "5",
+      "subject": "Science",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/5-12A-SC-WI.public.js"
+    },
+    {
+      "standard": "5.12B-SC",
+      "title": "Does Feeding the Birds Only Help the Birds?",
+      "grade": "5",
+      "subject": "Science",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/5-12B-SC.public.js"
+    },
+    {
+      "standard": "5.12B-SC-TH",
+      "title": "Thread: Just the Birds?",
+      "grade": "5",
+      "subject": "Science",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/5-12B-SC-TH.public.js"
+    },
+    {
+      "standard": "5.12B-SC-WI",
+      "title": "Feeder Ripple Weigh-In",
+      "grade": "5",
+      "subject": "Science",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/5-12B-SC-WI.public.js"
+    },
+    {
+      "standard": "5.12C-SC",
+      "title": "Will Paving the Lot Really Not Affect Anything Else?",
+      "grade": "5",
+      "subject": "Science",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/5-12C-SC.public.js"
+    },
+    {
+      "standard": "5.12C-SC-TH",
+      "title": "Thread: Pave = No Impact?",
+      "grade": "5",
+      "subject": "Science",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/5-12C-SC-TH.public.js"
+    },
+    {
+      "standard": "5.12C-SC-WI",
+      "title": "Pave Lot Weigh-In",
+      "grade": "5",
+      "subject": "Science",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/5-12C-SC-WI.public.js"
+    },
+    {
+      "standard": "5.13A-SC",
+      "title": "Do All the Pond Animals Survive the Same Way?",
+      "grade": "5",
+      "subject": "Science",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/5-13A-SC.public.js"
+    },
+    {
+      "standard": "5.13A-SC-TH",
+      "title": "Thread: One Winter Plan?",
+      "grade": "5",
+      "subject": "Science",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/5-13A-SC-TH.public.js"
+    },
+    {
+      "standard": "5.13A-SC-WI",
+      "title": "Pond Winter Weigh-In",
+      "grade": "5",
+      "subject": "Science",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/5-13A-SC-WI.public.js"
+    },
+    {
+      "standard": "5.13B-SC",
+      "title": "Sit, Shake, Instinct",
+      "grade": "5",
+      "subject": "Science",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/5-13B-SC.public.js"
+    },
+    {
+      "standard": "5.13B-SC-TH",
+      "title": "Thread: Born to Sit?",
+      "grade": "5",
+      "subject": "Science",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/5-13B-SC-TH.public.js"
+    },
+    {
+      "standard": "5.13B-SC-WI",
+      "title": "Sit Shake Weigh-In",
+      "grade": "5",
+      "subject": "Science",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/5-13B-SC-WI.public.js"
+    },
+    {
+      "standard": "5.6A-SC",
+      "title": "The One-Bin Metal Sorter",
+      "grade": "5",
+      "subject": "Science",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/5-6A-SC.public.js"
+    },
+    {
+      "standard": "5.6A-SC-TH",
+      "title": "Thread: Every Metal?",
+      "grade": "5",
+      "subject": "Science",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/5-6A-SC-TH.public.js"
+    },
+    {
+      "standard": "5.6A-SC-WI",
+      "title": "Magnet Bin Weigh-In",
+      "grade": "5",
+      "subject": "Science",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/5-6A-SC-WI.public.js"
+    },
+    {
+      "standard": "5.6B-SC",
+      "title": "Did Mixing Make Something Brand New?",
+      "grade": "5",
+      "subject": "Science",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/5-6B-SC.public.js"
+    },
+    {
+      "standard": "5.6B-SC-TH",
+      "title": "Thread: Brand-New Stuff?",
+      "grade": "5",
+      "subject": "Science",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/5-6B-SC-TH.public.js"
+    },
+    {
+      "standard": "5.6B-SC-WI",
+      "title": "Mix Pile Weigh-In",
+      "grade": "5",
+      "subject": "Science",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/5-6B-SC-WI.public.js"
+    },
+    {
+      "standard": "5.6C-SC",
+      "title": "Did the Salt Really Disappear?",
+      "grade": "5",
+      "subject": "Science",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/5-6C-SC.public.js"
+    },
+    {
+      "standard": "5.6C-SC-TH",
+      "title": "Thread: Salt Vanished?",
+      "grade": "5",
+      "subject": "Science",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/5-6C-SC-TH.public.js"
+    },
+    {
+      "standard": "5.6C-SC-WI",
+      "title": "Salt Mass Weigh-In",
+      "grade": "5",
+      "subject": "Science",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/5-6C-SC-WI.public.js"
+    },
+    {
+      "standard": "5.6D-SC",
+      "title": "Is an Empty Balloon Really Empty?",
+      "grade": "5",
+      "subject": "Science",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/5-6D-SC.public.js"
+    },
+    {
+      "standard": "5.6D-SC-TH",
+      "title": "Thread: Nothing Inside?",
+      "grade": "5",
+      "subject": "Science",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/5-6D-SC-TH.public.js"
+    },
+    {
+      "standard": "5.6D-SC-WI",
+      "title": "Balloon Air Weigh-In",
+      "grade": "5",
+      "subject": "Science",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/5-6D-SC-WI.public.js"
+    },
+    {
+      "standard": "5.7A-SC",
+      "title": "If Both Sides Pull, Does It Have to Move?",
+      "grade": "5",
+      "subject": "Science",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/5-7A-SC.public.js"
+    },
+    {
+      "standard": "5.7A-SC-TH",
+      "title": "Thread: Rope Must Move?",
+      "grade": "5",
+      "subject": "Science",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/5-7A-SC-TH.public.js"
+    },
+    {
+      "standard": "5.7A-SC-WI",
+      "title": "Tug Rope Weigh-In",
+      "grade": "5",
+      "subject": "Science",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/5-7A-SC-WI.public.js"
+    },
+    {
+      "standard": "5.8A-SC",
+      "title": "Does the Flashlight Make Energy From Nothing?",
+      "grade": "5",
+      "subject": "Science",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/5-8A-SC.public.js"
+    },
+    {
+      "standard": "5.8A-SC-TH",
+      "title": "Thread: Brand-New Light?",
+      "grade": "5",
+      "subject": "Science",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/5-8A-SC-TH.public.js"
+    },
+    {
+      "standard": "5.8A-SC-WI",
+      "title": "Flashlight Energy Weigh-In",
+      "grade": "5",
+      "subject": "Science",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/5-8A-SC-WI.public.js"
+    },
+    {
+      "standard": "5.8B-SC",
+      "title": "Does the Switch Even Matter?",
+      "grade": "5",
+      "subject": "Science",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/5-8B-SC.public.js"
+    },
+    {
+      "standard": "5.8B-SC-TH",
+      "title": "Thread: Switch Useless?",
+      "grade": "5",
+      "subject": "Science",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/5-8B-SC-TH.public.js"
+    },
+    {
+      "standard": "5.8B-SC-WI",
+      "title": "Switch Loop Weigh-In",
+      "grade": "5",
+      "subject": "Science",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/5-8B-SC-WI.public.js"
+    },
+    {
+      "standard": "5.8C-SC",
+      "title": "Did the Straw Really Bend?",
+      "grade": "5",
+      "subject": "Science",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/5-8C-SC.public.js"
+    },
+    {
+      "standard": "5.8C-SC-TH",
+      "title": "Thread: Straw Bent?",
+      "grade": "5",
+      "subject": "Science",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/5-8C-SC-TH.public.js"
+    },
+    {
+      "standard": "5.8C-SC-WI",
+      "title": "Straw Bend Weigh-In",
+      "grade": "5",
+      "subject": "Science",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/5-8C-SC-WI.public.js"
+    },
+    {
+      "standard": "5.9-SC",
+      "title": "Does the Shadow Move Randomly?",
+      "grade": "5",
+      "subject": "Science",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/5-9-SC.public.js"
+    },
+    {
+      "standard": "5.9-SC-TH",
+      "title": "Thread: Random Shadow?",
+      "grade": "5",
+      "subject": "Science",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/5-9-SC-TH.public.js"
+    },
+    {
+      "standard": "5.9-SC-WI",
+      "title": "Shadow Path Weigh-In",
+      "grade": "5",
+      "subject": "Science",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/5-9-SC-WI.public.js"
+    },
+    {
+      "standard": "ELA.5.10C-SC",
+      "title": "Chart or Text?",
+      "grade": "5",
+      "subject": "ELAR",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/ELA-5-10C-SC.public.js"
+    },
+    {
+      "standard": "ELA.5.13D-SC",
+      "title": "Two Sources Disagree",
+      "grade": "5",
+      "subject": "ELAR",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/ELA-5-13D-SC.public.js"
+    },
+    {
+      "standard": "ELA.5.8B-SC",
+      "title": "What",
+      "grade": "5",
+      "subject": "ELAR",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/ELA-5-8B-SC.public.js"
+    },
+    {
+      "standard": "ELA.5.9E-SC",
+      "title": "Facts That Cut Both Ways",
+      "grade": "5",
+      "subject": "ELAR",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/ELA-5-9E-SC.public.js"
+    },
+    {
+      "standard": "MA.5.10F-SC",
+      "title": "The Chen Family Budget",
+      "grade": "5",
+      "subject": "Math",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/MA-5-10F-SC.public.js"
+    },
+    {
+      "standard": "MA.5.3K-SC",
+      "title": "The Snack Counter Receipt",
+      "grade": "5",
+      "subject": "Math",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/MA-5-3K-SC.public.js"
+    },
+    {
+      "standard": "MA.5.6B-SC",
+      "title": "The Taller Box",
+      "grade": "5",
+      "subject": "Math",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/MA-5-6B-SC.public.js"
+    },
+    {
+      "standard": "MA.5.9C-SC",
+      "title": "Under a Minute",
+      "grade": "5",
+      "subject": "Math",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/MA-5-9C-SC.public.js"
+    },
+    {
+      "standard": "SS.5.13B-SC",
+      "title": "Nobody Really Had a Say?",
+      "grade": "5",
+      "subject": "Social Studies",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/SS-5-13B-SC.public.js"
+    },
+    {
+      "standard": "SS.5.13B-SC-TH",
+      "title": "Thread: Just for Show?",
+      "grade": "5",
+      "subject": "Social Studies",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/SS-5-13B-SC-TH.public.js"
+    },
+    {
+      "standard": "SS.5.13B-SC-WI",
+      "title": "Colonial Say Weigh-In",
+      "grade": "5",
+      "subject": "Social Studies",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/SS-5-13B-SC-WI.public.js"
+    },
+    {
+      "standard": "SS.5.14B-SC",
+      "title": "Just One Job?",
+      "grade": "5",
+      "subject": "Social Studies",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/SS-5-14B-SC.public.js"
+    },
+    {
+      "standard": "SS.5.14B-SC-TH",
+      "title": "Thread: Just Lawmaking?",
+      "grade": "5",
+      "subject": "Social Studies",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/SS-5-14B-SC-TH.public.js"
+    },
+    {
+      "standard": "SS.5.14B-SC-WI",
+      "title": "Preamble Jobs Weigh-In",
+      "grade": "5",
+      "subject": "Social Studies",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/SS-5-14B-SC-WI.public.js"
+    },
+    {
+      "standard": "SS.5.15A-SC",
+      "title": "One Branch, Every Job?",
+      "grade": "5",
+      "subject": "Social Studies",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/SS-5-15A-SC.public.js"
+    },
+    {
+      "standard": "SS.5.15A-SC-TH",
+      "title": "Thread: One Branch, Every Job?",
+      "grade": "5",
+      "subject": "Social Studies",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/SS-5-15A-SC-TH.public.js"
+    },
+    {
+      "standard": "SS.5.15A-SC-WI",
+      "title": "Branch Jobs Weigh-In",
+      "grade": "5",
+      "subject": "Social Studies",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/SS-5-15A-SC-WI.public.js"
+    },
+    {
+      "standard": "SS.5.2A-SC",
+      "title": "One Bad Law?",
+      "grade": "5",
+      "subject": "Social Studies",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/SS-5-2A-SC.public.js"
+    },
+    {
+      "standard": "SS.5.2A-SC-TH",
+      "title": "Thread: Just the Stamp Act?",
+      "grade": "5",
+      "subject": "Social Studies",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/SS-5-2A-SC-TH.public.js"
+    },
+    {
+      "standard": "SS.5.2A-SC-WI",
+      "title": "Stamp Act Weigh-In",
+      "grade": "5",
+      "subject": "Social Studies",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/SS-5-2A-SC-WI.public.js"
+    },
+    {
+      "standard": "SS.5.4A-SC",
+      "title": "Blame It on the Land",
+      "grade": "5",
+      "subject": "Social Studies",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/SS-5-4A-SC.public.js"
+    },
+    {
+      "standard": "SS.5.4A-SC-TH",
+      "title": "Thread: Only Land?",
+      "grade": "5",
+      "subject": "Social Studies",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/SS-5-4A-SC-TH.public.js"
+    },
+    {
+      "standard": "SS.5.4A-SC-WI",
+      "title": "1812 Cause Weigh-In",
+      "grade": "5",
+      "subject": "Social Studies",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/SS-5-4A-SC-WI.public.js"
+    },
+    {
+      "standard": "SS.5.4C-SC",
+      "title": "First to See It?",
+      "grade": "5",
+      "subject": "Social Studies",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/SS-5-4C-SC.public.js"
+    },
+    {
+      "standard": "SS.5.4C-SC-TH",
+      "title": "Thread: First to See It?",
+      "grade": "5",
+      "subject": "Social Studies",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/SS-5-4C-SC-TH.public.js"
+    },
+    {
+      "standard": "SS.5.4C-SC-WI",
+      "title": "First to See Weigh-In",
+      "grade": "5",
+      "subject": "Social Studies",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/SS-5-4C-SC-WI.public.js"
+    },
+    {
+      "standard": "SS.5.4D-SC",
+      "title": "Three Names, One Root",
+      "grade": "5",
+      "subject": "Social Studies",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/SS-5-4D-SC.public.js"
+    },
+    {
+      "standard": "SS.5.4D-SC-TH",
+      "title": "Thread: Separate Causes?",
+      "grade": "5",
+      "subject": "Social Studies",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/SS-5-4D-SC-TH.public.js"
+    },
+    {
+      "standard": "SS.5.4D-SC-WI",
+      "title": "Civil War Root Weigh-In",
+      "grade": "5",
+      "subject": "Social Studies",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/SS-5-4D-SC-WI.public.js"
+    },
+    {
+      "standard": "SS.5.4E-SC",
+      "title": "Freedom on Paper",
+      "grade": "5",
+      "subject": "Social Studies",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/SS-5-4E-SC.public.js"
+    },
+    {
+      "standard": "SS.5.4E-SC-TH",
+      "title": "Thread: Fixed by the 13th?",
+      "grade": "5",
+      "subject": "Social Studies",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/SS-5-4E-SC-TH.public.js"
+    },
+    {
+      "standard": "SS.5.4E-SC-WI",
+      "title": "13th Fix Weigh-In",
+      "grade": "5",
+      "subject": "Social Studies",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/SS-5-4E-SC-WI.public.js"
+    },
+    {
+      "standard": "SS.5.7B-SC",
+      "title": "Anywhere Will Do?",
+      "grade": "5",
+      "subject": "Social Studies",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/SS-5-7B-SC.public.js"
+    },
+    {
+      "standard": "SS.5.7B-SC-TH",
+      "title": "Thread: Anywhere Will Do?",
+      "grade": "5",
+      "subject": "Social Studies",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/SS-5-7B-SC-TH.public.js"
+    },
+    {
+      "standard": "SS.5.7B-SC-WI",
+      "title": "Anywhere City Weigh-In",
+      "grade": "5",
+      "subject": "Social Studies",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/SS-5-7B-SC-WI.public.js"
+    },
+    {
+      "standard": "SS.5.8B-SC",
+      "title": "Good For Everyone?",
+      "grade": "5",
+      "subject": "Social Studies",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/SS-5-8B-SC.public.js"
+    },
+    {
+      "standard": "SS.5.8B-SC-TH",
+      "title": "Thread: No Downsides?",
+      "grade": "5",
+      "subject": "Social Studies",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/SS-5-8B-SC-TH.public.js"
+    },
+    {
+      "standard": "SS.5.8B-SC-WI",
+      "title": "Dam Debate Weigh-In",
+      "grade": "5",
+      "subject": "Social Studies",
+      "engine": "Signal Check",
+      "kind": "",
+      "file": "lib/cases/signal-check/SS-5-8B-SC-WI.public.js"
+    },
+    {
+      "standard": "3.6A-SL",
+      "title": "Boat Load Test",
+      "grade": "3",
+      "subject": "Science",
+      "engine": "Simulation Lab",
+      "kind": "",
+      "file": "lib/cases/simulation-lab/3-6A-SL.public.js"
+    },
+    {
+      "standard": "3.6C-SL",
+      "title": "Ice Melt Race",
+      "grade": "3",
+      "subject": "Science",
+      "engine": "Simulation Lab",
+      "kind": "",
+      "file": "lib/cases/simulation-lab/3-6C-SL.public.js"
+    },
+    {
+      "standard": "3.7A-SL",
+      "title": "Magnet Pull Test",
+      "grade": "3",
+      "subject": "Science",
+      "engine": "Simulation Lab",
+      "kind": "",
+      "file": "lib/cases/simulation-lab/3-7A-SL.public.js"
+    },
+    {
+      "standard": "3.8B-SL",
+      "title": "Ramp Test",
+      "grade": "3",
+      "subject": "Science",
+      "engine": "Simulation Lab",
+      "kind": "",
+      "file": "lib/cases/simulation-lab/3-8B-SL.public.js"
+    },
+    {
+      "standard": "4.6B-SL",
+      "title": "Dissolving Station",
+      "grade": "4",
+      "subject": "Science",
+      "engine": "Simulation Lab",
+      "kind": "",
+      "file": "lib/cases/simulation-lab/4-6B-SL.public.js"
+    },
+    {
+      "standard": "4.7-SL",
+      "title": "Friction Test",
+      "grade": "4",
+      "subject": "Science",
+      "engine": "Simulation Lab",
+      "kind": "",
+      "file": "lib/cases/simulation-lab/4-7-SL.public.js"
+    },
+    {
+      "standard": "4.8C-SL",
+      "title": "Circuit Brightness Test",
+      "grade": "4",
+      "subject": "Science",
+      "engine": "Simulation Lab",
+      "kind": "",
+      "file": "lib/cases/simulation-lab/4-8C-SL.public.js"
+    },
+    {
+      "standard": "5.7B-SL",
+      "title": "Balloon Rocket Test",
+      "grade": "5",
+      "subject": "Science",
+      "engine": "Simulation Lab",
+      "kind": "",
+      "file": "lib/cases/simulation-lab/5-7B-SL.public.js"
+    },
+    {
+      "standard": "5.8B-SL",
+      "title": "Circuit Motor Test",
+      "grade": "5",
+      "subject": "Science",
+      "engine": "Simulation Lab",
+      "kind": "",
+      "file": "lib/cases/simulation-lab/5-8B-SL.public.js"
+    },
+    {
+      "standard": "5.9-SL",
+      "title": "Shadow Tracker",
+      "grade": "5",
+      "subject": "Science",
+      "engine": "Simulation Lab",
+      "kind": "",
+      "file": "lib/cases/simulation-lab/5-9-SL.public.js"
+    }
+  ]
+}
