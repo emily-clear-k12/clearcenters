@@ -811,7 +811,7 @@ function displayCode(code){return String(code||'').replace(/^TEKS\s+/i,'').repla
     {browseMode==='activities' && typeFilter==='all' && <section className="cc-panel"><h2>Choose an activity type</h2><p className="cc-muted">Then pick the lesson. The standard name is on each one.</p><div className="cc-type-grid">{Object.entries(ENGINES).filter(([key])=>key!=='relay_station').map(([key,art])=><button key={key} className="cc-activity cc-frame" style={subjectStyle(browseSubject)} onClick={()=>{setSelectedCase(null);setCaseSearch('');setTypeFilter(key);setTopic('all')}}><img src={art.image} alt=""/><div><h3>{art.label}</h3><p>{art.description}</p></div></button>)}</div></section>}
     {browseMode==='standards' && !pickedStandard && <section className="cc-panel"><h2>Choose a standard</h2><p className="cc-muted">{browseSubject} · Grade {browseGrade}. Open a standard to see its activities.</p><label className="cc-field">Find a standard<input className="cc-input" type="search" placeholder="Search by code or topic" value={caseSearch} onChange={e=>setCaseSearch(e.target.value)}/></label><div className="cc-standard-list" style={subjectStyle(browseSubject)}>{standardFamilies.map((family)=><section key={family.name}><h3>{family.name}</h3>{family.items.map((group)=><button key={group.code} type="button" className="cc-standard-row" onClick={()=>{setPickedStandard(group.code);setSelectedCase(null);setCaseSearch('');setLimit(12)}}><b>{displayCode(group.code)}</b>{group.title&&<span>{group.title}</span>}<small>{group.count} {group.count===1?'activity':'activities'}</small></button>)}</section>)}</div>{!visibleGroups.length&&<Empty>No standards for this grade and subject yet.</Empty>}</section>}
     </>}
-    {showList&&<div className={"cc-two"+(product!=='keys'?" cc-two-maker":"")}><section className="cc-panel">{browseMode==='standards'&&pickedStandard&&<button className="cc-text-button" onClick={()=>{setPickedStandard(null);setSelectedCase(null);setCaseSearch('');}}>← All standards</button>}<h2>{product==='keys'?(browseSubject===READINGS?'Readings':(RELAY_SPECIAL_TILES.find(t=>t.key===browseSubject)?.title||'ClearKeys')):(browseMode==='standards'?displayCode(pickedStandard):(typeFilter!=='all'?engineInfo(typeFilter).label:'Activities'))}</h2><p className="cc-muted">{browseMode==='standards'?(standardGroups.find(group=>group.code===pickedStandard)?.title||'Activities for this standard'):`${browseSubject} · Grade ${browseGrade} · ${filteredCases.length} activities`}</p><label className="cc-field">Find an activity<input className="cc-input" type="search" placeholder="Search these activities" value={caseSearch} onChange={e=>{setCaseSearch(e.target.value);setLimit(12)}}/></label><div className={"cc-gallery cc-compact-gallery"+(product!=='keys'?' cc-maker-gallery':'')+(product==='keys'&&browseSubject===READINGS?' cc-readings':'')}>{filteredCases.slice(0,limit).map((c,index)=>{const e=engineInfo(c.engine);const code=codesFor(c.standard)[0]||displayCode(String(c.standard||""));const topic=topicForCase(c.standard,typeof c.learning_target==="string"?c.learning_target:"");const title=String(c.title||"");const thumb=caseImageCandidates(c.standard,c.engine);return <button key={`${c.standard}-${c.engine}-${index}`} className="cc-activity" style={subjectStyle(c.subject)} aria-pressed={selectedCase?.standard===c.standard} onClick={()=>{setStudentInfo(false);setSelectedCase(c);if(/^FR\.[345]\.DAILY$/.test(String(c.standard||"")))setGameSkin(DEFAULT_GAME_SKIN);setSelectedChallenge(CHALLENGE_TYPES.find(t=>matchesChallenge(c.engine,t.key)))}}><img src={thumb[0]} alt="" onError={(event)=>{const img=event.currentTarget;const step=Number(img.dataset.step||0)+1;if(step>=thumb.length)return;img.dataset.step=String(step);img.src=thumb[step];}}/><div><small>{product==='keys'?e.label:code}</small>{topic&&<b>{topic}</b>}<strong>{product==='keys'?title.replace(/^Relay Station:\s*/i,''):title}</strong><em>{e.label}</em></div></button>})}</div>{casesLoading?<Empty>Loading activities…</Empty>:!filteredCases.length&&<Empty>{typeFilter!=='all'?'No activities for this type at Grade '+browseGrade+' · '+browseSubject+'. Try another grade or subject.':'No activities match these filters. Try another topic, grade, or format.'}</Empty>}{filteredCases.length>limit&&<button className="cc-btn secondary" style={{marginTop:18}} onClick={()=>setLimit(limit+12)}>Show more activities</button>}</section>
+    {showList&&<div className={"cc-two"+(product!=='keys'?" cc-two-maker":"")}><section className="cc-panel">{browseMode==='standards'&&pickedStandard&&<button className="cc-text-button" onClick={()=>{setPickedStandard(null);setSelectedCase(null);setCaseSearch('');}}>← All standards</button>}<h2>{product==='keys'?(browseSubject===READINGS?'Readings':(RELAY_SPECIAL_TILES.find(t=>t.key===browseSubject)?.title||'ClearKeys')):(browseMode==='standards'?displayCode(pickedStandard):(typeFilter!=='all'?engineInfo(typeFilter).label:'Activities'))}</h2><p className="cc-muted">{browseMode==='standards'?(standardGroups.find(group=>group.code===pickedStandard)?.title||'Activities for this standard'):`${browseSubject} · Grade ${browseGrade} · ${filteredCases.length} activities`}</p><label className="cc-field">Find an activity<input className="cc-input" type="search" placeholder="Search these activities" value={caseSearch} onChange={e=>{setCaseSearch(e.target.value);setLimit(12)}}/></label><div className={"cc-gallery cc-compact-gallery"+(product!=='keys'?' cc-maker-gallery':'')+(product==='keys'&&browseSubject===READINGS?' cc-readings':'')}>{filteredCases.slice(0,limit).map((c,index)=>{const e=engineInfo(c.engine);const code=codesFor(c.standard)[0]||displayCode(String(c.standard||""));const topic=topicForCase(c.standard,typeof c.learning_target==="string"?c.learning_target:"");const title=String(c.title||"");const thumb=caseImageCandidates(c.standard,c.engine);return <button key={`${c.standard}-${c.engine}-${index}`} className={"cc-activity"+(c.engine==="frequency_rush"?" is-rush":"")} style={subjectStyle(c.subject)} aria-pressed={selectedCase?.standard===c.standard} onClick={()=>{setStudentInfo(false);setSelectedCase(c);if(/^FR\.[345]\.DAILY$/.test(String(c.standard||"")))setGameSkin(DEFAULT_GAME_SKIN);setSelectedChallenge(CHALLENGE_TYPES.find(t=>matchesChallenge(c.engine,t.key)))}}><img src={thumb[0]} alt="" onError={(event)=>{const img=event.currentTarget;const step=Number(img.dataset.step||0)+1;if(step>=thumb.length)return;img.dataset.step=String(step);img.src=thumb[step];}}/><div><small>{product==='keys'?e.label:code}</small>{topic&&<b>{topic}</b>}<strong>{product==='keys'?title.replace(/^Relay Station:\s*/i,''):title}</strong><em>{e.label}</em></div></button>})}</div>{casesLoading?<Empty>Loading activities…</Empty>:!filteredCases.length&&<Empty>{typeFilter!=='all'?'No activities for this type at Grade '+browseGrade+' · '+browseSubject+'. Try another grade or subject.':'No activities match these filters. Try another topic, grade, or format.'}</Empty>}{filteredCases.length>limit&&<button className="cc-btn secondary" style={{marginTop:18}} onClick={()=>setLimit(limit+12)}>Show more activities</button>}</section>
     <aside className="cc-stack">{selectedCase?<section className="cc-panel cc-frame" style={subjectStyle(selectedCase.subject)}><div className="cc-assign-read"><div className="cc-eyebrow cc-subject-label">{engineInfo(selectedCase.engine).label}</div><h2>{product==='keys'?(selectedCase.title||'').replace(/^Relay Station:\s*/i,''):selectedCase.title}</h2><p className="cc-assign-standard">{[codesFor(selectedCase.standard).join(' & ')||displayCode(topicCode(selectedCase)), topicForCase(selectedCase.standard, selectedCase.learning_target)].filter(Boolean).join(' — ')}</p><p>{selectedCase.lesson_summary||selectedCase.learning_target||engineInfo(selectedCase.engine).description}</p></div>{((selectedCase.lesson_summary&&selectedCase.learning_target)||selectedCase.misconception_note)&&<div className="cc-student-pop">{selectedCase.lesson_summary&&selectedCase.learning_target&&<><h3>Learning target</h3><p className="cc-muted">{selectedCase.learning_target}</p></>}{selectedCase.misconception_note&&<><h3>Teaching notes</h3><p className="cc-muted">{selectedCase.misconception_note}</p></>}</div>}
     <div className="cc-assignment-form"><h3>Assign to {targetClass?.name||'your class'}</h3>
                   {assignClassId && (
@@ -858,66 +858,32 @@ function displayCode(code){return String(code||'').replace(/^TEKS\s+/i,'').repla
                   </div>
 
                   {selectedCase?.engine === "frequency_rush" && (
-                    <div style={{ marginBottom: 14 }}>
-                      <div style={{ fontWeight: 700, fontSize: 13, marginBottom: 8, color: COLORS.textDark }}>🛰️ Game world</div>
-                      <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
-                        {GAME_SKINS.filter((skin) => skin.id !== "crystal_dive" || !/^FR\.[345]\.DAILY$/.test(selectedCase.standard)).map((skin) => (
-                          <button
-                            key={skin.id}
-                            type="button"
-                            className="cc-btn"
-                            onClick={() => setGameSkin(skin.id)}
-                            style={{
-                              background: gameSkin === skin.id ? ACCENT : COLORS.white,
-                              color: gameSkin === skin.id ? COLORS.white : COLORS.textDark,
-                              border: `1.5px solid ${gameSkin === skin.id ? ACCENT : COLORS.border}`,
-                              borderRadius: 999,
-                              padding: "7px 14px",
-                              fontWeight: 700,
-                              fontSize: 12.5,
-                            }}
-                          >
-                            {skin.label}
-                          </button>
-                        ))}
-                      </div>
-                      <p style={{ fontSize: 11.5, color: COLORS.textMuted, margin: "6px 0 0 0" }}>
-                        The worlds use this question bank. Crystal Dive also has its own digging, caves, and crystal wheel.
-                      </p>
-                      {gameSkin === "crystal_dive" && <>
-                        <div style={{ fontWeight: 700, fontSize: 13, margin: "14px 0 8px 0", color: COLORS.textDark }}>⏱️ Crystal Dive session length</div>
-                        <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
-                          {CRYSTAL_DIVE_MINUTES.map((minutes) => <button key={minutes} type="button" className="cc-btn" aria-pressed={crystalDiveMinutes === minutes} onClick={() => setCrystalDiveMinutes(minutes)} style={{ background: crystalDiveMinutes === minutes ? ACCENT : COLORS.white, color: crystalDiveMinutes === minutes ? COLORS.white : COLORS.textDark, border: `1.5px solid ${crystalDiveMinutes === minutes ? ACCENT : COLORS.border}`, borderRadius: 999, padding: "7px 14px", fontWeight: 700, fontSize: 12.5 }}>{minutes} min</button>)}
+                    <div className="cc-rush-setup">
+                      <div>
+                        <h3>Game world</h3>
+                        <div className="cc-rush-picks">
+                          {GAME_SKINS.filter((skin) => skin.id !== "crystal_dive" || !/^FR\.[345]\.DAILY$/.test(selectedCase.standard)).map((skin) => (
+                            <button key={skin.id} type="button" aria-pressed={gameSkin === skin.id} onClick={() => setGameSkin(skin.id)}>{skin.label.replace(/\s*\([^)]*\)/, "")}</button>
+                          ))}
                         </div>
-                      </>}
-                      <div style={{ fontWeight: 700, fontSize: 13, margin: "14px 0 8px 0", color: COLORS.textDark }}>⏱️ Time per question</div>
-                      <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
-                        {QUESTION_SECONDS_OPTIONS.map((opt) => (
-                          <button
-                            key={opt.value}
-                            type="button"
-                            className="cc-btn"
-                            aria-pressed={questionSeconds === opt.value}
-                            onClick={() => setQuestionSeconds(opt.value)}
-                            style={{
-                              background: questionSeconds === opt.value ? ACCENT : COLORS.white,
-                              color: questionSeconds === opt.value ? COLORS.white : COLORS.textDark,
-                              border: `1.5px solid ${questionSeconds === opt.value ? ACCENT : COLORS.border}`,
-                              borderRadius: 999,
-                              padding: "7px 14px",
-                              fontWeight: 700,
-                              fontSize: 12.5,
-                            }}
-                          >
-                            {opt.label}
-                          </button>
-                        ))}
                       </div>
-                      <p style={{ fontSize: 11.5, color: COLORS.textMuted, margin: "6px 0 0 0" }}>
-                        {questionSeconds
-                          ? `Students get ${questionSeconds} seconds per question. Running out of time counts as a miss.`
-                          : "No clock. Faster answers still earn a speed bonus."}
-                      </p>
+                      {gameSkin === "crystal_dive" && (
+                        <div>
+                          <h3>Session length</h3>
+                          <div className="cc-rush-picks">
+                            {CRYSTAL_DIVE_MINUTES.map((minutes) => <button key={minutes} type="button" aria-pressed={crystalDiveMinutes === minutes} onClick={() => setCrystalDiveMinutes(minutes)}>{minutes} min</button>)}
+                          </div>
+                        </div>
+                      )}
+                      <div>
+                        <h3>Time per question</h3>
+                        <div className="cc-rush-picks">
+                          {QUESTION_SECONDS_OPTIONS.map((opt) => (
+                            <button key={opt.value} type="button" aria-pressed={questionSeconds === opt.value} onClick={() => setQuestionSeconds(opt.value)}>{opt.label}</button>
+                          ))}
+                        </div>
+                        <p>{questionSeconds ? `${questionSeconds} seconds per question. Running out of time counts as a miss.` : "No clock. Faster answers still earn a speed bonus."}</p>
+                      </div>
                     </div>
                   )}
 

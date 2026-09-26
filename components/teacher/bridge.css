@@ -112,7 +112,7 @@
 .cc-assign-read h2{margin:0}
 .cc-assign-standard{margin:0;font-weight:750;color:#241b50}
 .cc-assign-read p{margin:0;line-height:1.5;color:#3d4a63}
-.cc-maker-gallery{gap:12px}
+.cc-maker-gallery{grid-template-columns:1fr;gap:12px}
 .cc-maker-gallery .cc-activity{display:flex;align-items:center;gap:12px;min-height:0;padding:10px;border:0;border-radius:16px;background:#f7f8fd;box-shadow:inset 5px 0 0 var(--subject,#6d45c8),0 8px 0 #d9deee}
 .cc-maker-gallery .cc-activity[aria-pressed=true]{background:#f3fbf6;border-color:transparent;box-shadow:inset 5px 0 0 var(--subject,#6d45c8),0 0 0 3px #2f9e62,0 8px 0 #d7efe4}
 .cc-maker-gallery .cc-activity>img{width:72px;height:72px;min-width:72px;flex:0 0 72px;border-radius:12px;object-fit:cover}
@@ -143,14 +143,16 @@
 .cc-maker-mode-label{flex:1;min-width:0}
 .cc-maker-mode-soon{font-size:10px;font-weight:700;color:#9a94ae;text-transform:uppercase;letter-spacing:.04em}
 .cc-maker-journal{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:#241b50;cursor:pointer;margin:2px 0 0}
+.cc-maker-gallery .cc-activity.is-rush{align-items:center;min-height:0;padding:8px 10px;gap:10px;box-shadow:inset 4px 0 0 var(--subject,#6d45c8)}
+.cc-maker-gallery .cc-activity.is-rush[aria-pressed=true]{box-shadow:inset 4px 0 0 var(--subject,#6d45c8),0 0 0 3px #2f9e62}
+.cc-maker-gallery .cc-activity.is-rush>img{width:48px;height:48px;min-width:48px;flex:0 0 48px}
+.cc-maker-gallery .cc-activity.is-rush>div{padding:0}
+.cc-maker-gallery .cc-activity.is-rush b{display:none}
+.cc-maker-gallery .cc-activity.is-rush strong{font-size:15px;line-height:1.3}
+.cc-rush-setup{display:grid;gap:14px;margin:0 0 16px}
+.cc-rush-setup h3{margin:0;font-size:13px}
+.cc-rush-picks{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.cc-rush-picks button{border:1.5px solid #e3dcf3;border-radius:12px;background:#fff;color:#241b50;padding:10px 12px;font:700 13px Inter,sans-serif;text-align:left;cursor:pointer}
+.cc-rush-picks button[aria-pressed=true]{border-color:#6d45c8;background:#f4f0fc;color:#513193}
+.cc-rush-setup p{margin:0;font-size:12.5px;line-height:1.45;color:#70658d}
 @media(max-width:760px){.cc-two.cc-two-maker{grid-template-columns:1fr}}
-
-/* Maker Studio Assign list: use the full left column with a compact horizontal card. */
-.cc-maker-gallery{grid-template-columns:1fr}
-.cc-maker-gallery .cc-activity{display:flex;align-items:stretch;min-width:0;min-height:112px}
-.cc-maker-gallery .cc-activity>img{width:96px;height:112px;min-width:96px;flex:0 0 96px;object-fit:cover}
-.cc-maker-gallery .cc-activity>div{flex:1;min-width:0;padding:14px}
-.cc-maker-gallery .cc-activity h3{margin-bottom:6px}
-.cc-maker-gallery .cc-activity p{margin:0 0 8px}
-.cc-maker-gallery .cc-activity[aria-pressed=true]{border-width:3px;box-shadow:0 0 0 1px #2f9e62}
-@media(max-width:540px){.cc-maker-gallery .cc-activity>img{width:78px;min-width:78px;flex-basis:78px;height:104px}.cc-maker-gallery .cc-activity>div{padding:12px}}
