@@ -143,7 +143,8 @@ export default function MakerStudioClient({
         doneHint: m.doneHint || null,
       }));
   const enabled = config.enabledModes || ["write"];
-  const finishN = Math.max(1, Number(config.finishN) || 1);
+  // Submit when every enabled mode is Done. finishN mirrors enabled.length (no teacher Finish N).
+  const finishN = Math.max(1, enabled.length || Number(config.finishN) || 1);
   // Only assigned ∩ live modes — never show broken unbuilt buttons.
   const visibleModes = modesMeta.filter(
     (m) => enabled.includes(m.id) && (m.available || LIVE_MODE_IDS.has(m.id))
@@ -366,7 +367,7 @@ export default function MakerStudioClient({
 
   async function submitAll() {
     if (!canSubmit) {
-      setStatus(`Finish ${finishN} mode${finishN === 1 ? "" : "s"} before you submit.`);
+      setStatus(`Finish every mode before you submit. You have ${doneCount}/${finishN} done.`);
       return;
     }
     const data = await persist("turnin", modes);
@@ -821,7 +822,7 @@ export default function MakerStudioClient({
           <h2>Your job</h2>
           <p>{config.prompt}</p>
           <p className="mk-quiet" style={{ marginTop: 10 }}>
-            Finish {finishN} mode{finishN === 1 ? "" : "s"}, then tap Submit. Your teacher reads your work.
+            Finish every mode below, then tap Submit. Your teacher reads your work.
           </p>
         </div>
 

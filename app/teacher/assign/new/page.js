@@ -23,7 +23,8 @@ import {
   isPlayableQuickMsRow,
   isPlayableDesertMsRow,
 } from "../../../../lib/cases/maker-studio/assignFallback";
-import { MAKER_MENUS } from "../../../../lib/cases/maker-studio/menus";
+import { promptCardsForCase } from "../../../../lib/cases/maker-studio/menus";
+import { MAKER_MODES, sanitizeEnabledModes } from "../../../../lib/cases/maker-studio/modes";
 
 // Sept 24, 2026 — teacher-set Frequency Rush question timer. The game
 // accepts 0-60 seconds; 0 means no timer.
@@ -128,7 +129,7 @@ const CHALLENGE_TYPES = [
     description: "A 15-task quest on one planet. Station mode: four cards, then a challenge. About 15–20 minutes per act." },
   // Sept 26, 2026 — Maker Studio Wave 0 (prompt + mode grid; Write live).
   { key: "maker_studio", label: "Maker Studio", image: "/teacher/challenges/museum_exhibit.jpg", real: true,
-    description: "Students get a prompt, finish make modes (Write is live in Wave 0), and submit for teacher review — not AI-graded. About 10–15 minutes." },
+    description: "Students get a prompt, finish every make mode you turn on (Write, Sketch, Diagram, Poster, Comic, Voice are live), and submit for teacher review — not AI-graded. About 10–20 minutes." },
   // Coming soon — kept below live tiles (Assign library sorts real:true first as well).
   { key: "repair_desk", label: "Repair Desk", image: "/teacher/challenges/repair_desk.jpg", real: false,
     description: "A broken ticket arrives — a flawed diagram, model, or work sample. Students diagnose what's wrong, fix it, and explain the fix to whoever sent it in." },
@@ -228,7 +229,7 @@ function mergeExpeditionStationCatalog(rows) {
 
 // Sept 25, 2026 — Maker Studio catalog fallback (same pattern as Expedition Station).
 function makerStudioLibraryRows() {
-  // Wave 0: Quick Maker (Write). Catalog stays light — menus live in assign UI.
+  // Quick Maker seed. Prompt cards + mode toggles live in Assign UI.
   return [normalizeMakerCaseRow(QUICK_MS_ASSIGN_FALLBACK)];
 }
 
@@ -372,18 +373,28 @@ function NewAssignmentContent() {
   // Students can no longer turn the game's own timer on or off.
   const [questionSeconds, setQuestionSeconds] = useState(0);
 
-  // Maker Studio — quieter Assign: menus + prompt + finish N + journal. Modes come from menus (Wave 1 live modes).
+  // Maker Studio — two-pane Assign: prompt cards (left) + mode toggles (right). No Finish N UI.
   const [makerPrompt, setMakerPrompt] = useState("Write about today's idea in your own words. What do you understand, and what makes you think that?");
-  const [makerFinishN, setMakerFinishN] = useState(1);
+  const [makerPromptCardId, setMakerPromptCardId] = useState("quick-default");
   const [makerJournalOnRelease, setMakerJournalOnRelease] = useState(true);
   const [makerEnabledModes, setMakerEnabledModes] = useState(["write"]);
 
-  function applyMakerMenu(menu) {
-    if (!menu) return;
-    setMakerPrompt(menu.prompt || "");
-    setMakerFinishN(Math.max(1, Number(menu.finishN) || 1));
-    setMakerJournalOnRelease(menu.journalOnRelease !== false);
-    setMakerEnabledModes(Array.isArray(menu.enabledModes) && menu.enabledModes.length ? menu.enabledModes : ["write"]);
+  function applyMakerPromptCard(card) {
+    if (!card) return;
+    setMakerPromptCardId(card.id);
+    setMakerPrompt(card.prompt || "");
+  }
+
+  function toggleMakerMode(modeId, live) {
+    if (!live) return;
+    setMakerEnabledModes((prev) => {
+      const cur = Array.isArray(prev) ? prev : ["write"];
+      if (cur.includes(modeId)) {
+        const next = cur.filter((id) => id !== modeId);
+        return next.length ? next : [];
+      }
+      return sanitizeEnabledModes([...cur, modeId]);
+    });
   }
 
   const [challengeStep, setChallengeStep] = useState("library");
@@ -534,11 +545,20 @@ function NewAssignmentContent() {
         setAssigning(false);
         return;
       }
+      const enabledModes = sanitizeEnabledModes(
+        Array.isArray(makerEnabledModes) && makerEnabledModes.length ? makerEnabledModes : []
+      );
+      if (!enabledModes.length) {
+        setError("Turn on at least one live Maker mode before assigning.");
+        setAssigning(false);
+        return;
+      }
       assignmentFields.maker_studio_config = {
         prompt,
         topic: "",
-        enabledModes: Array.isArray(makerEnabledModes) && makerEnabledModes.length ? makerEnabledModes : ["write"],
-        finishN: Math.max(1, Number(makerFinishN) || 1),
+        enabledModes,
+        // Auto: student submits when every enabled mode is Done. Teachers never set Finish N.
+        finishN: enabledModes.length,
         everydayCount: 0,
         challengeCount: 0,
         journalOnRelease: !!makerJournalOnRelease,
@@ -609,7 +629,7 @@ function NewAssignmentContent() {
     setGameSkin(DEFAULT_GAME_SKIN);
     setCrystalDiveMinutes(10);
     setMakerPrompt("Write about today's idea in your own words. What do you understand, and what makes you think that?");
-    setMakerFinishN(1);
+    setMakerPromptCardId("quick-default");
     setMakerJournalOnRelease(true);
     setMakerEnabledModes(["write"]);
   }
@@ -818,57 +838,108 @@ function NewAssignmentContent() {
                   )}
 
 
-                  {selectedCase?.engine === "maker_studio" && (
+                  {selectedCase?.engine === "maker_studio" && (() => {
+                    const promptCards = promptCardsForCase(selectedCase.standard);
+                    const enabled = Array.isArray(makerEnabledModes) ? makerEnabledModes : [];
+                    return (
                     <div style={{ marginBottom: 14, border: `1.5px solid ${COLORS.border}`, borderRadius: 12, padding: 12, background: COLORS.white }}>
-                      <div style={{ fontWeight: 700, fontSize: 13, marginBottom: 8, color: COLORS.textDark }}>Ready-made menus</div>
-                      <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 12 }}>
-                        {MAKER_MENUS.map((menu) => (
-                          <button
-                            key={menu.id}
-                            type="button"
-                            className="cc-btn"
-                            onClick={() => applyMakerMenu(menu)}
-                            style={{ background: COLORS.white, color: COLORS.textDark, border: `1.5px solid ${COLORS.border}`, borderRadius: 999, padding: "7px 12px", fontWeight: 700, fontSize: 12 }}
-                            title={menu.blurb}
-                          >
-                            {menu.title}
-                          </button>
-                        ))}
+                      <div style={{ fontWeight: 700, fontSize: 13, marginBottom: 6, color: COLORS.textDark }}>Maker Studio setup</div>
+                      <p style={{ fontSize: 11.5, color: COLORS.textMuted, margin: "0 0 10px 0" }}>
+                        Pick a prompt, turn on the modes students must finish, then Assign. Students submit when every enabled mode is Done.
+                      </p>
+                      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, alignItems: "start" }}>
+                        <div>
+                          <div style={{ fontWeight: 700, fontSize: 12, marginBottom: 8, color: COLORS.textMuted }}>Prompt cards</div>
+                          <div style={{ display: "grid", gap: 6, maxHeight: 220, overflowY: "auto", marginBottom: 10 }}>
+                            {promptCards.map((card) => {
+                              const on = makerPromptCardId === card.id;
+                              return (
+                                <button
+                                  key={card.id}
+                                  type="button"
+                                  className="cc-btn"
+                                  onClick={() => applyMakerPromptCard(card)}
+                                  style={{
+                                    textAlign: "left",
+                                    background: on ? `${ACCENT}18` : COLORS.white,
+                                    color: COLORS.textDark,
+                                    border: `1.5px solid ${on ? ACCENT : COLORS.border}`,
+                                    borderRadius: 10,
+                                    padding: "8px 10px",
+                                    fontWeight: 700,
+                                    fontSize: 12.5,
+                                  }}
+                                >
+                                  {card.title || card.label}
+                                </button>
+                              );
+                            })}
+                          </div>
+                          <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: COLORS.textMuted, marginBottom: 4 }}>Prompt (editable)</label>
+                          <textarea
+                            value={makerPrompt}
+                            onChange={(e) => setMakerPrompt(e.target.value)}
+                            rows={4}
+                            style={{ width: "100%", border: "2px solid #ECEAF5", borderRadius: 10, padding: 10, fontSize: 13, boxSizing: "border-box", fontFamily: "inherit" }}
+                            placeholder="What should students make / write about?"
+                          />
+                        </div>
+                        <div>
+                          <div style={{ fontWeight: 700, fontSize: 12, marginBottom: 8, color: COLORS.textMuted }}>Make modes</div>
+                          <div style={{ display: "grid", gap: 6, maxHeight: 280, overflowY: "auto", marginBottom: 10 }}>
+                            {MAKER_MODES.map((mode) => {
+                              const on = enabled.includes(mode.id);
+                              const live = !!mode.live;
+                              return (
+                                <button
+                                  key={mode.id}
+                                  type="button"
+                                  className="cc-btn"
+                                  disabled={!live}
+                                  aria-pressed={on}
+                                  onClick={() => toggleMakerMode(mode.id, live)}
+                                  title={live ? mode.blurb : "Coming soon — not selectable yet"}
+                                  style={{
+                                    display: "flex",
+                                    alignItems: "center",
+                                    gap: 8,
+                                    textAlign: "left",
+                                    background: !live ? "#F3F1F8" : on ? `${ACCENT}18` : COLORS.white,
+                                    color: !live ? "#9A94AE" : COLORS.textDark,
+                                    border: `1.5px solid ${!live ? "#E4E0EF" : on ? ACCENT : COLORS.border}`,
+                                    borderRadius: 10,
+                                    padding: "8px 10px",
+                                    fontWeight: 700,
+                                    fontSize: 12.5,
+                                    cursor: live ? "pointer" : "not-allowed",
+                                    opacity: live ? 1 : 0.72,
+                                  }}
+                                >
+                                  <span style={{
+                                    width: 16, height: 16, borderRadius: 4, flexShrink: 0,
+                                    background: on && live ? ACCENT : COLORS.white,
+                                    border: `1.5px solid ${on && live ? ACCENT : COLORS.border}`,
+                                    display: "flex", alignItems: "center", justifyContent: "center",
+                                    color: COLORS.white, fontSize: 11,
+                                  }}>{on && live ? "✓" : ""}</span>
+                                  <span style={{ flex: 1 }}>{mode.icon} {mode.label}</span>
+                                  {!live ? <span style={{ fontSize: 10, fontWeight: 700, color: "#9A94AE" }}>Soon</span> : null}
+                                </button>
+                              );
+                            })}
+                          </div>
+                          <p style={{ fontSize: 11.5, color: COLORS.textMuted, margin: "0 0 10px 0" }}>
+                            Students finish every mode you turn on ({enabled.length || 0} selected). Grey modes are not live yet.
+                          </p>
+                          <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, fontWeight: 600, color: COLORS.textDark, cursor: "pointer" }}>
+                            <input type="checkbox" checked={makerJournalOnRelease} onChange={(e) => setMakerJournalOnRelease(e.target.checked)} />
+                            Keep in Journal when released
+                          </label>
+                        </div>
                       </div>
-                      <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: COLORS.textMuted, marginBottom: 4 }}>Prompt</label>
-                      <textarea
-                        value={makerPrompt}
-                        onChange={(e) => setMakerPrompt(e.target.value)}
-                        rows={3}
-                        style={{ width: "100%", border: "2px solid #ECEAF5", borderRadius: 10, padding: 10, fontSize: 13, boxSizing: "border-box", marginBottom: 10, fontFamily: "inherit" }}
-                        placeholder="What should students make / write about?"
-                      />
-                      <div style={{ marginBottom: 10, fontSize: 12, color: COLORS.textMuted }}>
-                        Modes in this menu:{" "}
-                        <strong style={{ color: COLORS.textDark }}>
-                          {(Array.isArray(makerEnabledModes) ? makerEnabledModes : ["write"]).join(", ")}
-                        </strong>
-                      </div>
-                      <div style={{ marginBottom: 10, maxWidth: 140 }}>
-                        <label style={{ fontSize: 11, fontWeight: 700, color: COLORS.textMuted }}>Finish N</label>
-                        <input
-                          type="number"
-                          min="1"
-                          max={Math.max(1, (Array.isArray(makerEnabledModes) ? makerEnabledModes : ["write"]).length)}
-                          value={makerFinishN}
-                          onChange={(e) => {
-                            const cap = Math.max(1, (Array.isArray(makerEnabledModes) ? makerEnabledModes : ["write"]).length);
-                            setMakerFinishN(Math.min(cap, Math.max(1, Number(e.target.value) || 1)));
-                          }}
-                          style={{ width: "100%", border: "2px solid #ECEAF5", borderRadius: 10, padding: "7px 10px", fontSize: 13, boxSizing: "border-box", marginTop: 3 }}
-                        />
-                      </div>
-                      <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, fontWeight: 600, color: COLORS.textDark, cursor: "pointer" }}>
-                        <input type="checkbox" checked={makerJournalOnRelease} onChange={(e) => setMakerJournalOnRelease(e.target.checked)} />
-                        Keep in Journal when released
-                      </label>
                     </div>
-                  )}
+                    );
+                  })()}
 
                   {engineSupportsDistressCall(selectedCase?.engine) && (
                     <div style={{ marginBottom: 14, border: `1.5px solid ${distressCallEnabled ? COLORS.violet : COLORS.border}`, borderRadius: 12, padding: 12, background: distressCallEnabled ? `${COLORS.violet}1A` : COLORS.white }}>
@@ -959,7 +1030,7 @@ function NewAssignmentContent() {
                     </div>
                   )}
 
-                  <button className="cc-btn" onClick={handleAssign} disabled={assigning || !assignClassId} style={{ width: "100%", background: assignClassId ? ACCENT : "#D8D4E8", color: COLORS.white, borderRadius: 999, padding: "12px 20px", fontWeight: 700, fontSize: 14.5 }}>
+                  <button className="cc-btn" onClick={handleAssign} disabled={assigning || !assignClassId || (selectedCase?.engine === "maker_studio" && (!(makerPrompt || "").trim() || !(Array.isArray(makerEnabledModes) && makerEnabledModes.length)))} style={{ width: "100%", background: (assignClassId && !(selectedCase?.engine === "maker_studio" && (!(makerPrompt || "").trim() || !(Array.isArray(makerEnabledModes) && makerEnabledModes.length)))) ? ACCENT : "#D8D4E8", color: COLORS.white, borderRadius: 999, padding: "12px 20px", fontWeight: 700, fontSize: 14.5 }}>
                     {assigning
                       ? "Assigning..."
                       : !assignClassId
