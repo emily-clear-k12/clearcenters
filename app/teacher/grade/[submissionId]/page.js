@@ -538,7 +538,49 @@ export default function TeacherGradeDetailPage() {
                               {!(Array.isArray(s.categories) && s.categories.length) ? <div style={{ color: COLORS.textMuted, fontSize: 13 }}>(no categories)</div> : null}
                             </div>
                           ) : null}
-                          {!["write", "sketch", "diagram", "poster", "comic", "voice", "before_after", "map_it", "math_story", "interview", "sort_of_my_own"].includes(modeId) ? (
+                          {modeId === "teach_the_buddy" ? (
+                            <>
+                              {s.explanation ? <div style={{ whiteSpace: "pre-wrap", fontSize: 14, lineHeight: 1.5, marginBottom: 10 }}>{s.explanation}</div> : <div style={{ color: COLORS.textMuted, fontSize: 13, marginBottom: 8 }}>(no explanation)</div>}
+                              <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                                {(Array.isArray(s.questions) ? s.questions : []).map((row, idx) => (
+                                  <div key={idx} style={{ background: COLORS.white, borderRadius: 10, padding: 10, border: `1px solid ${COLORS.border}` }}>
+                                    <div style={{ fontSize: 12, fontWeight: 700, color: COLORS.textMuted, marginBottom: 4 }}>Buddy Q{idx + 1}</div>
+                                    <div style={{ fontWeight: 600, fontSize: 13.5, marginBottom: 6 }}>{(row && row.question) || "—"}</div>
+                                    <div style={{ whiteSpace: "pre-wrap", fontSize: 14, lineHeight: 1.45 }}>{(row && row.answer) || "(no answer)"}</div>
+                                  </div>
+                                ))}
+                              </div>
+                              {s.aiUsed === false ? <div style={{ fontSize: 12, color: COLORS.textMuted, marginTop: 6 }}>Backup questions (AI unavailable)</div> : null}
+                            </>
+                          ) : null}
+                          {modeId === "paint_what_i_said" ? (
+                            <>
+                              {s.promptText ? <div style={{ fontSize: 13.5, color: COLORS.textMuted, marginBottom: 8 }}>{s.promptText}</div> : null}
+                              {s.imageDataUrl ? <img src={s.imageDataUrl} alt="Painted picture" style={{ maxWidth: "100%", borderRadius: 10, border: `1px solid ${COLORS.border}` }} /> : <div style={{ color: COLORS.textMuted, fontSize: 13 }}>(no picture)</div>}
+                              {s.imageSource ? <div style={{ fontSize: 12, color: COLORS.textMuted, marginTop: 6 }}>Source: {s.imageSource}{s.regenerateCount != null ? ` · regenerates: ${s.regenerateCount}` : ""}</div> : null}
+                            </>
+                          ) : null}
+                          {modeId === "what_if" ? (
+                            <>
+                              {s.twist ? <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 8 }}>What if {s.twist}?</div> : null}
+                              <ol style={{ margin: "0 0 8px", paddingLeft: 18, fontSize: 14, lineHeight: 1.45 }}>
+                                {(Array.isArray(s.beats) ? s.beats : []).map((b, idx) => (
+                                  <li key={idx}>{(b || "").trim() || "—"}</li>
+                                ))}
+                              </ol>
+                              {s.ending ? <div style={{ fontSize: 14, lineHeight: 1.45 }}><b>Ending:</b> {s.ending}</div> : null}
+                              {!s.twist && !(Array.isArray(s.beats) && s.beats.length) && !s.ending ? <div style={{ color: COLORS.textMuted, fontSize: 13 }}>(empty)</div> : null}
+                            </>
+                          ) : null}
+                          {modeId === "postcard" ? (
+                            <>
+                              <div style={{ fontSize: 13.5, marginBottom: 4 }}><b>To:</b> {s.to || "—"}</div>
+                              <div style={{ fontSize: 13.5, marginBottom: 8 }}><b>From:</b> {s.from || "—"}</div>
+                              {s.message ? <div style={{ whiteSpace: "pre-wrap", fontSize: 14, lineHeight: 1.5, marginBottom: 8 }}>{s.message}</div> : null}
+                              {s.imageDataUrl ? <img src={s.imageDataUrl} alt="Postcard front" style={{ maxWidth: "100%", borderRadius: 10, border: `1px solid ${COLORS.border}` }} /> : <div style={{ color: COLORS.textMuted, fontSize: 13 }}>(no front picture)</div>}
+                            </>
+                          ) : null}
+                          {!["write", "sketch", "diagram", "poster", "comic", "voice", "before_after", "map_it", "math_story", "interview", "sort_of_my_own", "teach_the_buddy", "paint_what_i_said", "what_if", "postcard"].includes(modeId) ? (
                             <div style={{ whiteSpace: "pre-wrap", fontSize: 14, lineHeight: 1.5 }}>{s.text || "(empty)"}</div>
                           ) : null}
                         </div>

@@ -66,6 +66,40 @@ function emptySlotFor(id) {
   if (id === "sort_of_my_own") {
     return { status: "empty", categories: [], items: [], updatedAt: null };
   }
+  if (id === "teach_the_buddy") {
+    return { status: "empty", explanation: "", questions: [], aiUsed: false, updatedAt: null };
+  }
+  if (id === "paint_what_i_said") {
+    return {
+      status: "empty",
+      promptText: "",
+      imageDataUrl: null,
+      imageSource: null,
+      regenerateCount: 0,
+      updatedAt: null,
+    };
+  }
+  if (id === "what_if") {
+    return {
+      status: "empty",
+      twist: "",
+      beats: [],
+      ending: "",
+      aiUsed: false,
+      updatedAt: null,
+    };
+  }
+  if (id === "postcard") {
+    return {
+      status: "empty",
+      to: "",
+      from: "",
+      message: "",
+      imageDataUrl: null,
+      imageSource: null,
+      updatedAt: null,
+    };
+  }
   return { status: "empty", updatedAt: null };
 }
 

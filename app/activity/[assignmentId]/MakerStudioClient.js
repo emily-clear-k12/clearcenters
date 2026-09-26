@@ -20,6 +20,27 @@ const DEFAULT_INTERVIEW_QUESTIONS = [
 ];
 const DEFAULT_SORT_ITEMS = ["Item 1", "Item 2", "Item 3", "Item 4"];
 
+const BUDDY_FALLBACK_QUESTIONS = [
+  { question: "What is one important idea you explained?", answer: "" },
+  { question: "Why does that idea matter for today's topic?", answer: "" },
+];
+const PAINT_MAX_REGENS = 2;
+const WHAT_IF_TWIST_CHIPS = [
+  "one thing changed",
+  "it happened in the past",
+  "it happened far away",
+  "we had no tools",
+  "everyone helped",
+];
+
+function emptyBuddyQuestions(list) {
+  const src = Array.isArray(list) && list.length ? list : BUDDY_FALLBACK_QUESTIONS;
+  return src.slice(0, 2).map((q) => ({
+    question: (q && q.question) || "",
+    answer: (q && q.answer) || "",
+  }));
+}
+
 function modeStatus(modes, id) {
   const slot = (modes && modes[id]) || null;
   if (!slot) return "empty";
@@ -121,6 +142,32 @@ function modeHasContent(id, draft) {
       )
     );
   }
+  if (id === "teach_the_buddy") {
+    return !!(
+      (draft.explanation || "").trim() ||
+      (draft.questions || []).some(
+        (q) => q && ((q.question || "").trim() || (q.answer || "").trim())
+      )
+    );
+  }
+  if (id === "paint_what_i_said") {
+    return !!( (draft.promptText || "").trim() || draft.imageDataUrl );
+  }
+  if (id === "what_if") {
+    return !!(
+      (draft.twist || "").trim() ||
+      (draft.ending || "").trim() ||
+      (draft.beats || []).some((b) => (b || "").trim())
+    );
+  }
+  if (id === "postcard") {
+    return !!(
+      (draft.to || "").trim() ||
+      (draft.from || "").trim() ||
+      (draft.message || "").trim() ||
+      draft.imageDataUrl
+    );
+  }
   return false;
 }
 
@@ -180,6 +227,33 @@ function modeReadyForDone(id, draft) {
           !!(rawCats[idx] || "").trim()
         );
       })
+    );
+  }
+  if (id === "teach_the_buddy") {
+    const qs = draft.questions || [];
+    return (
+      !!(draft.explanation || "").trim() &&
+      qs.length >= 1 &&
+      qs.every((q) => q && (q.question || "").trim() && (q.answer || "").trim())
+    );
+  }
+  if (id === "paint_what_i_said") {
+    return !!(draft.promptText || "").trim() && !!draft.imageDataUrl;
+  }
+  if (id === "what_if") {
+    const beats = (draft.beats || []).map((b) => (b || "").trim()).filter(Boolean);
+    return (
+      !!(draft.twist || "").trim() &&
+      beats.length >= 2 &&
+      !!(draft.ending || "").trim()
+    );
+  }
+  if (id === "postcard") {
+    return (
+      !!(draft.to || "").trim() &&
+      !!(draft.from || "").trim() &&
+      !!(draft.message || "").trim() &&
+      !!draft.imageDataUrl
     );
   }
   return false;
@@ -287,6 +361,49 @@ function buildSlot(id, draft, status) {
       updatedAt,
     };
   }
+  if (id === "teach_the_buddy") {
+    return {
+      status,
+      explanation: draft.explanation || "",
+      questions: (draft.questions || []).map((q) => ({
+        question: (q && q.question) || "",
+        answer: (q && q.answer) || "",
+      })),
+      aiUsed: !!draft.aiUsed,
+      updatedAt,
+    };
+  }
+  if (id === "paint_what_i_said") {
+    return {
+      status,
+      promptText: draft.promptText || "",
+      imageDataUrl: draft.imageDataUrl || null,
+      imageSource: draft.imageSource || null,
+      regenerateCount: Math.max(0, Number(draft.regenerateCount) || 0),
+      updatedAt,
+    };
+  }
+  if (id === "what_if") {
+    return {
+      status,
+      twist: draft.twist || "",
+      beats: (draft.beats || []).map((b) => (typeof b === "string" ? b : "")),
+      ending: draft.ending || "",
+      aiUsed: !!draft.aiUsed,
+      updatedAt,
+    };
+  }
+  if (id === "postcard") {
+    return {
+      status,
+      to: draft.to || "",
+      from: draft.from || "",
+      message: draft.message || "",
+      imageDataUrl: draft.imageDataUrl || null,
+      imageSource: draft.imageSource || null,
+      updatedAt,
+    };
+  }
   return { status, updatedAt };
 }
 
@@ -341,6 +458,8 @@ export default function MakerStudioClient({
   const [libraryPicker, setLibraryPicker] = useState(null);
   const [pinPlaceMode, setPinPlaceMode] = useState(false);
   const [sortActiveItem, setSortActiveItem] = useState(null);
+  const [aiBusy, setAiBusy] = useState(false);
+  const [aiNote, setAiNote] = useState(null);
   const [recording, setRecording] = useState(false);
   const [recordSec, setRecordSec] = useState(0);
   const autosaveTimer = useRef(null);
@@ -524,6 +643,38 @@ export default function MakerStudioClient({
             : base.items,
       };
       setSortActiveItem(null);
+    } else if (id === "teach_the_buddy") {
+      nextDraft = {
+        explanation: slot.explanation || "",
+        questions: emptyBuddyQuestions(slot.questions),
+        aiUsed: !!slot.aiUsed,
+      };
+      setAiNote(null);
+    } else if (id === "paint_what_i_said") {
+      nextDraft = {
+        promptText: slot.promptText || "",
+        imageDataUrl: slot.imageDataUrl || null,
+        imageSource: slot.imageSource || null,
+        regenerateCount: Math.max(0, Number(slot.regenerateCount) || 0),
+      };
+      setAiNote(null);
+    } else if (id === "what_if") {
+      nextDraft = {
+        twist: slot.twist || "",
+        beats: Array.isArray(slot.beats) ? slot.beats.map((b) => String(b || "")) : [],
+        ending: slot.ending || "",
+        aiUsed: !!slot.aiUsed,
+      };
+      setAiNote(null);
+    } else if (id === "postcard") {
+      nextDraft = {
+        to: slot.to || "",
+        from: slot.from || "",
+        message: slot.message || "",
+        imageDataUrl: slot.imageDataUrl || null,
+        imageSource: slot.imageSource || null,
+      };
+      setAiNote(null);
     } else {
       return;
     }
@@ -601,6 +752,14 @@ export default function MakerStudioClient({
     if (id === "math_story") return "Write your story and show your work, then tap Done.";
     if (id === "interview") return "Answer every question (3–5), then tap Done.";
     if (id === "sort_of_my_own") return "Name 2–4 categories and sort every item, then tap Done.";
+    if (id === "teach_the_buddy")
+      return "Write your explanation and answer Buddy's questions, then tap Done.";
+    if (id === "paint_what_i_said")
+      return "Add a description and a picture, then tap Done.";
+    if (id === "what_if")
+      return "Add a twist, at least 2 beats, and your ending, then tap Done.";
+    if (id === "postcard")
+      return "Fill To, From, message, and a front picture, then tap Done.";
     return "Finish this piece, then tap Done.";
   }
 
@@ -724,6 +883,216 @@ export default function MakerStudioClient({
   }
 
 
+  async function askBuddy() {
+    if (!draft || aiBusy) return;
+    const explanation = (draft.explanation || "").trim();
+    if (!explanation) {
+      setStatus("Write your explanation first, then Ask Buddy.");
+      return;
+    }
+    setAiBusy(true);
+    setAiNote(null);
+    setStatus("Buddy is thinking of questions…");
+    try {
+      const res = await fetch("/api/maker-studio/ai/buddy", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          explanation,
+          topic: config.topic || "",
+          prompt: config.prompt || "",
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      const incoming =
+        Array.isArray(data.questions) && data.questions.length
+          ? data.questions
+          : BUDDY_FALLBACK_QUESTIONS;
+      const keptAnswers = (draft.questions || []).map((q) => (q && q.answer) || "");
+      const nextQs = emptyBuddyQuestions(incoming).map((q, i) => ({
+        ...q,
+        answer: keptAnswers[i] || "",
+      }));
+      dirty.current = true;
+      setDraft((prev) => ({
+        ...(prev || {}),
+        questions: nextQs,
+        aiUsed: !data.fallback,
+      }));
+      setAiNote(data.message || (data.fallback ? "Using backup questions." : null));
+      setStatus(
+        data.fallback
+          ? "Buddy is resting — answer these questions instead."
+          : "Buddy asked you a couple of questions. Answer them below."
+      );
+    } catch (_) {
+      dirty.current = true;
+      setDraft((prev) => ({
+        ...(prev || {}),
+        questions: emptyBuddyQuestions(BUDDY_FALLBACK_QUESTIONS),
+        aiUsed: false,
+      }));
+      setAiNote("Buddy is resting. Try these questions instead.");
+      setStatus("Buddy is resting — answer these questions instead.");
+    } finally {
+      setAiBusy(false);
+    }
+  }
+
+  async function generatePaintImage({ regenerate } = {}) {
+    if (!draft || aiBusy) return;
+    const promptText = (draft.promptText || "").trim();
+    if (!promptText) {
+      setStatus("Describe the picture first.");
+      return;
+    }
+    const used = Math.max(0, Number(draft.regenerateCount) || 0);
+    if (regenerate && used >= PAINT_MAX_REGENS) {
+      setStatus("You already used your regenerates. Keep this picture or pick from the library.");
+      return;
+    }
+    setAiBusy(true);
+    setAiNote(null);
+    setStatus(regenerate ? "Making a new picture…" : "Painting your words…");
+    try {
+      const res = await fetch("/api/maker-studio/ai/image", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          promptText,
+          topic: config.topic || "",
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (data.ok && data.imageDataUrl) {
+        dirty.current = true;
+        setDraft((prev) => ({
+          ...(prev || {}),
+          imageDataUrl: data.imageDataUrl,
+          imageSource: "ai",
+          regenerateCount: regenerate ? used + 1 : used,
+        }));
+        setStatus(
+          regenerate
+            ? `New picture ready. Regenerates left: ${Math.max(0, PAINT_MAX_REGENS - (used + 1))}.`
+            : "Picture ready. You can regenerate a couple of times if you want."
+        );
+      } else {
+        setAiNote(
+          data.message ||
+            "Picture helper is resting. Pick from the library or draw instead."
+        );
+        setStatus("Picture helper is resting — use the library or draw.");
+      }
+    } catch (_) {
+      setAiNote("Couldn't make that picture. Pick from the library or draw instead.");
+      setStatus("Couldn't make that picture — use the library or draw.");
+    } finally {
+      setAiBusy(false);
+    }
+  }
+
+  async function runWhatIfBeats() {
+    if (!draft || aiBusy) return;
+    const twist = (draft.twist || "").trim();
+    if (!twist) {
+      setStatus("Add your What if… twist first.");
+      return;
+    }
+    setAiBusy(true);
+    setAiNote(null);
+    setStatus("Building your story beats…");
+    try {
+      const res = await fetch("/api/maker-studio/ai/what-if", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          twist,
+          topic: config.topic || "",
+          prompt: config.prompt || "",
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      const beats =
+        Array.isArray(data.beats) && data.beats.length >= 2
+          ? data.beats.map((b) => String(b || ""))
+          : [
+              `First, imagine what happens when ${twist}.`,
+              "Next, notice what stays the same and what is different.",
+              "Then, think about one new problem or surprise that shows up.",
+            ];
+      dirty.current = true;
+      setDraft((prev) => ({
+        ...(prev || {}),
+        beats,
+        aiUsed: !data.fallback,
+      }));
+      setAiNote(data.message || null);
+      setStatus(
+        data.fallback
+          ? "AI is resting — edit these beats or write your own."
+          : "Here are your beats. Add your ending line below."
+      );
+    } catch (_) {
+      dirty.current = true;
+      setDraft((prev) => ({
+        ...(prev || {}),
+        beats: [
+          `First, imagine what happens when ${twist}.`,
+          "Next, notice what stays the same and what is different.",
+        ],
+        aiUsed: false,
+      }));
+      setAiNote("AI is resting. Write or edit your own beats.");
+      setStatus("AI is resting — write your own beats.");
+    } finally {
+      setAiBusy(false);
+    }
+  }
+
+  async function generatePostcardImage() {
+    if (!draft || aiBusy) return;
+    const message = (draft.message || "").trim();
+    const desc =
+      message ||
+      [draft.to, draft.from].filter(Boolean).join(" / ") ||
+      (config.topic || "a classroom postcard scene");
+    setAiBusy(true);
+    setAiNote(null);
+    setStatus("Making a postcard picture…");
+    try {
+      const res = await fetch("/api/maker-studio/ai/image", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          promptText: `Postcard front illustration: ${desc}`,
+          topic: config.topic || "",
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (data.ok && data.imageDataUrl) {
+        dirty.current = true;
+        setDraft((prev) => ({
+          ...(prev || {}),
+          imageDataUrl: data.imageDataUrl,
+          imageSource: "ai",
+        }));
+        setStatus("Postcard front is ready.");
+      } else {
+        setAiNote(
+          data.message ||
+            "Picture helper is resting. Pick from the library or draw instead."
+        );
+        setStatus("Picture helper is resting — use the library or draw.");
+      }
+    } catch (_) {
+      setAiNote("Couldn't make that picture. Pick from the library or draw instead.");
+      setStatus("Couldn't make that picture — use the library or draw.");
+    } finally {
+      setAiBusy(false);
+    }
+  }
+
   function placeLibraryImage(item) {
     if (!item || !item.url || !libraryPicker) return;
     dirty.current = true;
@@ -743,7 +1112,14 @@ export default function MakerStudioClient({
         [side]: { imageDataUrl: url },
       }));
     } else {
-      setDraft((prev) => ({ ...(prev || {}), imageDataUrl: url }));
+      setDraft((prev) => ({
+        ...(prev || {}),
+        imageDataUrl: url,
+        imageSource:
+          activeMode === "paint_what_i_said" || activeMode === "postcard"
+            ? "library"
+            : (prev && prev.imageSource) || null,
+      }));
     }
     setLibraryPicker(null);
     setStatus("Picture placed from the library.");
@@ -1592,6 +1968,335 @@ export default function MakerStudioClient({
               </>
             ) : null}
 
+            {activeMode === "teach_the_buddy" ? (
+              <>
+                <div className="mk-field">
+                  <label htmlFor="mk-buddy-expl">Teach Buddy — your explanation</label>
+                  <textarea
+                    id="mk-buddy-expl"
+                    value={draft.explanation || ""}
+                    onChange={(e) => patchDraft({ explanation: e.target.value })}
+                    placeholder="Explain the idea like you are teaching a friend…"
+                    disabled={busy || aiBusy}
+                  />
+                </div>
+                <div className="mk-ai-row">
+                  <button
+                    type="button"
+                    className="mk-next"
+                    disabled={busy || aiBusy || !(draft.explanation || "").trim()}
+                    onClick={askBuddy}
+                  >
+                    {aiBusy ? "Asking…" : "Ask Buddy"}
+                  </button>
+                  <span className="mk-quiet">Buddy asks check questions — not a grade.</span>
+                </div>
+                {aiNote ? <p className="mk-warn">{aiNote}</p> : null}
+                <div className="mk-interview-list">
+                  {(draft.questions || []).map((row, idx) => (
+                    <div key={idx} className="mk-interview-row">
+                      <label htmlFor={`mk-buddy-a-${idx}`}>
+                        {(row && row.question) || `Question ${idx + 1}`}
+                      </label>
+                      <textarea
+                        id={`mk-buddy-a-${idx}`}
+                        value={(row && row.answer) || ""}
+                        onChange={(e) => {
+                          const next = (draft.questions || []).map((q, i) =>
+                            i === idx ? { ...q, answer: e.target.value } : q
+                          );
+                          patchDraft({ questions: next });
+                        }}
+                        placeholder="Your answer…"
+                        disabled={busy || aiBusy}
+                      />
+                    </div>
+                  ))}
+                </div>
+                {(draft.questions || []).length === 0 ? (
+                  <p className="mk-quiet">Tap Ask Buddy after you write, or answer will unlock with backup questions.</p>
+                ) : null}
+              </>
+            ) : null}
+
+            {activeMode === "paint_what_i_said" ? (
+              <>
+                <div className="mk-field">
+                  <label htmlFor="mk-paint-prompt">Describe the picture</label>
+                  <textarea
+                    id="mk-paint-prompt"
+                    value={draft.promptText || ""}
+                    onChange={(e) => patchDraft({ promptText: e.target.value })}
+                    placeholder="A few clear words about what you want to see…"
+                    disabled={busy || aiBusy}
+                  />
+                </div>
+                <div className="mk-ai-row">
+                  {!(draft.imageDataUrl && draft.imageSource === "ai") ? (
+                    <button
+                      type="button"
+                      className="mk-next"
+                      disabled={busy || aiBusy || !(draft.promptText || "").trim()}
+                      onClick={() => generatePaintImage({ regenerate: false })}
+                    >
+                      {aiBusy ? "Painting…" : "Paint it"}
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      className="mk-next"
+                      disabled={
+                        busy ||
+                        aiBusy ||
+                        !(draft.promptText || "").trim() ||
+                        Math.max(0, Number(draft.regenerateCount) || 0) >= PAINT_MAX_REGENS
+                      }
+                      onClick={() => generatePaintImage({ regenerate: true })}
+                    >
+                      {aiBusy ? "Painting…" : "Regenerate"}
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    className="mk-tool"
+                    disabled={busy || aiBusy}
+                    onClick={() => setLibraryPicker({ kind: "paint" })}
+                  >
+                    Pick from library
+                  </button>
+                  <span className="mk-regen-note">
+                    Regenerates used: {Math.max(0, Number(draft.regenerateCount) || 0)}/{PAINT_MAX_REGENS}
+                  </span>
+                </div>
+                {aiNote ? <p className="mk-warn">{aiNote}</p> : null}
+                {isLibraryPath(draft.imageDataUrl) ||
+                (typeof draft.imageDataUrl === "string" &&
+                  (draft.imageDataUrl.startsWith("data:") ||
+                    draft.imageDataUrl.startsWith("http"))) ? (
+                  <div className="mk-poster-preview">
+                    <img src={draft.imageDataUrl} alt="Painted picture" />
+                  </div>
+                ) : null}
+                <div className="mk-field">
+                  <label>Or draw your own</label>
+                  <MakerDrawPad
+                    initialImage={
+                      draft.imageSource === "draw" ? draft.imageDataUrl : null
+                    }
+                    onChange={(url) =>
+                      patchDraft({ imageDataUrl: url, imageSource: "draw" })
+                    }
+                    disabled={busy || aiBusy}
+                    height={220}
+                  />
+                </div>
+                {isPlacedImage(draft.imageDataUrl) ? (
+                  <button
+                    type="button"
+                    className="mk-ghost"
+                    disabled={busy || aiBusy}
+                    onClick={() =>
+                      patchDraft({ imageDataUrl: null, imageSource: null })
+                    }
+                  >
+                    Clear picture
+                  </button>
+                ) : null}
+              </>
+            ) : null}
+
+            {activeMode === "what_if" ? (
+              <>
+                <div className="mk-field">
+                  <label htmlFor="mk-whatif-twist">What if…</label>
+                  <input
+                    id="mk-whatif-twist"
+                    className="mk-input"
+                    value={draft.twist || ""}
+                    onChange={(e) => patchDraft({ twist: e.target.value })}
+                    placeholder="…one thing about today's idea changed"
+                    disabled={busy || aiBusy}
+                    maxLength={200}
+                  />
+                </div>
+                <div className="mk-twist-chips">
+                  {WHAT_IF_TWIST_CHIPS.map((chip) => (
+                    <button
+                      key={chip}
+                      type="button"
+                      className="mk-twist-chip"
+                      disabled={busy || aiBusy}
+                      onClick={() => patchDraft({ twist: chip })}
+                    >
+                      {chip}
+                    </button>
+                  ))}
+                </div>
+                <div className="mk-ai-row">
+                  <button
+                    type="button"
+                    className="mk-next"
+                    disabled={busy || aiBusy || !(draft.twist || "").trim()}
+                    onClick={runWhatIfBeats}
+                  >
+                    {aiBusy ? "Thinking…" : "Get story beats"}
+                  </button>
+                  <button
+                    type="button"
+                    className="mk-tool"
+                    disabled={busy || aiBusy}
+                    onClick={() => {
+                      dirty.current = true;
+                      setDraft((prev) => ({
+                        ...(prev || {}),
+                        beats: ["", ""],
+                        aiUsed: false,
+                      }));
+                      setAiNote("Write your own 2–3 beats.");
+                      setStatus("Write your own beats below.");
+                    }}
+                  >
+                    I'll write my own
+                  </button>
+                </div>
+                {aiNote ? <p className="mk-warn">{aiNote}</p> : null}
+                <div className="mk-beats">
+                  {(draft.beats || []).map((beat, idx) => (
+                    <div key={idx} className="mk-beat">
+                      <label htmlFor={`mk-beat-${idx}`}>Beat {idx + 1}</label>
+                      <textarea
+                        id={`mk-beat-${idx}`}
+                        value={beat || ""}
+                        onChange={(e) => {
+                          const next = (draft.beats || []).map((b, i) =>
+                            i === idx ? e.target.value : b
+                          );
+                          patchDraft({ beats: next });
+                        }}
+                        placeholder="What happens in this beat?"
+                        disabled={busy || aiBusy}
+                      />
+                    </div>
+                  ))}
+                </div>
+                {(draft.beats || []).length < 3 ? (
+                  <button
+                    type="button"
+                    className="mk-tool"
+                    style={{ marginTop: 8 }}
+                    disabled={busy || aiBusy}
+                    onClick={() =>
+                      patchDraft({ beats: [...(draft.beats || []), ""] })
+                    }
+                  >
+                    Add beat
+                  </button>
+                ) : null}
+                <div className="mk-field">
+                  <label htmlFor="mk-whatif-end">Your ending line</label>
+                  <input
+                    id="mk-whatif-end"
+                    className="mk-input"
+                    value={draft.ending || ""}
+                    onChange={(e) => patchDraft({ ending: e.target.value })}
+                    placeholder="How does your What if… end?"
+                    disabled={busy || aiBusy}
+                    maxLength={200}
+                  />
+                </div>
+              </>
+            ) : null}
+
+            {activeMode === "postcard" ? (
+              <>
+                <div className="mk-field">
+                  <label htmlFor="mk-pc-to">To</label>
+                  <input
+                    id="mk-pc-to"
+                    className="mk-input"
+                    value={draft.to || ""}
+                    onChange={(e) => patchDraft({ to: e.target.value })}
+                    placeholder="Who gets this postcard?"
+                    disabled={busy || aiBusy}
+                    maxLength={80}
+                  />
+                </div>
+                <div className="mk-field">
+                  <label htmlFor="mk-pc-from">From</label>
+                  <input
+                    id="mk-pc-from"
+                    className="mk-input"
+                    value={draft.from || ""}
+                    onChange={(e) => patchDraft({ from: e.target.value })}
+                    placeholder="Who is writing?"
+                    disabled={busy || aiBusy}
+                    maxLength={80}
+                  />
+                </div>
+                <div className="mk-field">
+                  <label htmlFor="mk-pc-msg">Message</label>
+                  <textarea
+                    id="mk-pc-msg"
+                    value={draft.message || ""}
+                    onChange={(e) => patchDraft({ message: e.target.value })}
+                    placeholder="A short message from that time or place…"
+                    disabled={busy || aiBusy}
+                  />
+                </div>
+                <div className="mk-ai-row">
+                  <button
+                    type="button"
+                    className="mk-next"
+                    disabled={busy || aiBusy}
+                    onClick={generatePostcardImage}
+                  >
+                    {aiBusy ? "Making…" : "AI front picture"}
+                  </button>
+                  <button
+                    type="button"
+                    className="mk-tool"
+                    disabled={busy || aiBusy}
+                    onClick={() => setLibraryPicker({ kind: "postcard" })}
+                  >
+                    Pick from library
+                  </button>
+                </div>
+                {aiNote ? <p className="mk-warn">{aiNote}</p> : null}
+                <div className="mk-postcard-front">
+                  {isPlacedImage(draft.imageDataUrl) ? (
+                    <img src={draft.imageDataUrl} alt="Postcard front" />
+                  ) : (
+                    <span className="mk-quiet">Front of postcard</span>
+                  )}
+                </div>
+                <div className="mk-field">
+                  <label>Or draw the front</label>
+                  <MakerDrawPad
+                    initialImage={
+                      draft.imageSource === "draw" ? draft.imageDataUrl : null
+                    }
+                    onChange={(url) =>
+                      patchDraft({ imageDataUrl: url, imageSource: "draw" })
+                    }
+                    disabled={busy || aiBusy}
+                    height={200}
+                  />
+                </div>
+                {isPlacedImage(draft.imageDataUrl) ? (
+                  <button
+                    type="button"
+                    className="mk-ghost"
+                    disabled={busy || aiBusy}
+                    onClick={() =>
+                      patchDraft({ imageDataUrl: null, imageSource: null })
+                    }
+                  >
+                    Clear picture
+                  </button>
+                ) : null}
+              </>
+            ) : null}
+
             <div className="mk-save-row">
               <span className={`mk-pill${saveState === "error" ? " warn" : ""}`}>
                 {saveState === "saving" ? "Saving…" : saveState === "error" ? "Save failed — keep going" : "Saved"}
@@ -1604,7 +2309,7 @@ export default function MakerStudioClient({
                   type="button"
                   className="mk-next"
                   onClick={markModeDone}
-                  disabled={busy || !modeReadyForDone(activeMode, draft)}
+                  disabled={busy || aiBusy || !modeReadyForDone(activeMode, draft)}
                 >
                   Done
                 </button>
