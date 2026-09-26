@@ -132,7 +132,7 @@ export async function POST(request) {
     if (summary.doneCount < summary.finishN) {
       return NextResponse.json({
         need: "finish",
-        message: `Finish ${summary.finishN} mode${summary.finishN === 1 ? "" : "s"} before you submit. You have ${summary.doneCount} done.`,
+        message: `Finish every mode before you submit. You have ${summary.doneCount}/${summary.finishN} done.`,
       });
     }
     const payload = {
