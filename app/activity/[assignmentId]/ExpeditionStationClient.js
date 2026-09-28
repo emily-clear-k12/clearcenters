@@ -28,6 +28,28 @@ const CREW = {
   nova: { name: "Nova", short: "Nova", initial: "N", img: "/expedition/crew/nova.png" },
 };
 
+// Same question, same order, for every student. Different questions land in
+// different orders, so the right button is not always the first one.
+function mixList(list) {
+  if (!Array.isArray(list) || list.length < 2) return list || [];
+  const arr = list.slice();
+  const key = arr.map((item) => `${item.id}|${item.text || item.label || ""}`).join("~");
+  let seed = 2166136261;
+  for (let i = 0; i < key.length; i++) {
+    seed ^= key.charCodeAt(i);
+    seed = Math.imul(seed, 16777619);
+  }
+  seed >>>= 0;
+  for (let i = arr.length - 1; i > 0; i--) {
+    seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0;
+    const j = seed % (i + 1);
+    const swap = arr[i];
+    arr[i] = arr[j];
+    arr[j] = swap;
+  }
+  return arr;
+}
+
 function fracLabel(n, d) {
   if (d === 1) return String(n);
   if (n === 0) return "0";
@@ -472,7 +494,10 @@ export default function ExpeditionStationClient({ assignmentId, publicCase, stud
         case "multi": return { picks };
         case "highlight": return { sentences };
         case "edit": return { fixes };
-        case "order": return { order: order || currentPart().items.map((i) => i.id) };
+        case "order": {
+          const source = (currentPart() && currentPart().items) || task.items || [];
+          return { order: order || mixList(source).map((item) => item.id) };
+        }
         case "number": return { value: Number(numberValue), model };
         case "point": return { point };
         case "write": return { written };
@@ -599,7 +624,7 @@ export default function ExpeditionStationClient({ assignmentId, publicCase, stud
   function Choices({ list, value, onPick, multi }) {
     return (
       <div className="es-choices">
-        {list.map((c) => {
+        {mixList(list).map((c) => {
           const on = multi ? value.includes(c.id) : value === c.id;
           return (
             <button key={c.id} type="button" className={`es-choice ${on ? "on" : ""}`} onClick={() => onPick(c.id)}>
@@ -618,11 +643,12 @@ export default function ExpeditionStationClient({ assignmentId, publicCase, stud
   }
 
   function SortBoard({ bins, items }) {
+    const mixed = mixList(items);
     return (
       <div className="es-sort">
         <p className="es-sub">Tap a card, then tap the bin it belongs in.</p>
         <div className="es-sort-items">
-          {items.map((it) => (
+          {mixed.map((it) => (
             <button
               key={it.id}
               type="button"
@@ -658,7 +684,8 @@ export default function ExpeditionStationClient({ assignmentId, publicCase, stud
   }
 
   function OrderList({ items }) {
-    const list = (order || items.map((i) => i.id)).map((id) => items.find((i) => i.id === id));
+    const mixed = mixList(items);
+    const list = (order || mixed.map((i) => i.id)).map((id) => items.find((i) => i.id === id));
     const move = (i, dir) => {
       const ids = list.map((x) => x.id);
       const j = i + dir;
@@ -796,9 +823,9 @@ export default function ExpeditionStationClient({ assignmentId, publicCase, stud
         <>
           {header}
           <div className="es-debate">
-            {["kai", "nova"].map((w) => (
-              <button key={w} type="button" className={`es-choice es-who ${who === w ? "on" : ""}`} onClick={() => setWho(w)}>
-                <Avatar who={w} size={32} /> {CREW[w].short} is right
+            {mixList([{ id: "kai", text: t.question || "kai" }, { id: "nova", text: t.question || "nova" }]).map((person) => (
+              <button key={person.id} type="button" className={`es-choice es-who ${who === person.id ? "on" : ""}`} onClick={() => setWho(person.id)}>
+                <Avatar who={person.id} size={32} /> {CREW[person.id].short} is right
               </button>
             ))}
           </div>
