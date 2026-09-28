@@ -65,7 +65,8 @@ import {subjectStyle,engineInfo,SUBJECTS,ENGINES} from '../../../../lib/teacherB
 import { activityFacts, factsLine, rowRank, ROW_LABEL, ROW_BLURB } from '../../../../lib/activityFacts';
 import { COLORS, PAGE_ACCENTS, PAGE_BACKGROUNDS, panelStyle } from "../../../../lib/teacherTheme";
 import { missionMapTeksLabel, missionMapTeksCode } from "../../../../lib/cases/mission-map/teksLabels";
-import { codesFor, topicForCase, coverLine, frUnitKey, frTopicName, mainCode } from "../../../../lib/standardCodes";
+import { codesFor, topicForCase, frUnitKey, frTopicName, mainCode } from "../../../../lib/standardCodes";
+import { standardWording } from "../../../../lib/standardWording";
 import { caseImageCandidates } from "../../../../lib/caseImage";
 
 // Sept 13 — moved to the console-interior look, same pattern as My Classes,
@@ -656,21 +657,13 @@ function displayCode(code){return String(code||'').replace(/^TEKS\s+/i,'').repla
     if (Number(c.grade)!==Number(browseGrade) || (c.subject!==browseSubject && !isFrDailyCase(c.standard))) return groups;
     if (!CHALLENGE_TYPES.some((t) => t.real && matchesChallenge(c.engine, t.key)) || matchesChallenge(c.engine, 'relay_station') || matchesChallenge(c.engine, 'signal_defense') || isRetiredSignalCheckCase(c.standard)) return groups;
     const owned = mainCode(c.standard);
-    const title = owned ? coverLine(c.standard, c.learning_target) : "";
     const codes = owned ? [owned] : codesFor(c.standard);
     for (const code of codes) {
-      if (!groups[code]) groups[code] = { code, title: "", count: 0, owned: false };
+      if (!groups[code]) groups[code] = { code, title: standardWording(browseSubject, code), count: 0 };
       if (!groups[code].seen) groups[code].seen = new Set();
       if (groups[code].seen.has(c.standard)) continue;
       groups[code].seen.add(c.standard);
       groups[code].count += 1;
-      if (owned && title) {
-        groups[code].title = title;
-        groups[code].owned = true;
-      } else if (!groups[code].owned) {
-        const topic = frTopicName(c.standard);
-        if (topic) groups[code].title = `Vocabulary practice: ${topic}`;
-      }
     }
     return groups;
   }, {})).sort((a, b) => a.code.localeCompare(b.code, undefined, { numeric: true }));
