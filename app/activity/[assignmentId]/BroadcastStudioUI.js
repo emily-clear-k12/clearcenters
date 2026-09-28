@@ -13,7 +13,7 @@ export function StudioHeader({ step, recording, busy, submitted, onStep, onLeave
     <header className="bb-studio-header">
       <div className="bb-header-main">
         <div className="bb-brand-row">
-          <img className="bb-brand" src="/clearcenters_logo.png" alt="ClearCenters" />
+          <span className="bb-brand"><img src="/teacher/brand_crystal_mark.png" alt="" />ClearCenters</span>
           <span className="bb-brand-divider" aria-hidden="true" />
           <h1>Broadcast Booth</h1>
         </div>

@@ -3,7 +3,7 @@
   --bb-ink: #21124f; --bb-muted: #665c8c; --bb-purple: #7433da; --bb-line: #ded5f4;
   min-height: 100vh; color: var(--bb-ink); font-family: 'Inter', system-ui, sans-serif;
   background: #e8dff9 url('/broadcast-booth/studio-background.webp') center center / cover fixed no-repeat;
-  padding: 36px 4.5vw 90px; box-sizing: border-box;
+  padding: 24px 4.5vw 70px; box-sizing: border-box;
 }
 .bb-root *, .bb-root *::before, .bb-root *::after { box-sizing: border-box; }
 .bb-root button, .bb-root input { font: inherit; }
@@ -20,7 +20,8 @@
 .bb-studio-header { display: flex; gap: 24px; justify-content: space-between; align-items: flex-start; margin-bottom: 18px; }
 .bb-header-main { background: linear-gradient(140deg,#fff 0%,#f5f0ff 70%,#e6ddf8 100%); border: 2px solid #fff; border-radius: 26px 38px 26px 26px; box-shadow: 0 5px 0 #c9bce8,0 12px 26px #38226626; padding: 16px 24px 12px; min-width: 0; flex: 1; max-width: 1100px; }
 .bb-brand-row { display: flex; align-items: center; gap: 20px; }
-.bb-brand { width: 190px; height: 52px; object-fit: contain; }
+.bb-brand { display: inline-flex; align-items: center; gap: 9px; color: #472281; font-size: 23px; font-weight: 800; white-space: nowrap; }
+.bb-brand img { width: 24px; height: 43px; object-fit: contain; }
 .bb-brand-divider { height: 33px; width: 1px; background: #9b78d9; }
 .bb-brand-row h1 { font-size: clamp(21px,2.35vw,34px); margin: 0; }
 .bb-header-nav { display: flex; justify-content: space-between; align-items: center; gap: 14px; margin-top: 8px; }
@@ -60,7 +61,7 @@
 .bb-field-notes { margin: 12px 0 20px; border-block: 1px solid var(--bb-line); padding: 12px 0; }
 .bb-root summary { cursor: pointer; color: #57318e; font-weight: 700; font-size: 14px; padding: 5px 0; }
 .bb-field-notes summary span { font-weight: 400; font-size: 11px; color: #776b95; margin-left: 8px; }
-.bb-field-content { padding-top: 8px; }
+.bb-field-content { padding-top: 8px; max-height: 250px; overflow-y: auto; scrollbar-width: thin; }
 .bb-bullets { padding-left: 0; margin: 8px 0 14px; list-style: none; }
 .bb-bullet-with-speak { display: flex; align-items: flex-start; gap: 7px; font-size: 13px; line-height: 1.5; padding: 7px 0; }
 .bb-bullet-with-speak > span { flex: 1; }
@@ -87,19 +88,19 @@
 .bb-starter-group .has-image { width: calc(50% - 5px); }
 .bb-selection { position: sticky; top: 8px; z-index: 3; display: flex; align-items: center; justify-content: space-between; gap: 10px; background: #ede1ff; color: #532a91; padding: 10px 15px; border: 1px solid #b990ee; border-radius: 15px; font-size: 13px; margin-bottom: 10px; box-shadow: 0 3px 12px #3f215733; }
 .bb-shelves { display: grid; gap: 12px; }
-.bb-shelf { background: linear-gradient(135deg,#f7f1ff,#eae1fb); border: 2px solid white; border-radius: 24px; padding: 15px; box-shadow: 0 4px 0 #cabbe73d,0 4px 10px #3d275414; min-width: 0; }
+.bb-shelf { background: linear-gradient(135deg,#f7f1ff,#eae1fb); border: 2px solid white; border-radius: 24px; padding: 12px; box-shadow: 0 4px 0 #cabbe73d,0 4px 10px #3d275414; min-width: 0; }
 .bb-shelf.is-awaiting { border-color: #af82ef; }
-.bb-shelf-heading { display: flex; align-items: center; gap: 11px; margin: 0 2px 12px; }
+.bb-shelf-heading { display: flex; align-items: center; gap: 11px; margin: 0 2px 8px; }
 .bb-shelf-heading > div { flex: 1; }
 .bb-shelf-heading h3 { font-size: 20px; }
 .bb-shelf-heading p { color: #716095; font-size: 12px; margin: 4px 0 0; }
 .bb-number { display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; background: linear-gradient(#a265ef,#7130d1); color: #fff; width: 46px; height: 46px; border-radius: 50%; border: 1px solid #c3a1f3; font-size: 24px; font-weight: 700; box-shadow: inset 0 2px 3px #ffffff77,0 3px 6px #6b37a333; }
 .bb-required { background: #fff5d9; color: #795513; border-radius: 12px; padding: 5px 8px; font-size: 10px; font-weight: 700; }
-.bb-shelf-chips { display: flex; flex-wrap: wrap; align-items: stretch; gap: 10px; background: #ffffffc7; border-radius: 17px; padding: 10px; min-height: 110px; }
+.bb-shelf-chips { display: flex; flex-wrap: wrap; align-items: stretch; gap: 10px; background: #ffffffc7; border-radius: 17px; padding: 10px; min-height: 76px; }
 .bb-shelf-chips .bb-chip { width: clamp(125px, 30%, 190px); }
-.bb-shelf-chips .bb-chip-img { height: 85px; }
+.bb-shelf-chips .bb-chip-img { height: 70px; }
 .bb-chip-x { position: absolute; right: 3px; top: 3px; width: 29px; height: 29px; display: flex; align-items: center; justify-content: center; border-radius: 50%; background: white; border: 1px solid #cfc0e7; color: #603594; box-shadow: 0 2px 4px #4e28783b; }
-.bb-drop { min-height: 105px; width: 150px; flex: 1 1 120px; max-width: 210px; border-radius: 14px; border: 2px dashed #d2c8e6; background: #faf9fe; color: #74648d; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; font-size: 12px !important; }
+.bb-drop { min-height: 65px; width: 150px; flex: 1 1 120px; max-width: 210px; border-radius: 14px; border: 2px dashed #d2c8e6; background: #faf9fe; color: #74648d; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; font-size: 12px !important; }
 .is-awaiting .bb-drop { background: #f2e9ff; color: #6127b9; border-color: #a873e6; }
 .bb-plan-footer { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; padding: 18px; margin-top: 12px; background: #fbf9fff2; border: 2px solid white; border-radius: 22px; }
 .bb-plan-footer p { flex: 1 1 160px; font-size: 12px; margin: 0; }
@@ -179,7 +180,7 @@
 @media (max-width: 1100px) {
   .bb-root { padding: 24px 3vw 70px; }
   .bb-header-main { padding: 12px 16px; }
-  .bb-brand { width: 145px; height: 42px; }
+  .bb-brand { font-size: 20px; }
   .bb-on-air { padding: 13px; border-width: 4px; }
   .bb-steps { gap: 3px; }
   .bb-panel { padding: 17px; }
@@ -192,7 +193,7 @@
 @media (max-width: 760px) {
   .bb-root { padding: 16px 12px 65px; background-position: center top; }
   .bb-studio-header { gap: 8px; align-items: stretch; }
-  .bb-brand { width: 120px; height: 36px; }
+  .bb-brand { font-size: 18px; }
   .bb-brand-row { gap: 10px; flex-wrap: wrap; }
   .bb-brand-divider { display: none; }
   .bb-brand-row h1 { font-size: 21px; }
@@ -212,7 +213,7 @@
 @media (max-width: 440px) {
   .bb-root { padding-inline: 8px; }
   .bb-header-main { padding: 12px; }
-  .bb-brand { width: 115px; }
+  .bb-brand { font-size: 17px; }
   .bb-brand-row h1 { font-size: 18px; }
   .bb-on-air { font-size: 12px; border-width: 3px; }
   .bb-home { font-size: 11px; padding: 7px 9px; }
