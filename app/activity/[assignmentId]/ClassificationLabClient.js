@@ -6,6 +6,7 @@ import BackToHubButton from "../../../components/BackToHubButton";
 import ReadAloudButton from "../../../components/ReadAloudButton";
 import SubmitReflection from "../../../components/submit/SubmitReflection";
 import { ACTIVITY_CHECKS } from "../../../lib/selfCheckLists";
+import { draftKey } from "../../../lib/deviceDraft";
 import "./classification-lab.css";
 
 const PAGE_NAMES = ["Sort", "Harder sort", "Venn"];
@@ -14,19 +15,19 @@ function sameZone(item, zone) {
   return item === zone;
 }
 
-function readClassDraft(assignmentId, alreadySubmitted) {
+function readClassDraft(assignmentId, studentId, alreadySubmitted) {
   if (typeof window === "undefined" || alreadySubmitted) return null;
   try {
-    const raw = window.localStorage.getItem(`classify-draft:${assignmentId}`);
+    const raw = window.localStorage.getItem(draftKey("classify-draft", assignmentId, studentId));
     return raw ? JSON.parse(raw) : null;
   } catch (err) {
     return null;
   }
 }
 
-export default function ClassificationLabClient({ assignmentId, publicCase, savedPages, samSkin, alreadySubmitted, revisionFeedback }) {
+export default function ClassificationLabClient({ assignmentId, studentId, publicCase, savedPages, samSkin, alreadySubmitted, revisionFeedback }) {
   const needsSam = publicCase.grade === "Grade 5";
-  const draft = readClassDraft(assignmentId, alreadySubmitted);
+  const draft = readClassDraft(assignmentId, studentId, alreadySubmitted);
   const [page, setPage] = useState((draft && draft.page) || 0);
   const [placed, setPlaced] = useState((draft && draft.placed) || {});
   const [picked, setPicked] = useState(null);
@@ -39,14 +40,15 @@ export default function ClassificationLabClient({ assignmentId, publicCase, save
   const [dragOver, setDragOver] = useState(null);
   const [samOpen, setSamOpen] = useState(false);
   useEffect(() => {
+    const key = draftKey("classify-draft", assignmentId, studentId);
     if (alreadySubmitted) {
-      try { window.localStorage.removeItem(`classify-draft:${assignmentId}`); } catch (err) {}
+      try { window.localStorage.removeItem(key); } catch (err) {}
       return;
     }
     try {
-      window.localStorage.setItem(`classify-draft:${assignmentId}`, JSON.stringify({ page, placed, labelAt, itemAt, mc, multi, inline }));
+      window.localStorage.setItem(key, JSON.stringify({ page, placed, labelAt, itemAt, mc, multi, inline }));
     } catch (err) {}
-  }, [alreadySubmitted, assignmentId, page, placed, labelAt, itemAt, mc, multi, inline]);
+  }, [alreadySubmitted, assignmentId, studentId, page, placed, labelAt, itemAt, mc, multi, inline]);
   const [saved, setSaved] = useState(savedPages || {});
   const [busy, setBusy] = useState(false);
   const [doneNote, setDoneNote] = useState(null);

@@ -12,6 +12,7 @@ import SamIcon from "../../components/SamIcon";
 import SamStage from "../../components/SamStage";
 import SamTrail from "../../components/SamTrail";
 import SamMotionTrail from "../../components/SamMotionTrail";
+import { clearDeviceDrafts } from "../../lib/deviceDraft";
 
 // Sept 12, 2026 — five hand-picked "parking spots" for S.A.M. to wander
 // between on Home, per Emily's "have SAM fly/float around... not just
@@ -231,6 +232,7 @@ export default function HomeClient({ student, studentClass, assignments, mission
   // file for the matching Log Out pill added there), so it needs its own
   // way to log out rather than relying on it existing somewhere else.
   async function handleLogout() {
+    clearDeviceDrafts();
     await fetch("/api/student-logout", { method: "POST" });
     router.push("/login");
   }

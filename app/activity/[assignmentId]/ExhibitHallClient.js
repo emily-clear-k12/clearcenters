@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { draftKey } from "../../../lib/deviceDraft";
 import BackToHubButton from "../../../components/BackToHubButton";
 import ReadAloudButton from "../../../components/ReadAloudButton";
 import SamGuide from "../../../components/SamGuide";
@@ -87,10 +88,10 @@ function CenterFace({ center }) {
   return null;
 }
 
-function readExhibitDraft(assignmentId, alreadySubmitted) {
+function readExhibitDraft(assignmentId, studentId, alreadySubmitted) {
   if (alreadySubmitted || typeof window === "undefined") return null;
   try {
-    const raw = window.localStorage.getItem(`exhibit-draft:${assignmentId}`);
+    const raw = window.localStorage.getItem(draftKey("exhibit-draft", assignmentId, studentId));
     const data = raw ? JSON.parse(raw) : null;
     return data && typeof data === "object" ? data : null;
   } catch (err) {
@@ -98,13 +99,13 @@ function readExhibitDraft(assignmentId, alreadySubmitted) {
   }
 }
 
-export default function ExhibitHallClient({ assignmentId, publicCase, alreadySubmitted, samSkin, samNickname }) {
+export default function ExhibitHallClient({ assignmentId, studentId, publicCase, alreadySubmitted, samSkin, samNickname }) {
   const router = useRouter();
   const exhibit = publicCase;
   const cards = exhibit.cards;
   const spots = exhibit.spots;
   const cardBy = (id) => cards.find((card) => card.id === id);
-  const [draft] = useState(() => readExhibitDraft(assignmentId, alreadySubmitted) || {});
+  const [draft] = useState(() => readExhibitDraft(assignmentId, studentId, alreadySubmitted) || {});
 
   const [step, setStep] = useState(alreadySubmitted ? "done" : (draft.step || "build"));
   const [picked, setPicked] = useState(draft.picked ?? null);
@@ -132,7 +133,7 @@ export default function ExhibitHallClient({ assignmentId, publicCase, alreadySub
 
   useEffect(() => {
     if (typeof window === "undefined") return;
-    const key = `exhibit-draft:${assignmentId}`;
+    const key = draftKey("exhibit-draft", assignmentId, studentId);
     if (alreadySubmitted || step === "done") {
       window.localStorage.removeItem(key);
       return;
@@ -140,7 +141,7 @@ export default function ExhibitHallClient({ assignmentId, publicCase, alreadySub
     window.localStorage.setItem(key, JSON.stringify({
       step, picked, landed, wall, groups, bin, reason, look, checks, lines, plaque, best, fooled, leftOut, held, finding, heatPick, sandPicks, daysFalse, notePick, stamps,
     }));
-  }, [assignmentId, alreadySubmitted, step, picked, landed, wall, groups, bin, reason, look, checks, lines, plaque, best, fooled, leftOut, held, finding, heatPick, sandPicks, daysFalse, notePick, stamps]);
+  }, [assignmentId, studentId, alreadySubmitted, step, picked, landed, wall, groups, bin, reason, look, checks, lines, plaque, best, fooled, leftOut, held, finding, heatPick, sandPicks, daysFalse, notePick, stamps]);
 
   const split = exhibit.layout === "split";
   const line = exhibit.layout === "line";
