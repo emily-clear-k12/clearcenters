@@ -190,9 +190,14 @@ export default function ProgressClient({ student, missions, badgeTiers, pastDue 
             </div>
           )}
           {!late && <div style={{ height: 10 }} />}
-          <div style={{ display: "flex", gap: 8, padding: "0 18px 16px" }}>
-            <button type="button" onClick={() => router.push("/star-chart")} style={{ background: "#fff", border: "1px solid #d9d3ea", borderRadius: 999, padding: "8px 14px", fontWeight: 700, cursor: "pointer" }}>Star Chart</button>
-            <button type="button" onClick={() => router.push("/badges")} style={{ background: "#fff", border: "1px solid #d9d3ea", borderRadius: 999, padding: "8px 14px", fontWeight: 700, cursor: "pointer" }}>Badges</button>
+          <div style={{ padding: "0 18px 16px" }}>
+            <button type="button" onClick={() => router.push("/star-chart")} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, width: "100%", background: "linear-gradient(90deg, #241656, #5b3cc4)", color: "#fff", border: 0, borderRadius: 18, padding: "18px 22px", cursor: "pointer", textAlign: "left" }}>
+              <span>
+                <strong style={{ display: "block", fontSize: 22, fontFamily: "Poppins, sans-serif" }}>Star Chart</strong>
+                <span style={{ display: "block", marginTop: 4, fontSize: 14, opacity: 0.9 }}>Your words and facts, up in the sky.</span>
+              </span>
+              <span style={{ fontSize: 28 }} aria-hidden="true">✦</span>
+            </button>
           </div>
         </header>
 
