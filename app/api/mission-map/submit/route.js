@@ -97,7 +97,7 @@ export async function POST(request) {
     return NextResponse.json({ error: "Not logged in." }, { status: 401 });
   }
 
-  const { assignmentId, caseStandard, checkpointResults, finalResponseText, checklist } = await request.json();
+  const { assignmentId, caseStandard, checkpointResults, finalResponseText, checklist, selfConfidence } = await request.json();
   const caseData = getMissionMapServerCase(caseStandard);
 
   const { correctCount, total } = scoreCheckpoints(caseData, checkpointResults || []);
@@ -140,6 +140,7 @@ export async function POST(request) {
   const fields = {
     attempt2: summarizeForHumans(caseData, checkpointResults || [], finalResponseText, correctCount, total),
     checklist: checklist || null,
+    ...( ["shaky", "solid", "strong"].includes(selfConfidence) ? { self_confidence: selfConfidence } : {}),
     mission_map_data: {
       checkpointResults: checkpointResults || [],
       checkpointScore: total ? { correctCount, total } : null,

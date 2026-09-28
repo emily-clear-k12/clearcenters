@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import { supabaseAdmin } from "../../../../lib/supabaseAdmin";
 import { getExpeditionQuest } from "../../../../lib/cases/expedition-station/catalog";
 import { gradeExpeditionTask, summarizeExpedition } from "../../../../lib/cases/expedition-station/index.server";
+import { reflectionFrom, withFirstTry } from "../../../../lib/reflection";
 
 async function awardCrystals(studentId, amount) {
   if (!amount) return;
@@ -36,7 +37,7 @@ export async function POST(request) {
 
   const { data: existing } = await supabaseAdmin
     .from("submissions")
-    .select("id, expedition_station_data, submitted_at")
+    .select("id, expedition_station_data, attempt1, submitted_at, revision_requested")
     .eq("assignment_id", assignmentId)
     .eq("student_id", studentId)
     .maybeSingle();
@@ -46,6 +47,23 @@ export async function POST(request) {
     cards: {},
     meters: { ...quest.meterStart },
   };
+
+  if (body.action === "turnin") {
+    const reflection = reflectionFrom(body);
+    if (reflection.error) return NextResponse.json({ error: reflection.error }, { status: 400 });
+    if (!prior.questDone) return NextResponse.json({ error: "Finish the quest first." }, { status: 400 });
+    const keep = !!(existing && (existing.revision_requested || existing.submitted_at));
+    const payload = withFirstTry(prior, prior, existing && existing.attempt1, keep);
+    const row = {
+      expedition_station_data: payload,
+      checklist: reflection.checklist,
+      self_confidence: reflection.self_confidence,
+      revision_requested: false,
+      submitted_at: new Date().toISOString(),
+    };
+    if (existing) await supabaseAdmin.from("submissions").update(row).eq("id", existing.id);
+    return NextResponse.json({ ok: true, turnedIn: true });
+  }
 
   // Mark briefing seen (autosave)
   if (body.action === "brief") {
@@ -150,6 +168,7 @@ export async function POST(request) {
     savedAt: new Date().toISOString(),
     title: quest.title,
   };
+  if (prior.firstTry) payload.firstTry = prior.firstTry;
 
   const summary = summarizeExpedition(quest, cards);
   const row = {
@@ -157,12 +176,6 @@ export async function POST(request) {
     attempt1: summary.text,
     ai_score: questDone ? summary.score : null,
   };
-
-  // Turned in only when every open act is finished, so the quest stays on the
-  // student's mission list until then.
-  if (questDone && !(existing && existing.submitted_at)) {
-    row.submitted_at = new Date().toISOString();
-  }
 
   if (existing) {
     await supabaseAdmin.from("submissions").update(row).eq("id", existing.id);

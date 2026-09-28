@@ -6,6 +6,7 @@ import { useRouter, useParams } from "next/navigation";
 import { ChevronLeft, Printer, Link2, Check } from "lucide-react";
 import { supabase } from "../../../../../lib/supabaseClient";
 import { COLORS, PAGE_ACCENTS, PAGE_BACKGROUNDS } from "../../../../../lib/teacherTheme";
+import { countLine } from "../../../../../lib/gradeScale";
 
 // Sept 13 — moved to the console-interior look, same pattern as the rest of
 // Reports (see Teacher_SiteWide_Redesign_Plan.md). Same reasoning as the
@@ -200,7 +201,13 @@ export default function StudentReportPage() {
       return !sub || !sub.submitted_at;
     }).map((a) => a.id);
 
-    const graded = myScores.filter((v) => v !== null);
+    const myGrades = applicable.map((a) => {
+      const sub = submissions.find((s) => s.assignment_id === a.id && s.student_id === studentId);
+      if (!sub || !sub.released || sub.teacher_grade === null || sub.teacher_grade === undefined) return null;
+      return Number(sub.teacher_grade);
+    }).filter((grade) => grade !== null);
+    const line = countLine(myGrades);
+    const graded = myScores.filter((value) => value !== null);
     const avgPct = graded.length > 0 ? Math.round(graded.reduce((a, b) => a + b, 0) / graded.length) : null;
     const band = avgPct !== null ? proficiencyBand(avgPct / 50) : null;
 
@@ -237,6 +244,7 @@ export default function StudentReportPage() {
       assignmentCount: applicable.length,
       missionsCompleted,
       avgPct,
+      line,
       band,
       classAveragePct,
       myScores,
@@ -312,8 +320,7 @@ export default function StudentReportPage() {
   // callout right under the title, instead of requiring a scroll down to
   // Assignment History to notice a student is struggling or has missing work.
   const atAGlance = [];
-  if (report.band?.label === "Needs Support") atAGlance.push({ color: COLORS.danger, text: `Needs Support — ${report.avgPct}% average` });
-  else if (report.band?.label === "Developing") atAGlance.push({ color: COLORS.violet, text: `Developing — ${report.avgPct}% average` });
+  if (report.line && report.line !== "No grades yet") atAGlance.push({ color: COLORS.textDark, text: report.line });
   if (report.missingCount > 0) atAGlance.push({ color: COLORS.danger, text: `${report.missingCount} assignment${report.missingCount === 1 ? "" : "s"} not submitted` });
   if (atAGlance.length === 0) atAGlance.push({ color: COLORS.success, text: "✓ On track, nothing missing" });
 
@@ -403,7 +410,7 @@ export default function StudentReportPage() {
 
           <div style={{ display: "flex", padding: "16px 0", borderTop: `1px solid ${COLORS.border}`, borderBottom: `1px solid ${COLORS.border}`, marginBottom: 24 }}>
             <StatBlock label="Missions Completed" value={`${report.missionsCompleted} of ${report.assignmentCount}`} />
-            <StatBlock label="Average Score" value={report.avgPct !== null ? `${report.avgPct}%` : "—"} />
+            <StatBlock label="Released grades" value={report.line || "—"} />
             <StatBlock label="Band" value={report.band ? report.band.label : "No grade yet"} />
             <StatBlock label="vs. Class Average" value={delta !== null ? `${delta >= 0 ? "+" : ""}${delta} pts` : "—"} />
           </div>

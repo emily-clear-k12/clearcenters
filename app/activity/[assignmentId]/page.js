@@ -343,6 +343,7 @@ export default async function ActivityPage({ params }) {
         studentFirstName={student.first_name || null}
         existingData={raw}
         alreadySubmitted={alreadySubmitted}
+        revisionFeedback={revisionFeedback}
         samSkin={student.equipped_sam_skin}
       />
     );
@@ -435,6 +436,8 @@ export default async function ActivityPage({ params }) {
         assignmentId={assignmentId}
         publicCase={classificationLabCase}
         savedPages={savedPages}
+        alreadySubmitted={alreadySubmitted}
+        revisionFeedback={revisionFeedback}
         samSkin={student.equipped_sam_skin}
       />
     );

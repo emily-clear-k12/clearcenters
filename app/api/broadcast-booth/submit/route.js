@@ -16,6 +16,7 @@ import {
   summarizeBroadcast,
   scanSafetyText,
 } from "../../../../lib/cases/broadcast-booth/index.server";
+import { reflectionFrom, withFirstTry } from "../../../../lib/reflection";
 
 function normalizeBeats(raw, beatDefs) {
   const incoming = raw && typeof raw === "object" ? raw : {};
@@ -83,7 +84,7 @@ export async function POST(request) {
 
   const { data: existing } = await supabaseAdmin
     .from("submissions")
-    .select("id, broadcast_booth_data, submitted_at, revision_requested")
+    .select("id, broadcast_booth_data, attempt1, submitted_at, revision_requested")
     .eq("assignment_id", assignmentId)
     .eq("student_id", studentId)
     .maybeSingle();
@@ -146,6 +147,8 @@ export async function POST(request) {
   }
 
   if (kind === "turnin") {
+    const reflection = reflectionFrom(body);
+    if (reflection.error) return NextResponse.json({ need: "reflect", error: reflection.error }, { status: 400 });
     const summary = summarizeBroadcast(payloadBase, caseRow || { segmentType: config.segmentType });
     if (!summary.stimulusReady) {
       return NextResponse.json({
@@ -174,19 +177,22 @@ export async function POST(request) {
       .join("\n");
     const safety = scanSafetyText(allText);
 
-    const payload = {
+    const keep = !!(existing && (existing.revision_requested || existing.submitted_at));
+    const payload = withFirstTry({
       ...payloadBase,
       softMissingStills: softMissing,
       safety,
       teacherLevel: prior.teacherLevel || null,
       turnedInAt: new Date().toISOString(),
-    };
+    }, prior, existing && existing.attempt1, keep);
     const attempt = broadcastAttemptText(payload, caseRow || { segmentType: config.segmentType, ...config });
     const row = {
       broadcast_booth_data: payload,
       attempt1: attempt || "(Broadcast Booth voice submission)",
       attempt2: attempt || "(Broadcast Booth voice submission)",
       submitted_at: new Date().toISOString(),
+      checklist: reflection.checklist,
+      self_confidence: reflection.self_confidence,
       revision_requested: false,
       ai_score: null,
       ai_rationale: null,

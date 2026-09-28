@@ -11,6 +11,8 @@ import { useMemo, useState } from "react";
 import BackToHubButton from "../../../components/BackToHubButton";
 import SamIcon from "../../../components/SamIcon";
 import Visual from "./ExpeditionVisuals";
+import SubmitReflection from "../../../components/submit/SubmitReflection";
+import { ACTIVITY_CHECKS } from "../../../lib/selfCheckLists";
 import "./expedition-station.css";
 
 const PLANET_ART = {
@@ -354,7 +356,7 @@ function PassagePanel({ passages, ids, selectable, selected, onToggle, editing, 
 
 // ---------- main ----------
 
-export default function ExpeditionStationClient({ assignmentId, publicCase, studentFirstName, existingData, alreadySubmitted, samSkin }) {
+export default function ExpeditionStationClient({ assignmentId, publicCase, studentFirstName, existingData, alreadySubmitted, revisionFeedback, samSkin }) {
   const quest = publicCase;
   const firstName = studentFirstName || "Specialist";
   const saved = existingData || { briefed: false, cards: {} };
@@ -441,7 +443,7 @@ export default function ExpeditionStationClient({ assignmentId, publicCase, stud
     if (!t || t.locked || !actOpen(t.act)) return;
     const a = quest.acts[t.act];
     if (id === a.challenge && !a.tasks.every((x) => cards[x] && cards[x].done)) return;
-    if (cards[id] && cards[id].done) {
+    if (cards[id] && cards[id].done && !revisionFeedback) {
       setSamLine(`Already done · ${starsGlyph(cards[id].stars)}. Pick another card.`);
       return;
     }
@@ -1332,6 +1334,36 @@ export default function ExpeditionStationClient({ assignmentId, publicCase, stud
                 );
               })}
             </div>
+            {alreadySubmitted ? (
+              <p className="es-note good">This quest is turned in. Your teacher can see your stars and written answers.</p>
+            ) : (
+              <SubmitReflection
+                questions={ACTIVITY_CHECKS.expedition_station}
+                revisionNote={revisionFeedback}
+                busy={busy}
+                onSubmit={async (reflection) => {
+                  setBusy(true);
+                  try {
+                    const res = await fetch("/api/expedition-station/submit", {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({ assignmentId, action: "turnin", ...reflection }),
+                    });
+                    const data = await res.json();
+                    if (!res.ok) {
+                      setSamLine(data.error || "Could not turn the quest in.");
+                      setBusy(false);
+                      return;
+                    }
+                    setSamLine("Turned in. Your teacher can see your stars and written answers.");
+                    window.location.reload();
+                  } catch (err) {
+                    setSamLine("Network hiccup. Try submit again.");
+                    setBusy(false);
+                  }
+                }}
+              />
+            )}
             <button type="button" className="es-btn ghost" onClick={() => setScreen("board")}>Review the board</button>
           </section>
         ) : null}

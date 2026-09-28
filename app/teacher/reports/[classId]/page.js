@@ -6,6 +6,7 @@ import { useRouter, useParams } from "next/navigation";
 import { ChevronLeft, ChevronRight, Printer } from "lucide-react";
 import { supabase } from "../../../../lib/supabaseClient";
 import { COLORS, PAGE_ACCENTS, PAGE_BACKGROUNDS } from "../../../../lib/teacherTheme";
+import { countLine } from "../../../../lib/gradeScale";
 
 // Sept 13 — moved to the console-interior look, same pattern as My Classes
 // and Student Progress (see Teacher_SiteWide_Redesign_Plan.md). Observatory's
@@ -321,6 +322,7 @@ export default function ClassReportPage() {
         id: st.id,
         name: st.first_name,
         scores,
+        line: countLine(scores.filter((value) => value !== null).map((value) => (value >= 100 ? 2 : value <= 0 ? 0 : 1))),
         avgPct,
         band: avgPct !== null ? proficiencyBand(avgPct / 50) : null,
         missionsCompleted,
@@ -329,7 +331,7 @@ export default function ClassReportPage() {
     }).sort((a, b) => (a.avgPct ?? -1) - (b.avgPct ?? -1));
 
     const releasedAll = submissions.filter((s) => s.released && s.teacher_grade !== null && s.teacher_grade !== undefined);
-    const classAverage = releasedAll.length > 0 ? Math.round((releasedAll.reduce((sum, s) => sum + s.teacher_grade, 0) / releasedAll.length / 2) * 100) : null;
+    const classLine = countLine(releasedAll.map((s) => s.teacher_grade));
 
     const bandCounts = { Excellent: 0, Proficient: 0, Developing: 0, "Needs Support": 0 };
     studentRows.forEach((r) => { if (r.band) bandCounts[r.band.label] += 1; });
@@ -358,7 +360,7 @@ export default function ClassReportPage() {
     return {
       studentCount: rawStudents.length,
       assignmentCount: assignments.length,
-      classAverage,
+      classLine,
       completionPct,
       bandCounts,
       studentRows,
@@ -508,7 +510,7 @@ export default function ClassReportPage() {
           <div style={{ display: "flex", padding: "16px 0", borderTop: `1px solid ${COLORS.border}`, borderBottom: `1px solid ${COLORS.border}`, marginBottom: 24 }}>
             <StatBlock label="Students" value={report.studentCount} />
             <StatBlock label="Assignments" value={report.assignmentCount} />
-            <StatBlock label="Class Average" value={report.classAverage !== null ? `${report.classAverage}%` : "—"} />
+            <StatBlock label="Released grades" value={report.classLine || "—"} />
             <StatBlock label="Completion Rate" value={`${report.completionPct}%`} />
           </div>
 
@@ -602,7 +604,7 @@ export default function ClassReportPage() {
                         <div style={{ width: 140, fontWeight: 600, fontSize: 12.5 }}>{r.name}</div>
                         <div style={{ width: 110, color: COLORS.textMuted, fontSize: 12.5 }}>{r.missionsCompleted} submitted</div>
                         <div style={{ flex: 1 }} />
-                        <div style={{ width: 40, fontWeight: 700, textAlign: "right", fontSize: 12.5 }}>{r.avgPct !== null ? `${r.avgPct}%` : "—"}</div>
+                        <div style={{ width: 180, fontWeight: 700, textAlign: "right", fontSize: 12.5 }}>{r.line}</div>
                         {r.band ? (
                           <span style={{ fontSize: 10.5, fontWeight: 700, padding: "2px 9px", borderRadius: 999, background: r.band.color + "22", color: r.band.color, marginLeft: 10 }}>{r.band.label}</span>
                         ) : (
@@ -615,7 +617,7 @@ export default function ClassReportPage() {
                           <div style={{ width: 140, fontWeight: 600 }}>{r.name}</div>
                           <div style={{ width: 110, color: COLORS.textMuted }}>{r.missionsCompleted} submitted</div>
                           <div style={{ flex: 1 }} />
-                          <div style={{ width: 40, fontWeight: 700, textAlign: "right" }}>{r.avgPct !== null ? `${r.avgPct}%` : "—"}</div>
+                          <div style={{ width: 180, fontWeight: 700, textAlign: "right" }}>{r.line}</div>
                           {r.band ? (
                             <span style={{ fontSize: 10.5, fontWeight: 700, padding: "2px 9px", borderRadius: 999, background: r.band.color + "22", color: r.band.color }}>{r.band.label}</span>
                           ) : (

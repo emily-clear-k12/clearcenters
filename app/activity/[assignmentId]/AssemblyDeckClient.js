@@ -4,6 +4,8 @@ import { useState, useEffect, useMemo, useCallback, createContext, useContext, u
 import SamGuide from "../../../components/SamGuide";
 import BackToHubButton from "../../../components/BackToHubButton";
 import { assembledReport, getRound, leftoversSoFar, reasonChipsFor, rejectReason, roundSize, trayOrder, CHALLENGE } from "../../../lib/cases/assembly-deck/index.public";
+import SubmitReflection from "../../../components/submit/SubmitReflection";
+import { ACTIVITY_CHECKS } from "../../../lib/selfCheckLists";
 
 // Assembly Deck — the student screen (design doc §3).
 // brief -> [build -> rejects] x rounds -> assembly -> what-if -> trap -> debrief -> explain -> done
@@ -1534,8 +1536,8 @@ export default function AssemblyDeckClient({ assignmentId, caseStandard, publicC
 
   const round = publicCase.rounds[roundIndex];
 
-  async function submit(confidence) {
-    const feeling = typeof confidence === "string" ? confidence : null;
+  async function submit(reflection) {
+    const feeling = reflection && reflection.selfConfidence;
     setBusy(true);
     setErr(null);
     try {
@@ -1550,6 +1552,8 @@ export default function AssemblyDeckClient({ assignmentId, caseStandard, publicC
           whatIfChoiceId: whatIfChoice,
           lookChoiceId: lookChoice,
           confidence: feeling,
+          checklist: reflection && reflection.checklist,
+          selfConfidence: feeling,
         }),
       });
       const data = await res.json();
@@ -1660,9 +1664,9 @@ export default function AssemblyDeckClient({ assignmentId, caseStandard, publicC
       />
     );
   } else if (phase === "explain") {
-    body = <Explain publicCase={publicCase} text={explanation} setText={setExplanation} onSubmit={publicCase.chain ? () => setPhase("feel") : () => submit()} busy={busy} err={err} />;
+    body = <Explain publicCase={publicCase} text={explanation} setText={setExplanation} onSubmit={() => setPhase("feel")} busy={busy} err={err} />;
   } else if (phase === "feel") {
-    body = <Feel onPick={(id) => submit(id)} busy={busy} err={err} />;
+    body = <SubmitReflection questions={ACTIVITY_CHECKS.assembly_deck} onSubmit={submit} busy={busy} revisionNote={revisionFeedback} />;
   } else {
     body = <Done publicCase={publicCase} boards={boards} assembly={assembly} result={result} />;
   }
