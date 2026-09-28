@@ -7,6 +7,7 @@ import { HOME_BACKGROUNDS } from "../../lib/homeBackgrounds";
 import { SAM_SKINS, DEFAULT_SAM_SKIN } from "../../lib/samSkins";
 import { getWorldStory } from "../../lib/worldStories";
 import { DEV_FORCE_UNLOCK_ALL } from "../../lib/devFlags";
+import { ACTIVITY_FACTS } from "../../lib/activityFacts";
 import SamIcon from "../../components/SamIcon";
 import SamStage from "../../components/SamStage";
 import SamTrail from "../../components/SamTrail";
@@ -54,16 +55,9 @@ const HOME_BACKGROUND_LABELS = {
 // MissionsClient.js already has its own copy of this exact map — see that
 // file's ENGINE_LABELS for the same fix). Add new engines here the moment
 // they go live, and keep this in sync with MissionsClient.js's copy.
-const ENGINE_LABELS = {
-  fact_check_desk: "SIGNAL CHECK",
-  mission_map: "MISSION MAP",
-  simulation_lab: "SIMULATION LAB",
-  frequency_rush: "FREQUENCY RUSH",
-  relay_station: "RELAY STATION",
-  assembly_deck: "ASSEMBLY DECK",
-};
 function engineTag(engine) {
-  return ENGINE_LABELS[engine] || "GROUP CHAT";
+  const facts = ACTIVITY_FACTS[engine] || ACTIVITY_FACTS.group_chat;
+  return facts.label.toUpperCase();
 }
 const COLORS = {
   violet: "#7B5DFF",

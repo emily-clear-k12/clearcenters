@@ -69,10 +69,8 @@ function AssignBriefingInner() {
       .order("id")
       .then(({ data, error: err }) => {
         if (err) {
-          setError(
-            err.message +
-              " — Did you run add_briefings_ss_3_2a_br_migration.sql in Supabase?"
-          );
+          console.error(err);
+          setError("Briefings couldn't be loaded. Try again, or contact support if this keeps happening.");
           return;
         }
         setBriefings(data || []);

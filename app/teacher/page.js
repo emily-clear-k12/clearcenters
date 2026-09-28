@@ -597,7 +597,7 @@ export default function TeacherOverview() {
       classesData = fallback.data;
       if (fallback.error) {
         console.error("Fallback class load also failed:", fallback.error);
-        setError("Couldn't load your classes — try refreshing. If this keeps happening, let Claude know.");
+        setError("Couldn't load your classes. Refresh the page and try again.");
       }
     }
     const classIds = (classesData || []).map((c) => c.id);

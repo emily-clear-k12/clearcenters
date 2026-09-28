@@ -7,6 +7,7 @@ import { MAX_DISCUSS_TURNS } from "../../../lib/constants";
 import { GENERIC_HINTS, getCaseHints } from "../../../lib/hints";
 import SamIcon from "../../../components/SamIcon";
 import SamStage from "../../../components/SamStage";
+import ReadAloudButton from "../../../components/ReadAloudButton";
 
 const COLORS = {
   navy: "#16243F",
@@ -538,6 +539,7 @@ export default function ActivityClient(props) {
 
       <div style={{ background: COLORS.slate, padding: "12px 20px", display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap", position: "relative", zIndex: 2 }}>
         <button onClick={function () { router.push("/home"); router.refresh(); }} className="gc-btn" style={{ background: "none", color: COLORS.white, display: "flex", alignItems: "center", padding: 6, borderRadius: 8 }}>← Home</button>
+        <ReadAloudButton text={`${publicCase.title}. ${publicCase.bigQuestion || ""} ${(publicCase.evidenceBank || []).join(". ")}`} />
         <div style={{ marginRight: "auto" }}>
           <div style={{ fontFamily: "'Poppins', sans-serif", color: COLORS.white, fontWeight: 700, fontSize: 16, lineHeight: 1.2 }}>{publicCase.title}</div>
           <div style={{ color: "rgba(255,255,255,.6)", fontSize: 12 }}>{publicCase.standard}</div>

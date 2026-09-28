@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import BackToHubButton from "../../../components/BackToHubButton";
+import ReadAloudButton from "../../../components/ReadAloudButton";
 import SamGuide from "../../../components/SamGuide";
 import SubmitReflection from "../../../components/submit/SubmitReflection";
 import { ACTIVITY_CHECKS } from "../../../lib/selfCheckLists";
@@ -86,36 +87,60 @@ function CenterFace({ center }) {
   return null;
 }
 
+function readExhibitDraft(assignmentId, alreadySubmitted) {
+  if (alreadySubmitted || typeof window === "undefined") return null;
+  try {
+    const raw = window.localStorage.getItem(`exhibit-draft:${assignmentId}`);
+    const data = raw ? JSON.parse(raw) : null;
+    return data && typeof data === "object" ? data : null;
+  } catch (err) {
+    return null;
+  }
+}
+
 export default function ExhibitHallClient({ assignmentId, publicCase, alreadySubmitted, samSkin, samNickname }) {
   const router = useRouter();
   const exhibit = publicCase;
   const cards = exhibit.cards;
   const spots = exhibit.spots;
   const cardBy = (id) => cards.find((card) => card.id === id);
+  const [draft] = useState(() => readExhibitDraft(assignmentId, alreadySubmitted) || {});
 
-  const [step, setStep] = useState(alreadySubmitted ? "done" : "build");
-  const [picked, setPicked] = useState(null);
-  const [landed, setLanded] = useState(null);
-  const [wall, setWall] = useState(() => Array.from({ length: spots.length }, () => null));
-  const [groups, setGroups] = useState({ left: [], right: [], both: [] });
-  const [bin, setBin] = useState(null);
-  const [reason, setReason] = useState(null);
-  const [look, setLook] = useState(null);
-  const [checks, setChecks] = useState(0);
-  const [lines, setLines] = useState({});
-  const [plaque, setPlaque] = useState("");
-  const [best, setBest] = useState({ one: "", two: "" });
-  const [fooled, setFooled] = useState("");
-  const [leftOut, setLeftOut] = useState("");
-  const [held, setHeld] = useState("");
-  const [finding, setFinding] = useState("");
-  const [heatPick, setHeatPick] = useState(null);
-  const [sandPicks, setSandPicks] = useState([]);
-  const [daysFalse, setDaysFalse] = useState(null);
-  const [notePick, setNotePick] = useState(null);
-  const [stamps, setStamps] = useState({});
+  const [step, setStep] = useState(alreadySubmitted ? "done" : (draft.step || "build"));
+  const [picked, setPicked] = useState(draft.picked ?? null);
+  const [landed, setLanded] = useState(draft.landed ?? null);
+  const [wall, setWall] = useState(() => (Array.isArray(draft.wall) && draft.wall.length === spots.length ? draft.wall : Array.from({ length: spots.length }, () => null)));
+  const [groups, setGroups] = useState(draft.groups || { left: [], right: [], both: [] });
+  const [bin, setBin] = useState(draft.bin ?? null);
+  const [reason, setReason] = useState(draft.reason ?? null);
+  const [look, setLook] = useState(draft.look ?? null);
+  const [checks, setChecks] = useState(draft.checks || 0);
+  const [lines, setLines] = useState(draft.lines || {});
+  const [plaque, setPlaque] = useState(draft.plaque || "");
+  const [best, setBest] = useState(draft.best || { one: "", two: "" });
+  const [fooled, setFooled] = useState(draft.fooled || "");
+  const [leftOut, setLeftOut] = useState(draft.leftOut || "");
+  const [held, setHeld] = useState(draft.held || "");
+  const [finding, setFinding] = useState(draft.finding || "");
+  const [heatPick, setHeatPick] = useState(draft.heatPick ?? null);
+  const [sandPicks, setSandPicks] = useState(draft.sandPicks || []);
+  const [daysFalse, setDaysFalse] = useState(draft.daysFalse ?? null);
+  const [notePick, setNotePick] = useState(draft.notePick ?? null);
+  const [stamps, setStamps] = useState(draft.stamps || {});
   const [status, setStatus] = useState("Tap a picture. Mark what kind of source it is, then tap the spot it belongs on.");
   const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const key = `exhibit-draft:${assignmentId}`;
+    if (alreadySubmitted || step === "done") {
+      window.localStorage.removeItem(key);
+      return;
+    }
+    window.localStorage.setItem(key, JSON.stringify({
+      step, picked, landed, wall, groups, bin, reason, look, checks, lines, plaque, best, fooled, leftOut, held, finding, heatPick, sandPicks, daysFalse, notePick, stamps,
+    }));
+  }, [assignmentId, alreadySubmitted, step, picked, landed, wall, groups, bin, reason, look, checks, lines, plaque, best, fooled, leftOut, held, finding, heatPick, sandPicks, daysFalse, notePick, stamps]);
 
   const split = exhibit.layout === "split";
   const line = exhibit.layout === "line";
@@ -318,6 +343,7 @@ export default function ExhibitHallClient({ assignmentId, publicCase, alreadySub
           <div>
             <p className="ms-kicker">{exhibit.kicker}</p>
             <h1>{exhibit.title}</h1>
+            <ReadAloudButton text={`${exhibit.title}. ${exhibit.job || ""} ${exhibit.detail || ""}`} style={{ marginTop: 8 }} />
             <p className="ms-quiet">{step === "build" ? (line ? "1 · The timeline" : portrait ? "1 · The portrait" : kinds ? "1 · The gallery" : "1 · The wall") : step === "write" ? "2 · The labels" : step === "open" ? "3 · New source" : "Turned in"}</p>
           </div>
         </header>

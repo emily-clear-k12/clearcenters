@@ -261,7 +261,7 @@ export default function ClassRosterPage() {
   <PageHeading title="Your class, connected" subtitle="Manage students and classroom access."><ClassTabs classes={[classInfo,...otherClasses]} value={classId} onChange={id=>router.push(`/teacher/roster/${id}`)}/></PageHeading>
   <section className="cc-panel cc-frame cc-row cc-between" style={{...subjectStyle(classInfo.subject),marginBottom:20}}><div><h2>{classInfo.name}</h2><p className="cc-muted">{classInfo.grade?`Grade ${classInfo.grade} · `:''}{classInfo.subject} · {activeRoster.length} students</p></div><div><div className="cc-eyebrow">CLASS JOIN CODE</div><strong style={{fontSize:28,letterSpacing:2}}>{classInfo.class_code}</strong></div><button className="cc-btn secondary" onClick={copyClassCode}>Copy code</button><button className="cc-btn" onClick={()=>window.print()}>Print roster & sign-in cards</button>{joinUrl&&<QRCodeSVG value={joinUrl} size={64}/>}</section>
   {error&&<div className="cc-error" role="alert">{error}</div>}
-  {activeColumnMissing&&<p className="cc-muted">Student removal is currently unavailable. Adding and transferring students are available.</p>}
+  {activeColumnMissing&&<p className="cc-muted">Removing a student isn't available yet. You can still add students and move them to another class.</p>}
   <div className="cc-roster-layout"><section className="cc-panel"><div className="cc-toolbar"><h2>Students</h2><input className="cc-input cc-search" aria-label="Find a student" placeholder="Find a student" value={search} onChange={e=>setSearch(e.target.value)}/></div>
               <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 10, color: COLORS.textDark }}>Roster ({activeRoster.length})</div>
               <div style={{ display: "grid", gap: 2 }}>
