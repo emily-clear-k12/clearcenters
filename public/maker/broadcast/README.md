@@ -12,3 +12,4 @@ Seeds:
 - Desert Explain (`SCI.3.13A-BB`) — cactus / adaptations chips
 - Creek Correspondent (`SCI.3.12B-BB`) — creek bank / habitat chips
 - Schoolyard Debate (`SCI.3.11B-BB`) — shade trees vs playground chips
+- News Desk (`ELA.3.9D-BB`) — garden barrel chips for central idea and evidence
