@@ -8,6 +8,7 @@ import { GENERIC_HINTS, getCaseHints } from "../../../lib/hints";
 import SamIcon from "../../../components/SamIcon";
 import SamStage from "../../../components/SamStage";
 import ReadAloudButton from "../../../components/ReadAloudButton";
+import BackToHubButton from "../../../components/BackToHubButton";
 
 const COLORS = {
   navy: "#16243F",
@@ -473,7 +474,8 @@ export default function ActivityClient(props) {
       <div onClick={coldPhase !== "think" ? advanceColdOpen : undefined} style={{ minHeight: "100vh", backgroundImage: 'url("/group-chat/window.jpg")', backgroundSize: "cover", backgroundPosition: "center", backgroundAttachment: "fixed", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", cursor: coldPhase !== "think" ? "pointer" : "default", color: COLORS.white, fontFamily: "'Inter', sans-serif", padding: 24, userSelect: "none", position: "relative" }}>
         <style>{"@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@600;700&family=Inter:wght@400;500;600;700&display=swap'); .gc-scrim { position: fixed; inset: 0; background: linear-gradient(160deg, rgba(22,36,63,.72) 0%, rgba(27,45,77,.8) 100%); z-index: 0; pointer-events: none; }"}</style>
         <div className="gc-scrim" />
-        <div style={{ position: "absolute", top: 18, left: 22, fontWeight: 700, fontSize: 15 }}>ClearCenters <span style={{ color: COLORS.gold }}>· Group Chat</span></div>
+        <BackToHubButton readText={publicCase.title + ". " + (publicCase.bigQuestion || "")} />
+        <div style={{ position: "absolute", top: 64, left: 22, fontWeight: 700, fontSize: 15, zIndex: 2 }}>ClearCenters <span style={{ color: COLORS.gold }}>· Group Chat</span></div>
         <div style={{ position: "absolute", top: 16, right: 22, background: COLORS.violet, fontWeight: 700, fontSize: 11, letterSpacing: 1.5, padding: "5px 12px", borderRadius: 999 }}>COLD OPEN</div>
 
         {coldPhase === "intro" && (
@@ -536,9 +538,9 @@ export default function ActivityClient(props) {
     <div style={{ minHeight: "100vh", backgroundImage: 'url("/group-chat/window.jpg")', backgroundSize: "cover", backgroundPosition: "center", backgroundAttachment: "fixed", fontFamily: "'Inter', sans-serif", color: COLORS.textDark, display: "flex", flexDirection: "column", position: "relative" }}>
       <style>{"\n        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@600;700&family=Inter:wght@400;500;600;700&display=swap');\n        .gc-btn { transition: transform 150ms ease; cursor: pointer; border: none; font-family: 'Inter', sans-serif; }\n        .gc-btn:hover { transform: translateY(-1px); }\n        .gc-fade-in { animation: gcFadeIn 220ms ease-out; }\n        @keyframes gcFadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }\n        .gc-dot { animation: gcPulse 1.2s ease-in-out infinite; }\n        @keyframes gcPulse { 0%,100% { opacity: .3; } 50% { opacity: 1; } }\n        .gc-scrim { position: fixed; inset: 0; background: linear-gradient(180deg, rgba(22,36,63,.72) 0%, rgba(27,45,77,.8) 100%); z-index: 0; pointer-events: none; }\n      "}</style>
       <div className="gc-scrim" />
+      <BackToHubButton readText={`${publicCase.title}. ${publicCase.bigQuestion || ""} ${(publicCase.evidenceBank || []).join(". ")}`} />
 
-      <div style={{ background: COLORS.slate, padding: "12px 20px", display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap", position: "relative", zIndex: 2 }}>
-        <button onClick={function () { router.push("/home"); router.refresh(); }} className="gc-btn" style={{ background: "none", color: COLORS.white, display: "flex", alignItems: "center", padding: 6, borderRadius: 8 }}>← Home</button>
+      <div style={{ background: COLORS.slate, padding: "12px 20px 12px 200px", display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap", position: "relative", zIndex: 2 }}>
         <ReadAloudButton text={`${publicCase.title}. ${publicCase.bigQuestion || ""} ${(publicCase.evidenceBank || []).join(". ")}`} />
         <div style={{ marginRight: "auto" }}>
           <div style={{ fontFamily: "'Poppins', sans-serif", color: COLORS.white, fontWeight: 700, fontSize: 16, lineHeight: 1.2 }}>{publicCase.title}</div>

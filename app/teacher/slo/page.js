@@ -21,7 +21,7 @@ export default function SloPage() {
 
   return (
     <BridgePage teacherEmail={email}>
-      <PageHeading title="SLOs" subtitle="Student learning objectives. TTESS will live here too." />
+      <PageHeading title="Learning goals" subtitle="This page is not ready yet." />
       <section className="cc-panel">
         <p className="cc-muted">Coming soon.</p>
       </section>

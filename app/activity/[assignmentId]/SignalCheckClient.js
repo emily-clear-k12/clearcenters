@@ -8,6 +8,7 @@ import SamIcon from "../../../components/SamIcon";
 import SamStage from "../../../components/SamStage";
 import DistressCallBadge from "../../../components/DistressCallBadge";
 import ReadAloudButton from "../../../components/ReadAloudButton";
+import BackToHubButton from "../../../components/BackToHubButton";
 
 // Signal Check's own locked palette — navy/teal/violet/gold, distinct from
 // Group Chat (violet-led) and Newsroom (navy/gold-led) so it reads as its
@@ -129,26 +130,9 @@ function hasRealReasoning(verdict, reasoning) {
 // localStorage before this) on demand, the same real server-backed pattern
 // Group Chat's handleManualSave uses, not just the step-by-step autosaves.
 function TopBar({ standard, subject, onSave, saveState, showSave }) {
-  // Added a "← Home" button alongside Save Progress (Sept 1 2026, Emily's
-  // ask: "once they save the activity they might need to get back to the
-  // home screen but i dont see a button to do that"). Signal Check had NO
-  // way back to Home from inside the activity at all before this — unlike
-  // Group Chat, which already has a persistent "← Home" button in its own
-  // header bar. useRouter is called directly here rather than threading a
-  // `router` prop down, since TopBar is a plain function component in the
-  // same client module and hooks work the same way either place.
-  const router = useRouter();
   return (
-    <div style={{ position: "relative", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "20px 24px 0", zIndex: 2, flexWrap: "wrap", gap: 10 }}>
+    <div style={{ position: "relative", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "20px 24px 0 190px", zIndex: 2, flexWrap: "wrap", gap: 10 }}>
       <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-        <button
-          type="button"
-          onClick={() => router.push("/home")}
-          className="sc-btn"
-          style={{ background: "none", color: COLORS.white, display: "flex", alignItems: "center", gap: 5, padding: 0, fontWeight: 700, fontSize: 13, fontFamily: "'Inter', sans-serif" }}
-        >
-          ← Home
-        </button>
         <div style={{ display: "flex", alignItems: "center", gap: 10, fontFamily: "'Poppins', sans-serif", fontWeight: 700, fontSize: 15, letterSpacing: 3, color: COLORS.white }}>
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke={COLORS.teal} strokeWidth="2" /><path d="M20 20L16 16" stroke={COLORS.teal} strokeWidth="2" strokeLinecap="round" /></svg>
           SIGNAL CHECK
@@ -667,6 +651,7 @@ export default function SignalCheckClient({ assignmentId, studentId, caseStandar
         @keyframes sc-fadein { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
       `}</style>
       <div className="sc-scrim" />
+      <BackToHubButton readText={`${publicCase.title || "Signal Check"}. ${publicCase.transmission ? publicCase.transmission.claimHeadline : ""}`} />
       {/* Distress Call (Sept 8 2026) — renders nothing unless this specific
           assignment was flagged as one; see components/DistressCallBadge.js. */}
       <DistressCallBadge assignmentId={assignmentId} />
