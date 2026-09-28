@@ -6,14 +6,7 @@ import Link from "next/link";
 import { QRCodeSVG } from "qrcode.react";
 import { supabase } from "../../../lib/supabaseClient";
 import { BridgePage, PageHeading, ClassTabs, Empty } from "../../../components/teacher/BridgeUI";
-import { CLASS_PLANETS, planetForClass } from "../../../lib/classPlanets";
 import { SAM_SKINS, DEFAULT_SAM_SKIN, FALLBACK_ICON } from "../../../lib/samSkins";
-
-const TABS = [
-  ["students", "Students"],
-  ["work", "Assigned"],
-  ["look", "Look"],
-];
 
 function classCode() {
   const letters = "ABCDEFGHJKLMNPQRSTUVWXYZ";
@@ -25,18 +18,33 @@ function classCode() {
   return code;
 }
 
+function studentNote(studentId, assignments, submissions) {
+  const mine = submissions.filter((row) => row.student_id === studentId);
+  const toReview = mine.filter((row) => row.submitted_at && !row.revision_requested && (row.teacher_grade === null || row.teacher_grade === undefined));
+  if (toReview.length) return { rank: 0, text: toReview.length === 1 ? "1 ready to review" : `${toReview.length} ready to review` };
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const finished = new Set(mine.filter((row) => row.submitted_at && !row.revision_requested).map((row) => row.assignment_id));
+  const late = assignments.filter((item) => {
+    if (!item.due_date || finished.has(item.id)) return false;
+    return new Date(`${item.due_date}T00:00:00`) < today;
+  });
+  if (late.length) return { rank: 1, text: late.length === 1 ? "1 past due" : `${late.length} past due` };
+  if (mine.some((row) => row.revision_requested)) return { rank: 2, text: "Trying again" };
+  const turnedIn = mine.filter((row) => row.submitted_at).length;
+  return { rank: 3, text: turnedIn ? `${turnedIn} turned in` : "Nothing waiting" };
+}
+
 export default function ClassClient() {
   const router = useRouter();
   const search = useSearchParams();
   const askedClass = search.get("class");
-  const askedTab = search.get("tab");
   const [email, setEmail] = useState("");
   const [teacherId, setTeacherId] = useState(null);
   const [classes, setClasses] = useState([]);
-  const [classId, setClassId] = useState(search.get("class") || "");
-  const [tab, setTab] = useState(TABS.some(([id]) => id === askedTab) ? askedTab : "students");
+  const [classId, setClassId] = useState(askedClass || "");
   const [students, setStudents] = useState([]);
-  const [work, setWork] = useState([]);
+  const [notes, setNotes] = useState({});
   const [names, setNames] = useState("");
   const [adding, setAdding] = useState(false);
   const [notice, setNotice] = useState("");
@@ -81,45 +89,41 @@ export default function ClassClient() {
     });
   }, [router, loadClasses, askedClass]);
 
+  const loadStudents = useCallback(async (current) => {
+    if (!current) return;
+    setJoinUrl(`${window.location.origin}/join/${encodeURIComponent(current.class_code)}`);
+    const first = await supabase.from("students").select("id, first_name, pin, active").eq("class_id", current.id).order("first_name");
+    let rows = first.data || [];
+    if (first.error) {
+      const fallback = await supabase.from("students").select("id, first_name, pin").eq("class_id", current.id).order("first_name");
+      rows = (fallback.data || []).map((student) => ({ ...student, active: true }));
+    } else {
+      rows = rows.map((student) => ({ ...student, active: student.active !== false }));
+    }
+    setStudents(rows);
+    const { data: assignments } = await supabase.from("assignments").select("id, due_date").eq("class_id", current.id);
+    const ids = (assignments || []).map((item) => item.id);
+    let submissions = [];
+    if (ids.length) {
+      const { data } = await supabase.from("submissions").select("student_id, assignment_id, submitted_at, teacher_grade, revision_requested").in("assignment_id", ids);
+      submissions = data || [];
+    }
+    const nextNotes = {};
+    rows.filter((student) => student.active !== false).forEach((student) => {
+      nextNotes[student.id] = studentNote(student.id, assignments || [], submissions);
+    });
+    setNotes(nextNotes);
+  }, []);
+
   useEffect(() => {
-    if (!selected) return;
-    setJoinUrl(`${window.location.origin}/join/${encodeURIComponent(selected.class_code)}`);
-    supabase.from("students").select("id, first_name, pin, active").eq("class_id", selected.id).order("first_name").then(({ data, error: studentError }) => {
-      if (studentError) {
-        supabase.from("students").select("id, first_name, pin").eq("class_id", selected.id).order("first_name").then((fallback) => {
-          setStudents((fallback.data || []).map((student) => ({ ...student, active: true })));
-        });
-        return;
-      }
-      setStudents((data || []).map((student) => ({ ...student, active: student.active !== false })));
-    });
-    supabase.from("assignments").select("id, due_date, case_standard, cases(title)").eq("class_id", selected.id).order("created_at", { ascending: false }).then(async ({ data }) => {
-      const rows = data || [];
-      const ids = rows.map((row) => row.id);
-      let turnedIn = {};
-      if (ids.length) {
-        const { data: submissions } = await supabase.from("submissions").select("assignment_id, submitted_at").in("assignment_id", ids);
-        (submissions || []).forEach((row) => {
-          if (!row.submitted_at) return;
-          turnedIn[row.assignment_id] = (turnedIn[row.assignment_id] || 0) + 1;
-        });
-      }
-      setWork(rows.map((row) => ({ ...row, turnedIn: turnedIn[row.id] || 0 })));
-    });
-  }, [selected]);
+    loadStudents(selected);
+  }, [selected, loadStudents]);
 
   function chooseClass(id) {
     setClassId(id);
     setNotice("");
     setError("");
-  }
-
-  function chooseTab(next) {
-    setTab(next);
-    const params = new URLSearchParams();
-    if (selected) params.set("class", selected.id);
-    params.set("tab", next);
-    router.replace(`/teacher/class?${params.toString()}`);
+    setSaved("");
   }
 
   async function createClass(event) {
@@ -144,7 +148,6 @@ export default function ClassClient() {
     setShowNew(false);
     await loadClasses(teacherId);
     setClassId(data.id);
-    setTab("students");
   }
 
   async function addStudents(event) {
@@ -174,41 +177,7 @@ export default function ClassClient() {
     }
     setNames("");
     setNotice(`Added ${result.students?.length || list.length}. Their sign-in numbers are on the list.`);
-    const { data: fresh } = await supabase.from("students").select("id, first_name, pin, active").eq("class_id", selected.id).order("first_name");
-    setStudents((fresh || []).map((student) => ({ ...student, active: student.active !== false })));
-  }
-
-  async function studentAction(student, action, targetClassId) {
-    const { data } = await supabase.auth.getSession();
-    const accessToken = data?.session?.access_token;
-    if (!accessToken) {
-      setError("Your session expired. Refresh and try again.");
-      return;
-    }
-    const res = await fetch("/api/teacher/roster/student", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ studentId: student.id, action, targetClassId, accessToken }),
-    });
-    const result = await res.json();
-    if (!res.ok) {
-      setError(result.error || "Couldn't save that change.");
-      return;
-    }
-    const { data: fresh } = await supabase.from("students").select("id, first_name, pin, active").eq("class_id", selected.id).order("first_name");
-    setStudents((fresh || []).map((row) => ({ ...row, active: row.active !== false })));
-  }
-
-  async function savePlanet(planetKey) {
-    if (!selected) return;
-    const { error: saveError } = await supabase.from("classes").update({ planet_key: planetKey }).eq("id", selected.id).eq("teacher_id", teacherId);
-    if (saveError) {
-      console.error(saveError);
-      setError("Couldn't save the planet. Try again.");
-      return;
-    }
-    setClasses((list) => list.map((item) => (item.id === selected.id ? { ...item, planet_key: planetKey } : item)));
-    setSaved("Planet saved.");
+    loadStudents(selected);
   }
 
   async function saveSam(key) {
@@ -236,15 +205,16 @@ export default function ClassClient() {
     setSaved("Name saved.");
   }
 
-  const active = students.filter((student) => student.active !== false);
-  const removed = students.filter((student) => student.active === false);
-  const others = classes.filter((item) => selected && item.id !== selected.id);
-  const planet = selected ? planetForClass(selected, classes.indexOf(selected)) : null;
+  const active = students
+    .filter((student) => student.active !== false)
+    .slice()
+    .sort((a, b) => (notes[a.id]?.rank ?? 3) - (notes[b.id]?.rank ?? 3) || a.first_name.localeCompare(b.first_name));
 
   return (
     <BridgePage teacherEmail={email}>
       <style>{`
         .cc-sign-cards{display:none}
+        .cc-student-row{text-decoration:none;color:inherit}
         @media print{
           .no-print{display:none!important}
           .cc-sign-cards{display:grid;grid-template-columns:1fr 1fr;gap:12px}
@@ -254,7 +224,7 @@ export default function ClassClient() {
         }
       `}</style>
       <div className="no-print">
-        <PageHeading title="Class" subtitle="Students, what you've assigned, and how this class looks.">
+        <PageHeading title="Class" subtitle="Who is here, and who needs you.">
           {classes.length > 1 && <ClassTabs classes={classes} value={selected?.id} onChange={chooseClass} />}
         </PageHeading>
         {error && <div className="cc-error" role="alert">{error}</div>}
@@ -289,101 +259,44 @@ export default function ClassClient() {
                 <ClassForm name={newName} setName={setNewName} grade={newGrade} setGrade={setNewGrade} subject={newSubject} setSubject={setNewSubject} busy={making} onSubmit={createClass} />
               </section>
             )}
-            <div className="cc-tabs" role="tablist">
-              {TABS.map(([id, label]) => (
-                <button key={id} type="button" role="tab" aria-pressed={tab === id} onClick={() => chooseTab(id)}>{label}</button>
-              ))}
-            </div>
             {notice && <p className="cc-muted">{notice}</p>}
             {saved && <p className="cc-muted">{saved}</p>}
-
-            {tab === "students" && (
-              <div className="cc-two">
-                <section className="cc-panel">
-                  <h2>Students</h2>
-                  {active.length === 0 && <Empty>No students yet. Add first names on the right.</Empty>}
-                  {active.map((student) => (
-                    <div className="cc-person" key={student.id}>
+            <div className="cc-two">
+              <section className="cc-panel">
+                <h2>Students</h2>
+                {active.length === 0 && <Empty>No students yet. Add first names on the right.</Empty>}
+                {active.map((student) => {
+                  const note = notes[student.id] || { rank: 3, text: "Nothing waiting" };
+                  return (
+                    <Link className="cc-person cc-student-row" key={student.id} href={`/teacher/students/${student.id}`}>
                       <div className="cc-avatar">{student.first_name[0]}</div>
                       <div>
                         <strong>{student.first_name}</strong>
                         <p>Sign-in number {student.pin}</p>
                       </div>
-                      {others.length > 0 && (
-                        <select className="cc-input" aria-label={`Move ${student.first_name}`} value="" onChange={(event) => {
-                          const target = event.target.value;
-                          const className = others.find((item) => item.id === target)?.name || "the other class";
-                          if (target && window.confirm(`Move ${student.first_name} to ${className}? Their work goes with them.`)) studentAction(student, "transfer", target);
-                        }}>
-                          <option value="">Move to…</option>
-                          {others.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}
-                        </select>
-                      )}
-                      <button className="cc-btn quiet" type="button" onClick={() => {
-                        if (window.confirm(`Remove ${student.first_name}? Their work stays saved. You can bring them back.`)) studentAction(student, "deactivate");
-                      }}>Remove</button>
-                    </div>
-                  ))}
-                  {removed.length > 0 && (
-                    <details>
-                      <summary>Removed ({removed.length})</summary>
-                      {removed.map((student) => (
-                        <div className="cc-person" key={student.id}>
-                          <div><strong>{student.first_name}</strong></div>
-                          <button className="cc-btn quiet" type="button" onClick={() => studentAction(student, "reactivate")}>Bring back</button>
-                        </div>
-                      ))}
-                    </details>
-                  )}
-                </section>
-                <aside className="cc-panel">
+                      <span className={note.rank < 3 ? "cc-badge" : "cc-badge neutral"}>{note.text}</span>
+                    </Link>
+                  );
+                })}
+              </section>
+              <aside className="cc-stack">
+                <section className="cc-panel">
                   <h2>Add students</h2>
                   <p className="cc-muted">One first name per line. Each student gets a 4-digit sign-in number.</p>
                   <form onSubmit={addStudents}>
-                    <textarea className="cc-input" style={{ width: "100%", minHeight: 140 }} value={names} onChange={(event) => setNames(event.target.value)} placeholder={"Maya\nLuis\nAva"} aria-label="Student names" />
+                    <textarea className="cc-input" style={{ width: "100%", minHeight: 120 }} value={names} onChange={(event) => setNames(event.target.value)} placeholder={"Maya\nLuis\nAva"} aria-label="Student names" />
                     <button className="cc-btn" style={{ marginTop: 12 }} disabled={adding || !names.trim()}>{adding ? "Adding…" : "Add students"}</button>
                   </form>
-                </aside>
-              </div>
-            )}
-
-            {tab === "work" && (
-              <section className="cc-panel">
-                <div className="cc-row cc-between">
-                  <h2>Assigned</h2>
-                  <Link className="cc-btn" href={`/teacher/assign/new?classId=${selected.id}`}>Assign something</Link>
-                </div>
-                {work.length === 0 && <Empty>Nothing assigned to this class yet.</Empty>}
-                {work.map((item) => (
-                  <div className="cc-person" key={item.id}>
-                    <div>
-                      <strong>{item.cases?.title || item.case_standard}</strong>
-                      <p>{item.turnedIn} turned in{item.due_date ? ` · due ${new Date(item.due_date).toLocaleDateString()}` : ""}</p>
-                    </div>
-                    <Link className="cc-link" href="/teacher/grade">Grades</Link>
-                  </div>
-                ))}
-              </section>
-            )}
-
-            {tab === "look" && (
-              <div className="cc-two">
+                </section>
                 <section className="cc-panel">
                   <h2>This class</h2>
-                  <form onSubmit={rename} className="cc-row" style={{ marginBottom: 18 }}>
+                  <form onSubmit={rename} className="cc-row" style={{ alignItems: "end" }}>
                     <label className="cc-field" style={{ flex: 1 }}>
                       Class name
                       <input className="cc-input" name="name" defaultValue={selected.name} key={selected.id} />
                     </label>
                     <button className="cc-btn" type="submit">Save name</button>
                   </form>
-                  <div className="cc-eyebrow">Planet</div>
-                  <p className="cc-muted">This is the planet for {selected.name}. Right now: {planet?.name}.</p>
-                  <div className="cc-row">
-                    {CLASS_PLANETS.map((item) => (
-                      <button key={item.key} type="button" className="cc-btn quiet" aria-pressed={planet?.key === item.key} onClick={() => savePlanet(item.key)}>{item.name}</button>
-                    ))}
-                  </div>
                 </section>
                 <section className="cc-panel">
                   <h2>S.A.M.</h2>
@@ -397,8 +310,8 @@ export default function ClassClient() {
                     ))}
                   </div>
                 </section>
-              </div>
-            )}
+              </aside>
+            </div>
           </>
         )}
       </div>
