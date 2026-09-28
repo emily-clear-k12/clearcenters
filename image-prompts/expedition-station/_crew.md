@@ -8,7 +8,7 @@ Make all three in one sitting so they look like the same crew: same art style, s
 
 ## Commander Vega
 
-- [ ] Made
+- [x] Made
 - **Save to:** `public/expedition/crew/vega.png`
 - **Size:** 512 × 512 (square), PNG
 - **Accent:** violet to aqua
@@ -16,7 +16,7 @@ Make all three in one sitting so they look like the same crew: same art style, s
 
 ## Kai (engineer)
 
-- [ ] Made
+- [x] Made
 - **Save to:** `public/expedition/crew/kai.png`
 - **Size:** 512 × 512 (square), PNG
 - **Accent:** orange to gold
@@ -24,7 +24,7 @@ Make all three in one sitting so they look like the same crew: same art style, s
 
 ## Nova (scientist)
 
-- [ ] Made
+- [x] Made
 - **Save to:** `public/expedition/crew/nova.png`
 - **Size:** 512 × 512 (square), PNG
 - **Accent:** green to teal
