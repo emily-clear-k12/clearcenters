@@ -1239,7 +1239,7 @@ export default function ExpeditionStationClient({ assignmentId, publicCase, stud
 
   return (
     <div className={`es-root es-subject-${subjectKey}`}>
-      <BackToHubButton />
+      <BackToHubButton readText={`${quest.title}. ${(quest.opening || []).join(" ")}`} />
       <div className="es-shell">
         <header className="es-top es-glass">
           <div className="es-top-left">

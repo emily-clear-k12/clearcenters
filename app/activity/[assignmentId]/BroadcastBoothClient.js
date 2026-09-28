@@ -1,9 +1,9 @@
 "use client";
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
 import "./broadcast-booth.css";
 import SubmitReflection from "../../../components/submit/SubmitReflection";
+import BackToHubButton from "../../../components/BackToHubButton";
 import { ACTIVITY_CHECKS } from "../../../lib/selfCheckLists";
 import {
   CLIP_CAP_SEC,
@@ -100,7 +100,6 @@ export default function BroadcastBoothClient({
   alreadySubmitted,
   revisionFeedback,
 }) {
-  const router = useRouter();
   const beatDefs = useMemo(() => {
     const list = (publicCase && publicCase.beats) || [];
     return list.length ? list : [];
@@ -655,9 +654,9 @@ export default function BroadcastBoothClient({
 
   return (
     <div className="bb-root">
+      <BackToHubButton readText={`${publicCase.title}. ${prompt}`} />
       <div className={"bb-shell" + (planWide ? " bb-shell-wide" : "")}>
         <div className="bb-kicker">{publicCase.kicker || "Broadcast Booth"}</div>
-        <button type="button" className="bb-btn secondary" onClick={() => router.push("/home")} style={{ marginBottom: 10 }}>← Home</button>
         <h1 className="bb-title">{publicCase.title}</h1>
         <p className="bb-progress">
           {publicCase.segmentLabel || "Explain it live"} · {doneCount}/{beatDefs.length} beats · ~{publicCase.estimatedMinutes || 28} min
