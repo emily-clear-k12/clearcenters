@@ -184,6 +184,7 @@ export default function BroadcastBoothClient({
   const mounted = useRef(true);
   const recordingLock = useRef(false);
   const submittingLock = useRef(false);
+  const allowLeave = useRef(false);
   const busy = recording || micPending || processing || turningIn || leaving;
   const [recordSec, setRecordSec] = useState(0);
   const [shortClipWarn, setShortClipWarn] = useState(false);
@@ -233,7 +234,7 @@ export default function BroadcastBoothClient({
 
   useEffect(() => {
     function warnBeforeLeaving(event) {
-      if (dirty.current || saving || busy) {
+      if (!allowLeave.current && (dirty.current || saving || busy)) {
         event.preventDefault();
         event.returnValue = "";
       }
@@ -245,12 +246,12 @@ export default function BroadcastBoothClient({
   async function leaveStudio(event) {
     event.preventDefault();
     if (busy) return;
-    if (submitted || previewMode) { window.location.assign("/missions"); return; }
+    if (submitted || previewMode) { allowLeave.current = true; window.location.assign("/missions"); return; }
     setLeaving(true);
     if (saveTimer.current) clearTimeout(saveTimer.current);
     const { ok } = await persist("save");
     setLeaving(false);
-    if (ok) { dirty.current = false; window.location.assign("/missions"); }
+    if (ok) { dirty.current = false; allowLeave.current = true; window.location.assign("/missions"); }
   }
 
   const currentBeat = beatDefs[beatIndex] || null;
