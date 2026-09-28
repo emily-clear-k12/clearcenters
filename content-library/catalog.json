@@ -1,7 +1,7 @@
 {
   "generatedFrom": "lib/cases and add_*.sql",
-  "onDisk": 1000,
-  "inSql": 1017,
+  "onDisk": 1012,
+  "inSql": 1029,
   "items": [
     {
       "standard": "3.10C-AD",
@@ -3343,6 +3343,24 @@
       "file": "lib/cases/expedition-station/quests/new-crew-member.js"
     },
     {
+      "standard": "ELA.3.8C-XP",
+      "title": "The Lost Rover",
+      "grade": "3",
+      "subject": "ELAR",
+      "engine": "Expedition Station",
+      "kind": "id",
+      "file": "lib/cases/expedition-station/quests/lost-rover.js"
+    },
+    {
+      "standard": "ELA.3.9D-XP",
+      "title": "The Field Guide",
+      "grade": "3",
+      "subject": "ELAR",
+      "engine": "Expedition Station",
+      "kind": "id",
+      "file": "lib/cases/expedition-station/quests/field-guide.js"
+    },
+    {
       "standard": "ELA.3.9E-XP",
       "title": "The Trader's Pitch",
       "grade": "3",
@@ -3359,6 +3377,15 @@
       "engine": "Expedition Station",
       "kind": "id",
       "file": "lib/cases/expedition-station/quests/crystal-count.js"
+    },
+    {
+      "standard": "MA.3.2D-XP",
+      "title": "The Signal Race",
+      "grade": "3",
+      "subject": "Math",
+      "engine": "Expedition Station",
+      "kind": "id",
+      "file": "lib/cases/expedition-station/quests/signal-race.js"
     },
     {
       "standard": "MA.3.3A-XP",
@@ -3460,6 +3487,15 @@
       "file": "lib/cases/expedition-station/quests/food-chain-crew.js"
     },
     {
+      "standard": "SCI.3.12D-XP",
+      "title": "The Fossil Dig",
+      "grade": "3",
+      "subject": "Science",
+      "engine": "Expedition Station",
+      "kind": "id",
+      "file": "lib/cases/expedition-station/quests/fossil-dig.js"
+    },
+    {
       "standard": "SCI.3.13A-XP",
       "title": "The Survival Suits",
       "grade": "3",
@@ -3487,6 +3523,15 @@
       "file": "lib/cases/expedition-station/quests/push-pull-yard.js"
     },
     {
+      "standard": "SCI.3.8A-XP",
+      "title": "The Energy Hunt",
+      "grade": "3",
+      "subject": "Science",
+      "engine": "Expedition Station",
+      "kind": "id",
+      "file": "lib/cases/expedition-station/quests/energy-hunt.js"
+    },
+    {
       "standard": "SCI.3.9A-XP",
       "title": "The Orbit Model",
       "grade": "3",
@@ -3512,6 +3557,15 @@
       "engine": "Expedition Station",
       "kind": "id",
       "file": "lib/cases/expedition-station/quests/dark-canopy.js"
+    },
+    {
+      "standard": "ELA.4.6G-XP",
+      "title": "The Summit Summary",
+      "grade": "4",
+      "subject": "ELAR",
+      "engine": "Expedition Station",
+      "kind": "id",
+      "file": "lib/cases/expedition-station/quests/summit-summary.js"
     },
     {
       "standard": "ELA.4.8A-XP",
@@ -3613,6 +3667,15 @@
       "file": "lib/cases/expedition-station/quests/pattern-machine.js"
     },
     {
+      "standard": "MA.4.5D-XP",
+      "title": "The Garden Plots",
+      "grade": "4",
+      "subject": "Math",
+      "engine": "Expedition Station",
+      "kind": "id",
+      "file": "lib/cases/expedition-station/quests/garden-plots.js"
+    },
+    {
       "standard": "MA.4.7C-XP",
       "title": "The Telescope Array",
       "grade": "4",
@@ -3640,6 +3703,15 @@
       "file": "lib/cases/expedition-station/quests/canyon-makers.js"
     },
     {
+      "standard": "SCI.4.11A-XP",
+      "title": "The Energy Choice",
+      "grade": "4",
+      "subject": "Science",
+      "engine": "Expedition Station",
+      "kind": "id",
+      "file": "lib/cases/expedition-station/quests/energy-choice.js"
+    },
+    {
       "standard": "SCI.4.12A-XP",
       "title": "The Greenhouse Test",
       "grade": "4",
@@ -3647,6 +3719,15 @@
       "engine": "Expedition Station",
       "kind": "id",
       "file": "lib/cases/expedition-station/quests/greenhouse-test.js"
+    },
+    {
+      "standard": "SCI.4.12B-XP",
+      "title": "The Web of Life",
+      "grade": "4",
+      "subject": "Science",
+      "engine": "Expedition Station",
+      "kind": "id",
+      "file": "lib/cases/expedition-station/quests/web-of-life.js"
     },
     {
       "standard": "SCI.4.6B-XP",
@@ -3665,6 +3746,15 @@
       "engine": "Expedition Station",
       "kind": "id",
       "file": "lib/cases/expedition-station/quests/power-grid.js"
+    },
+    {
+      "standard": "SCI.4.9A-XP",
+      "title": "The Season Tracker",
+      "grade": "4",
+      "subject": "Science",
+      "engine": "Expedition Station",
+      "kind": "id",
+      "file": "lib/cases/expedition-station/quests/season-tracker.js"
     },
     {
       "standard": "SCI.4.9B-XP",
@@ -3730,6 +3820,15 @@
       "file": "lib/cases/expedition-station/quests/freight-split.js"
     },
     {
+      "standard": "MA.5.3E-XP",
+      "title": "The Fuel Price",
+      "grade": "5",
+      "subject": "Math",
+      "engine": "Expedition Station",
+      "kind": "id",
+      "file": "lib/cases/expedition-station/quests/fuel-price.js"
+    },
+    {
       "standard": "MA.5.3H-XP",
       "title": "The Robot Rebuild",
       "grade": "5",
@@ -3773,6 +3872,15 @@
       "engine": "Expedition Station",
       "kind": "id",
       "file": "lib/cases/expedition-station/quests/cooling-core.js"
+    },
+    {
+      "standard": "SCI.5.8C-XP",
+      "title": "The Light Lab",
+      "grade": "5",
+      "subject": "Science",
+      "engine": "Expedition Station",
+      "kind": "id",
+      "file": "lib/cases/expedition-station/quests/light-lab.js"
     },
     {
       "standard": "3.FR.Energy.forms",
