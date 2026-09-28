@@ -170,3 +170,8 @@
 .cc-rush-topic strong{font-size:16px;line-height:1.25}
 .cc-rush-topic small{font-size:12px;font-weight:800;color:#6d45c8}
 @media(max-width:760px){.cc-two.cc-two-maker{grid-template-columns:1fr}.cc-rush-modes{grid-template-columns:1fr}.cc-rush-board{grid-template-columns:1fr}}
+
+.cc-quiet{margin:8px 4px 18px;color:#70658d;font-size:13px}
+.cc-activity-facts{display:block;margin-top:4px;color:#5c5678;font-size:12px;line-height:1.35}
+.cc-row-head{grid-column:1 / -1;margin:16px 0 2px;font-size:16px;color:#241b50}
+.cc-row-head span{display:block;margin-top:2px;font-size:12px;font-weight:600;color:#70658d}
