@@ -116,19 +116,6 @@ export default function BroadcastBoothClient({
     () => (publicCase && publicCase.beatStems && typeof publicCase.beatStems === "object" ? publicCase.beatStems : {}),
     [publicCase]
   );
-  const allStemChips = useMemo(() => {
-    const out = [];
-    const seen = new Set();
-    for (const b of beatDefs) {
-      const stems = Array.isArray(beatStems[b.id]) ? beatStems[b.id] : [];
-      for (const s of stems) {
-        if (!s || !s.id || seen.has(s.id)) continue;
-        seen.add(s.id);
-        out.push({ ...s, source: s.source || "stem" });
-      }
-    }
-    return out;
-  }, [beatDefs, beatStems]);
 
   const clipCap = (publicCase && publicCase.clipCapSec) || CLIP_CAP_SEC;
   const minClip = (publicCase && publicCase.minClipSec) || MIN_CLIP_SEC;
@@ -160,6 +147,7 @@ export default function BroadcastBoothClient({
   );
   /** Pending chip from ideas bank (tap chip → tap tray). */
   const [selectedChip, setSelectedChip] = useState(null);
+  const [planIndex, setPlanIndex] = useState(0);
   const [dragChip, setDragChip] = useState(null);
 
   const [beats, setBeats] = useState(() => hydrateBeats(existingData, beatDefs));
@@ -654,7 +642,7 @@ export default function BroadcastBoothClient({
       return;
     }
     setSelectedChip({ ...chip, source: chip.source || "stimulus" });
-    setStatus("Now tap a beat tray to place it.");
+    setStatus("Now tap Place idea here.");
   }
 
   function onShelfClick(beatId) {
@@ -899,25 +887,30 @@ export default function BroadcastBoothClient({
 
         {view === "brainstorm" ? (
           <div className="bb-plan-layout">
-            <aside className="bb-panel bb-plan-stimulus" aria-label="Topic and idea bank">
+            <div className="bb-plan-top">
               <div className="bb-eyebrow">Your topic · {publicCase.segmentLabel}</div>
               <h2>{publicCase.title}</h2>
-              <details className="bb-field-notes" open><summary>Field notes <span>Read, then plan</span></summary>{fieldNotes}</details>
-              <div className="bb-ideas-bank">
-                <div className="bb-label-with-speak"><h3 className="bb-eyebrow">Idea bank</h3><SpeakButton text={stimulusChips.map((c) => c.label).join(". ")} showLabel={false} label="Read idea bank" onUnavailable={unavailableSpeak} /></div>
-                <p className="bb-muted">Choose an idea, then tap a tray. You can also drag it.</p>
-                <div className="bb-bank-grid">{stimulusChips.map(renderIdea)}</div>
-                {allStemChips.length ? <details className="bb-starters"><summary>Sentence starters</summary>
-                  {beatDefs.map((b) => <div className="bb-starter-group" key={b.id}><h4>{b.label}</h4><div className="bb-chip-row">{(beatStems[b.id] || []).map((c) => renderIdea({ ...c, source: "stem" }))}</div></div>)}
-                </details> : null}
-              </div>
-            </aside>
+              <details className="bb-field-notes"><summary>Field notes <span>Open if you need them</span></summary>{fieldNotes}</details>
+            </div>
+            <nav className="bb-plan-cats" aria-label="Broadcast parts">
+              {beatDefs.map((b, i) => {
+                const chips = brainstormMap[b.id] || [];
+                const required = requiredSet.has(b.id);
+                const needs = required && chips.length < (brainstormMin.minPerBeat || 1);
+                return (
+                  <button key={b.id} type="button" className={i === planIndex ? "is-current" : ""} aria-current={i === planIndex ? "true" : undefined} onClick={() => setPlanIndex(i)}>
+                    <span className="bb-mini-number">{i + 1}</span>
+                    <span className="bb-plan-cat-label">{b.label}</span>
+                    {needs ? <small>Needs an idea</small> : chips.length ? <small>{chips.length} {chips.length === 1 ? "idea" : "ideas"}</small> : <small>Optional</small>}
+                  </button>
+                );
+              })}
+            </nav>
             <section className="bb-plan-right" aria-label="Your storyboard">
-              <div className="bb-plan-heading"><div><h2>Your storyboard</h2><p className="bb-muted">Give each part of your broadcast a place.</p></div>
-                <span className="bb-count">{beatDefs.length} segments</span></div>
-              {selectedChip ? <div className="bb-selection" role="status"><span><strong>{selectedChip.label}</strong> selected. Choose a tray.</span><button className="bb-icon-btn" onClick={() => { setSelectedChip(null); setStatus(""); }} aria-label="Cancel selected idea"><X size={18} /></button></div> : null}
+              {selectedChip ? <div className="bb-selection" role="status"><span><strong>{selectedChip.label}</strong> selected. Place it on this part.</span><button className="bb-icon-btn" onClick={() => { setSelectedChip(null); setStatus(""); }} aria-label="Cancel selected idea"><X size={18} /></button></div> : null}
               <div className="bb-shelves">
-                {beatDefs.map((b, i) => {
+                {beatDefs.filter((_, i) => i === planIndex).map((b) => {
+                  const i = planIndex;
                   const chips = brainstormMap[b.id] || [];
                   const required = requiredSet.has(b.id);
                   return <section key={b.id} className={"bb-shelf" + (selectedChip || dragChip ? " is-awaiting" : "")}
@@ -937,9 +930,15 @@ export default function BroadcastBoothClient({
                   </section>;
                 })}
               </div>
-              <div className="bb-plan-footer"><p className="bb-muted">{mapMeetsMin ? "Your plan is ready. Bring it to life!" : emptyHint}</p>
-                <button className="bb-btn teal" onClick={finishBrainstorm} disabled={!mapMeetsMin || submitted}>Ready to record <ArrowRight size={20} /></button></div>
             </section>
+            <section className="bb-panel bb-ideas-bank" aria-label="Ideas for this part">
+              <div className="bb-label-with-speak"><h3 className="bb-eyebrow">Ideas for {beatDefs[planIndex]?.label || "this part"}</h3><SpeakButton text={(beatStems[beatDefs[planIndex]?.id] || stimulusChips).map((c) => c.label).join(". ")} showLabel={false} label="Read ideas" onUnavailable={unavailableSpeak} /></div>
+              <p className="bb-muted">Choose an idea, then tap Place idea here.</p>
+              {(beatStems[beatDefs[planIndex]?.id] || []).length ? <div className="bb-chip-row bb-starter-row">{(beatStems[beatDefs[planIndex].id] || []).map((c) => renderIdea({ ...c, source: "stem" }))}</div> : null}
+              <div className="bb-bank-grid">{stimulusChips.map(renderIdea)}</div>
+            </section>
+            <div className="bb-plan-footer"><p className="bb-muted">{mapMeetsMin ? "Your plan is ready. Bring it to life!" : emptyHint}</p>
+              <button className="bb-btn teal" onClick={finishBrainstorm} disabled={!mapMeetsMin || submitted}>Ready to record <ArrowRight size={20} /></button></div>
           </div>
         ) : null}
 
