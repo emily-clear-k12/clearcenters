@@ -1,7 +1,7 @@
 {
   "generatedFrom": "lib/cases and add_*.sql",
-  "onDisk": 1012,
-  "inSql": 1029,
+  "onDisk": 1016,
+  "inSql": 1033,
   "items": [
     {
       "standard": "3.10C-AD",
@@ -3352,6 +3352,15 @@
       "file": "lib/cases/expedition-station/quests/lost-rover.js"
     },
     {
+      "standard": "ELA.3.9B-XP",
+      "title": "The Sky Songs",
+      "grade": "3",
+      "subject": "ELAR",
+      "engine": "Expedition Station",
+      "kind": "id",
+      "file": "lib/cases/expedition-station/quests/sky-songs.js"
+    },
+    {
       "standard": "ELA.3.9D-XP",
       "title": "The Field Guide",
       "grade": "3",
@@ -3658,6 +3667,15 @@
       "file": "lib/cases/expedition-station/quests/cargo-bays.js"
     },
     {
+      "standard": "MA.4.4F-XP",
+      "title": "The Sharing Station",
+      "grade": "4",
+      "subject": "Math",
+      "engine": "Expedition Station",
+      "kind": "id",
+      "file": "lib/cases/expedition-station/quests/sharing-station.js"
+    },
+    {
       "standard": "MA.4.5B-XP",
       "title": "The Pattern Machine",
       "grade": "4",
@@ -3728,6 +3746,15 @@
       "engine": "Expedition Station",
       "kind": "id",
       "file": "lib/cases/expedition-station/quests/web-of-life.js"
+    },
+    {
+      "standard": "SCI.4.13A-XP",
+      "title": "The Plant Survivors",
+      "grade": "4",
+      "subject": "Science",
+      "engine": "Expedition Station",
+      "kind": "id",
+      "file": "lib/cases/expedition-station/quests/plant-survivors.js"
     },
     {
       "standard": "SCI.4.6B-XP",
@@ -3872,6 +3899,15 @@
       "engine": "Expedition Station",
       "kind": "id",
       "file": "lib/cases/expedition-station/quests/cooling-core.js"
+    },
+    {
+      "standard": "SCI.5.7A-XP",
+      "title": "The Tug-of-War",
+      "grade": "5",
+      "subject": "Science",
+      "engine": "Expedition Station",
+      "kind": "id",
+      "file": "lib/cases/expedition-station/quests/tug-of-war.js"
     },
     {
       "standard": "SCI.5.8C-XP",

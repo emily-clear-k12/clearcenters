@@ -58,7 +58,7 @@
 | ✅ | The Close Enough Check | MA.4.3F-XP | 4.3F benchmark fractions and reasonableness | 4.3G | Frostveil | Check the crew's fuel math before the blizzard |
 | ⬜ | The Supply Ledger | MA.4.4A-XP | 4.4A add and subtract whole numbers and decimals | 4.2E | Mechara | Balance the city's supply ledger |
 | ✅ | The Cargo Bays | MA.4.4D-XP | 4.4D multiply up to 4 digits × 1 digit and 2 × 2 digits | 4.4B, 4.4C | Cindara | Fill the lava freighter's cargo bays |
-| ⬜ | The Sharing Station | MA.4.4F-XP | 4.4F divide up to 4 digits by 1 digit | 4.4E | Solara | Share supplies evenly across the canopy camps |
+| ✅ | The Sharing Station | MA.4.4F-XP | 4.4F divide up to 4 digits by 1 digit | 4.4E | Solara | Share supplies evenly across the canopy camps |
 | ⬜ | The Two-Step Trek | MA.4.4H-XP | 4.4H one- and two-step × and ÷ problems | 4.4G, 4.5A | Frostveil | Plan the supplies for a two-week ice trek |
 | ✅ | The Pattern Machine | MA.4.5B-XP | 4.5B input-output tables and patterns | — | Mechara | Crack the rules of the robot assembly line |
 | ✅ | The Garden Plots | MA.4.5D-XP | 4.5D perimeter and area problems | 4.5C | Lumara | Design garden plots to the gardener's order |
@@ -105,7 +105,7 @@ Each ELAR quest has 4–6 original passages that belong to its world.
 | ✅ | The Fable Fire | ELA.3.8A-XP | 3.8A theme | 3.9A | Cindara | Three Cindaran fables |
 | ✅ | The New Crew Member | ELA.3.8B-XP | 3.8B characters | 3.8D | Mechara | A story about a new robot on the crew |
 | ✅ | The Lost Rover | ELA.3.8C-XP | 3.8C plot | 3.10B | Frostveil | A story told in scrambled logs |
-| ⬜ | The Sky Songs | ELA.3.9B-XP | 3.9B poetry | 3.10D | Cloudreach | Crew poems and sky-creature songs |
+| ✅ | The Sky Songs | ELA.3.9B-XP | 3.9B poetry | 3.10D | Cloudreach | Crew poems and sky-creature songs |
 | ⬜ | The Radio Play | ELA.3.9C-XP | 3.9C drama | 3.8B | Solara | A short radio play the crew performs |
 | ✅ | The Field Guide | ELA.3.9D-XP | 3.9D informational text features and structure | 3.10C | Solara | A rainforest field guide with headings and diagrams |
 | ✅ | The Trader's Pitch | ELA.3.9E-XP | 3.9E argumentative text | 3.10A | Mechara | Ads and a crew proposal |
@@ -191,14 +191,14 @@ Science quests use the 2024–25 science TEKS. Practices (1–4) and recurring t
 | ✅ | The Greenhouse Test | SCI.4.12A-XP | 4.12A producers make food | — | Lumara | Test what the garden plants need |
 | ✅ | The Web of Life | SCI.4.12B-XP | 4.12B food webs | — | Solara | Build the rainforest food web |
 | ⬜ | The Ancient Seas | SCI.4.12C-XP | 4.12C fossils and past environments | — | Cindara | Find seashell fossils on a mountain |
-| ⬜ | The Plant Survivors | SCI.4.13A-XP | 4.13A plant structures | 4.13B | Lumara | Discover how plants survive tough places |
+| ✅ | The Plant Survivors | SCI.4.13A-XP | 4.13A plant structures | 4.13B | Lumara | Discover how plants survive tough places |
 
 ### Grade 5
 
 | Status | Quest | Code | Main standard | Also practices | Planet | Story hook |
 | --- | --- | --- | --- | --- | --- | --- |
 | ✅ | The Cooling Core | SCI.5.6A-XP | 5.6A properties of matter | 5.6B, 5.6C, 5.6D, 5.1B, 5.1C, 5.2B, 5.3A | Cindara | Rebuild the cooling core's heat shield |
-| ⬜ | The Tug-of-War | SCI.5.7A-XP | 5.7A balanced and unbalanced forces | 5.7B | Frostveil | Free the stuck rover |
+| ✅ | The Tug-of-War | SCI.5.7A-XP | 5.7A balanced and unbalanced forces | 5.7B | Frostveil | Free the stuck rover |
 | ⬜ | The Energy Chain | SCI.5.8A-XP | 5.8A energy transformations | 5.8B | Mechara | Follow the energy through the robot factory |
 | ✅ | The Light Lab | SCI.5.8C-XP | 5.8C light reflects, refracts, absorbs | — | Lumara | Bounce light to power the garden sensors |
 | ⬜ | The Spinning Earth | SCI.5.9-XP | 5.9 Earth's rotation and day and night | — | Cloudreach | Explain day and night to the new crew |
@@ -216,10 +216,10 @@ Science quests use the 2024–25 science TEKS. Practices (1–4) and recurring t
 
 | Subject | Grade 3 | Grade 4 | Grade 5 | Total | Written |
 | --- | --- | --- | --- | --- | --- |
-| Math | 15 | 18 | 16 | 49 | 27 |
-| ELAR | 13 | 14 | 14 | 41 | 20 |
-| Science | 12 | 14 | 12 | 38 | 19 |
-| **All** | **40** | **46** | **42** | **128** | **66** |
+| Math | 15 | 18 | 16 | 49 | 28 |
+| ELAR | 13 | 14 | 14 | 41 | 21 |
+| Science | 12 | 14 | 12 | 38 | 21 |
+| **All** | **40** | **46** | **42** | **128** | **70** |
 
 ## Notes
 
