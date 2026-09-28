@@ -17,7 +17,7 @@
 5. **Science stays Earth-true.** Real materials, real animals, real Earth and space facts.
 6. **ELAR passages are original** and fit the quest's world (logs, legends, letters, plays, poems, field guides, ads).
 
-**Status key:** ✅ Live (Act 1 playable) · 🔒 Written, locked (waiting on task types) · ⬜ Planned
+**Status key:** ✅ Written, all 3 acts playable · ⬜ Planned
 
 **Code format:** `MA.3.4K-XP` (math), `ELA.4.8A-XP` (ELAR), `SCI.5.9-XP` (science). The code's standard is the main standard.
 
@@ -54,8 +54,8 @@
 | ⬜ | The Star Map | MA.4.2B-XP | 4.2B place value to billions and decimals | 4.2A | Cloudreach | Log star distances on the sky reef's map |
 | ⬜ | The Population Count | MA.4.2C-XP | 4.2C compare and order whole numbers | 4.2D | Solara | Count and rank the jungle's animal populations |
 | ⬜ | The Decimal Dials | MA.4.2F-XP | 4.2F compare and order decimals | 4.2E, 4.2G, 4.2H | Mechara | Tune the robot factory's decimal dials |
-| ⬜ | The Pollen Scoops | MA.4.3A-XP | 4.3A fractions as sums of unit fractions | 4.3B | Lumara | Mix pollen for the glow bees, one scoop at a time |
-| ⬜ | The Close Enough Check | MA.4.3F-XP | 4.3F benchmark fractions and reasonableness | 4.3G | Frostveil | Check the crew's fuel math before the blizzard |
+| ✅ | The Pollen Scoops | MA.4.3A-XP | 4.3A fractions as sums of unit fractions | 4.3B | Lumara | Mix pollen for the glow bees, one scoop at a time |
+| ✅ | The Close Enough Check | MA.4.3F-XP | 4.3F benchmark fractions and reasonableness | 4.3G | Frostveil | Check the crew's fuel math before the blizzard |
 | ⬜ | The Supply Ledger | MA.4.4A-XP | 4.4A add and subtract whole numbers and decimals | 4.2E | Mechara | Balance the city's supply ledger |
 | ⬜ | The Cargo Bays | MA.4.4D-XP | 4.4D multiply up to 4 digits × 1 digit and 2 × 2 digits | 4.4B, 4.4C | Cindara | Fill the lava freighter's cargo bays |
 | ⬜ | The Sharing Station | MA.4.4F-XP | 4.4F divide up to 4 digits by 1 digit | 4.4E | Solara | Share supplies evenly across the canopy camps |
@@ -99,7 +99,7 @@ Each ELAR quest has 4–6 original passages that belong to its world.
 
 | Status | Quest | Code | Main standard | Also practices | Planet | Passages |
 | --- | --- | --- | --- | --- | --- | --- |
-| ⬜ | The Missing Map | ELA.3.6F-XP | 3.6F inferences with evidence | 3.7C | Frostveil | Crew logs, a torn map, a note |
+| ✅ | The Missing Map | ELA.3.6F-XP | 3.6F inferences with evidence | 3.7C | Frostveil | Crew logs, a torn map, a note |
 | ⬜ | The Big Idea Board | ELA.3.6G-XP | 3.6G key ideas | 3.7D | Cloudreach | Field-guide entries about sky creatures |
 | ⬜ | The Word Garden | ELA.3.3B-XP | 3.3B context clues and multiple meanings | 3.3C, 3.3D | Lumara | Garden journal, seed-packet labels |
 | ⬜ | The Fable Fire | ELA.3.8A-XP | 3.8A theme | 3.9A | Cindara | Three Cindaran fables |
@@ -117,7 +117,7 @@ Each ELAR quest has 4–6 original passages that belong to its world.
 
 | Status | Quest | Code | Main standard | Also practices | Planet | Passages |
 | --- | --- | --- | --- | --- | --- | --- |
-| 🔒 | The Dark Canopy | ELA.4.6F-XP | 4.6F inferences with evidence | 4.7C, 4.11C, 4.11D, 4.3B, 4.3C, 4.8A, 4.8B, 4.7B | Lumara | Field logs, a legend, messages |
+| ✅ | The Dark Canopy | ELA.4.6F-XP | 4.6F inferences with evidence | 4.7C, 4.11C, 4.11D, 4.3B, 4.3C, 4.8A, 4.8B, 4.7B | Lumara | Field logs, a legend, messages |
 | ⬜ | The Root Words | ELA.4.3C-XP | 4.3C affixes and roots | 4.3B, 4.3D | Mechara | Robot manuals full of new words |
 | ⬜ | The Summit Summary | ELA.4.6G-XP | 4.6G key ideas | 4.7D | Frostveil | Expedition reports to summarize |
 | ⬜ | The Tall Tale Trail | ELA.4.8A-XP | 4.8A theme | 4.9A | Solara | Solaran tall tales and legends |
@@ -185,7 +185,7 @@ Science quests use the 2024–25 science TEKS. Practices (1–4) and recurring t
 | ⬜ | The Power Grid | SCI.4.8C-XP | 4.8C closed circuits | 4.8B | Mechara | Wire the outpost's lights and heaters |
 | ⬜ | The Season Tracker | SCI.4.9A-XP | 4.9A seasons | — | Frostveil | Track daylight on Earth through the year |
 | ⬜ | The Moon Watch | SCI.4.9B-XP | 4.9B the Moon's appearance | — | Lumara | Record moon phases from the home-world telescope |
-| ⬜ | The Water Cycle Loop | SCI.4.10A-XP | 4.10A water cycle | 4.10C | Cloudreach | Follow one water drop around the cycle |
+| ✅ | The Water Cycle Loop | SCI.4.10A-XP | 4.10A water cycle | 4.10C | Cloudreach | Follow one water drop around the cycle |
 | ⬜ | The Canyon Makers | SCI.4.10B-XP | 4.10B weathering, erosion, deposition | — | Cindara | Fast-forward a river carving a canyon |
 | ⬜ | The Energy Choice | SCI.4.11A-XP | 4.11A renewable and nonrenewable resources | 4.11B, 4.11C | Mechara | Choose how to power the robot city |
 | ⬜ | The Greenhouse Test | SCI.4.12A-XP | 4.12A producers make food | — | Lumara | Test what the garden plants need |
@@ -197,7 +197,7 @@ Science quests use the 2024–25 science TEKS. Practices (1–4) and recurring t
 
 | Status | Quest | Code | Main standard | Also practices | Planet | Story hook |
 | --- | --- | --- | --- | --- | --- | --- |
-| 🔒 | The Cooling Core | SCI.5.6A-XP | 5.6A properties of matter | 5.6B, 5.6C, 5.6D, 5.1B, 5.1C, 5.2B, 5.3A | Cindara | Rebuild the cooling core's heat shield |
+| ✅ | The Cooling Core | SCI.5.6A-XP | 5.6A properties of matter | 5.6B, 5.6C, 5.6D, 5.1B, 5.1C, 5.2B, 5.3A | Cindara | Rebuild the cooling core's heat shield |
 | ⬜ | The Tug-of-War | SCI.5.7A-XP | 5.7A balanced and unbalanced forces | 5.7B | Frostveil | Free the stuck rover |
 | ⬜ | The Energy Chain | SCI.5.8A-XP | 5.8A energy transformations | 5.8B | Mechara | Follow the energy through the robot factory |
 | ⬜ | The Light Lab | SCI.5.8C-XP | 5.8C light reflects, refracts, absorbs | — | Lumara | Bounce light to power the garden sensors |
@@ -216,10 +216,10 @@ Science quests use the 2024–25 science TEKS. Practices (1–4) and recurring t
 
 | Subject | Grade 3 | Grade 4 | Grade 5 | Total | Written |
 | --- | --- | --- | --- | --- | --- |
-| Math | 15 | 18 | 16 | 49 | 6 |
-| ELAR | 13 | 14 | 14 | 41 | 1 |
-| Science | 12 | 14 | 12 | 38 | 1 |
-| **All** | **40** | **46** | **42** | **128** | **8** |
+| Math | 15 | 18 | 16 | 49 | 8 |
+| ELAR | 13 | 14 | 14 | 41 | 2 |
+| Science | 12 | 14 | 12 | 38 | 2 |
+| **All** | **40** | **46** | **42** | **128** | **12** |
 
 ## Notes
 

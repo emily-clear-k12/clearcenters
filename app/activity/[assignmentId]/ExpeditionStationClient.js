@@ -136,15 +136,22 @@ function FracInput({ value, onChange, defaultD }) {
   );
 }
 
-function TankVisual({ denom, filled, safe, label }) {
+function TankVisual({ denom, filled, safe, label, match }) {
   const pct = Math.max(0, Math.min(100, (filled / denom) * 100));
   const safePct = safe != null ? Math.max(0, Math.min(100, (safe / denom) * 100)) : null;
+  const matchPct = match ? Math.max(0, Math.min(100, (match.n / match.d) * 100)) : null;
   return (
     <div className="es-gauge">
       <div className="es-tank" aria-hidden="true">
         <div className="es-fuel" style={{ height: `${pct}%` }} />
         {safePct != null ? <div className="es-safe" style={{ bottom: `${safePct}%` }} /> : null}
       </div>
+      {matchPct != null ? (
+        <div className="es-tank es-tank-match" aria-label={`${match.label || "Match"}: ${fracLabel(match.n, match.d)}`}>
+          <div className="es-fuel" style={{ height: `${matchPct}%` }} />
+          <span className="es-tank-tag">{match.label || "Match"} · {fracLabel(match.n, match.d)}</span>
+        </div>
+      ) : null}
       <div className="es-ticks">
         {Array.from({ length: denom + 1 }, (_, i) => (
           <span key={i}>{fracLabel(denom - i, denom).split(" ")[0]}</span>
@@ -1069,7 +1076,7 @@ export default function ExpeditionStationClient({ assignmentId, publicCase, stud
         ) : fl.strip ? (
           <GridVisual grid={{ rows: 1, cols: fl.denom }} denom={fl.denom} filled={frac && frac.d === fl.denom ? frac.n : 0} onPick={(n) => setFrac({ n, d: fl.denom })} />
         ) : (
-          <TankVisual denom={fl.denom} filled={frac ? fillLevel : fl.start || 0} safe={fl.safe} />
+          <TankVisual denom={fl.denom} filled={frac ? fillLevel : fl.start || 0} safe={fl.safe} match={fl.match} />
         )}
         {fl.pours ? <p className="es-sub">Pours: {fl.pours.map((p) => fracLabel(p.n, p.d)).join(" + ")}</p> : null}
         <FracInput value={fracValue} onChange={setFrac} defaultD={fl.denom} />
