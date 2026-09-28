@@ -779,7 +779,7 @@ export default function TeacherOverview() {
       dueSoon > 0 && {
         key: "duesoon", icon: ICONS.calendar, color: COLORS.teal, count: dueSoon, classCount: dueSoonClasses,
         label: `assignment${dueSoon === 1 ? "" : "s"} due within a week`,
-        onGo: () => router.push("/teacher/class?tab=work"),
+        onGo: () => router.push("/teacher/progress"),
       },
     ].filter(Boolean);
   }, [perClassStats, router]);
