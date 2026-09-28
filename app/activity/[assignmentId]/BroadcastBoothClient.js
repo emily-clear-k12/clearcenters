@@ -2,6 +2,8 @@
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import "./broadcast-booth.css";
+import { ArrowLeft, ArrowRight, Check, CheckCircle2, ImagePlus, Mic, Plus, Square, Volume2, X } from "lucide-react";
+import { StudioHeader, BroadcastPlayer, RecordingMeter, clock } from "./BroadcastStudioUI";
 import {
   CLIP_CAP_SEC,
   MIN_CLIP_SEC,
@@ -83,7 +85,7 @@ function SpeakButton({ text, label = "Read aloud", showLabel = true, className =
         speakText(text, onUnavailable);
       }}
     >
-      <span className="bb-speak-glyph" aria-hidden="true">🔊</span>
+      <Volume2 size={16} aria-hidden="true" />
       {showLabel ? <span className="bb-speak-text">{label}</span> : null}
     </button>
   );
@@ -96,6 +98,7 @@ export default function BroadcastBoothClient({
   existingData,
   alreadySubmitted,
   revisionFeedback,
+  previewMode = false,
 }) {
   const beatDefs = useMemo(() => {
     const list = (publicCase && publicCase.beats) || [];
@@ -172,6 +175,15 @@ export default function BroadcastBoothClient({
   const [submitted, setSubmitted] = useState(!!alreadySubmitted);
   const [micError, setMicError] = useState(null);
   const [recording, setRecording] = useState(false);
+  const [micPending, setMicPending] = useState(false);
+  const [processing, setProcessing] = useState(false);
+  const [turningIn, setTurningIn] = useState(false);
+  const [saveError, setSaveError] = useState("");
+  const saveQueue = useRef(Promise.resolve());
+  const mounted = useRef(true);
+  const recordingLock = useRef(false);
+  const submittingLock = useRef(false);
+  const busy = recording || micPending || processing || turningIn;
   const [recordSec, setRecordSec] = useState(0);
   const [shortClipWarn, setShortClipWarn] = useState(false);
   const [softStillWarn, setSoftStillWarn] = useState(false);
@@ -208,7 +220,11 @@ export default function BroadcastBoothClient({
   }, [beatDefs]);
 
   useEffect(() => {
+    mounted.current = true;
     return () => {
+      mounted.current = false;
+      if (saveTimer.current) clearTimeout(saveTimer.current);
+      window.speechSynthesis?.cancel();
       if (recordTimer.current) clearInterval(recordTimer.current);
       if (mediaStream.current) mediaStream.current.getTracks().forEach((t) => t.stop());
     };
@@ -225,31 +241,39 @@ export default function BroadcastBoothClient({
     : [];
   const requiredSet = new Set((brainstormMin && brainstormMin.requiredBeatIds) || []);
 
-  async function persist(kind, overrides) {
-    setSaving(true);
-    setStatus(kind === "turnin" ? "Submitting..." : "");
+  function persist(kind, overrides) {
     const o = overrides || {};
-    try {
-      const res = await fetch("/api/broadcast-booth/submit", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          assignmentId,
-          kind,
-          stimulusReady: o.stimulusReady !== undefined ? o.stimulusReady : stimulusReadyRef.current,
-          brainstormReady: o.brainstormReady !== undefined ? o.brainstormReady : brainstormReadyRef.current,
-          brainstormMap: o.brainstormMap !== undefined ? o.brainstormMap : brainstormMapRef.current,
-          currentBeatIndex: o.currentBeatIndex !== undefined ? o.currentBeatIndex : beatIndexRef.current,
-          beats: o.beats !== undefined ? o.beats : beatsRef.current,
-        }),
-      });
-      const data = await res.json().catch(() => ({}));
-      setSaving(false);
-      return { ok: res.ok, data };
-    } catch (err) {
-      setSaving(false);
-      return { ok: false, data: { error: "Network error. Try again." } };
-    }
+    const payload = {
+      assignmentId, kind,
+      stimulusReady: o.stimulusReady ?? stimulusReadyRef.current,
+      brainstormReady: o.brainstormReady ?? brainstormReadyRef.current,
+      brainstormMap: o.brainstormMap ?? brainstormMapRef.current,
+      currentBeatIndex: o.currentBeatIndex ?? beatIndexRef.current,
+      beats: o.beats ?? beatsRef.current,
+    };
+    // Queue snapshots so an older autosave cannot overwrite a newer save or turn-in.
+    const request = saveQueue.current.then(async () => {
+      if (mounted.current) setSaving(true);
+      let result;
+      if (previewMode) {
+        result = { ok: true, data: {} }; // Preview never writes student data.
+      } else {
+        try {
+          const res = await fetch("/api/broadcast-booth/submit", {
+            method: "POST", headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+          });
+          result = { ok: res.ok, data: await res.json().catch(() => ({})) };
+        } catch (_) { result = { ok: false, data: { error: "Network error. Try again." } }; }
+      }
+      if (mounted.current) {
+        setSaving(false);
+        setSaveError(result.ok ? "" : "Your latest changes could not be saved. Keep this page open and try again.");
+      }
+      return result;
+    });
+    saveQueue.current = request.catch(() => {});
+    return request;
   }
 
   function scheduleSave() {
@@ -258,7 +282,7 @@ export default function BroadcastBoothClient({
     saveTimer.current = setTimeout(() => {
       if (!dirty.current || submitted) return;
       dirty.current = false;
-      persist("save");
+      if (!submittingLock.current) persist("save");
     }, 900);
   }
 
@@ -379,6 +403,7 @@ export default function BroadcastBoothClient({
   }
 
   async function startRecording() {
+    if (recordingLock.current || submitted || busy) return;
     setMicError(null);
     setShortClipWarn(false);
     if (!stimulusReady) {
@@ -394,8 +419,14 @@ export default function BroadcastBoothClient({
       setMicError("This device cannot record audio in the browser.");
       return;
     }
+    recordingLock.current = true;
+    setMicPending(true);
+    window.speechSynthesis?.cancel();
+    document.querySelectorAll("audio[data-broadcast-player]").forEach((audio) => audio.pause());
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      if (!mounted.current) { stream.getTracks().forEach((t) => t.stop()); return; }
+      setMicPending(false);
       mediaStream.current = stream;
       const mime = MediaRecorder.isTypeSupported("audio/webm;codecs=opus")
         ? "audio/webm;codecs=opus"
@@ -412,6 +443,9 @@ export default function BroadcastBoothClient({
         if (ev.data && ev.data.size) recordChunks.current.push(ev.data);
       };
       rec.onstop = () => {
+        recordingLock.current = false;
+        if (!mounted.current) return;
+        setProcessing(true);
         const blob = new Blob(recordChunks.current, { type: rec.mimeType || "audio/webm" });
         const durationSec = Math.min(
           clipCap,
@@ -419,6 +453,7 @@ export default function BroadcastBoothClient({
         );
         if (durationSec < minClip || blob.size < 800) {
           setShortClipWarn(true);
+          setProcessing(false);
           if (mediaStream.current) {
             mediaStream.current.getTracks().forEach((t) => t.stop());
             mediaStream.current = null;
@@ -427,6 +462,8 @@ export default function BroadcastBoothClient({
         }
         const reader = new FileReader();
         reader.onloadend = () => {
+          if (!mounted.current) return;
+          setProcessing(false);
           const dataUrl = typeof reader.result === "string" ? reader.result : null;
           if (!currentBeat) return;
           setBeats((prev) => ({
@@ -443,6 +480,7 @@ export default function BroadcastBoothClient({
           }));
           scheduleSave();
         };
+        reader.onerror = () => { if (mounted.current) { setProcessing(false); setMicError("This recording could not be saved. Please try again."); } };
         reader.readAsDataURL(blob);
         if (mediaStream.current) {
           mediaStream.current.getTracks().forEach((t) => t.stop());
@@ -459,6 +497,9 @@ export default function BroadcastBoothClient({
         if (elapsed >= clipCap) stopRecording();
       }, 250);
     } catch (err) {
+      recordingLock.current = false;
+      setMicPending(false);
+      mediaStream.current?.getTracks().forEach((t) => t.stop());
       setMicError("Microphone access was denied or unavailable. Allow the mic, then try again.");
       setRecording(false);
     }
@@ -470,13 +511,14 @@ export default function BroadcastBoothClient({
       recordTimer.current = null;
     }
     setRecording(false);
+    setProcessing(true);
     if (mediaRec.current && mediaRec.current.state !== "inactive") {
       try { mediaRec.current.stop(); } catch (_) { /* ignore */ }
     }
   }
 
   function onStillUpload(file) {
-    if (!file || !currentBeat) return;
+    if (!file || !currentBeat || busy) return;
     if (!file.type || !file.type.startsWith("image/")) {
       setStatus("Please choose an image file.");
       return;
@@ -504,7 +546,7 @@ export default function BroadcastBoothClient({
   }
 
   function markBeatDone() {
-    if (!currentBeat) return;
+    if (!currentBeat || busy) return;
     const slot = beats[currentBeat.id];
     if (!slot || !slot.audioDataUrl) {
       setStatus("Record a clip for this beat first.");
@@ -527,7 +569,7 @@ export default function BroadcastBoothClient({
   }
 
   function goToBeat(i) {
-    if (submitted || !stimulusReady || !brainstormReady) return;
+    if (submitted || busy || !stimulusReady || !brainstormReady) return;
     setBeatIndex(i);
     setView("beat");
     setStatus("");
@@ -536,6 +578,7 @@ export default function BroadcastBoothClient({
   }
 
   async function handleSubmit() {
+    if (submittingLock.current || submitted || busy) return;
     if (!allDone) {
       setStatus("Record all " + beatDefs.length + " beats before you submit.");
       return;
@@ -552,8 +595,14 @@ export default function BroadcastBoothClient({
       setSoftStillWarn(true);
       setStatus("Tip: " + missing.map((m) => m.label).join(" & ") + " usually need a still. You can still submit.");
     }
+    submittingLock.current = true;
+    setTurningIn(true);
+    if (saveTimer.current) clearTimeout(saveTimer.current);
+    dirty.current = false;
     const { ok, data } = await persist("turnin");
+    setTurningIn(false);
     if (!ok) {
+      submittingLock.current = false;
       setStatus((data && (data.message || data.error)) || "Could not submit.");
       return;
     }
@@ -638,70 +687,9 @@ export default function BroadcastBoothClient({
 
   const prompt = (config && config.prompt) || publicCase.prompt || "";
   const stim = publicCase.stimulus;
-  const planWide = view === "brainstorm" || view === "beat";
-
-  return (
-    <div className="bb-root">
-      <div className={"bb-shell" + (planWide ? " bb-shell-wide" : "")}>
-        <div className="bb-kicker">{publicCase.kicker || "Broadcast Booth"}</div>
-        <h1 className="bb-title">{publicCase.title}</h1>
-        <p className="bb-progress">
-          {publicCase.segmentLabel || "Explain it live"} · {doneCount}/{beatDefs.length} beats · ~{publicCase.estimatedMinutes || 28} min
-        </p>
-
-        {revisionFeedback ? <div className="bb-warn">Teacher note: {revisionFeedback}</div> : null}
-
-        {view === "cover" && publicCase.cover ? (
-          <div className="bb-card">
-            <div className="bb-cue-row">
-              <div className="bb-cue">{publicCase.cover.headline}</div>
-              <SpeakButton text={(publicCase.cover.headline || "") + ". " + (publicCase.cover.line || "") + ". No student faces. No video editor. Just your voice and optional stills."} onUnavailable={unavailableSpeak} />
-            </div>
-            <p className="bb-muted">{publicCase.cover.line}</p>
-            <p className="bb-muted" style={{ marginTop: 10 }}>
-              No student faces. No video editor. Just your voice and optional stills.
-            </p>
-            <div className="bb-row" style={{ marginTop: 14 }}>
-              <button type="button" className="bb-btn" onClick={enterPlan}>Open field kit</button>
-            </div>
-          </div>
-        ) : null}
-
-        {view === "brainstorm" ? (
-          <div className="bb-card bb-plan-card">
-            <div className="bb-cue-row">
-              <div className="bb-cue">Plan your broadcast · storyboard</div>
-              <SpeakButton text="Plan your broadcast storyboard. Field notes stay on the left. Tap a chip, then tap a beat tray — or drag chips onto trays. Tap × to remove. No typing." onUnavailable={unavailableSpeak} />
-            </div>
-            <p className="bb-muted">
-              Field notes stay on the left. Tap a chip, then tap a beat tray — or drag chips onto trays. Tap × to remove. No typing.
-            </p>
-            {!mapMeetsMin ? (
-              <div className="bb-warn bb-warn-with-speak">
-                <span>{emptyHint}</span>
-                <SpeakButton text={emptyHint} showLabel={false} label="Read empty hint" onUnavailable={unavailableSpeak} />
-              </div>
-            ) : (
-              <div className="bb-muted bb-inline-speak" style={{ marginBottom: 8 }}>
-                <span>Looks good — you can start recording when ready.</span>
-                <SpeakButton text="Looks good — you can start recording when ready." showLabel={false} label="Read status" onUnavailable={unavailableSpeak} />
-              </div>
-            )}
-
-            <div className="bb-plan-layout">
-              <aside className="bb-plan-stimulus" aria-label="Field notes">
-                <div className="bb-plan-col-label bb-label-with-speak">
-                  <span>Field notes</span>
-                  <SpeakButton showLabel={false} label="Read field notes" onUnavailable={unavailableSpeak} text={
-                    ((stim && stim.title) || "Field notes") + ". " +
-                    ((stim && stim.sceneSetter) ? stim.sceneSetter + ". " : "") +
-                    ((stim && stim.sharedContext) ? stim.sharedContext + ". " : "") +
-                    ((stim && Array.isArray(stim.bullets)) ? stim.bullets.join(". ") + ". " : "") +
-                    "Your prompt: " + prompt
-                  } />
-                </div>
-                <div className="bb-cue" style={{ fontSize: 15 }}>{(stim && stim.title) || "Field notes"}</div>
-
+  const step = view === "beat" ? 1 : (view === "playback" || view === "done") ? 2 : 0;
+  const topicImage = stim?.placeStill?.imageUrl || null;
+  const fieldNotes = (<div className="bb-field-content">
                 {stim && stim.sceneSetter ? (
                   <div className="bb-scene-setter">
                     <div className="bb-tray-label">You are here</div>
@@ -828,482 +816,157 @@ export default function BroadcastBoothClient({
                 <div className="bb-row" style={{ marginTop: 12 }}>
                   <button type="button" className="bb-btn secondary" onClick={speakStimulus}>Read aloud</button>
                 </div>
-              </aside>
+  </div>);
 
-              <div className="bb-plan-right">
-                <div className="bb-ideas-bank" aria-label="Ideas bank">
-                  <div className="bb-plan-col-label bb-label-with-speak">
-                    <span>Ideas bank</span>
-                    <SpeakButton
-                      showLabel={false}
-                      label="Read ideas bank"
-                      onUnavailable={unavailableSpeak}
-                      text={
-                        "Ideas bank. " +
-                        stimulusChips
-                          .map((c) => c.label)
-                          .concat(allStemChips.map((c) => c.label))
-                          .filter(Boolean)
-                          .join(". ")
-                      }
-                    />
-                  </div>
-                  <div className="bb-tray-label">Picture chips</div>
-                  <div className="bb-chip-row">
-                    {stimulusChips.map((chip) => {
-                      const isSel = selectedChip && selectedChip.id === chip.id && (selectedChip.source || "stimulus") !== "stem";
-                      return (
-                        <button
-                          key={chip.id}
-                          type="button"
-                          className={
-                            "bb-chip" +
-                            (chip.imageUrl ? " has-image" : "") +
-                            (isSel ? " is-picked" : "")
-                          }
-                          disabled={submitted}
-                          draggable={!submitted}
-                          onDragStart={(e) => startIdeaDrag(e, chip)}
-                          onClick={() => onIdeaChipClick(chip)}
-                        >
-                          <ChipFace chip={chip} />
-                        </button>
-                      );
-                    })}
-                  </div>
-                  {allStemChips.length ? (
-                    <>
-                      <div className="bb-tray-label" style={{ marginTop: 12 }}>Pick-stems</div>
-                      <div className="bb-chip-row">
-                        {allStemChips.map((chip) => {
-                          const isSel = selectedChip && selectedChip.id === chip.id && selectedChip.source === "stem";
-                          return (
-                            <button
-                              key={chip.id}
-                              type="button"
-                              className={
-                                "bb-chip stem" +
-                                (chip.imageUrl ? " has-image" : "") +
-                                (isSel ? " is-picked" : "")
-                              }
-                              disabled={submitted}
-                              draggable={!submitted}
-                              onDragStart={(e) => startIdeaDrag(e, { ...chip, source: "stem" })}
-                              onClick={() => onIdeaChipClick({ ...chip, source: "stem" })}
-                            >
-                              <ChipFace chip={chip} />
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </>
-                  ) : null}
-                  {selectedChip ? (
-                    <p className="bb-muted bb-inline-speak" style={{ marginTop: 8 }}>
-                      <span>
-                        Selected: <strong>{selectedChip.label}</strong> — tap a tray below
-                      </span>
-                      <SpeakButton text={selectedChip.label} showLabel={false} label={"Read chip: " + selectedChip.label} onUnavailable={unavailableSpeak} />
-                      {" · "}
-                      <button type="button" className="bb-text-btn" onClick={() => { setSelectedChip(null); setStatus(""); }}>
-                        Clear
-                      </button>
-                    </p>
-                  ) : null}
-                </div>
+  const topicSummary = (
+    <div className="bb-topic-summary">
+      <div className="bb-eyebrow">Your topic</div>
+      <h2>{publicCase.title}</h2>
+      {topicImage ? <img className="bb-topic-image" src={topicImage} alt={stim.placeStill.caption || "Activity scene"} /> : null}
+      <p className="bb-muted">{prompt}</p>
+    </div>
+  );
 
-                <div className="bb-shelves" aria-label="Storyboard beat trays">
-                  {beatDefs.map((b) => {
-                    const chips = Array.isArray(brainstormMap[b.id]) ? brainstormMap[b.id] : [];
-                    const isReq = requiredSet.has(b.id);
-                    const filled = chips.length > 0;
-                    const awaiting = !!selectedChip;
-                    return (
-                      <div
-                        key={b.id}
-                        role="button"
-                        tabIndex={0}
-                        className={
-                          "bb-shelf" +
-                          (filled ? " is-filled" : "") +
-                          (isReq ? " is-required" : "") +
-                          (awaiting ? " is-awaiting" : "") +
-                          (dragChip ? " is-droppable" : "")
-                        }
-                        onClick={() => onShelfClick(b.id)}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter" || e.key === " ") {
-                            e.preventDefault();
-                            onShelfClick(b.id);
-                          }
-                        }}
-                        onDragOver={onShelfDragOver}
-                        onDrop={(e) => onShelfDrop(e, b.id)}
-                        aria-label={b.label + " tray"}
-                      >
-                        <div className="bb-shelf-title bb-label-with-speak">
-                          <span>{b.label}{isReq ? " *" : ""}</span>
-                          <SpeakButton
-                            showLabel={false}
-                            label={"Read " + b.label + " tray"}
-                            onUnavailable={unavailableSpeak}
-                            text={
-                              b.label + ". " + (b.cue || "") + ". " +
-                              (chips.length
-                                ? ("Chips: " + chips.map((c) => c.label).join(", ") + ".")
-                                : (awaiting ? "Tap to place." : "Drop or tap here.")) +
-                              (isReq && !chips.length ? " This tray needs at least one idea before recording." : "")
-                            }
-                          />
-                        </div>
-                        <div className="bb-shelf-chips">
-                          {chips.length === 0 ? (
-                            <span className="bb-shelf-empty bb-inline-speak">
-                              <span>{awaiting ? "Tap to place" : "Drop or tap here"}</span>
-                              <SpeakButton
-                                text={awaiting ? "Tap to place" : "Drop or tap here"}
-                                showLabel={false}
-                                label="Read empty tray hint"
-                                onUnavailable={unavailableSpeak}
-                              />
-                            </span>
-                          ) : (
-                            chips.map((c, idx) => (
-                              <span
-                                key={placementKey(b.id, c.id, idx)}
-                                className={"bb-chip on-map" + (c.imageUrl ? " has-image" : "")}
-                                draggable={!submitted}
-                                onDragStart={(e) => {
-                                  e.stopPropagation();
-                                  const payload = JSON.stringify({ move: true, fromBeatId: b.id, fromIndex: idx, ...c });
-                                  e.dataTransfer.setData("application/json", payload);
-                                  e.dataTransfer.setData("text/plain", payload);
-                                  setDragChip(c);
-                                }}
-                                onClick={(e) => e.stopPropagation()}
-                                title={c.label}
-                              >
-                                <ChipFace chip={c} />
-                                {!submitted ? (
-                                  <button
-                                    type="button"
-                                    className="bb-chip-x"
-                                    aria-label={"Remove " + c.label}
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      removeChipFromTray(b.id, idx);
-                                    }}
-                                  >
-                                    ×
-                                  </button>
-                                ) : null}
-                              </span>
-                            ))
-                          )}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
+  function renderIdea(chip) {
+    const picked = selectedChip?.id === chip.id && (selectedChip.source || "stimulus") === (chip.source || "stimulus");
+    return <button key={chip.id} type="button" className={"bb-chip" + (chip.imageUrl ? " has-image" : "") + (picked ? " is-picked" : "")}
+      aria-pressed={picked} draggable={!submitted} disabled={submitted}
+      onDragStart={(e) => startIdeaDrag(e, chip)} onDragEnd={() => setDragChip(null)} onClick={() => onIdeaChipClick(chip)}>
+      <ChipFace chip={chip} />
+    </button>;
+  }
+
+  return (
+    <div className="bb-root">
+      <div className="bb-shell">
+        <StudioHeader step={step} recording={recording} busy={busy} submitted={submitted}
+          onStep={(i) => { window.speechSynthesis?.cancel(); if (i === 0) setView("brainstorm"); else if (i === 1) goToBeat(beatIndex); }} />
+        {revisionFeedback ? <div className="bb-warn"><strong>Teacher note:</strong> {revisionFeedback}</div> : null}
+        {saveError ? <div className="bb-err" role="alert">{saveError} <button className="bb-text-btn" disabled={saving || busy} onClick={() => persist("save")}>Try saving again</button></div> : null}
+
+        {view === "cover" && publicCase.cover ? (
+          <section className="bb-cover bb-panel">
+            <div className="bb-cover-icon"><Mic size={44} /></div>
+            <div className="bb-eyebrow">{publicCase.segmentLabel} · {beatDefs.length} segments</div>
+            <h2>{publicCase.cover.headline}</h2>
+            <p>{publicCase.cover.line}</p>
+            <p className="bb-muted">Plan your ideas. Record your voice. Share your broadcast.</p>
+            <div className="bb-row"><button className="bb-btn teal" onClick={enterPlan}>Enter the studio <ArrowRight size={19} /></button>
+              <SpeakButton text={publicCase.cover.headline + ". " + publicCase.cover.line} onUnavailable={unavailableSpeak} /></div>
+          </section>
+        ) : null}
+
+        {view === "brainstorm" ? (
+          <div className="bb-plan-layout">
+            <aside className="bb-panel bb-plan-stimulus" aria-label="Topic and idea bank">
+              <div className="bb-eyebrow">Your topic · {publicCase.segmentLabel}</div>
+              <h2>{publicCase.title}</h2>
+              <details className="bb-field-notes" open><summary>Field notes <span>Read, then plan</span></summary>{fieldNotes}</details>
+              <div className="bb-ideas-bank">
+                <div className="bb-label-with-speak"><h3 className="bb-eyebrow">Idea bank</h3><SpeakButton text={stimulusChips.map((c) => c.label).join(". ")} showLabel={false} label="Read idea bank" onUnavailable={unavailableSpeak} /></div>
+                <p className="bb-muted">Choose an idea, then tap a tray. You can also drag it.</p>
+                <div className="bb-bank-grid">{stimulusChips.map(renderIdea)}</div>
+                {allStemChips.length ? <details className="bb-starters"><summary>Sentence starters</summary>
+                  {beatDefs.map((b) => <div className="bb-starter-group" key={b.id}><h4>{b.label}</h4><div className="bb-chip-row">{(beatStems[b.id] || []).map((c) => renderIdea({ ...c, source: "stem" }))}</div></div>)}
+                </details> : null}
               </div>
-            </div>
-
-            <div className="bb-row" style={{ marginTop: 14 }}>
-              <button
-                type="button"
-                className="bb-btn teal"
-                onClick={finishBrainstorm}
-                disabled={!mapMeetsMin || submitted}
-              >
-                Map ready · Start recording
-              </button>
-            </div>
-            {status ? <p className="bb-muted" style={{ marginTop: 10 }}>{status}</p> : null}
-            {saving ? <p className="bb-muted">Saving...</p> : null}
-          </div>
-        ) : null}
-
-        {(view === "beat" || view === "playback") && stimulusReady && brainstormReady ? (
-          <div className="bb-beat-rail" role="list">
-            {beatDefs.map((b, i) => {
-              const slot = beats[b.id];
-              const done = slot && slot.status === "done" && slot.audioDataUrl;
-              const active = view === "beat" && i === beatIndex;
-              return (
-                <button
-                  key={b.id}
-                  type="button"
-                  role="listitem"
-                  className={"bb-beat-chip" + (done ? " is-done" : "") + (active ? " is-active" : "")}
-                  onClick={() => goToBeat(i)}
-                  disabled={submitted}
-                >
-                  {i + 1}. {b.label}{done ? " ✓" : ""}
-                </button>
-              );
-            })}
-          </div>
-        ) : null}
-
-        {view === "beat" && currentBeat && brainstormReady ? (
-          <div className="bb-record-layout">
-            <div className="bb-compact-map" aria-label="Your plan — glance while you record">
-              <div className="bb-compact-map-label">Your storyboard · current beat highlighted</div>
-              <div className="bb-compact-map-grid">
-                {beatDefs.map((b) => {
-                  const chips = Array.isArray(brainstormMap[b.id]) ? brainstormMap[b.id] : [];
-                  const isCurrent = currentBeat && b.id === currentBeat.id;
-                  const isReq = requiredSet.has(b.id);
-                  return (
-                    <div
-                      key={"compact-" + b.id}
-                      className={
-                        "bb-compact-tray" +
-                        (isCurrent ? " is-current" : "") +
-                        (chips.length ? " is-filled" : "") +
-                        (isReq ? " is-required" : "")
-                      }
-                    >
-                      <div className="bb-compact-tray-title bb-label-with-speak">
-                        <span>{b.label}{isReq ? " *" : ""}{isCurrent ? " · recording" : ""}</span>
-                        <SpeakButton
-                          showLabel={false}
-                          label={"Read " + b.label}
-                          onUnavailable={unavailableSpeak}
-                          text={
-                            b.label + (isCurrent ? ", recording now. " : ". ") +
-                            (chips.length ? ("Chips: " + chips.map((c) => c.label).join(", ")) : "Empty tray.")
-                          }
-                        />
-                      </div>
-                      <div className="bb-compact-tray-chips">
-                        {chips.length === 0 ? (
-                          <span className="bb-shelf-empty">—</span>
-                        ) : (
-                          chips.map((c, idx) => (
-                            <span
-                              key={placementKey("c-" + b.id, c.id, idx)}
-                              className={"bb-chip on-map compact" + (c.imageUrl ? " has-image" : "")}
-                              title={c.label}
-                            >
-                              <ChipFace chip={c} />
-                            </span>
-                          ))
-                        )}
-                      </div>
+            </aside>
+            <section className="bb-plan-right" aria-label="Your storyboard">
+              <div className="bb-plan-heading"><div><h2>Your storyboard</h2><p className="bb-muted">Give each part of your broadcast a place.</p></div>
+                <span className="bb-count">{beatDefs.length} segments</span></div>
+              {selectedChip ? <div className="bb-selection" role="status"><span><strong>{selectedChip.label}</strong> selected. Choose a tray.</span><button className="bb-icon-btn" onClick={() => { setSelectedChip(null); setStatus(""); }} aria-label="Cancel selected idea"><X size={18} /></button></div> : null}
+              <div className="bb-shelves">
+                {beatDefs.map((b, i) => {
+                  const chips = brainstormMap[b.id] || [];
+                  const required = requiredSet.has(b.id);
+                  return <section key={b.id} className={"bb-shelf" + (selectedChip || dragChip ? " is-awaiting" : "")}
+                    aria-label={b.label + " tray"} onDragOver={onShelfDragOver} onDrop={(e) => onShelfDrop(e, b.id)}>
+                    <div className="bb-shelf-heading"><span className="bb-number">{i + 1}</span><div><h3>{b.label}</h3><p>{b.cue}</p></div>
+                      <SpeakButton text={b.label + ". " + b.cue} showLabel={false} label={"Read " + b.label + " tray"} onUnavailable={unavailableSpeak} />
+                      {required && chips.length < (brainstormMin.minPerBeat || 1) ? <span className="bb-required">Needs an idea</span> : null}</div>
+                    <div className="bb-shelf-chips">
+                      {chips.map((c, idx) => <div key={placementKey(b.id, c.id, idx)} className={"bb-chip on-map" + (c.imageUrl ? " has-image" : "")}
+                        draggable={!submitted} onDragEnd={() => setDragChip(null)} onDragStart={(e) => {
+                          const payload = JSON.stringify({ ...c, move: true, fromBeatId: b.id, fromIndex: idx });
+                          e.dataTransfer.setData("application/json", payload); e.dataTransfer.setData("text/plain", payload); setDragChip(c);
+                        }}><ChipFace chip={c} /><button className="bb-chip-x" aria-label={"Remove " + c.label + " from " + b.label} onClick={() => removeChipFromTray(b.id, idx)}><X size={16} /></button></div>)}
+                      {chips.length < 8 ? <button className="bb-drop" onClick={() => onShelfClick(b.id)} aria-label={"Add selected idea to " + b.label}>
+                        <Plus size={23} /><span>{selectedChip ? "Place idea here" : "Add an idea"}</span></button> : <span className="bb-muted">Tray full · remove an idea to add another</span>}
                     </div>
-                  );
+                  </section>;
                 })}
               </div>
-            </div>
-          <div className="bb-card">
-            <div className="bb-cue-row">
-              <div className="bb-cue">Beat {beatIndex + 1}: {currentBeat.label}</div>
-              <SpeakButton
-                label="Read aloud"
-                onUnavailable={unavailableSpeak}
-                text={
-                  "Beat " + (beatIndex + 1) + ": " + currentBeat.label + ". " + (currentBeat.cue || "") + ". " +
-                  (activePlanChips.length
-                    ? ("Your plan chips: " + activePlanChips.map((c) => c.label).join(", ") + ".")
-                    : "No chips on this beat — you can still record.")
-                }
-              />
-            </div>
-            <p className="bb-muted">{currentBeat.cue}</p>
-
-            {activePlanChips.length ? (
-              <div className="bb-plan-cue" aria-label="Your plan for this beat">
-                <div className="bb-plan-cue-label bb-label-with-speak">
-                  <span>Your plan (silent cue)</span>
-                  <SpeakButton
-                    showLabel={false}
-                    label="Read plan chips"
-                    onUnavailable={unavailableSpeak}
-                    text={"Your plan chips: " + activePlanChips.map((c) => c.label).join(", ")}
-                  />
-                </div>
-                <div className="bb-chip-row">
-                  {activePlanChips.map((c, idx) => (
-                    <span
-                      key={placementKey(currentBeat.id, c.id, idx)}
-                      className={"bb-chip on-cue" + (c.imageUrl ? " has-image" : "")}
-                    >
-                      <ChipFace chip={c} />
-                      <SpeakButton
-                        text={c.label}
-                        showLabel={false}
-                        label={"Read chip: " + c.label}
-                        className="bb-speak-on-chip"
-                        onUnavailable={unavailableSpeak}
-                      />
-                    </span>
-                  ))}
-                </div>
-              </div>
-            ) : (
-              <p className="bb-muted bb-inline-speak" style={{ marginTop: 6 }}>
-                <span>No chips on this beat — you can still record.</span>
-                <SpeakButton text="No chips on this beat — you can still record." showLabel={false} label="Read empty beat message" onUnavailable={unavailableSpeak} />
-              </p>
-            )}
-
-            <p className="bb-muted" style={{ marginTop: 6 }}>Up to {clipCap} seconds. Re-record anytime before you submit.</p>
-
-            {micError ? (
-              <div className="bb-err bb-warn-with-speak">
-                <span>{micError}</span>
-                <SpeakButton text={micError} showLabel={false} label="Read error" onUnavailable={unavailableSpeak} />
-              </div>
-            ) : null}
-            {shortClipWarn ? (
-              <div className="bb-warn bb-warn-with-speak">
-                <span>That clip was too short or silent. Hold the mic closer and try a longer take.</span>
-                <SpeakButton text="That clip was too short or silent. Hold the mic closer and try a longer take." showLabel={false} label="Read warning" onUnavailable={unavailableSpeak} />
-              </div>
-            ) : null}
-            {softStillWarn && currentBeat.stillRequired ? (
-              <div className="bb-warn bb-warn-with-speak">
-                <span>This beat usually needs a still (photo or drawing). You can add one or continue.</span>
-                <SpeakButton text="This beat usually needs a still. You can add one or continue." showLabel={false} label="Read warning" onUnavailable={unavailableSpeak} />
-              </div>
-            ) : null}
-
-            <div className="bb-row" style={{ marginTop: 12 }}>
-              {!recording ? (
-                <button
-                  type="button"
-                  className="bb-btn"
-                  onClick={startRecording}
-                  disabled={!stimulusReady || !brainstormReady || submitted}
-                >
-                  {currentSlot.audioDataUrl ? "Record again" : "Record"}
-                </button>
-              ) : (
-                <button type="button" className="bb-btn danger" onClick={stopRecording}>
-                  Stop · {recordSec}s / {clipCap}s
-                </button>
-              )}
-              <label className="bb-btn secondary" style={{ cursor: "pointer" }}>
-                {currentSlot.stillDataUrl ? "Change still" : (currentBeat.stillRequired ? "Add still" : "Optional still")}
-                <input
-                  type="file"
-                  accept="image/*"
-                  style={{ display: "none" }}
-                  disabled={submitted}
-                  onChange={(e) => onStillUpload(e.target.files && e.target.files[0])}
-                />
-              </label>
-              <button
-                type="button"
-                className="bb-btn secondary"
-                onClick={() => { setView("brainstorm"); setStatus(""); }}
-                disabled={recording || submitted}
-              >
-                Edit plan
-              </button>
-            </div>
-
-            {currentSlot.audioDataUrl ? <audio className="bb-audio" controls src={currentSlot.audioDataUrl} /> : null}
-            {currentSlot.stillDataUrl ? <img className="bb-still" src={currentSlot.stillDataUrl} alt="Beat still" /> : null}
-
-            <div className="bb-row" style={{ marginTop: 14 }}>
-              <button
-                type="button"
-                className="bb-btn gold"
-                onClick={markBeatDone}
-                disabled={!currentSlot.audioDataUrl || recording || submitted}
-              >
-                {beatIndex >= beatDefs.length - 1 ? "Save beat · Review all" : "Save beat · Next"}
-              </button>
-              {beatIndex > 0 ? (
-                <button type="button" className="bb-btn secondary" onClick={() => goToBeat(beatIndex - 1)} disabled={recording}>
-                  Back
-                </button>
-              ) : null}
-            </div>
-            {status ? <p className="bb-muted" style={{ marginTop: 10 }}>{status}</p> : null}
-            {saving ? <p className="bb-muted">Saving...</p> : null}
-          </div>
+              <div className="bb-plan-footer"><p className="bb-muted">{mapMeetsMin ? "Your plan is ready. Bring it to life!" : emptyHint}</p>
+                <button className="bb-btn teal" onClick={finishBrainstorm} disabled={!mapMeetsMin || submitted}>Ready to record <ArrowRight size={20} /></button></div>
+            </section>
           </div>
         ) : null}
 
-        {view === "playback" ? (
-          <div className="bb-card">
-            <div className="bb-cue-row">
-              <div className="bb-cue">Full playback</div>
-              <SpeakButton text="Full playback. Listen to your whole broadcast. Re-record any beat, then submit." onUnavailable={unavailableSpeak} />
-            </div>
-            <p className="bb-muted">Listen to your whole broadcast. Re-record any beat, then submit.</p>
-            {beatDefs.map((b, i) => {
-              const slot = beats[b.id] || emptyBeat();
-              const plan = Array.isArray(brainstormMap[b.id]) ? brainstormMap[b.id] : [];
-              return (
-                <div key={b.id} style={{ marginTop: 14, paddingTop: 12, borderTop: "1px solid rgba(140,82,242,.15)" }}>
-                  <div style={{ fontWeight: 700, marginBottom: 4 }}>
-                    {i + 1}. {b.label}{slot.audioDataUrl ? "" : " — missing"}
-                  </div>
-                  {plan.length ? (
-                    <div className="bb-chip-row" style={{ marginBottom: 6 }}>
-                      {plan.map((c, idx) => (
-                        <span
-                          key={placementKey(b.id, c.id, idx)}
-                          className={"bb-chip on-cue" + (c.imageUrl ? " has-image" : "")}
-                        >
-                          <ChipFace chip={c} />
-                        </span>
-                      ))}
+        {(view === "beat" || view === "playback" || view === "done") ? (
+          <div className="bb-work-layout">
+            <aside className="bb-panel bb-broadcast-sidebar">
+              <h2>Your broadcast</h2>
+              {view === "beat" ? <><nav className="bb-segment-nav" aria-label="Broadcast segments">{beatDefs.map((b, i) => (
+                <button key={b.id} className={i === beatIndex ? "is-current" : ""} disabled={busy || submitted} aria-current={i === beatIndex ? "step" : undefined} onClick={() => goToBeat(i)}>
+                  <span className="bb-mini-number">{i + 1}</span><span>{b.label}</span>{beats[b.id]?.status === "done" && beats[b.id]?.audioDataUrl ? <Check size={19} /> : null}
+                </button>))}</nav><button className="bb-btn secondary bb-edit-plan" disabled={busy} onClick={() => setView("brainstorm")}>Edit plan</button></> : null}
+              {topicSummary}
+              <div className="bb-completion"><CheckCircle2 size={21} /> {doneCount} of {beatDefs.length} segments recorded</div>
+              {view !== "beat" ? <p className="bb-muted">{submitted ? "Your teacher can listen to your broadcast." : "Listen to each part. You can record any part again."}</p> : null}
+            </aside>
+
+            {view === "beat" && currentBeat ? (
+              <section className="bb-panel bb-record-panel">
+                <div className="bb-record-heading"><span className="bb-number">{beatIndex + 1}</span><div><h2>{currentBeat.label}</h2><p className="bb-muted">{currentBeat.cue}</p></div>
+                  {!busy ? <SpeakButton text={currentBeat.label + ". " + currentBeat.cue} showLabel={false} label="Read recording prompt" onUnavailable={unavailableSpeak} /> : null}</div>
+                <div className="bb-plan-cue"><div className="bb-label-with-speak"><h3>Your planning cues</h3>
+                  {!busy && activePlanChips.length ? <SpeakButton text={activePlanChips.map((c) => c.label).join(". ")} showLabel={false} label="Read planning cues" onUnavailable={unavailableSpeak} /> : null}</div>
+                  {activePlanChips.length ? <div className="bb-cue-grid">{activePlanChips.map((c, i) => <div key={placementKey(currentBeat.id, c.id, i)} className={"bb-chip on-cue" + (c.imageUrl ? " has-image" : "")}><ChipFace chip={c} /></div>)}</div> : <p className="bb-muted">No ideas in this tray. You can still record, or return to your plan.</p>}
+                </div>
+                <div className="bb-recorder">
+                  <div className={"bb-record-state" + (recording ? " is-recording" : "")}><span aria-hidden="true" />{recording ? "Recording" : micPending ? "Waiting for microphone…" : processing ? "Preparing your recording…" : currentSlot.audioDataUrl ? "Listen to your take" : "Ready when you are"}</div>
+                  {recording ? <div className="bb-timer">{clock(recordSec)}<small> / {clock(clipCap)}</small></div> : null}
+                  <RecordingMeter stream={mediaStream.current} active={recording} />
+                  {currentSlot.audioDataUrl && !recording ? <BroadcastPlayer key={currentSlot.audioDataUrl} src={currentSlot.audioDataUrl} duration={currentSlot.durationSec} label={currentBeat.label} disabled={busy} /> : null}
+                  <div className="bb-record-controls">{recording ? <button className="bb-btn danger" onClick={stopRecording}><Square size={21} fill="currentColor" /> Stop recording</button> :
+                    <button className="bb-btn" disabled={busy || submitted} onClick={startRecording}><Mic size={21} />{currentSlot.audioDataUrl ? "Record again" : "Start recording"}</button>}
+                    <label className={"bb-btn secondary bb-upload" + (busy ? " is-disabled" : "")}><ImagePlus size={20} />{currentSlot.stillDataUrl ? "Change photo or drawing" : "Add a photo or drawing"}<input type="file" accept="image/*" aria-label="Add a photo or drawing" disabled={busy || submitted} onChange={(e) => { onStillUpload(e.target.files?.[0]); e.target.value = ""; }} /></label></div>
+                  <p className="bb-muted">Up to {clipCap} seconds. You can listen and record again.</p>
+                  {currentBeat.stillRequired && !currentSlot.stillDataUrl ? <p className="bb-muted">A photo or drawing is suggested for this segment.</p> : null}
+                  {currentSlot.stillDataUrl ? <img className="bb-still" src={currentSlot.stillDataUrl} alt="Your segment illustration" /> : null}
+                </div>
+                {micError ? <div className="bb-err" role="alert">{micError}</div> : null}
+                {shortClipWarn ? <div className="bb-warn" role="alert">That clip was too short. Record for at least {minClip} seconds and check that your microphone is working.</div> : null}
+                <div className="bb-record-footer"><button className="bb-text-btn" disabled={busy || beatIndex === 0} onClick={() => goToBeat(beatIndex - 1)}><ArrowLeft size={16} /> Previous</button>
+                  <button className="bb-btn teal" disabled={!currentSlot.audioDataUrl || busy || submitted} onClick={markBeatDone}>{beatIndex === beatDefs.length - 1 ? "Save segment · Review" : "Save segment · Next"}<ArrowRight size={18} /></button></div>
+              </section>
+            ) : null}
+
+            {(view === "playback" || view === "done") ? (
+              <section className="bb-panel bb-review-panel">
+                {submitted ? <div className="bb-success-heading"><CheckCircle2 size={40} /><div><h2>Broadcast submitted!</h2><p className="bb-muted">Your voice. Your ideas. Ready for your teacher.</p></div></div> : <><h2>Listen before you send</h2><p className="bb-muted">Make sure your ideas are clear and complete.</p></>}
+                <div className="bb-review-list">{beatDefs.map((b, i) => {
+                  const slot = beats[b.id] || emptyBeat();
+                  const plan = brainstormMap[b.id] || [];
+                  const still = slot.stillDataUrl || plan.find((c) => c.imageUrl)?.imageUrl;
+                  return <article className="bb-review-card" key={b.id}>
+                    {still ? <img className="bb-review-image" src={still} alt={slot.stillDataUrl ? "Your segment illustration" : "Planning cue"} /> : <div className="bb-review-placeholder"><Mic size={32} /></div>}
+                    <div className="bb-review-audio"><h3><span className="bb-mini-number">{i + 1}</span>{b.label}</h3>
+                      {slot.audioDataUrl ? <BroadcastPlayer src={slot.audioDataUrl} duration={slot.durationSec} label={b.label} /> : <p className="bb-muted">This segment still needs a recording.</p>}
+                      {plan.length ? <details className="bb-review-cues"><summary>Planning cues</summary><div className="bb-chip-row">{plan.map((c, index) => <span className="bb-cue-label" key={placementKey(b.id,c.id,index)}>{c.label}</span>)}</div></details> : null}
                     </div>
-                  ) : null}
-                  {slot.audioDataUrl ? <audio className="bb-audio" controls src={slot.audioDataUrl} /> : null}
-                  {slot.stillDataUrl ? <img className="bb-still" src={slot.stillDataUrl} alt="" /> : null}
-                  <button type="button" className="bb-btn secondary" style={{ marginTop: 8 }} onClick={() => goToBeat(i)} disabled={submitted}>
-                    Re-record
-                  </button>
+                    {!submitted ? <button className="bb-btn secondary bb-rerecord" disabled={busy} onClick={() => goToBeat(i)}><Mic size={18} />{slot.audioDataUrl ? "Record again" : "Record"}</button> : null}
+                  </article>;
+                })}</div>
+                <div className="bb-review-footer">{submitted ? <a href="/missions" className="bb-btn teal">Back to My Missions <ArrowRight size={18} /></a> : <>
+                  <button className="bb-btn secondary" disabled={busy} onClick={() => goToBeat(beatIndex)}><ArrowLeft size={17} />Back to recording</button>
+                  <button className="bb-btn teal" disabled={!allDone || busy || saving} onClick={handleSubmit}>{turningIn ? "Submitting…" : "Submit broadcast"}<ArrowRight size={19} /></button></>}
                 </div>
-              );
-            })}
-            <div className="bb-row" style={{ marginTop: 16 }}>
-              <button type="button" className="bb-btn" onClick={handleSubmit} disabled={!allDone || saving || submitted}>
-                Submit broadcast
-              </button>
-            </div>
-            {status ? <p className="bb-muted" style={{ marginTop: 10 }}>{status}</p> : null}
+              </section>
+            ) : null}
           </div>
         ) : null}
-
-        {view === "done" ? (
-          <div className="bb-card bb-empty">
-            <div className="bb-cue-row" style={{ justifyContent: "center" }}>
-              <div className="bb-cue">Broadcast submitted</div>
-              <SpeakButton text="Broadcast submitted. Nice work. Your teacher will listen to each beat." onUnavailable={unavailableSpeak} />
-            </div>
-            <p className="bb-muted">Nice work. Your teacher will listen to each beat.</p>
-            {beatDefs.map((b) => {
-              const slot = beats[b.id];
-              if (!slot || !slot.audioDataUrl) return null;
-              const plan = Array.isArray(brainstormMap[b.id]) ? brainstormMap[b.id] : [];
-              return (
-                <div key={b.id} style={{ marginTop: 10, textAlign: "left" }}>
-                  <div style={{ fontWeight: 700, fontSize: 13 }}>{b.label}</div>
-                  {plan.length ? (
-                    <div className="bb-chip-row" style={{ margin: "4px 0 6px" }}>
-                      {plan.map((c, idx) => (
-                        <span
-                          key={placementKey(b.id, c.id, idx)}
-                          className={"bb-chip on-cue" + (c.imageUrl ? " has-image" : "")}
-                        >
-                          <ChipFace chip={c} />
-                        </span>
-                      ))}
-                    </div>
-                  ) : null}
-                  <audio className="bb-audio" controls src={slot.audioDataUrl} />
-                </div>
-              );
-            })}
-          </div>
-        ) : null}
+        <div className="bb-status" role="status" aria-live="polite">{saving ? (previewMode ? "Preview · no student data saved" : "Saving your work…") : status}</div>
       </div>
     </div>
   );
