@@ -21,7 +21,6 @@ export default function BroadcastPreview({ cases }) {
   const [screen, setScreen] = useState("plan");
   const [version, setVersion] = useState(0);
   const [fixture, setFixture] = useState(null);
-  const [compact, setCompact] = useState(false);
   const item = cases[selected];
   function change(caseIndex, nextScreen) {
     const c = cases[caseIndex];
@@ -42,13 +41,11 @@ export default function BroadcastPreview({ cases }) {
       <label>Activity <select aria-label="Preview activity" value={selected} onChange={(e) => change(Number(e.target.value), screen)}>{cases.map((c,i) => <option value={i} key={c.standard}>{c.segmentLabel} · {c.topic}</option>)}</select></label>
       <label>Screen <select aria-label="Preview screen" value={screen} onChange={(e) => change(selected,e.target.value)}>{["cover","plan","record","review","submitted"].map((s) => <option key={s}>{s}</option>)}</select></label>
       <button onClick={() => change(selected,screen)}>Reset screen</button>
-      <button onClick={() => setCompact((v) => !v)}>{compact ? "Full width" : "Phone width"}</button>
       <span>No student data saved. Review audio is a test tone.</span>
     </div>
-    <div style={compact ? { width: 390, maxWidth: "100%", margin: "0 auto" } : undefined}>
-      {compact ? <iframe title="Phone preview" src="/design-preview/broadcast-booth" style={{width:"100%", height:850, border:0}} /> :
+    <div>
       <BroadcastBoothClient key={selected + ":" + version} assignmentId="design-preview" publicCase={item} config={item.config}
-        existingData={fixture || (screen === "plan" ? { stimulusReady: true } : null)} alreadySubmitted={screen === "submitted"} previewMode />}
+        existingData={fixture || (screen === "plan" ? { stimulusReady: true } : null)} alreadySubmitted={screen === "submitted"} previewMode />
     </div>
   </>;
 }
