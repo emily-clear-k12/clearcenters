@@ -1,6 +1,6 @@
 # The Tall Tale Trail — Content v1 (ELA.4.8A-XP)
 
-**Grade 4 · ELAR · Solara.** Written Sept 27, 2026. Code: `lib/cases/expedition-station/quests/tall-tale-trail.js`.
+**Grade 4 · ELAR · Solara.** Written Sept 28, 2026. Code: `lib/cases/expedition-station/quests/tall-tale-trail.js`.
 
 **Main standard:** 4.8A · **Also shows up under:** 4.9A, 4.6F, 4.7C, 4.7B, 4.10D, 4.11D
 
@@ -129,12 +129,12 @@ Story night on **solara**`[F:solara]` helped our crew. The elders told three old
 | 2 | The rainforest canopy | The canopy is the thick top layer of leaves and branches in a rainforest. Most rainforest animals live up there, not on the ground. |
 | 4 | Rainforest rain | Tropical rainforests usually get more than 80 inches of rain each year. That much water would be taller than most grown-ups! |
 | 5 | Fig trees | Fig trees are very important in rainforests. They often have fruit when other trees don't, so many animals depend on them for food. |
-| 6 | Glowing mushrooms | Some mushrooms in real forests glow in the dark! Living things that make their own light are called bioluminescent. |
+| 6 | The biggest flower | The biggest single flower in the world grows in rainforests in Southeast Asia. It can be almost 1 meter wide, and it smells like rotten meat! |
 | 7 | The forest floor | The rainforest floor is very dark, even at noon. The canopy is so thick that only a tiny bit of sunlight reaches the ground. |
-| 9 | Toucan bills | A toucan's huge bill looks heavy, but it is light because it is mostly hollow inside. It helps the bird reach fruit and stay cool. |
+| 9 | Pink river dolphins | Pink river dolphins live in the Amazon River. They can bend their necks to swim around tree trunks in flooded forests. |
 | 10 | Capuchin monkeys | Capuchin monkeys are clever tool users. Some use rocks to crack open hard nuts. |
-| 11 | Leafcutter ants | Leafcutter ants work as a team. They carry pieces of leaves back to their nest and use them to grow a fungus garden that they eat. |
-| 13 | Sloths | Sloths move so slowly that tiny green algae grow in their fur. The green color helps them hide in the trees. |
+| 11 | Army ants | Army ants do not build a lasting nest. At night, thousands of them hook their bodies together to make a living nest. |
+| 13 | Hoatzin chicks | Baby hoatzin birds have little claws on their wings. The claws help them climb through branches before they can fly. |
 | 15 | Rainforest tortoises | Yellow-footed tortoises live in South American rainforests. They eat a lot of fallen fruit from the forest floor. |
 
 ## Review checklist

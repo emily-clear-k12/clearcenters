@@ -1,6 +1,6 @@
 # The Trusted Source — Content v1 (ELA.5.13D-XP)
 
-**Grade 5 · ELAR · Mechara.** Written Sept 27, 2026. Code: `lib/cases/expedition-station/quests/trusted-source.js`.
+**Grade 5 · ELAR · Mechara.** Written Sept 28, 2026. Code: `lib/cases/expedition-station/quests/trusted-source.js`.
 
 **Main standard:** 5.13D · **Also shows up under:** 5.13C, 5.13E, 5.13F, 5.13G, 5.9E, 5.6F, 5.6H, 5.7C
 
@@ -125,8 +125,8 @@ Lights may also flicker during big storms. `F4.1` Call the City Power Team if a 
 | Task | Discovery | Fact |
 | --- | --- | --- |
 | 1 | Volts | Voltage is measured in volts, named after Alessandro Volta. He built the first battery in 1800 by stacking metal discs with salty cloth between them. |
-| 2 | Circuits | Electricity can only flow in a closed loop called a circuit. If the loop is broken anywhere, the current stops. |
-| 3 | Copper wire | Most electric wires are made of copper because electricity flows through copper very easily. |
+| 2 | Lightning rods | Benjamin Franklin invented the lightning rod. It is a metal rod that guides lightning safely down into the ground. |
+| 3 | Alternating current | The electricity in most homes is alternating current, or AC. In the United States, it flows back and forth 60 times every second. |
 | 5 | The word robot | The word robot comes from a 1920 play by Czech writer Karel Čapek. It comes from a Czech word meaning hard, forced work. |
 | 6 | The first factory robot | The first industrial robot, called Unimate, went to work in a car factory in 1961. It lifted hot metal parts. |
 | 8 | Thick and thin wires | A thick wire can carry more electric current than a thin wire of the same metal, and it doesn't get as hot. |

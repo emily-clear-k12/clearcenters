@@ -36,12 +36,12 @@
 | ⬜ | The Parts Depot | MA.3.4A-XP | 3.4A add and subtract within 1,000 | 3.4B, 3.5A | Mechara | Restock the robot parts depot |
 | ✅ | The Market Stall | MA.3.4C-XP | 3.4C coins and bills | 3.9C | Solara | Run the jungle market stall and make change |
 | ✅ | The Seed Crates | MA.3.4K-XP | 3.4K multiply and divide word problems | 3.4D, 3.4E, 3.4H, 3.4J, 3.5B | Lumara | Pack seed crates in equal groups for planting |
-| ⬜ | The Rover Convoy | MA.3.4G-XP | 3.4G two-digit × one-digit | 3.4F, 3.4I | Frostveil | Load the rover convoy for the long ice crossing |
+| ✅ | The Rover Convoy | MA.3.4G-XP | 3.4G two-digit × one-digit | 3.4F, 3.4I | Frostveil | Load the rover convoy for the long ice crossing |
 | ⬜ | The Missing Number Lock | MA.3.5D-XP | 3.5D unknowns in × and ÷ equations | 3.5C, 3.5E | Cindara | Crack the number locks on the lava vault |
 | ⬜ | The Shape Workshop | MA.3.6A-XP | 3.6A classify 2D and 3D figures | 3.6B | Mechara | Sort parts by shape to rebuild a robot |
 | ✅ | The Greenhouse Floor | MA.3.6C-XP | 3.6C area of rectangles | 3.6D, 3.6E | Lumara | Tile the greenhouse floor and plan garden plots |
 | ✅ | The Creature Pens | MA.3.7B-XP | 3.7B perimeter | 3.7A | Solara | Fence the rescued animals' pens |
-| ⬜ | The Launch Schedule | MA.3.7C-XP | 3.7C time intervals | 3.7D, 3.7E | Cloudreach | Time the sky-ship launches and weigh the cargo |
+| ✅ | The Launch Schedule | MA.3.7C-XP | 3.7C time intervals | 3.7D, 3.7E | Cloudreach | Time the sky-ship launches and weigh the cargo |
 | ✅ | The Sighting Board | MA.3.8B-XP | 3.8B solve problems with data | 3.8A | Solara | Graph the animal sightings and plan the tour |
 | ⬜ | The Outpost Jobs | MA.3.9A-XP | 3.9A labor and income | 3.9B, 3.9D, 3.9E, 3.9F | Mechara | Earn, save, and spend credits at the outpost |
 
@@ -60,7 +60,7 @@
 | ⬜ | The Cargo Bays | MA.4.4D-XP | 4.4D multiply up to 4 digits × 1 digit and 2 × 2 digits | 4.4B, 4.4C | Cindara | Fill the lava freighter's cargo bays |
 | ⬜ | The Sharing Station | MA.4.4F-XP | 4.4F divide up to 4 digits by 1 digit | 4.4E | Solara | Share supplies evenly across the canopy camps |
 | ⬜ | The Two-Step Trek | MA.4.4H-XP | 4.4H one- and two-step × and ÷ problems | 4.4G, 4.5A | Frostveil | Plan the supplies for a two-week ice trek |
-| ⬜ | The Pattern Machine | MA.4.5B-XP | 4.5B input-output tables and patterns | — | Mechara | Crack the rules of the robot assembly line |
+| ✅ | The Pattern Machine | MA.4.5B-XP | 4.5B input-output tables and patterns | — | Mechara | Crack the rules of the robot assembly line |
 | ⬜ | The Garden Plots | MA.4.5D-XP | 4.5D perimeter and area problems | 4.5C | Lumara | Design garden plots to the gardener's order |
 | ⬜ | The Blueprint Room | MA.4.6D-XP | 4.6D classify figures by lines and angles | 4.6A, 4.6B, 4.6C | Mechara | Sort blueprint parts and fix the symmetry |
 | ✅ | The Telescope Array | MA.4.7C-XP | 4.7C measure angles | 4.7A, 4.7B, 4.7D, 4.7E | Cloudreach | Aim the telescopes at a new comet |
@@ -75,7 +75,7 @@
 | ✅ | The Robot Rebuild | MA.5.3H-XP | 5.3H add and subtract fractions (unlike denominators) | 5.3K, 5.3A | Mechara | Recharge the robots and restart the city core |
 | ✅ | The Canopy Supply Drop | MA.5.3I-XP | 5.3I multiply whole numbers and fractions | 5.3J, 5.3L | Solara | Share supplies across the canopy camps |
 | ⬜ | The Precision Lab | MA.5.2B-XP | 5.2B compare and order decimals to thousandths | 5.2A, 5.2C | Frostveil | Rank ice core samples by thickness |
-| ⬜ | The Freight Split | MA.5.3C-XP | 5.3C divide by two-digit divisors | 5.3B | Cindara | Split a huge lava-rock shipment into freighters |
+| ✅ | The Freight Split | MA.5.3C-XP | 5.3C divide by two-digit divisors | 5.3B | Cindara | Split a huge lava-rock shipment into freighters |
 | ⬜ | The Fuel Price | MA.5.3E-XP | 5.3E multiply decimals | 5.3D | Mechara | Buy fuel and parts at decimal prices |
 | ⬜ | The Water Rations | MA.5.3G-XP | 5.3G divide decimals | 5.3F | Frostveil | Ration meltwater across the crew |
 | ⬜ | The Prime Vault | MA.5.4A-XP | 5.4A prime and composite numbers | — | Cindara | Open the vault that only accepts primes |
@@ -100,15 +100,15 @@ Each ELAR quest has 4–6 original passages that belong to its world.
 | Status | Quest | Code | Main standard | Also practices | Planet | Passages |
 | --- | --- | --- | --- | --- | --- | --- |
 | ✅ | The Missing Map | ELA.3.6F-XP | 3.6F inferences with evidence | 3.7C | Frostveil | Crew logs, a torn map, a note |
-| ⬜ | The Big Idea Board | ELA.3.6G-XP | 3.6G key ideas | 3.7D | Cloudreach | Field-guide entries about sky creatures |
+| ✅ | The Big Idea Board | ELA.3.6G-XP | 3.6G key ideas | 3.7D | Cloudreach | Field-guide entries about sky creatures |
 | ⬜ | The Word Garden | ELA.3.3B-XP | 3.3B context clues and multiple meanings | 3.3C, 3.3D | Lumara | Garden journal, seed-packet labels |
-| ⬜ | The Fable Fire | ELA.3.8A-XP | 3.8A theme | 3.9A | Cindara | Three Cindaran fables |
-| ⬜ | The New Crew Member | ELA.3.8B-XP | 3.8B characters | 3.8D | Mechara | A story about a new robot on the crew |
+| ✅ | The Fable Fire | ELA.3.8A-XP | 3.8A theme | 3.9A | Cindara | Three Cindaran fables |
+| ✅ | The New Crew Member | ELA.3.8B-XP | 3.8B characters | 3.8D | Mechara | A story about a new robot on the crew |
 | ⬜ | The Lost Rover | ELA.3.8C-XP | 3.8C plot | 3.10B | Frostveil | A story told in scrambled logs |
 | ⬜ | The Sky Songs | ELA.3.9B-XP | 3.9B poetry | 3.10D | Cloudreach | Crew poems and sky-creature songs |
 | ⬜ | The Radio Play | ELA.3.9C-XP | 3.9C drama | 3.8B | Solara | A short radio play the crew performs |
 | ⬜ | The Field Guide | ELA.3.9D-XP | 3.9D informational text features and structure | 3.10C | Solara | A rainforest field guide with headings and diagrams |
-| ⬜ | The Trader's Pitch | ELA.3.9E-XP | 3.9E argumentative text | 3.10A | Mechara | Ads and a crew proposal |
+| ✅ | The Trader's Pitch | ELA.3.9E-XP | 3.9E argumentative text | 3.10A | Mechara | Ads and a crew proposal |
 | ✅ | The Garbled Messages | ELA.3.11D-XP | 3.11D editing | 3.11C | Cindara | Storm-damaged messages to fix |
 | ⬜ | The Report to Vega | ELA.3.12B-XP | 3.12B write informational text | 3.11A, 3.11B | Lumara | Notes the student turns into a report |
 | ⬜ | The Archive Hunt | ELA.3.13C-XP | 3.13C gather information from sources | 3.13D, 3.13E | Mechara | The outpost archive: logs, guides, charts |
@@ -126,7 +126,7 @@ Each ELAR quest has 4–6 original passages that belong to its world.
 | ✅ | The Crew Poems | ELA.4.9B-XP | 4.9B figurative language in poetry | 4.10D | Lumara | Poems with similes, metaphors, personification |
 | ⬜ | The Stage Crew | ELA.4.9C-XP | 4.9C drama structure | 4.8B | Mechara | A play with scenes and stage directions |
 | ⬜ | The Volcano Report | ELA.4.9D-XP | 4.9D informational text | 4.10B, 4.10C | Cindara | Reports with headings, graphs, timelines |
-| ⬜ | The Outpost Debate | ELA.4.9E-XP | 4.9E argumentative text | 4.10A | Frostveil | Crew proposals to move the outpost |
+| ✅ | The Outpost Debate | ELA.4.9E-XP | 4.9E argumentative text | 4.10A | Frostveil | Crew proposals to move the outpost |
 | ⬜ | Two Sides of the Storm | ELA.4.10E-XP | 4.10E point of view | 4.7B | Cloudreach | The same storm told by two crew members |
 | ⬜ | The Signal Repair | ELA.4.11D-XP | 4.11D editing | 4.11C | Mechara | Damaged transmissions to fix |
 | ⬜ | The Opinion Board | ELA.4.12C-XP | 4.12C write an opinion essay | 4.11A, 4.11B | Solara | Prompts about camp rules |
@@ -138,9 +138,9 @@ Each ELAR quest has 4–6 original passages that belong to its world.
 | --- | --- | --- | --- | --- | --- | --- |
 | ⬜ | The Pun Patrol | ELA.5.3D-XP | 5.3D adages and puns | 5.3B, 5.3C | Mechara | Robot jokes and crew sayings |
 | ⬜ | The Silent Signal | ELA.5.6F-XP | 5.6F inferences with evidence | 5.7C | Frostveil | A mystery told in logs and messages |
-| ⬜ | The Three Reports | ELA.5.6H-XP | 5.6H synthesize information | 5.7B | Cloudreach | Three reports about one storm |
+| ✅ | The Three Reports | ELA.5.6H-XP | 5.6H synthesize information | 5.7B | Cloudreach | Three reports about one storm |
 | ⬜ | The Twin Legends | ELA.5.8A-XP | 5.8A multiple themes | 5.9A | Lumara | Two legends with more than one theme |
-| ⬜ | The Crew Conflict | ELA.5.8B-XP | 5.8B character relationships and conflicts | 5.8D | Cindara | A story about a crew that disagrees |
+| ✅ | The Crew Conflict | ELA.5.8B-XP | 5.8B character relationships and conflicts | 5.8D | Cindara | A story about a crew that disagrees |
 | ⬜ | The River Rescue | ELA.5.8C-XP | 5.8C plot | 5.10B | Solara | An adventure story |
 | ⬜ | The Speaker's Voice | ELA.5.9B-XP | 5.9B poetry: poet vs. speaker | 5.10D | Cloudreach | Poems written as different speakers |
 | ⬜ | The Opening Night | ELA.5.9C-XP | 5.9C drama | 5.10F | Mechara | A play for the robot city's opening night |
@@ -165,12 +165,12 @@ Science quests use the 2024–25 science TEKS. Practices (1–4) and recurring t
 | ✅ | The Melting Point | SCI.3.6C-XP | 3.6C state changes from heating and cooling | 3.6D | Cindara | Heat and cool materials to build a shelter |
 | ⬜ | The Push and Pull Yard | SCI.3.7A-XP | 3.7A forces | 3.7B | Mechara | Move cargo with pushes, pulls, and magnets |
 | ⬜ | The Energy Hunt | SCI.3.8A-XP | 3.8A light, sound, and thermal energy | 3.8B | Lumara | Find energy all around the garden outpost |
-| ⬜ | The Orbit Model | SCI.3.9A-XP | 3.9A Sun, Earth, and Moon orbits | 3.9B | Cloudreach | Build a model of Earth's orbit from the telescope |
+| ✅ | The Orbit Model | SCI.3.9A-XP | 3.9A Sun, Earth, and Moon orbits | 3.9B | Cloudreach | Build a model of Earth's orbit from the telescope |
 | ⬜ | The Weather Watch | SCI.3.10A-XP | 3.10A weather in different places | — | Frostveil | Compare weather at two outposts |
 | ⬜ | The Soil Makers | SCI.3.10B-XP | 3.10B soil formation | 3.10C | Cindara | Watch rock turn into soil |
 | ⬜ | The Reuse Station | SCI.3.11B-XP | 3.11B conservation | 3.11A, 3.11C | Mechara | Reduce, reuse, and recycle at the outpost |
 | ⬜ | The Migration Map | SCI.3.12A-XP | 3.12A weather and animal migration | — | Cloudreach | Track where the animals go when it gets cold |
-| ⬜ | The Food Chain Crew | SCI.3.12B-XP | 3.12B food chains | 3.12C | Solara | Build and repair a rainforest food chain |
+| ✅ | The Food Chain Crew | SCI.3.12B-XP | 3.12B food chains | 3.12C | Solara | Build and repair a rainforest food chain |
 | ⬜ | The Fossil Dig | SCI.3.12D-XP | 3.12D fossils | — | Cindara | Dig up fossils and figure out what they were |
 | ⬜ | The Survival Suits | SCI.3.13A-XP | 3.13A animal structures | 3.13B | Frostveil | Design suits based on how animals survive the cold |
 
@@ -184,11 +184,11 @@ Science quests use the 2024–25 science TEKS. Practices (1–4) and recurring t
 | ⬜ | The Wave Tank | SCI.4.8A-XP | 4.8A energy transfer | — | Cloudreach | Test how waves and sound move energy |
 | ✅ | The Power Grid | SCI.4.8C-XP | 4.8C closed circuits | 4.8B | Mechara | Wire the outpost's lights and heaters |
 | ⬜ | The Season Tracker | SCI.4.9A-XP | 4.9A seasons | — | Frostveil | Track daylight on Earth through the year |
-| ⬜ | The Moon Watch | SCI.4.9B-XP | 4.9B the Moon's appearance | — | Lumara | Record moon phases from the home-world telescope |
+| ✅ | The Moon Watch | SCI.4.9B-XP | 4.9B the Moon's appearance | — | Lumara | Record moon phases from the home-world telescope |
 | ✅ | The Water Cycle Loop | SCI.4.10A-XP | 4.10A water cycle | 4.10C | Cloudreach | Follow one water drop around the cycle |
 | ✅ | The Canyon Makers | SCI.4.10B-XP | 4.10B weathering, erosion, deposition | — | Cindara | Fast-forward a river carving a canyon |
 | ⬜ | The Energy Choice | SCI.4.11A-XP | 4.11A renewable and nonrenewable resources | 4.11B, 4.11C | Mechara | Choose how to power the robot city |
-| ⬜ | The Greenhouse Test | SCI.4.12A-XP | 4.12A producers make food | — | Lumara | Test what the garden plants need |
+| ✅ | The Greenhouse Test | SCI.4.12A-XP | 4.12A producers make food | — | Lumara | Test what the garden plants need |
 | ⬜ | The Web of Life | SCI.4.12B-XP | 4.12B food webs | — | Solara | Build the rainforest food web |
 | ⬜ | The Ancient Seas | SCI.4.12C-XP | 4.12C fossils and past environments | — | Cindara | Find seashell fossils on a mountain |
 | ⬜ | The Plant Survivors | SCI.4.13A-XP | 4.13A plant structures | 4.13B | Lumara | Discover how plants survive tough places |
@@ -206,7 +206,7 @@ Science quests use the 2024–25 science TEKS. Practices (1–4) and recurring t
 | ⬜ | The Rock Layers | SCI.5.10B-XP | 5.10B sedimentary rocks and fossil fuels | — | Cindara | Read the story in the canyon's rock layers |
 | ⬜ | The Delta Builders | SCI.5.10C-XP | 5.10C landforms | — | Frostveil | Watch water, wind, and ice shape the land |
 | ⬜ | The Green Plan | SCI.5.11-XP | 5.11 design conservation solutions | — | Mechara | Design a plan to cut the city's waste |
-| ⬜ | The Ecosystem Balance | SCI.5.12A-XP | 5.12A biotic and abiotic factors | 5.12B | Solara | Keep the jungle ecosystem in balance |
+| ✅ | The Ecosystem Balance | SCI.5.12A-XP | 5.12A biotic and abiotic factors | 5.12B | Solara | Keep the jungle ecosystem in balance |
 | ⬜ | The Dam Decision | SCI.5.12C-XP | 5.12C human impact on ecosystems | — | Solara | Decide whether to dam the jungle river |
 | ⬜ | The Instinct Files | SCI.5.13B-XP | 5.13B instinct and learned behaviors | 5.13A | Lumara | Study how garden creatures survive |
 
@@ -216,10 +216,10 @@ Science quests use the 2024–25 science TEKS. Practices (1–4) and recurring t
 
 | Subject | Grade 3 | Grade 4 | Grade 5 | Total | Written |
 | --- | --- | --- | --- | --- | --- |
-| Math | 15 | 18 | 16 | 49 | 17 |
-| ELAR | 13 | 14 | 14 | 41 | 8 |
-| Science | 12 | 14 | 12 | 38 | 5 |
-| **All** | **40** | **46** | **42** | **128** | **30** |
+| Math | 15 | 18 | 16 | 49 | 21 |
+| ELAR | 13 | 14 | 14 | 41 | 15 |
+| Science | 12 | 14 | 12 | 38 | 10 |
+| **All** | **40** | **46** | **42** | **128** | **46** |
 
 ## Notes
 

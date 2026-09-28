@@ -105,7 +105,7 @@ Our crew came to Lumara for **are**`[E:are]` first poetry night. Nova's lantern 
 | 6 | Ladybugs | Ladybugs eat tiny bugs called aphids. One ladybug can eat thousands of aphids in its life, which helps protect garden plants. |
 | 8 | Moon shapes | The Moon looks like it changes shape during the month, but it is always round. We just see different amounts of its sunny side. |
 | 10 | Monarch butterflies | Some monarch butterflies fly up to 3,000 miles to spend the winter somewhere warm. |
-| 11 | Dew | Dew forms at night when the air cools. Water vapor in the air turns into tiny drops on grass and leaves. |
+| 11 | Venus flytraps | A Venus flytrap snaps its leaves shut when a bug touches the tiny hairs inside them two times. |
 | 13 | Tulips | Tulips close their petals at night and open them again in the morning. |
 | 15 | Garden snails | Garden snails make a slimy trail that helps them glide over rough ground. They are most active at night and on rainy days. |
 

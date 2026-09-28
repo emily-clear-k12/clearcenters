@@ -1,6 +1,6 @@
 # The Market Stall — Content v1 (MA.3.4C-XP)
 
-**Grade 3 · Math · Solara.** Written Sept 27, 2026. Code: `lib/cases/expedition-station/quests/market-stall.js`.
+**Grade 3 · Math · Solara.** Written Sept 28, 2026. Code: `lib/cases/expedition-station/quests/market-stall.js`.
 
 **Main standard:** 3.4C · **Also shows up under:** 3.9C, 3.4A
 
@@ -66,16 +66,16 @@
 
 | Task | Discovery | Fact |
 | --- | --- | --- |
-| 1 | Rainforest life | Rainforests cover only a small part of Earth, but more than half of all the kinds of plants and animals on Earth live in them. |
+| 1 | Cashews | Each cashew nut grows at the bottom of a fruit called a cashew apple. Cashew trees first grew in Brazil. |
 | 2 | Banana hands | Bananas grow in bunches called hands. Each single banana is called a finger. |
 | 3 | The $1 bill | The face on the $1 bill is George Washington, the first president of the United States. |
-| 5 | Capuchin monkeys | Capuchin monkeys are very clever. Some of them use rocks as tools to crack open hard nuts. |
+| 5 | Rubber trees | Natural rubber comes from the milky sap of rubber trees. These trees first grew in the Amazon rainforest. |
 | 6 | Cacao pods | Chocolate is made from the seeds of the cacao tree. The seeds grow inside big pods that hang right from the tree trunk. |
 | 8 | Vanilla | Vanilla comes from the long seed pod of a kind of orchid flower that grows in warm, wet places. |
 | 10 | Brazil nuts | Brazil nuts grow inside a hard, round shell about the size of a softball. Each shell holds a dozen or more nuts. |
 | 11 | Cloth money | U.S. paper money is not really paper. It is made mostly of cotton, with some linen mixed in. |
 | 13 | Coin ridges | A dime has 118 tiny ridges around its edge. A quarter has 119! |
-| 15 | Rainforest rain | Tropical rainforests get a lot of rain. Many get more than 80 inches of rain in a year. |
+| 15 | Nickel coins | A U.S. nickel coin is made of three parts copper and one part nickel. So a nickel is mostly copper! |
 
 ## Review checklist
 

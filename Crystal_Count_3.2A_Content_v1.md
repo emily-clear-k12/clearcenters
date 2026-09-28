@@ -1,6 +1,6 @@
 # The Crystal Count — Content v1 (MA.3.2A-XP)
 
-**Grade 3 · Math · Frostveil.** Written Sept 27, 2026. Code: `lib/cases/expedition-station/quests/crystal-count.js`.
+**Grade 3 · Math · Frostveil.** Written Sept 28, 2026. Code: `lib/cases/expedition-station/quests/crystal-count.js`.
 
 **Main standard:** 3.2A · **Also shows up under:** 3.2B, 3.2C
 
@@ -66,9 +66,9 @@
 
 | Task | Discovery | Fact |
 | --- | --- | --- |
-| 1 | Snowflakes | Almost every snowflake has six sides or six arms. That shape comes from the way water freezes into ice crystals. |
+| 1 | The ice hotel | In Sweden, a hotel is built out of snow and ice every winter. In spring, it melts away. |
 | 2 | Snowiest winter | Mount Baker in Washington State got about 1,140 inches of snow in one winter. That's a world record! |
-| 3 | White snow | Ice is clear, but snow looks white. The tiny ice crystals bounce all the colors of light back to your eyes, and all the colors together look white. |
+| 3 | Narwhals | A narwhal's long tusk is really a tooth. It grows out through the whale's upper lip. |
 | 5 | Mount Everest | Mount Everest is the tallest mountain on Earth. It is about 8,849 meters tall, and its top is always covered in snow and ice. |
 | 6 | Greenland's ice | A giant sheet of ice covers most of Greenland. In the thickest places, the ice is more than 3,000 meters deep. |
 | 9 | The coldest place | The coldest air temperature ever measured was about −89°C, at Vostok Station in Antarctica. |
