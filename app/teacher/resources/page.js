@@ -122,6 +122,11 @@ export default function ResourcesPage() {
             {!classes.length && <Empty>Create a class before planning a week.</Empty>}
           </section>
           <section className="cc-panel">
+            <h2>Passages</h2>
+            <p className="cc-muted">Open a passage on its own. Pick a subject, then read the text.</p>
+            <Link className="cc-btn secondary" href="/teacher/passages">Passages</Link>
+          </section>
+          <section className="cc-panel">
             <div className="cc-row cc-between"><h2>Teaching guides</h2><span className="cc-badge neutral">Coming soon</span></div>
             <p className="cc-muted">Printable lesson companions are on their way. For now, open an activity to explore its learning purpose and teaching notes.</p>
             <Link className="cc-btn secondary" href="/teacher/assign/new">Explore activities</Link>
