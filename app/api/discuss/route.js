@@ -1,15 +1,14 @@
 import { NextResponse } from "next/server";
-import { cookies } from "next/headers";
 import { callClaude } from "../../../lib/anthropic";
 import { getServerCase } from "../../../lib/cases/index.server";
 import { MAX_DISCUSS_TURNS } from "../../../lib/constants";
 import { gradeWords } from "../../../lib/gradeFromStandard";
+import { readStudentId } from "../../../lib/studentSession";
 
 export async function POST(request) {
   // Only a logged-in student can reach the AI characters — this route used
   // to be reachable by anyone who knew the URL, logged in or not.
-  const cookieStore = cookies();
-  const studentId = cookieStore.get("cc_student_id")?.value;
+  const studentId = readStudentId();
   if (!studentId) {
     return NextResponse.json({ error: "Not logged in." }, { status: 401 });
   }

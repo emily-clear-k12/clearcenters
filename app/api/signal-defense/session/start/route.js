@@ -36,7 +36,7 @@ export async function POST(request) {
   if (existing) {
     const participants = await fetchParticipants(existing.id);
     return NextResponse.json({
-      ...serializeSession(existing, participants),
+      ...serializeSession(existing, participants, { includeStudentIds: true }),
       alreadyOpen: true,
     });
   }
@@ -77,5 +77,5 @@ export async function POST(request) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  return NextResponse.json(serializeSession(session, []));
+  return NextResponse.json(serializeSession(session, [], { includeStudentIds: true }));
 }

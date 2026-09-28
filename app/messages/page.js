@@ -1,15 +1,14 @@
-import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { supabaseAdmin } from "../../lib/supabaseAdmin";
 import MessagesClient from "./MessagesClient";
+import { readStudentId } from "../../lib/studentSession";
 
 // Sept 14 — Feature 5 of the teacher-efficiency build (see
 // Teacher_SiteWide_Redesign_Plan.md): the student-facing inbox for
 // announcements/nudges sent from app/teacher/messages. Same server-page
 // (cookie auth) + client-component split as /progress and /badges.
 export default async function MessagesPage() {
-  const cookieStore = cookies();
-  const studentId = cookieStore.get("cc_student_id")?.value;
+  const studentId = readStudentId();
 
   if (!studentId) {
     redirect("/login");

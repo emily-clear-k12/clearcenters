@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
-import { cookies } from "next/headers";
 import { supabaseAdmin } from "../../../../lib/supabaseAdmin";
 import { getWorldStory } from "../../../../lib/worldStories";
+import { readStudentId } from "../../../../lib/studentSession";
 
 // Crystals a student pays to unlock a world's game — Emily's ask: "just
 // like if they visited the planet and wanted to do something there is a
@@ -20,8 +20,7 @@ const GAME_TICKET_COST = 1;
 // unlocked this game is never charged twice, even on a double-click or a
 // retried request.
 export async function POST(request) {
-  const cookieStore = cookies();
-  const studentId = cookieStore.get("cc_student_id")?.value;
+  const studentId = readStudentId();
   if (!studentId) {
     return NextResponse.json({ error: "Not logged in." }, { status: 401 });
   }

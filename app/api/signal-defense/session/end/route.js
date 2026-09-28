@@ -40,7 +40,7 @@ export async function POST(request) {
 
   if (session.status === "ended") {
     const participants = await fetchParticipants(session.id);
-    return NextResponse.json(serializeSession(session, participants));
+    return NextResponse.json(serializeSession(session, participants, { includeStudentIds: true }));
   }
 
   const { data: updated, error } = await supabaseAdmin
@@ -55,5 +55,5 @@ export async function POST(request) {
   }
 
   const participants = await fetchParticipants(updated.id);
-  return NextResponse.json(serializeSession(updated, participants));
+  return NextResponse.json(serializeSession(updated, participants, { includeStudentIds: true }));
 }

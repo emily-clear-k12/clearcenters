@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
-import { cookies } from "next/headers";
 import { callClaude } from "../../../../lib/anthropic";
 import { getNewsroomBNServerCase } from "../../../../lib/cases/newsroom-bn/index.server";
 import { MAX_DISCUSS_TURNS } from "../../../../lib/constants";
+import { readStudentId } from "../../../../lib/studentSession";
 
 // Newsroom's "Call the Source" chat — unlike Group Chat's single shared
 // system prompt covering a whole cast, each Newsroom voice has its own
@@ -10,8 +10,7 @@ import { MAX_DISCUSS_TURNS } from "../../../../lib/constants";
 // boundary they hold under pressure), so one call here always talks to
 // exactly one character, chosen by voiceId.
 export async function POST(request) {
-  const cookieStore = cookies();
-  const studentId = cookieStore.get("cc_student_id")?.value;
+  const studentId = readStudentId();
   if (!studentId) {
     return NextResponse.json({ error: "Not logged in." }, { status: 401 });
   }

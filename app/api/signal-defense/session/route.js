@@ -74,5 +74,8 @@ export async function GET(request) {
   }
 
   const participants = await fetchParticipants(session.id);
-  return NextResponse.json(serializeSession(session, participants, { myStudentId }));
+  return NextResponse.json(serializeSession(session, participants, {
+    myStudentId,
+    includeStudentIds: Boolean(accessToken),
+  }));
 }

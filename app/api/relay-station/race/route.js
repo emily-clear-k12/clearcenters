@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
-import { cookies } from "next/headers";
 import { supabaseAdmin } from "../../../../lib/supabaseAdmin";
 import { computeRun, RACE_CRYSTALS, RACE_STALE_SECONDS } from "../../../../lib/cases/relay-station";
+import { readStudentId } from "../../../../lib/studentSession";
 
 // Class Relay Race — student side (Wave 3, design doc §15).
 //   action "state"  -> the class's current race (live, or finished in the last 30 min)
@@ -13,8 +13,7 @@ import { computeRun, RACE_CRYSTALS, RACE_STALE_SECONDS } from "../../../../lib/c
 // Leg text is only sent for legs that are done (the message reveals as the
 // class types) and for the leg the student is typing.
 export async function POST(request) {
-  const cookieStore = cookies();
-  const studentId = cookieStore.get("cc_student_id")?.value;
+  const studentId = readStudentId();
   if (!studentId) return NextResponse.json({ error: "Not logged in." }, { status: 401 });
   const body = await request.json().catch(() => ({}));
   const { assignmentId, action } = body;

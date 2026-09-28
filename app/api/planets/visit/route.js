@@ -1,14 +1,13 @@
 import { NextResponse } from "next/server";
-import { cookies } from "next/headers";
 import { supabaseAdmin } from "../../../../lib/supabaseAdmin";
+import { readStudentId } from "../../../../lib/studentSession";
 
 // Records that a student has actually opened a planet's arrival scene at
 // least once. Fires the first time a student views an unlocked planet;
 // safe to call again on every subsequent visit — the unique
 // (student_id, planet_key) constraint just no-ops on a repeat.
 export async function POST(request) {
-  const cookieStore = cookies();
-  const studentId = cookieStore.get("cc_student_id")?.value;
+  const studentId = readStudentId();
 
   if (!studentId) {
     return NextResponse.json({ error: "Not logged in." }, { status: 401 });

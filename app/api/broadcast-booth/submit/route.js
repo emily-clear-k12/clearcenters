@@ -1,5 +1,4 @@
 import { NextResponse } from "next/server";
-import { cookies } from "next/headers";
 import { supabaseAdmin } from "../../../../lib/supabaseAdmin";
 import {
   getBroadcastBoothCase,
@@ -17,6 +16,7 @@ import {
   scanSafetyText,
 } from "../../../../lib/cases/broadcast-booth/index.server";
 import { reflectionFrom, withFirstTry } from "../../../../lib/reflection";
+import { readStudentId } from "../../../../lib/studentSession";
 
 function normalizeBeats(raw, beatDefs) {
   const incoming = raw && typeof raw === "object" ? raw : {};
@@ -57,7 +57,7 @@ function normalizeBeats(raw, beatDefs) {
 }
 
 export async function POST(request) {
-  const studentId = cookies().get("cc_student_id")?.value;
+  const studentId = readStudentId();
   if (!studentId) return NextResponse.json({ error: "Not logged in." }, { status: 401 });
 
   const body = await request.json().catch(() => ({}));

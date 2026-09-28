@@ -1,5 +1,4 @@
 import { NextResponse } from "next/server";
-import { cookies } from "next/headers";
 import { supabaseAdmin } from "../../../../lib/supabaseAdmin";
 import { ROUND_SECONDS, getFrequencyRushWordSet, getClassifyBanksForCase } from "../../../../lib/cases/frequency-rush";
 import { pointsForCorrectAnswer } from "../../../../lib/frequencyRushScoring";
@@ -7,6 +6,7 @@ import { getOutpostProgress } from "../../../../lib/outpostBuilder";
 import { getSkillSet, recomputeSkillItem } from "../../../../lib/frequencyRushSkills";
 import { isCustomListCode, recomputeCustomItem } from "../../../../lib/frequencyRushCustomLists";
 import {
+import { readStudentId } from "../../../../lib/studentSession";
   isDailyCode,
   loadDailyContext,
   recomputeDailyItem,
@@ -52,8 +52,7 @@ import {
 // replay/low-stakes by design, that's an acceptable trade for using the
 // widget file exactly as built rather than forking it.
 export async function POST(request) {
-  const cookieStore = cookies();
-  const studentId = cookieStore.get("cc_student_id")?.value;
+  const studentId = readStudentId();
   if (!studentId) {
     return NextResponse.json({ error: "Not logged in." }, { status: 401 });
   }

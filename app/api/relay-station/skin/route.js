@@ -1,14 +1,13 @@
 import { NextResponse } from "next/server";
-import { cookies } from "next/headers";
 import { supabaseAdmin } from "../../../../lib/supabaseAdmin";
 import { skinUnlocked, getKeyboardSkin } from "../../../../lib/cases/relay-station";
+import { readStudentId } from "../../../../lib/studentSession";
 
 // Relay Station keyboard skins (Wave 3). A student equips a skin they've
 // unlocked by rank on the Foundations Track; the rank is re-checked here
 // from their real progress row, never trusted from the browser.
 export async function POST(request) {
-  const cookieStore = cookies();
-  const studentId = cookieStore.get("cc_student_id")?.value;
+  const studentId = readStudentId();
   if (!studentId) return NextResponse.json({ error: "Not logged in." }, { status: 401 });
   const body = await request.json().catch(() => ({}));
   const skin = getKeyboardSkin(body.skin);

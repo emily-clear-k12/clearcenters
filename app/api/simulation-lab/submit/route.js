@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
-import { cookies } from "next/headers";
 import { supabaseAdmin } from "../../../../lib/supabaseAdmin";
 import { callClaude, extractJSON } from "../../../../lib/anthropic";
 import { getSimulationLabServerCase } from "../../../../lib/cases/simulation-lab/index.server";
 import { getSimulationLabPublicCase } from "../../../../lib/cases/simulation-lab/index.public";
 import { scoreSubmission, CONFIDENCE_IDS } from "../../../../lib/simulationLabScoring";
+import { readStudentId } from "../../../../lib/studentSession";
 
 // Sept 24, 2026: every live case uses the animated scene flow
 // (components/simulation-lab, ClearCenters_STATE.md §9 rule 22). Scoring is
@@ -74,8 +74,7 @@ ${finalResponseText || "(nothing written)"}`;
 }
 
 export async function POST(request) {
-  const cookieStore = cookies();
-  const studentId = cookieStore.get("cc_student_id")?.value;
+  const studentId = readStudentId();
 
   if (!studentId) {
     return NextResponse.json({ error: "Not logged in." }, { status: 401 });

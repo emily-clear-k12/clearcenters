@@ -1,7 +1,7 @@
-import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { supabaseAdmin } from "../../lib/supabaseAdmin";
 import BadgesClient from "./BadgesClient";
+import { readStudentId } from "../../lib/studentSession";
 
 // New as of the Aug 27 Galaxy Hub rebuild — badges used to live inside the
 // Crystal Vault page (the "Your Badges" section). That page is now the
@@ -13,8 +13,7 @@ import BadgesClient from "./BadgesClient";
 // crystals" plan mentioned above landed. Tiers now gate on missionsCompleted
 // (see below), not crystal_points.
 export default async function BadgesPage() {
-  const cookieStore = cookies();
-  const studentId = cookieStore.get("cc_student_id")?.value;
+  const studentId = readStudentId();
 
   if (!studentId) {
     redirect("/login");

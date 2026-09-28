@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import { cookies } from "next/headers";
 import { supabaseAdmin } from "../../../../lib/supabaseAdmin";
+import { readStudentId } from "../../../../lib/studentSession";
 
 // Records a single "discovery" hotspot a student has found on a planet's
 // free-play scene (Glow Garden's 3 click-to-explore pins, to start — pure
@@ -9,8 +9,7 @@ import { supabaseAdmin } from "../../../../lib/supabaseAdmin";
 // constraint just no-ops on a repeat, same idempotent pattern as
 // /api/planets/visit.
 export async function POST(request) {
-  const cookieStore = cookies();
-  const studentId = cookieStore.get("cc_student_id")?.value;
+  const studentId = readStudentId();
 
   if (!studentId) {
     return NextResponse.json({ error: "Not logged in." }, { status: 401 });

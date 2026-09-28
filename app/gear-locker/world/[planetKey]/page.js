@@ -1,9 +1,9 @@
-import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { supabaseAdmin } from "../../../../lib/supabaseAdmin";
 import { getWorldStory } from "../../../../lib/worldStories";
 import { DEV_FORCE_UNLOCK_ALL } from "../../../../lib/devFlags";
 import WorldRewardStationClient from "./WorldRewardStationClient";
+import { readStudentId } from "../../../../lib/studentSession";
 
 // Sept 5, 2026 — the unified "world reward station" page every Galaxy Hub
 // planet now routes to once unlocked, replacing both the old generic
@@ -21,8 +21,7 @@ import WorldRewardStationClient from "./WorldRewardStationClient";
 // and game exist.
 export default async function WorldPage({ params }) {
   const planetKey = params.planetKey;
-  const cookieStore = cookies();
-  const studentId = cookieStore.get("cc_student_id")?.value;
+  const studentId = readStudentId();
 
   if (!studentId) {
     redirect("/login");

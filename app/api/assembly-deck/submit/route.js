@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
-import { cookies } from "next/headers";
 import { supabaseAdmin } from "../../../../lib/supabaseAdmin";
 import { callClaude, extractJSON } from "../../../../lib/anthropic";
 import { getAssemblyDeckServerCase, gradeRound, gradeRejections, gradeAssembly, gradeCase, gradePinpoint, gradeQuickCheck, gradeWhatIf, gradeRepair, gradeLook, trapSentences, trapVerdict, requesterReply } from "../../../../lib/cases/assembly-deck/index.server";
 import { getAssemblyDeckPublicCase, getRound, CHALLENGE } from "../../../../lib/cases/assembly-deck/index.public";
 import { reflectionFrom, withFirstTry } from "../../../../lib/reflection";
+import { readStudentId } from "../../../../lib/studentSession";
 
 // Assembly Deck (design doc §6). Four kinds of traffic:
 //   "check"    -> grade one paragraph board. No AI call, nothing finalized.
@@ -95,8 +95,7 @@ async function awardCrystals(studentId, amount) {
 }
 
 export async function POST(request) {
-  const cookieStore = cookies();
-  const studentId = cookieStore.get("cc_student_id")?.value;
+  const studentId = readStudentId();
   if (!studentId) return NextResponse.json({ error: "Not logged in." }, { status: 401 });
 
   const body = await request.json().catch(() => ({}));

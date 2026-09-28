@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import { cookies } from "next/headers";
 import { supabaseAdmin } from "../../../../lib/supabaseAdmin";
+import { readStudentId } from "../../../../lib/studentSession";
 
 // Powers the small badges in the student nav ("Progress") and the banner on
 // Home — a lightweight read-only count, not the source of truth for any
@@ -22,8 +22,7 @@ import { supabaseAdmin } from "../../../../lib/supabaseAdmin";
 //      not-yet-run migration degrades to 0 instead of breaking the whole
 //      endpoint (and the existing grades/revisions badge along with it).
 export async function GET() {
-  const cookieStore = cookies();
-  const studentId = cookieStore.get("cc_student_id")?.value;
+  const studentId = readStudentId();
 
   if (!studentId) {
     return NextResponse.json({ error: "Not logged in." }, { status: 401 });

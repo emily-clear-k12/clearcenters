@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "../../../lib/supabaseAdmin";
 import { HOME_BACKGROUNDS } from "../../../lib/homeBackgrounds";
+import { createStudentSession, STUDENT_COOKIE, STUDENT_COOKIE_OPTIONS } from "../../../lib/studentSession";
 
 // Sept 4, 2026 (Emily's ask): Home's background is now one of several
 // (see lib/homeBackgrounds.js), picked at random each time a student
@@ -68,18 +69,26 @@ export async function POST(request) {
     return NextResponse.json({ error: "That name and PIN don't match. Try again or ask your teacher." }, { status: 401 });
   }
 
-  // 3. Success — set a simple session cookie identifying this student.
-  // NOTE: for the pilot this is a lightweight session, good enough for a
-  // classroom setting. A wider rollout should upgrade this to a signed,
-  // expiring session token rather than a raw student id in a cookie.
+  if (!process.env.STUDENT_SESSION_SECRET) {
+    return NextResponse.json(
+      { error: "Student sign-in isn't set up yet. Ask your admin to add the STUDENT_SESSION_SECRET setting." },
+      { status: 500 }
+    );
+  }
+
+  let sessionValue;
+  try {
+    sessionValue = createStudentSession(student.id);
+  } catch (err) {
+    console.error(err);
+    return NextResponse.json(
+      { error: "Student sign-in isn't set up yet. Ask your admin to add the STUDENT_SESSION_SECRET setting." },
+      { status: 500 }
+    );
+  }
+
   const response = NextResponse.json({ success: true, student });
-  response.cookies.set("cc_student_id", student.id, {
-    httpOnly: true,
-    secure: true,
-    sameSite: "lax",
-    path: "/",
-    maxAge: 60 * 60 * 8, // 8 hours — a school day
-  });
+  response.cookies.set(STUDENT_COOKIE, sessionValue, STUDENT_COOKIE_OPTIONS);
 
   // Random Home background for this session (see HOME_BACKGROUNDS above)
   // — same cookie lifetime as the session itself, so it lives and dies
