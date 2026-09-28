@@ -1,7 +1,7 @@
 {
   "generatedFrom": "lib/cases and add_*.sql",
-  "onDisk": 954,
-  "inSql": 971,
+  "onDisk": 961,
+  "inSql": 978,
   "items": [
     {
       "standard": "3.10C-AD",
@@ -598,8 +598,8 @@
       "file": "lib/cases/assembly-deck/SS-5-4C-AD.public.js"
     },
     {
-      "standard": "SCI.3.13A-BB",
-      "title": "Broadcast Booth: Desert Radio (Explain)",
+      "standard": "SCI.3.11B-BB",
+      "title": "Broadcast Booth: Schoolyard Debate (Shade vs Play)",
       "grade": "3",
       "subject": "Science",
       "engine": "Broadcast Booth",
@@ -613,16 +613,16 @@
       "subject": "Science",
       "engine": "Broadcast Booth",
       "kind": "standard",
-      "file": "lib/cases/broadcast-booth/catalog.js"
+      "file": "lib/cases/broadcast-booth/assignFallback.js"
     },
     {
-      "standard": "SCI.3.11B-BB",
-      "title": "Broadcast Booth: Schoolyard Debate (Shade vs Play)",
+      "standard": "SCI.3.13A-BB",
+      "title": "Broadcast Booth: Desert Radio (Explain)",
       "grade": "3",
       "subject": "Science",
       "engine": "Broadcast Booth",
       "kind": "standard",
-      "file": "lib/cases/broadcast-booth/catalog.js"
+      "file": "lib/cases/broadcast-booth/assignFallback.js"
     },
     {
       "standard": "ELAR-3.10E-CL",
@@ -2507,7 +2507,7 @@
     },
     {
       "standard": "3.4E-EX",
-      "title": "Every way to show 4 ├ù 6",
+      "title": "Every way to show 4 × 6",
       "grade": "3",
       "subject": "Math",
       "engine": "Exhibit Hall",
@@ -3289,6 +3289,15 @@
       "file": "lib/cases/exhibit-hall/split.js"
     },
     {
+      "standard": "ELA.3.6F-XP",
+      "title": "The Missing Map",
+      "grade": "3",
+      "subject": "ELAR",
+      "engine": "Expedition Station",
+      "kind": "id",
+      "file": "lib/cases/expedition-station/quests/missing-map.js"
+    },
+    {
       "standard": "MA.3.3A-XP",
       "title": "The Glow Garden Harvest",
       "grade": "3",
@@ -3307,6 +3316,15 @@
       "file": "lib/cases/expedition-station/quests/tide-pools.js"
     },
     {
+      "standard": "SCI.3.6C-XP",
+      "title": "The Melting Point",
+      "grade": "3",
+      "subject": "Science",
+      "engine": "Expedition Station",
+      "kind": "id",
+      "file": "lib/cases/expedition-station/quests/melting-point.js"
+    },
+    {
       "standard": "ELA.4.6F-XP",
       "title": "The Dark Canopy",
       "grade": "4",
@@ -3314,6 +3332,24 @@
       "engine": "Expedition Station",
       "kind": "id",
       "file": "lib/cases/expedition-station/quests/dark-canopy.js"
+    },
+    {
+      "standard": "ELA.4.8A-XP",
+      "title": "The Tall Tale Trail",
+      "grade": "4",
+      "subject": "ELAR",
+      "engine": "Expedition Station",
+      "kind": "id",
+      "file": "lib/cases/expedition-station/quests/tall-tale-trail.js"
+    },
+    {
+      "standard": "MA.4.3A-XP",
+      "title": "The Pollen Scoops",
+      "grade": "4",
+      "subject": "Math",
+      "engine": "Expedition Station",
+      "kind": "id",
+      "file": "lib/cases/expedition-station/quests/pollen-scoops.js"
     },
     {
       "standard": "MA.4.3C-XP",
@@ -3332,6 +3368,33 @@
       "engine": "Expedition Station",
       "kind": "standard",
       "file": "lib/cases/expedition-station/assignFallback.js"
+    },
+    {
+      "standard": "MA.4.3F-XP",
+      "title": "The Close Enough Check",
+      "grade": "4",
+      "subject": "Math",
+      "engine": "Expedition Station",
+      "kind": "id",
+      "file": "lib/cases/expedition-station/quests/close-enough-check.js"
+    },
+    {
+      "standard": "SCI.4.10A-XP",
+      "title": "The Water Cycle Loop",
+      "grade": "4",
+      "subject": "Science",
+      "engine": "Expedition Station",
+      "kind": "id",
+      "file": "lib/cases/expedition-station/quests/water-cycle-loop.js"
+    },
+    {
+      "standard": "ELA.5.13D-XP",
+      "title": "The Trusted Source",
+      "grade": "5",
+      "subject": "ELAR",
+      "engine": "Expedition Station",
+      "kind": "id",
+      "file": "lib/cases/expedition-station/quests/trusted-source.js"
     },
     {
       "standard": "MA.5.3H-XP",
@@ -4694,7 +4757,7 @@
     },
     {
       "standard": "SS.3.10A",
-      "title": "ItΓÇÖs More Than a Party",
+      "title": "It’s More Than a Party",
       "grade": "",
       "subject": "",
       "engine": "Group Chat",
@@ -4730,7 +4793,7 @@
     },
     {
       "standard": "SS.3.1A",
-      "title": "The Community DidnΓÇÖt Change by Itself",
+      "title": "The Community Didn’t Change by Itself",
       "grade": "",
       "subject": "",
       "engine": "Group Chat",
@@ -4820,7 +4883,7 @@
     },
     {
       "standard": "SS.3.6B",
-      "title": "Everybody Wants One. There ArenΓÇÖt Enough.",
+      "title": "Everybody Wants One. There Aren’t Enough.",
       "grade": "",
       "subject": "",
       "engine": "Group Chat",
@@ -4829,7 +4892,7 @@
     },
     {
       "standard": "SS.3.6C",
-      "title": "The Store Sold OutΓÇª But Did It Make Money?",
+      "title": "The Store Sold Out… But Did It Make Money?",
       "grade": "",
       "subject": "",
       "engine": "Group Chat",
@@ -4901,7 +4964,7 @@
     },
     {
       "standard": "SS.3.9D",
-      "title": "Who Helps When Government DoesnΓÇÖt Do It All?",
+      "title": "Who Helps When Government Doesn’t Do It All?",
       "grade": "",
       "subject": "",
       "engine": "Group Chat",
@@ -5126,7 +5189,7 @@
     },
     {
       "standard": "SS.4.3E",
-      "title": "Texas Joins the United States ΓÇö Problem Solved?",
+      "title": "Texas Joins the United States — Problem Solved?",
       "grade": "",
       "subject": "",
       "engine": "Group Chat",
@@ -5387,7 +5450,7 @@
     },
     {
       "standard": "SS.5.21B",
-      "title": "Who Gets to Be ΓÇ£AmericanΓÇ¥?",
+      "title": "Who Gets to Be “American”?",
       "grade": "",
       "subject": "",
       "engine": "Group Chat",

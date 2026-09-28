@@ -120,7 +120,7 @@ Each ELAR quest has 4–6 original passages that belong to its world.
 | ✅ | The Dark Canopy | ELA.4.6F-XP | 4.6F inferences with evidence | 4.7C, 4.11C, 4.11D, 4.3B, 4.3C, 4.8A, 4.8B, 4.7B | Lumara | Field logs, a legend, messages |
 | ⬜ | The Root Words | ELA.4.3C-XP | 4.3C affixes and roots | 4.3B, 4.3D | Mechara | Robot manuals full of new words |
 | ⬜ | The Summit Summary | ELA.4.6G-XP | 4.6G key ideas | 4.7D | Frostveil | Expedition reports to summarize |
-| ⬜ | The Tall Tale Trail | ELA.4.8A-XP | 4.8A theme | 4.9A | Solara | Solaran tall tales and legends |
+| ✅ | The Tall Tale Trail | ELA.4.8A-XP | 4.8A theme | 4.9A | Solara | Solaran tall tales and legends |
 | ⬜ | The Rival Pilots | ELA.4.8B-XP | 4.8B characters | 4.8D | Cloudreach | A story about two rival sky pilots |
 | ⬜ | The Eruption Story | ELA.4.8C-XP | 4.8C plot | 4.10B | Cindara | A story with rising action and a climax |
 | ⬜ | The Crew Poems | ELA.4.9B-XP | 4.9B figurative language in poetry | 4.10D | Lumara | Poems with similes, metaphors, personification |
@@ -149,7 +149,7 @@ Each ELAR quest has 4–6 original passages that belong to its world.
 | ⬜ | The Narrator's Eye | ELA.5.10E-XP | 5.10E point of view | 5.7B | Lumara | One event told from different points of view |
 | ⬜ | The Final Draft | ELA.5.11D-XP | 5.11D editing | 5.11C | Cindara | A crew newsletter to edit |
 | ⬜ | The Field Report | ELA.5.12B-XP | 5.12B write informational text | 5.11A, 5.11B | Cloudreach | Research notes to turn into a report |
-| ⬜ | The Trusted Source | ELA.5.13D-XP | 5.13D credibility of sources | 5.13C, 5.13E | Mechara | Sources of mixed reliability |
+| ✅ | The Trusted Source | ELA.5.13D-XP | 5.13D credibility of sources | 5.13C, 5.13E | Mechara | Sources of mixed reliability |
 
 ---
 
@@ -162,7 +162,7 @@ Science quests use the 2024–25 science TEKS. Practices (1–4) and recurring t
 | Status | Quest | Code | Main standard | Also practices | Planet | Story hook |
 | --- | --- | --- | --- | --- | --- | --- |
 | ⬜ | The Sample Scales | SCI.3.6A-XP | 3.6A measure temperature and mass | 3.6B | Frostveil | Measure and sort the ice samples |
-| ⬜ | The Melting Point | SCI.3.6C-XP | 3.6C state changes from heating and cooling | 3.6D | Cindara | Heat and cool materials to build a shelter |
+| ✅ | The Melting Point | SCI.3.6C-XP | 3.6C state changes from heating and cooling | 3.6D | Cindara | Heat and cool materials to build a shelter |
 | ⬜ | The Push and Pull Yard | SCI.3.7A-XP | 3.7A forces | 3.7B | Mechara | Move cargo with pushes, pulls, and magnets |
 | ⬜ | The Energy Hunt | SCI.3.8A-XP | 3.8A light, sound, and thermal energy | 3.8B | Lumara | Find energy all around the garden outpost |
 | ⬜ | The Orbit Model | SCI.3.9A-XP | 3.9A Sun, Earth, and Moon orbits | 3.9B | Cloudreach | Build a model of Earth's orbit from the telescope |
@@ -217,9 +217,9 @@ Science quests use the 2024–25 science TEKS. Practices (1–4) and recurring t
 | Subject | Grade 3 | Grade 4 | Grade 5 | Total | Written |
 | --- | --- | --- | --- | --- | --- |
 | Math | 15 | 18 | 16 | 49 | 8 |
-| ELAR | 13 | 14 | 14 | 41 | 2 |
-| Science | 12 | 14 | 12 | 38 | 2 |
-| **All** | **40** | **46** | **42** | **128** | **12** |
+| ELAR | 13 | 14 | 14 | 41 | 4 |
+| Science | 12 | 14 | 12 | 38 | 3 |
+| **All** | **40** | **46** | **42** | **128** | **15** |
 
 ## Notes
 
