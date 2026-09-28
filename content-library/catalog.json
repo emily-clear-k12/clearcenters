@@ -1,7 +1,7 @@
 {
   "generatedFrom": "lib/cases and add_*.sql",
-  "onDisk": 954,
-  "inSql": 971,
+  "onDisk": 1012,
+  "inSql": 1029,
   "items": [
     {
       "standard": "3.10C-AD",
@@ -598,8 +598,8 @@
       "file": "lib/cases/assembly-deck/SS-5-4C-AD.public.js"
     },
     {
-      "standard": "SCI.3.13A-BB",
-      "title": "Broadcast Booth: Desert Radio (Explain)",
+      "standard": "SCI.3.11B-BB",
+      "title": "Broadcast Booth: Schoolyard Debate (Shade vs Play)",
       "grade": "3",
       "subject": "Science",
       "engine": "Broadcast Booth",
@@ -613,16 +613,16 @@
       "subject": "Science",
       "engine": "Broadcast Booth",
       "kind": "standard",
-      "file": "lib/cases/broadcast-booth/catalog.js"
+      "file": "lib/cases/broadcast-booth/assignFallback.js"
     },
     {
-      "standard": "SCI.3.11B-BB",
-      "title": "Broadcast Booth: Schoolyard Debate (Shade vs Play)",
+      "standard": "SCI.3.13A-BB",
+      "title": "Broadcast Booth: Desert Radio (Explain)",
       "grade": "3",
       "subject": "Science",
       "engine": "Broadcast Booth",
       "kind": "standard",
-      "file": "lib/cases/broadcast-booth/catalog.js"
+      "file": "lib/cases/broadcast-booth/assignFallback.js"
     },
     {
       "standard": "ELAR-3.10E-CL",
@@ -2507,7 +2507,7 @@
     },
     {
       "standard": "3.4E-EX",
-      "title": "Every way to show 4 ├ù 6",
+      "title": "Every way to show 4 × 6",
       "grade": "3",
       "subject": "Math",
       "engine": "Exhibit Hall",
@@ -3289,6 +3289,105 @@
       "file": "lib/cases/exhibit-hall/split.js"
     },
     {
+      "standard": "ELA.3.11D-XP",
+      "title": "The Garbled Messages",
+      "grade": "3",
+      "subject": "ELAR",
+      "engine": "Expedition Station",
+      "kind": "id",
+      "file": "lib/cases/expedition-station/quests/garbled-messages.js"
+    },
+    {
+      "standard": "ELA.3.3B-XP",
+      "title": "The Word Garden",
+      "grade": "3",
+      "subject": "ELAR",
+      "engine": "Expedition Station",
+      "kind": "id",
+      "file": "lib/cases/expedition-station/quests/word-garden.js"
+    },
+    {
+      "standard": "ELA.3.6F-XP",
+      "title": "The Missing Map",
+      "grade": "3",
+      "subject": "ELAR",
+      "engine": "Expedition Station",
+      "kind": "id",
+      "file": "lib/cases/expedition-station/quests/missing-map.js"
+    },
+    {
+      "standard": "ELA.3.6G-XP",
+      "title": "The Big Idea Board",
+      "grade": "3",
+      "subject": "ELAR",
+      "engine": "Expedition Station",
+      "kind": "id",
+      "file": "lib/cases/expedition-station/quests/big-idea-board.js"
+    },
+    {
+      "standard": "ELA.3.8A-XP",
+      "title": "The Fable Fire",
+      "grade": "3",
+      "subject": "ELAR",
+      "engine": "Expedition Station",
+      "kind": "id",
+      "file": "lib/cases/expedition-station/quests/fable-fire.js"
+    },
+    {
+      "standard": "ELA.3.8B-XP",
+      "title": "The New Crew Member",
+      "grade": "3",
+      "subject": "ELAR",
+      "engine": "Expedition Station",
+      "kind": "id",
+      "file": "lib/cases/expedition-station/quests/new-crew-member.js"
+    },
+    {
+      "standard": "ELA.3.8C-XP",
+      "title": "The Lost Rover",
+      "grade": "3",
+      "subject": "ELAR",
+      "engine": "Expedition Station",
+      "kind": "id",
+      "file": "lib/cases/expedition-station/quests/lost-rover.js"
+    },
+    {
+      "standard": "ELA.3.9D-XP",
+      "title": "The Field Guide",
+      "grade": "3",
+      "subject": "ELAR",
+      "engine": "Expedition Station",
+      "kind": "id",
+      "file": "lib/cases/expedition-station/quests/field-guide.js"
+    },
+    {
+      "standard": "ELA.3.9E-XP",
+      "title": "The Trader's Pitch",
+      "grade": "3",
+      "subject": "ELAR",
+      "engine": "Expedition Station",
+      "kind": "id",
+      "file": "lib/cases/expedition-station/quests/traders-pitch.js"
+    },
+    {
+      "standard": "MA.3.2A-XP",
+      "title": "The Crystal Count",
+      "grade": "3",
+      "subject": "Math",
+      "engine": "Expedition Station",
+      "kind": "id",
+      "file": "lib/cases/expedition-station/quests/crystal-count.js"
+    },
+    {
+      "standard": "MA.3.2D-XP",
+      "title": "The Signal Race",
+      "grade": "3",
+      "subject": "Math",
+      "engine": "Expedition Station",
+      "kind": "id",
+      "file": "lib/cases/expedition-station/quests/signal-race.js"
+    },
+    {
       "standard": "MA.3.3A-XP",
       "title": "The Glow Garden Harvest",
       "grade": "3",
@@ -3307,6 +3406,150 @@
       "file": "lib/cases/expedition-station/quests/tide-pools.js"
     },
     {
+      "standard": "MA.3.4A-XP",
+      "title": "The Parts Depot",
+      "grade": "3",
+      "subject": "Math",
+      "engine": "Expedition Station",
+      "kind": "id",
+      "file": "lib/cases/expedition-station/quests/parts-depot.js"
+    },
+    {
+      "standard": "MA.3.4C-XP",
+      "title": "The Market Stall",
+      "grade": "3",
+      "subject": "Math",
+      "engine": "Expedition Station",
+      "kind": "id",
+      "file": "lib/cases/expedition-station/quests/market-stall.js"
+    },
+    {
+      "standard": "MA.3.4G-XP",
+      "title": "The Rover Convoy",
+      "grade": "3",
+      "subject": "Math",
+      "engine": "Expedition Station",
+      "kind": "id",
+      "file": "lib/cases/expedition-station/quests/rover-convoy.js"
+    },
+    {
+      "standard": "MA.3.4K-XP",
+      "title": "The Seed Crates",
+      "grade": "3",
+      "subject": "Math",
+      "engine": "Expedition Station",
+      "kind": "id",
+      "file": "lib/cases/expedition-station/quests/seed-crates.js"
+    },
+    {
+      "standard": "MA.3.6C-XP",
+      "title": "The Greenhouse Floor",
+      "grade": "3",
+      "subject": "Math",
+      "engine": "Expedition Station",
+      "kind": "id",
+      "file": "lib/cases/expedition-station/quests/greenhouse-floor.js"
+    },
+    {
+      "standard": "MA.3.7B-XP",
+      "title": "The Creature Pens",
+      "grade": "3",
+      "subject": "Math",
+      "engine": "Expedition Station",
+      "kind": "id",
+      "file": "lib/cases/expedition-station/quests/creature-pens.js"
+    },
+    {
+      "standard": "MA.3.7C-XP",
+      "title": "The Launch Schedule",
+      "grade": "3",
+      "subject": "Math",
+      "engine": "Expedition Station",
+      "kind": "id",
+      "file": "lib/cases/expedition-station/quests/launch-schedule.js"
+    },
+    {
+      "standard": "MA.3.8B-XP",
+      "title": "The Sighting Board",
+      "grade": "3",
+      "subject": "Math",
+      "engine": "Expedition Station",
+      "kind": "id",
+      "file": "lib/cases/expedition-station/quests/sighting-board.js"
+    },
+    {
+      "standard": "SCI.3.12B-XP",
+      "title": "The Food Chain Crew",
+      "grade": "3",
+      "subject": "Science",
+      "engine": "Expedition Station",
+      "kind": "id",
+      "file": "lib/cases/expedition-station/quests/food-chain-crew.js"
+    },
+    {
+      "standard": "SCI.3.12D-XP",
+      "title": "The Fossil Dig",
+      "grade": "3",
+      "subject": "Science",
+      "engine": "Expedition Station",
+      "kind": "id",
+      "file": "lib/cases/expedition-station/quests/fossil-dig.js"
+    },
+    {
+      "standard": "SCI.3.13A-XP",
+      "title": "The Survival Suits",
+      "grade": "3",
+      "subject": "Science",
+      "engine": "Expedition Station",
+      "kind": "id",
+      "file": "lib/cases/expedition-station/quests/survival-suits.js"
+    },
+    {
+      "standard": "SCI.3.6C-XP",
+      "title": "The Melting Point",
+      "grade": "3",
+      "subject": "Science",
+      "engine": "Expedition Station",
+      "kind": "id",
+      "file": "lib/cases/expedition-station/quests/melting-point.js"
+    },
+    {
+      "standard": "SCI.3.7A-XP",
+      "title": "The Push and Pull Yard",
+      "grade": "3",
+      "subject": "Science",
+      "engine": "Expedition Station",
+      "kind": "id",
+      "file": "lib/cases/expedition-station/quests/push-pull-yard.js"
+    },
+    {
+      "standard": "SCI.3.8A-XP",
+      "title": "The Energy Hunt",
+      "grade": "3",
+      "subject": "Science",
+      "engine": "Expedition Station",
+      "kind": "id",
+      "file": "lib/cases/expedition-station/quests/energy-hunt.js"
+    },
+    {
+      "standard": "SCI.3.9A-XP",
+      "title": "The Orbit Model",
+      "grade": "3",
+      "subject": "Science",
+      "engine": "Expedition Station",
+      "kind": "id",
+      "file": "lib/cases/expedition-station/quests/orbit-model.js"
+    },
+    {
+      "standard": "ELA.4.10E-XP",
+      "title": "Two Sides of the Storm",
+      "grade": "4",
+      "subject": "ELAR",
+      "engine": "Expedition Station",
+      "kind": "id",
+      "file": "lib/cases/expedition-station/quests/two-sides-storm.js"
+    },
+    {
       "standard": "ELA.4.6F-XP",
       "title": "The Dark Canopy",
       "grade": "4",
@@ -3314,6 +3557,69 @@
       "engine": "Expedition Station",
       "kind": "id",
       "file": "lib/cases/expedition-station/quests/dark-canopy.js"
+    },
+    {
+      "standard": "ELA.4.6G-XP",
+      "title": "The Summit Summary",
+      "grade": "4",
+      "subject": "ELAR",
+      "engine": "Expedition Station",
+      "kind": "id",
+      "file": "lib/cases/expedition-station/quests/summit-summary.js"
+    },
+    {
+      "standard": "ELA.4.8A-XP",
+      "title": "The Tall Tale Trail",
+      "grade": "4",
+      "subject": "ELAR",
+      "engine": "Expedition Station",
+      "kind": "id",
+      "file": "lib/cases/expedition-station/quests/tall-tale-trail.js"
+    },
+    {
+      "standard": "ELA.4.8B-XP",
+      "title": "The Rival Pilots",
+      "grade": "4",
+      "subject": "ELAR",
+      "engine": "Expedition Station",
+      "kind": "id",
+      "file": "lib/cases/expedition-station/quests/rival-pilots.js"
+    },
+    {
+      "standard": "ELA.4.9B-XP",
+      "title": "The Crew Poems",
+      "grade": "4",
+      "subject": "ELAR",
+      "engine": "Expedition Station",
+      "kind": "id",
+      "file": "lib/cases/expedition-station/quests/crew-poems.js"
+    },
+    {
+      "standard": "ELA.4.9E-XP",
+      "title": "The Outpost Debate",
+      "grade": "4",
+      "subject": "ELAR",
+      "engine": "Expedition Station",
+      "kind": "id",
+      "file": "lib/cases/expedition-station/quests/outpost-debate.js"
+    },
+    {
+      "standard": "MA.4.2F-XP",
+      "title": "The Decimal Dials",
+      "grade": "4",
+      "subject": "Math",
+      "engine": "Expedition Station",
+      "kind": "id",
+      "file": "lib/cases/expedition-station/quests/decimal-dials.js"
+    },
+    {
+      "standard": "MA.4.3A-XP",
+      "title": "The Pollen Scoops",
+      "grade": "4",
+      "subject": "Math",
+      "engine": "Expedition Station",
+      "kind": "id",
+      "file": "lib/cases/expedition-station/quests/pollen-scoops.js"
     },
     {
       "standard": "MA.4.3C-XP",
@@ -3334,6 +3640,195 @@
       "file": "lib/cases/expedition-station/assignFallback.js"
     },
     {
+      "standard": "MA.4.3F-XP",
+      "title": "The Close Enough Check",
+      "grade": "4",
+      "subject": "Math",
+      "engine": "Expedition Station",
+      "kind": "id",
+      "file": "lib/cases/expedition-station/quests/close-enough-check.js"
+    },
+    {
+      "standard": "MA.4.4D-XP",
+      "title": "The Cargo Bays",
+      "grade": "4",
+      "subject": "Math",
+      "engine": "Expedition Station",
+      "kind": "id",
+      "file": "lib/cases/expedition-station/quests/cargo-bays.js"
+    },
+    {
+      "standard": "MA.4.5B-XP",
+      "title": "The Pattern Machine",
+      "grade": "4",
+      "subject": "Math",
+      "engine": "Expedition Station",
+      "kind": "id",
+      "file": "lib/cases/expedition-station/quests/pattern-machine.js"
+    },
+    {
+      "standard": "MA.4.5D-XP",
+      "title": "The Garden Plots",
+      "grade": "4",
+      "subject": "Math",
+      "engine": "Expedition Station",
+      "kind": "id",
+      "file": "lib/cases/expedition-station/quests/garden-plots.js"
+    },
+    {
+      "standard": "MA.4.7C-XP",
+      "title": "The Telescope Array",
+      "grade": "4",
+      "subject": "Math",
+      "engine": "Expedition Station",
+      "kind": "id",
+      "file": "lib/cases/expedition-station/quests/telescope-array.js"
+    },
+    {
+      "standard": "SCI.4.10A-XP",
+      "title": "The Water Cycle Loop",
+      "grade": "4",
+      "subject": "Science",
+      "engine": "Expedition Station",
+      "kind": "id",
+      "file": "lib/cases/expedition-station/quests/water-cycle-loop.js"
+    },
+    {
+      "standard": "SCI.4.10B-XP",
+      "title": "The Canyon Makers",
+      "grade": "4",
+      "subject": "Science",
+      "engine": "Expedition Station",
+      "kind": "id",
+      "file": "lib/cases/expedition-station/quests/canyon-makers.js"
+    },
+    {
+      "standard": "SCI.4.11A-XP",
+      "title": "The Energy Choice",
+      "grade": "4",
+      "subject": "Science",
+      "engine": "Expedition Station",
+      "kind": "id",
+      "file": "lib/cases/expedition-station/quests/energy-choice.js"
+    },
+    {
+      "standard": "SCI.4.12A-XP",
+      "title": "The Greenhouse Test",
+      "grade": "4",
+      "subject": "Science",
+      "engine": "Expedition Station",
+      "kind": "id",
+      "file": "lib/cases/expedition-station/quests/greenhouse-test.js"
+    },
+    {
+      "standard": "SCI.4.12B-XP",
+      "title": "The Web of Life",
+      "grade": "4",
+      "subject": "Science",
+      "engine": "Expedition Station",
+      "kind": "id",
+      "file": "lib/cases/expedition-station/quests/web-of-life.js"
+    },
+    {
+      "standard": "SCI.4.6B-XP",
+      "title": "The Mixing Lab",
+      "grade": "4",
+      "subject": "Science",
+      "engine": "Expedition Station",
+      "kind": "id",
+      "file": "lib/cases/expedition-station/quests/mixing-lab.js"
+    },
+    {
+      "standard": "SCI.4.8C-XP",
+      "title": "The Power Grid",
+      "grade": "4",
+      "subject": "Science",
+      "engine": "Expedition Station",
+      "kind": "id",
+      "file": "lib/cases/expedition-station/quests/power-grid.js"
+    },
+    {
+      "standard": "SCI.4.9A-XP",
+      "title": "The Season Tracker",
+      "grade": "4",
+      "subject": "Science",
+      "engine": "Expedition Station",
+      "kind": "id",
+      "file": "lib/cases/expedition-station/quests/season-tracker.js"
+    },
+    {
+      "standard": "SCI.4.9B-XP",
+      "title": "The Moon Watch",
+      "grade": "4",
+      "subject": "Science",
+      "engine": "Expedition Station",
+      "kind": "id",
+      "file": "lib/cases/expedition-station/quests/moon-watch.js"
+    },
+    {
+      "standard": "ELA.5.13D-XP",
+      "title": "The Trusted Source",
+      "grade": "5",
+      "subject": "ELAR",
+      "engine": "Expedition Station",
+      "kind": "id",
+      "file": "lib/cases/expedition-station/quests/trusted-source.js"
+    },
+    {
+      "standard": "ELA.5.6H-XP",
+      "title": "The Three Reports",
+      "grade": "5",
+      "subject": "ELAR",
+      "engine": "Expedition Station",
+      "kind": "id",
+      "file": "lib/cases/expedition-station/quests/three-reports.js"
+    },
+    {
+      "standard": "ELA.5.8B-XP",
+      "title": "The Crew Conflict",
+      "grade": "5",
+      "subject": "ELAR",
+      "engine": "Expedition Station",
+      "kind": "id",
+      "file": "lib/cases/expedition-station/quests/crew-conflict.js"
+    },
+    {
+      "standard": "ELA.5.9D-XP",
+      "title": "The Glacier Files",
+      "grade": "5",
+      "subject": "ELAR",
+      "engine": "Expedition Station",
+      "kind": "id",
+      "file": "lib/cases/expedition-station/quests/glacier-files.js"
+    },
+    {
+      "standard": "MA.5.2B-XP",
+      "title": "The Precision Lab",
+      "grade": "5",
+      "subject": "Math",
+      "engine": "Expedition Station",
+      "kind": "id",
+      "file": "lib/cases/expedition-station/quests/precision-lab.js"
+    },
+    {
+      "standard": "MA.5.3C-XP",
+      "title": "The Freight Split",
+      "grade": "5",
+      "subject": "Math",
+      "engine": "Expedition Station",
+      "kind": "id",
+      "file": "lib/cases/expedition-station/quests/freight-split.js"
+    },
+    {
+      "standard": "MA.5.3E-XP",
+      "title": "The Fuel Price",
+      "grade": "5",
+      "subject": "Math",
+      "engine": "Expedition Station",
+      "kind": "id",
+      "file": "lib/cases/expedition-station/quests/fuel-price.js"
+    },
+    {
       "standard": "MA.5.3H-XP",
       "title": "The Robot Rebuild",
       "grade": "5",
@@ -3352,6 +3847,24 @@
       "file": "lib/cases/expedition-station/quests/canopy-supply-drop.js"
     },
     {
+      "standard": "MA.5.8C-XP",
+      "title": "The Radar Grid",
+      "grade": "5",
+      "subject": "Math",
+      "engine": "Expedition Station",
+      "kind": "id",
+      "file": "lib/cases/expedition-station/quests/radar-grid.js"
+    },
+    {
+      "standard": "SCI.5.12A-XP",
+      "title": "The Ecosystem Balance",
+      "grade": "5",
+      "subject": "Science",
+      "engine": "Expedition Station",
+      "kind": "id",
+      "file": "lib/cases/expedition-station/quests/ecosystem-balance.js"
+    },
+    {
       "standard": "SCI.5.6A-XP",
       "title": "The Cooling Core",
       "grade": "5",
@@ -3359,6 +3872,15 @@
       "engine": "Expedition Station",
       "kind": "id",
       "file": "lib/cases/expedition-station/quests/cooling-core.js"
+    },
+    {
+      "standard": "SCI.5.8C-XP",
+      "title": "The Light Lab",
+      "grade": "5",
+      "subject": "Science",
+      "engine": "Expedition Station",
+      "kind": "id",
+      "file": "lib/cases/expedition-station/quests/light-lab.js"
     },
     {
       "standard": "3.FR.Energy.forms",
@@ -4694,7 +5216,7 @@
     },
     {
       "standard": "SS.3.10A",
-      "title": "ItΓÇÖs More Than a Party",
+      "title": "It’s More Than a Party",
       "grade": "",
       "subject": "",
       "engine": "Group Chat",
@@ -4730,7 +5252,7 @@
     },
     {
       "standard": "SS.3.1A",
-      "title": "The Community DidnΓÇÖt Change by Itself",
+      "title": "The Community Didn’t Change by Itself",
       "grade": "",
       "subject": "",
       "engine": "Group Chat",
@@ -4820,7 +5342,7 @@
     },
     {
       "standard": "SS.3.6B",
-      "title": "Everybody Wants One. There ArenΓÇÖt Enough.",
+      "title": "Everybody Wants One. There Aren’t Enough.",
       "grade": "",
       "subject": "",
       "engine": "Group Chat",
@@ -4829,7 +5351,7 @@
     },
     {
       "standard": "SS.3.6C",
-      "title": "The Store Sold OutΓÇª But Did It Make Money?",
+      "title": "The Store Sold Out… But Did It Make Money?",
       "grade": "",
       "subject": "",
       "engine": "Group Chat",
@@ -4901,7 +5423,7 @@
     },
     {
       "standard": "SS.3.9D",
-      "title": "Who Helps When Government DoesnΓÇÖt Do It All?",
+      "title": "Who Helps When Government Doesn’t Do It All?",
       "grade": "",
       "subject": "",
       "engine": "Group Chat",
@@ -5126,7 +5648,7 @@
     },
     {
       "standard": "SS.4.3E",
-      "title": "Texas Joins the United States ΓÇö Problem Solved?",
+      "title": "Texas Joins the United States — Problem Solved?",
       "grade": "",
       "subject": "",
       "engine": "Group Chat",
@@ -5387,7 +5909,7 @@
     },
     {
       "standard": "SS.5.21B",
-      "title": "Who Gets to Be ΓÇ£AmericanΓÇ¥?",
+      "title": "Who Gets to Be “American”?",
       "grade": "",
       "subject": "",
       "engine": "Group Chat",

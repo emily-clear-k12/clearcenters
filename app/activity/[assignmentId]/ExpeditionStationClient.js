@@ -10,6 +10,9 @@
 import { useMemo, useState } from "react";
 import BackToHubButton from "../../../components/BackToHubButton";
 import SamIcon from "../../../components/SamIcon";
+import Visual from "./ExpeditionVisuals";
+import SubmitReflection from "../../../components/submit/SubmitReflection";
+import { ACTIVITY_CHECKS } from "../../../lib/selfCheckLists";
 import "./expedition-station.css";
 
 const PLANET_ART = {
@@ -26,6 +29,28 @@ const CREW = {
   kai: { name: "Kai", short: "Kai", initial: "K", img: "/expedition/crew/kai.png" },
   nova: { name: "Nova", short: "Nova", initial: "N", img: "/expedition/crew/nova.png" },
 };
+
+// Same question, same order, for every student. Different questions land in
+// different orders, so the right button is not always the first one.
+function mixList(list) {
+  if (!Array.isArray(list) || list.length < 2) return list || [];
+  const arr = list.slice();
+  const key = arr.map((item) => `${item.id}|${item.text || item.label || ""}`).join("~");
+  let seed = 2166136261;
+  for (let i = 0; i < key.length; i++) {
+    seed ^= key.charCodeAt(i);
+    seed = Math.imul(seed, 16777619);
+  }
+  seed >>>= 0;
+  for (let i = arr.length - 1; i > 0; i--) {
+    seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0;
+    const j = seed % (i + 1);
+    const swap = arr[i];
+    arr[i] = arr[j];
+    arr[j] = swap;
+  }
+  return arr;
+}
 
 function fracLabel(n, d) {
   if (d === 1) return String(n);
@@ -266,11 +291,11 @@ function PassagePanel({ passages, ids, selectable, selected, onToggle, editing, 
           </header>
           {p.paragraphs
             ? p.paragraphs.map((para, i) => (
-                <p key={i}>
+                <p key={i} className={p.poem ? "es-stanza" : undefined}>
                   {para.map((s) => (
                     <span
                       key={s.id}
-                      className={`es-sentence ${selectable ? "tap" : ""} ${selected && selected.includes(s.id) ? "on" : ""}`}
+                      className={`es-sentence ${p.poem ? "es-poem-line" : ""} ${selectable ? "tap" : ""} ${selected && selected.includes(s.id) ? "on" : ""}`}
                       onClick={selectable ? () => onToggle(s.id) : undefined}
                       role={selectable ? "button" : undefined}
                       tabIndex={selectable ? 0 : undefined}
@@ -331,7 +356,7 @@ function PassagePanel({ passages, ids, selectable, selected, onToggle, editing, 
 
 // ---------- main ----------
 
-export default function ExpeditionStationClient({ assignmentId, publicCase, studentFirstName, existingData, alreadySubmitted, samSkin }) {
+export default function ExpeditionStationClient({ assignmentId, publicCase, studentFirstName, existingData, alreadySubmitted, revisionFeedback, samSkin }) {
   const quest = publicCase;
   const firstName = studentFirstName || "Specialist";
   const saved = existingData || { briefed: false, cards: {} };
@@ -381,6 +406,8 @@ export default function ExpeditionStationClient({ assignmentId, publicCase, stud
   const [openToken, setOpenToken] = useState(null);
   const [order, setOrder] = useState(null);
   const [numberValue, setNumberValue] = useState("");
+  const [model, setModel] = useState(null);
+  const [point, setPoint] = useState(null);
 
   const meters = useMemo(() => computeMeters(quest, cards), [quest, cards]);
   const totalStars = Object.values(cards).reduce((sum, c) => sum + (c && c.done ? c.stars || 0 : 0), 0);
@@ -406,6 +433,8 @@ export default function ExpeditionStationClient({ assignmentId, publicCase, stud
     setOpenToken(null);
     setOrder(null);
     setNumberValue("");
+    setModel(null);
+    setPoint(null);
     setNote(null);
   }
 
@@ -414,7 +443,7 @@ export default function ExpeditionStationClient({ assignmentId, publicCase, stud
     if (!t || t.locked || !actOpen(t.act)) return;
     const a = quest.acts[t.act];
     if (id === a.challenge && !a.tasks.every((x) => cards[x] && cards[x].done)) return;
-    if (cards[id] && cards[id].done) {
+    if (cards[id] && cards[id].done && !revisionFeedback) {
       setSamLine(`Already done · ${starsGlyph(cards[id].stars)}. Pick another card.`);
       return;
     }
@@ -467,8 +496,12 @@ export default function ExpeditionStationClient({ assignmentId, publicCase, stud
         case "multi": return { picks };
         case "highlight": return { sentences };
         case "edit": return { fixes };
-        case "order": return { order: order || currentPart().items.map((i) => i.id) };
-        case "number": return { value: Number(numberValue) };
+        case "order": {
+          const source = (currentPart() && currentPart().items) || task.items || [];
+          return { order: order || mixList(source).map((item) => item.id) };
+        }
+        case "number": return { value: Number(numberValue), model };
+        case "point": return { point };
         case "write": return { written };
         case "sort": return { placements };
         default: return {};
@@ -593,7 +626,7 @@ export default function ExpeditionStationClient({ assignmentId, publicCase, stud
   function Choices({ list, value, onPick, multi }) {
     return (
       <div className="es-choices">
-        {list.map((c) => {
+        {mixList(list).map((c) => {
           const on = multi ? value.includes(c.id) : value === c.id;
           return (
             <button key={c.id} type="button" className={`es-choice ${on ? "on" : ""}`} onClick={() => onPick(c.id)}>
@@ -612,18 +645,19 @@ export default function ExpeditionStationClient({ assignmentId, publicCase, stud
   }
 
   function SortBoard({ bins, items }) {
+    const mixed = mixList(items);
     return (
       <div className="es-sort">
         <p className="es-sub">Tap a card, then tap the bin it belongs in.</p>
         <div className="es-sort-items">
-          {items.map((it) => (
+          {mixed.map((it) => (
             <button
               key={it.id}
               type="button"
               className={`es-sort-item ${heldItem === it.id ? "held" : ""} ${placements[it.id] ? "placed" : ""} ${wrongItems.includes(it.id) ? "wrong" : ""}`}
               onClick={() => setHeldItem(heldItem === it.id ? null : it.id)}
             >
-              {it.image ? <img src={it.image} alt="" onError={(e) => { e.currentTarget.style.display = "none"; }} /> : null}
+              {it.image ? <img src={it.image} alt="" onError={(e) => { const img = e.currentTarget; if (!img.dataset.pngFallback && /\.svg$/i.test(it.image)) { img.dataset.pngFallback = "true"; img.src = it.image.replace(/\.svg$/i, ".png"); return; } img.style.display = "none"; }} /> : null}
               <span>{it.label}</span>
               {placements[it.id] ? <small>→ {(bins.find((b) => b.id === placements[it.id]) || {}).label}</small> : null}
             </button>
@@ -652,7 +686,8 @@ export default function ExpeditionStationClient({ assignmentId, publicCase, stud
   }
 
   function OrderList({ items }) {
-    const list = (order || items.map((i) => i.id)).map((id) => items.find((i) => i.id === id));
+    const mixed = mixList(items);
+    const list = (order || mixed.map((i) => i.id)).map((id) => items.find((i) => i.id === id));
     const move = (i, dir) => {
       const ids = list.map((x) => x.id);
       const j = i + dir;
@@ -699,13 +734,23 @@ export default function ExpeditionStationClient({ assignmentId, publicCase, stud
         return <p className="es-sub">Tap each word that's wrong, then pick the fix. Words that are already right won't change.</p>;
       case "order":
         return OrderList({ items: cfg.items });
-      case "number":
+      case "number": {
+        const drives = cfg.visual && cfg.visual.mode !== "show" && ["blocks", "money"].includes(cfg.visual.type);
         return (
           <label className="es-number">
-            <input type="number" inputMode="decimal" value={numberValue} onChange={(e) => setNumberValue(e.target.value)} aria-label="Your answer" />
+            <input
+              type="number"
+              inputMode="decimal"
+              readOnly={!!drives}
+              placeholder={drives ? "Build it on the picture" : undefined}
+              value={numberValue}
+              onChange={(e) => { if (!drives) setNumberValue(e.target.value); }}
+              aria-label="Your answer"
+            />
             {cfg.unit ? <span>{cfg.unit}</span> : null}
           </label>
         );
+      }
       case "write": {
         const words = written.trim() ? written.trim().split(/\s+/).length : 0;
         return (
@@ -735,6 +780,7 @@ export default function ExpeditionStationClient({ assignmentId, publicCase, stud
       case "edit": return Object.keys(fixes).length > 0;
       case "order": return true;
       case "number": return numberValue !== "";
+      case "point": return !!point;
       case "write": return written.trim().split(/\s+/).filter(Boolean).length >= (cfg.minWords || 1);
       case "sort": return cfg.items.every((it) => placements[it.id]);
       default: return true;
@@ -769,6 +815,7 @@ export default function ExpeditionStationClient({ assignmentId, publicCase, stud
           <p className="es-question">{t.question}</p>
         )}
         {t.data ? <DataTable data={t.data} /> : null}
+        {t.visual && ["debate", "sort"].includes(kind) ? <Visual key={`${taskId}-hv`} v={t.visual} value={numberValue} onChange={setNumberValue} onModel={setModel} point={point} onPoint={setPoint} /> : null}
       </>
     );
 
@@ -778,9 +825,9 @@ export default function ExpeditionStationClient({ assignmentId, publicCase, stud
         <>
           {header}
           <div className="es-debate">
-            {["kai", "nova"].map((w) => (
-              <button key={w} type="button" className={`es-choice es-who ${who === w ? "on" : ""}`} onClick={() => setWho(w)}>
-                <Avatar who={w} size={32} /> {CREW[w].short} is right
+            {mixList([{ id: "kai", text: t.question || "kai" }, { id: "nova", text: t.question || "nova" }]).map((person) => (
+              <button key={person.id} type="button" className={`es-choice es-who ${who === person.id ? "on" : ""}`} onClick={() => setWho(person.id)}>
+                <Avatar who={person.id} size={32} /> {CREW[person.id].short} is right
               </button>
             ))}
           </div>
@@ -965,6 +1012,7 @@ export default function ExpeditionStationClient({ assignmentId, publicCase, stud
               ))}
               <p className="es-question">Part {step}: {part.prompt}</p>
             </div>
+            {cfg.visual ? <Visual key={`${taskId}-${step}-v`} v={cfg.visual} value={numberValue} onChange={setNumberValue} onModel={setModel} point={point} onPoint={setPoint} /> : null}
             {GenericInput({ kind: pk, cfg: cfg })}
             {SureRow()}
             {Actions({ ready: genericReady(pk, cfg), label: step < t.parts.length ? "Check this part" : "Submit" })}
@@ -974,8 +1022,8 @@ export default function ExpeditionStationClient({ assignmentId, publicCase, stud
     }
 
     // ----- single generic (ELAR / science) -----
-    if (["choice", "multi", "highlight", "edit", "order", "number", "write"].includes(kind)) {
-      const cfg = { choices: t.choices, items: t.items, unit: t.unit, minWords: t.minWords, rubric: t.rubric, count: t.selectCount || 1 };
+    if (["choice", "multi", "highlight", "edit", "order", "number", "write", "point"].includes(kind)) {
+      const cfg = { choices: t.choices, items: t.items, unit: t.unit, minWords: t.minWords, rubric: t.rubric, count: t.selectCount || 1, visual: t.visual };
       const passageIds = t.passage || [];
       return (
         <div className={`es-split ${passageIds.length ? "with-passage" : ""}`}>
@@ -995,6 +1043,7 @@ export default function ExpeditionStationClient({ assignmentId, publicCase, stud
           ) : null}
           <div className="es-split-task">
             {header}
+            {cfg.visual ? <Visual key={`${taskId}-v`} v={cfg.visual} value={numberValue} onChange={setNumberValue} onModel={setModel} point={point} onPoint={setPoint} /> : null}
             {GenericInput({ kind: kind, cfg: cfg })}
             {SureRow()}
             {Actions({ ready: genericReady(kind, cfg) })}
@@ -1190,7 +1239,7 @@ export default function ExpeditionStationClient({ assignmentId, publicCase, stud
 
   return (
     <div className={`es-root es-subject-${subjectKey}`}>
-      <BackToHubButton />
+      <BackToHubButton readText={`${quest.title}. ${(quest.opening || []).join(" ")}`} />
       <div className="es-shell">
         <header className="es-top es-glass">
           <div className="es-top-left">
@@ -1285,6 +1334,36 @@ export default function ExpeditionStationClient({ assignmentId, publicCase, stud
                 );
               })}
             </div>
+            {alreadySubmitted ? (
+              <p className="es-note good">This quest is turned in. Your teacher can see your stars and written answers.</p>
+            ) : (
+              <SubmitReflection
+                questions={ACTIVITY_CHECKS.expedition_station}
+                revisionNote={revisionFeedback}
+                busy={busy}
+                onSubmit={async (reflection) => {
+                  setBusy(true);
+                  try {
+                    const res = await fetch("/api/expedition-station/submit", {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({ assignmentId, action: "turnin", ...reflection }),
+                    });
+                    const data = await res.json();
+                    if (!res.ok) {
+                      setSamLine(data.error || "Could not turn the quest in.");
+                      setBusy(false);
+                      return;
+                    }
+                    setSamLine("Turned in. Your teacher can see your stars and written answers.");
+                    window.location.reload();
+                  } catch (err) {
+                    setSamLine("Network hiccup. Try submit again.");
+                    setBusy(false);
+                  }
+                }}
+              />
+            )}
             <button type="button" className="es-btn ghost" onClick={() => setScreen("board")}>Review the board</button>
           </section>
         ) : null}

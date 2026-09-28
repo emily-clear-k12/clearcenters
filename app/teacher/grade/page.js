@@ -8,6 +8,7 @@ import Link from 'next/link';
 import {BridgePage,PageHeading,ClassTabs,Empty} from '../../../components/teacher/BridgeUI';
 import {subjectStyle} from '../../../lib/teacherBridge';
 import { COLORS, PAGE_ACCENTS, PAGE_BACKGROUNDS } from "../../../lib/teacherTheme";
+import { isPracticeGame } from "../../../lib/engineKinds";
 
 // Sept 13 — moved to the console-interior look, same pattern as the rest of
 // the app. Grading isn't one of the 5 Overview landmarks by itself, so it
@@ -77,7 +78,7 @@ export default function TeacherGradeListPage() {
       return;
     }
 
-    const { data: assignments } = await supabase.from("assignments").select("id, case_standard, due_date, class_id").in("class_id", classIds);
+    const { data: assignments } = await supabase.from("assignments").select("id, case_standard, due_date, class_id, game_skin").in("class_id", classIds);
     const assignmentList = assignments || [];
     const assignmentIds = assignmentList.map((a) => a.id);
     const assignmentMap = Object.fromEntries(assignmentList.map((a) => [a.id, a]));
@@ -102,22 +103,25 @@ export default function TeacherGradeListPage() {
 
     const studentIds = [...new Set(list.map((s) => s.student_id).filter(Boolean))];
     const { data: students } = studentIds.length > 0 ? await supabase.from("students").select("id, first_name").in("id", studentIds) : { data: [] };
-    const { data: cases } = caseStandards.length > 0 ? await supabase.from("cases").select("standard, title, subject").in("standard", caseStandards) : { data: [] };
+    const { data: cases } = caseStandards.length > 0 ? await supabase.from("cases").select("standard, title, subject, engine").in("standard", caseStandards) : { data: [] };
 
     const studentMap = Object.fromEntries((students || []).map((s) => [s.id, s]));
     const caseMap = Object.fromEntries((cases || []).map((c) => [c.standard, c]));
 
     const merged = list.map((s) => {
       const assignment = assignmentMap[s.assignment_id];
+      const caseRow = assignment ? caseMap[assignment.case_standard] : null;
       return {
         ...s,
-        subject: assignment ? caseMap[assignment.case_standard]?.subject : null,
+        subject: assignment ? caseRow?.subject : null,
+        engine: assignment ? caseRow?.engine : null,
+        gameSkin: assignment ? assignment.game_skin : null,
         studentName: studentMap[s.student_id]?.first_name || "Unknown student",
-        caseTitle: assignment ? (caseMap[assignment.case_standard]?.title || assignment.case_standard) : "Unknown case",
+        caseTitle: assignment ? (caseRow?.title || assignment.case_standard) : "Unknown case",
         classId: assignment ? assignment.class_id : null,
         className: assignment ? classMap[assignment.class_id]?.name : "Unknown class",
       };
-    });
+    }).filter((s) => !isPracticeGame(s.engine, s.gameSkin));
 
     // Kept as one flat list rather than pre-grouped by class — the class
     // tabs and the assignment grouping below both derive from this via

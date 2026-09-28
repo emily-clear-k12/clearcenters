@@ -2,6 +2,8 @@
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import "./broadcast-booth.css";
+import SubmitReflection from "../../../components/submit/SubmitReflection";
+import { ACTIVITY_CHECKS } from "../../../lib/selfCheckLists";
 import { ArrowLeft, ArrowRight, Check, CheckCircle2, ImagePlus, Mic, Plus, Square, Volume2, X } from "lucide-react";
 import { StudioHeader, BroadcastPlayer, RecordingMeter, clock } from "./BroadcastStudioUI";
 import {
@@ -178,6 +180,7 @@ export default function BroadcastBoothClient({
   const [micPending, setMicPending] = useState(false);
   const [processing, setProcessing] = useState(false);
   const [turningIn, setTurningIn] = useState(false);
+  const [reflecting, setReflecting] = useState(false);
   const [leaving, setLeaving] = useState(false);
   const [saveError, setSaveError] = useState("");
   const saveQueue = useRef(Promise.resolve());
@@ -274,6 +277,8 @@ export default function BroadcastBoothClient({
       brainstormMap: o.brainstormMap ?? brainstormMapRef.current,
       currentBeatIndex: o.currentBeatIndex ?? beatIndexRef.current,
       beats: o.beats ?? beatsRef.current,
+      checklist: o.checklist,
+      selfConfidence: o.selfConfidence,
     };
     // Queue snapshots so an older autosave cannot overwrite a newer save or turn-in.
     const request = saveQueue.current.then(async () => {
@@ -619,17 +624,23 @@ export default function BroadcastBoothClient({
       setSoftStillWarn(true);
       setStatus("Tip: " + missing.map((m) => m.label).join(" & ") + " usually need a still. You can still submit.");
     }
+    setReflecting(true);
+  }
+
+  async function finishReflection(reflection) {
+    if (submittingLock.current || submitted || busy || !allDone || !mapMeetsMin) return;
     submittingLock.current = true;
     setTurningIn(true);
     if (saveTimer.current) clearTimeout(saveTimer.current);
     dirty.current = false;
-    const { ok, data } = await persist("turnin");
+    const { ok, data } = await persist("turnin", reflection);
     setTurningIn(false);
     if (!ok) {
       submittingLock.current = false;
       setStatus((data && (data.message || data.error)) || "Could not submit.");
       return;
     }
+    setReflecting(false);
     setSubmitted(true);
     setView("done");
     setStatus("Submitted. Your teacher will listen to your broadcast.");
@@ -988,9 +999,10 @@ export default function BroadcastBoothClient({
                     {!submitted ? <button className="bb-btn secondary bb-rerecord" disabled={busy} onClick={() => goToBeat(i)}><Mic size={18} />{slot.audioDataUrl ? "Record again" : "Record"}</button> : null}
                   </article>;
                 })}</div>
+                {reflecting && !submitted ? <SubmitReflection questions={ACTIVITY_CHECKS.broadcast_booth} onSubmit={finishReflection} busy={turningIn || saving} disabled={!allDone || busy} revisionNote={revisionFeedback} /> : null}
                 <div className="bb-review-footer">{submitted ? <a href="/missions" className="bb-btn teal">Back to My Missions <ArrowRight size={18} /></a> : <>
                   <button className="bb-btn secondary" disabled={busy} onClick={() => goToBeat(beatIndex)}><ArrowLeft size={17} />Back to recording</button>
-                  <button className="bb-btn teal" disabled={!allDone || busy || saving} onClick={handleSubmit}>{turningIn ? "Submitting…" : "Submit broadcast"}<ArrowRight size={19} /></button></>}
+                  <button className="bb-btn teal" disabled={!allDone || busy || saving || reflecting} onClick={handleSubmit}>{turningIn ? "Submitting…" : "Submit broadcast"}<ArrowRight size={19} /></button></>}
                 </div>
               </section>
             ) : null}

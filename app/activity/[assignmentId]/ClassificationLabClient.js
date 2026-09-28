@@ -1,8 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import SamIcon from "../../../components/SamIcon";
 import BackToHubButton from "../../../components/BackToHubButton";
+import ReadAloudButton from "../../../components/ReadAloudButton";
+import SubmitReflection from "../../../components/submit/SubmitReflection";
+import { ACTIVITY_CHECKS } from "../../../lib/selfCheckLists";
 import "./classification-lab.css";
 
 const PAGE_NAMES = ["Sort", "Harder sort", "Venn"];
@@ -11,22 +14,44 @@ function sameZone(item, zone) {
   return item === zone;
 }
 
-export default function ClassificationLabClient({ assignmentId, publicCase, savedPages, samSkin }) {
+function readClassDraft(assignmentId, alreadySubmitted) {
+  if (typeof window === "undefined" || alreadySubmitted) return null;
+  try {
+    const raw = window.localStorage.getItem(`classify-draft:${assignmentId}`);
+    return raw ? JSON.parse(raw) : null;
+  } catch (err) {
+    return null;
+  }
+}
+
+export default function ClassificationLabClient({ assignmentId, publicCase, savedPages, samSkin, alreadySubmitted, revisionFeedback }) {
   const needsSam = publicCase.grade === "Grade 5";
-  const [page, setPage] = useState(0);
-  const [placed, setPlaced] = useState({});
+  const draft = readClassDraft(assignmentId, alreadySubmitted);
+  const [page, setPage] = useState((draft && draft.page) || 0);
+  const [placed, setPlaced] = useState((draft && draft.placed) || {});
   const [picked, setPicked] = useState(null);
   const [note, setNote] = useState(null);
-  const [labelAt, setLabelAt] = useState({});
-  const [itemAt, setItemAt] = useState({});
-  const [mc, setMc] = useState(null);
-  const [multi, setMulti] = useState([]);
-  const [inline, setInline] = useState(null);
+  const [labelAt, setLabelAt] = useState((draft && draft.labelAt) || {});
+  const [itemAt, setItemAt] = useState((draft && draft.itemAt) || {});
+  const [mc, setMc] = useState((draft && draft.mc) || null);
+  const [multi, setMulti] = useState((draft && draft.multi) || []);
+  const [inline, setInline] = useState((draft && draft.inline) || null);
   const [dragOver, setDragOver] = useState(null);
   const [samOpen, setSamOpen] = useState(false);
+  useEffect(() => {
+    if (alreadySubmitted) {
+      try { window.localStorage.removeItem(`classify-draft:${assignmentId}`); } catch (err) {}
+      return;
+    }
+    try {
+      window.localStorage.setItem(`classify-draft:${assignmentId}`, JSON.stringify({ page, placed, labelAt, itemAt, mc, multi, inline }));
+    } catch (err) {}
+  }, [alreadySubmitted, assignmentId, page, placed, labelAt, itemAt, mc, multi, inline]);
   const [saved, setSaved] = useState(savedPages || {});
   const [busy, setBusy] = useState(false);
   const [doneNote, setDoneNote] = useState(null);
+  const pagesReady = [0, 1, 2].every((index) => (savedPages || {})[index] || (savedPages || {})[String(index)]);
+  const [reflecting, setReflecting] = useState(pagesReady && !alreadySubmitted);
 
   const sort = page < 2 ? publicCase.pages[page] : null;
   const defsOpen = !needsSam || samOpen;
@@ -120,11 +145,31 @@ export default function ClassificationLabClient({ assignmentId, publicCase, save
       if (data.saved) {
         setSaved((prev) => ({ ...prev, [page]: { correct: data.total - data.misses, total: data.total } }));
       }
-      if (data.done) {
-        setDoneNote(data.crystals ? `All three sorts are saved. +${data.crystals} crystals.` : "All three sorts are saved.");
-      }
+      if (data.ready) setReflecting(true);
     } catch (err) {
       setNote("That check did not go through. Try again.");
+    }
+    setBusy(false);
+  }
+
+  async function turnIn(reflection) {
+    setBusy(true);
+    try {
+      const res = await fetch("/api/classification-lab/submit", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ assignmentId, kind: "turnin", ...reflection }),
+      });
+      const data = await res.json();
+      if (!res.ok || data.error) {
+        setNote(data.error || "That submit did not go through. Try again.");
+        setBusy(false);
+        return;
+      }
+      setReflecting(false);
+      setDoneNote(data.crystals ? `Turned in. +${data.crystals} crystals.` : "Turned in. Your teacher will see your sorts.");
+    } catch (err) {
+      setNote("That submit did not go through. Try again.");
     }
     setBusy(false);
   }
@@ -158,6 +203,7 @@ export default function ClassificationLabClient({ assignmentId, publicCase, save
           <div>
             <p className="cl-kicker">Classification Lab · {publicCase.teks}</p>
             <h1>{publicCase.title}</h1>
+            <ReadAloudButton text={`${publicCase.title}. ${sort ? `${sort.rule} ${sort.notThis || ""}` : (publicCase.venn && publicCase.venn.mc ? publicCase.venn.mc.prompt : "")}`} style={{ marginTop: 8 }} />
           </div>
           <div className="cl-head-actions">
             {needsSam && !samOpen && (
@@ -350,12 +396,18 @@ export default function ClassificationLabClient({ assignmentId, publicCase, save
         </div>
 
         <footer className="cl-foot">
+          {reflecting ? (
+            <SubmitReflection questions={ACTIVITY_CHECKS.classification_lab} onSubmit={turnIn} busy={busy} revisionNote={revisionFeedback} />
+          ) : (
+            <>
           <p>{doneNote || note || (needsSam && !samOpen ? "Try it first. Ask SAM if you need the words." : "A miss will not show which item.")}</p>
           <div className="cl-actions">
             {page > 0 && <button type="button" className="cl-back" onClick={() => go(page - 1)}>Back</button>}
             <button type="button" className="cl-check" onClick={check} disabled={busy}>{busy ? "Checking" : "Check"}</button>
             {page < 2 && <button type="button" className="cl-next" onClick={() => go(page + 1)}>Next page</button>}
           </div>
+            </>
+          )}
         </footer>
       </div>
     </div>

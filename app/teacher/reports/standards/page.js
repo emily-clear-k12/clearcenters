@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { ChevronLeft, Printer } from "lucide-react";
 import { supabase } from "../../../../lib/supabaseClient";
 import { COLORS, PAGE_ACCENTS, PAGE_BACKGROUNDS } from "../../../../lib/teacherTheme";
+import { countLine } from "../../../../lib/gradeScale";
 import { missionMapTeksCode } from "../../../../lib/cases/mission-map/teksLabels";
 
 // Sept 13 — moved to the console-interior look, same pattern as the rest of
@@ -14,13 +15,6 @@ import { missionMapTeksCode } from "../../../../lib/cases/mission-map/teksLabels
 // proficiency-band colors (including violet for "Developing") untouched.
 const ACCENT = "#7541cf";
 const BG = PAGE_BACKGROUNDS["/teacher/reports"];
-
-function proficiencyBand(avg) {
-  if (avg >= 1.8) return { label: "Excellent", color: COLORS.success };
-  if (avg >= 1.4) return { label: "Proficient", color: COLORS.info };
-  if (avg >= 1.0) return { label: "Developing", color: COLORS.violet };
-  return { label: "Needs Support", color: COLORS.danger };
-}
 
 export default function StandardsReportPage() {
   const router = useRouter();
@@ -93,9 +87,8 @@ export default function StandardsReportPage() {
     const grouped = (classes || []).map((c) => {
       const stdMap = byClassStandard[c.id] || {};
       const standardRows = Object.entries(stdMap).map(([standard, grades]) => {
-        const avg = grades.reduce((a, b) => a + b, 0) / grades.length;
-        return { standard, title: caseTitleMap[standard] || standard, gradedCount: grades.length, avgPct: Math.round((avg / 2) * 100), band: proficiencyBand(avg) };
-      }).sort((a, b) => a.avgPct - b.avgPct);
+        return { standard, title: caseTitleMap[standard] || standard, gradedCount: grades.length, line: countLine(grades), notYet: grades.filter((grade) => Number(grade) === 0).length };
+      }).sort((a, b) => b.notYet - a.notYet);
       return { classId: c.id, className: c.name, standards: standardRows };
     });
 
@@ -207,9 +200,7 @@ export default function StandardsReportPage() {
                           standard, so it passes straight through. */}
                       <div style={{ width: 220, fontWeight: 600 }}>{row.title} <span style={{ color: COLORS.textMuted, fontWeight: 400 }}>({missionMapTeksCode(row.standard) || row.standard})</span></div>
                       <div style={{ width: 80, color: COLORS.textMuted }}>{row.gradedCount} graded</div>
-                      <div style={{ flex: 1 }} />
-                      <div style={{ width: 40, fontWeight: 700, textAlign: "right" }}>{row.avgPct}%</div>
-                      <span style={{ fontSize: 10.5, fontWeight: 700, padding: "2px 9px", borderRadius: 999, background: row.band.color + "22", color: row.band.color }}>{row.band.label}</span>
+                      <div style={{ flex: 1, fontWeight: 700 }}>{row.line}</div>
                     </div>
                   ))}
                 </div>

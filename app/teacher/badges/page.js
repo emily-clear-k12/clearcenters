@@ -380,7 +380,7 @@ export default function BadgesRewardsPage() {
           })}
           {tiers.length === 0 && !error && (
             <div style={{ padding: "32px 20px", textAlign: "center", color: COLORS.textMuted, fontSize: 13.5 }}>
-              No badge tiers found yet — ask Claude to double check the database setup.
+              Badge rewards aren't ready yet. Try again in a little while.
             </div>
           )}
         </div>

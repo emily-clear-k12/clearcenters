@@ -1,0 +1,146 @@
+# The Tall Tale Trail — Content v1 (ELA.4.8A-XP)
+
+**Grade 4 · ELAR · Solara.** Written Sept 28, 2026. Code: `lib/cases/expedition-station/quests/tall-tale-trail.js`.
+
+**Main standard:** 4.8A · **Also shows up under:** 4.9A, 4.6F, 4.7C, 4.7B, 4.10D, 4.11D
+
+**I can:** I can figure out the theme of a story and prove it with evidence. I can tell a tall tale, a legend, and a fable apart.
+
+**Mission:** Listen to the elders' tall tales, legends, and fables, figure out what each one teaches, and help the crew send a report to Mission Control.
+
+**Story:** On the jungle moon Solara, a flood has cut off the supply trail, and two camps must share one crate. The camp elders answer with old stories: a giant cook, a glowing canopy, and a greedy monkey.
+
+**Meters on Solara:** Campfire (starts at 20%) · Story notes · Journal (10 discoveries)
+
+**Status:** All 3 acts are playable. Every task is graded (written answers are scored by the teacher).
+
+**Opening (Vega):** Specialist {firstName}, this is Commander Vega on Solara. The river flooded, and our supply trail is gone. We have to share one crate with the river camp, and it's not going well. Kai is counting every piece of fruit. Tonight the camp elders are telling old stories. I think they're trying to teach us something. Help us figure out what. Vega out.
+
+## Passages
+
+### Passage A · Commander Vega's Log, Story Night (Log (informational narrative))
+
+Last week the river flooded and washed away part of the supply trail. `A1.1` Now the next supply drop is six days away. `A1.2` Our camp and the Solaran camp by the river have to share one crate of food and one water filter. `A1.3`
+
+Today the sharing did not go well. `A2.1` Kai counted the dried fruit twice and said the river camp took more than their share. `A2.2` Nova said the water filter should stay at our camp because our tents are closer to the stream. `A2.3` Everyone got grumpy, and nobody talked much at dinner. `A2.4`
+
+After dinner, Elder Rana tapped her walking stick on a log. `A3.1` "Tonight, we tell the old stories," she said. `A3.2` She looked right at Kai when she said it. `A3.3`
+
+I have written down each story the elders told, just the way they told it. `A4.1` I think they were trying to teach us something. `A4.2`
+
+### Passage B · Big Tulu and the Soup Paddle (Tall tale)
+
+Long ago, the best cook on all of Solara was a woman named Big Tulu. `B1.1` She was so tall that birds built nests in her hair, and she had to duck under the clouds. `B1.2` Her soup pot was as big as a lake, and she stirred it with a canoe paddle. `B1.3`
+
+One year it rained for a hundred days without stopping. `B2.1` The rivers rose, the gardens washed away, and every camp in the jungle went hungry. `B2.2` Every camp, that is, except Big Tulu's, because she still had a whole pot of bean soup. `B2.3`
+
+Tulu could have eaten that soup all by herself. `B3.1` Instead, she lifted the pot onto her shoulder and crossed the whole jungle in three giant steps. `B3.2` At every camp, she dipped her paddle into the pot and filled every bowl to the top. `B3.3`
+
+By the time she got home, her pot was empty and her stomach was growling louder than thunder. `B4.1` Then she heard footsteps on the trail. `B4.2` People from every camp were coming, and each one carried something: a root, a handful of beans, a pinch of salt. `B4.3` One by one, they dropped their gifts into Tulu's pot. `B4.4`
+
+That night, Tulu stirred the biggest soup Solara had ever seen, and nobody went to bed hungry. `B5.1` People say you can still smell it when the wind blows from the east. `B5.2`
+
+### Passage C · Kai's message to Nova (Message (has mistakes))
+
+Nova, story night was the best night of the whole trip. The elders **tells**`[C:tells]` amazing stories. I liked the one about the giant cook **who's**`[C:who's]` pot was as big as a lake. **i**`[C:i]` think Elder Rana was talking to me during that story, though. Maybe I was too greedy about the dried fruit. Tomorrow I will ask the river camp how many people they need to feed.
+
+### Passage D · Why the Canopy Glows (Legend)
+
+Long, long ago, the jungle of Solara had no light at night. `D1.1` When the sun went down, the forest turned as black as the inside of a seed. `D1.2` Travelers got lost, and children were afraid to leave their huts. `D1.3`
+
+One evening, a boy named Tavi saw that his little sister had not come home from the river. `D2.1` The hunters said it was far too dark to search. `D2.2` Tavi's knees shook and his heart pounded, but he stepped into the black forest anyway. `D2.3`
+
+He climbed the tallest tree, higher than anyone had ever climbed. `D3.1` At the top, he called out to the moon, "Please, give me a little light so I can find my sister!" `D3.2`
+
+The moon saw that the boy was frightened but had climbed anyway. `D4.1` She sprinkled down a silver dust that settled on every leaf. `D4.2` The whole canopy began to glow, and far below, Tavi saw his sister sitting safely by the river. `D4.3`
+
+Ever since that night, the leaves of Solara glow softly after sunset. `D5.1` The elders say the light is the moon's gift to anyone who climbs when they are afraid. `D5.2`
+
+### Passage E · Monkey and the Fallen Fig Tree (Fable)
+
+After a big storm, Monkey found a fig tree lying on the ground. `E1.1` Its branches were heavy with ripe, sweet figs. `E1.2`
+
+Tortoise crawled up slowly. `E2.1` "May I have a few figs?" he asked. `E2.2` "My fruit tree blew away." `E2.3` Toucan landed beside him and said, "Me too, please. My nest is full of rainwater." `E2.4`
+
+"Find your own!" Monkey snapped. `E3.1` He stuffed figs into his cheeks, his hands, and the curl of his tail until he could barely move. `E3.2`
+
+Just then, a jaguar crept out of the ferns. `E4.1` Tortoise pulled into his shell, and Toucan flew up to a high branch. `E4.2` But Monkey was so loaded down with figs that he could not climb. `E4.3`
+
+Toucan screeched as loudly as she could, and Tortoise banged his shell against a rock. `E5.1` The startled jaguar spun around and ran back into the ferns. `E5.2` Monkey sat shaking in the mud, surrounded by squashed figs. `E5.3`
+
+"You helped me, even after I would not share with you," Monkey said quietly. `E6.1` That evening, he divided the last good figs into three equal piles. `E6.2`
+
+Moral: Grab everything for yourself, and you may lose it all. `E7.1`
+
+### Passage F · Mission Report draft (Report (has mistakes))
+
+Story night on **solara**`[F:solara]` helped our crew. The elders told three old stories, and each one **teach**`[F:teach]` us something. Big Tulu shared her soup, and the other camps shared **there**`[F:there]` food with her. Tavi was brave even though he was scared. **Tomorow**`[F:Tomorow]` our two camps will split the dried fruit into fair piles and take turns with the water filter.
+
+## Act 1 · Big Tulu's soup
+
+| # | Level | Machine | Crew line and question | Answer | Wrong answers → hint | S.A.M. hint |
+| --- | --- | --- | --- | --- | --- | --- |
+| 1 | Warm-up | Read the Crew | Elder Rana looked straight at Kai before the stories started. Kai says it was nothing. I'm not so sure. *(Passage A)* **Read Passage A. Why did Elder Rana most likely look right at Kai?** Choices: a) Kai argued about the dried fruit, and she wanted him to learn from the stories. b) Kai was sitting in her seat by the fire. c) Kai was going to tell the first story. d) Kai was falling asleep during dinner. | a) Kai argued about the dried fruit, and she wanted him to learn from the stories. | **choice b**: The log never says where Kai sat. What did Kai do earlier that day that caused trouble? <br> **choice c**: The log says the elders told the stories. What happened with Kai and the fruit? <br> **choice d**: Nothing says Kai was sleepy. Reread paragraph 2 about the dried fruit. | Look back at paragraph 2. What did Kai do earlier that day? |
+| 2 | Warm-up | Trace | Tall tales stretch the truth like a rubber band. Point my scanner at the biggest stretch about Tulu's size. *(Passage B)* **Highlight a sentence that uses exaggeration (hyperbole) to show how huge Big Tulu was.** | "She was so tall that birds built nests in her hair, and she had to duck under the clouds." (B1.2 or B1.3) | **highlights B1.1**: Being the best cook could be true. Which sentence says something that could never really happen? <br> **highlights B2.1**: That's an exaggeration, but it's about the rain, not Tulu's size. Look at paragraph 1. <br> **highlights B3.1**: That tells about a choice Tulu made. Which sentence exaggerates how big she was? <br> **highlights B4.2**: Anyone can hear footsteps. Find a sentence about Tulu's size that stretches the truth. | Hyperbole is an exaggeration so big it could never really happen. Look at paragraph 1. |
+| 3 | Warm-up | Repair | I sent Nova a message after story night, but I typed it in the dark. Three mistakes snuck in! *(Passage C)* **Tap each mistake in Kai's message and pick the fix.** | tells → tell; who's → whose; i → I | **wrong fix on C:tells**: There are many elders. Do we say "the elders tells" or "the elders tell"? <br> **wrong fix on C:who's**: Who's means "who is." The pot belongs to the cook. Which word shows belonging? <br> **wrong fix on C:i**: When you write about yourself, how do you always write the word I? | Read each sentence out loud in your head. Does every word look right and sound right? |
+| 4 | Warm-up | Decipher | Elder Rana called Big Tulu a tall tale. I want to know what makes it one before I write it in the log. *(Passage B)* **Which features show that "Big Tulu and the Soup Paddle" is a tall tale? Pick every one.** Items: a) A hero who is bigger and stronger than any real person b) Funny exaggerations, like a pot as big as a lake c) Impossible feats, like crossing the jungle in three steps d) Talking animals who teach a lesson e) A moral written out at the end | a) A hero who is bigger and stronger than any real person + b) Funny exaggerations, like a pot as big as a lake + c) Impossible feats, like crossing the jungle in three steps | **picks d**: Are there any talking animals in Big Tulu? That feature belongs to a different kind of story. <br> **picks e**: Look at the end of the story. Does it say "Moral:"? That's a feature of fables. <br> **misses one**: There is more than one feature. Think about Tulu's size, her pot, and how she traveled. | Tall tales have a larger-than-life hero and exaggerations that could never really happen. |
+| 5 | Challenge | Trace | Surprise! Elder Rana won't open the supply crate until someone tells her what Big Tulu's story teaches. Kai says, "It's about soup!" I don't think that's what she means. *(Passage B, A)* **Part 1: What is a theme of Big Tulu's story? Part 2: Highlight TWO sentences: one that shows Tulu sharing and one that shows what happened because she shared. Part 3: Pick what the crew should do next.** Part 1: What is a theme of Big Tulu's story? (a) Soup b) Big Tulu carried her soup to every camp in the jungle. c) When you share what you have, others will share with you. d) You should always cook a very big pot.) Part 2: Highlight one sentence that shows Tulu sharing and one that shows what happened because she shared. Part 3: What should the crew do with the supply crate? (a) Count the fruit again to make sure the river camp didn't take extra. b) Keep the water filter at our camp, since our tents are closer. c) Share the supplies fairly with the river camp, the way Tulu shared her soup. d) Wait until the supply drop and not share anything.) | Part 1: c) When you share what you have, others will share with you. <br> Part 2: "Tulu could have eaten that soup all by herself." (B3.1 or B3.2 or B3.3) AND "People from every camp were coming, and each one carried something: a root, a handful of beans, a pinch of salt." (B4.3 or B4.4 or B5.1) <br> Part 3: c) Share the supplies fairly with the river camp, the way Tulu shared her soup. | (step 1) **choice a**: Soup is the topic, just one word. What lesson about life does the story teach? <br> (step 1) **choice b**: That's a summary of what happened. What lesson does Tulu's choice teach us? <br> (step 1) **choice d**: The story never says that. Think about what happened after Tulu gave her soup away. <br> (step 2) **highlights B1.3**: That tells about Tulu's pot, not about sharing. Look at paragraphs 3 and 4. <br> (step 2) **highlights B2.2**: That tells the problem. Find where Tulu shares, and then where people give back. <br> (step 2) **highlights B4.1**: That shows Tulu ran out of soup. What happened next that made the soup bigger? <br> (step 3) **choice a**: Counting again is what started the trouble. What did Tulu do with her soup? <br> (step 3) **choice b**: That keeps the filter for one camp. Which choice follows the lesson of the story? <br> (step 3) **choice d**: Tulu didn't wait. She shared when people needed it. Which choice matches the theme? | A topic is one word, like "soup." A summary retells what happened. A theme is a lesson about life that the story shows. |
+
+**Act complete:** Elder Rana opened the crate, {firstName}! You found the lesson in Big Tulu's story.
+
+**Teaser:** Next on Solara: the elders tell a legend about the glowing canopy and a fable about a greedy monkey. Act 2 is open now, or come back to it next time.
+
+## Act 2 · The glowing canopy
+
+**Opening:** Welcome back, {firstName}. Nova here. The canopy is glowing tonight, and Elder Rana says there's a legend about why. Elder Moku has a story too, with a monkey in it. Let's listen closely.
+
+| # | Level | Machine | Crew line and question | Answer | Wrong answers → hint | S.A.M. hint |
+| --- | --- | --- | --- | --- | --- | --- |
+| 6 | On level | Trace | Legends often explain why something in nature is the way it is. I want to know what this one explains. *(Passage D)* **Highlight the sentence that tells what part of nature this legend explains.** | "Ever since that night, the leaves of Solara glow softly after sunset." (D5.1) | **highlights D4.3**: Close! That tells what happened that one night. Which sentence says it still happens now? <br> **highlights D1.1**: That tells how things were long ago. Which sentence tells how things are now, and why? <br> **highlights D4.2**: That tells what the moon did. Find the sentence that says the glow still happens today. <br> **highlights D5.2**: That tells what the elders say the light means. Which sentence tells what happens every night now? | Look for a sentence that says something still happens today because of what happened long ago. |
+| 7 | On level | Decipher | The legend says the forest was "as black as the inside of a seed." I've never been inside a seed! *(Passage D)* **"When the sun went down, the forest turned as black as the inside of a seed." What does this comparison tell you?** Choices: a) The forest was full of seeds. b) The forest was completely dark, with no light at all. c) The trees in the forest were very small. d) The forest was a little bit shady. | b) The forest was completely dark, with no light at all. | **choice a**: The sentence compares the dark to a seed. It isn't about how many seeds there were. <br> **choice c**: The comparison is about color and light, not size. How black is the inside of a seed? <br> **choice d**: A little shady would still have some light. Could any light get inside a seed? | Think about what it would be like inside a closed-up seed. Could any light get in? |
+| 8 | On level | Brief | The legend never says its lesson out loud. Help me figure it out and prove it. *(Passage D)* **Part 1: What is a theme of "Why the Canopy Glows"? Part 2: Highlight TWO sentences that show Tavi was scared but acted anyway.** Part 1: What is a theme of the legend? (a) The jungle glows at night. b) Being brave means doing what is right even when you are afraid. c) Tavi climbed a tree and found his sister by the river. d) Never go to the river alone.) Part 2: Highlight two sentences that show Tavi was scared but acted anyway. | Part 1: b) Being brave means doing what is right even when you are afraid. <br> Part 2: "Tavi's knees shook and his heart pounded, but he stepped into the black forest anyway." (D2.3) AND "The moon saw that the boy was frightened but had climbed anyway." (D4.1) | (step 1) **choice a**: That's what the legend explains, not a lesson about life. What does Tavi's choice teach? <br> (step 1) **choice c**: That's a summary of what happened. What lesson does Tavi's choice teach us? <br> (step 1) **choice d**: The legend never says that. Think about how Tavi felt and what he did anyway. <br> (step 2) **highlights D2.2**: That shows the hunters would not search. Find sentences about how Tavi felt and what he did. <br> (step 2) **highlights D3.1**: That shows what Tavi did, but not that he was scared. Find sentences that show both. <br> (step 2) **highlights D5.2**: That's what the elders say. Find sentences in the story that SHOW Tavi being scared and brave. | What did Tavi feel, and what did he do anyway? The theme is the lesson his choice teaches. |
+| 9 | On level | Decipher | The next story has talking animals in it! Elder Moku says it's not a tall tale or a legend. *(Passage E)* **Part 1: What kind of story is "Monkey and the Fallen Fig Tree"? Part 2: Highlight the sentence that states the lesson right out loud.** Part 1: What kind of story is this? (a) A tall tale, because the hero is bigger than life b) A fable, because animals talk and act like people, and it ends with a moral c) A legend, because it explains why something in nature happens d) A log, because it tells facts about the jungle) Part 2: Highlight the sentence that states the lesson right out loud. | Part 1: b) A fable, because animals talk and act like people, and it ends with a moral <br> Part 2: "Moral: Grab everything for yourself, and you may lose it all." (E7.1) | (step 1) **choice a**: Is Monkey bigger than life? Look at who the characters are and how the story ends. <br> (step 1) **choice c**: Does this story explain why something in nature happens? Look at the characters and the ending. <br> (step 1) **choice d**: A log tells what really happened. Can real animals talk? <br> (step 2) **highlights E6.1**: That's what Monkey says to his friends. Which sentence states a lesson for everyone? <br> (step 2) **highlights E6.2**: That shows what Monkey did. Which sentence says the lesson out loud? <br> (step 2) **highlights E3.1**: That's Monkey refusing to share. Look at the very end of the fable. | Who are the characters? And look at the very end. Does the story tell you its lesson? |
+| 10 | Challenge | Two Accounts | Surprise! A storm just knocked over the supply tent, and fruit is rolling everywhere. Both camps are grabbing. The elders say, "Remember Tulu and Monkey!" Quick, what do the two stories have in common? *(Passage B, E)* **Part 1: How are the themes of Big Tulu and the fable alike? Part 2: Highlight one sentence from each story that shows someone being helped after sharing, or learning to share. Part 3: How are the two stories different?** Part 1: How are the themes of the two stories alike? (a) Both are about food. b) Both show that sharing helps everyone, and keeping everything for yourself does not. c) Both have animals that talk. d) Both explain why something in nature happens.) Part 2: Highlight one sentence from Big Tulu and one from the fable. Part 3: How are the two stories different? (a) Tulu shares from the start, but Monkey learns to share only after he gets into trouble. b) Tulu never shares, but Monkey always shares. c) Big Tulu is true, but the fable is made up. d) Big Tulu has a moral written at the end, but the fable does not.) | Part 1: b) Both show that sharing helps everyone, and keeping everything for yourself does not. <br> Part 2: "People from every camp were coming, and each one carried something: a root, a handful of beans, a pinch of salt." (B4.3 or B4.4 or B5.1) AND ""You helped me, even after I would not share with you," Monkey said quietly." (E6.1 or E6.2) <br> Part 3: a) Tulu shares from the start, but Monkey learns to share only after he gets into trouble. | (step 1) **choice a**: Food is the topic, not the theme. What lesson do both stories teach about sharing? <br> (step 1) **choice c**: Only the fable has talking animals. What lesson do the two stories share? <br> (step 1) **choice d**: Neither story explains nature. Think about what happens to the sharers and the grabber. <br> (step 2) **highlights B1.2**: That's an exaggeration about Tulu's size. Find where the camps give back to Tulu. <br> (step 2) **highlights E3.2**: That shows Monkey being greedy. Find where he learns to share. <br> (step 2) **highlights E4.3**: That shows Monkey in trouble. Which sentence shows what he learned? <br> (step 3) **choice b**: Tulu shared her soup with every camp. Who shared right away, and who learned later? <br> (step 3) **choice c**: Both are made-up stories the elders tell. How do Tulu and Monkey act differently? <br> (step 3) **choice d**: Check the endings. Which story ends with "Moral:"? | Food is a topic both stories share. The theme is the lesson. What happens to the characters who share, and to the one who grabs? |
+
+**Act complete:** The camps are picking up the fruit together, {firstName}. The stories are working.
+
+**Teaser:** Next on Solara: it's time to write the report. Act 3 is open now, or come back to it next time.
+
+## Act 3 · The report
+
+**Opening:** Specialist {firstName}, Commander Vega. Tomorrow we meet with the river camp. Help us pull together what the stories taught us, then send the report.
+
+| # | Level | Machine | Crew line and question | Answer | Wrong answers → hint | S.A.M. hint |
+| --- | --- | --- | --- | --- | --- | --- |
+| 11 | On level | Brief | I wrote notes on all three stories, but I mixed up themes with story details. Help me sort them out. *(Passage B, D, E)* **Pick every statement that is a THEME, a lesson about life, not a detail or summary.** Items: a) Being brave means acting even when you are afraid. b) Sharing what you have can make everyone stronger. c) Tavi climbed the tallest tree and called to the moon. d) Monkey stuffed figs into his cheeks and his tail. e) Big Tulu's pot was as big as a lake. | a) Being brave means acting even when you are afraid. + b) Sharing what you have can make everyone stronger. | **picks c**: That tells what Tavi did in one story. It's a summary, not a lesson. <br> **picks d**: That's a detail about Monkey. What lesson could fit many people? <br> **picks e**: That's an exaggerated detail from the tall tale, not a lesson about life. <br> **misses one**: There is more than one theme. Look for every statement that teaches a lesson about life. | A theme could fit many stories and many people. A detail or summary only tells what happened in one story. |
+| 12 | On level | Brief | Tomorrow we meet with the river camp about the supplies. Which old story should I remember when I get there? *(Passage B, D, E)* **Which story's lesson would help the crew most with the supply problem? Write 1–2 sentences. Name the story and use one detail from it.** Rubric: Names a story and its lesson; Uses a detail from that story as evidence; Complete sentences with capitals and end punctuation | Written, teacher-scored (at least 15 words) |  | Think about the problem in Vega's log. Which story's lesson fits that problem? Then find a detail that shows the lesson. |
+| 13 | On level | Read the Crew | Kai grumbled about the fruit all day. But his message to Nova sounds different. I think the stories worked. *(Passage C, A)* **Highlight a sentence in Kai's message that shows he has changed his mind about sharing.** | "Maybe I was too greedy about the dried fruit." (C-s5 or C-s6) | **highlights C-s4**: That shows Kai noticed Elder Rana. Which sentence shows he feels differently about the fruit? <br> **highlights C-s3**: That tells which story Kai liked. Which sentence shows a change in how he thinks about sharing? <br> **highlights C-s1**: That tells how Kai liked story night. How does he feel now about the dried fruit? | Earlier, Kai counted the fruit twice. Which sentence shows he feels or plans something different now? |
+| 14 | On level | Decipher | Mission Control asked how a tall tale is different from a legend. I want to get this right. *(Passage B, D)* **Which answer best explains the difference between Big Tulu (a tall tale) and "Why the Canopy Glows" (a legend)?** Choices: a) The tall tale has talking animals, and the legend has a moral at the end. b) The tall tale is true, and the legend is made up. c) The tall tale uses huge, funny exaggerations, and the legend tells about a brave person long ago and explains something in nature. d) The tall tale is short, and the legend is long. | c) The tall tale uses huge, funny exaggerations, and the legend tells about a brave person long ago and explains something in nature. | **choice a**: Talking animals and a moral are features of a fable. Neither of these stories has them. <br> **choice b**: Both stories are made up. How does each one tell its story? <br> **choice d**: Length doesn't decide the genre. What does each kind of story do? | Think about what makes Big Tulu funny and impossible, and what the canopy story explains at the end. |
+| 15 | Challenge | Transmit | Surprise! The supply drone is landing early, and Mission Control wants our report before it leaves. Fix it, add proof, and send it. *(Passage F, B, D, E)* **Part 1: Fix the 4 mistakes in the report. Part 2: Pick the best evidence to add. Part 3: Write 2–3 sentences telling one theme from story night, with evidence from a story.** Part 1: Fix the 4 mistakes in the report. Part 2: Pick the best evidence to show that sharing helps everyone. (a) Big Tulu was so tall that birds built nests in her hair. b) After Tulu shared her soup, people from every camp brought gifts for her pot. c) The jungle of Solara had no light at night. d) Tortoise pulled into his shell.) Part 3: Tell one theme from story night. Use evidence from one of the stories. Rubric: States a theme as a lesson about life, not a topic or summary; Uses evidence from one of the stories; Complete sentences with capitals and end punctuation | Part 1: solara → Solara; teach → taught; there → their; Tomorow → Tomorrow <br> Part 2: b) After Tulu shared her soup, people from every camp brought gifts for her pot. <br> Part 3: Written, teacher-scored (at least 18 words) | (step 1) **wrong fix on F:solara**: Solara is the name of a moon. What do names start with? <br> (step 1) **wrong fix on F:teach**: Story night already happened. Yesterday each story ___ us something. <br> (step 1) **wrong fix on F:there**: The food belongs to the camps. Which word shows that something belongs to someone? <br> (step 1) **wrong fix on F:Tomorow**: Tomorrow has two r's. Which spelling is right? <br> (step 2) **choice a**: That's an exaggeration about Tulu's size. Which detail proves sharing helps everyone? <br> (step 2) **choice c**: That's from the legend, and it's about the dark. Which detail shows sharing paying off? <br> (step 2) **choice d**: That shows Tortoise hiding. Which detail shows what happened after someone shared? | Good evidence is a detail from the story that proves the lesson. A theme is a lesson, not just what happened. |
+
+**Act complete:** Your report is on its way to Mission Control, {firstName}! Both camps are sharing again.
+
+**Teaser:** Mission complete. Commander Vega will send your next transmission soon.
+
+## Discoveries (Earth-true)
+
+| Task | Discovery | Fact |
+| --- | --- | --- |
+| 2 | The rainforest canopy | The canopy is the thick top layer of leaves and branches in a rainforest. Most rainforest animals live up there, not on the ground. |
+| 4 | Rainforest rain | Tropical rainforests usually get more than 80 inches of rain each year. That much water would be taller than most grown-ups! |
+| 5 | Fig trees | Fig trees are very important in rainforests. They often have fruit when other trees don't, so many animals depend on them for food. |
+| 6 | The biggest flower | The biggest single flower in the world grows in rainforests in Southeast Asia. It can be almost 1 meter wide, and it smells like rotten meat! |
+| 7 | The forest floor | The rainforest floor is very dark, even at noon. The canopy is so thick that only a tiny bit of sunlight reaches the ground. |
+| 9 | Pink river dolphins | Pink river dolphins live in the Amazon River. They can bend their necks to swim around tree trunks in flooded forests. |
+| 10 | Capuchin monkeys | Capuchin monkeys are clever tool users. Some use rocks to crack open hard nuts. |
+| 11 | Army ants | Army ants do not build a lasting nest. At night, thousands of them hook their bodies together to make a living nest. |
+| 13 | Hoatzin chicks | Baby hoatzin birds have little claws on their wings. The claws help them climb through branches before they can fly. |
+| 15 | Rainforest tortoises | Yellow-footed tortoises live in South American rainforests. They eat a lot of fallen fruit from the forest floor. |
+
+## Review checklist
+
+- [ ] Every task practices the listed standards
+- [ ] Answer keys checked by hand
+- [ ] Wrong answers match real misconceptions
+- [ ] Discovery facts are accurate
+- [ ] Nothing implies a time limit

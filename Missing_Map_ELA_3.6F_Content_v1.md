@@ -1,6 +1,6 @@
 # The Missing Map — Content v1 (ELA.3.6F-XP)
 
-**Grade 3 · ELAR · Frostveil.** Written Sept 26, 2026. Code: `lib/cases/expedition-station/quests/missing-map.js`.
+**Grade 3 · ELAR · Frostveil.** Written Sept 28, 2026. Code: `lib/cases/expedition-station/quests/missing-map.js`.
 
 **Main standard:** 3.6F · **Also shows up under:** 3.7C, 3.7B, 3.3B, 3.8A, 3.8C, 3.11D
 
@@ -121,7 +121,7 @@ The crew's map went missing on **frostveil**`[F:frostveil]` last week. A curious
 | 2 | Snowflakes | Most snowflakes have six sides or six points. Each one grows in its own way as it falls. |
 | 4 | Arctic foxes | Arctic foxes grow thick white fur in winter. In summer, their fur turns brown or gray. |
 | 5 | Animal tracks | Scientists can tell which animal walked by looking at the shape and size of its tracks in snow or mud. |
-| 6 | Snow dens | Snow has lots of air trapped inside it. That air holds in heat, so a den dug in snow can stay much warmer than the wind outside. |
+| 6 | The equator | The equator is an imaginary line around the middle of Earth. Places near it are warm all year. |
 | 8 | North on maps | On most maps, north is at the top. A compass rose shows which way is north, south, east, and west. |
 | 9 | Polar bear paws | Polar bears have fur on the bottoms of their paws. It helps them grip the ice and keeps their feet warm. |
 | 10 | Clear ice, white snow | A single ice crystal is clear like glass. A pile of snow looks white because light bounces around all the tiny crystals. |

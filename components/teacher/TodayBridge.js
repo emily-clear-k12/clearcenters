@@ -6,6 +6,7 @@ import {engineInfo,subjectStyle,assignmentBoard} from '../../lib/teacherBridge';
 import {rememberedTeacherClass,rememberTeacherClass} from '../../lib/teacherClass';
 import {missionMapTeksCode} from '../../lib/cases/mission-map/teksLabels';
 import {supabase} from '../../lib/supabaseClient';
+import { countLine } from '../../lib/gradeScale';
 
 function teksKeys(standard){
  const raw=String(standard||'');
@@ -14,8 +15,6 @@ function teksKeys(standard){
  const source=(mapped||raw.replace(/-(?:SC|GC|FR|SL|SD|AD|RS|MM|CL|EX|XP|MS).*$/i,'')).replace(/(\d+)-(\d+[A-Z]?)/gi,'$1.$2');
  return [...new Set((source.match(/\d+\.\d+[A-Z]?/gi)||[]).map(code=>code.toUpperCase()))];
 }
-function scoreColor(pct){if(pct<=50)return '#d64545';if(pct<70)return '#e8943a';if(pct<80)return '#c8960a';if(pct<90)return '#1f8a4d';return '#3d84f5';}
-function scoreWord(pct){if(pct>=90)return 'Excellent';if(pct>=80)return 'Proficient';if(pct>=60)return 'Developing';return 'Needs support';}
 
 export default function TodayBridge({teacherName,teacherEmail,classes,students,assignments,submissions,hints,caseDetails,targets,targetsError,error,onRewards,children}){
  const [classId,setClassId]=useState(''),[selected,setSelected]=useState({}),[progressFilter,setProgressFilter]=useState(null);
@@ -42,7 +41,7 @@ export default function TodayBridge({teacherName,teacherEmail,classes,students,a
  const byId=Object.fromEntries(list.map(a=>[a.id,a]));
  const requests=roster.map(s=>{const mine=hints.filter(h=>h.student_id===s.id&&byId[h.assignment_id]);const standard=byId[mine[0]?.assignment_id]?.case_standard;return {...s,count:mine.length,standard};}).filter(s=>s.count>0).sort((a,b)=>b.count-a.count);
  const released=submissions.filter(s=>s.assignment_id===current?.id&&s.released&&s.teacher_grade!=null);
- const pct=released.length?Math.round(released.reduce((sum,s)=>sum+Number(s.teacher_grade),0)/released.length/2*100):null;
+ const gradeLine=released.length?countLine(released.map(s=>s.teacher_grade)):null;
  const currentKeys=teksKeys(current?.case_standard);
  const currentTopic=currentKeys.join(' & ');
  const ideas=library.filter(item=>{
@@ -58,10 +57,21 @@ export default function TodayBridge({teacherName,teacherEmail,classes,students,a
   supabase.from('cases').select('standard, title, engine, subject, grade').eq('grade',grade).then(({data})=>{if(!ignore)setLibrary(data||[])});
   return ()=>{ignore=true};
  },[info.grade,cls?.grade,current?.case_standard,currentTopic]);
- const struggling=roster.map(s=>{const grades=submissions.filter(x=>x.student_id===s.id&&list.some(a=>a.id===x.assignment_id)&&x.released&&x.teacher_grade!=null).map(x=>Number(x.teacher_grade));const avg=grades.length?grades.reduce((a,b)=>a+b,0)/grades.length:null;const hintCount=hints.filter(h=>h.student_id===s.id&&byId[h.assignment_id]).length;return {student:s,avg,hintCount};}).filter(x=>(x.avg!=null&&x.avg<1.4)||x.hintCount>=2).sort((a,b)=>b.hintCount-a.hintCount||((a.avg??9)-(b.avg??9))).slice(0,3);
+ const struggling=roster.map(s=>{const grades=submissions.filter(x=>x.student_id===s.id&&list.some(a=>a.id===x.assignment_id)&&x.released&&x.teacher_grade!=null).map(x=>Number(x.teacher_grade));const notYet=grades.filter(g=>g===0).length;const hintCount=hints.filter(h=>h.student_id===s.id&&byId[h.assignment_id]).length;return {student:s,notYet,hintCount};}).filter(x=>x.notYet>0||x.hintCount>=2).sort((a,b)=>b.notYet-a.notYet||b.hintCount-a.hintCount).slice(0,3);
  const distress=list.find(a=>a.distress_call);
  const boards=[];
  if(distress)boards.push({key:'live',name:'Distress call',button:'Open the live board',href:`/teacher/live-ops-board?assignmentId=${distress.id}`,image:'/teacher/live_ops_board_bg.jpg',focus:'68% 18%'});
+ const startSteps=[
+  {done:roster.length>0,label:'Add your students',href:`/teacher/class?class=${cls?.id}`},
+  {done:list.length>0,label:'Assign an activity',href:`/teacher/assign/new?classId=${cls?.id}`},
+ ];
+ const showStart=startSteps.some(step=>!step.done);
+ function dayKey(date){return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`}
+ const monday=new Date();
+ monday.setHours(0,0,0,0);
+ monday.setDate(monday.getDate()-(monday.getDay()===0?6:monday.getDay()-1));
+ const weekDays=[0,1,2,3,4].map(offset=>{const date=new Date(monday);date.setDate(monday.getDate()+offset);return date});
+ const todayKey=dayKey(new Date());
  const actualTeks=missionMapTeksCode(current?.case_standard||'')||current?.case_standard;
  const displayName=teacherName?.split(' ')[0]||teacherEmail?.split('@')[0]||'teacher';
  function showProgress(key){setProgressFilter(key);dialog.current?.showModal()}
@@ -69,9 +79,11 @@ export default function TodayBridge({teacherName,teacherEmail,classes,students,a
  return <BridgePage teacherName={teacherName} teacherEmail={teacherEmail}>
  <PageHeading title={`Hello, ${displayName}.`} subtitle={new Date().toLocaleDateString(undefined,{weekday:'long',month:'long',day:'numeric'})}><ClassTabs classes={classes} value={cls?.id} onChange={changeClass}/><div className="cc-class-context">{cls?.grade?`Grade ${cls.grade} · `:''}{cls?.subject?`${cls.subject} · `:''}{roster.length} students</div></PageHeading>
  {error&&<div className="cc-error" role="alert">{error}</div>}
- {!classes.length?<Empty><h2>Your teaching space is ready.</h2><p>Create a class to start assigning activities.</p><Link className="cc-btn" href="/teacher/assign">Create a class</Link></Empty>:<>
+ {!classes.length?<Empty><h2>Your teaching space is ready.</h2><p>Create a class to start assigning activities.</p><Link className="cc-btn" href="/teacher/class">Create a class</Link></Empty>:<>
+ {showStart&&<section className="cc-panel" style={{marginBottom:16}}><h2>Start here</h2><p className="cc-muted">Two steps, then your class can begin.</p><div className="cc-row">{startSteps.map(step=><Link key={step.label} className={step.done?'cc-badge teal':'cc-btn'} href={step.href}>{step.done?'Done · ':''}{step.label}</Link>)}</div></section>}
+ <section className="cc-panel" style={{marginBottom:16}}><h2>This week</h2><p className="cc-muted">What is due Monday through Friday.</p><div className="cc-week-scroll"><div className="cc-week"><div className="cc-week-label">Due</div>{weekDays.map(date=>{const key=dayKey(date);const due=list.filter(item=>item.due_date===key);return <div key={key} className={'cc-day'+(key===todayKey?' is-today':'')}><strong>{date.toLocaleDateString(undefined,{weekday:'short'})}</strong>{due.length?due.map(item=><p key={item.id}>{caseDetails[item.case_standard]?.title||item.case_standard}</p>):<p className="cc-day-empty">Nothing due</p>}</div>})}</div></div></section>
  <div className="cc-two"><div className="cc-stack">
- {current?<section className="cc-panel cc-frame cc-hero" style={style}><div className="cc-hero-main"><div><div className="cc-eyebrow cc-subject-label">CURRENT ACTIVITY · {engine.label}</div><h2>{info.title||current.case_standard}</h2><p className="cc-muted">{actualTeks} · {progressUnavailable?'Recipients unavailable':targetRows.length?`${applicable.length} selected student${applicable.length===1?'':'s'}`:'Whole class'}{current.due_date?` · Due ${new Date(current.due_date+'T12:00:00').toLocaleDateString(undefined,{month:'short',day:'numeric'})}`:''}</p><p className="cc-muted">{info.learning_target||engine.description}</p>{pct!=null&&<p className="cc-muted"><span style={{color:scoreColor(pct),fontWeight:700}}>{pct}%</span> class average on this activity · {scoreWord(pct)}</p>}<div className="cc-row"><Link className="cc-btn" href={assignmentBoard(current,info.engine)}>View assignment</Link><button className="cc-btn secondary" disabled={progressUnavailable} onClick={()=>showProgress('all')}>View students</button></div></div><img src={engine.image} alt={`${engine.label} activity`}/></div>
+ {current?<section className="cc-panel cc-frame cc-hero" style={style}><div className="cc-hero-main"><div><div className="cc-eyebrow cc-subject-label">CURRENT ACTIVITY · {engine.label}</div><h2>{info.title||current.case_standard}</h2><p className="cc-muted">{actualTeks} · {progressUnavailable?'Recipients unavailable':targetRows.length?`${applicable.length} selected student${applicable.length===1?'':'s'}`:'Whole class'}{current.due_date?` · Due ${new Date(current.due_date+'T12:00:00').toLocaleDateString(undefined,{month:'short',day:'numeric'})}`:''}</p><p className="cc-muted">{info.learning_target||engine.description}</p>{gradeLine&&<p className="cc-muted" style={{fontWeight:700}}>{gradeLine}</p>}<div className="cc-row"><Link className="cc-btn" href={assignmentBoard(current,info.engine)}>View assignment</Link><button className="cc-btn secondary" disabled={progressUnavailable} onClick={()=>showProgress('all')}>View students</button></div></div><img src={engine.image} alt={`${engine.label} activity`}/></div>
  {!progressUnavailable?<div className="cc-progress"><div className="cc-progress-bar" aria-hidden="true">{['not started','working','completed'].map((k,i)=><span key={k} style={{flex:counts[k]||0,display:counts[k]?'block':'none',background:['#c9c6df','#5798ef','#4bb589'][i]}}/>)}</div><div className="cc-progress-labels">{['not started','working','completed'].map(k=><button key={k} onClick={()=>showProgress(k)}>{counts[k]} {k}</button>)}</div></div>:<p className="cc-muted">Student progress is unavailable. Refresh to try again.</p>}
  </section>:<section className="cc-panel"><Empty><h2>What will your class explore?</h2><p>Assign an activity to bring this space to life.</p><Link className="cc-btn" href={`/teacher/assign/new?classId=${cls.id}`}>Find an activity</Link></Empty></section>}
  {others.length>0&&<section className="cc-panel cc-assigned-shelf"><div className="cc-row cc-between"><h2>Also assigned</h2><span className="cc-badge neutral">{others.length} activities</span></div><div className="cc-assigned-grid">{(showAll?others:others.slice(0,4)).map(item=>{const detail=caseDetails[item.case_standard]||{},art=engineInfo(detail.engine);return <button key={item.id} className="cc-assigned-tile" style={subjectStyle(detail.subject||cls?.subject)} onClick={()=>focus(item.id)} aria-label={`Focus on ${detail.title||item.case_standard}`}><img src={art.image} alt=""/><span><small>{art.label}</small><strong>{detail.title||item.case_standard}</strong><span className="cc-assigned-meta">{item.due_date?`Due ${new Date(item.due_date+'T12:00:00').toLocaleDateString(undefined,{month:'short',day:'numeric'})}`:item.case_standard}</span></span><span aria-hidden="true" className="cc-tile-arrow">→</span></button>})}</div>{others.length>4&&<button className="cc-text-button" aria-expanded={showAll} onClick={()=>setShowAll(!showAll)}>{showAll?'Show fewer assignments':`View all ${others.length} assignments →`}</button>}</section>}
@@ -80,9 +92,9 @@ export default function TodayBridge({teacherName,teacherEmail,classes,students,a
  {!pending.length&&<p className="cc-muted">You’re caught up on submitted work for this class.</p>}
  <Link className="cc-btn" style={{width:'100%',marginTop:14}} href={`/teacher/grade?classId=${cls.id}`}>Review student work</Link></section>
  <section className="cc-panel cc-support"><div className="cc-support-title"><img src="/icons/sam/cosmic/helping-poster.png" alt="S.A.M."/><h2>Next teaching step</h2></div>
- {error?<p className="cc-muted">Follow-up evidence is unavailable. Refresh to try again.</p>:struggling.length||pct!=null||requests.length?<>
+ {error?<p className="cc-muted">Follow-up evidence is unavailable. Refresh to try again.</p>:struggling.length||gradeLine||requests.length?<>
  {struggling.length>0&&<div className="cc-support-suggestion"><div className="cc-eyebrow">S.A.M. suggests</div><h3>Check in · {struggling.map(x=>x.student.first_name).join(', ')}</h3><p>Review their recent work before choosing a follow-up.</p></div>}
- <div className="cc-support-metrics">{pct!=null&&<div><strong style={{color:scoreColor(pct)}}>{pct}%</strong><span>Reviewed average on this activity</span></div>}{requests.length>0&&<div><strong>{requests.reduce((n,s)=>n+s.count,0)}</strong><span>Hint requests across this class</span></div>}</div>
+ <div className="cc-support-metrics">{gradeLine&&<div><strong>{gradeLine}</strong><span>Reviewed work on this activity</span></div>}{requests.length>0&&<div><strong>{requests.reduce((n,s)=>n+s.count,0)}</strong><span>Hint requests across this class</span></div>}</div>
  {requests.slice(0,3).map(s=><div className="cc-person" key={s.id}><div className="cc-avatar">{s.first_name?.[0]}</div><div><strong>{s.first_name}</strong><p>{s.count} hint{s.count===1?'':'s'} across assigned work</p></div><Link className="cc-link" href={`/teacher/students/${s.id}`}>View work</Link></div>)}
  {!requests.length&&struggling.map(x=><div className="cc-person" key={x.student.id}><div className="cc-avatar">{x.student.first_name?.[0]}</div><div><strong>{x.student.first_name}</strong><p>Review released work across this class.</p></div><Link className="cc-link" href={`/teacher/students/${x.student.id}`}>View work</Link></div>)}
  <Link className="cc-btn" href={`/teacher/progress?classId=${cls.id}`}>Review evidence →</Link>
@@ -93,7 +105,7 @@ export default function TodayBridge({teacherName,teacherEmail,classes,students,a
  {ideas.length>0?<div className="cc-three">{ideas.map(item=>{const itemEngine=engineInfo(item.engine);return <Link key={item.standard} className="cc-mini cc-frame" style={{...style,textAlign:'left'}} href={`/teacher/assign/new?classId=${cls.id}&standard=${encodeURIComponent(teksKeys(item.standard)[0]||'')}`}><img src={itemEngine.image} alt=""/><div><strong>{itemEngine.label}</strong><p>{item.title||item.standard}</p></div></Link>})}</div>:<p className="cc-muted">No other activities for this standard yet.</p>}
  </section>}
  {boards.length>0&&<div className="cc-board-grid">{boards.map(board=><div key={board.key} className="cc-board-tile cc-frame" style={style}><Link href={board.href}><img src={board.image} alt="" style={board.focus?{objectPosition:board.focus}:undefined}/></Link><strong>{board.name}</strong><Link className="cc-link" href={board.href}>{board.button}</Link>{board.also&&<Link className="cc-link" href={board.also}>{board.alsoLabel||'Open'}</Link>}</div>)}</div>}
- <div className="cc-row cc-between" style={{marginTop:20}}><Link className="cc-link" href={`/teacher/roster/${cls.id}`}>Class code & roster</Link><button className="cc-btn quiet" onClick={()=>onRewards(cls.id)}>Give crystals & rewards</button></div>
+ <div className="cc-row cc-between" style={{marginTop:20}}><Link className="cc-link" href={`/teacher/class?class=${cls.id}&tab=students`}>Class code & students</Link><button className="cc-btn quiet" onClick={()=>onRewards(cls.id)}>Give crystals & rewards</button></div>
  </>}
  <dialog ref={dialog}><div className="cc-row cc-between"><h2>{progressFilter==='all'?'Activity progress':progressFilter}</h2><button className="cc-btn secondary" onClick={()=>dialog.current?.close()}>Close</button></div>{applicable.filter(s=>progressFilter==='all'||statusFor(s)===progressFilter).map(s=><div className="cc-person" key={s.id}><div className="cc-avatar">{s.first_name[0]}</div><div><strong>{s.first_name}</strong><p>{statusFor(s)}</p></div><Link className="cc-link" href={`/teacher/students/${s.id}`}>View student</Link></div>)}</dialog>{children}
  </BridgePage>

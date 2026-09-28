@@ -5,6 +5,8 @@ import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "../../../lib/supabaseClient";
 import { COLORS, PAGE_ACCENTS, PAGE_BACKGROUNDS, panelStyle } from "../../../lib/teacherTheme";
+import { countLevels, countLine, levelColor, levelWord } from "../../../lib/gradeScale";
+import { mistakeLine } from "../../../lib/mistakeLine";
 
 // Sept 13 — second page moved to the console-interior look (see
 // Teacher_SiteWide_Redesign_Plan.md). Observatory's destination, so it
@@ -16,18 +18,6 @@ import { COLORS, PAGE_ACCENTS, PAGE_BACKGROUNDS, panelStyle } from "../../../lib
 const ACCENT = "#7541cf";
 const BG = PAGE_BACKGROUNDS["/teacher/progress"];
 
-function proficiencyBand(avg) {
-  if (avg >= 1.8) return { label: "Excellent", color: COLORS.success };
-  if (avg >= 1.4) return { label: "Proficient", color: COLORS.info };
-  if (avg >= 1.0) return { label: "Developing", color: COLORS.violet };
-  return { label: "Needs Support", color: COLORS.danger };
-}
-
-// Lower rank = shown first in the card grid — students who need a look float
-// to the front, a student with no grades yet sorts last (nothing to act on).
-const BAND_RANK = { "Needs Support": 0, "Developing": 1, "Proficient": 2, "Excellent": 3 };
-const BAND_ORDER = ["Needs Support", "Developing", "Proficient", "Excellent"];
-
 export default function StudentProgressPage() {
   const router = useRouter();
   const [loadingAuth, setLoadingAuth] = useState(true);
@@ -36,12 +26,13 @@ export default function StudentProgressPage() {
   const [teacherId, setTeacherId] = useState(null);
   const [groups, setGroups] = useState([]);
   const [standardGroups, setStandardGroups] = useState([]);
-  const [view, setView] = useState("student"); // "student" | "standard"
+  const [view, setView] = useState("student");
+  const [levelFilter, setLevelFilter] = useState(null);
+  const [gridGroups, setGridGroups] = useState([]);
   const [expandedKey, setExpandedKey] = useState(null);
   const [selectedClassId, setSelectedClassId] = useState("all");
   useEffect(()=>{const id=new URLSearchParams(window.location.search).get("classId");if(id)setSelectedClassId(id)},[]);
   const [search, setSearch] = useState("");
-  const [bandFilter, setBandFilter] = useState(null);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data, error }) => {
@@ -74,7 +65,7 @@ export default function StudentProgressPage() {
 
     let submissions = [];
     if (assignmentIds.length > 0) {
-      const { data } = await supabase.from("submissions").select("student_id, assignment_id, teacher_grade, released, submitted_at").in("assignment_id", assignmentIds);
+      const { data } = await supabase.from("submissions").select("student_id, assignment_id, teacher_grade, released, submitted_at, self_confidence, classification_lab_data, signal_data").in("assignment_id", assignmentIds);
       submissions = data || [];
     }
 
@@ -82,9 +73,11 @@ export default function StudentProgressPage() {
     // can label each row with the case title instead of just a bare code.
     const caseStandards = [...new Set((assignments || []).map((a) => a.case_standard).filter(Boolean))];
     let caseTitleMap = {};
+    let caseEngineMap = {};
     if (caseStandards.length > 0) {
-      const { data: cases } = await supabase.from("cases").select("standard, title").in("standard", caseStandards);
+      const { data: cases } = await supabase.from("cases").select("standard, title, engine").in("standard", caseStandards);
       caseTitleMap = Object.fromEntries((cases || []).map((c) => [c.standard, c.title]));
+      caseEngineMap = Object.fromEntries((cases || []).map((c) => [c.standard, c.engine]));
     }
 
     const byStudent = {};
@@ -96,11 +89,7 @@ export default function StudentProgressPage() {
 
     const computed = students.map((st) => {
       const info = byStudent[st.id] || { grades: [], submittedCount: 0 };
-      const hasGrades = info.grades.length > 0;
-      const avg = hasGrades ? info.grades.reduce((a, b) => a + b, 0) / info.grades.length : null;
-      const avgPct = avg !== null ? Math.round((avg / 2) * 100) : null;
-      const band = avg !== null ? proficiencyBand(avg) : null;
-      return { id: st.id, name: st.first_name, classId: st.class_id, className: classMap[st.class_id], missionsCompleted: info.submittedCount, avgPct, band };
+      return { id: st.id, name: st.first_name, classId: st.class_id, className: classMap[st.class_id], missionsCompleted: info.submittedCount, grades: info.grades, notYet: countLevels(info.grades)[0] };
     });
 
     // Divide by class instead of one mixed list, so each class's students
@@ -112,7 +101,7 @@ export default function StudentProgressPage() {
       if (byClass[row.classId]) byClass[row.classId].students.push(row);
     });
     const grouped = Object.values(byClass);
-    grouped.forEach((g) => g.students.sort((a, b) => (a.avgPct ?? -1) - (b.avgPct ?? -1)));
+    grouped.forEach((g) => g.students.sort((a, b) => b.notYet - a.notYet || a.name.localeCompare(b.name)));
 
     setGroups(grouped);
 
@@ -138,21 +127,48 @@ export default function StudentProgressPage() {
     const standardGrouped = (classes || []).map((c) => {
       const stdMap = byClassStandard[c.id] || {};
       const standardRows = Object.entries(stdMap).map(([standard, info]) => {
-        const avg = info.grades.reduce((a, b) => a + b, 0) / info.grades.length;
-        const avgPct = Math.round((avg / 2) * 100);
         const studentRows = Object.entries(info.byStudent)
-          .map(([studentId, grades]) => {
-            const sAvg = grades.reduce((a, b) => a + b, 0) / grades.length;
-            return { id: studentId, name: studentMap[studentId]?.first_name || "Unknown", avgPct: Math.round((sAvg / 2) * 100), band: proficiencyBand(sAvg) };
-          })
-          .sort((a, b) => a.avgPct - b.avgPct);
-        return { standard, title: caseTitleMap[standard] || standard, avgPct, band: proficiencyBand(avg), gradedCount: info.grades.length, students: studentRows };
+          .map(([studentId, grades]) => ({ id: studentId, name: studentMap[studentId]?.first_name || "Unknown", grades }))
+          .sort((a, b) => countLevels(b.grades)[0] - countLevels(a.grades)[0]);
+        return { standard, title: caseTitleMap[standard] || standard, grades: info.grades, gradedCount: info.grades.length, students: studentRows };
       });
-      standardRows.sort((a, b) => a.avgPct - b.avgPct);
+      standardRows.sort((a, b) => countLevels(b.grades)[0] - countLevels(a.grades)[0]);
       return { classId: c.id, className: c.name, standards: standardRows };
     });
 
     setStandardGroups(standardGrouped);
+
+    const grids = (classes || []).map((c) => {
+      const classStudents = students.filter((student) => student.class_id === c.id);
+      const standards = [...new Set((assignments || []).filter((a) => a.class_id === c.id).map((a) => a.case_standard).filter(Boolean))];
+      const cells = {};
+      const byStandard = {};
+      submissions.forEach((s) => {
+        const standard = assignmentStandard[s.assignment_id];
+        const student = studentMap[s.student_id];
+        if (!standard || !student || student.class_id !== c.id) return;
+        if (!byStandard[standard]) byStandard[standard] = [];
+        byStandard[standard].push(s);
+        if (s.released && s.teacher_grade !== null && s.teacher_grade !== undefined) cells[`${s.student_id}:${standard}`] = Number(s.teacher_grade);
+      });
+      const sureWrong = [...new Set(submissions.filter((s) => {
+        const student = studentMap[s.student_id];
+        return student && student.class_id === c.id && s.released && Number(s.teacher_grade) === 0 && s.self_confidence === "strong";
+      }).map((s) => studentMap[s.student_id]?.first_name).filter(Boolean))];
+      return {
+        classId: c.id,
+        className: c.name,
+        students: classStudents.map((student) => ({ id: student.id, name: student.first_name })),
+        standards: standards.map((standard) => ({
+          standard,
+          title: caseTitleMap[standard] || standard,
+          mistake: mistakeLine(standard, caseEngineMap[standard], byStandard[standard] || []),
+        })),
+        cells,
+        sureWrong,
+      };
+    });
+    setGridGroups(grids);
     setLoading(false);
   }, []);
 
@@ -166,31 +182,25 @@ export default function StudentProgressPage() {
     return relevant.flatMap((g) => g.students);
   }, [groups, selectedClassId]);
 
-  const scopedBandCounts = useMemo(() => {
-    const counts = { "Needs Support": 0, "Developing": 0, "Proficient": 0, "Excellent": 0 };
-    scopedStudents.forEach((s) => { if (s.band) counts[s.band.label] += 1; });
+  const scopedLevelCounts = useMemo(() => {
+    const counts = { 0: 0, 1: 0, 2: 0 };
+    scopedStudents.forEach((student) => {
+      const levels = countLevels(student.grades);
+      [0, 1, 2].forEach((level) => { if (levels[level]) counts[level] += 1; });
+    });
     return counts;
   }, [scopedStudents]);
 
-  const scopedAvg = useMemo(() => {
-    const graded = scopedStudents.filter((s) => s.avgPct !== null);
-    if (graded.length === 0) return null;
-    return Math.round(graded.reduce((sum, s) => sum + s.avgPct, 0) / graded.length);
-  }, [scopedStudents]);
+  const scopedLine = useMemo(() => countLine(scopedStudents.flatMap((student) => student.grades || [])), [scopedStudents]);
 
   // Search + band filter on top of the scoped roster, then sorted so
   // students who need a look float to the front of the grid.
   const visibleStudents = useMemo(() => {
     const q = search.trim().toLowerCase();
     let list = scopedStudents.filter((s) => (q ? s.name.toLowerCase().includes(q) : true));
-    if (bandFilter) list = list.filter((s) => s.band?.label === bandFilter);
-    return [...list].sort((a, b) => {
-      const rankA = a.band ? BAND_RANK[a.band.label] : 4;
-      const rankB = b.band ? BAND_RANK[b.band.label] : 4;
-      if (rankA !== rankB) return rankA - rankB;
-      return (a.avgPct ?? -1) - (b.avgPct ?? -1);
-    });
-  }, [scopedStudents, search, bandFilter]);
+    if (levelFilter !== null) list = list.filter((s) => countLevels(s.grades)[levelFilter] > 0);
+    return [...list].sort((a, b) => b.notYet - a.notYet || a.name.localeCompare(b.name));
+  }, [scopedStudents, search, levelFilter]);
 
   if (loadingAuth || loading) {
     return <div style={{ minHeight: "100vh", background: COLORS.canvas, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Inter', sans-serif", color: COLORS.textMuted }}>Loading...</div>;
@@ -221,7 +231,7 @@ export default function StudentProgressPage() {
               of loose text floating over the art. */}
           <div style={panelStyle(ACCENT, { padding: "16px 18px 18px", marginBottom: 24 })}>
             <div style={{ display: "flex", gap: 8, marginBottom: view === "student" && groups.length > 0 ? 14 : 0 }}>
-              {[{ key: "student", label: "By Student" }, { key: "standard", label: "By Standard" }].map((t) => (
+              {[{ key: "student", label: "By Student" }, { key: "standard", label: "By Standard" }, { key: "grid", label: "Standards grid" }].map((t) => (
                 <button
                   key={t.key}
                   onClick={() => setView(t.key)}
@@ -268,23 +278,23 @@ export default function StudentProgressPage() {
 
                 <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 12 }}>
                   <button
-                    onClick={() => setBandFilter(null)}
+                    onClick={() => setLevelFilter(null)}
                     className="sp-btn"
-                    style={{ background: bandFilter === null ? COLORS.textMuted : `${COLORS.textMuted}18`, color: bandFilter === null ? COLORS.white : COLORS.textMuted, border: `1.5px solid ${COLORS.textMuted}55`, borderRadius: 999, padding: "6px 14px", fontWeight: 700, fontSize: 11.5 }}
+                    style={{ background: levelFilter === null ? COLORS.textMuted : `${COLORS.textMuted}18`, color: levelFilter === null ? COLORS.white : COLORS.textMuted, border: `1.5px solid ${COLORS.textMuted}55`, borderRadius: 999, padding: "6px 14px", fontWeight: 700, fontSize: 11.5 }}
                   >
                     All {scopedStudents.length}
                   </button>
-                  {BAND_ORDER.map((label) => {
-                    const color = label === "Needs Support" ? COLORS.danger : label === "Developing" ? COLORS.violet : label === "Proficient" ? COLORS.info : COLORS.success;
-                    const active = bandFilter === label;
+                  {[0, 1, 2].map((level) => {
+                    const color = levelColor(level);
+                    const active = levelFilter === level;
                     return (
                       <button
-                        key={label}
-                        onClick={() => setBandFilter(active ? null : label)}
+                        key={level}
+                        onClick={() => setLevelFilter(active ? null : level)}
                         className="sp-btn"
                         style={{ background: active ? color : `${color}18`, color: active ? COLORS.white : color, border: `1.5px solid ${color}55`, borderRadius: 999, padding: "6px 14px", fontWeight: 700, fontSize: 11.5 }}
                       >
-                        {scopedBandCounts[label]} {label}
+                        {scopedLevelCounts[level]} {levelWord(level)}
                       </button>
                     );
                   })}
@@ -292,18 +302,11 @@ export default function StudentProgressPage() {
 
                 <div style={{ fontSize: 12.5, color: COLORS.textMuted, marginBottom: 8 }}>
                   <b style={{ color: COLORS.textDark }}>{scopedStudents.length} student{scopedStudents.length === 1 ? "" : "s"}</b>
-                  {scopedAvg !== null && <> · avg <b style={{ color: COLORS.textDark }}>{scopedAvg}%</b></>}
                   {" · "}
-                  <span style={{ color: COLORS.danger, fontWeight: 700 }}>{scopedBandCounts["Needs Support"]} Needs Support</span>
-                  {" · "}
-                  <span style={{ color: COLORS.violet, fontWeight: 700 }}>{scopedBandCounts["Developing"]} Developing</span>
-                  {" · "}
-                  <span style={{ color: COLORS.info, fontWeight: 700 }}>{scopedBandCounts["Proficient"]} Proficient</span>
-                  {" · "}
-                  <span style={{ color: COLORS.success, fontWeight: 700 }}>{scopedBandCounts["Excellent"]} Excellent</span>
+                  {scopedLine}
                 </div>
                 <div style={{ fontSize: 11, color: COLORS.textMuted }}>
-                  Sorted so students who need support show up first — a colored border flags anyone below Proficient.
+                  Sorted so students with a Not yet show up first.
                 </div>
               </>
             )}
@@ -322,12 +325,12 @@ export default function StudentProgressPage() {
               ) : (
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(150px, 1fr))", gap: 10 }}>
                   {visibleStudents.map((r) => {
-                    const flagged = r.band && (r.band.label === "Needs Support" || r.band.label === "Developing");
+                    const flagged = r.notYet > 0;
                     return (
                       <div
                         key={r.id}
-                        style={panelStyle(flagged ? r.band.color : ACCENT, {
-                          border: flagged ? `2px solid ${r.band.color}` : `1px solid ${COLORS.border}`,
+                        style={panelStyle(flagged ? levelColor(0) : ACCENT, {
+                          border: flagged ? `2px solid ${levelColor(0)}` : `1px solid ${COLORS.border}`,
                           padding: 12,
                           textAlign: "center",
                         })}
@@ -335,12 +338,7 @@ export default function StudentProgressPage() {
                         <div style={{ width: 36, height: 36, borderRadius: "50%", background: `${COLORS.violet}22`, display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, color: COLORS.violet, fontSize: 13, margin: "0 auto 8px auto" }}>{r.name[0]}</div>
                         <div style={{ fontWeight: 700, fontSize: 12.5, marginBottom: 2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{r.name}</div>
                         <div style={{ fontSize: 11, color: COLORS.textMuted, marginBottom: 8 }}>{r.missionsCompleted} submitted</div>
-                        <div style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 700, fontSize: 18, color: r.band ? r.band.color : COLORS.textMuted, marginBottom: 4 }}>{r.avgPct !== null ? `${r.avgPct}%` : "—"}</div>
-                        {r.band ? (
-                          <span style={{ fontSize: 9.5, fontWeight: 700, padding: "2px 8px", borderRadius: 999, background: r.band.color + "22", color: r.band.color }}>{r.band.label}</span>
-                        ) : (
-                          <span style={{ fontSize: 9.5, fontWeight: 700, padding: "2px 8px", borderRadius: 999, background: COLORS.border, color: COLORS.textMuted }}>No grades yet</span>
-                        )}
+                        <div style={{ fontSize: 12, fontWeight: 700, color: COLORS.textDark, lineHeight: 1.4 }}>{countLine(r.grades)}</div>
                       </div>
                     );
                   })}
@@ -361,7 +359,9 @@ export default function StudentProgressPage() {
                 {g.standards.map((row) => {
                   const key = `${g.classId}:${row.standard}`;
                   const expanded = expandedKey === key;
-                  const strugglingCount = row.students.filter((s) => s.band.label === "Needs Support").length;
+                  const notYetCount = countLevels(row.grades)[0];
+                  const levels = countLevels(row.grades);
+                  const total = levels[0] + levels[1] + levels[2] || 1;
                   return (
                     <div key={key} style={{ borderBottom: `1px solid ${COLORS.border}` }}>
                       <button
@@ -374,15 +374,14 @@ export default function StudentProgressPage() {
                           <div style={{ fontSize: 11, color: COLORS.textMuted }}>{row.standard}</div>
                         </div>
                         <div style={{ width: 100, fontSize: 12.5, color: COLORS.textMuted }}>{row.gradedCount} graded</div>
-                        <div style={{ flex: 1, height: 8, background: COLORS.border, borderRadius: 999, overflow: "hidden" }}>
-                          <div style={{ height: "100%", width: `${row.avgPct}%`, background: row.band.color, borderRadius: 999 }} />
+                        <div style={{ flex: 1, height: 8, background: COLORS.border, borderRadius: 999, overflow: "hidden", display: "flex" }}>
+                          <div style={{ height: "100%", width: `${(levels[2] / total) * 100}%`, background: levelColor(2) }} />
+                          <div style={{ height: "100%", width: `${(levels[1] / total) * 100}%`, background: levelColor(1) }} />
+                          <div style={{ height: "100%", width: `${(levels[0] / total) * 100}%`, background: levelColor(0) }} />
                         </div>
-                        <div style={{ width: 50, textAlign: "right", fontWeight: 700, fontSize: 13, color: COLORS.textDark }}>{row.avgPct}%</div>
-                        <div style={{ width: 130, textAlign: "right" }}>
-                          <span style={{ fontSize: 11, fontWeight: 700, padding: "3px 10px", borderRadius: 999, background: row.band.color + "22", color: row.band.color }}>{row.band.label}</span>
-                        </div>
-                        {strugglingCount > 0 && (
-                          <div style={{ width: 90, textAlign: "right", fontSize: 11, fontWeight: 700, color: COLORS.danger }}>{strugglingCount} need reteach</div>
+                        <div style={{ width: 210, textAlign: "right", fontWeight: 700, fontSize: 12, color: COLORS.textDark }}>{countLine(row.grades)}</div>
+                        {notYetCount > 0 && (
+                          <div style={{ width: 90, textAlign: "right", fontSize: 11, fontWeight: 700, color: levelColor(0) }}>{notYetCount} not yet</div>
                         )}
                         <span style={{ color: COLORS.textMuted, marginLeft: 8, transform: expanded ? "rotate(90deg)" : "none", transition: "transform 120ms ease" }}>›</span>
                       </button>
@@ -391,7 +390,7 @@ export default function StudentProgressPage() {
                           {row.students.map((s) => (
                             <div key={s.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "6px 10px", background: "rgba(255,255,255,.5)", borderRadius: 8, fontSize: 12.5 }}>
                               <div style={{ flex: 1, fontWeight: 600, color: COLORS.textDark }}>{s.name}</div>
-                              <span style={{ fontWeight: 700, padding: "2px 8px", borderRadius: 999, background: s.band.color + "22", color: s.band.color }}>{s.avgPct}% · {s.band.label}</span>
+                              <span style={{ fontWeight: 700, color: COLORS.textDark }}>{countLine(s.grades)}</span>
                             </div>
                           ))}
                         </div>
@@ -400,6 +399,39 @@ export default function StudentProgressPage() {
                   );
                 })}
               </div>
+            </div>
+          ))}
+
+          {view === "grid" && gridGroups.filter((g) => selectedClassId === "all" || g.classId === selectedClassId).map((g) => (
+            <div key={g.classId} style={{ marginBottom: 28 }}>
+              <h2 style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 700, fontSize: 16, margin: "0 0 8px 4px" }}>{g.className}</h2>
+              {g.sureWrong.length > 0 && <p style={{ fontSize: 13, color: levelColor(0), fontWeight: 700, margin: "0 0 8px 4px" }}>Sure but not yet: {g.sureWrong.join(", ")}</p>}
+              {g.standards.length === 0 ? <p style={{ color: COLORS.textMuted }}>No standards assigned yet.</p> : (
+                <div style={{ overflowX: "auto", ...panelStyle(ACCENT, { padding: 12 }) }}>
+                  <table style={{ borderCollapse: "collapse", fontSize: 12 }}>
+                    <thead>
+                      <tr>
+                        <th style={{ textAlign: "left", padding: 6 }}>Student</th>
+                        {g.standards.map((standard) => <th key={standard.standard} style={{ padding: 6, minWidth: 88 }}>{standard.title}</th>)}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {g.students.map((student) => (
+                        <tr key={student.id}>
+                          <td style={{ padding: 6, fontWeight: 700 }}>{student.name}</td>
+                          {g.standards.map((standard) => {
+                            const grade = g.cells[`${student.id}:${standard.standard}`];
+                            return <td key={standard.standard} style={{ padding: 6, textAlign: "center" }}>{grade == null ? "—" : <span style={{ display: "inline-block", minWidth: 64, borderRadius: 999, padding: "3px 8px", fontWeight: 700, color: "#fff", background: levelColor(grade) }}>{levelWord(grade)}</span>}</td>;
+                          })}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                  {g.standards.filter((standard) => standard.mistake).map((standard) => (
+                    <p key={standard.standard} style={{ fontSize: 13, margin: "10px 0 0" }}><b>{standard.title}.</b> {standard.mistake}</p>
+                  ))}
+                </div>
+              )}
             </div>
           ))}
         </div>

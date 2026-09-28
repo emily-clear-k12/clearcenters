@@ -7,6 +7,8 @@ import SamGuide from "../../../components/SamGuide";
 import { MAKER_MODES } from "../../../lib/cases/maker-studio/modes";
 import MakerDrawPad from "./MakerDrawPad";
 import LibraryPicker from "../../../components/maker/LibraryPicker";
+import SubmitReflection from "../../../components/submit/SubmitReflection";
+import { ACTIVITY_CHECKS } from "../../../lib/selfCheckLists";
 import "./maker-studio.css";
 
 const VOICE_CAP_SEC = 90;
@@ -458,6 +460,7 @@ export default function MakerStudioClient({
   const [busy, setBusy] = useState(false);
   const [saveState, setSaveState] = useState("saved");
   const [submitted, setSubmitted] = useState(!!alreadySubmitted);
+  const [reflecting, setReflecting] = useState(false);
   const [voiceError, setVoiceError] = useState(null);
   /** null | { kind } with optional index/side for library target */
   const [libraryPicker, setLibraryPicker] = useState(null);
@@ -479,7 +482,7 @@ export default function MakerStudioClient({
   const canSubmit = doneCount >= finishN && !submitted;
 
   const persist = useCallback(
-    async (kind, nextModes) => {
+    async (kind, nextModes, reflection) => {
       setBusy(true);
       try {
         const response = await fetch("/api/maker-studio/submit", {
@@ -489,6 +492,7 @@ export default function MakerStudioClient({
             assignmentId,
             kind,
             modes: nextModes,
+            ...(reflection || {}),
           }),
         });
         return await response.json().catch(() => ({}));
@@ -776,15 +780,20 @@ export default function MakerStudioClient({
       setStatus(`Finish every mode before you submit. You have ${doneCount}/${finishN} done.`);
       return;
     }
-    const data = await persist("turnin", modes);
+    setReflecting(true);
+  }
+
+  async function finishReflection(reflection) {
+    const data = await persist("turnin", modes, reflection);
     if (data && data.need) {
-      setStatus(data.message || "Finish a few more pieces first.");
+      setStatus(data.error || data.message || "Finish a few more pieces first.");
       return;
     }
     if (data && data.error) {
       setStatus(data.error);
       return;
     }
+    setReflecting(false);
     setSubmitted(true);
     setView("done");
     setStatus("Submitted. Your teacher will read your work.");
@@ -2383,7 +2392,7 @@ export default function MakerStudioClient({
   // Main studio page
   return (
     <div className="mk-page" data-mode="home">
-      <BackToHubButton />
+      <BackToHubButton readText={`${title}. ${topicLine || ""}`} />
       <div className="mk-shell">
         <div className="mk-top">
           <div>
@@ -2451,12 +2460,18 @@ export default function MakerStudioClient({
         </div>
 
         <div className="mk-foot">
+          {reflecting ? (
+            <SubmitReflection questions={ACTIVITY_CHECKS.maker_studio} onSubmit={finishReflection} busy={busy} revisionNote={revisionFeedback} />
+          ) : (
+            <>
           <p className="mk-quiet" style={{ margin: 0 }}>
             {status}
           </p>
           <button type="button" className="mk-check" disabled={!canSubmit || busy} onClick={submitAll}>
             Submit
           </button>
+            </>
+          )}
         </div>
 
         <SamGuide

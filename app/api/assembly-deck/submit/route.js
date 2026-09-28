@@ -4,6 +4,7 @@ import { supabaseAdmin } from "../../../../lib/supabaseAdmin";
 import { callClaude, extractJSON } from "../../../../lib/anthropic";
 import { getAssemblyDeckServerCase, gradeRound, gradeRejections, gradeAssembly, gradeCase, gradePinpoint, gradeQuickCheck, gradeWhatIf, gradeRepair, gradeLook, trapSentences, trapVerdict, requesterReply } from "../../../../lib/cases/assembly-deck/index.server";
 import { getAssemblyDeckPublicCase, getRound, CHALLENGE } from "../../../../lib/cases/assembly-deck/index.public";
+import { reflectionFrom, withFirstTry } from "../../../../lib/reflection";
 
 // Assembly Deck (design doc §6). Four kinds of traffic:
 //   "check"    -> grade one paragraph board. No AI call, nothing finalized.
@@ -213,6 +214,9 @@ export async function POST(request) {
     (challenge ? CHALLENGE.bonusCrystals : 0);
   const reply = requesterReply(serverCase, graded, trapCaught);
 
+  const reflection = reflectionFrom(body);
+  if (reflection.error) return NextResponse.json({ error: reflection.error }, { status: 400 });
+
   const fields = {
     attempt1: explanation || "",
     attempt2: summarizeForHumans(publicCase, graded, explanation, attempts, challenge, trapCaught),
@@ -231,7 +235,7 @@ export async function POST(request) {
       quickCheck: graded.quickCheck ? { choiceId: graded.quickCheck.choiceId, correct: graded.quickCheck.correct, key: graded.quickCheck.key } : null,
       rounds: graded.rounds.map((r) => ({ id: r.id, build: { correct: r.build.correct, total: r.build.total }, rejects: { correct: r.rejects.correct, total: r.rejects.total } })),
       explanation: explanation || "",
-      confidence: body.confidence || null,
+      confidence: reflection.self_confidence,
       glows: ai.glows,
       grow: ai.grow,
       crystalsEarned: crystals,
@@ -242,15 +246,21 @@ export async function POST(request) {
       requesterTier: reply ? reply.tier : null,
     },
     submitted_at: new Date().toISOString(),
+    checklist: reflection.checklist,
+    self_confidence: reflection.self_confidence,
     revision_requested: false,
   };
 
   const { data: existing } = await supabaseAdmin
     .from("submissions")
-    .select("id, submitted_at")
+    .select("id, submitted_at, revision_requested, assembly_deck_data, attempt2")
     .eq("assignment_id", assignmentId)
     .eq("student_id", studentId)
     .maybeSingle();
+
+  if (existing && (existing.revision_requested || existing.submitted_at)) {
+    fields.assembly_deck_data = withFirstTry(fields.assembly_deck_data, existing.assembly_deck_data, existing.attempt2, true);
+  }
 
   const alreadyPaid = !!(existing && existing.submitted_at);
 

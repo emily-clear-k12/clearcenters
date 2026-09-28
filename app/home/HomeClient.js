@@ -7,6 +7,7 @@ import { HOME_BACKGROUNDS } from "../../lib/homeBackgrounds";
 import { SAM_SKINS, DEFAULT_SAM_SKIN } from "../../lib/samSkins";
 import { getWorldStory } from "../../lib/worldStories";
 import { DEV_FORCE_UNLOCK_ALL } from "../../lib/devFlags";
+import { ACTIVITY_FACTS } from "../../lib/activityFacts";
 import SamIcon from "../../components/SamIcon";
 import SamStage from "../../components/SamStage";
 import SamTrail from "../../components/SamTrail";
@@ -54,16 +55,9 @@ const HOME_BACKGROUND_LABELS = {
 // MissionsClient.js already has its own copy of this exact map — see that
 // file's ENGINE_LABELS for the same fix). Add new engines here the moment
 // they go live, and keep this in sync with MissionsClient.js's copy.
-const ENGINE_LABELS = {
-  fact_check_desk: "SIGNAL CHECK",
-  mission_map: "MISSION MAP",
-  simulation_lab: "SIMULATION LAB",
-  frequency_rush: "FREQUENCY RUSH",
-  relay_station: "RELAY STATION",
-  assembly_deck: "ASSEMBLY DECK",
-};
 function engineTag(engine) {
-  return ENGINE_LABELS[engine] || "GROUP CHAT";
+  const facts = ACTIVITY_FACTS[engine] || ACTIVITY_FACTS.group_chat;
+  return facts.label.toUpperCase();
 }
 const COLORS = {
   violet: "#7B5DFF",
@@ -369,7 +363,13 @@ export default function HomeClient({ student, studentClass, assignments, mission
         .hub-portal--missions:hover .hub-orb-wrap { filter: drop-shadow(0 10px 22px rgba(0,0,0,.4)) drop-shadow(0 0 22px #7B5DFF); }
         .hub-portal--progress:hover .hub-orb-wrap { filter: drop-shadow(0 10px 22px rgba(0,0,0,.4)) drop-shadow(0 0 22px #00C2C7); }
         .hub-portal--crystal:hover .hub-orb-wrap { filter: drop-shadow(0 10px 22px rgba(0,0,0,.4)) drop-shadow(0 0 22px #FFC44D); }
-        .hub-portal--briefings:hover .hub-orb-wrap { filter: drop-shadow(0 10px 22px rgba(0,0,0,.4)) drop-shadow(0 0 22px #2ED37A); }
+        .hub-portals { position: absolute; bottom: 6%; left: 50%; transform: translateX(-50%); display: flex; gap: 64px; z-index: 4; }
+        @media (max-width: 800px) {
+          .hub-portals { gap: 8px; width: calc(100% - 16px); justify-content: center; bottom: 3%; }
+          .hub-portal { width: 96px; }
+          .hub-orb-wrap { width: 68px; height: 68px; }
+          .hub-portal span { font-size: 11px !important; padding: 4px 8px !important; }
+        }
       `}</style>
 
       {/* Header — a compact, more-square stat tile in the top-left corner
@@ -847,7 +847,7 @@ export default function HomeClient({ student, studentClass, assignments, mission
           Sept 11, 2026 — Briefings folded in as a 4th orb icon (far left),
           matching Missions/Progress/Galaxy Hub instead of the old standalone
           pill button underneath. */}
-      <div style={{ position: "absolute", bottom: "6%", left: "50%", transform: "translateX(-50%)", display: "flex", gap: 64, zIndex: 4 }}>
+      <div className="hub-portals">
         <button type="button" className="hub-portal hub-portal--missions" onClick={() => router.push("/missions")}>
           <div className="hub-orb-wrap"><img src="/student/orb_missions.png" alt="" /></div>
           <span style={{ fontWeight: 700, fontSize: 13, color: COLORS.white, background: "rgba(20,26,50,.55)", padding: "4px 14px", borderRadius: 999, backdropFilter: "blur(6px)" }}>My Missions</span>

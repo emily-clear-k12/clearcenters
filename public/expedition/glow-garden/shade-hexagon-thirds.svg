@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
+  <!-- Three equal-area regions: each quadrilateral is two of the six equal center triangles. -->
+  <polygon points="100,22 167.55,61 167.55,139 100,100" fill="#ffc44d" stroke="#5b3cc4" stroke-width="4" stroke-linejoin="round"/>
+  <polygon points="100,100 167.55,139 100,178 32.45,139" fill="#efe8ff" stroke="#5b3cc4" stroke-width="4" stroke-linejoin="round"/>
+  <polygon points="100,22 100,100 32.45,139 32.45,61" fill="#efe8ff" stroke="#5b3cc4" stroke-width="4" stroke-linejoin="round"/>
+</svg>

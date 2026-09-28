@@ -597,7 +597,7 @@ export default function TeacherOverview() {
       classesData = fallback.data;
       if (fallback.error) {
         console.error("Fallback class load also failed:", fallback.error);
-        setError("Couldn't load your classes — try refreshing. If this keeps happening, let Claude know.");
+        setError("Couldn't load your classes. Refresh the page and try again.");
       }
     }
     const classIds = (classesData || []).map((c) => c.id);
@@ -779,7 +779,7 @@ export default function TeacherOverview() {
       dueSoon > 0 && {
         key: "duesoon", icon: ICONS.calendar, color: COLORS.teal, count: dueSoon, classCount: dueSoonClasses,
         label: `assignment${dueSoon === 1 ? "" : "s"} due within a week`,
-        onGo: () => router.push("/teacher/assign"),
+        onGo: () => router.push("/teacher/progress"),
       },
     ].filter(Boolean);
   }, [perClassStats, router]);

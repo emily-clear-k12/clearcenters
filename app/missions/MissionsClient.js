@@ -6,6 +6,7 @@ import BackToHubButton from "../../components/BackToHubButton";
 import { CaseImage } from "../../lib/caseImage";
 import SamIcon from "../../components/SamIcon";
 import SamStage from "../../components/SamStage";
+import { ACTIVITY_FACTS } from "../../lib/activityFacts";
 
 const COLORS = {
   violet: "#7B5DFF",
@@ -39,16 +40,9 @@ function subjectRingColor(subject) {
 // "mission_map" entry), and the same bug Simulation Lab and Frequency Rush
 // hit here until this fix — add new engines here the moment they go live.
 // Keep this in sync with app/home/HomeClient.js's own copy of this map.
-const ENGINE_LABELS = {
-  fact_check_desk: "SIGNAL CHECK",
-  mission_map: "MISSION MAP",
-  simulation_lab: "SIMULATION LAB",
-  frequency_rush: "FREQUENCY RUSH",
-  relay_station: "RELAY STATION",
-  assembly_deck: "ASSEMBLY DECK",
-};
 function engineTag(engine) {
-  return ENGINE_LABELS[engine] || "GROUP CHAT";
+  const facts = ACTIVITY_FACTS[engine] || ACTIVITY_FACTS.group_chat;
+  return facts.label.toUpperCase();
 }
 
 // Most engines' badge just inherits the subject's ring color (green/gold) —
@@ -147,8 +141,8 @@ export default function MissionsClient({ student, assignments }) {
     <div
       style={{
         position: "relative",
-        height: "100vh",
-        overflow: "hidden",
+        minHeight: "100vh",
+        overflow: "auto",
         background: COLORS.cream,
         fontFamily: "'Inter', sans-serif",
         color: COLORS.textDark,
@@ -209,224 +203,19 @@ export default function MissionsClient({ student, assignments }) {
         {student.crystal_points}
       </div>
 
-      {/* The mission bay scene — a fixed full-viewport overlay so the
-          pedestals/dais stay glued to the same spots on the fixed
-          background above regardless of scroll (there's no scroll on this
-          page — same no-scroll 100vh approach as Home). */}
-      <div style={{ position: "fixed", inset: 0, zIndex: 1 }}>
-          {SLOTS.map((slot, slotIndex) => {
-            const mission = onPedestals[slotIndex];
-            // Bumped up from 112/56 (Aug 27, later the same day) — Emily
-            // wanted the side tiles big enough to read the whole title
-            // without it getting cut off. Paired with the switch below from
-            // one-line ellipsis truncation to a 2-line wrap, so a long title
-            // like "What Made Texas Grow?" has room to actually finish.
-            const cardW = Math.round(150 * slot.scale);
-            const imgH = Math.round(74 * slot.scale);
-
-            if (!mission) {
-              // A translucent gray + dashed outline reads as "empty slot" at
-              // a glance against this bright background — a plain low-opacity
-              // white box (tried first) nearly vanished since there's no
-              // image content left for a grayscale filter to desaturate.
-              return (
-                <div
-                  key={slot.key}
-                  style={{
-                    position: "absolute",
-                    left: `${slot.x}%`,
-                    top: `${slot.y}%`,
-                    transform: "translate(-50%, -100%)",
-                    width: cardW,
-                    height: imgH + 40,
-                    borderRadius: 14,
-                    background: "rgba(90,95,120,.20)",
-                    border: "2px dashed rgba(90,95,120,.32)",
-                  }}
-                />
-              );
-            }
-
-            const ring = subjectRingColor(mission.cases?.subject);
-            const shadow = `0 0 0 2.5px ${ring}, 0 8px 22px rgba(40,20,80,.18)`;
-
-            return (
-              <button
-                key={slot.key}
-                type="button"
-                className="ped-btn"
-                onClick={() => handlePedestalClick(slotIndex)}
-                style={{
-                  position: "absolute",
-                  left: `${slot.x}%`,
-                  top: `${slot.y}%`,
-                  transform: "translate(-50%, -100%)",
-                  display: "flex",
-                  flexDirection: "column",
-                  alignItems: "center",
-                  border: "none",
-                  background: "none",
-                  padding: 0,
-                  cursor: "pointer",
-                  font: "inherit",
-                }}
-              >
-                <div style={{ width: cardW, borderRadius: 14, overflow: "hidden", background: "rgba(255,255,255,.94)", boxShadow: shadow, display: "flex", flexDirection: "column" }}>
-                  <div style={{ position: "relative", height: imgH }}>
-                    <CaseImage standard={mission.case_standard} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
-                    {mission.revisionRequested && (
-                      <div title="Sent back for revision" style={{ position: "absolute", top: 4, left: 4, width: Math.round(18 * slot.scale), height: Math.round(18 * slot.scale), borderRadius: "50%", background: COLORS.gold, boxShadow: "0 2px 6px rgba(0,0,0,.3)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: Math.round(10 * slot.scale) }}>
-                        ⭐
-                      </div>
-                    )}
-                  </div>
-                  <div style={{ padding: `${Math.round(7 * slot.scale)}px ${Math.round(10 * slot.scale)}px ${Math.round(9 * slot.scale)}px` }}>
-                    <span style={{ display: "inline-block", fontSize: 8.5 + slot.scale, fontWeight: 700, letterSpacing: .3, padding: "2px 7px", borderRadius: 999, marginBottom: 4, background: `${ring}26`, color: ring }}>
-                      {mission.cases?.subject ? mission.cases.subject.toUpperCase() : engineTag(mission.cases?.engine)}
-                    </span>
-                    {/* Full title, wrapped up to 2 lines, instead of a
-                        single-line ellipsis truncation — Emily wanted to be
-                        able to read the whole title on the tile itself
-                        without it getting cut off. */}
-                    <div style={{ fontWeight: 700, lineHeight: 1.25, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden", fontSize: 12.5 + slot.scale, color: COLORS.textDark, textAlign: "left" }}>
-                      {mission.cases?.title}
-                    </div>
-                    <div style={{ color: COLORS.textMuted, fontSize: 10 + slot.scale, textAlign: "left", marginTop: 2 }}>
-                      {mission.case_standard}
-                    </div>
-                  </div>
-                </div>
-                <div style={{ width: 3, height: 18 * slot.scale, marginTop: 4, background: "linear-gradient(180deg, rgba(255,255,255,.9), rgba(255,255,255,0))" }} />
-              </button>
-            );
-          })}
-
-          {/* Center dais — the currently-selected mission's bigger detail card */}
-          {selected ? (
-            <div
-              style={{
-                position: "absolute",
-                left: `${CENTER_SLOT.x}%`,
-                top: `${CENTER_SLOT.y}%`,
-                transform: "translate(-50%, -100%)",
-                width: "23%",
-                minWidth: 220,
-                maxWidth: 300,
-                borderRadius: 20,
-                overflow: "hidden",
-                background: "rgba(255,255,255,.96)",
-                boxShadow: `0 0 0 3px ${engineAccentColor(selected.cases?.engine, selected.cases?.subject)}, 0 14px 40px rgba(40,20,80,.22)`,
-                zIndex: 4,
-              }}
-            >
-              <div style={{ width: "100%", aspectRatio: "16/7", overflow: "hidden" }}>
-                <CaseImage standard={selected.case_standard} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
-              </div>
-              <div style={{ padding: "12px 16px 16px" }}>
-                <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 8 }}>
-                  <span style={{ display: "inline-block", fontSize: 10.5, fontWeight: 700, letterSpacing: .3, padding: "4px 11px", borderRadius: 999, background: `${engineAccentColor(selected.cases?.engine, selected.cases?.subject)}26`, color: engineAccentColor(selected.cases?.engine, selected.cases?.subject) }}>
-                    {selected.cases?.subject ? selected.cases.subject.toUpperCase() : engineTag(selected.cases?.engine)} · {engineTag(selected.cases?.engine)}
-                  </span>
-                  {selected.revisionRequested && (
-                    <span style={{ display: "inline-flex", alignItems: "center", gap: 4, background: "#FFF4E5", color: "#B8860B", fontSize: 10.5, fontWeight: 700, letterSpacing: .3, padding: "4px 11px", borderRadius: 999 }}>
-                      🔁 Try Again
-                    </span>
-                  )}
-                </div>
-                <p style={{ fontFamily: "'Poppins', sans-serif", fontSize: 16.5, fontWeight: 700, margin: "0 0 3px 0", color: COLORS.textDark }}>{selected.cases?.title}</p>
-                <p style={{ fontSize: 11.5, color: COLORS.textMuted, margin: "0 0 10px 0" }}>
-                  {selected.case_standard}{selected.due_date ? ` · Due ${selected.due_date}` : ""}
-                </p>
-                {selected.cases?.learning_target && (
-                  <div style={{ fontSize: 11.5, color: COLORS.textDark, background: COLORS.tealSoft, borderRadius: 10, padding: "8px 10px", marginBottom: 12, lineHeight: 1.4 }}>
-                    🎯 {selected.cases.learning_target}
-                  </div>
-                )}
-                <button
-                  type="button"
-                  onClick={() => router.push(`/activity/${selected.id}`)}
-                  className="gc-btn"
-                  style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 6, width: "100%", background: `linear-gradient(135deg, ${COLORS.violet}, #9B7DFF)`, color: COLORS.white, borderRadius: 999, padding: "10px 18px", fontWeight: 700, fontSize: 13 }}
-                >
-                  Launch Mission 🚀
-                </button>
-              </div>
-            </div>
-          ) : (
-            <div
-              style={{
-                position: "absolute",
-                left: "50%",
-                top: "30%",
-                transform: "translateX(-50%)",
-                width: 280,
-                textAlign: "center",
-                background: "rgba(255,255,255,.94)",
-                borderRadius: 18,
-                padding: "28px 20px",
-                boxShadow: "0 10px 30px rgba(40,20,80,.18)",
-              }}
-            >
-              <p style={{ color: COLORS.textMuted, fontSize: 13, margin: 0 }}>
-                No missions assigned yet — check back once your teacher assigns one!
-              </p>
-            </div>
-          )}
+      <div style={{ position: "relative", zIndex: 2, maxWidth: 760, margin: "0 auto", padding: "88px 16px 160px", display: "grid", gap: 12 }}>
+        <h1 style={{ fontFamily: "Poppins, sans-serif", fontSize: 32, margin: 0, color: "#fff", textShadow: "0 2px 8px rgba(0,0,0,.45)" }}>Missions</h1>
+        {sorted.length === 0 && <p style={{ background: "rgba(255,255,255,.94)", borderRadius: 16, padding: 18 }}>No missions assigned yet.</p>}
+        {sorted.map((mission) => (
+          <button key={mission.id} type="button" onClick={() => router.push(`/activity/${mission.id}`)} style={{ display: "flex", gap: 12, alignItems: "center", textAlign: "left", background: "rgba(255,255,255,.96)", border: "none", borderRadius: 16, padding: 12, font: "inherit", cursor: "pointer" }}>
+            <CaseImage standard={mission.case_standard} alt="" style={{ width: 72, height: 56, objectFit: "cover", borderRadius: 10, flexShrink: 0 }} />
+            <span style={{ minWidth: 0 }}>
+              <strong style={{ display: "block" }}>{mission.cases?.title || "Mission"}</strong>
+              <span style={{ display: "block", color: COLORS.textMuted, fontSize: 13, marginTop: 4 }}>{mission.revisionRequested ? "Try again · " : ""}{mission.cases?.subject ? mission.cases.subject + " · " : ""}{mission.case_standard}{mission.due_date ? " · Due " + mission.due_date : ""}</span>
+            </span>
+          </button>
+        ))}
       </div>
-
-      {/* Overflow — anything past the 5 slots (4 pedestals + center). Fixed to the bottom of
-          the viewport (Aug 27 full-screen pass) since this page no longer
-          has a flowing `<main>` column for it to sit below — same no-scroll
-          100vh page as Home, so this has to float instead of flow. */}
-      {overflow.length > 0 && (
-        <div style={{ position: "fixed", left: 24, right: 24, bottom: 20, zIndex: 2 }}>
-          <p style={{ fontSize: 11.5, fontWeight: 700, color: COLORS.white, textShadow: "0 1px 4px rgba(0,0,0,.6)", textTransform: "uppercase", letterSpacing: .4, margin: "0 0 8px 4px" }}>
-            +{overflow.length} more mission{overflow.length === 1 ? "" : "s"}
-          </p>
-          <div className="overflow-row" style={{ display: "flex", gap: 10, overflowX: "auto", paddingBottom: 6 }}>
-              {overflow.map((mission) => {
-                const ring = subjectRingColor(mission.cases?.subject);
-                return (
-                  <button
-                    key={mission.id}
-                    type="button"
-                    onClick={() => router.push(`/activity/${mission.id}`)}
-                    className="gc-btn"
-                    style={{
-                      flexShrink: 0,
-                      width: 220,
-                      display: "flex",
-                      gap: 10,
-                      alignItems: "center",
-                      textAlign: "left",
-                      background: COLORS.white,
-                      borderRadius: 14,
-                      padding: 10,
-                      boxShadow: `0 0 0 2px ${ring}, 0 4px 14px rgba(0,0,0,.08)`,
-                      border: "none",
-                      font: "inherit",
-                      color: "inherit",
-                      cursor: "pointer",
-                    }}
-                  >
-                    <div style={{ position: "relative", width: 40, height: 40, borderRadius: 9, overflow: "hidden", flexShrink: 0 }}>
-                      <CaseImage standard={mission.case_standard} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
-                      {mission.revisionRequested && (
-                        <div style={{ position: "absolute", top: 1, left: 1, width: 14, height: 14, borderRadius: "50%", background: COLORS.gold, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 8 }}>⭐</div>
-                      )}
-                    </div>
-                    <div style={{ minWidth: 0 }}>
-                      <div style={{ fontSize: 12, fontWeight: 700, color: COLORS.textDark, lineHeight: 1.25, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                        {mission.cases?.title}
-                      </div>
-                      <div style={{ fontSize: 10.5, color: COLORS.textMuted }}>{mission.case_standard}</div>
-                    </div>
-                  </button>
-                );
-              })}
-          </div>
-        </div>
-      )}
 
       {/* Sept 4, 2026 — grown from a 64px corner button to a real 150px
           "companion" presence (SamStage), matching Home's same upgrade —
