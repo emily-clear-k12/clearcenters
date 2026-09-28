@@ -37,7 +37,7 @@
 | ✅ | The Market Stall | MA.3.4C-XP | 3.4C coins and bills | 3.9C | Solara | Run the jungle market stall and make change |
 | ✅ | The Seed Crates | MA.3.4K-XP | 3.4K multiply and divide word problems | 3.4D, 3.4E, 3.4H, 3.4J, 3.5B | Lumara | Pack seed crates in equal groups for planting |
 | ✅ | The Rover Convoy | MA.3.4G-XP | 3.4G two-digit × one-digit | 3.4F, 3.4I | Frostveil | Load the rover convoy for the long ice crossing |
-| ⬜ | The Missing Number Lock | MA.3.5D-XP | 3.5D unknowns in × and ÷ equations | 3.5C, 3.5E | Cindara | Crack the number locks on the lava vault |
+| ✅ | The Missing Number Lock | MA.3.5D-XP | 3.5D unknowns in × and ÷ equations | 3.5C, 3.5E | Cindara | Crack the number locks on the lava vault |
 | ⬜ | The Shape Workshop | MA.3.6A-XP | 3.6A classify 2D and 3D figures | 3.6B | Mechara | Sort parts by shape to rebuild a robot |
 | ✅ | The Greenhouse Floor | MA.3.6C-XP | 3.6C area of rectangles | 3.6D, 3.6E | Lumara | Tile the greenhouse floor and plan garden plots |
 | ✅ | The Creature Pens | MA.3.7B-XP | 3.7B perimeter | 3.7A | Solara | Fence the rescued animals' pens |
@@ -141,7 +141,7 @@ Each ELAR quest has 4–6 original passages that belong to its world.
 | ✅ | The Three Reports | ELA.5.6H-XP | 5.6H synthesize information | 5.7B | Cloudreach | Three reports about one storm |
 | ⬜ | The Twin Legends | ELA.5.8A-XP | 5.8A multiple themes | 5.9A | Lumara | Two legends with more than one theme |
 | ✅ | The Crew Conflict | ELA.5.8B-XP | 5.8B character relationships and conflicts | 5.8D | Cindara | A story about a crew that disagrees |
-| ⬜ | The River Rescue | ELA.5.8C-XP | 5.8C plot | 5.10B | Solara | An adventure story |
+| ✅ | The River Rescue | ELA.5.8C-XP | 5.8C plot | 5.10B | Solara | An adventure story |
 | ⬜ | The Speaker's Voice | ELA.5.9B-XP | 5.9B poetry: poet vs. speaker | 5.10D | Cloudreach | Poems written as different speakers |
 | ⬜ | The Opening Night | ELA.5.9C-XP | 5.9C drama | 5.10F | Mechara | A play for the robot city's opening night |
 | ✅ | The Glacier Files | ELA.5.9D-XP | 5.9D informational text | 5.10B, 5.10C | Frostveil | Science reports with graphics |
@@ -169,7 +169,7 @@ Science quests use the 2024–25 science TEKS. Practices (1–4) and recurring t
 | ⬜ | The Weather Watch | SCI.3.10A-XP | 3.10A weather in different places | — | Frostveil | Compare weather at two outposts |
 | ⬜ | The Soil Makers | SCI.3.10B-XP | 3.10B soil formation | 3.10C | Cindara | Watch rock turn into soil |
 | ⬜ | The Reuse Station | SCI.3.11B-XP | 3.11B conservation | 3.11A, 3.11C | Mechara | Reduce, reuse, and recycle at the outpost |
-| ⬜ | The Migration Map | SCI.3.12A-XP | 3.12A weather and animal migration | — | Cloudreach | Track where the animals go when it gets cold |
+| ✅ | The Migration Map | SCI.3.12A-XP | 3.12A weather and animal migration | — | Cloudreach | Track where the animals go when it gets cold |
 | ✅ | The Food Chain Crew | SCI.3.12B-XP | 3.12B food chains | 3.12C | Solara | Build and repair a rainforest food chain |
 | ✅ | The Fossil Dig | SCI.3.12D-XP | 3.12D fossils | — | Cindara | Dig up fossils and figure out what they were |
 | ✅ | The Survival Suits | SCI.3.13A-XP | 3.13A animal structures | 3.13B | Frostveil | Design suits based on how animals survive the cold |
@@ -208,7 +208,7 @@ Science quests use the 2024–25 science TEKS. Practices (1–4) and recurring t
 | ⬜ | The Green Plan | SCI.5.11-XP | 5.11 design conservation solutions | — | Mechara | Design a plan to cut the city's waste |
 | ✅ | The Ecosystem Balance | SCI.5.12A-XP | 5.12A biotic and abiotic factors | 5.12B | Solara | Keep the jungle ecosystem in balance |
 | ⬜ | The Dam Decision | SCI.5.12C-XP | 5.12C human impact on ecosystems | — | Solara | Decide whether to dam the jungle river |
-| ⬜ | The Instinct Files | SCI.5.13B-XP | 5.13B instinct and learned behaviors | 5.13A | Lumara | Study how garden creatures survive |
+| ✅ | The Instinct Files | SCI.5.13B-XP | 5.13B instinct and learned behaviors | 5.13A | Lumara | Study how garden creatures survive |
 
 ---
 
@@ -216,10 +216,10 @@ Science quests use the 2024–25 science TEKS. Practices (1–4) and recurring t
 
 | Subject | Grade 3 | Grade 4 | Grade 5 | Total | Written |
 | --- | --- | --- | --- | --- | --- |
-| Math | 15 | 18 | 16 | 49 | 28 |
-| ELAR | 13 | 14 | 14 | 41 | 21 |
-| Science | 12 | 14 | 12 | 38 | 21 |
-| **All** | **40** | **46** | **42** | **128** | **70** |
+| Math | 15 | 18 | 16 | 49 | 29 |
+| ELAR | 13 | 14 | 14 | 41 | 22 |
+| Science | 12 | 14 | 12 | 38 | 23 |
+| **All** | **40** | **46** | **42** | **128** | **74** |
 
 ## Notes
 

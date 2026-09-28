@@ -1,7 +1,7 @@
 {
   "generatedFrom": "lib/cases and add_*.sql",
-  "onDisk": 1016,
-  "inSql": 1033,
+  "onDisk": 1020,
+  "inSql": 1037,
   "items": [
     {
       "standard": "3.10C-AD",
@@ -3451,6 +3451,15 @@
       "file": "lib/cases/expedition-station/quests/seed-crates.js"
     },
     {
+      "standard": "MA.3.5D-XP",
+      "title": "The Missing Number Lock",
+      "grade": "3",
+      "subject": "Math",
+      "engine": "Expedition Station",
+      "kind": "id",
+      "file": "lib/cases/expedition-station/quests/missing-number-lock.js"
+    },
+    {
       "standard": "MA.3.6C-XP",
       "title": "The Greenhouse Floor",
       "grade": "3",
@@ -3485,6 +3494,15 @@
       "engine": "Expedition Station",
       "kind": "id",
       "file": "lib/cases/expedition-station/quests/sighting-board.js"
+    },
+    {
+      "standard": "SCI.3.12A-XP",
+      "title": "The Migration Map",
+      "grade": "3",
+      "subject": "Science",
+      "engine": "Expedition Station",
+      "kind": "id",
+      "file": "lib/cases/expedition-station/quests/migration-map.js"
     },
     {
       "standard": "SCI.3.12B-XP",
@@ -3820,6 +3838,15 @@
       "file": "lib/cases/expedition-station/quests/crew-conflict.js"
     },
     {
+      "standard": "ELA.5.8C-XP",
+      "title": "The River Rescue",
+      "grade": "5",
+      "subject": "ELAR",
+      "engine": "Expedition Station",
+      "kind": "id",
+      "file": "lib/cases/expedition-station/quests/river-rescue.js"
+    },
+    {
       "standard": "ELA.5.9D-XP",
       "title": "The Glacier Files",
       "grade": "5",
@@ -3890,6 +3917,15 @@
       "engine": "Expedition Station",
       "kind": "id",
       "file": "lib/cases/expedition-station/quests/ecosystem-balance.js"
+    },
+    {
+      "standard": "SCI.5.13B-XP",
+      "title": "The Instinct Files",
+      "grade": "5",
+      "subject": "Science",
+      "engine": "Expedition Station",
+      "kind": "id",
+      "file": "lib/cases/expedition-station/quests/instinct-files.js"
     },
     {
       "standard": "SCI.5.6A-XP",
