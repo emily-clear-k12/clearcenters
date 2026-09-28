@@ -34,15 +34,15 @@
 | ✅ | The Crystal Count | MA.3.2A-XP | 3.2A compose and decompose numbers | 3.2B | Frostveil | Count and bundle ice crystals for the supply log |
 | ⬜ | The Signal Race | MA.3.2D-XP | 3.2D compare and order numbers | 3.2C | Cloudreach | Rank weather signals to find the strongest storm |
 | ⬜ | The Parts Depot | MA.3.4A-XP | 3.4A add and subtract within 1,000 | 3.4B, 3.5A | Mechara | Restock the robot parts depot |
-| ⬜ | The Market Stall | MA.3.4C-XP | 3.4C coins and bills | 3.9C | Solara | Run the jungle market stall and make change |
+| ✅ | The Market Stall | MA.3.4C-XP | 3.4C coins and bills | 3.9C | Solara | Run the jungle market stall and make change |
 | ✅ | The Seed Crates | MA.3.4K-XP | 3.4K multiply and divide word problems | 3.4D, 3.4E, 3.4H, 3.4J, 3.5B | Lumara | Pack seed crates in equal groups for planting |
 | ⬜ | The Rover Convoy | MA.3.4G-XP | 3.4G two-digit × one-digit | 3.4F, 3.4I | Frostveil | Load the rover convoy for the long ice crossing |
 | ⬜ | The Missing Number Lock | MA.3.5D-XP | 3.5D unknowns in × and ÷ equations | 3.5C, 3.5E | Cindara | Crack the number locks on the lava vault |
 | ⬜ | The Shape Workshop | MA.3.6A-XP | 3.6A classify 2D and 3D figures | 3.6B | Mechara | Sort parts by shape to rebuild a robot |
-| ⬜ | The Greenhouse Floor | MA.3.6C-XP | 3.6C area of rectangles | 3.6D, 3.6E | Lumara | Tile the greenhouse floor and plan garden plots |
+| ✅ | The Greenhouse Floor | MA.3.6C-XP | 3.6C area of rectangles | 3.6D, 3.6E | Lumara | Tile the greenhouse floor and plan garden plots |
 | ⬜ | The Creature Pens | MA.3.7B-XP | 3.7B perimeter | 3.7A | Solara | Fence the rescued animals' pens |
 | ⬜ | The Launch Schedule | MA.3.7C-XP | 3.7C time intervals | 3.7D, 3.7E | Cloudreach | Time the sky-ship launches and weigh the cargo |
-| ⬜ | The Sighting Board | MA.3.8B-XP | 3.8B solve problems with data | 3.8A | Solara | Graph the animal sightings and plan the tour |
+| ✅ | The Sighting Board | MA.3.8B-XP | 3.8B solve problems with data | 3.8A | Solara | Graph the animal sightings and plan the tour |
 | ⬜ | The Outpost Jobs | MA.3.9A-XP | 3.9A labor and income | 3.9B, 3.9D, 3.9E, 3.9F | Mechara | Earn, save, and spend credits at the outpost |
 
 ### Grade 4
@@ -63,7 +63,7 @@
 | ⬜ | The Pattern Machine | MA.4.5B-XP | 4.5B input-output tables and patterns | — | Mechara | Crack the rules of the robot assembly line |
 | ⬜ | The Garden Plots | MA.4.5D-XP | 4.5D perimeter and area problems | 4.5C | Lumara | Design garden plots to the gardener's order |
 | ⬜ | The Blueprint Room | MA.4.6D-XP | 4.6D classify figures by lines and angles | 4.6A, 4.6B, 4.6C | Mechara | Sort blueprint parts and fix the symmetry |
-| ⬜ | The Telescope Array | MA.4.7C-XP | 4.7C measure angles | 4.7A, 4.7B, 4.7D, 4.7E | Cloudreach | Aim the telescopes at a new comet |
+| ✅ | The Telescope Array | MA.4.7C-XP | 4.7C measure angles | 4.7A, 4.7B, 4.7D, 4.7E | Cloudreach | Aim the telescopes at a new comet |
 | ⬜ | The Measure Lab | MA.4.8C-XP | 4.8C measurement problems | 4.8A, 4.8B | Cindara | Convert and measure lava samples |
 | ⬜ | The Crater Survey | MA.4.9B-XP | 4.9B solve problems with data | 4.9A | Cindara | Plot crater depths and find the safest landing |
 | ⬜ | The Snack Stand | MA.4.10B-XP | 4.10B profit | 4.10A, 4.10C, 4.10D, 4.10E | Solara | Run a snack stand and track the profit |
@@ -216,10 +216,10 @@ Science quests use the 2024–25 science TEKS. Practices (1–4) and recurring t
 
 | Subject | Grade 3 | Grade 4 | Grade 5 | Total | Written |
 | --- | --- | --- | --- | --- | --- |
-| Math | 15 | 18 | 16 | 49 | 11 |
+| Math | 15 | 18 | 16 | 49 | 15 |
 | ELAR | 13 | 14 | 14 | 41 | 4 |
 | Science | 12 | 14 | 12 | 38 | 3 |
-| **All** | **40** | **46** | **42** | **128** | **18** |
+| **All** | **40** | **46** | **42** | **128** | **22** |
 
 ## Notes
 

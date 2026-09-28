@@ -582,11 +582,13 @@ span.esv-money { cursor: default; }
 .esv-money.bill { width: 78px; height: 38px; border-radius: 6px; background: linear-gradient(135deg, #e3f5e5, #a9dcb0); color: #1d5a2a; border: 2px solid #7cc58a; }
 
 /* protractor */
-.esv-angle { width: min(360px, 100%); display: block; margin: 0 auto; }
+.esv-angle { width: min(400px, 100%); display: block; margin: 0 auto; }
 .esv-protractor { fill: rgba(111, 216, 245, 0.18); stroke: #9d8dd0; stroke-width: 2; }
 .esv-angle line { stroke: #9d8dd0; stroke-width: 1; }
 .esv-angle line.long { stroke: var(--es-ink); stroke-width: 1.5; }
-.esv-angle text { font: 700 10px Inter, sans-serif; fill: var(--es-muted); text-anchor: middle; }
+.esv-angle text { font: 700 9px Inter, sans-serif; text-anchor: middle; }
+.esv-angle text.outer { fill: var(--es-violet); }
+.esv-angle text.inner { fill: var(--es-muted); }
 .esv-angle .esv-ray { stroke: var(--es-accent); stroke-width: 4; stroke-linecap: round; }
 .esv-vertex { fill: var(--es-violet); }
 

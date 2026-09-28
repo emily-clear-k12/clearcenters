@@ -297,32 +297,39 @@ function Money({ v, onChange }) {
   );
 }
 
-// Protractor showing an angle (show only). v.degrees, v.from ("right"|"left").
+// Protractor showing an angle (show only). Like a real protractor it has two
+// number scales: the outer one starts at 0 on the left, the inner one starts at
+// 0 on the right. v.degrees is measured from the base ray: from "right" (default)
+// or from "left". Students must read the scale that starts at 0 on the base ray.
 function Angle({ v }) {
-  const cx = 160, cy = 150, R = 130;
+  const cx = 170, cy = 160, R = 140;
   const fromLeft = v.from === "left";
-  const pt = (deg, r) => {
-    const a = ((fromLeft ? 180 - deg : deg) * Math.PI) / 180;
+  // position by "standard" angle: 0 = right ray, 180 = left ray
+  const at = (std, r) => {
+    const a = (std * Math.PI) / 180;
     return [cx + r * Math.cos(a), cy - r * Math.sin(a)];
   };
   const ticks = [];
   for (let d = 0; d <= 180; d += 5) {
     const long = d % 10 === 0;
-    const [x1, y1] = pt(d, R);
-    const [x2, y2] = pt(d, R - (long ? 14 : 7));
+    const [x1, y1] = at(d, R);
+    const [x2, y2] = at(d, R - (long ? 14 : 7));
     ticks.push(<line key={d} x1={x1} y1={y1} x2={x2} y2={y2} className={long ? "long" : ""} />);
   }
   const labels = [];
-  for (let d = 0; d <= 180; d += 30) {
-    const [x, y] = pt(d, R - 28);
-    labels.push(<text key={d} x={x} y={y + 4}>{d}</text>);
+  for (let d = 0; d <= 180; d += 10) {
+    const [ox, oy] = at(d, R + 12);
+    const [ix, iy] = at(d, R - 26);
+    labels.push(<text key={`o${d}`} x={ox} y={oy + 4} className="outer">{180 - d}</text>);
+    labels.push(<text key={`i${d}`} x={ix} y={iy + 4} className="inner">{d}</text>);
   }
-  const [ex, ey] = pt(v.degrees, R + 6);
-  const [bx, by] = pt(0, R + 6);
+  const rayStd = fromLeft ? 180 - v.degrees : v.degrees;
+  const [ex, ey] = at(rayStd, R + 2);
+  const [bx, by] = at(fromLeft ? 180 : 0, R + 2);
   return (
     <div className="esv-card">
       {v.title ? <div className="esv-title">{v.title}</div> : null}
-      <svg className="esv-angle" viewBox="0 0 320 170" role="img" aria-label="A protractor measuring an angle">
+      <svg className="esv-angle" viewBox="0 0 340 180" role="img" aria-label="A protractor measuring an angle">
         <path d={`M ${cx - R} ${cy} A ${R} ${R} 0 0 1 ${cx + R} ${cy} Z`} className="esv-protractor" />
         {ticks}
         {labels}
@@ -330,6 +337,7 @@ function Angle({ v }) {
         <line x1={cx} y1={cy} x2={ex} y2={ey} className="esv-ray" />
         <circle cx={cx} cy={cy} r="5" className="esv-vertex" />
       </svg>
+      <div className="esv-axis">Outer numbers start at 0 on the left · inner numbers start at 0 on the right</div>
     </div>
   );
 }

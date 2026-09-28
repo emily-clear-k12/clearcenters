@@ -2,7 +2,7 @@
 
 Added Sept 27, 2026. Code: `app/activity/[assignmentId]/ExpeditionVisuals.js` (drawn by the student screen), styles in `expedition-station.css`.
 
-Any task, or any part of a `parts` task, can carry a `visual`. Visuals never hold answers; the answer still lives in `answer`. Interactive visuals fill in the student's answer as they work, and the student can also type it.
+Any task, or any part of a `parts` task, can carry a `visual` (debate and sort tasks show it too). Visuals never hold answers; the answer still lives in `answer`. Interactive visuals fill in the student's answer as they work, and the student can also type it.
 
 | `visual.type` | What the student sees | Interactive? | Pair with answer kind | Good for |
 | --- | --- | --- | --- | --- |
@@ -13,7 +13,7 @@ Any task, or any part of a `parts` task, can carry a `visual`. Visuals never hol
 | `dotplot` | Dot plot / line plot (`values`, `min`, `max`, `labels`, `axis`) | show only | `number`, `choice` | 4.9A, 5.9A |
 | `numline` | Whole-number line from `min` to `max` by `step`, optional gold `marks` | `pick: true`: tap a tick to answer | `number` | rounding, comparing, 3.2C/D, 4.2C/D, elapsed time |
 | `money` | Coins and bills (`kinds` from p, n, d, q, b1, b5, b10, b20) | build (default): tap to add, tap in the tray to remove; value is dollars (3.45) · `mode: "show"`: fixed `show` list | `number` (dollars) | 3.4C, 4.10, 5.10 |
-| `angle` | Protractor with an angle drawn (`degrees`, `from: "right"` or `"left"`) | show only | `number` (degrees) | 4.7C/D/E |
+| `angle` | Two-scale protractor (outer scale starts at 0 on the left, inner at 0 on the right) with an angle drawn (`degrees`, `from: "right"` or `"left"`) | show only | `number` (degrees) | 4.7C/D/E |
 | `coords` | First-quadrant grid (`max`, labelled `points`) | `pick: true`: tap an intersection | `point` `{ x, y }` | 5.8A–C |
 
 ## Answer kind `point`

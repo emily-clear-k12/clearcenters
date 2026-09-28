@@ -774,6 +774,7 @@ export default function ExpeditionStationClient({ assignmentId, publicCase, stud
           <p className="es-question">{t.question}</p>
         )}
         {t.data ? <DataTable data={t.data} /> : null}
+        {t.visual && ["debate", "sort"].includes(kind) ? <Visual key={`${taskId}-hv`} v={t.visual} value={numberValue} onChange={setNumberValue} point={point} onPoint={setPoint} /> : null}
       </>
     );
 

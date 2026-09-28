@@ -1,7 +1,7 @@
 {
   "generatedFrom": "lib/cases and add_*.sql",
-  "onDisk": 964,
-  "inSql": 981,
+  "onDisk": 968,
+  "inSql": 985,
   "items": [
     {
       "standard": "3.10C-AD",
@@ -3325,6 +3325,15 @@
       "file": "lib/cases/expedition-station/quests/tide-pools.js"
     },
     {
+      "standard": "MA.3.4C-XP",
+      "title": "The Market Stall",
+      "grade": "3",
+      "subject": "Math",
+      "engine": "Expedition Station",
+      "kind": "id",
+      "file": "lib/cases/expedition-station/quests/market-stall.js"
+    },
+    {
       "standard": "MA.3.4K-XP",
       "title": "The Seed Crates",
       "grade": "3",
@@ -3332,6 +3341,24 @@
       "engine": "Expedition Station",
       "kind": "id",
       "file": "lib/cases/expedition-station/quests/seed-crates.js"
+    },
+    {
+      "standard": "MA.3.6C-XP",
+      "title": "The Greenhouse Floor",
+      "grade": "3",
+      "subject": "Math",
+      "engine": "Expedition Station",
+      "kind": "id",
+      "file": "lib/cases/expedition-station/quests/greenhouse-floor.js"
+    },
+    {
+      "standard": "MA.3.8B-XP",
+      "title": "The Sighting Board",
+      "grade": "3",
+      "subject": "Math",
+      "engine": "Expedition Station",
+      "kind": "id",
+      "file": "lib/cases/expedition-station/quests/sighting-board.js"
     },
     {
       "standard": "SCI.3.6C-XP",
@@ -3395,6 +3422,15 @@
       "engine": "Expedition Station",
       "kind": "id",
       "file": "lib/cases/expedition-station/quests/close-enough-check.js"
+    },
+    {
+      "standard": "MA.4.7C-XP",
+      "title": "The Telescope Array",
+      "grade": "4",
+      "subject": "Math",
+      "engine": "Expedition Station",
+      "kind": "id",
+      "file": "lib/cases/expedition-station/quests/telescope-array.js"
     },
     {
       "standard": "SCI.4.10A-XP",
