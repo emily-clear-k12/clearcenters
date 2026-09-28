@@ -1,7 +1,7 @@
 {
   "generatedFrom": "lib/cases and add_*.sql",
-  "onDisk": 961,
-  "inSql": 978,
+  "onDisk": 964,
+  "inSql": 981,
   "items": [
     {
       "standard": "3.10C-AD",
@@ -3298,6 +3298,15 @@
       "file": "lib/cases/expedition-station/quests/missing-map.js"
     },
     {
+      "standard": "MA.3.2A-XP",
+      "title": "The Crystal Count",
+      "grade": "3",
+      "subject": "Math",
+      "engine": "Expedition Station",
+      "kind": "id",
+      "file": "lib/cases/expedition-station/quests/crystal-count.js"
+    },
+    {
       "standard": "MA.3.3A-XP",
       "title": "The Glow Garden Harvest",
       "grade": "3",
@@ -3314,6 +3323,15 @@
       "engine": "Expedition Station",
       "kind": "id",
       "file": "lib/cases/expedition-station/quests/tide-pools.js"
+    },
+    {
+      "standard": "MA.3.4K-XP",
+      "title": "The Seed Crates",
+      "grade": "3",
+      "subject": "Math",
+      "engine": "Expedition Station",
+      "kind": "id",
+      "file": "lib/cases/expedition-station/quests/seed-crates.js"
     },
     {
       "standard": "SCI.3.6C-XP",
@@ -3413,6 +3431,15 @@
       "engine": "Expedition Station",
       "kind": "id",
       "file": "lib/cases/expedition-station/quests/canopy-supply-drop.js"
+    },
+    {
+      "standard": "MA.5.8C-XP",
+      "title": "The Radar Grid",
+      "grade": "5",
+      "subject": "Math",
+      "engine": "Expedition Station",
+      "kind": "id",
+      "file": "lib/cases/expedition-station/quests/radar-grid.js"
     },
     {
       "standard": "SCI.5.6A-XP",

@@ -31,11 +31,11 @@
 | --- | --- | --- | --- | --- | --- | --- |
 | ✅ | The Glow Garden Harvest | MA.3.3A-XP | 3.3A represent fractions | 3.3B, 3.3C, 3.3D, 3.7A | Lumara | Split the harvest and light the festival path |
 | ✅ | The Tide Pools | MA.3.3F-XP | 3.3F equivalent fractions | 3.3G, 3.3H | Cloudreach | Balance the rain pools before the dry spell |
-| ⬜ | The Crystal Count | MA.3.2A-XP | 3.2A compose and decompose numbers | 3.2B | Frostveil | Count and bundle ice crystals for the supply log |
+| ✅ | The Crystal Count | MA.3.2A-XP | 3.2A compose and decompose numbers | 3.2B | Frostveil | Count and bundle ice crystals for the supply log |
 | ⬜ | The Signal Race | MA.3.2D-XP | 3.2D compare and order numbers | 3.2C | Cloudreach | Rank weather signals to find the strongest storm |
 | ⬜ | The Parts Depot | MA.3.4A-XP | 3.4A add and subtract within 1,000 | 3.4B, 3.5A | Mechara | Restock the robot parts depot |
 | ⬜ | The Market Stall | MA.3.4C-XP | 3.4C coins and bills | 3.9C | Solara | Run the jungle market stall and make change |
-| ⬜ | The Seed Crates | MA.3.4K-XP | 3.4K multiply and divide word problems | 3.4D, 3.4E, 3.4H, 3.4J, 3.5B | Lumara | Pack seed crates in equal groups for planting |
+| ✅ | The Seed Crates | MA.3.4K-XP | 3.4K multiply and divide word problems | 3.4D, 3.4E, 3.4H, 3.4J, 3.5B | Lumara | Pack seed crates in equal groups for planting |
 | ⬜ | The Rover Convoy | MA.3.4G-XP | 3.4G two-digit × one-digit | 3.4F, 3.4I | Frostveil | Load the rover convoy for the long ice crossing |
 | ⬜ | The Missing Number Lock | MA.3.5D-XP | 3.5D unknowns in × and ÷ equations | 3.5C, 3.5E | Cindara | Crack the number locks on the lava vault |
 | ⬜ | The Shape Workshop | MA.3.6A-XP | 3.6A classify 2D and 3D figures | 3.6B | Mechara | Sort parts by shape to rebuild a robot |
@@ -85,7 +85,7 @@
 | ⬜ | The Cargo Crates | MA.5.4H-XP | 5.4H perimeter, area, and volume problems | 5.4G, 5.6A, 5.6B | Cloudreach | Build crates for the sky-ship cargo hold |
 | ⬜ | The Shape Family Tree | MA.5.5A-XP | 5.5A classify 2D figures in a hierarchy | — | Lumara | Sort the garden's stained-glass shapes |
 | ⬜ | The Recipe Converter | MA.5.7A-XP | 5.7A measurement conversions | — | Solara | Scale the jungle festival recipes |
-| ⬜ | The Radar Grid | MA.5.8C-XP | 5.8C graph ordered pairs | 5.8A, 5.8B | Cloudreach | Drop probes on the storm radar grid |
+| ✅ | The Radar Grid | MA.5.8C-XP | 5.8C graph ordered pairs | 5.8A, 5.8B | Cloudreach | Drop probes on the storm radar grid |
 | ⬜ | The Weather Station Data | MA.5.9C-XP | 5.9C solve problems with data | 5.9A, 5.9B | Frostveil | Read the weather station's graphs |
 | ⬜ | The Outpost Budget | MA.5.10F-XP | 5.10F balance a budget | 5.10A, 5.10B, 5.10C, 5.10D, 5.10E | Mechara | Balance the robot city's budget |
 
@@ -216,14 +216,15 @@ Science quests use the 2024–25 science TEKS. Practices (1–4) and recurring t
 
 | Subject | Grade 3 | Grade 4 | Grade 5 | Total | Written |
 | --- | --- | --- | --- | --- | --- |
-| Math | 15 | 18 | 16 | 49 | 8 |
+| Math | 15 | 18 | 16 | 49 | 11 |
 | ELAR | 13 | 14 | 14 | 41 | 4 |
 | Science | 12 | 14 | 12 | 38 | 3 |
-| **All** | **40** | **46** | **42** | **128** | **15** |
+| **All** | **40** | **46** | **42** | **128** | **18** |
 
 ## Notes
 
 - **Not covered on purpose:** speaking and listening (ELAR 1), fluency (ELAR 4), independent reading (ELAR 5), and cursive. These belong in Broadcast Booth or live instruction.
 - **Process standards** (math 3.1–5.1, science 1–5) run through every quest as supporting standards.
+- **Whole-number math visuals** (blocks, arrays, graphs, number lines, money, protractor, coordinate grid) are listed in `Expedition_Station_Math_Visuals.md`.
 - **Adding a quest:** pick a ⬜ row, write it in `lib/cases/expedition-station/quests/`, register it in `catalog.js`, run the answer-key check, and change its status here.
 - **Changing a main standard:** make sure no other row uses it.

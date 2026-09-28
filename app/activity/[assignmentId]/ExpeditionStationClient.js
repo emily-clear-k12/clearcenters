@@ -10,6 +10,7 @@
 import { useMemo, useState } from "react";
 import BackToHubButton from "../../../components/BackToHubButton";
 import SamIcon from "../../../components/SamIcon";
+import Visual from "./ExpeditionVisuals";
 import "./expedition-station.css";
 
 const PLANET_ART = {
@@ -381,6 +382,7 @@ export default function ExpeditionStationClient({ assignmentId, publicCase, stud
   const [openToken, setOpenToken] = useState(null);
   const [order, setOrder] = useState(null);
   const [numberValue, setNumberValue] = useState("");
+  const [point, setPoint] = useState(null);
 
   const meters = useMemo(() => computeMeters(quest, cards), [quest, cards]);
   const totalStars = Object.values(cards).reduce((sum, c) => sum + (c && c.done ? c.stars || 0 : 0), 0);
@@ -406,6 +408,7 @@ export default function ExpeditionStationClient({ assignmentId, publicCase, stud
     setOpenToken(null);
     setOrder(null);
     setNumberValue("");
+    setPoint(null);
     setNote(null);
   }
 
@@ -469,6 +472,7 @@ export default function ExpeditionStationClient({ assignmentId, publicCase, stud
         case "edit": return { fixes };
         case "order": return { order: order || currentPart().items.map((i) => i.id) };
         case "number": return { value: Number(numberValue) };
+        case "point": return { point };
         case "write": return { written };
         case "sort": return { placements };
         default: return {};
@@ -735,6 +739,7 @@ export default function ExpeditionStationClient({ assignmentId, publicCase, stud
       case "edit": return Object.keys(fixes).length > 0;
       case "order": return true;
       case "number": return numberValue !== "";
+      case "point": return !!point;
       case "write": return written.trim().split(/\s+/).filter(Boolean).length >= (cfg.minWords || 1);
       case "sort": return cfg.items.every((it) => placements[it.id]);
       default: return true;
@@ -965,6 +970,7 @@ export default function ExpeditionStationClient({ assignmentId, publicCase, stud
               ))}
               <p className="es-question">Part {step}: {part.prompt}</p>
             </div>
+            {cfg.visual ? <Visual key={`${taskId}-${step}-v`} v={cfg.visual} value={numberValue} onChange={setNumberValue} point={point} onPoint={setPoint} /> : null}
             {GenericInput({ kind: pk, cfg: cfg })}
             {SureRow()}
             {Actions({ ready: genericReady(pk, cfg), label: step < t.parts.length ? "Check this part" : "Submit" })}
@@ -974,8 +980,8 @@ export default function ExpeditionStationClient({ assignmentId, publicCase, stud
     }
 
     // ----- single generic (ELAR / science) -----
-    if (["choice", "multi", "highlight", "edit", "order", "number", "write"].includes(kind)) {
-      const cfg = { choices: t.choices, items: t.items, unit: t.unit, minWords: t.minWords, rubric: t.rubric, count: t.selectCount || 1 };
+    if (["choice", "multi", "highlight", "edit", "order", "number", "write", "point"].includes(kind)) {
+      const cfg = { choices: t.choices, items: t.items, unit: t.unit, minWords: t.minWords, rubric: t.rubric, count: t.selectCount || 1, visual: t.visual };
       const passageIds = t.passage || [];
       return (
         <div className={`es-split ${passageIds.length ? "with-passage" : ""}`}>
@@ -995,6 +1001,7 @@ export default function ExpeditionStationClient({ assignmentId, publicCase, stud
           ) : null}
           <div className="es-split-task">
             {header}
+            {cfg.visual ? <Visual key={`${taskId}-v`} v={cfg.visual} value={numberValue} onChange={setNumberValue} point={point} onPoint={setPoint} /> : null}
             {GenericInput({ kind: kind, cfg: cfg })}
             {SureRow()}
             {Actions({ ready: genericReady(kind, cfg) })}
