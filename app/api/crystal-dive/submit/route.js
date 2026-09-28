@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
-import { cookies } from "next/headers";
 import { supabaseAdmin } from "../../../../lib/supabaseAdmin";
 import { getFrequencyRushWordSet, getFrequencyRushClassificationSet, getClassifyBanksForCase } from "../../../../lib/cases/frequency-rush";
 import { getSkillSet, recomputeSkillItem } from "../../../../lib/frequencyRushSkills";
 import { isCustomListCode, recomputeCustomItem } from "../../../../lib/frequencyRushCustomLists";
+import { readStudentId } from "../../../../lib/studentSession";
 
 const MULTIPLIERS = [.5, .75, 1, 1, 1.25, 1.5];
 
@@ -21,7 +21,7 @@ function practiceFacts(answers) {
 }
 
 export async function POST(request) {
-  const studentId = cookies().get("cc_student_id")?.value;
+  const studentId = readStudentId();
   if (!studentId) return NextResponse.json({ error: "Not logged in." }, { status: 401 });
   const body = await request.json().catch(() => ({}));
   if (!body.sessionId || !Array.isArray(body.answers) || body.answers.length > 160) {

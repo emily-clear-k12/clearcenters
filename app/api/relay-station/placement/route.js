@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
-import { cookies } from "next/headers";
 import { supabaseAdmin } from "../../../../lib/supabaseAdmin";
 import { getRelayStationLesson, placementResult } from "../../../../lib/cases/relay-station";
+import { readStudentId } from "../../../../lib/studentSession";
 
 // Relay Station Placement Check (design doc §12). A brand-new track student
 // can take a short 3-stage test; the server re-scores every stage from raw
@@ -10,8 +10,7 @@ import { getRelayStationLesson, placementResult } from "../../../../lib/cases/re
 // Typing Track board). Skipped levels are marked passed with 0 stars and
 // `placed: true`, so the student can replay them later for stars/crystals.
 export async function POST(request) {
-  const cookieStore = cookies();
-  const studentId = cookieStore.get("cc_student_id")?.value;
+  const studentId = readStudentId();
   if (!studentId) return NextResponse.json({ error: "Not logged in." }, { status: 401 });
 
   const body = await request.json().catch(() => null);

@@ -1,14 +1,13 @@
 import { NextResponse } from "next/server";
-import { cookies } from "next/headers";
 import { supabaseAdmin } from "../../../../lib/supabaseAdmin";
+import { readStudentId } from "../../../../lib/studentSession";
 
 // Buys one Gear Locker item for the logged-in student. All of the actual
 // rules (enough points? already owned? swap out whatever else was equipped
 // in that slot?) live in the purchase_item() Postgres function so this stays
 // a thin, safe wrapper — see the Supabase migration for the function body.
 export async function POST(request) {
-  const cookieStore = cookies();
-  const studentId = cookieStore.get("cc_student_id")?.value;
+  const studentId = readStudentId();
 
   if (!studentId) {
     return NextResponse.json({ error: "Not logged in." }, { status: 401 });

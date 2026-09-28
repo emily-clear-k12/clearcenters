@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
-import { cookies } from "next/headers";
 import { supabaseAdmin } from "../../../../lib/supabaseAdmin";
 import { nextGameState } from "../../../../lib/planetGameState";
+import { readStudentId } from "../../../../lib/studentSession";
 
 // Records the outcome of a planet mini-game round. Unlike /api/planets/visit
 // (a one-time flag), this is called every time a student finishes a round —
@@ -11,8 +11,7 @@ import { nextGameState } from "../../../../lib/planetGameState";
 // route existed, so this is the only place that result reaches the student's
 // account.
 export async function POST(request) {
-  const cookieStore = cookies();
-  const studentId = cookieStore.get("cc_student_id")?.value;
+  const studentId = readStudentId();
 
   if (!studentId) {
     return NextResponse.json({ error: "Not logged in." }, { status: 401 });

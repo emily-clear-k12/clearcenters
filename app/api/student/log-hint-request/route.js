@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import { cookies } from "next/headers";
 import { supabaseAdmin } from "../../../../lib/supabaseAdmin";
+import { readStudentId } from "../../../../lib/studentSession";
 
 // Sept 4, 2026 — Teacher-facing S.A.M. expansion, Feature A (see
 // SAM_Companion_Concept_v1.md §9/§10). Every "Get a hint" tap across the
@@ -9,8 +9,7 @@ import { supabaseAdmin } from "../../../../lib/supabaseAdmin";
 // into the existing "Needs Support/Check-In" card — no student-facing
 // change at all, and nothing here ever blocks or slows the hint itself.
 export async function POST(request) {
-  const cookieStore = cookies();
-  const studentId = cookieStore.get("cc_student_id")?.value;
+  const studentId = readStudentId();
 
   if (!studentId) {
     return NextResponse.json({ error: "Not logged in." }, { status: 401 });

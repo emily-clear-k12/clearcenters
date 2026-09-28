@@ -4,6 +4,7 @@ import { supabaseAdmin } from "../../lib/supabaseAdmin";
 import { getVisibleAssignmentsForStudent } from "../../lib/getStudentAssignments";
 import { HOME_BACKGROUNDS } from "../../lib/homeBackgrounds";
 import HomeClient from "./HomeClient";
+import { readStudentId } from "../../lib/studentSession";
 
 // Sept 5, 2026 — worlds whose "learn about this world" story a student has
 // already read (see app/gear-locker/world/[planetKey]) each earn that
@@ -31,7 +32,7 @@ async function getEarnedWorldBackgrounds(studentId) {
 
 export default async function HomePage() {
   const cookieStore = cookies();
-  const studentId = cookieStore.get("cc_student_id")?.value;
+  const studentId = readStudentId();
 
   if (!studentId) {
     console.error("[home/page.js] no cc_student_id cookie present — redirecting to /login");

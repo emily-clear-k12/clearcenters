@@ -1,7 +1,7 @@
-import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { supabaseAdmin } from "../../../lib/supabaseAdmin";
 import GlowGardenClient from "./GlowGardenClient";
+import { readStudentId } from "../../../lib/studentSession";
 
 const PLANET_KEY = "glow_garden";
 const GAME_KEY = "catch_glow_sprites";
@@ -13,8 +13,7 @@ const GAME_KEY = "catch_glow_sprites";
 // other 5 planets stay on the generic modal until/unless Emily asks to
 // build theirs out too.
 export default async function GlowGardenPage() {
-  const cookieStore = cookies();
-  const studentId = cookieStore.get("cc_student_id")?.value;
+  const studentId = readStudentId();
 
   if (!studentId) {
     redirect("/login");

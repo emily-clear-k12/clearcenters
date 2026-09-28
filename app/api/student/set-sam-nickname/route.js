@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import { cookies } from "next/headers";
 import { supabaseAdmin } from "../../../../lib/supabaseAdmin";
+import { readStudentId } from "../../../../lib/studentSession";
 
 // Sept 4, 2026 — lets a student give S.A.M. their own nickname, from the
 // new "Customize S.A.M." section of the Home settings panel. Zero art
@@ -12,8 +12,7 @@ import { supabaseAdmin } from "../../../../lib/supabaseAdmin";
 const MAX_NICKNAME_LENGTH = 20;
 
 export async function POST(request) {
-  const cookieStore = cookies();
-  const studentId = cookieStore.get("cc_student_id")?.value;
+  const studentId = readStudentId();
 
   if (!studentId) {
     return NextResponse.json({ error: "Not logged in." }, { status: 401 });

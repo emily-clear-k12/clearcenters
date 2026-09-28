@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
-import { cookies } from "next/headers";
 import { supabaseAdmin } from "../../../../lib/supabaseAdmin";
 import { HOME_BACKGROUNDS } from "../../../../lib/homeBackgrounds";
+import { readStudentId } from "../../../../lib/studentSession";
 
 // Sept 4, 2026 — lets a logged-in student set a PERMANENT Home background
 // choice from the new gear-icon settings panel (HomeClient.js), saved on
@@ -22,8 +22,7 @@ import { HOME_BACKGROUNDS } from "../../../../lib/homeBackgrounds";
 // story_read_at) rather than trusting any path a client could otherwise
 // just type in directly.
 export async function POST(request) {
-  const cookieStore = cookies();
-  const studentId = cookieStore.get("cc_student_id")?.value;
+  const studentId = readStudentId();
 
   if (!studentId) {
     return NextResponse.json({ error: "Not logged in." }, { status: 401 });

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
-import { cookies } from "next/headers";
 import { supabaseAdmin } from "../../../../lib/supabaseAdmin";
 import { getWorldStory } from "../../../../lib/worldStories";
+import { readStudentId } from "../../../../lib/studentSession";
 
 // Sept 5, 2026 — marks that a student has read a world's "learn about this
 // world" story. This is the single trigger for that world's whole
@@ -11,8 +11,7 @@ import { getWorldStory } from "../../../../lib/worldStories";
 // returns success without touching the timestamp, so re-reading a story
 // never resets or re-fires anything.
 export async function POST(request) {
-  const cookieStore = cookies();
-  const studentId = cookieStore.get("cc_student_id")?.value;
+  const studentId = readStudentId();
   if (!studentId) {
     return NextResponse.json({ error: "Not logged in." }, { status: 401 });
   }

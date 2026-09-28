@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import { cookies } from "next/headers";
 import {
+import { readStudentId } from "../../../../lib/studentSession";
   scanMakerLibrary,
   searchMakerLibrary,
 } from "../../../../lib/cases/maker-studio/library";
@@ -11,7 +11,7 @@ import {
  * Images come from public/maker/ (+ public/lab/) — drop files there to add.
  */
 export async function GET(request) {
-  const studentId = cookies().get("cc_student_id")?.value;
+  const studentId = readStudentId();
   if (!studentId) {
     return NextResponse.json({ error: "Not logged in." }, { status: 401 });
   }

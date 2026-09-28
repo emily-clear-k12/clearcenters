@@ -1,5 +1,4 @@
 import { NextResponse } from "next/server";
-import { cookies } from "next/headers";
 import { supabaseAdmin } from "../../../../lib/supabaseAdmin";
 import {
   getFrequencyRushWordSet,
@@ -15,6 +14,7 @@ import { getSkillSet, buildSkillItems, skillItemForKey, SKILL_ROUND_LABELS } fro
 import { isCustomListCode, buildCustomListItems, customItemForKey, CUSTOM_LIST_LABELS } from "../../../../lib/frequencyRushCustomLists";
 import { getMissedForStudent, mixRetryPool, MAX_RETRY_PER_RUN } from "../../../../lib/frequencyRushMissed";
 import { isDailyCode, buildDailyMix, getDailyStatus, getPersonalBest, DAILY_LABELS } from "../../../../lib/frequencyRushDaily";
+import { readStudentId } from "../../../../lib/studentSession";
 
 // Sept 24, 2026 — My Missed Words: how many questions a run holds when some
 // are retries. The game plays 10 rounds by default, so a 10-item pool means
@@ -33,8 +33,7 @@ const RETRY_POOL_SIZE = 10;
 // client the student's current Outpost Builder standing so the intro
 // screen can show "your station" before the run even starts.
 export async function POST(request) {
-  const cookieStore = cookies();
-  const studentId = cookieStore.get("cc_student_id")?.value;
+  const studentId = readStudentId();
   if (!studentId) {
     return NextResponse.json({ error: "Not logged in." }, { status: 401 });
   }

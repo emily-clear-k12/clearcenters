@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
-import { cookies } from "next/headers";
 import { supabaseAdmin } from "../../../../lib/supabaseAdmin";
 import { callClaude, extractJSON } from "../../../../lib/anthropic";
 import { resolveRelayStationLesson } from "../../../../lib/relayStationServer";
 import { getComposePrompt, COMPOSE_CRYSTALS } from "../../../../lib/cases/relay-station";
+import { readStudentId } from "../../../../lib/studentSession";
 
 // Relay Station "Your Turn" — Copy -> Compose (Wave 2, design doc §14).
 // After relaying a model text, the student writes their own version. The
@@ -13,8 +13,7 @@ import { getComposePrompt, COMPOSE_CRYSTALS } from "../../../../lib/cases/relay-
 // plus which checklist items the writing meets. A failed AI call never
 // blocks saving — the teacher can still read and grade it.
 export async function POST(request) {
-  const cookieStore = cookies();
-  const studentId = cookieStore.get("cc_student_id")?.value;
+  const studentId = readStudentId();
   if (!studentId) return NextResponse.json({ error: "Not logged in." }, { status: 401 });
 
   const body = await request.json().catch(() => null);

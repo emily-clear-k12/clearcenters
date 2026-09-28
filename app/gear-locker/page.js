@@ -1,7 +1,7 @@
-import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { supabaseAdmin } from "../../lib/supabaseAdmin";
 import GearLockerClient from "./GearLockerClient";
+import { readStudentId } from "../../lib/studentSession";
 
 // Renamed in spirit (not on disk) to the "Galaxy Hub" as of Aug 27 — this
 // page used to be the Crystal Vault room-decorating shop; it's now a
@@ -9,8 +9,7 @@ import GearLockerClient from "./GearLockerClient";
 // route on purpose, same reasoning as the earlier Crystal Vault rename:
 // avoid touching routing/links for something that's cosmetic to a student.
 export default async function GearLockerPage() {
-  const cookieStore = cookies();
-  const studentId = cookieStore.get("cc_student_id")?.value;
+  const studentId = readStudentId();
 
   if (!studentId) {
     redirect("/login");

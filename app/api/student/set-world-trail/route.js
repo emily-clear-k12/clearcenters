@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
-import { cookies } from "next/headers";
 import { supabaseAdmin } from "../../../../lib/supabaseAdmin";
 import { getWorldStory } from "../../../../lib/worldStories";
+import { readStudentId } from "../../../../lib/studentSession";
 
 // Sept 5, 2026 — equips (or clears, with planetKey: null) a world's S.A.M.
 // trail cosmetic. A trail is "owned" the moment that world's story has
@@ -9,8 +9,7 @@ import { getWorldStory } from "../../../../lib/worldStories";
 // server-side rather than trusting the settings-panel UI, same pattern as
 // set-sam-skin's threshold re-check.
 export async function POST(request) {
-  const cookieStore = cookies();
-  const studentId = cookieStore.get("cc_student_id")?.value;
+  const studentId = readStudentId();
   if (!studentId) {
     return NextResponse.json({ error: "Not logged in." }, { status: 401 });
   }

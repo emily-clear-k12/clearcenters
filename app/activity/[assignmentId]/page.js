@@ -1,4 +1,3 @@
-import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { supabaseAdmin } from "../../../lib/supabaseAdmin";
 import { getPublicCase } from "../../../lib/cases/index.public";
@@ -31,11 +30,11 @@ import ExhibitHallClient from "./ExhibitHallClient";
 import ExpeditionStationClient from "./ExpeditionStationClient";
 import MakerStudioClient from "./MakerStudioClient";
 import BroadcastBoothClient from "./BroadcastBoothClient";
+import { readStudentId } from "../../../lib/studentSession";
 
 export default async function ActivityPage({ params }) {
   const { assignmentId } = params;
-  const cookieStore = cookies();
-  const studentId = cookieStore.get("cc_student_id")?.value;
+  const studentId = readStudentId();
 
   if (!studentId) {
     redirect("/login");

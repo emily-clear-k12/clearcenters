@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
-import { cookies } from "next/headers";
 import { getSimulationLabServerCase } from "../../../../lib/cases/simulation-lab/index.server";
 import { getSimulationLabPublicCase } from "../../../../lib/cases/simulation-lab/index.public";
 import { isCorrect, sceneCheckpointIds } from "../../../../lib/simulationLabScoring";
+import { readStudentId } from "../../../../lib/studentSession";
 
 // Instant feedback for the scene-based Simulation Lab's choice questions
 // (pattern + fair test). Answers ONE choice at a time with right/not-yet and
@@ -10,7 +10,7 @@ import { isCorrect, sceneCheckpointIds } from "../../../../lib/simulationLabScor
 // browser. Nothing is saved here — the first attempt is what the submit
 // route scores (the client sends it with the submission).
 export async function POST(request) {
-  const studentId = cookies().get("cc_student_id")?.value;
+  const studentId = readStudentId();
   // The dev-only harness (app/simulation-lab/dev) runs without a student
   // login on local / preview builds; production always requires one.
   if (!studentId && process.env.VERCEL_ENV === "production") {

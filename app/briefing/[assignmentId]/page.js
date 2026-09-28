@@ -1,13 +1,12 @@
-import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { supabaseAdmin } from "../../../lib/supabaseAdmin";
 import { getPublicBriefing } from "../../../lib/briefings/index.public";
 import BriefingClient from "./BriefingClient";
+import { readStudentId } from "../../../lib/studentSession";
 
 export default async function BriefingPlayerPage({ params }) {
   const { assignmentId } = params;
-  const cookieStore = cookies();
-  const studentId = cookieStore.get("cc_student_id")?.value;
+  const studentId = readStudentId();
   if (!studentId) redirect("/login");
 
   const { data: student } = await supabaseAdmin

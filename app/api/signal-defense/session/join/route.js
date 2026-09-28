@@ -57,5 +57,5 @@ export async function POST(request) {
   }
 
   const participants = await fetchParticipants(session.id);
-  return NextResponse.json(serializeSession(session, participants));
+  return NextResponse.json(serializeSession(session, participants, { myStudentId: student.id }));
 }

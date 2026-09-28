@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import { cookies } from "next/headers";
 import { supabaseAdmin } from "../../../../lib/supabaseAdmin";
+import { readStudentId } from "../../../../lib/studentSession";
 
 // Signal Defense submit - minimal persistence so a finished run shows up
 // for teachers the same way Frequency Rush / Simulation Lab do: one
@@ -11,8 +11,7 @@ import { supabaseAdmin } from "../../../../lib/supabaseAdmin";
 // same trust level Frequency Rush already accepts for widget-driven
 // endedReason / cosmetic fields. No separate sessions table in this pass.
 export async function POST(request) {
-  const cookieStore = cookies();
-  const studentId = cookieStore.get("cc_student_id")?.value;
+  const studentId = readStudentId();
 
   if (!studentId) {
     return NextResponse.json({ error: "Not logged in." }, { status: 401 });
