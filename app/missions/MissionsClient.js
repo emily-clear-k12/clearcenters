@@ -6,6 +6,7 @@ import BackToHubButton from "../../components/BackToHubButton";
 import { CaseImage } from "../../lib/caseImage";
 import SamIcon from "../../components/SamIcon";
 import SamStage from "../../components/SamStage";
+import { ACTIVITY_FACTS } from "../../lib/activityFacts";
 
 const COLORS = {
   violet: "#7B5DFF",
@@ -39,16 +40,9 @@ function subjectRingColor(subject) {
 // "mission_map" entry), and the same bug Simulation Lab and Frequency Rush
 // hit here until this fix — add new engines here the moment they go live.
 // Keep this in sync with app/home/HomeClient.js's own copy of this map.
-const ENGINE_LABELS = {
-  fact_check_desk: "SIGNAL CHECK",
-  mission_map: "MISSION MAP",
-  simulation_lab: "SIMULATION LAB",
-  frequency_rush: "FREQUENCY RUSH",
-  relay_station: "RELAY STATION",
-  assembly_deck: "ASSEMBLY DECK",
-};
 function engineTag(engine) {
-  return ENGINE_LABELS[engine] || "GROUP CHAT";
+  const facts = ACTIVITY_FACTS[engine] || ACTIVITY_FACTS.group_chat;
+  return facts.label.toUpperCase();
 }
 
 // Most engines' badge just inherits the subject's ring color (green/gold) —

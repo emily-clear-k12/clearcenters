@@ -11,7 +11,7 @@ import { getSignalCheckPublicCase } from "../../../../lib/cases/signal-check/ind
 import { selfCheckFor } from "../../../../lib/selfCheck";
 import { AUTO_SCORE_ENGINES, NO_AI_ENGINES, isPracticeGame } from "../../../../lib/engineKinds";
 import { COLORS, PAGE_ACCENTS, PAGE_BACKGROUNDS, panelStyle } from "../../../../lib/teacherTheme";
-import { levelWord } from "../../../../lib/gradeScale";
+import { levelWord, studentLevelWord } from "../../../../lib/gradeScale";
 
 // Sept 13 — moved to the console-interior look, same Observatory family
 // (aqua, bg-observatory.jpg) as the Submissions list this page is reached
@@ -44,7 +44,6 @@ import { levelWord } from "../../../../lib/gradeScale";
 const ACCENT = "#7541cf";
 const BG = PAGE_BACKGROUNDS["/teacher/grade"];
 
-const GRADE_LABELS = { 0: "Not yet", 1: "Almost", 2: "Got it" };
 function gradeLabelFor(engine, grade) {
   return levelWord(grade, engine);
 }
@@ -82,16 +81,15 @@ function ScorePill({ label, value, color, sublabel }) {
   );
 }
 
-function ReleaseConfirmModal({ open, studentName, grade, gradeLabel, onCancel, onConfirm }) {
+function ReleaseConfirmModal({ open, studentName, grade, onCancel, onConfirm }) {
   if (!open) return null;
-  const label = gradeLabel || GRADE_LABELS[grade];
   return (
     <div style={{ position: "fixed", inset: 0, background: "rgba(13,20,35,.65)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 100, padding: 20 }}>
       <div style={{ background: COLORS.white, borderRadius: 18, width: "min(420px, 100%)", padding: 24, boxShadow: "0 24px 60px rgba(0,0,0,.4)", textAlign: "center" }}>
         <div style={{ fontSize: 36, marginBottom: 10 }}>📤</div>
         <div style={{ fontWeight: 700, fontSize: 17, color: COLORS.textDark, marginBottom: 8 }}>Release this grade to {studentName}?</div>
         <div style={{ fontSize: 13.5, color: COLORS.textMuted, lineHeight: 1.5, marginBottom: 6 }}>
-          They'll see <strong>{label}</strong> and your feedback. They will not see the AI's score or rationale.
+          They'll see <strong>{studentLevelWord(grade)}</strong> and your feedback. They will not see the AI's score or rationale.
         </div>
         <div style={{ display: "flex", gap: 10, justifyContent: "center", marginTop: 18 }}>
           <button onClick={onCancel} style={{ background: COLORS.canvas, color: COLORS.textDark, border: "none", borderRadius: 999, padding: "11px 22px", fontWeight: 700, fontSize: 14, cursor: "pointer" }}>Not yet</button>

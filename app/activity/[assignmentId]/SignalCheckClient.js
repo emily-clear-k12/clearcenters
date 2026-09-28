@@ -7,6 +7,7 @@ import { GENERIC_HINTS, getCaseHints } from "../../../lib/hints";
 import SamIcon from "../../../components/SamIcon";
 import SamStage from "../../../components/SamStage";
 import DistressCallBadge from "../../../components/DistressCallBadge";
+import ReadAloudButton from "../../../components/ReadAloudButton";
 
 // Signal Check's own locked palette — navy/teal/violet/gold, distinct from
 // Group Chat (violet-led) and Newsroom (navy/gold-led) so it reads as its
@@ -694,6 +695,7 @@ export default function SignalCheckClient({ assignmentId, studentId, caseStandar
             <div style={{ fontFamily: "'Space Mono', monospace", fontSize: 11, letterSpacing: 2, color: COLORS.teal }}>⟶ INCOMING TRANSMISSION · SOURCE: {publicCase.transmission.source}</div>
             <GlassCard style={{ maxWidth: 560 }}>
               <div style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 700, fontSize: 26, lineHeight: 1.3 }}>"{publicCase.transmission.claimHeadline}"</div>
+              <ReadAloudButton text={publicCase.transmission.claimHeadline} style={{ marginTop: 8 }} />
               <div style={{ marginTop: 12, fontSize: 12.5, color: "rgba(255,255,255,.6)" }}>— logged by {publicCase.transmission.source}, {publicCase.transmission.loggedAt}</div>
             </GlassCard>
             <PrimaryButton onClick={() => goTo("scan")}>

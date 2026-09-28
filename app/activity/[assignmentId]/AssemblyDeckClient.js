@@ -6,6 +6,7 @@ import BackToHubButton from "../../../components/BackToHubButton";
 import { assembledReport, getRound, leftoversSoFar, reasonChipsFor, rejectReason, roundSize, trayOrder, CHALLENGE } from "../../../lib/cases/assembly-deck/index.public";
 import SubmitReflection from "../../../components/submit/SubmitReflection";
 import { ACTIVITY_CHECKS } from "../../../lib/selfCheckLists";
+import ReadAloudButton from "../../../components/ReadAloudButton";
 
 // Assembly Deck — the student screen (design doc §3).
 // brief -> [build -> rejects] x rounds -> assembly -> what-if -> trap -> debrief -> explain -> done
@@ -219,6 +220,7 @@ function Brief({ publicCase, onStart, challenge, setChallenge }) {
     <Panel>
       <div style={{ fontSize: 12, letterSpacing: 2, color: THEME.teal, fontWeight: 700 }}>🧩 ASSEMBLY DECK</div>
       <h1 style={{ fontSize: 28, margin: "8px 0 4px" }}>{publicCase.title}</h1>
+      <ReadAloudButton text={`${publicCase.title}. ${(publicCase.brief || []).join(" ")}`} style={{ marginBottom: 12 }} />
       <div style={{ color: THEME.muted, fontSize: 13.5, marginBottom: 14 }}>
         {publicCase.subject} · Grade {publicCase.grade} · {publicCase.rounds.length} {pieceWord(publicCase, true)} · about {publicCase.estimatedMinutes} minutes
       </div>

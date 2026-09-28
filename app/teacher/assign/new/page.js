@@ -788,7 +788,7 @@ function displayCode(code){return String(code||'').replace(/^TEKS\s+/i,'').repla
         .select()
         .single());
       if (!insertError) {
-        setError("Assigned, but run add_broadcast_booth.sql so Broadcast Booth settings save next time.");
+        setError("Assigned, but the Broadcast Booth settings didn't save. Assign it again, or contact support if this keeps happening.");
       }
     }
     if (insertError && /maker_studio_config/i.test(insertError.message || "")) {
@@ -799,12 +799,13 @@ function displayCode(code){return String(code||'').replace(/^TEKS\s+/i,'').repla
         .select()
         .single());
       if (!insertError) {
-        setError("Assigned, but run add_maker_studio.sql so the prompt and Maker settings save next time.");
+        setError("Assigned, but the Maker Studio settings didn't save. Assign it again, or contact support if this keeps happening.");
       }
     }
     if (insertError) {
       setAssigning(false);
-      setError("Couldn't assign the case: " + insertError.message);
+      console.error(insertError);
+      setError("Couldn't assign that activity. Try again, or contact support if it keeps happening.");
       return;
     }
 

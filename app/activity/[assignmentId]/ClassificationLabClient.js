@@ -3,6 +3,7 @@
 import { useState } from "react";
 import SamIcon from "../../../components/SamIcon";
 import BackToHubButton from "../../../components/BackToHubButton";
+import ReadAloudButton from "../../../components/ReadAloudButton";
 import SubmitReflection from "../../../components/submit/SubmitReflection";
 import { ACTIVITY_CHECKS } from "../../../lib/selfCheckLists";
 import "./classification-lab.css";
@@ -182,6 +183,7 @@ export default function ClassificationLabClient({ assignmentId, publicCase, save
           <div>
             <p className="cl-kicker">Classification Lab · {publicCase.teks}</p>
             <h1>{publicCase.title}</h1>
+            <ReadAloudButton text={`${publicCase.title}. ${sort ? `${sort.rule} ${sort.notThis || ""}` : (publicCase.venn && publicCase.venn.mc ? publicCase.venn.mc.prompt : "")}`} style={{ marginTop: 8 }} />
           </div>
           <div className="cl-head-actions">
             {needsSam && !samOpen && (

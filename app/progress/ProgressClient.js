@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import BackToHubButton from "../../components/BackToHubButton";
 import { CaseImage } from "../../lib/caseImage";
 import { getPublicCase } from "../../lib/cases/index.public";
+import { studentLevelWord } from "../../lib/gradeScale";
 
 const COLORS = {
   navy: "#0D1B2A",
@@ -25,9 +26,9 @@ const COLORS = {
 };
 
 const GRADE_META = {
-  0: { label: "Keep Practicing", bg: COLORS.goldSoft, color: "#8A6508", bar: "#E2B100", height: 36 },
-  1: { label: "Getting There", bg: COLORS.tealSoft, color: "#087C8A", bar: "#1AA7B5", height: 110 },
-  2: { label: "Nailed It", bg: COLORS.successSoft, color: "#0E7A45", bar: "#22A35A", height: 190 },
+  0: { label: studentLevelWord(0), bg: COLORS.goldSoft, color: "#8A6508", bar: "#E2B100", height: 36 },
+  1: { label: studentLevelWord(1), bg: COLORS.tealSoft, color: "#087C8A", bar: "#1AA7B5", height: 110 },
+  2: { label: studentLevelWord(2), bg: COLORS.successSoft, color: "#0E7A45", bar: "#22A35A", height: 190 },
 };
 
 const CONFIDENCE_META = {
@@ -189,6 +190,10 @@ export default function ProgressClient({ student, missions, badgeTiers, pastDue 
             </div>
           )}
           {!late && <div style={{ height: 10 }} />}
+          <div style={{ display: "flex", gap: 8, padding: "0 18px 16px" }}>
+            <button type="button" onClick={() => router.push("/star-chart")} style={{ background: "#fff", border: "1px solid #d9d3ea", borderRadius: 999, padding: "8px 14px", fontWeight: 700, cursor: "pointer" }}>Star Chart</button>
+            <button type="button" onClick={() => router.push("/badges")} style={{ background: "#fff", border: "1px solid #d9d3ea", borderRadius: 999, padding: "8px 14px", fontWeight: 700, cursor: "pointer" }}>Badges</button>
+          </div>
         </header>
 
         <div className="sp-cols">
@@ -262,17 +267,17 @@ export default function ProgressClient({ student, missions, badgeTiers, pastDue 
                 <p style={{ margin: "4px 0 0", color: COLORS.textMuted, fontSize: 13 }}>{bars.length ? "Tap a bar to see that grade." : "Your graph starts after the first grade."}</p>
               </div>
               <div style={{ display: "flex", gap: 12, fontSize: 12, fontWeight: 700, color: COLORS.textMuted }}>
-                <span><i style={{ display: "inline-block", width: 8, height: 8, borderRadius: "50%", background: "#e2b100", marginRight: 4 }} />Keep Practicing</span>
-                <span><i style={{ display: "inline-block", width: 8, height: 8, borderRadius: "50%", background: "#1aa7b5", marginRight: 4 }} />Getting There</span>
-                <span><i style={{ display: "inline-block", width: 8, height: 8, borderRadius: "50%", background: "#22a35a", marginRight: 4 }} />Nailed It</span>
+                <span><i style={{ display: "inline-block", width: 8, height: 8, borderRadius: "50%", background: "#e2b100", marginRight: 4 }} />{studentLevelWord(0)}</span>
+                <span><i style={{ display: "inline-block", width: 8, height: 8, borderRadius: "50%", background: "#1aa7b5", marginRight: 4 }} />{studentLevelWord(1)}</span>
+                <span><i style={{ display: "inline-block", width: 8, height: 8, borderRadius: "50%", background: "#22a35a", marginRight: 4 }} />{studentLevelWord(2)}</span>
               </div>
             </div>
             {bars.length > 0 && (
               <div style={{ display: "flex", gap: 12, alignItems: "flex-end", marginTop: 12 }}>
                 <div style={{ position: "relative", height: 200, width: 110, flexShrink: 0, fontSize: 12, fontWeight: 700, color: COLORS.textMuted }}>
-                  <span style={{ position: "absolute", top: 0, right: 8 }}>Nailed It</span>
-                  <span style={{ position: "absolute", top: 82, right: 8 }}>Getting There</span>
-                  <span style={{ position: "absolute", top: 156, right: 8 }}>Keep Practicing</span>
+                  <span style={{ position: "absolute", top: 0, right: 8 }}>{studentLevelWord(2)}</span>
+                  <span style={{ position: "absolute", top: 82, right: 8 }}>{studentLevelWord(1)}</span>
+                  <span style={{ position: "absolute", top: 156, right: 8 }}>{studentLevelWord(0)}</span>
                 </div>
                 <div style={{ flex: 1, minHeight: 230, display: "flex", alignItems: "flex-end", gap: 10, borderBottom: "2px solid #e4dff2", paddingBottom: 28 }}>
                   {bars.map((m) => {
