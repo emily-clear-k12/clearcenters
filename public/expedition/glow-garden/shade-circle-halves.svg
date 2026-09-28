@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
+
+  <path d="M100 22 A78 78 0 0 0 100 178 Z" fill="#efe8ff" stroke="#5b3cc4" stroke-width="4" stroke-linejoin="round"/>
+  <path d="M100 22 A78 78 0 0 1 100 178 Z" fill="#ffc44d" stroke="#5b3cc4" stroke-width="4" stroke-linejoin="round"/>
+  <line x1="100" y1="22" x2="100" y2="178" stroke="#5b3cc4" stroke-width="4"/>
+
+</svg>

@@ -382,6 +382,7 @@ export default function ExpeditionStationClient({ assignmentId, publicCase, stud
   const [openToken, setOpenToken] = useState(null);
   const [order, setOrder] = useState(null);
   const [numberValue, setNumberValue] = useState("");
+  const [model, setModel] = useState(null);
   const [point, setPoint] = useState(null);
 
   const meters = useMemo(() => computeMeters(quest, cards), [quest, cards]);
@@ -408,6 +409,7 @@ export default function ExpeditionStationClient({ assignmentId, publicCase, stud
     setOpenToken(null);
     setOrder(null);
     setNumberValue("");
+    setModel(null);
     setPoint(null);
     setNote(null);
   }
@@ -471,7 +473,7 @@ export default function ExpeditionStationClient({ assignmentId, publicCase, stud
         case "highlight": return { sentences };
         case "edit": return { fixes };
         case "order": return { order: order || currentPart().items.map((i) => i.id) };
-        case "number": return { value: Number(numberValue) };
+        case "number": return { value: Number(numberValue), model };
         case "point": return { point };
         case "write": return { written };
         case "sort": return { placements };
@@ -703,13 +705,23 @@ export default function ExpeditionStationClient({ assignmentId, publicCase, stud
         return <p className="es-sub">Tap each word that's wrong, then pick the fix. Words that are already right won't change.</p>;
       case "order":
         return OrderList({ items: cfg.items });
-      case "number":
+      case "number": {
+        const drives = cfg.visual && cfg.visual.mode !== "show" && ["array", "blocks", "money"].includes(cfg.visual.type);
         return (
           <label className="es-number">
-            <input type="number" inputMode="decimal" value={numberValue} onChange={(e) => setNumberValue(e.target.value)} aria-label="Your answer" />
+            <input
+              type="number"
+              inputMode="decimal"
+              readOnly={!!drives}
+              placeholder={drives ? "Build it on the picture" : undefined}
+              value={numberValue}
+              onChange={(e) => { if (!drives) setNumberValue(e.target.value); }}
+              aria-label="Your answer"
+            />
             {cfg.unit ? <span>{cfg.unit}</span> : null}
           </label>
         );
+      }
       case "write": {
         const words = written.trim() ? written.trim().split(/\s+/).length : 0;
         return (
@@ -774,7 +786,7 @@ export default function ExpeditionStationClient({ assignmentId, publicCase, stud
           <p className="es-question">{t.question}</p>
         )}
         {t.data ? <DataTable data={t.data} /> : null}
-        {t.visual && ["debate", "sort"].includes(kind) ? <Visual key={`${taskId}-hv`} v={t.visual} value={numberValue} onChange={setNumberValue} point={point} onPoint={setPoint} /> : null}
+        {t.visual && ["debate", "sort"].includes(kind) ? <Visual key={`${taskId}-hv`} v={t.visual} value={numberValue} onChange={setNumberValue} onModel={setModel} point={point} onPoint={setPoint} /> : null}
       </>
     );
 
@@ -971,7 +983,7 @@ export default function ExpeditionStationClient({ assignmentId, publicCase, stud
               ))}
               <p className="es-question">Part {step}: {part.prompt}</p>
             </div>
-            {cfg.visual ? <Visual key={`${taskId}-${step}-v`} v={cfg.visual} value={numberValue} onChange={setNumberValue} point={point} onPoint={setPoint} /> : null}
+            {cfg.visual ? <Visual key={`${taskId}-${step}-v`} v={cfg.visual} value={numberValue} onChange={setNumberValue} onModel={setModel} point={point} onPoint={setPoint} /> : null}
             {GenericInput({ kind: pk, cfg: cfg })}
             {SureRow()}
             {Actions({ ready: genericReady(pk, cfg), label: step < t.parts.length ? "Check this part" : "Submit" })}
@@ -1002,7 +1014,7 @@ export default function ExpeditionStationClient({ assignmentId, publicCase, stud
           ) : null}
           <div className="es-split-task">
             {header}
-            {cfg.visual ? <Visual key={`${taskId}-v`} v={cfg.visual} value={numberValue} onChange={setNumberValue} point={point} onPoint={setPoint} /> : null}
+            {cfg.visual ? <Visual key={`${taskId}-v`} v={cfg.visual} value={numberValue} onChange={setNumberValue} onModel={setModel} point={point} onPoint={setPoint} /> : null}
             {GenericInput({ kind: kind, cfg: cfg })}
             {SureRow()}
             {Actions({ ready: genericReady(kind, cfg) })}

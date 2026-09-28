@@ -27,7 +27,7 @@ function BlockPiece({ place }) {
 }
 
 // Base-ten blocks. build: steppers per place set the number. show: fixed counts.
-function Blocks({ v, value, onChange }) {
+function Blocks({ v, value, onChange, onModel }) {
   const places = v.places || ["hundreds", "tens", "ones"];
   const [counts, setCounts] = useState(() => {
     const c = {};
@@ -36,10 +36,12 @@ function Blocks({ v, value, onChange }) {
   });
   const shown = v.mode === "show" ? v.counts || {} : counts;
   const total = places.reduce((sum, p) => sum + (shown[p] || 0) * PLACE_INFO[p].value, 0);
-  const set = (p, n) => {
-    const next = { ...counts, [p]: Math.max(0, Math.min(v.maxPer || 19, n)) };
+  const set = (place, n) => {
+    const next = { ...counts, [place]: Math.max(0, Math.min(v.maxPer || 19, n)) };
     setCounts(next);
-    onChange && onChange(String(places.reduce((sum, q) => sum + (next[q] || 0) * PLACE_INFO[q].value, 0)));
+    const total = places.reduce((sum, q) => sum + (next[q] || 0) * PLACE_INFO[q].value, 0);
+    onChange && onChange(String(total));
+    onModel && onModel({ counts: next });
   };
   return (
     <div className="esv-card">
@@ -71,7 +73,7 @@ function Blocks({ v, value, onChange }) {
 }
 
 // Rows × columns of dots or tiles. build: tap a cell to set the size. show: fixed.
-function ArrayGrid({ v }) {
+function ArrayGrid({ v, onChange, onModel }) {
   const maxR = v.maxRows || 10;
   const maxC = v.maxCols || 10;
   const [size, setSize] = useState({ r: v.mode === "show" ? v.rows : 0, c: v.mode === "show" ? v.cols : 0 });
@@ -103,7 +105,17 @@ function ArrayGrid({ v }) {
                   type="button"
                   className={`esv-cell ${on ? "on" : ""}`}
                   aria-label={`${row} rows of ${col}`}
-                  onClick={() => setSize(size.r === row && size.c === col ? { r: 0, c: 0 } : { r: row, c: col })}
+                  onClick={() => {
+                    const next = size.r === row && size.c === col ? { r: 0, c: 0 } : { r: row, c: col };
+                    setSize(next);
+                    const filled = next.r > 0 && next.c > 0;
+                    onModel && onModel(filled ? { rows: next.r, cols: next.c } : null);
+                    if (!onChange) return;
+                    if (!filled) onChange("");
+                    else if (v.fills === "rows") onChange(String(next.r));
+                    else if (v.fills === "cols") onChange(String(next.c));
+                    else onChange(String(next.r * next.c));
+                  }}
                 >
                   {on && v.icon && !tiles ? v.icon : null}
                 </button>
@@ -253,7 +265,7 @@ function dollars(cents) {
 
 // Money tray. build: tap coins and bills to add; tap one in the tray to take it out.
 // show: displays a fixed set (v.show = ["q","q","d"]).
-function Money({ v, onChange }) {
+function Money({ v, onChange, onModel }) {
   const kinds = v.kinds || ["b1", "q", "d", "n", "p"];
   const [tray, setTray] = useState(v.start || []);
   const shown = v.mode === "show" ? v.show || [] : tray;
@@ -261,6 +273,7 @@ function Money({ v, onChange }) {
   const update = (next) => {
     setTray(next);
     onChange && onChange((next.reduce((s, k) => s + MONEY[k].cents, 0) / 100).toFixed(2));
+    onModel && onModel({ pieces: next });
   };
   return (
     <div className="esv-card">
@@ -389,16 +402,16 @@ function Coords({ v, point, onPoint }) {
   );
 }
 
-export default function Visual({ v, value, onChange, point, onPoint }) {
+export default function Visual({ v, value, onChange, onModel, point, onPoint }) {
   if (!v) return null;
   switch (v.type) {
-    case "blocks": return <Blocks v={v} value={value} onChange={onChange} />;
-    case "array": return <ArrayGrid v={v} />;
+    case "blocks": return <Blocks v={v} value={value} onChange={onChange} onModel={onModel} />;
+    case "array": return <ArrayGrid v={v} onChange={onChange} onModel={onModel} />;
     case "bars":
     case "pictograph":
     case "dotplot": return <Bars v={v} />;
     case "numline": return <NumLine v={v} value={value} onChange={onChange} />;
-    case "money": return <Money v={v} onChange={onChange} />;
+    case "money": return <Money v={v} onChange={onChange} onModel={onModel} />;
     case "angle": return <Angle v={v} />;
     case "coords": return <Coords v={v} point={point} onPoint={onPoint} />;
     default: return null;
