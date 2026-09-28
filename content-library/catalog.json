@@ -1,7 +1,7 @@
 {
   "generatedFrom": "lib/cases and add_*.sql",
-  "onDisk": 968,
-  "inSql": 985,
+  "onDisk": 976,
+  "inSql": 993,
   "items": [
     {
       "standard": "3.10C-AD",
@@ -3289,6 +3289,15 @@
       "file": "lib/cases/exhibit-hall/split.js"
     },
     {
+      "standard": "ELA.3.11D-XP",
+      "title": "The Garbled Messages",
+      "grade": "3",
+      "subject": "ELAR",
+      "engine": "Expedition Station",
+      "kind": "id",
+      "file": "lib/cases/expedition-station/quests/garbled-messages.js"
+    },
+    {
       "standard": "ELA.3.6F-XP",
       "title": "The Missing Map",
       "grade": "3",
@@ -3352,6 +3361,15 @@
       "file": "lib/cases/expedition-station/quests/greenhouse-floor.js"
     },
     {
+      "standard": "MA.3.7B-XP",
+      "title": "The Creature Pens",
+      "grade": "3",
+      "subject": "Math",
+      "engine": "Expedition Station",
+      "kind": "id",
+      "file": "lib/cases/expedition-station/quests/creature-pens.js"
+    },
+    {
       "standard": "MA.3.8B-XP",
       "title": "The Sighting Board",
       "grade": "3",
@@ -3386,6 +3404,33 @@
       "engine": "Expedition Station",
       "kind": "id",
       "file": "lib/cases/expedition-station/quests/tall-tale-trail.js"
+    },
+    {
+      "standard": "ELA.4.8B-XP",
+      "title": "The Rival Pilots",
+      "grade": "4",
+      "subject": "ELAR",
+      "engine": "Expedition Station",
+      "kind": "id",
+      "file": "lib/cases/expedition-station/quests/rival-pilots.js"
+    },
+    {
+      "standard": "ELA.4.9B-XP",
+      "title": "The Crew Poems",
+      "grade": "4",
+      "subject": "ELAR",
+      "engine": "Expedition Station",
+      "kind": "id",
+      "file": "lib/cases/expedition-station/quests/crew-poems.js"
+    },
+    {
+      "standard": "MA.4.2F-XP",
+      "title": "The Decimal Dials",
+      "grade": "4",
+      "subject": "Math",
+      "engine": "Expedition Station",
+      "kind": "id",
+      "file": "lib/cases/expedition-station/quests/decimal-dials.js"
     },
     {
       "standard": "MA.4.3A-XP",
@@ -3442,6 +3487,24 @@
       "file": "lib/cases/expedition-station/quests/water-cycle-loop.js"
     },
     {
+      "standard": "SCI.4.10B-XP",
+      "title": "The Canyon Makers",
+      "grade": "4",
+      "subject": "Science",
+      "engine": "Expedition Station",
+      "kind": "id",
+      "file": "lib/cases/expedition-station/quests/canyon-makers.js"
+    },
+    {
+      "standard": "SCI.4.8C-XP",
+      "title": "The Power Grid",
+      "grade": "4",
+      "subject": "Science",
+      "engine": "Expedition Station",
+      "kind": "id",
+      "file": "lib/cases/expedition-station/quests/power-grid.js"
+    },
+    {
       "standard": "ELA.5.13D-XP",
       "title": "The Trusted Source",
       "grade": "5",
@@ -3449,6 +3512,15 @@
       "engine": "Expedition Station",
       "kind": "id",
       "file": "lib/cases/expedition-station/quests/trusted-source.js"
+    },
+    {
+      "standard": "ELA.5.9D-XP",
+      "title": "The Glacier Files",
+      "grade": "5",
+      "subject": "ELAR",
+      "engine": "Expedition Station",
+      "kind": "id",
+      "file": "lib/cases/expedition-station/quests/glacier-files.js"
     },
     {
       "standard": "MA.5.3H-XP",

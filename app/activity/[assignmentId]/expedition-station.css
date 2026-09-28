@@ -347,6 +347,8 @@
 .es-sentence.tap { cursor: pointer; }
 .es-sentence.tap:hover { background: var(--es-accent-soft); }
 .es-sentence.on { background: #fff0a8; box-shadow: 0 0 0 2px #ffd84d; }
+.es-stanza { margin-bottom: 14px !important; }
+.es-poem-line { display: block; width: fit-content; padding: 0 4px; }
 .es-edit-text { line-height: 2.2 !important; }
 .es-token-wrap { position: relative; display: inline-block; }
 .es-token {

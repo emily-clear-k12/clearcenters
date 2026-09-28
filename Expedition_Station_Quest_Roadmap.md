@@ -40,7 +40,7 @@
 | ⬜ | The Missing Number Lock | MA.3.5D-XP | 3.5D unknowns in × and ÷ equations | 3.5C, 3.5E | Cindara | Crack the number locks on the lava vault |
 | ⬜ | The Shape Workshop | MA.3.6A-XP | 3.6A classify 2D and 3D figures | 3.6B | Mechara | Sort parts by shape to rebuild a robot |
 | ✅ | The Greenhouse Floor | MA.3.6C-XP | 3.6C area of rectangles | 3.6D, 3.6E | Lumara | Tile the greenhouse floor and plan garden plots |
-| ⬜ | The Creature Pens | MA.3.7B-XP | 3.7B perimeter | 3.7A | Solara | Fence the rescued animals' pens |
+| ✅ | The Creature Pens | MA.3.7B-XP | 3.7B perimeter | 3.7A | Solara | Fence the rescued animals' pens |
 | ⬜ | The Launch Schedule | MA.3.7C-XP | 3.7C time intervals | 3.7D, 3.7E | Cloudreach | Time the sky-ship launches and weigh the cargo |
 | ✅ | The Sighting Board | MA.3.8B-XP | 3.8B solve problems with data | 3.8A | Solara | Graph the animal sightings and plan the tour |
 | ⬜ | The Outpost Jobs | MA.3.9A-XP | 3.9A labor and income | 3.9B, 3.9D, 3.9E, 3.9F | Mechara | Earn, save, and spend credits at the outpost |
@@ -53,7 +53,7 @@
 | ✅ | The Lava Lock | MA.4.3C-XP | 4.3C equivalent fractions | 4.3D, 4.3G | Cindara | Match coolant levels and seal the lava lock |
 | ⬜ | The Star Map | MA.4.2B-XP | 4.2B place value to billions and decimals | 4.2A | Cloudreach | Log star distances on the sky reef's map |
 | ⬜ | The Population Count | MA.4.2C-XP | 4.2C compare and order whole numbers | 4.2D | Solara | Count and rank the jungle's animal populations |
-| ⬜ | The Decimal Dials | MA.4.2F-XP | 4.2F compare and order decimals | 4.2E, 4.2G, 4.2H | Mechara | Tune the robot factory's decimal dials |
+| ✅ | The Decimal Dials | MA.4.2F-XP | 4.2F compare and order decimals | 4.2E, 4.2G, 4.2H | Mechara | Tune the robot factory's decimal dials |
 | ✅ | The Pollen Scoops | MA.4.3A-XP | 4.3A fractions as sums of unit fractions | 4.3B | Lumara | Mix pollen for the glow bees, one scoop at a time |
 | ✅ | The Close Enough Check | MA.4.3F-XP | 4.3F benchmark fractions and reasonableness | 4.3G | Frostveil | Check the crew's fuel math before the blizzard |
 | ⬜ | The Supply Ledger | MA.4.4A-XP | 4.4A add and subtract whole numbers and decimals | 4.2E | Mechara | Balance the city's supply ledger |
@@ -109,7 +109,7 @@ Each ELAR quest has 4–6 original passages that belong to its world.
 | ⬜ | The Radio Play | ELA.3.9C-XP | 3.9C drama | 3.8B | Solara | A short radio play the crew performs |
 | ⬜ | The Field Guide | ELA.3.9D-XP | 3.9D informational text features and structure | 3.10C | Solara | A rainforest field guide with headings and diagrams |
 | ⬜ | The Trader's Pitch | ELA.3.9E-XP | 3.9E argumentative text | 3.10A | Mechara | Ads and a crew proposal |
-| ⬜ | The Garbled Messages | ELA.3.11D-XP | 3.11D editing | 3.11C | Cindara | Storm-damaged messages to fix |
+| ✅ | The Garbled Messages | ELA.3.11D-XP | 3.11D editing | 3.11C | Cindara | Storm-damaged messages to fix |
 | ⬜ | The Report to Vega | ELA.3.12B-XP | 3.12B write informational text | 3.11A, 3.11B | Lumara | Notes the student turns into a report |
 | ⬜ | The Archive Hunt | ELA.3.13C-XP | 3.13C gather information from sources | 3.13D, 3.13E | Mechara | The outpost archive: logs, guides, charts |
 
@@ -121,9 +121,9 @@ Each ELAR quest has 4–6 original passages that belong to its world.
 | ⬜ | The Root Words | ELA.4.3C-XP | 4.3C affixes and roots | 4.3B, 4.3D | Mechara | Robot manuals full of new words |
 | ⬜ | The Summit Summary | ELA.4.6G-XP | 4.6G key ideas | 4.7D | Frostveil | Expedition reports to summarize |
 | ✅ | The Tall Tale Trail | ELA.4.8A-XP | 4.8A theme | 4.9A | Solara | Solaran tall tales and legends |
-| ⬜ | The Rival Pilots | ELA.4.8B-XP | 4.8B characters | 4.8D | Cloudreach | A story about two rival sky pilots |
+| ✅ | The Rival Pilots | ELA.4.8B-XP | 4.8B characters | 4.8D | Cloudreach | A story about two rival sky pilots |
 | ⬜ | The Eruption Story | ELA.4.8C-XP | 4.8C plot | 4.10B | Cindara | A story with rising action and a climax |
-| ⬜ | The Crew Poems | ELA.4.9B-XP | 4.9B figurative language in poetry | 4.10D | Lumara | Poems with similes, metaphors, personification |
+| ✅ | The Crew Poems | ELA.4.9B-XP | 4.9B figurative language in poetry | 4.10D | Lumara | Poems with similes, metaphors, personification |
 | ⬜ | The Stage Crew | ELA.4.9C-XP | 4.9C drama structure | 4.8B | Mechara | A play with scenes and stage directions |
 | ⬜ | The Volcano Report | ELA.4.9D-XP | 4.9D informational text | 4.10B, 4.10C | Cindara | Reports with headings, graphs, timelines |
 | ⬜ | The Outpost Debate | ELA.4.9E-XP | 4.9E argumentative text | 4.10A | Frostveil | Crew proposals to move the outpost |
@@ -144,7 +144,7 @@ Each ELAR quest has 4–6 original passages that belong to its world.
 | ⬜ | The River Rescue | ELA.5.8C-XP | 5.8C plot | 5.10B | Solara | An adventure story |
 | ⬜ | The Speaker's Voice | ELA.5.9B-XP | 5.9B poetry: poet vs. speaker | 5.10D | Cloudreach | Poems written as different speakers |
 | ⬜ | The Opening Night | ELA.5.9C-XP | 5.9C drama | 5.10F | Mechara | A play for the robot city's opening night |
-| ⬜ | The Glacier Files | ELA.5.9D-XP | 5.9D informational text | 5.10B, 5.10C | Frostveil | Science reports with graphics |
+| ✅ | The Glacier Files | ELA.5.9D-XP | 5.9D informational text | 5.10B, 5.10C | Frostveil | Science reports with graphics |
 | ⬜ | The Council Vote | ELA.5.9E-XP | 5.9E argumentative text | 5.10A, 5.10G | Solara | Speeches for a council vote |
 | ⬜ | The Narrator's Eye | ELA.5.10E-XP | 5.10E point of view | 5.7B | Lumara | One event told from different points of view |
 | ⬜ | The Final Draft | ELA.5.11D-XP | 5.11D editing | 5.11C | Cindara | A crew newsletter to edit |
@@ -182,11 +182,11 @@ Science quests use the 2024–25 science TEKS. Practices (1–4) and recurring t
 | ⬜ | The Mixing Lab | SCI.4.6B-XP | 4.6B mixtures and solutions | 4.6C | Cloudreach | Mix and separate the sky reef's supplies |
 | ⬜ | The Slippery Slope | SCI.4.7A-XP | 4.7 gravity, friction, and magnetism | — | Frostveil | Test which surfaces stop the sled |
 | ⬜ | The Wave Tank | SCI.4.8A-XP | 4.8A energy transfer | — | Cloudreach | Test how waves and sound move energy |
-| ⬜ | The Power Grid | SCI.4.8C-XP | 4.8C closed circuits | 4.8B | Mechara | Wire the outpost's lights and heaters |
+| ✅ | The Power Grid | SCI.4.8C-XP | 4.8C closed circuits | 4.8B | Mechara | Wire the outpost's lights and heaters |
 | ⬜ | The Season Tracker | SCI.4.9A-XP | 4.9A seasons | — | Frostveil | Track daylight on Earth through the year |
 | ⬜ | The Moon Watch | SCI.4.9B-XP | 4.9B the Moon's appearance | — | Lumara | Record moon phases from the home-world telescope |
 | ✅ | The Water Cycle Loop | SCI.4.10A-XP | 4.10A water cycle | 4.10C | Cloudreach | Follow one water drop around the cycle |
-| ⬜ | The Canyon Makers | SCI.4.10B-XP | 4.10B weathering, erosion, deposition | — | Cindara | Fast-forward a river carving a canyon |
+| ✅ | The Canyon Makers | SCI.4.10B-XP | 4.10B weathering, erosion, deposition | — | Cindara | Fast-forward a river carving a canyon |
 | ⬜ | The Energy Choice | SCI.4.11A-XP | 4.11A renewable and nonrenewable resources | 4.11B, 4.11C | Mechara | Choose how to power the robot city |
 | ⬜ | The Greenhouse Test | SCI.4.12A-XP | 4.12A producers make food | — | Lumara | Test what the garden plants need |
 | ⬜ | The Web of Life | SCI.4.12B-XP | 4.12B food webs | — | Solara | Build the rainforest food web |
@@ -216,10 +216,10 @@ Science quests use the 2024–25 science TEKS. Practices (1–4) and recurring t
 
 | Subject | Grade 3 | Grade 4 | Grade 5 | Total | Written |
 | --- | --- | --- | --- | --- | --- |
-| Math | 15 | 18 | 16 | 49 | 15 |
-| ELAR | 13 | 14 | 14 | 41 | 4 |
-| Science | 12 | 14 | 12 | 38 | 3 |
-| **All** | **40** | **46** | **42** | **128** | **22** |
+| Math | 15 | 18 | 16 | 49 | 17 |
+| ELAR | 13 | 14 | 14 | 41 | 8 |
+| Science | 12 | 14 | 12 | 38 | 5 |
+| **All** | **40** | **46** | **42** | **128** | **30** |
 
 ## Notes
 
