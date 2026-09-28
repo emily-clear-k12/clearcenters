@@ -706,7 +706,7 @@ export default function ExpeditionStationClient({ assignmentId, publicCase, stud
       case "order":
         return OrderList({ items: cfg.items });
       case "number": {
-        const drives = cfg.visual && cfg.visual.mode !== "show" && ["array", "blocks", "money"].includes(cfg.visual.type);
+        const drives = cfg.visual && cfg.visual.mode !== "show" && ["blocks", "money"].includes(cfg.visual.type);
         return (
           <label className="es-number">
             <input

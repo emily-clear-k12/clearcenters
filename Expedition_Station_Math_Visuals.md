@@ -2,7 +2,7 @@
 
 Added Sept 27, 2026. Code: `app/activity/[assignmentId]/ExpeditionVisuals.js` (drawn by the student screen), styles in `expedition-station.css`.
 
-Any task, or any part of a `parts` task, can carry a `visual` (debate and sort tasks show it too). Visuals never hold answers; the answer still lives in `answer`. Interactive visuals fill in the student's answer as they work, and the student can also type it.
+Any task, or any part of a `parts` task, can carry a `visual` (debate and sort tasks show it too). Visuals never hold answers; the answer still lives in `answer`. Blocks and money fill in the student's answer as they build it. An array is a model only: building it never fills in the answer, so the student always types the product (or missing side) themselves.
 
 | `visual.type` | What the student sees | Interactive? | Pair with answer kind | Good for |
 | --- | --- | --- | --- | --- |

@@ -109,12 +109,8 @@ function ArrayGrid({ v, onChange, onModel }) {
                     const next = size.r === row && size.c === col ? { r: 0, c: 0 } : { r: row, c: col };
                     setSize(next);
                     const filled = next.r > 0 && next.c > 0;
+                    // The array is a model only. The student still types the answer.
                     onModel && onModel(filled ? { rows: next.r, cols: next.c } : null);
-                    if (!onChange) return;
-                    if (!filled) onChange("");
-                    else if (v.fills === "rows") onChange(String(next.r));
-                    else if (v.fills === "cols") onChange(String(next.c));
-                    else onChange(String(next.r * next.c));
                   }}
                 >
                   {on && v.icon && !tiles ? v.icon : null}
