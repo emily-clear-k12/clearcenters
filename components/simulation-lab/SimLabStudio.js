@@ -21,6 +21,7 @@
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import BackToHubButton from "../BackToHubButton";
 import SamIcon from "../SamIcon";
 import DistressCallBadge from "../DistressCallBadge";
 import { getScene } from "./scenes";
@@ -594,6 +595,7 @@ function Studio({
 
   return (
     <div className={"slx slx-viewport" + (rm ? " rm" : "")}>
+      <BackToHubButton readText={`${publicCase.title || "Simulation Lab"}. ${publicCase.question || publicCase.bigQuestion || ""}`} />
       <div className="slx-app" style={{ transform: `scale(${scale})` }} data-case={cfg.standard}>
         <header className="topbar">
           <div className="brand">

@@ -9,6 +9,7 @@ import SamStage from "../../../components/SamStage";
 import DistressCallBadge from "../../../components/DistressCallBadge";
 import ReadAloudButton from "../../../components/ReadAloudButton";
 import BackToHubButton from "../../../components/BackToHubButton";
+import { draftKey } from "../../../lib/deviceDraft";
 
 // Signal Check's own locked palette — navy/teal/violet/gold, distinct from
 // Group Chat (violet-led) and Newsroom (navy/gold-led) so it reads as its
@@ -350,7 +351,7 @@ export default function SignalCheckClient({ assignmentId, studentId, caseStandar
   // Sept 4, 2026 — S.A.M. expansion: samLabel replaces every literal
   // "S.A.M." text label so a student's chosen nickname shows up everywhere.
   const samLabel = samNickname || "S.A.M.";
-  const storageKey = "cc_signalcheck_draft_" + assignmentId;
+  const storageKey = draftKey("cc_signalcheck_draft", assignmentId, studentId);
   const evidenceSource = normalizeEvidence(publicCase);
 
   // Stable per student+case (not per render/reload) so the shuffle doesn't

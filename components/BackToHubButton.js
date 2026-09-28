@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import ReadAloudButton from "./ReadAloudButton";
+import { clearDeviceDrafts } from "../lib/deviceDraft";
 
 const LINKS = [
   ["Missions", "/missions"],
@@ -39,6 +40,7 @@ export default function BackToHubButton({ readText }) {
   }, [open]);
 
   async function logout() {
+    clearDeviceDrafts();
     await fetch("/api/student-logout", { method: "POST" });
     router.push("/login");
   }
