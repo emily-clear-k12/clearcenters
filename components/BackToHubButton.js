@@ -44,7 +44,7 @@ export default function BackToHubButton({ readText }) {
   }
 
   return (
-    <div className="cc-student-bar" style={{ position: "fixed", top: 12, left: 12, zIndex: 60, display: "flex", gap: 8, flexWrap: "wrap", maxWidth: "calc(100% - 24px)" }}>
+    <div className="cc-student-bar" onClick={(event) => event.stopPropagation()} style={{ position: "fixed", top: 12, left: 12, zIndex: 60, display: "flex", gap: 8, flexWrap: "wrap", maxWidth: "calc(100% - 24px)" }}>
       <button type="button" className="gc-btn" onClick={() => router.push("/home")} style={{ ...pill, background: "rgba(255,255,255,.92)", color: "#1F2A44" }}>Home</button>
       <button type="button" className="gc-btn" aria-expanded={open} onClick={() => setOpen((value) => !value)} style={{ ...pill, background: "rgba(20,16,50,.62)", color: "#fff" }}>Menu</button>
       {readText ? <ReadAloudButton text={readText} /> : null}

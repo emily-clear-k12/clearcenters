@@ -9,6 +9,7 @@ import SamStage from "../../../components/SamStage";
 import DistressCallBadge from "../../../components/DistressCallBadge";
 import { missionMapTeksLabel } from "../../../lib/cases/mission-map/teksLabels";
 import ReadAloudButton from "../../../components/ReadAloudButton";
+import BackToHubButton from "../../../components/BackToHubButton";
 
 // Mission Map's own locked palette — light sky-blue with a signal-gold
 // accent for cleared ground (revised Aug 30 v3: replaced an initial dark
@@ -944,6 +945,7 @@ export default function MissionMapClient({
       <div style={backgroundStyle}>
         <style>{`.mm-scrim { position: fixed; inset: 0; background: linear-gradient(180deg, rgba(234,244,255,.82) 0%, rgba(190,224,255,.86) 100%); z-index: 0; pointer-events: none; }`}</style>
         <div className="mm-scrim" />
+      <BackToHubButton readText={`${publicCase.title}. ${(publicCase.checkpoints || []).map((item) => item.prompt || item.question || item.text || "").filter(Boolean).join(" ")}`} />
         <div style={{ position: "relative", zIndex: 2, maxWidth: 640, margin: "0 auto", padding: "60px 20px", textAlign: "center" }}>
           <h1 style={{ fontFamily: "'Poppins', sans-serif" }}>Transmission received, Cadet.</h1>
           {missionCleanRun && (
@@ -990,6 +992,7 @@ export default function MissionMapClient({
         .mm-scrim { position: fixed; inset: 0; background: linear-gradient(180deg, rgba(234,244,255,.82) 0%, rgba(190,224,255,.86) 100%); z-index: 0; pointer-events: none; }
       `}</style>
       <div className="mm-scrim" />
+      <BackToHubButton readText={`${publicCase.title}. ${(publicCase.checkpoints || []).map((item) => item.prompt || item.question || item.text || "").filter(Boolean).join(" ")}`} />
       {/* Distress Call (Sept 8 2026) — renders nothing unless this specific
           assignment was flagged as one; see components/DistressCallBadge.js. */}
       <DistressCallBadge assignmentId={assignmentId} />
@@ -1002,21 +1005,8 @@ export default function MissionMapClient({
           </div>
         )}
 
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 18, flexWrap: "wrap", gap: 10 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 18, flexWrap: "wrap", gap: 10, paddingTop: 36 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-            {/* Added Sept 1 2026 (Emily's ask: "once they save the activity
-                they might need to get back to the home screen but i dont
-                see a button to do that") — Mission Map previously only had
-                a "Back to Home" button on the post-submit screen, nothing
-                reachable from the Brief/Walk/Final Unlock phases at all. */}
-            <button
-              type="button"
-              className="mm-btn"
-              onClick={() => router.push("/home")}
-              style={{ background: "none", color: COLORS.white, padding: 0, fontWeight: 700, fontSize: 13 }}
-            >
-              ← Home
-            </button>
             <div style={{ fontSize: 12, letterSpacing: 1, color: COLORS.teal, fontWeight: 700 }}>{PHASE_LABEL[phase]}</div>
             {phase === "walk" && currentStreak >= 2 && (
               <div
