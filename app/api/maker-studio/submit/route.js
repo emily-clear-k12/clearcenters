@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import { supabaseAdmin } from "../../../../lib/supabaseAdmin";
 import { getMakerStudioCase, resolveMakerConfig } from "../../../../lib/cases/maker-studio/catalog";
 import { makerAttemptText, summarizeMakerPieces } from "../../../../lib/cases/maker-studio/index.server";
+import { reflectionFrom, withFirstTry } from "../../../../lib/reflection";
 import { sanitizeEnabledModes } from "../../../../lib/cases/maker-studio/modes";
 
 function normalizeModes(raw, writeText) {
@@ -133,7 +134,7 @@ export async function POST(request) {
 
   const { data: existing } = await supabaseAdmin
     .from("submissions")
-    .select("id, maker_studio_data, submitted_at, revision_requested")
+    .select("id, maker_studio_data, attempt1, submitted_at, revision_requested")
     .eq("assignment_id", assignmentId)
     .eq("student_id", studentId)
     .maybeSingle();
@@ -189,6 +190,8 @@ export async function POST(request) {
   }
 
   if (kind === "turnin") {
+    const reflection = reflectionFrom(body);
+    if (reflection.error) return NextResponse.json({ need: "reflect", error: reflection.error }, { status: 400 });
     const summary = summarizeMakerPieces({ modes }, config);
     if (summary.doneCount < summary.finishN) {
       return NextResponse.json({
@@ -196,22 +199,24 @@ export async function POST(request) {
         message: `Finish every mode before you submit. You have ${summary.doneCount}/${summary.finishN} done.`,
       });
     }
-    const payload = {
+    const keep = !!(existing && (existing.revision_requested || existing.submitted_at));
+    const payload = withFirstTry({
       version: 2,
       modes,
       journalKept: prior.journalKept === true,
       teacherLevel: prior.teacherLevel || null,
       turnedInAt: new Date().toISOString(),
       savedAt: new Date().toISOString(),
-    };
+    }, prior, existing && existing.attempt1, keep);
     const attempt = makerAttemptText(payload, config);
     const row = {
       maker_studio_data: payload,
       attempt1: attempt,
       attempt2: attempt,
       submitted_at: new Date().toISOString(),
+      checklist: reflection.checklist,
+      self_confidence: reflection.self_confidence,
       revision_requested: false,
-      // Teacher-reviewed — no AI score
       ai_score: null,
       ai_rationale: null,
     };

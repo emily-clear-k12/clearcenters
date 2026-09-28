@@ -2,6 +2,8 @@
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import "./broadcast-booth.css";
+import SubmitReflection from "../../../components/submit/SubmitReflection";
+import { ACTIVITY_CHECKS } from "../../../lib/selfCheckLists";
 import {
   CLIP_CAP_SEC,
   MIN_CLIP_SEC,
@@ -241,6 +243,8 @@ export default function BroadcastBoothClient({
           brainstormMap: o.brainstormMap !== undefined ? o.brainstormMap : brainstormMapRef.current,
           currentBeatIndex: o.currentBeatIndex !== undefined ? o.currentBeatIndex : beatIndexRef.current,
           beats: o.beats !== undefined ? o.beats : beatsRef.current,
+          checklist: o.checklist,
+          selfConfidence: o.selfConfidence,
         }),
       });
       const data = await res.json().catch(() => ({}));
@@ -535,6 +539,8 @@ export default function BroadcastBoothClient({
     setShortClipWarn(false);
   }
 
+  const [reflecting, setReflecting] = useState(false);
+
   async function handleSubmit() {
     if (!allDone) {
       setStatus("Record all " + beatDefs.length + " beats before you submit.");
@@ -552,11 +558,16 @@ export default function BroadcastBoothClient({
       setSoftStillWarn(true);
       setStatus("Tip: " + missing.map((m) => m.label).join(" & ") + " usually need a still. You can still submit.");
     }
-    const { ok, data } = await persist("turnin");
+    setReflecting(true);
+  }
+
+  async function finishReflection(reflection) {
+    const { ok, data } = await persist("turnin", reflection);
     if (!ok) {
       setStatus((data && (data.message || data.error)) || "Could not submit.");
       return;
     }
+    setReflecting(false);
     setSubmitted(true);
     setView("done");
     setStatus("Submitted. Your teacher will listen to your broadcast.");
@@ -1263,11 +1274,17 @@ export default function BroadcastBoothClient({
                 </div>
               );
             })}
+            {reflecting ? (
+              <div style={{ marginTop: 16 }}>
+                <SubmitReflection questions={ACTIVITY_CHECKS.broadcast_booth} onSubmit={finishReflection} busy={saving} revisionNote={revisionFeedback} />
+              </div>
+            ) : (
             <div className="bb-row" style={{ marginTop: 16 }}>
               <button type="button" className="bb-btn" onClick={handleSubmit} disabled={!allDone || saving || submitted}>
                 Submit broadcast
               </button>
             </div>
+            )}
             {status ? <p className="bb-muted" style={{ marginTop: 10 }}>{status}</p> : null}
           </div>
         ) : null}

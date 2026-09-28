@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import { supabaseAdmin } from "../../../../lib/supabaseAdmin";
 import { getExhibitCase } from "../../../../lib/cases/exhibit-hall/catalog";
 import { gradeExhibit } from "../../../../lib/cases/exhibit-hall/index.server";
+import { reflectionFrom, withFirstTry } from "../../../../lib/reflection";
 
 const REASON = {
   point: "Doesn't prove the point",
@@ -49,7 +50,7 @@ export async function POST(request) {
 
   const { data: existing } = await supabaseAdmin
     .from("submissions")
-    .select("id, exhibit_hall_data, submitted_at")
+    .select("id, exhibit_hall_data, attempt1, submitted_at, revision_requested")
     .eq("assignment_id", assignmentId)
     .eq("student_id", studentId)
     .maybeSingle();
@@ -109,12 +110,22 @@ export async function POST(request) {
   };
 
   const turningIn = body.kind === "turnin";
+  if (turningIn) {
+    const reflection = reflectionFrom(body);
+    if (reflection.error) return NextResponse.json({ need: "reflect", error: reflection.error }, { status: 400 });
+    var turnInFields = reflection;
+  }
+  const keep = turningIn && !!(existing && (existing.revision_requested || existing.submitted_at));
+  const stored = turningIn
+    ? withFirstTry(payload, prior, existing && existing.attempt1, keep)
+    : { ...payload, ...(prior.firstTry ? { firstTry: prior.firstTry } : {}) };
   const row = {
-    exhibit_hall_data: payload,
+    exhibit_hall_data: stored,
     attempt1: exhibitText,
     ai_score: turningIn ? graded.level : existing ? existing.ai_score : null,
     ai_rationale: turningIn ? `Exhibit Hall. Wall ${graded.wallLevel}. Questions ${graded.questions}/4. Suggested level ${graded.level}. The teacher releases the grade.` : null,
-    submitted_at: turningIn ? (existing && existing.submitted_at) || new Date().toISOString() : existing ? existing.submitted_at : null,
+    submitted_at: turningIn ? new Date().toISOString() : existing ? existing.submitted_at : null,
+    ...(turningIn ? { checklist: turnInFields.checklist, self_confidence: turnInFields.self_confidence, revision_requested: false } : {}),
   };
 
   if (existing) await supabaseAdmin.from("submissions").update(row).eq("id", existing.id);

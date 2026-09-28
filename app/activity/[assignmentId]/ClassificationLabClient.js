@@ -3,6 +3,8 @@
 import { useState } from "react";
 import SamIcon from "../../../components/SamIcon";
 import BackToHubButton from "../../../components/BackToHubButton";
+import SubmitReflection from "../../../components/submit/SubmitReflection";
+import { ACTIVITY_CHECKS } from "../../../lib/selfCheckLists";
 import "./classification-lab.css";
 
 const PAGE_NAMES = ["Sort", "Harder sort", "Venn"];
@@ -11,7 +13,7 @@ function sameZone(item, zone) {
   return item === zone;
 }
 
-export default function ClassificationLabClient({ assignmentId, publicCase, savedPages, samSkin }) {
+export default function ClassificationLabClient({ assignmentId, publicCase, savedPages, samSkin, alreadySubmitted, revisionFeedback }) {
   const needsSam = publicCase.grade === "Grade 5";
   const [page, setPage] = useState(0);
   const [placed, setPlaced] = useState({});
@@ -27,6 +29,8 @@ export default function ClassificationLabClient({ assignmentId, publicCase, save
   const [saved, setSaved] = useState(savedPages || {});
   const [busy, setBusy] = useState(false);
   const [doneNote, setDoneNote] = useState(null);
+  const pagesReady = [0, 1, 2].every((index) => (savedPages || {})[index] || (savedPages || {})[String(index)]);
+  const [reflecting, setReflecting] = useState(pagesReady && !alreadySubmitted);
 
   const sort = page < 2 ? publicCase.pages[page] : null;
   const defsOpen = !needsSam || samOpen;
@@ -120,11 +124,31 @@ export default function ClassificationLabClient({ assignmentId, publicCase, save
       if (data.saved) {
         setSaved((prev) => ({ ...prev, [page]: { correct: data.total - data.misses, total: data.total } }));
       }
-      if (data.done) {
-        setDoneNote(data.crystals ? `All three sorts are saved. +${data.crystals} crystals.` : "All three sorts are saved.");
-      }
+      if (data.ready) setReflecting(true);
     } catch (err) {
       setNote("That check did not go through. Try again.");
+    }
+    setBusy(false);
+  }
+
+  async function turnIn(reflection) {
+    setBusy(true);
+    try {
+      const res = await fetch("/api/classification-lab/submit", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ assignmentId, kind: "turnin", ...reflection }),
+      });
+      const data = await res.json();
+      if (!res.ok || data.error) {
+        setNote(data.error || "That submit did not go through. Try again.");
+        setBusy(false);
+        return;
+      }
+      setReflecting(false);
+      setDoneNote(data.crystals ? `Turned in. +${data.crystals} crystals.` : "Turned in. Your teacher will see your sorts.");
+    } catch (err) {
+      setNote("That submit did not go through. Try again.");
     }
     setBusy(false);
   }
@@ -350,12 +374,18 @@ export default function ClassificationLabClient({ assignmentId, publicCase, save
         </div>
 
         <footer className="cl-foot">
+          {reflecting ? (
+            <SubmitReflection questions={ACTIVITY_CHECKS.classification_lab} onSubmit={turnIn} busy={busy} revisionNote={revisionFeedback} />
+          ) : (
+            <>
           <p>{doneNote || note || (needsSam && !samOpen ? "Try it first. Ask SAM if you need the words." : "A miss will not show which item.")}</p>
           <div className="cl-actions">
             {page > 0 && <button type="button" className="cl-back" onClick={() => go(page - 1)}>Back</button>}
             <button type="button" className="cl-check" onClick={check} disabled={busy}>{busy ? "Checking" : "Check"}</button>
             {page < 2 && <button type="button" className="cl-next" onClick={() => go(page + 1)}>Next page</button>}
           </div>
+            </>
+          )}
         </footer>
       </div>
     </div>

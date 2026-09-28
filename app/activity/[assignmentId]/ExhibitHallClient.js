@@ -4,6 +4,8 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import BackToHubButton from "../../../components/BackToHubButton";
 import SamGuide from "../../../components/SamGuide";
+import SubmitReflection from "../../../components/submit/SubmitReflection";
+import { ACTIVITY_CHECKS } from "../../../lib/selfCheckLists";
 import "./exhibit-hall.css";
 
 function ModelFace({ model }) {
@@ -126,18 +128,19 @@ export default function ExhibitHallClient({ assignmentId, publicCase, alreadySub
   const placedIds = split ? splitIds : wall;
   const heldCards = cards.filter((card) => !placedIds.includes(card.id) && card.id !== bin);
 
-  function payload(kind) {
+  function payload(kind, extra) {
     return {
       assignmentId, kind, wall, groups, bin, reason, stamps, lines, plaque, best, fooled, leftOut, held, finding, heatPick, sandPicks, daysFalse, notePick,
+      ...(extra || {}),
     };
   }
 
-  async function send(kind) {
+  async function send(kind, extra) {
     setBusy(true);
     const response = await fetch("/api/exhibit-hall/submit", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload(kind)),
+      body: JSON.stringify(payload(kind, extra)),
     });
     const data = await response.json().catch(() => ({}));
     setBusy(false);
@@ -265,9 +268,20 @@ export default function ExhibitHallClient({ assignmentId, publicCase, alreadySub
     setStatus("Saved. A wrong piece can stay. The first save is the one that counts.");
   }
 
+  const [reflecting, setReflecting] = useState(false);
+
   async function turnIn() {
-    const data = await send("turnin");
+    setReflecting(true);
+  }
+
+  async function finish(reflection) {
+    const data = await send("turnin", reflection);
+    if (data.need === "reflect") {
+      setStatus(data.error || "Check the list and how sure you are.");
+      return;
+    }
     if (data.need === "wall") {
+      setReflecting(false);
       setStatus("Save the wall before you turn it in.");
       return;
     }
@@ -568,6 +582,10 @@ export default function ExhibitHallClient({ assignmentId, publicCase, alreadySub
         )}
 
         <footer className="ms-foot">
+          {reflecting ? (
+            <SubmitReflection questions={ACTIVITY_CHECKS.exhibit_hall} onSubmit={finish} busy={busy} />
+          ) : (
+            <>
           <p>{status}</p>
           <div className="ms-actions">
             {step === "build" && <button type="button" className="ms-check" disabled={busy} onClick={check}>Save</button>}
@@ -577,6 +595,8 @@ export default function ExhibitHallClient({ assignmentId, publicCase, alreadySub
             {step === "open" && <button type="button" className="ms-back" onClick={() => setStep("write")}>Back to the labels</button>}
             {step === "open" && <button type="button" className="ms-next" disabled={busy} onClick={turnIn}>Turn it in</button>}
           </div>
+            </>
+          )}
         </footer>
 
         {look && (

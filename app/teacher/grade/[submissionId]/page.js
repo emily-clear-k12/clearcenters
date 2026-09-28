@@ -8,6 +8,8 @@ import { supabase } from "../../../../lib/supabaseClient";
 import { getPublicCase } from "../../../../lib/cases/index.public";
 import { getNewsroomBNPublicCase } from "../../../../lib/cases/newsroom-bn/index.public";
 import { getSignalCheckPublicCase } from "../../../../lib/cases/signal-check/index.public";
+import { selfCheckFor } from "../../../../lib/selfCheck";
+import { AUTO_SCORE_ENGINES, NO_AI_ENGINES } from "../../../../lib/engineKinds";
 import { COLORS, PAGE_ACCENTS, PAGE_BACKGROUNDS, panelStyle } from "../../../../lib/teacherTheme";
 
 // Sept 13 — moved to the console-interior look, same Observatory family
@@ -314,6 +316,15 @@ export default function TeacherGradeDetailPage() {
   const caseEntry = isSignalCheck ? null : getPublicCase(submission.caseStandard);
   const signalCheckCase = isSignalCheck ? getSignalCheckPublicCase(submission.caseStandard) : null;
   const isNewsroom = (submission.caseEngine || "").startsWith("newsroom");
+  const isAutoScore = AUTO_SCORE_ENGINES.includes(submission.caseEngine);
+  const hideAi = NO_AI_ENGINES.includes(submission.caseEngine);
+  const scoreLabel = isAutoScore ? "Auto score" : "AI First Reader";
+  const summaryColumn = {
+    mission_map: "mission_map_data",
+    simulation_lab: "simulation_lab_data",
+    assembly_deck: "assembly_deck_data",
+    expedition_station: "expedition_station_data",
+  }[submission.caseEngine];
   const newsroomCase = isNewsroom ? getNewsroomBNPublicCase(submission.caseStandard) : null;
   const newsroomVoiceName = (id) => (newsroomCase?.voices.find((v) => v.id === id) || {}).name || id;
   const nd = submission.newsroom_data || null;
@@ -321,7 +332,7 @@ export default function TeacherGradeDetailPage() {
   const confMeta = submission.self_confidence ? CONFIDENCE_META[submission.self_confidence] : null;
   const checklist = submission.checklist || [];
   const checkedCount = checklist.filter(Boolean).length;
-  const selfCheckQuestions = isSignalCheck ? (signalCheckCase?.selfCheckQuestions || []) : (caseEntry?.publicCase?.selfCheckQuestions || []);
+  const selfCheckQuestions = selfCheckFor(submission.caseEngine, submission.caseStandard);
   const gapFlag =
     submission.ai_score !== null &&
     (Math.abs(finalGrade - submission.ai_score) >= 2 ||
@@ -755,6 +766,19 @@ export default function TeacherGradeDetailPage() {
                   <div style={{ background: COLORS.canvas, borderRadius: 10, padding: 12, fontSize: 13, color: COLORS.textDark, whiteSpace: "pre-wrap" }}>{submission.attempt2 || "(no answer written)"}</div>
                 )}
               </div>
+            ) : summaryColumn ? (
+              <>
+                {(submission[summaryColumn] || {}).firstTry ? (
+                  <div style={panelStyle(ACCENT, { padding: 16 })}>
+                    <div style={{ fontWeight: 700, fontSize: 12.5, color: COLORS.textMuted, marginBottom: 8, textTransform: "uppercase", letterSpacing: 0.5 }}>First try</div>
+                    <div style={{ background: COLORS.canvas, borderRadius: 10, padding: 12, fontSize: 14, lineHeight: 1.5, color: COLORS.textDark, whiteSpace: "pre-wrap" }}>{(submission[summaryColumn] || {}).firstTry.summary || "(saved)"}</div>
+                  </div>
+                ) : null}
+                <div style={panelStyle(ACCENT, { padding: 16 })}>
+                  <div style={{ fontWeight: 700, fontSize: 12.5, color: COLORS.textMuted, marginBottom: 8, textTransform: "uppercase", letterSpacing: 0.5 }}>{(submission[summaryColumn] || {}).firstTry ? "After revision" : "Student's work"}</div>
+                  <div style={{ background: COLORS.canvas, borderRadius: 10, padding: 12, fontSize: 14, lineHeight: 1.5, color: COLORS.textDark, whiteSpace: "pre-wrap" }}>{submission.attempt2 || submission.attempt1 || <span style={{ color: COLORS.textMuted, fontStyle: "italic" }}>(no answer written)</span>}</div>
+                </div>
+              </>
             ) : (
               <>
                 <div style={panelStyle(ACCENT, { padding: 16 })}>
@@ -815,11 +839,12 @@ export default function TeacherGradeDetailPage() {
               </div>
             )}
 
+            {hideAi ? null : (
             <div style={panelStyle(ACCENT, { padding: 16 })}>
               <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
                 <Sparkles size={15} color={ACCENT} />
-                <div style={{ fontWeight: 700, fontSize: 13, color: ACCENT }}>AI First Reader</div>
-                <span style={{ marginLeft: "auto", fontSize: 10.5, color: COLORS.textMuted, fontStyle: "italic" }}>not the final grade — teacher preview only</span>
+                <div style={{ fontWeight: 700, fontSize: 13, color: ACCENT }}>{scoreLabel}</div>
+                <span style={{ marginLeft: "auto", fontSize: 10.5, color: COLORS.textMuted, fontStyle: "italic" }}>{isAutoScore ? "scored by the activity — teacher is still the scorer of record" : "not the final grade — teacher preview only"}</span>
               </div>
               {submission.ai_score !== null && submission.ai_score !== undefined ? (
                 <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
@@ -841,6 +866,7 @@ export default function TeacherGradeDetailPage() {
                 </div>
               )}
             </div>
+            )}
 
             <div className="gc-fade-in" style={{ background: finalGrade === 2 ? `${COLORS.teal}22` : "#FFF7E6", borderRadius: 16, padding: 16, border: `1.5px solid ${finalGrade === 2 ? COLORS.teal : COLORS.gold}` }}>
               <div style={{ fontWeight: 700, fontSize: 13, color: finalGrade === 2 ? "#0F7C8C" : "#B8860B", marginBottom: 6 }}>
@@ -895,7 +921,7 @@ export default function TeacherGradeDetailPage() {
             )}
 
             <div style={{ display: "flex", gap: 10 }}>
-              <ScorePill label="AI First Read" value={submission.ai_score !== null && submission.ai_score !== undefined ? submission.ai_score : "—"} color={ACCENT} />
+              {hideAi ? null : <ScorePill label={isAutoScore ? "Auto score" : "AI First Read"} value={submission.ai_score !== null && submission.ai_score !== undefined ? submission.ai_score : "—"} color={ACCENT} />}
               <ScorePill label="Student Felt" value={confMeta ? confMeta.emoji : "—"} sublabel={confMeta ? confMeta.label : "Not shared"} color={COLORS.teal} />
               <ScorePill label="Your Grade" value={finalGrade} color={COLORS.gold} />
             </div>

@@ -685,6 +685,7 @@ export default function MissionMapClient({
           checkpointResults,
           finalResponseText,
           checklist,
+          selfConfidence,
         }),
       });
       if (!res.ok) throw new Error("submit failed");

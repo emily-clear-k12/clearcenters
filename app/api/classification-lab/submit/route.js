@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import { supabaseAdmin } from "../../../../lib/supabaseAdmin";
 import { getLabCase } from "../../../../lib/cases/classification-lab/catalog";
 import { gradeClassificationPage } from "../../../../lib/cases/classification-lab/index.server";
+import { reflectionFrom, withFirstTry } from "../../../../lib/reflection";
 
 const PAGE_NAMES = ["Sort", "Harder sort", "Venn"];
 
@@ -29,6 +30,43 @@ export async function POST(request) {
 
   const body = await request.json().catch(() => ({}));
   const assignmentId = body.assignmentId;
+  if (body.kind === "turnin") {
+    const reflection = reflectionFrom(body);
+    if (reflection.error) return NextResponse.json({ need: "reflect", error: reflection.error }, { status: 400 });
+    const { data: student } = await supabaseAdmin.from("students").select("id, class_id").eq("id", studentId).single();
+    const { data: assignment } = await supabaseAdmin.from("assignments").select("id, class_id, case_standard").eq("id", assignmentId).single();
+    if (!student || !assignment || assignment.class_id !== student.class_id) {
+      return NextResponse.json({ error: "That assignment is not yours." }, { status: 403 });
+    }
+    const { data: existing } = await supabaseAdmin
+      .from("submissions")
+      .select("id, classification_lab_data, attempt1, submitted_at, revision_requested")
+      .eq("assignment_id", assignmentId)
+      .eq("student_id", studentId)
+      .maybeSingle();
+    const data = (existing && existing.classification_lab_data) || { pages: {} };
+    const pages = data.pages || {};
+    if (![0, 1, 2].every((index) => pages[index] || pages[String(index)])) {
+      return NextResponse.json({ need: "pages", error: "Finish all three sorts first." }, { status: 400 });
+    }
+    const keep = !!(existing && (existing.revision_requested || existing.submitted_at));
+    const payload = withFirstTry(data, data, existing && existing.attempt1, keep);
+    const row = {
+      classification_lab_data: payload,
+      checklist: reflection.checklist,
+      self_confidence: reflection.self_confidence,
+      revision_requested: false,
+      submitted_at: new Date().toISOString(),
+    };
+    if (existing) await supabaseAdmin.from("submissions").update(row).eq("id", existing.id);
+    else await supabaseAdmin.from("submissions").insert({ ...row, assignment_id: assignmentId, student_id: studentId, attempt1: "" });
+    let crystals = 0;
+    if (!(existing && existing.submitted_at)) {
+      crystals = 3;
+      await awardCrystals(studentId, crystals);
+    }
+    return NextResponse.json({ ok: true, done: true, crystals });
+  }
   const pageIndex = Number(body.page);
   if (!assignmentId || ![0, 1, 2].includes(pageIndex)) {
     return NextResponse.json({ error: "Missing the page." }, { status: 400 });
@@ -50,7 +88,7 @@ export async function POST(request) {
 
   const { data: existing } = await supabaseAdmin
     .from("submissions")
-    .select("id, classification_lab_data, submitted_at")
+    .select("id, classification_lab_data, submitted_at, revision_requested")
     .eq("assignment_id", assignmentId)
     .eq("student_id", studentId)
     .maybeSingle();
@@ -79,7 +117,7 @@ export async function POST(request) {
     attempt1: summary(lab, pages),
     ai_score: done ? score : null,
     ai_rationale: done ? `Classification Lab. First check on each page. ${correct}/${total}.` : null,
-    submitted_at: done ? (existing && existing.submitted_at) || new Date().toISOString() : existing ? existing.submitted_at : null,
+    submitted_at: existing ? existing.submitted_at : null,
   };
 
   if (existing) {
@@ -89,10 +127,6 @@ export async function POST(request) {
   }
 
   let crystals = 0;
-  if (done && !(existing && existing.submitted_at)) {
-    crystals = 3;
-    await awardCrystals(studentId, crystals);
-  }
 
   return NextResponse.json({
     misses: graded.misses,
@@ -100,6 +134,7 @@ export async function POST(request) {
     saved: !already,
     practice: !!already,
     done,
+    ready: done,
     crystals,
   });
 }
