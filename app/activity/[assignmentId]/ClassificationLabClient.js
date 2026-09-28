@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import SamIcon from "../../../components/SamIcon";
 import BackToHubButton from "../../../components/BackToHubButton";
 import ReadAloudButton from "../../../components/ReadAloudButton";
@@ -14,19 +14,39 @@ function sameZone(item, zone) {
   return item === zone;
 }
 
+function readClassDraft(assignmentId, alreadySubmitted) {
+  if (typeof window === "undefined" || alreadySubmitted) return null;
+  try {
+    const raw = window.localStorage.getItem(`classify-draft:${assignmentId}`);
+    return raw ? JSON.parse(raw) : null;
+  } catch (err) {
+    return null;
+  }
+}
+
 export default function ClassificationLabClient({ assignmentId, publicCase, savedPages, samSkin, alreadySubmitted, revisionFeedback }) {
   const needsSam = publicCase.grade === "Grade 5";
-  const [page, setPage] = useState(0);
-  const [placed, setPlaced] = useState({});
+  const draft = readClassDraft(assignmentId, alreadySubmitted);
+  const [page, setPage] = useState((draft && draft.page) || 0);
+  const [placed, setPlaced] = useState((draft && draft.placed) || {});
   const [picked, setPicked] = useState(null);
   const [note, setNote] = useState(null);
-  const [labelAt, setLabelAt] = useState({});
-  const [itemAt, setItemAt] = useState({});
-  const [mc, setMc] = useState(null);
-  const [multi, setMulti] = useState([]);
-  const [inline, setInline] = useState(null);
+  const [labelAt, setLabelAt] = useState((draft && draft.labelAt) || {});
+  const [itemAt, setItemAt] = useState((draft && draft.itemAt) || {});
+  const [mc, setMc] = useState((draft && draft.mc) || null);
+  const [multi, setMulti] = useState((draft && draft.multi) || []);
+  const [inline, setInline] = useState((draft && draft.inline) || null);
   const [dragOver, setDragOver] = useState(null);
   const [samOpen, setSamOpen] = useState(false);
+  useEffect(() => {
+    if (alreadySubmitted) {
+      try { window.localStorage.removeItem(`classify-draft:${assignmentId}`); } catch (err) {}
+      return;
+    }
+    try {
+      window.localStorage.setItem(`classify-draft:${assignmentId}`, JSON.stringify({ page, placed, labelAt, itemAt, mc, multi, inline }));
+    } catch (err) {}
+  }, [alreadySubmitted, assignmentId, page, placed, labelAt, itemAt, mc, multi, inline]);
   const [saved, setSaved] = useState(savedPages || {});
   const [busy, setBusy] = useState(false);
   const [doneNote, setDoneNote] = useState(null);

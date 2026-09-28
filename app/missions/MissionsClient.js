@@ -207,7 +207,13 @@ export default function MissionsClient({ student, assignments }) {
           pedestals/dais stay glued to the same spots on the fixed
           background above regardless of scroll (there's no scroll on this
           page — same no-scroll 100vh approach as Home). */}
-      <div style={{ position: "fixed", inset: 0, zIndex: 1 }}>
+      <style>{`
+        @media (max-width: 760px) {
+          .mission-stage, .mission-overflow { display: none !important; }
+          .mission-phone { display: flex !important; }
+        }
+      `}</style>
+      <div className="mission-stage" style={{ position: "fixed", inset: 0, zIndex: 1 }}>
           {SLOTS.map((slot, slotIndex) => {
             const mission = onPedestals[slotIndex];
             // Bumped up from 112/56 (Aug 27, later the same day) — Emily
@@ -373,7 +379,7 @@ export default function MissionsClient({ student, assignments }) {
           has a flowing `<main>` column for it to sit below — same no-scroll
           100vh page as Home, so this has to float instead of flow. */}
       {overflow.length > 0 && (
-        <div style={{ position: "fixed", left: 24, right: 24, bottom: 20, zIndex: 2 }}>
+        <div className="mission-overflow" style={{ position: "fixed", left: 24, right: 24, bottom: 20, zIndex: 2 }}>
           <p style={{ fontSize: 11.5, fontWeight: 700, color: COLORS.white, textShadow: "0 1px 4px rgba(0,0,0,.6)", textTransform: "uppercase", letterSpacing: .4, margin: "0 0 8px 4px" }}>
             +{overflow.length} more mission{overflow.length === 1 ? "" : "s"}
           </p>
@@ -421,6 +427,17 @@ export default function MissionsClient({ student, assignments }) {
           </div>
         </div>
       )}
+
+      <div className="mission-phone" style={{ display: "none", position: "relative", zIndex: 2, flexDirection: "column", gap: 10, padding: "88px 16px 120px" }}>
+        <h1 style={{ fontFamily: "Poppins, sans-serif", fontSize: 28, margin: "0 0 8px" }}>Missions</h1>
+        {sorted.length === 0 && <p style={{ color: COLORS.textMuted }}>No missions assigned yet.</p>}
+        {sorted.map((mission) => (
+          <button key={mission.id} type="button" onClick={() => router.push(`/activity/${mission.id}`)} style={{ textAlign: "left", background: "#fff", border: "none", borderRadius: 16, padding: 14, font: "inherit" }}>
+            <strong>{mission.cases?.title || "Mission"}</strong>
+            <div style={{ color: COLORS.textMuted, fontSize: 13, marginTop: 4 }}>{mission.revisionRequested ? "Try again · " : ""}{mission.case_standard}</div>
+          </button>
+        ))}
+      </div>
 
       {/* Sept 4, 2026 — grown from a 64px corner button to a real 150px
           "companion" presence (SamStage), matching Home's same upgrade —

@@ -2392,7 +2392,7 @@ export default function MakerStudioClient({
   // Main studio page
   return (
     <div className="mk-page" data-mode="home">
-      <BackToHubButton />
+      <BackToHubButton readText={`${title}. ${topicLine || ""}`} />
       <div className="mk-shell">
         <div className="mk-top">
           <div>

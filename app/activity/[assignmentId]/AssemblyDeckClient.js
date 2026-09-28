@@ -61,10 +61,10 @@ function btn(color, disabled) {
   };
 }
 
-function Shell({ children, sam, bright }) {
+function Shell({ children, sam, bright, readText }) {
   return (
-    <div style={{ minHeight: "100vh", background: bright ? "url(/student/assembly_bay.jpg) center / cover fixed" : THEME.bg, color: THEME.text, fontFamily: "system-ui, sans-serif", padding: "24px 16px 120px", display: "flex", flexDirection: "column", alignItems: "center", gap: 16 }}>
-      <BackToHubButton />
+    <div style={{ minHeight: "100vh", background: bright ? "url(/student/assembly_bay.jpg) center / cover fixed" : THEME.bg, color: THEME.text, fontFamily: "system-ui, sans-serif", padding: "72px 16px 120px", display: "flex", flexDirection: "column", alignItems: "center", gap: 16 }}>
+      <BackToHubButton readText={readText} />
       {children}
       {sam}
     </div>
@@ -1484,6 +1484,16 @@ function ScratchPad() {
   );
 }
 
+function readAssemblyDraft(assignmentId, alreadySubmitted) {
+  if (typeof window === "undefined" || alreadySubmitted) return null;
+  try {
+    const raw = window.localStorage.getItem(`assembly-draft:${assignmentId}`);
+    return raw ? JSON.parse(raw) : null;
+  } catch (err) {
+    return null;
+  }
+}
+
 export default function AssemblyDeckClient({ assignmentId, caseStandard, publicCase, existingSubmission, alreadySubmitted, revisionRequested, revisionFeedback, samSkin, samNickname }) {
   const [sam, setSam] = useState({ line: "", state: "idle" });
   const say = useCallback((line, state, ms) => {
@@ -1492,13 +1502,14 @@ export default function AssemblyDeckClient({ assignmentId, caseStandard, publicC
   }, []);
 
   const saved = (existingSubmission && existingSubmission.assembly_deck_data) || null;
-  const [phase, setPhase] = useState(alreadySubmitted && saved ? "done" : "brief");
-  const [roundIndex, setRoundIndex] = useState(0);
-  const [boards, setBoards] = useState(() => (saved && saved.boards) || Object.fromEntries(publicCase.rounds.map((r) => [r.id, {}])));
-  const [rejections, setRejections] = useState(() => (saved && saved.rejections) || Object.fromEntries(publicCase.rounds.map((r) => [r.id, {}])));
-  const [assembly, setAssembly] = useState(() => (saved && saved.assembly) || {});
+  const draft = readAssemblyDraft(assignmentId, alreadySubmitted);
+  const [phase, setPhase] = useState(alreadySubmitted && saved ? "done" : (draft && draft.phase) || "brief");
+  const [roundIndex, setRoundIndex] = useState((draft && draft.roundIndex) || 0);
+  const [boards, setBoards] = useState(() => (saved && saved.boards) || (draft && draft.boards) || Object.fromEntries(publicCase.rounds.map((r) => [r.id, {}])));
+  const [rejections, setRejections] = useState(() => (saved && saved.rejections) || (draft && draft.rejections) || Object.fromEntries(publicCase.rounds.map((r) => [r.id, {}])));
+  const [assembly, setAssembly] = useState(() => (saved && saved.assembly) || (draft && draft.assembly) || {});
   const [attempts, setAttempts] = useState(0);
-  const [explanation, setExplanation] = useState("");
+  const [explanation, setExplanation] = useState((draft && draft.explanation) || "");
   const [result, setResult] = useState(() => (alreadySubmitted && saved ? {
     placement: saved.placement || { correct: 0, total: 0 },
     decoys: saved.decoys || { correct: 0, total: 0 },
@@ -1522,7 +1533,7 @@ export default function AssemblyDeckClient({ assignmentId, caseStandard, publicC
   const [pinpoint, setPinpoint] = useState(null);
   const [quick, setQuick] = useState(null);
   const [caseFileOpen, setCaseFileOpen] = useState(false);
-  const [locked, setLocked] = useState(() => (alreadySubmitted ? publicCase.rounds.map((r) => r.id) : []));
+  const [locked, setLocked] = useState(() => (alreadySubmitted ? publicCase.rounds.map((r) => r.id) : (draft && draft.locked) || []));
   const [cutStep, setCutStep] = useState(-1);
   function playCut() {
     const chain = publicCase.chain || {};
@@ -1533,8 +1544,20 @@ export default function AssemblyDeckClient({ assignmentId, caseStandard, publicC
     plan.forEach((_, i) => setTimeout(() => setCutStep(i + 1), 650 * (i + 1)));
   }
   const [guess, setGuess] = useState([]);
-  const [whatIfChoice, setWhatIfChoice] = useState(null);
-  const [lookChoice, setLookChoice] = useState(null);
+  const [whatIfChoice, setWhatIfChoice] = useState((draft && draft.whatIfChoice) || null);
+  const [lookChoice, setLookChoice] = useState((draft && draft.lookChoice) || null);
+
+  useEffect(() => {
+    if (alreadySubmitted || phase === "done") {
+      try { window.localStorage.removeItem(`assembly-draft:${assignmentId}`); } catch (err) {}
+      return;
+    }
+    try {
+      window.localStorage.setItem(`assembly-draft:${assignmentId}`, JSON.stringify({
+        phase, roundIndex, boards, rejections, assembly, explanation, locked, whatIfChoice, lookChoice,
+      }));
+    } catch (err) {}
+  }, [alreadySubmitted, phase, roundIndex, boards, rejections, assembly, explanation, locked, whatIfChoice, lookChoice, assignmentId]);
 
   const round = publicCase.rounds[roundIndex];
 
@@ -1685,6 +1708,7 @@ export default function AssemblyDeckClient({ assignmentId, caseStandard, publicC
     <SamContext.Provider value={say}>
       <Shell
         bright={!!publicCase.chain}
+        readText={`${publicCase.title}. ${(publicCase.brief || []).join(" ")}`}
         sam={<SamGuide skinKey={samSkin} alt={samNickname || "S.A.M."} size={96} anchors={{ home: { right: 14, bottom: 14 } }} line={sam.line} state={sam.state} tipOnTap zIndex={40} />}
       >
         {publicCase.chain && <PondBoard chain={publicCase.chain} locked={locked} scenario={phase === "whatif" || phase === "bonus" ? "cut-test" : "story"} cutStep={cutStep} guess={phase === "whatif" || phase === "bonus" ? guess : []} />}
