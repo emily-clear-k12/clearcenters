@@ -178,12 +178,13 @@ export default function BroadcastBoothClient({
   const [micPending, setMicPending] = useState(false);
   const [processing, setProcessing] = useState(false);
   const [turningIn, setTurningIn] = useState(false);
+  const [leaving, setLeaving] = useState(false);
   const [saveError, setSaveError] = useState("");
   const saveQueue = useRef(Promise.resolve());
   const mounted = useRef(true);
   const recordingLock = useRef(false);
   const submittingLock = useRef(false);
-  const busy = recording || micPending || processing || turningIn;
+  const busy = recording || micPending || processing || turningIn || leaving;
   const [recordSec, setRecordSec] = useState(0);
   const [shortClipWarn, setShortClipWarn] = useState(false);
   const [softStillWarn, setSoftStillWarn] = useState(false);
@@ -229,6 +230,28 @@ export default function BroadcastBoothClient({
       if (mediaStream.current) mediaStream.current.getTracks().forEach((t) => t.stop());
     };
   }, []);
+
+  useEffect(() => {
+    function warnBeforeLeaving(event) {
+      if (dirty.current || saving || busy) {
+        event.preventDefault();
+        event.returnValue = "";
+      }
+    }
+    window.addEventListener("beforeunload", warnBeforeLeaving);
+    return () => window.removeEventListener("beforeunload", warnBeforeLeaving);
+  }, [saving, busy]);
+
+  async function leaveStudio(event) {
+    event.preventDefault();
+    if (busy) return;
+    if (submitted || previewMode) { window.location.assign("/missions"); return; }
+    setLeaving(true);
+    if (saveTimer.current) clearTimeout(saveTimer.current);
+    const { ok } = await persist("save");
+    setLeaving(false);
+    if (ok) { dirty.current = false; window.location.assign("/missions"); }
+  }
 
   const currentBeat = beatDefs[beatIndex] || null;
   const currentSlot = currentBeat ? beats[currentBeat.id] || emptyBeat() : emptyBeat();
@@ -461,7 +484,7 @@ export default function BroadcastBoothClient({
           return;
         }
         const reader = new FileReader();
-        reader.onloadend = () => {
+        reader.onload = () => {
           if (!mounted.current) return;
           setProcessing(false);
           const dataUrl = typeof reader.result === "string" ? reader.result : null;
@@ -839,7 +862,7 @@ export default function BroadcastBoothClient({
   return (
     <div className="bb-root">
       <div className="bb-shell">
-        <StudioHeader step={step} recording={recording} busy={busy} submitted={submitted}
+        <StudioHeader onLeave={leaveStudio} step={step} recording={recording} busy={busy} submitted={submitted}
           onStep={(i) => { window.speechSynthesis?.cancel(); if (i === 0) setView("brainstorm"); else if (i === 1) goToBeat(beatIndex); }} />
         {revisionFeedback ? <div className="bb-warn"><strong>Teacher note:</strong> {revisionFeedback}</div> : null}
         {saveError ? <div className="bb-err" role="alert">{saveError} <button className="bb-text-btn" disabled={saving || busy} onClick={() => persist("save")}>Try saving again</button></div> : null}
@@ -880,7 +903,7 @@ export default function BroadcastBoothClient({
                   const chips = brainstormMap[b.id] || [];
                   const required = requiredSet.has(b.id);
                   return <section key={b.id} className={"bb-shelf" + (selectedChip || dragChip ? " is-awaiting" : "")}
-                    aria-label={b.label + " tray"} onDragOver={onShelfDragOver} onDrop={(e) => onShelfDrop(e, b.id)}>
+                    aria-label={b.label + " tray"} onClick={(e) => { if (selectedChip && !e.target.closest("button")) onShelfClick(b.id); }} onDragOver={onShelfDragOver} onDrop={(e) => onShelfDrop(e, b.id)}>
                     <div className="bb-shelf-heading"><span className="bb-number">{i + 1}</span><div><h3>{b.label}</h3><p>{b.cue}</p></div>
                       <SpeakButton text={b.label + ". " + b.cue} showLabel={false} label={"Read " + b.label + " tray"} onUnavailable={unavailableSpeak} />
                       {required && chips.length < (brainstormMin.minPerBeat || 1) ? <span className="bb-required">Needs an idea</span> : null}</div>

@@ -8,7 +8,7 @@ export function clock(seconds) {
   return `${Math.floor(n / 60)}:${String(n % 60).padStart(2, "0")}`;
 }
 
-export function StudioHeader({ step, recording, busy, submitted, onStep }) {
+export function StudioHeader({ step, recording, busy, submitted, onStep, onLeave }) {
   return (
     <header className="bb-studio-header">
       <div className="bb-header-main">
@@ -18,7 +18,7 @@ export function StudioHeader({ step, recording, busy, submitted, onStep }) {
           <h1>Broadcast Booth</h1>
         </div>
         <div className="bb-header-nav">
-          <a className="bb-home" href="/missions" aria-disabled={busy || undefined} onClick={(e) => { if (busy) e.preventDefault(); }}><ArrowLeft size={16} /> My Missions</a>
+          <a className="bb-home" href="/missions" aria-disabled={busy || undefined} onClick={onLeave}><ArrowLeft size={16} /> My Missions</a>
           <nav className="bb-steps" aria-label="Broadcast progress">
             {["Plan", "Record", "Review"].map((name, i) => (
               <button key={name} type="button" aria-current={step === i ? "step" : undefined}
