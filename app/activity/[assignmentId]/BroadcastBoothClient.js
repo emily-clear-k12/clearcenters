@@ -851,12 +851,18 @@ export default function BroadcastBoothClient({
     </div>
   );
 
+  // Show each picture once in the planning options, keeping every distinct label
+  // and the original image on the chip when it is placed in a storyboard tray.
+  const planningPictures = new Set([stim.placeStill?.imageUrl, stim.artifactCard?.imageUrl].filter(Boolean));
   function renderIdea(chip) {
+    const showPicture = chip.imageUrl && !planningPictures.has(chip.imageUrl);
+    if (showPicture) planningPictures.add(chip.imageUrl);
+    const face = showPicture ? chip : { ...chip, imageUrl: undefined };
     const picked = selectedChip?.id === chip.id && (selectedChip.source || "stimulus") === (chip.source || "stimulus");
-    return <button key={chip.id} type="button" className={"bb-chip" + (chip.imageUrl ? " has-image" : "") + (picked ? " is-picked" : "")}
+    return <button key={chip.id} type="button" className={"bb-chip" + (showPicture ? " has-image" : "") + (picked ? " is-picked" : "")}
       aria-pressed={picked} draggable={!submitted} disabled={submitted}
       onDragStart={(e) => startIdeaDrag(e, chip)} onDragEnd={() => setDragChip(null)} onClick={() => onIdeaChipClick(chip)}>
-      <ChipFace chip={chip} />
+      <ChipFace chip={face} />
     </button>;
   }
 

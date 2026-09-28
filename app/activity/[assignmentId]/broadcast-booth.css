@@ -61,7 +61,7 @@
 .bb-field-notes { margin: 12px 0 20px; border-block: 1px solid var(--bb-line); padding: 12px 0; }
 .bb-root summary { cursor: pointer; color: #57318e; font-weight: 700; font-size: 14px; padding: 5px 0; }
 .bb-field-notes summary span { font-weight: 400; font-size: 11px; color: #776b95; margin-left: 8px; }
-.bb-field-content { padding-top: 8px; max-height: 250px; overflow-y: auto; scrollbar-width: thin; }
+.bb-field-content { padding-top: 8px;  }
 .bb-bullets { padding-left: 0; margin: 8px 0 14px; list-style: none; }
 .bb-bullet-with-speak { display: flex; align-items: flex-start; gap: 7px; font-size: 13px; line-height: 1.5; padding: 7px 0; }
 .bb-bullet-with-speak > span { flex: 1; }
@@ -175,7 +175,7 @@
 .bb-cover .bb-row { justify-content: center; margin-top: 25px; }
 .bb-card.bb-empty { background: #fff; border-radius: 24px; padding: 35px; }
 @media (min-width: 1100px) {
-  .bb-plan-stimulus { max-height: calc(100vh - 215px); overflow-y: auto; scrollbar-width: thin; scrollbar-color: #c1abe3 transparent; position: sticky; top: 18px; }
+  .bb-plan-stimulus { align-self: stretch; }
 }
 @media (max-width: 1100px) {
   .bb-root { padding: 24px 3vw 70px; }
