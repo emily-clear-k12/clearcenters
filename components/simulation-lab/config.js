@@ -20,6 +20,12 @@ export function buildSceneConfig(publicCase, sceneModule) {
   const v0 = publicCase.variables[0];
   const out = publicCase.outcome;
   const unitRaw = v0.unit || "";
+  // Optional display names for the setting values, e.g. months:
+  // scene.valueNames = { 0: "Dec", 1: "Jan", … }. Used on chart ticks, the
+  // faded run markers and in S.A.M.'s lines wherever {v} is a setting.
+  const names = sc.valueNames || null;
+  const tickSuffix = sc.tickSuffix != null ? sc.tickSuffix : unitRaw.trim() === "°" ? "°" : "";
+  const nameOf = (v) => (names && names[v] != null ? names[v] : `${v}${tickSuffix}`);
   const variable = {
     id: v0.id,
     label: v0.label,
@@ -27,10 +33,11 @@ export function buildSceneConfig(publicCase, sceneModule) {
     max: v0.max,
     step: v0.step,
     axis: sc.variableAxis || v0.label,
-    tickSuffix: sc.tickSuffix != null ? sc.tickSuffix : unitRaw.trim() === "°" ? "°" : "",
+    tickSuffix,
+    name: nameOf,
     unitWord: sc.unitWord || unitRaw.trim(),
     // label on the faded marker of an earlier run, e.g. "10 breaths", "Level 5"
-    ghost: (v) => (sc.ghostFormat ? sc.ghostFormat.replace("{v}", v) : `${v}${unitRaw}`),
+    ghost: (v) => (sc.ghostFormat ? sc.ghostFormat.replace("{v}", names ? nameOf(v) : v) : names ? nameOf(v) : `${v}${unitRaw}`),
   };
   const outcome = {
     id: out.id,
@@ -41,6 +48,8 @@ export function buildSceneConfig(publicCase, sceneModule) {
     unit1: sc.unitOne || sc.unit || out.unit,
     short: sc.unit || out.unit,
     axis: sc.outcomeAxis || out.label,
+    // Math cases: label each chart dot with its ordered pair, e.g. (4, 14)
+    pairLabels: !!sc.pairLabels,
   };
   const unitTxt = (v) => (outcome.unit === "m" ? `${fmtNum(v)} m` : `${fmtNum(v)} ${Number(v) === 1 ? outcome.unit1 : outcome.unit}`);
 
@@ -52,7 +61,8 @@ export function buildSceneConfig(publicCase, sceneModule) {
   };
   const sam = {};
   Object.keys(templates).forEach((k) => {
-    sam[k] = (v) => fill(templates[k], { v, min: variable.min, max: variable.max });
+    const nm = (x) => (names && typeof x === "number" ? nameOf(x) : x);
+    sam[k] = (v) => fill(templates[k], { v: nm(v), min: nm(variable.min), max: nm(variable.max) });
   });
   sam.toPattern = sam.toPattern || (() => "Three runs done! Look at your dots on the chart →");
   // How a run compares with the flag, e.g. "It went 1.5 m past your flag."
@@ -77,12 +87,15 @@ export function buildSceneConfig(publicCase, sceneModule) {
     standard: publicCase.standard,
     title: publicCase.title,
     grade: publicCase.grade,
+    subject: publicCase.subject || "Science",
     question: publicCase.system.question,
     framing: publicCase.system.framing,
     variable,
     outcome,
     unitTxt,
     runLabel: sc.runLabel || sceneModule.runLabel || "Run!",
+    // free-form per-case options a scene may read (e.g. shadow's arc label)
+    sceneOpts: sc.opts || {},
     resetLabel: sc.resetLabel || sceneModule.resetLabel || "Reset",
     round1: { runs: sc.r1Runs || 3, table: tableToMap(publicCase.roundOne.lookupTable, v0.id, out.id) },
     round2: {

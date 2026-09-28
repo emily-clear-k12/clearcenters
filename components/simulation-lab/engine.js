@@ -116,6 +116,7 @@ export function createEngine({ svg, chartHost, cfg, sceneModule, rm, ui }) {
     markers.showLanding(run);
     chart.add(v, dist, run.round);
     if (scene.showCount) scene.showCount(dist, run.round);
+    if (scene.logRun) scene.logRun(run, false);
     ui.onRun(run);
     let diff = null;
     if (run.pred != null) diff = await gap.show(run.pred, dist);
@@ -220,6 +221,7 @@ export function createEngine({ svg, chartHost, cfg, sceneModule, rm, ui }) {
       state.runs.push(run);
       markers.addGhost(run, false);
       chart.add(run.setting, run.dist, run.round, true);
+      if (scene.logRun) scene.logRun(run, true);
     });
     const r2 = roundRuns(2);
     if (mode === "test") {

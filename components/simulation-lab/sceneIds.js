@@ -5,7 +5,7 @@
 // Keep in sync with scenes/index.js. Every live Simulation Lab case must
 // name one of these in its public `scene` block — there is no other
 // Simulation Lab layout (ClearCenters_STATE.md §9 rule 22).
-export const SCENE_IDS = ["balloon", "ramp", "boat", "bulb", "motor", "ice", "magnet", "dissolve", "friction", "shadow"];
+export const SCENE_IDS = ["balloon", "ramp", "boat", "bulb", "motor", "ice", "magnet", "dissolve", "friction", "shadow", "crate", "launcher", "mug", "dissolveRace", "tug", "market", "settlement", "strawberry", "cups"];
 
 export function hasSimLabScene(publicCase) {
   return !!(publicCase && publicCase.scene && SCENE_IDS.includes(publicCase.scene.id));

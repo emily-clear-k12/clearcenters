@@ -76,6 +76,16 @@ for (const std of standards) {
     }
   }
   if (!(sc.twist && sc.twist.type)) bad(std, "scene.twist.type missing");
+  // Scenes that support more than one twist read cfg.twist.type; the case's
+  // twist must be one they know (otherwise the default twist plays silently).
+  try {
+    const src = fs.readFileSync(path.join(ROOT, "components/simulation-lab/scenes", `${sc.id}.js`), "utf8");
+    if (/twist\.type/.test(src) && sc.twist && !src.includes(`"${sc.twist.type}"`)) bad(std, `scene "${sc.id}" picks its twist by type but never mentions "${sc.twist.type}"`);
+  } catch (e) { /* missing file is reported by the scene checks above */ }
+  // valueNames must name every setting (chart ticks, ghost chips, S.A.M. lines)
+  if (sc.valueNames) for (let x = v.min; x <= v.max + 1e-9; x += v.step) { const k = Math.round(x * 1000) / 1000; if (sc.valueNames[k] == null) { bad(std, `scene.valueNames has no name for ${k}`); break; } }
+  // Math cases graph number pairs: they should turn pairLabels on
+  if (p.subject === "Math" && !sc.pairLabels) bad(std, "Math case without scene.pairLabels (the chart is the graph of number pairs)");
 
   const ids = sc.checkpointIds || ["cp1", "fair"];
   const perfect = [];

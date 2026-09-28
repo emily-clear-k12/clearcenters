@@ -48,8 +48,15 @@ feedback live **only** in the `.server.js` case files. Nothing in
      twist: { type: "widerBoat", banner: "Conditions change!",
               question: "This boat is wider. Does your pattern still hold?" },
      sam: { /* optional per-case overrides of the scene's S.A.M. lines */ },
+     // optional (added Sept 25 2026):
+     valueNames: { 0: "Dec", 1: "Jan" }, // label settings by name (chart ticks, ghost chips, S.A.M. {v})
+     pairLabels: true,           // chart writes "(x, y)" above each dot (Math: graphing number pairs)
+     runLabel: "Noon Sun!",      // override the scene's Run button text
+     opts: { /* free-form options the scene reads as cfg.sceneOpts */ },
    }
    ```
+   The case's top-level `subject` ("Science", "Social Studies", "Math") also
+   reaches the scene config as `cfg.subject` (the completion title uses it).
    Also add a `fair` checkpoint (`type: "mc"`, `sceneOnly: true`, 4 choices with
    `icon`s) after `cp1`.
 3. **Server file**: add `{ id: "fair", type: "mc", correctChoiceId, sceneOnly: true }`
@@ -81,6 +88,7 @@ feedback live **only** in the `.server.js` case files. Nothing in
 | `playTwist({ instant })` | async: show the condition change (instant on resume) |
 | `setEnabled(b)`, `setLocked(b)`, `setAttention(b)` | control state; locked = Mission Control fixed the setting |
 | `showCount?()`, `clearCount?()` | optional count-up readouts |
+| `logRun?(run, restored)` | optional: called after every run (and for each saved run on resume) with `{ round, setting, dist, pred }`, e.g. to fill an in-scene input-output table |
 | `destroy()` | remove tickers and listeners |
 
 `stage` = `{ svg, defs, layers: { static, under, actors, over }, anim: { tween, wait, tickers, RM } }`.
@@ -115,7 +123,38 @@ and `{max}` are filled in.
   object for the twist)
 - `kit/markers.js`: flag, run markers, gap bracket
 - `kit/chart.js`: the live chart
+- `kit/padSetting.js`: `padSetting` (all the − / + rules: stepping, full/empty/locked
+  lines, the animated `setSetting`) and `padSceneApi` (the engine boilerplate).
+  Most gauge scenes are a drawing plus one `padSetting`.
+- `kit/props.js`: `person`, `walker` (a person who walks A→B with swinging legs),
+  `iconCounter` (a tally board of faint slots that fill one by one: buyers,
+  families…), `stopwatch` (dial + readout), `priceTag` (hanging sign that swings),
+  `crate`, `labBeaker`, `toyCart` (the ramp cart look), `winch` (post + N readout)
+- `kit/carpet.js`: `tileCarpet`, the carpet roll twist for `floorTiles`
 - `scenes/circuitKit.js`: battery holder + wires + switch + current dots (bulb, motor)
+
+## Scenes (20 cases, Sept 25 2026)
+
+| scene | cases | twist(s) |
+|---|---|---|
+| balloon | 5.7B | weight |
+| ramp | 3.8B | carpet |
+| boat | 3.6A | widerBoat |
+| bulb / motor | 4.8C / 5.8B | biggerBulb / biggerFan |
+| ice | 3.6C | biggerIce |
+| magnet | 3.7A | biggerMagnet |
+| dissolve | 4.6B | salt |
+| friction | 4.7 | heavyBlock |
+| shadow | 5.9, 4.9A | flagpole (5.9), tallerPole + month names via `opts.useNames` (4.9A) |
+| crate | 3.7B | carpet (uses `tileCarpet`) |
+| launcher | 3.8A | heavyPod |
+| mug | 4.8B | breezy (fan) |
+| dissolveRace | 5.6C | colderWater (the scale shows matter is conserved) |
+| tug | 5.7A | heavyCart |
+| market | SS.3.6A | rain (walkers, tally board) |
+| settlement | SS.4.7A | rocky (map, wagons, houses) |
+| strawberry | SS.5.11B | festival (crates, shoppers, price board) |
+| cups | MA.5.8C (Math) | tallCups (input-output table via `logRun`, `pairLabels`) |
 
 ## Dev harness (not reachable in production)
 
