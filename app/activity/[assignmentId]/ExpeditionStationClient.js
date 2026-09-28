@@ -657,7 +657,7 @@ export default function ExpeditionStationClient({ assignmentId, publicCase, stud
               className={`es-sort-item ${heldItem === it.id ? "held" : ""} ${placements[it.id] ? "placed" : ""} ${wrongItems.includes(it.id) ? "wrong" : ""}`}
               onClick={() => setHeldItem(heldItem === it.id ? null : it.id)}
             >
-              {it.image ? <img src={it.image} alt="" onError={(e) => { e.currentTarget.style.display = "none"; }} /> : null}
+              {it.image ? <img src={it.image} alt="" onError={(e) => { const img = e.currentTarget; if (!img.dataset.pngFallback && /\.svg$/i.test(it.image)) { img.dataset.pngFallback = "true"; img.src = it.image.replace(/\.svg$/i, ".png"); return; } img.style.display = "none"; }} /> : null}
               <span>{it.label}</span>
               {placements[it.id] ? <small>→ {(bins.find((b) => b.id === placements[it.id]) || {}).label}</small> : null}
             </button>
