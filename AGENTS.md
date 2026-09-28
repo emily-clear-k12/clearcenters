@@ -1,5 +1,11 @@
 # Agent guidance
 
+## Broadcast Booth content
+
+- Before creating Broadcast Booth activities, read `lib/cases/broadcast-booth/AUTHORING.md`.
+- Reuse the approved shared studio; add content, not a new activity UI.
+- Complete catalog registration, picture assets, matching SQL rows, and content-library regeneration. Distinguish committed content from database-applied and live content.
+
 ## Maker / image library
 
 - New kid-facing ClearCenters product illustrations/photos belong under `public/maker/` (preferred) or `public/lab/`.

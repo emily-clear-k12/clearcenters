@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo, useCallback, createContext, useContext, useRef } from "react";
 import SamGuide from "../../../components/SamGuide";
+import { draftKey } from "../../../lib/deviceDraft";
 import BackToHubButton from "../../../components/BackToHubButton";
 import { assembledReport, getRound, leftoversSoFar, reasonChipsFor, rejectReason, roundSize, trayOrder, CHALLENGE } from "../../../lib/cases/assembly-deck/index.public";
 import SubmitReflection from "../../../components/submit/SubmitReflection";
@@ -1484,17 +1485,17 @@ function ScratchPad() {
   );
 }
 
-function readAssemblyDraft(assignmentId, alreadySubmitted) {
+function readAssemblyDraft(assignmentId, studentId, alreadySubmitted) {
   if (typeof window === "undefined" || alreadySubmitted) return null;
   try {
-    const raw = window.localStorage.getItem(`assembly-draft:${assignmentId}`);
+    const raw = window.localStorage.getItem(draftKey("assembly-draft", assignmentId, studentId));
     return raw ? JSON.parse(raw) : null;
   } catch (err) {
     return null;
   }
 }
 
-export default function AssemblyDeckClient({ assignmentId, caseStandard, publicCase, existingSubmission, alreadySubmitted, revisionRequested, revisionFeedback, samSkin, samNickname }) {
+export default function AssemblyDeckClient({ assignmentId, studentId, caseStandard, publicCase, existingSubmission, alreadySubmitted, revisionRequested, revisionFeedback, samSkin, samNickname }) {
   const [sam, setSam] = useState({ line: "", state: "idle" });
   const say = useCallback((line, state, ms) => {
     setSam({ line, state: state || "idle" });
@@ -1502,7 +1503,7 @@ export default function AssemblyDeckClient({ assignmentId, caseStandard, publicC
   }, []);
 
   const saved = (existingSubmission && existingSubmission.assembly_deck_data) || null;
-  const draft = readAssemblyDraft(assignmentId, alreadySubmitted);
+  const draft = readAssemblyDraft(assignmentId, studentId, alreadySubmitted);
   const [phase, setPhase] = useState(alreadySubmitted && saved ? "done" : (draft && draft.phase) || "brief");
   const [roundIndex, setRoundIndex] = useState((draft && draft.roundIndex) || 0);
   const [boards, setBoards] = useState(() => (saved && saved.boards) || (draft && draft.boards) || Object.fromEntries(publicCase.rounds.map((r) => [r.id, {}])));
@@ -1548,16 +1549,17 @@ export default function AssemblyDeckClient({ assignmentId, caseStandard, publicC
   const [lookChoice, setLookChoice] = useState((draft && draft.lookChoice) || null);
 
   useEffect(() => {
+    const key = draftKey("assembly-draft", assignmentId, studentId);
     if (alreadySubmitted || phase === "done") {
-      try { window.localStorage.removeItem(`assembly-draft:${assignmentId}`); } catch (err) {}
+      try { window.localStorage.removeItem(key); } catch (err) {}
       return;
     }
     try {
-      window.localStorage.setItem(`assembly-draft:${assignmentId}`, JSON.stringify({
+      window.localStorage.setItem(key, JSON.stringify({
         phase, roundIndex, boards, rejections, assembly, explanation, locked, whatIfChoice, lookChoice,
       }));
     } catch (err) {}
-  }, [alreadySubmitted, phase, roundIndex, boards, rejections, assembly, explanation, locked, whatIfChoice, lookChoice, assignmentId]);
+  }, [alreadySubmitted, phase, roundIndex, boards, rejections, assembly, explanation, locked, whatIfChoice, lookChoice, assignmentId, studentId]);
 
   const round = publicCase.rounds[roundIndex];
 

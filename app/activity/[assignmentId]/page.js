@@ -322,6 +322,7 @@ export default async function ActivityPage({ params }) {
     return (
       <AssemblyDeckClient
         assignmentId={assignmentId}
+        studentId={student.id}
         caseStandard={assignment.case_standard}
         publicCase={assemblyDeckCase}
         existingSubmission={existingSubmission}
@@ -417,6 +418,7 @@ export default async function ActivityPage({ params }) {
     return (
       <ExhibitHallClient
         assignmentId={assignmentId}
+        studentId={student.id}
         publicCase={exhibitHallCase}
         alreadySubmitted={alreadySubmitted}
         samSkin={student.equipped_sam_skin}
@@ -434,6 +436,7 @@ export default async function ActivityPage({ params }) {
     return (
       <ClassificationLabClient
         assignmentId={assignmentId}
+        studentId={student.id}
         publicCase={classificationLabCase}
         savedPages={savedPages}
         alreadySubmitted={alreadySubmitted}

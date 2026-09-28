@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { useRouter, usePathname } from "next/navigation";
+import { clearDeviceDrafts } from "../lib/deviceDraft";
 
 const COLORS = {
   navy: "#0D1B2A",
@@ -52,6 +53,7 @@ export default function StudentSidebar() {
   }, [pathname]);
 
   async function handleLogout() {
+    clearDeviceDrafts();
     await fetch("/api/student-logout", { method: "POST" });
     router.push("/login");
   }
