@@ -1,7 +1,7 @@
 {
   "generatedFrom": "lib/cases and add_*.sql",
-  "onDisk": 992,
-  "inSql": 1009,
+  "onDisk": 1000,
+  "inSql": 1017,
   "items": [
     {
       "standard": "3.10C-AD",
@@ -3298,6 +3298,15 @@
       "file": "lib/cases/expedition-station/quests/garbled-messages.js"
     },
     {
+      "standard": "ELA.3.3B-XP",
+      "title": "The Word Garden",
+      "grade": "3",
+      "subject": "ELAR",
+      "engine": "Expedition Station",
+      "kind": "id",
+      "file": "lib/cases/expedition-station/quests/word-garden.js"
+    },
+    {
       "standard": "ELA.3.6F-XP",
       "title": "The Missing Map",
       "grade": "3",
@@ -3368,6 +3377,15 @@
       "engine": "Expedition Station",
       "kind": "id",
       "file": "lib/cases/expedition-station/quests/tide-pools.js"
+    },
+    {
+      "standard": "MA.3.4A-XP",
+      "title": "The Parts Depot",
+      "grade": "3",
+      "subject": "Math",
+      "engine": "Expedition Station",
+      "kind": "id",
+      "file": "lib/cases/expedition-station/quests/parts-depot.js"
     },
     {
       "standard": "MA.3.4C-XP",
@@ -3442,6 +3460,15 @@
       "file": "lib/cases/expedition-station/quests/food-chain-crew.js"
     },
     {
+      "standard": "SCI.3.13A-XP",
+      "title": "The Survival Suits",
+      "grade": "3",
+      "subject": "Science",
+      "engine": "Expedition Station",
+      "kind": "id",
+      "file": "lib/cases/expedition-station/quests/survival-suits.js"
+    },
+    {
       "standard": "SCI.3.6C-XP",
       "title": "The Melting Point",
       "grade": "3",
@@ -3451,6 +3478,15 @@
       "file": "lib/cases/expedition-station/quests/melting-point.js"
     },
     {
+      "standard": "SCI.3.7A-XP",
+      "title": "The Push and Pull Yard",
+      "grade": "3",
+      "subject": "Science",
+      "engine": "Expedition Station",
+      "kind": "id",
+      "file": "lib/cases/expedition-station/quests/push-pull-yard.js"
+    },
+    {
       "standard": "SCI.3.9A-XP",
       "title": "The Orbit Model",
       "grade": "3",
@@ -3458,6 +3494,15 @@
       "engine": "Expedition Station",
       "kind": "id",
       "file": "lib/cases/expedition-station/quests/orbit-model.js"
+    },
+    {
+      "standard": "ELA.4.10E-XP",
+      "title": "Two Sides of the Storm",
+      "grade": "4",
+      "subject": "ELAR",
+      "engine": "Expedition Station",
+      "kind": "id",
+      "file": "lib/cases/expedition-station/quests/two-sides-storm.js"
     },
     {
       "standard": "ELA.4.6F-XP",
@@ -3550,6 +3595,15 @@
       "file": "lib/cases/expedition-station/quests/close-enough-check.js"
     },
     {
+      "standard": "MA.4.4D-XP",
+      "title": "The Cargo Bays",
+      "grade": "4",
+      "subject": "Math",
+      "engine": "Expedition Station",
+      "kind": "id",
+      "file": "lib/cases/expedition-station/quests/cargo-bays.js"
+    },
+    {
       "standard": "MA.4.5B-XP",
       "title": "The Pattern Machine",
       "grade": "4",
@@ -3593,6 +3647,15 @@
       "engine": "Expedition Station",
       "kind": "id",
       "file": "lib/cases/expedition-station/quests/greenhouse-test.js"
+    },
+    {
+      "standard": "SCI.4.6B-XP",
+      "title": "The Mixing Lab",
+      "grade": "4",
+      "subject": "Science",
+      "engine": "Expedition Station",
+      "kind": "id",
+      "file": "lib/cases/expedition-station/quests/mixing-lab.js"
     },
     {
       "standard": "SCI.4.8C-XP",
@@ -3647,6 +3710,15 @@
       "engine": "Expedition Station",
       "kind": "id",
       "file": "lib/cases/expedition-station/quests/glacier-files.js"
+    },
+    {
+      "standard": "MA.5.2B-XP",
+      "title": "The Precision Lab",
+      "grade": "5",
+      "subject": "Math",
+      "engine": "Expedition Station",
+      "kind": "id",
+      "file": "lib/cases/expedition-station/quests/precision-lab.js"
     },
     {
       "standard": "MA.5.3C-XP",
