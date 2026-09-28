@@ -9,8 +9,9 @@ import { getPublicCase } from "../../../../lib/cases/index.public";
 import { getNewsroomBNPublicCase } from "../../../../lib/cases/newsroom-bn/index.public";
 import { getSignalCheckPublicCase } from "../../../../lib/cases/signal-check/index.public";
 import { selfCheckFor } from "../../../../lib/selfCheck";
-import { AUTO_SCORE_ENGINES, NO_AI_ENGINES } from "../../../../lib/engineKinds";
+import { AUTO_SCORE_ENGINES, NO_AI_ENGINES, isPracticeGame } from "../../../../lib/engineKinds";
 import { COLORS, PAGE_ACCENTS, PAGE_BACKGROUNDS, panelStyle } from "../../../../lib/teacherTheme";
+import { levelWord } from "../../../../lib/gradeScale";
 
 // Sept 13 — moved to the console-interior look, same Observatory family
 // (aqua, bg-observatory.jpg) as the Submissions list this page is reached
@@ -43,15 +44,9 @@ import { COLORS, PAGE_ACCENTS, PAGE_BACKGROUNDS, panelStyle } from "../../../../
 const ACCENT = "#7541cf";
 const BG = PAGE_BACKGROUNDS["/teacher/grade"];
 
-const GRADE_LABELS = { 0: "Level 0", 1: "Level 1", 2: "Level 2" };
-const MAKER_GRADE_LABELS = { 0: "Still working", 1: "On track", 2: "Strong" };
-const BB_GRADE_LABELS = { 0: "Still working", 1: "On track", 2: "Strong" };
+const GRADE_LABELS = { 0: "Not yet", 1: "Almost", 2: "Got it" };
 function gradeLabelFor(engine, grade) {
-  if (engine === "maker_studio" || engine === "broadcast_booth") {
-    const map = engine === "broadcast_booth" ? BB_GRADE_LABELS : MAKER_GRADE_LABELS;
-    return map[grade] || GRADE_LABELS[grade];
-  }
-  return GRADE_LABELS[grade];
+  return levelWord(grade, engine);
 }
 // Crystal Points awarded when a grade is released, scaled to score so effort
 // still earns something even at Level 0. Easy to retune later — just these
@@ -146,6 +141,7 @@ export default function TeacherGradeDetailPage() {
   const [pointsAwarded, setPointsAwarded] = useState(null);
   const [showSendBackConfirm, setShowSendBackConfirm] = useState(false);
   const [sendingBack, setSendingBack] = useState(false);
+  const [run, setRun] = useState([]);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data, error: authError }) => {
@@ -204,12 +200,64 @@ export default function TeacherGradeDetailPage() {
     } else {
       setJournalKeep(true);
     }
+    if (assignment && assignment.class_id) loadRun(assignment.class_id);
     setLoading(false);
   }, [submissionId]);
+
+  function skippedIds() {
+    try { return JSON.parse(sessionStorage.getItem("cc-grade-run-skip") || "[]"); } catch (err) { return []; }
+  }
+
+  function orderRun(rows) {
+    const skip = new Set(skippedIds());
+    return [...rows.filter((row) => !skip.has(row.id)), ...rows.filter((row) => skip.has(row.id))];
+  }
+
+  async function loadRun(classId) {
+    const { data: assignments } = await supabase.from("assignments").select("id, case_standard, game_skin").eq("class_id", classId);
+    const assignmentList = assignments || [];
+    if (!assignmentList.length) { setRun([]); return; }
+    const standards = [...new Set(assignmentList.map((a) => a.case_standard).filter(Boolean))];
+    const { data: cases } = standards.length ? await supabase.from("cases").select("standard, engine").in("standard", standards) : { data: [] };
+    const engineByStandard = Object.fromEntries((cases || []).map((c) => [c.standard, c.engine]));
+    const gradedIds = assignmentList.filter((a) => !isPracticeGame(engineByStandard[a.case_standard], a.game_skin)).map((a) => a.id);
+    if (!gradedIds.length) { setRun([]); return; }
+    const { data: subs } = await supabase.from("submissions").select("id, student_id, submitted_at, released, revision_requested, teacher_grade").in("assignment_id", gradedIds).not("submitted_at", "is", null).order("submitted_at", { ascending: true });
+    const waiting = (subs || []).filter((s) => !s.released && !s.revision_requested && (s.teacher_grade === null || s.teacher_grade === undefined));
+    const studentIds = [...new Set(waiting.map((s) => s.student_id))];
+    const { data: students } = studentIds.length ? await supabase.from("students").select("id, first_name").in("id", studentIds) : { data: [] };
+    const names = Object.fromEntries((students || []).map((s) => [s.id, s.first_name]));
+    setRun(orderRun(waiting.map((s) => ({ id: s.id, name: names[s.student_id] || "Student" }))));
+  }
 
   useEffect(() => {
     if (!loadingAuth) loadSubmission();
   }, [loadingAuth, loadSubmission]);
+
+  useEffect(() => {
+    function onKey(event) {
+      if (!submission || submission.released || submission.revision_requested || saving) return;
+      const tag = event.target && event.target.tagName;
+      if (tag === "TEXTAREA" || tag === "INPUT") return;
+      if (event.key === "0" || event.key === "1" || event.key === "2") {
+        setFinalGrade(Number(event.key));
+      }
+      if (event.key === "Enter") {
+        event.preventDefault();
+        handleRelease();
+      }
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  });
+
+  function skipStudent() {
+    const ids = skippedIds().filter((id) => id !== submissionId);
+    ids.push(submissionId);
+    sessionStorage.setItem("cc-grade-run-skip", JSON.stringify(ids));
+    const next = run.find((row) => row.id !== submissionId);
+    if (next) router.push(`/teacher/grade/${next.id}`);
+  }
 
   async function handleRelease() {
     setSaving(true);
@@ -251,7 +299,9 @@ export default function TeacherGradeDetailPage() {
     }
 
     setSaving(false);
-    await loadSubmission();
+    const next = run.find((row) => row.id !== submissionId);
+    if (next) router.push(`/teacher/grade/${next.id}`);
+    else router.push("/teacher/grade");
   }
 
   async function handleSendBack() {
@@ -399,6 +449,12 @@ export default function TeacherGradeDetailPage() {
             <div style={{ fontFamily: "'Poppins', sans-serif", color: COLORS.textDark, fontWeight: 700, fontSize: 15 }}>{studentName}</div>
             <div style={{ color: COLORS.textMuted, fontSize: 12 }}>{submission.className}</div>
           </div>
+          {run.length > 0 && (
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <span style={{ fontWeight: 700, fontSize: 13, color: COLORS.textDark }}>{Math.max(1, run.findIndex((row) => row.id === submissionId) + 1)} of {run.length}</span>
+              <button type="button" onClick={skipStudent} style={{ background: "rgba(255,255,255,.7)", border: `1px solid ${COLORS.border}`, borderRadius: 999, padding: "6px 12px", fontWeight: 700, fontSize: 12, cursor: "pointer" }}>Skip</button>
+            </div>
+          )}
           <div style={{ textAlign: "right" }}>
             <div style={{ color: COLORS.textDark, fontWeight: 700, fontSize: 13.5 }}>{submission.caseTitle || submission.caseStandard}</div>
             <div style={{ color: COLORS.textMuted, fontSize: 11.5 }}>Submitted {new Date(submission.submitted_at).toLocaleString()}</div>
@@ -933,7 +989,8 @@ export default function TeacherGradeDetailPage() {
             )}
 
             <div style={panelStyle(ACCENT, { padding: 16 })}>
-              <div style={{ fontWeight: 700, fontSize: 14, color: COLORS.textDark, marginBottom: 10 }}>Final Grade</div>
+              <div style={{ fontWeight: 700, fontSize: 14, color: COLORS.textDark, marginBottom: 4 }}>Final Grade</div>
+              <div style={{ fontSize: 11.5, color: COLORS.textMuted, marginBottom: 10 }}>Press 0, 1, or 2, then Enter. Skip moves this student to the end.</div>
               <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8, marginBottom: 12 }}>
                 {[0, 1, 2].map((g) => (
                   <button
