@@ -141,7 +141,7 @@ const CHALLENGE_TYPES = [
   { key: "exhibit_hall", label: "Exhibit Hall", image: "/maker/hall.jpg", real: true,
     description: "Students stamp each source, choose what belongs on a four-spot exhibit, and write the labels. A wrong piece stays. About 20 minutes." },
   // Sept 25, 2026 — Expedition Station Act 1 (Frozen Relay MA.4.3E-XP) is live.
-  { key: "expedition_station", label: "Expedition Station", image: "/teacher/challenges/mission_map.jpg", real: true,
+  { key: "expedition_station", label: "Expedition Station", image: "/teacher/challenges/expedition_station.jpg", real: true,
     description: "A 15-task quest on one planet. Station mode: four cards, then a challenge. About 15–20 minutes per act." },
   // Sept 26, 2026 — Maker Studio: full-width Assign setup (prompt chips + modes; no Finish N).
   { key: "maker_studio", label: "Maker Studio", image: "/teacher/challenges/museum_exhibit.jpg", real: true,
