@@ -7,10 +7,11 @@ import { QRCodeSVG } from "qrcode.react";
 import { supabase } from "../../../lib/supabaseClient";
 import { BridgePage, PageHeading, ClassTabs, Empty } from "../../../components/teacher/BridgeUI";
 import ClassSetup from "../../../components/teacher/ClassSetup";
+import ClassTools from "../../../components/teacher/ClassTools";
 import { replaySamTips } from "../../../components/teacher/SamCoach";
 import { SAM_SKINS, DEFAULT_SAM_SKIN, FALLBACK_ICON } from "../../../lib/samSkins";
 import { GRADEBOOK_SCALES, scaleNumbers } from "../../../lib/gradebookScale";
-import { liveBoardFor } from "../../../lib/teacherBridge";
+import { liveBoardFor, engineLine } from "../../../lib/teacherBridge";
 
 function gradebookFields(scale, got, almost, notyet) {
   const preset = GRADEBOOK_SCALES.find((item) => item.id === scale) || GRADEBOOK_SCALES[0];
@@ -293,7 +294,10 @@ export default function ClassClient() {
       `}</style>
       <div className="no-print">
         <PageHeading title="Class" subtitle="Who is here, and who needs you.">
-          {classes.length > 1 && <ClassTabs classes={classes} value={selected?.id} onChange={chooseClass} />}
+          <div className="cc-row" style={{ alignItems: "center" }}>
+            {classes.length > 1 && <ClassTabs classes={classes} value={selected?.id} onChange={chooseClass} />}
+            {classes.length > 0 && <ClassTools classId={selected?.id} />}
+          </div>
         </PageHeading>
         {error && <div className="cc-error" role="alert">{error}</div>}
         {!ready ? <Empty>Loading…</Empty> : !classes.length ? (
@@ -389,7 +393,7 @@ export default function ClassClient() {
                 <div className="cc-person" key={item.id}>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <strong>{item.title}</strong>
-                    <p>{item.case_standard} · assigned {item.created_at ? new Date(item.created_at).toLocaleDateString() : "—"}{item.due_date ? ` · due ${new Date(`${item.due_date}T12:00:00`).toLocaleDateString()}` : ""} · {item.turnedIn} turned in</p>
+                    <p>{engineLine(item.engine)} · {item.case_standard} · assigned {item.created_at ? new Date(item.created_at).toLocaleDateString() : "—"}{item.due_date ? ` · due ${new Date(`${item.due_date}T12:00:00`).toLocaleDateString()}` : ""} · {item.turnedIn} turned in</p>
                   </div>
                   {confirmId !== item.id && liveBoardFor(item, item.engine) && <Link className="cc-btn secondary" href={liveBoardFor(item, item.engine).href}>Open {liveBoardFor(item, item.engine).label}</Link>}
                   {confirmId === item.id ? (

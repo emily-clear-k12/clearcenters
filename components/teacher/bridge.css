@@ -193,3 +193,14 @@
 .cc-today-group small{font-size:12px;color:#70658d}
 .cc-today-group em{font-style:normal;font-size:12.5px;color:#433866;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .cc-today-group:hover strong{color:#6a3fc6}
+/* Short plain-words subtitle under an activity name (Sept 29, 2026) */
+.cc-what{margin:2px 0 6px;font:600 12.5px Inter,sans-serif;color:#6b6491}
+small.cc-what{display:block;margin:1px 0 3px}
+/* Class page · Tools (Sept 29, 2026) */
+.cc-tools{position:relative;display:inline-block}
+.cc-tools-panel{position:absolute;right:0;top:calc(100% + 8px);z-index:40;width:min(560px,92vw);display:grid;grid-template-columns:1fr 1fr;gap:6px;background:#fff;border:1px solid #dfd5f2;border-radius:16px;padding:8px;box-shadow:0 16px 40px #25204d33}
+.cc-tools-panel a{display:grid;gap:3px;padding:11px 12px;border-radius:11px;text-decoration:none;color:#241b50}
+.cc-tools-panel a:hover,.cc-tools-panel a:focus-visible{background:#f3eefc}
+.cc-tools-panel strong{font:600 14px Inter,sans-serif}
+.cc-tools-panel span{font-size:12.5px;line-height:1.4;color:#6b6491}
+@media(max-width:620px){.cc-tools-panel{grid-template-columns:1fr;right:auto;left:0}}

@@ -197,7 +197,7 @@ export default function TeacherGradeListPage() {
   const rows=filteredSubmissions.filter(s=>(assignmentFilter==='all'||s.assignment_id===assignmentFilter)&&(reviewFilter==='all'||(reviewFilter==='review'?needsReview(s):!needsReview(s))));
   const chosen=rows.find(s=>needsReview(s));
   return <BridgePage teacherEmail={teacherEmail}>
-    <PageHeading title="Review student work" subtitle="See what is finished and what needs your feedback."><ClassTabs classes={classes} value={selectedClassId} onChange={id=>{setSelectedClassId(id);setAssignmentFilter('all')}} all/><Link className="cc-btn" style={{marginTop:10}} href="/teacher/gradebook">Gradebook</Link></PageHeading>
+    <PageHeading title="Review student work" subtitle="See what is finished and what needs your feedback. Students see a grade only after you release it."><ClassTabs classes={classes} value={selectedClassId} onChange={id=>{setSelectedClassId(id);setAssignmentFilter('all')}} all/><Link className="cc-btn" style={{marginTop:10}} href="/teacher/gradebook">Gradebook</Link></PageHeading>
     {error&&<div className="cc-error" role="alert">{error}</div>}
     <div className="cc-three"><div className="cc-summary"><strong>{totalNeedsReview}</strong><span>ready to review</span></div><div className="cc-summary"><strong>{classFilteredSubmissions.filter(s=>s.teacher_grade!=null&&!s.revision_requested).length}</strong><span>graded</span></div><div className="cc-summary"><strong>{classFilteredSubmissions.filter(s=>s.revision_requested).length}</strong><span>returned for revision</span></div></div>
     <section className="cc-panel cc-frame" style={subjectStyle(assignmentFilter==='all'?null:submissions.find(s=>s.assignment_id===assignmentFilter)?.subject)}>

@@ -14,7 +14,7 @@ import Link from "next/link";
 import { supabase } from "../../../../lib/supabaseClient";
 import { BridgePage, Empty } from "../../../../components/teacher/BridgeUI";
 import { rememberTeacherClass } from "../../../../lib/teacherClass";
-import { engineInfo } from "../../../../lib/teacherBridge";
+import { engineInfo, engineLine } from "../../../../lib/teacherBridge";
 import { levelWord } from "../../../../lib/gradeScale";
 import { standardWording } from "../../../../lib/standardWording";
 import { codesFor, mainCode } from "../../../../lib/standardCodes";
@@ -419,7 +419,7 @@ export default function GroupPage() {
                 <div className="sg-follow">
                   {progress.follow.map((col) => (
                     <div key={col.id} className="sg-follow-row">
-                      <span><strong>{col.title}</strong><small>{engineInfo(col.engine).label} · assigned {niceDate(col.createdAt)}</small></span>
+                      <span><strong>{col.title}</strong><small>{engineLine(col.engine)} · assigned {niceDate(col.createdAt)}</small></span>
                       <span className="sg-dots">{rows.map((r) => <span key={r.student.id} className="sg-dot" title={`${r.student.first_name}: ${cellWord(book.cells[r.student.id]?.[col.id], col.engine)}`}>{cellChip(book.cells[r.student.id]?.[col.id])}{r.student.first_name}</span>)}</span>
                     </div>
                   ))}
@@ -433,7 +433,7 @@ export default function GroupPage() {
                       {ideas.map((idea) => (
                         <div key={idea.standard} className="sg-idea">
                           <strong>{idea.title}</strong>
-                          <small>{idea.label}{idea.row ? ` · ${ROW_LABELS[idea.row]}` : ""}{idea.minutes ? ` · ${idea.minutes}` : ""}{!idea.graded ? " · scores itself" : ""}</small>
+                          <small>{idea.label}{idea.what ? ` · ${idea.what}` : ""}{idea.row ? ` · ${ROW_LABELS[idea.row]}` : ""}{idea.minutes ? ` · ${idea.minutes}` : ""}{!idea.graded ? " · scores itself" : ""}</small>
                           {idea.row === want && <span className="sg-tag plan" style={{ justifySelf: "start" }}>Fits this group</span>}
                           <Link className="cc-btn" href={assignHref(activeIds, idea.engine)}>Assign to {activeIds.length === 1 ? nameOf(activeIds[0]) : `these ${activeIds.length}`}</Link>
                         </div>

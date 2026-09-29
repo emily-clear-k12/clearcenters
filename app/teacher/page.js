@@ -782,12 +782,12 @@ export default function TeacherOverview() {
       checkIn > 0 && {
         key: "checkin", icon: ICONS.flag, color: COLORS.violet, count: checkIn, classCount: checkInClasses,
         label: `student${checkIn === 1 ? "" : "s"} to check in with`,
-        onGo: () => router.push("/teacher/progress"),
+        onGo: () => router.push("/teacher/reports?tab=students"),
       },
       dueSoon > 0 && {
         key: "duesoon", icon: ICONS.calendar, color: COLORS.teal, count: dueSoon, classCount: dueSoonClasses,
         label: `assignment${dueSoon === 1 ? "" : "s"} due within a week`,
-        onGo: () => router.push("/teacher/progress"),
+        onGo: () => router.push("/teacher/reports?tab=students"),
       },
     ].filter(Boolean);
   }, [perClassStats, router]);

@@ -122,8 +122,17 @@ export default function GroupsPage() {
         ) : (
           <div className="sg-empty">
             <p style={{ margin: "0 0 12px", fontWeight: 600, color: "#241b50" }}>No groups for this class yet.</p>
-            <p style={{ margin: "0 0 14px" }}>In the gradebook, open Small groups, pick a standard, and save the group you want to pull.</p>
-            <Link className="cc-btn" href={`/teacher/gradebook?classId=${classId}&view=standard&groups=auto`}>Open Small groups in the gradebook</Link>
+            {book.columns.some((c) => book.students.some((st) => { const k = book.cells[st.id]?.[c.id]?.kind; return k === 0 || k === 1 || k === 2; })) ? (
+              <>
+                <p style={{ margin: "0 0 14px" }}>In the gradebook, open Small groups, pick a standard, and save the group you want to pull.</p>
+                <Link className="cc-btn" href={`/teacher/gradebook?classId=${classId}&view=standard&groups=auto`}>Open Small groups in the gradebook</Link>
+              </>
+            ) : (
+              <>
+                <p style={{ margin: "0 0 14px" }}>Groups are made from grades. Assign an activity and grade a few, then come back to pull a group.</p>
+                <Link className="cc-btn" href={`/teacher/assign/new?classId=${classId}`}>Assign an activity</Link>
+              </>
+            )}
           </div>
         ))}
 

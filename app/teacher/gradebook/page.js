@@ -16,7 +16,7 @@ import Link from "next/link";
 import { supabase } from "../../../lib/supabaseClient";
 import { BridgePage, Empty } from "../../../components/teacher/BridgeUI";
 import { rememberedTeacherClass, rememberTeacherClass } from "../../../lib/teacherClass";
-import { engineInfo } from "../../../lib/teacherBridge";
+import { engineInfo, engineLine } from "../../../lib/teacherBridge";
 import { levelWord } from "../../../lib/gradeScale";
 import {
   PERIODS, WAITING, RETURNED, MISSING, NOT_ASSIGNED,
@@ -151,7 +151,7 @@ function GridView({ book, order, filter, onOpen }) {
           <tr>
             <th className="gb-name">Student</th>
             {book.columns.map((col) => (
-              <th key={col.id} title={`${col.title}\n${engineInfo(col.engine).label}${col.code ? ` · TEKS ${col.code}` : ""}\n${col.dueDate ? `Due ${niceDate(col.dueDate)}` : `Assigned ${niceDate(col.createdAt)}`}`}>
+              <th key={col.id} title={`${col.title}\n${engineLine(col.engine)}${col.code ? ` · TEKS ${col.code}` : ""}\n${col.dueDate ? `Due ${niceDate(col.dueDate)}` : `Assigned ${niceDate(col.createdAt)}`}`}>
                 <div className="gb-col">
                   <b>{col.short}</b>
                   <i>{[col.code, niceDate(col.dueDate || col.createdAt)].filter(Boolean).join(" · ")}</i>
@@ -200,7 +200,7 @@ function StandardView({ book, order, openStd, setOpenStd, onOpen, onGroups }) {
                   </th>
                   {open && std.columnIds.map((id) => (
                     <th key={id} className="gb-open" title={colMap[id].title}>
-                      <div className="gb-col"><b>{colMap[id].short}</b><i>{engineInfo(colMap[id].engine).label}</i></div>
+                      <div className="gb-col"><b>{colMap[id].short}</b><i>{engineInfo(colMap[id].engine).label}</i><i>{engineInfo(colMap[id].engine).what}</i></div>
                     </th>
                   ))}
                 </React.Fragment>
@@ -416,7 +416,7 @@ function Drawer({ book, open, onClose, groupNotes }) {
     body = (
       <>
         <h2>{student.first_name} · {column.title}</h2>
-        <p className="cc-muted">{engineInfo(column.engine).label}{column.code ? ` · TEKS ${column.code}` : ""}{column.dueDate ? ` · due ${niceDate(column.dueDate)}` : ` · assigned ${niceDate(column.createdAt)}`}</p>
+        <p className="cc-muted">{engineLine(column.engine)}{column.code ? ` · TEKS ${column.code}` : ""}{column.dueDate ? ` · due ${niceDate(column.dueDate)}` : ` · assigned ${niceDate(column.createdAt)}`}</p>
         <div className="gb-big"><span className={`gb-chip ${chipClass(cell)}`}>{chipMark(cell)}</span>{cellWord(cell, column.engine)}{cell?.kind === MISSING && cell.pastDue ? " · past due" : ""}</div>
         {cell?.submittedAt && <p className="cc-muted">Turned in {niceDate(cell.submittedAt)}{graded ? (cell.released ? " · released" : " · not released yet") : ""}</p>}
         {cell?.confidence && <p className="cc-muted" style={{ display: "flex", alignItems: "center", gap: 6 }}>Felt: <ConfidenceMark value={cell.confidence} /></p>}
@@ -439,7 +439,7 @@ function Drawer({ book, open, onClose, groupNotes }) {
           const cell = book.cells[student.id]?.[col.id];
           return (
             <div key={col.id} className="gb-drawer-row">
-              <span><strong>{col.title}</strong><small>{engineInfo(col.engine).label}{col.code ? ` · ${col.code}` : ""} · {niceDate(col.dueDate || col.createdAt)}</small></span>
+              <span><strong>{col.title}</strong><small>{engineLine(col.engine)}{col.code ? ` · ${col.code}` : ""} · {niceDate(col.dueDate || col.createdAt)}</small></span>
               <Cell cell={cell} column={col} student={student} onOpen={(next) => onClose(next)} />
             </div>
           );
@@ -609,8 +609,9 @@ export default function GradebookPage() {
               {current ? `${current.name}${current.grade && !/grade/i.test(current.name) ? ` · Grade ${current.grade}` : ""}` : "No class yet"} · {book.students.length} {book.students.length === 1 ? "student" : "students"} · {book.columns.length} {book.columns.length === 1 ? "activity" : "activities"}
               {totals.waiting > 0 && <> · <b>{totals.waiting} waiting for you</b></>}
             </p>
+            <p className="gb-hint">Students see a grade only after you release it. Practice games like Frequency Rush score themselves, so they stay out of the gradebook.</p>
           </div>
-          <Link className="cc-btn secondary" href="/teacher/grade">Review list →</Link>
+          <Link className={totals.waiting ? "cc-btn" : "cc-btn secondary"} href="/teacher/grade">{totals.waiting ? `Grade ${totals.waiting} waiting →` : "Review list →"}</Link>
         </div>
 
         {error && <div className="cc-error" role="alert">{error}</div>}

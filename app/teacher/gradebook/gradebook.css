@@ -100,3 +100,4 @@ button.gb-chip:hover{filter:brightness(.95);transform:translateY(-1px)}
 .gb-gnotes{margin-top:16px;border-top:1px solid var(--line);padding-top:12px}
 .gb-gnotes h3{font:600 14px Poppins,sans-serif;margin:0 0 6px}
 .gb-gnotes p{margin:6px 0 0;font-size:13px}
+.gb-hint{margin:6px 0 0;font-size:12.5px;color:#70658d}

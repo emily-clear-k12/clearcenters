@@ -83,6 +83,13 @@ Nothing else. This file is a status document, not a design document — design n
 - Delete by hand: `app/sandbox`, `app/demo`, `app/api/demo`, `components/DemoFrame.js`, `lib/demo`, and the three old Reports folders.
 - **Expedition Station / Broadcast Booth review** — other bots are on it (Emily, Sept 29).
 
+*Later the same session — "would a new teacher get this?" fixes (Emily approved all four)*
+- **One path for "how are they doing":** the **Grades** tab now opens the Gradebook (its top button reads "Grade N waiting →" when work is waiting). **Student Progress (`/teacher/progress`) and Settings (`/teacher/settings`) are retired** and redirect to Reports → Students and to Class. Today's "Review evidence" became "See every student" on Reports.
+- **Every activity name has a short plain subtitle** (`what` in `lib/activityFacts.js`, `engineLine()` in `lib/teacherBridge.js`), e.g. "Expedition Station · Three-part story quest", on Assign, Today, the Gradebook, Class, Groups and the student report. Board names are plain first: "Class goal screen (Live Ops)", "Class game screen (Crew)".
+- **Tools button on the Class page** (`components/teacher/ClassTools.js`): Star Chart, Sentence Sort, Badges and rewards, Passages, Word lists, Typing texts, each with one line on what it's for. The account menu now only has Class tools, Notes, Learning goals and Sign out.
+- **One-line explanations:** release (Gradebook and the review list), practice games staying out of the Gradebook, and an empty Groups page that says to grade a few activities first.
+- **S.A.M. first-week tour:** 8 tips in order (add students → assign → grade → release → Gradebook → small groups → Reports → Tools), one per sign-in or via Next tip. Stored under a new key, so every teacher starts from tip 1.
+
 ---
 
 **Sept 28, 2026 (evening) — Catch-up. STATE was four days behind: about 140 commits went in between Sept 24 night and Sept 28 evening, all from other sessions. This entry reads them from the GitHub history. No code was changed.**
