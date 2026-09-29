@@ -53,14 +53,16 @@ Leave these Grade 3 Science cases alone.
 | Built | ELA.3.6F-BB | Explain | 3 | Inference | What a story shows about a character when it never says the feeling out loud. | `lib/cases/ELA-3-6F.public.js`. SQL in the chat. Not run. |
 | Built | ELA.5.8A-BB | Explain | 5 | Theme | The theme of a story, with evidence from the text. | `lib/cases/ELA-5-8A.public.js`. SQL in the chat. Not run. |
 | Built | ELA.5.9E-BB | Debate | 5 | Argument | Facts for a claim and facts against it, then which side the facts support. | `lib/cases/ELA-5-9E.public.js`. SQL in the chat. Not run. |
-| Next | MA.3.5B-BB | Explain | 3 | Multiplication | One multiplication problem shown with an array. Numbers within 100. | `lib/cases/MA-3-5B.public.js` |
-| | MA.4.3E-BB | Explain | 4 | Fractions | How to add two fractions with the same denominator. | `lib/cases/MA-4-3E.public.js` |
-| | SS.3.2B-BB | Correspondent | 3 | Communities | Two communities that meet the same needs in different ways. | `lib/cases/SS-3-2B.public.js` |
-| | SS.4.10A-BB | Explain | 4 | Economics | How supply and demand change price and what is available. | `lib/cases/SS-4-10A.public.js` |
+| Built | MA.3.5B-BB | Explain | 3 | Multiplication | One multiplication problem shown with an array. Numbers within 100. | `lib/cases/MA-3-5B.public.js`. SQL in the chat. Not run. |
+| Built | MA.4.3E-BB | Explain | 4 | Fractions | How to add two fractions with the same denominator. | `lib/cases/MA-4-3E.public.js`. SQL in the chat. Not run. |
+| Built | SS.3.2B-BB | Correspondent | 3 | Communities | Two communities that meet the same needs in different ways. | `lib/cases/SS-3-2B.public.js`. SQL in the chat. Not run. |
+| Built | SS.4.10A-BB | Explain | 4 | Economics | How supply and demand change price and what is available. | `lib/cases/SS-4-10A.public.js`. SQL in the chat. Not run. |
+
+The first wave is done. Do not start the later list until Emily asks.
 
 ## Later
 
-Do not build these until the first wave is done, and do not let them repeat a first-wave story.
+The first wave is done. Do not build these until Emily asks. Do not repeat a first-wave story.
 
 - The one water-cycle Explain: SCI.4.10A-BB
 - The one Moon Explain: SCI.4.9B-BB
