@@ -1,0 +1,132 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>My Progress Mockup</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Poppins:wght@600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#1f2a44;--muted:#5c6780;--line:#e8e3f5;--v:#7b5dff;--vs:#ede6ff;--n2:#22a35a;--n2s:#e9f9ee;--n1:#1aa7b5;--n1s:#e6f8f9;--n0:#e2b100;--n0s:#fff7e6;--o:#f97316;--os:#fff1e6}
+*{box-sizing:border-box}body{margin:0;font-family:Inter,sans-serif;color:var(--ink);background:linear-gradient(160deg,#241656,#3b2a8c 40%,#5b3cc4)}
+.wrap{max-width:1180px;margin:0 auto;padding:18px 16px 40px}
+.note{background:#fff8e6;border:1px solid #f0dfae;border-radius:14px;padding:10px 14px;font-size:13px;line-height:1.5;margin-bottom:12px;color:#3a2e00}
+.pick{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;align-items:center;color:#fff;font-size:13px;font-weight:600}
+.pick button{border:0;border-radius:999px;padding:9px 14px;font:700 13px Inter,sans-serif;cursor:pointer;background:rgba(255,255,255,.18);color:#fff}
+.pick button[aria-pressed=true]{background:#fff;color:#3b2a8c}
+.card{background:rgba(255,255,255,.96);border-radius:22px;padding:20px;box-shadow:0 6px 24px rgba(20,10,60,.25)}
+.hdr{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;margin-bottom:14px}
+h1{font:800 32px Poppins,sans-serif;margin:0;letter-spacing:-.6px}
+h2{font:700 20px Poppins,sans-serif;margin:0 0 4px}
+.sub{color:var(--muted);font-size:15px;margin:2px 0 0}
+.gems{display:flex;gap:10px;align-items:center}
+.gem{background:var(--vs);color:#4b33b8;border-radius:999px;padding:8px 14px;font-weight:800;font-size:15px}
+.grid{display:grid;gap:16px}.g2{grid-template-columns:minmax(0,1.25fr) minmax(0,1fr)}
+.next{display:flex;gap:12px;overflow-x:auto;padding-bottom:4px}
+.nx{flex:0 0 250px;border-radius:18px;padding:14px;display:flex;flex-direction:column;gap:6px;border:2px solid transparent}
+.nx .tag{font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase}
+.nx b{font:700 16px Poppins,sans-serif}
+.nx p{margin:0;font-size:13px;color:var(--muted);line-height:1.4;flex:1}
+.nx button{align-self:flex-start;border:0;border-radius:999px;padding:9px 16px;font:800 13px Inter,sans-serif;cursor:pointer;color:#fff}
+.try{background:var(--os);border-color:#ffd2b0}.try .tag{color:#b8560e}.try button{background:var(--o)}
+.late{background:#fff5f6;border-color:#f7b9c2}.late .tag{color:#c4233a}.late button{background:#ee5264}
+.todo{background:var(--vs);border-color:#d8ccff}.todo .tag{color:#5b3db5}.todo button{background:var(--v)}
+.wait{background:#f4f4fa;border-color:#e6e3ef}.wait .tag{color:#6f6688}.wait button{background:#9a93b3}
+.skill{display:grid;grid-template-columns:minmax(0,1fr) 150px auto;gap:12px;align-items:center;padding:12px 0;border-bottom:1px solid var(--line)}
+.skill:last-child{border:0}
+.skill b{display:block;font-size:15px;line-height:1.35}
+.skill small{color:var(--muted);font-size:12px}
+.stars{display:flex;gap:4px}
+.star{width:26px;height:26px}
+.lvl{display:inline-block;border-radius:999px;padding:5px 11px;font-size:12px;font-weight:800;white-space:nowrap}
+.l2{background:var(--n2s);color:#0e7a45}.l1{background:var(--n1s);color:#087c8a}.l0{background:var(--n0s);color:#8a6508}.lw{background:#f1eff8;color:#6f6688}
+.btn{border:0;border-radius:999px;padding:8px 14px;font:800 12px Inter,sans-serif;cursor:pointer;background:var(--vs);color:#4b33b8;white-space:nowrap}
+.sam{display:flex;gap:14px;align-items:center;background:linear-gradient(180deg,#161036,#2a1868);color:#f6f3ff;border-radius:18px;padding:14px 18px;margin-top:14px}
+.sam .face{width:64px;height:64px;border-radius:50%;background:radial-gradient(circle at 35% 35%,#9ff3ff,#2bb7d8);flex:0 0 auto;display:grid;place-items:center;font:800 18px Poppins,sans-serif;color:#10254a}
+.sam p{margin:0;font-size:15px;line-height:1.45}
+.sam small{display:block;color:#7ee7ff;font-size:11px;font-weight:800;letter-spacing:.14em;margin-bottom:4px}
+.conf{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:10px}
+.cf{border-radius:16px;padding:14px;border:2px solid var(--line)}
+.cf strong{font:800 28px Poppins,sans-serif;display:block;line-height:1}
+.cf b{display:block;font-size:14px;margin-top:6px}.cf p{margin:4px 0 0;font-size:12.5px;color:var(--muted);line-height:1.4}
+.cf.good{background:var(--n2s);border-color:#bfe8cd}.cf.trust{background:var(--n1s);border-color:#b6e5ea}.cf.check{background:var(--n0s);border-color:#f2dc9a}.cf.learn{background:var(--vs);border-color:#d8ccff}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0 12px}
+.chips button{border:0;border-radius:999px;padding:7px 13px;font:700 12px Inter,sans-serif;cursor:pointer;background:#f1eff8;color:#4a4163}
+.chips button[aria-pressed=true]{background:#3b2a8c;color:#fff}
+.log{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:10px}
+.mi{border-radius:16px;overflow:hidden;background:#fff;border:1px solid var(--line);cursor:pointer;text-align:left;padding:0;font:inherit;color:inherit}
+.mi .img{height:74px}
+.mi div.t{padding:10px 12px}
+.mi b{display:block;font-size:14px;margin-bottom:6px}
+.badges{display:flex;justify-content:space-around;gap:10px;align-items:center;flex-wrap:wrap}
+.bdg{text-align:center;width:120px}
+.bdg .c{width:74px;height:74px;border-radius:50%;margin:0 auto 6px;display:grid;place-items:center;font:800 22px Poppins,sans-serif;color:#fff}
+.why{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:16px}
+.why div{background:rgba(255,255,255,.14);color:#fff;border-radius:14px;padding:12px 14px;font-size:12.5px;line-height:1.5}.why b{display:block;font-size:13px;margin-bottom:3px}
+.tip{position:fixed;z-index:50;background:#1f1640;color:#fff;font-size:12px;padding:7px 10px;border-radius:8px;pointer-events:none;display:none}
+@media(max-width:900px){.g2,.why{grid-template-columns:1fr}.skill{grid-template-columns:1fr auto}.skill .stars{display:none}}
+</style></head><body><div class="wrap">
+<div class="note"><b>Mockup of the student My Progress page</b>, using the demo class. Switch students to see how it changes. Kid colors stay the same as today: green Nailed It, teal Getting There, gold Keep Practicing (no red on the student side).</div>
+<div class="pick" id="pick">View as:</div>
+<div id="page"></div>
+<div class="why">
+ <div><b>Starts with "what do I do now?"</b>Try-agains, past-due and not-started missions sit in one row at the top, each with one big button. No hunting through three lists.</div>
+ <div><b>Skills, not just missions</b>"My skills" turns the standards into "I can…" sentences with stars, so kids see what they're getting good at, and a Practice button when a skill needs work.</div>
+ <div><b>Always encouraging</b>Growth is told as "you're climbing" or "let's get back on track", never as slipping. "How sure were you?" teaches kids to trust (or double-check) themselves.</div>
+</div></div><div class="tip" id="tip"></div>
+<script>
+const D={"acts":[{"id":"a0","std":"MA.4.3C-XP","title":"The Lava Lock","code":"4.3C","wk":3,"day":0},{"id":"a1","std":"4.10B-AD","title":"The Bend in Sandy Creek","code":"4.10B","wk":3,"day":2},{"id":"a2","std":"MA.4.3E-XP","title":"The Frozen Relay","code":"4.3E","wk":2,"day":0},{"id":"a3","std":"SCI.4.10B-XP","title":"The Canyon Makers","code":"4.10B","wk":2,"day":2},{"id":"a4","std":"MA.4.5B-AD","title":"The Sticker Machine","code":"4.5B","wk":1,"day":0},{"id":"a5","std":"4.9B-AD","title":"Twenty-Eight Nights","code":"4.9B","wk":1,"day":1},{"id":"a6","std":"SCI.4.9B-XP","title":"The Moon Watch","code":"4.9B","wk":1,"day":3},{"id":"a7","std":"MA.4.5B-XP","title":"The Pattern Machine","code":"4.5B","wk":0,"day":1},{"id":"a8","std":"4.8C-AD","title":"The Closed Path","code":"4.8C","wk":0,"day":3}],"kids":[{"id":"s0","name":"Ava","blurb":"Strong in every subject","work":[{"g":1,"c":"solid"},{"g":2,"c":"strong"},{"g":2,"c":"solid"},{"g":2,"c":"strong"},{"g":2,"c":"strong"},{"g":2,"c":"solid"},{"g":2,"c":"strong"},null,{"g":"w","c":"strong"}]},{"id":"s1","name":"Eli","blurb":"Solid, but fractions are hard","work":[{"g":2,"c":"solid"},{"g":1,"c":"strong"},{"g":0,"c":"solid"},{"g":2,"c":"strong"},{"g":2,"c":"strong"},{"g":2,"c":"strong"},{"g":1,"c":"strong"},null,null]},{"id":"s2","name":"Jonah","blurb":"Loves science, struggles with inferences","work":[{"g":1,"c":"strong"},{"g":2,"c":"solid"},{"g":2,"c":"solid"},{"g":2,"c":"solid"},{"g":2,"c":"solid"},{"g":2,"c":"solid"},{"g":"w","c":"solid"},{"g":"w","c":"solid"},null]},{"id":"s3","name":"Luis","blurb":"Improving every week","work":[{"g":0,"c":"solid"},{"g":0,"c":"solid"},{"g":0,"c":"shaky"},{"g":1,"c":"solid"},{"g":1,"c":"strong"},{"g":"w","c":"shaky"},{"g":2,"c":"shaky"},{"g":"w","c":"strong"},null]},{"id":"s4","name":"Maya","blurb":"On track, a few things to review","work":[{"g":2,"c":"strong"},{"g":1,"c":"strong"},{"g":2,"c":"strong"},{"g":1,"c":"strong"},{"g":1,"c":"strong"},{"g":2,"c":"solid"},{"g":1,"c":"strong"},{"g":"w","c":"solid"},null]},{"id":"s5","name":"Noah","blurb":"Understands it, but work goes missing","work":[{"g":1,"c":"strong"},null,{"g":1,"c":"strong"},{"g":1,"c":"solid"},null,{"g":2,"c":"shaky"},null,null,{"g":"w","c":"strong"}]},{"id":"s6","name":"Priya","blurb":"Ready for a challenge","work":[null,{"g":2,"c":"strong"},{"g":2,"c":"strong"},{"g":2,"c":"strong"},{"g":2,"c":"strong"},{"g":"w","c":"solid"},{"g":2,"c":"solid"},{"g":"w","c":"strong"},null]},{"id":"s7","name":"Sofia","blurb":"Needs help in most things","work":[{"g":0,"c":"shaky"},{"g":1,"c":"shaky"},{"g":0,"c":"strong"},{"g":1,"c":"shaky"},{"g":1,"c":"solid"},null,{"g":0,"c":"strong"},null,null]},{"id":"s8","name":"Aiden","blurb":"Slipping the last two weeks","work":[{"g":2,"c":"strong"},{"g":2,"c":"strong"},{"g":2,"c":"solid"},{"g":2,"c":"solid"},{"g":2,"c":"strong"},{"g":1,"c":"strong"},{"g":1,"c":"solid"},{"g":"w","c":"strong"},null]},{"id":"s9","name":"Camila","blurb":"Steady","work":[{"g":1,"c":"solid"},{"g":2,"c":"solid"},{"g":2,"c":"strong"},{"g":2,"c":"solid"},{"g":2,"c":"strong"},{"g":"w","c":"solid"},{"g":1,"c":"strong"},{"g":"w","c":"strong"},null]},{"id":"s10","name":"Diego","blurb":"Almost there on most things","work":[{"g":1,"c":"solid"},{"g":2,"c":"solid"},{"g":2,"c":"strong"},{"g":1,"c":"shaky"},{"g":1,"c":"solid"},{"g":1,"c":"strong"},{"g":1,"c":"solid"},null,{"g":"w","c":"solid"}]},{"id":"s11","name":"Emma","blurb":"Strong reader, multiplication is shaky","work":[{"g":2,"c":"strong"},{"g":2,"c":"solid"},null,{"g":1,"c":"solid"},{"g":1,"c":"strong"},{"g":2,"c":"solid"},{"g":2,"c":"solid"},{"g":"w","c":"strong"},null]},{"id":"s12","name":"Grace","blurb":"Moon and seasons are confusing","work":[{"g":2,"c":"strong"},{"g":2,"c":"solid"},{"g":1,"c":"strong"},{"g":1,"c":"solid"},{"g":2,"c":"solid"},{"g":"r","c":"solid"},{"g":0,"c":"strong"},null,{"g":"w","c":"solid"}]},{"id":"s13","name":"Isaiah","blurb":"Starting to catch on","work":[{"g":0,"c":"shaky"},{"g":0,"c":"solid"},{"g":2,"c":"solid"},{"g":0,"c":"solid"},{"g":"r","c":"shaky"},{"g":2,"c":"strong"},{"g":0,"c":"shaky"},{"g":"w","c":"strong"},null]},{"id":"s14","name":"Layla","blurb":"Strong, especially in science","work":[{"g":1,"c":"strong"},{"g":2,"c":"strong"},{"g":2,"c":"strong"},{"g":2,"c":"solid"},{"g":2,"c":"solid"},{"g":2,"c":"strong"},{"g":2,"c":"strong"},null,null]},{"id":"s15","name":"Mateo","blurb":"In the middle, some missing work","work":[{"g":1,"c":"solid"},{"g":2,"c":"solid"},{"g":1,"c":"solid"},null,{"g":0,"c":"strong"},{"g":1,"c":"solid"},{"g":2,"c":"solid"},{"g":"w","c":"strong"},{"g":"w","c":"strong"}]},{"id":"s16","name":"Olivia","blurb":"Strong, writing opinions is newer","work":[{"g":1,"c":"solid"},{"g":1,"c":"solid"},{"g":2,"c":"strong"},{"g":2,"c":"strong"},{"g":2,"c":"strong"},{"g":2,"c":"solid"},{"g":2,"c":"solid"},null,null]},{"id":"s17","name":"Ryan","blurb":"Needs help, especially with reading","work":[{"g":0,"c":"solid"},{"g":1,"c":"shaky"},{"g":1,"c":"shaky"},{"g":0,"c":"solid"},{"g":1,"c":"solid"},{"g":0,"c":"solid"},{"g":0,"c":"shaky"},null,{"g":"w","c":"strong"}]}]};
+const ICAN={"4.3C":"I can tell if two fractions are equal.","4.3E":"I can add and subtract fractions with the same bottom number.","4.5B":"I can find the rule in an input-output table.","4.10B":"I can explain how water, wind and ice change the land.","4.9B":"I can explain why the Moon's shape seems to change.","4.8C":"I can build a circuit that lights a bulb."};
+const WORD={2:"Nailed It",1:"Getting There",0:"Keep Practicing"};
+const COL={2:"#22a35a",1:"#1aa7b5",0:"#e2b100"};
+const IMG=["#9ec9e8","#f2c48d","#b9d98f","#e6a07c","#c5b3ea","#8fc3e8","#9aa3d8","#e8b9d0","#a7dccb"];
+const $=q=>document.querySelector(q);
+const who=[4,3,7];let cur=4;
+function lvl(gs){if(!gs.length)return null;const a=gs.reduce((x,y)=>x+y,0)/gs.length;return a>=1.5?2:a>=.75?1:0}
+function stars(l){const n=l==null?0:l+1;return `<div class="stars">${[0,1,2].map(i=>`<svg class="star" viewBox="0 0 24 24"><path d="M12 2.5l2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.4 6.1 20.5l1.2-6.5L2.5 9.4l6.6-.9z" fill="${i<n?'#ffc44d':'#ece8f6'}" stroke="${i<n?'#e0a800':'#d9d3ea'}" stroke-width="1"/></svg>`).join('')}</div>`}
+function render(){
+ const k=D.kids[cur];const W=k.work.map((w,j)=>({w,a:D.acts[j],j}));
+ const graded=W.filter(x=>x.w&&typeof x.w.g==='number');
+ const tryAgain=W.filter(x=>x.w&&x.w.g==='r');const waiting=W.filter(x=>x.w&&x.w.g==='w');
+ const late=W.filter(x=>!x.w&&x.a.wk>0);const todo=W.filter(x=>!x.w&&x.a.wk===0);
+ const cards=[...tryAgain.map(x=>['try','Try again',x.a.title,'Your teacher left you a note. One more go!','Try again']),...late.map(x=>['late','Past due',x.a.title,'This one was due last week.','Open it']),...todo.map(x=>['todo','Due this week',x.a.title,x.a.day===1?'Due Tuesday.':'Due Thursday.','Start']),...waiting.map(x=>['wait','Waiting for your teacher',x.a.title,'You turned it in. Nice!','Look back'])];
+ // skills
+ const codes=[...new Set(D.acts.map(a=>a.code))];
+ const skills=codes.map(c=>{const gs=graded.filter(x=>x.a.code===c).map(x=>x.w.g);return {c,l:lvl(gs),n:gs.length,w:W.filter(x=>x.a.code===c&&x.w&&x.w.g==='w').length}}).sort((a,b)=>(b.l??-1)-(a.l??-1));
+ // growth
+ const early=lvl(graded.filter(x=>x.a.wk>=2).map(x=>x.w.g)),recent=lvl(graded.filter(x=>x.a.wk<=1).map(x=>x.w.g));
+ const best=skills.find(s=>s.l===2),practice=[...skills].reverse().find(s=>s.l!=null&&s.l<2);
+ let samLine;
+ if(early!=null&&recent!=null&&recent>early)samLine=`You're climbing! Your last two weeks are better than the two before. Keep it up.`;
+ else if(early!=null&&recent!=null&&recent<early)samLine=`The last two weeks were tougher. That's okay. Let's get back on track with ${practice?practice.c:'your next mission'}.`;
+ else samLine=best?`You're steady and strong. You've nailed ${best.c}.`:`Every mission you finish makes you stronger. Let's keep going.`;
+ const samLine2=practice?`One skill to practice: "${ICAN[practice.c]}"`:`Nothing needs practice right now. Want a challenge?`;
+ // confidence
+ const cc={good:0,trust:0,check:0,learn:0};graded.forEach(x=>{const c=x.w.c,g=x.w.g;if(g===2&&c!=='shaky')cc.good++;else if(g===2&&c==='shaky')cc.trust++;else if(g<2&&c==='strong')cc.check++;else cc.learn++});
+ // chart
+ const Wd=520,H=150;const pts=graded.map((x,i)=>({i,g:x.w.g,t:x.a.title}));const X=i=>118+i*(Wd-140)/Math.max(1,pts.length-1),Y=g=>H-24-g*(H-48)/2;
+ const chart=pts.length<2?'<p class="sub">Your line starts after two grades.</p>':`<svg viewBox="0 0 ${Wd} ${H}" width="100%" role="img" aria-label="Your grades in order">${[0,1,2].map(g=>`<line x1="110" x2="${Wd-14}" y1="${Y(g)}" y2="${Y(g)}" stroke="#eeeaf5"/><text x="102" y="${Y(g)+4}" font-size="11" font-weight="700" fill="#6f6688" text-anchor="end">${WORD[g]}</text>`).join('')}<polyline fill="none" stroke="#b7a6dd" stroke-width="3" stroke-linejoin="round" points="${pts.map(p=>X(p.i)+','+Y(p.g)).join(' ')}"/>${pts.map(p=>`<circle cx="${X(p.i)}" cy="${Y(p.g)}" r="8" fill="${COL[p.g]}" stroke="#fff" stroke-width="3" data-tip="${p.t}: ${WORD[p.g]}"/>`).join('')}</svg>`;
+ const all=W.filter(x=>x.w);const done=all.length;
+ $('#page').innerHTML=`<div class="card">
+  <div class="hdr"><div><h1>My Progress</h1><p class="sub">${k.name} · ${done} missions turned in · ${Math.max(0,10-done)} more for your next badge</p></div><div class="gems"><span class="gem">${40+done*12} crystals</span><span class="gem" style="background:#fff3d6;color:#8a6508">${Math.min(5,done)}-day streak</span></div></div>
+  <h2>Up next</h2><p class="sub" style="margin-bottom:10px">${cards.length?'Start with the first one.':'You are all caught up!'}</p>
+  <div class="next">${cards.map(([cls,tag,t,p,b])=>`<div class="nx ${cls}"><span class="tag">${tag}</span><b>${t}</b><p>${p}</p><button>${b}</button></div>`).join('')||'<div class="nx todo"><span class="tag">All done</span><b>Nothing waiting</b><p>Want to practice? Try the Star Chart.</p><button>Star Chart</button></div>'}</div>
+  <div class="sam"><div class="face">SAM</div><div><small>S.A.M. SAYS</small><p>${samLine}</p><p style="margin-top:6px;opacity:.9">${samLine2}</p></div></div>
+ </div>
+ <div class="grid g2" style="margin-top:16px">
+  <div class="card"><h2>My skills</h2><p class="sub">What you can do, from your missions. More stars as you get better.</p>
+   ${skills.map(s=>`<div class="skill"><div><b>${ICAN[s.c]}</b><small>TEKS ${s.c} · ${s.n?`${s.n} ${s.n>1?'missions':'mission'}`:'no grade yet'}</small></div>${stars(s.l)}<div>${s.l==null?`<span class="lvl lw">${s.w?'Waiting':'Not yet graded'}</span>`:s.l<2?`<button class="btn">Practice</button>`:`<span class="lvl l2">Nailed It</span>`}</div></div>`).join('')}
+  </div>
+  <div class="grid" style="align-content:start">
+   <div class="card"><h2>My growth</h2><p class="sub">Every grade, in order. Tap a dot to see the mission.</p>${chart}</div>
+   <div class="card"><h2>How sure were you?</h2><p class="sub">Before you turn work in, you say how sure you are. Here's how that matched up.</p>
+    <div class="conf"><div class="cf good"><strong>${cc.good}</strong><b>Felt good, nailed it</b><p>You know your stuff.</p></div><div class="cf trust"><strong>${cc.trust}</strong><b>Felt shaky, nailed it</b><p>You knew more than you thought. Trust yourself!</p></div><div class="cf check"><strong>${cc.check}</strong><b>Felt strong, still practicing</b><p>Take a second look at these. Ask S.A.M. or your teacher.</p></div><div class="cf learn"><strong>${cc.learn}</strong><b>Still learning</b><p>That's how learning works. Keep going.</p></div></div>
+   </div>
+  </div>
+ </div>
+ <div class="card" style="margin-top:16px"><h2>All my missions</h2>
+  <div class="chips">${['All','Try again','Waiting','Finished'].map((c,i)=>`<button aria-pressed="${i===0}">${c}</button>`).join('')}</div>
+  <div class="log">${all.map(x=>{const g=x.w.g;const cls=typeof g==='number'?'l'+g:'lw';const lab=typeof g==='number'?WORD[g]:g==='w'?'Waiting':'Try again';return `<button class="mi"><div class="img" style="background:${IMG[x.j%IMG.length]}"></div><div class="t"><b>${x.a.title}</b><span class="lvl ${cls}">${lab}</span></div></button>`}).join('')}</div>
+ </div>
+ <div class="card" style="margin-top:16px"><h2>Badges</h2><div class="badges">${[['Starter','#9a8cff','Earned'],['Steady','#7b5dff',`${Math.max(0,10-done)} missions away`],['Bright','#c9c2da','Later']].map(([n,c,s])=>`<div class="bdg"><div class="c" style="background:${c}">★</div><b>${n}</b><div class="sub" style="font-size:12px">${s}</div></div>`).join('')}</div></div>`;
+}
+$('#pick').innerHTML+=who.map(i=>`<button data-i="${i}" aria-pressed="${i===cur}">${D.kids[i].name} · ${D.kids[i].blurb}</button>`).join('');
+document.querySelectorAll('#pick button').forEach(b=>b.onclick=()=>{cur=+b.dataset.i;document.querySelectorAll('#pick button').forEach(x=>x.setAttribute('aria-pressed',x===b));render()});
+render();
+document.addEventListener('mousemove',e=>{const c=e.target.closest('[data-tip]');const t=$('#tip');if(c){t.textContent=c.dataset.tip;t.style.display='block';t.style.left=(e.clientX+12)+'px';t.style.top=(e.clientY+12)+'px'}else t.style.display='none'});
+</script></body></html>

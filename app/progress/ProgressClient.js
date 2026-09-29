@@ -68,7 +68,35 @@ function samLines(finished) {
   const line2 = weak
     ? `The one to practice is ${weak.caseTitle}.${weak.feedback ? ` ${weak.feedback}` : ""}`
     : "Nothing needs a redo right now. Keep going.";
-  return [line1, line2];
+  // Sept 28, 2026: one line from "How sure are you?" when it tells us something.
+  const sureButPractice = newestFirst.find((m) => m.grade === 0 && m.selfConfidence === "strong");
+  const shakyButNailed = newestFirst.find((m) => m.grade === 2 && m.selfConfidence === "shaky");
+  let line3 = "";
+  if (sureButPractice) line3 = `You felt really strong about ${sureButPractice.caseTitle}, but it still needs practice. Take a second look at it.`;
+  else if (shakyButNailed) line3 = `You felt shaky about ${shakyButNailed.caseTitle}, but you nailed it. Trust yourself!`;
+  return [line1, line2, line3];
+}
+
+function Stars({ level }) {
+  const lit = level + 1;
+  return (
+    <span style={{ display: "inline-flex", gap: 3 }} aria-label={`${lit} of 3 stars`}>
+      {[0, 1, 2].map((i) => (
+        <svg key={i} width="20" height="20" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M12 2.5l2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.4 6.1 20.5l1.2-6.5L2.5 9.4l6.6-.9z" fill={i < lit ? "#FFC44D" : "#ECE8F6"} stroke={i < lit ? "#E0A800" : "#D9D3EA"} strokeWidth="1" />
+        </svg>
+      ))}
+    </span>
+  );
+}
+
+function formatDueShort(dateStr) {
+  const d = new Date(`${dateStr}T12:00:00`);
+  const days = Math.round((d - new Date(new Date().toDateString())) / 86400000);
+  if (days === 0) return "Due today";
+  if (days === 1) return "Due tomorrow";
+  if (days > 1 && days < 7) return `Due ${d.toLocaleDateString(undefined, { weekday: "long" })}`;
+  return `Due ${d.toLocaleDateString(undefined, { month: "short", day: "numeric" })}`;
 }
 
 function DetailModal({ entry, onClose }) {
@@ -109,9 +137,11 @@ function DetailModal({ entry, onClose }) {
   );
 }
 
-export default function ProgressClient({ student, missions, badgeTiers, pastDue = [], journalEntries = [] }) {
+export default function ProgressClient({ student, missions, badgeTiers, pastDue = [], journalEntries = [], upNext = [], skills = [] }) {
   const router = useRouter();
   const [selected, setSelected] = useState(null);
+  const [showAllFinished, setShowAllFinished] = useState(false);
+  const [showAllNext, setShowAllNext] = useState(false);
 
   const needsAttention = missions.filter((m) => m.revisionRequested && !(m.released && m.grade !== null && m.grade !== undefined));
   const waitingForTeacher = missions.filter((m) => !m.revisionRequested && !(m.released && m.grade !== null && m.grade !== undefined));
@@ -137,7 +167,12 @@ export default function ProgressClient({ student, missions, badgeTiers, pastDue 
   const bars = [...finished]
     .sort((a, b) => new Date(a.releasedAt || a.submittedAt) - new Date(b.releasedAt || b.submittedAt))
     .slice(-8);
-  const [line1, line2] = samLines(finished);
+  const [line1, line2, line3] = samLines(finished);
+  const finishedNewest = [...finished].sort((a, b) => new Date(b.releasedAt || b.submittedAt) - new Date(a.releasedAt || a.submittedAt));
+  const finishedShown = showAllFinished ? finishedNewest : finishedNewest.slice(0, 5);
+  const nextShown = showAllNext ? upNext : upNext.slice(0, 4);
+  const nailedSkills = skills.filter((k) => k.level === 2);
+  const practiceSkills = skills.filter((k) => k.level < 2).sort((a, b) => a.level - b.level);
   const late = pastDue[0];
 
   return (
@@ -148,12 +183,14 @@ export default function ProgressClient({ student, missions, badgeTiers, pastDue 
         @keyframes sp-pop { from { opacity: 0; transform: translateY(-10px) scale(.96); } to { opacity: 1; transform: none; } }
         .sp-eq { transform-origin: bottom; animation: sp-eq .9s ease-in-out infinite; }
         @keyframes sp-eq { 50% { transform: scaleY(.35); } }
-        .sp-cols { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; margin-bottom: 16px; }
+        .sp-cols { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; margin-bottom: 16px; align-items: start; }
+        .sp-skills { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+        .sp-more { border: 0; background: none; color: #6a45d6; font: 700 13px Inter, sans-serif; cursor: pointer; padding: 4px 2px; }
         .sp-stage { display: grid; grid-template-columns: 280px minmax(0, 1fr); gap: 8px; }
         .sp-bar { border: 0; background: none; padding: 0; cursor: pointer; font: inherit; color: inherit; }
         .sp-bar:hover div { filter: brightness(1.08); }
         @media (max-width: 900px) {
-          .sp-cols, .sp-stage { grid-template-columns: 1fr; }
+          .sp-cols, .sp-stage, .sp-skills { grid-template-columns: 1fr; }
         }
       `}</style>
 
@@ -203,10 +240,11 @@ export default function ProgressClient({ student, missions, badgeTiers, pastDue 
 
         <div className="sp-cols">
           <section style={{ ...card, padding: 16 }}>
-            <h2 style={{ margin: "0 0 10px", fontSize: 13, letterSpacing: ".04em", textTransform: "uppercase", color: "#b8560e" }}>Try again · {needsAttention.length}</h2>
-            {needsAttention.length === 0 ? (
-              <p style={{ fontSize: 13, color: COLORS.textMuted, margin: "6px 0" }}>Nothing to try again.</p>
-            ) : needsAttention.map((m) => (
+            <h2 style={{ margin: "0 0 10px", fontSize: 13, letterSpacing: ".04em", textTransform: "uppercase", color: "#b8560e" }}>Up next · {needsAttention.length + upNext.length}</h2>
+            {needsAttention.length === 0 && upNext.length === 0 && (
+              <p style={{ fontSize: 13, color: COLORS.textMuted, margin: "6px 0" }}>You're all caught up!</p>
+            )}
+            {needsAttention.map((m) => (
               <div key={m.id} style={{ display: "flex", gap: 10, alignItems: "center", background: COLORS.cream, borderRadius: 12, padding: 10, boxShadow: "inset 4px 0 0 #39D97A", marginBottom: 8 }}>
                 <CaseImage standard={m.caseStandard} alt="" style={{ width: 48, height: 48, borderRadius: 10, objectFit: "cover" }} />
                 <div style={{ flex: 1, minWidth: 0 }}>
@@ -216,6 +254,17 @@ export default function ProgressClient({ student, missions, badgeTiers, pastDue 
                 <button type="button" onClick={() => router.push(`/activity/${m.assignmentId}`)} style={{ background: COLORS.orangeSoft, color: "#b8560e", border: 0, borderRadius: 999, padding: "8px 12px", fontWeight: 700, fontSize: 12, cursor: "pointer" }}>Try again</button>
               </div>
             ))}
+                      {nextShown.map((a) => (
+              <div key={a.id} style={{ display: "flex", gap: 10, alignItems: "center", background: a.pastDue ? "#fff5f6" : COLORS.cream, borderRadius: 12, padding: 10, boxShadow: `inset 4px 0 0 ${a.pastDue ? "#ee5264" : "#7B5DFF"}`, marginBottom: 8 }}>
+                <CaseImage standard={a.caseStandard} alt="" style={{ width: 48, height: 48, borderRadius: 10, objectFit: "cover" }} />
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <strong style={{ display: "block", fontSize: 14 }}>{a.caseTitle}</strong>
+                  <span style={{ fontSize: 12, fontWeight: a.pastDue ? 700 : 400, color: a.pastDue ? "#c4233a" : COLORS.textMuted }}>{a.pastDue ? "Past due" : a.dueDate ? formatDueShort(a.dueDate) : "Ready when you are"}</span>
+                </div>
+                <button type="button" onClick={() => router.push(`/activity/${a.id}`)} style={{ background: a.pastDue ? "#ee5264" : COLORS.violet, color: "#fff", border: 0, borderRadius: 999, padding: "8px 12px", fontWeight: 700, fontSize: 12, cursor: "pointer" }}>{a.pastDue ? "Open it" : "Start"}</button>
+              </div>
+            ))}
+            {upNext.length > 4 && <button type="button" className="sp-more" onClick={() => setShowAllNext(!showAllNext)}>{showAllNext ? "Show less" : `Show all ${upNext.length}`}</button>}
           </section>
 
           <section style={{ ...card, padding: 16 }}>
@@ -237,7 +286,7 @@ export default function ProgressClient({ student, missions, badgeTiers, pastDue 
             <h2 style={{ margin: "0 0 10px", fontSize: 13, letterSpacing: ".04em", textTransform: "uppercase", color: "#0e7a45" }}>Finished · {finished.length}</h2>
             {finished.length === 0 ? (
               <p style={{ fontSize: 13, color: COLORS.textMuted, margin: "6px 0" }}>Grades show up here.</p>
-            ) : finished.map((m) => {
+            ) : finishedShown.map((m) => {
               const meta = GRADE_META[m.grade];
               return (
                 <button key={m.id} type="button" onClick={() => setSelected(m)} style={{ display: "flex", gap: 10, alignItems: "center", background: COLORS.cream, borderRadius: 12, padding: 10, width: "100%", border: 0, textAlign: "left", marginBottom: 8, cursor: "pointer", font: "inherit", color: "inherit", boxShadow: `inset 4px 0 0 ${meta?.bar || "#39D97A"}` }}>
@@ -250,8 +299,32 @@ export default function ProgressClient({ student, missions, badgeTiers, pastDue 
                 </button>
               );
             })}
+            {finished.length > 5 && <button type="button" className="sp-more" onClick={() => setShowAllFinished(!showAllFinished)}>{showAllFinished ? "Show less" : `Show all ${finished.length}`}</button>}
           </section>
         </div>
+
+        {skills.length > 0 && (
+          <section style={{ ...card, background: "rgba(255,255,255,.9)", backdropFilter: "blur(8px)", padding: "16px 20px", marginBottom: 16 }}>
+            <h2 style={{ margin: "0 0 2px", fontFamily: "'Poppins', sans-serif", fontSize: 20 }}>My skills</h2>
+            <p style={{ margin: "0 0 12px", color: COLORS.textMuted, fontSize: 13 }}>What your missions show you can do. More stars as you get better.</p>
+            <div className="sp-skills">
+              {[["Nailed it", "#0e7a45", nailedSkills, "Nail a skill and it shows up here."], ["Keep practicing", "#8A6508", practiceSkills, "Nothing to practice right now. Nice!"]].map(([label, color, list, empty]) => (
+                <div key={label}>
+                  <h3 style={{ margin: "0 0 8px", fontSize: 13, letterSpacing: ".04em", textTransform: "uppercase", color }}>{label} · {list.length}</h3>
+                  {list.length === 0 ? <p style={{ fontSize: 13, color: COLORS.textMuted, margin: "4px 0" }}>{empty}</p> : list.map((k) => (
+                    <div key={k.key} style={{ display: "flex", gap: 12, alignItems: "center", background: COLORS.cream, borderRadius: 12, padding: "10px 12px", marginBottom: 8 }}>
+                      <Stars level={k.level} />
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <strong style={{ display: "block", fontSize: 14, lineHeight: 1.35 }}>{k.text}</strong>
+                        <span style={{ fontSize: 12, color: COLORS.textMuted }}>{k.count} {k.count === 1 ? "mission" : "missions"}{k.level < 2 ? ` · ${GRADE_META[k.level].label}` : ""}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
 
         <section style={{ ...card, background: "rgba(255,255,255,.82)", backdropFilter: "blur(8px)", padding: 14, marginBottom: 16 }} className="sp-stage">
           <aside style={{ background: "linear-gradient(180deg,#161036,#2a1868)", color: "#f6f3ff", borderRadius: 16, padding: "8px 16px 16px", border: "1px solid rgba(126,231,255,.45)" }}>
@@ -264,6 +337,7 @@ export default function ProgressClient({ student, missions, badgeTiers, pastDue 
             </div>
             <p style={{ margin: "12px 0 0", fontSize: 14.5, lineHeight: 1.45 }}>{line1}</p>
             <p style={{ margin: "12px 0 0", paddingTop: 12, borderTop: "1px solid rgba(126,231,255,.28)", fontSize: 14.5, lineHeight: 1.45 }}>{line2}</p>
+            {line3 && <p style={{ margin: "12px 0 0", paddingTop: 12, borderTop: "1px solid rgba(126,231,255,.28)", fontSize: 14.5, lineHeight: 1.45 }}>{line3}</p>}
           </aside>
           <div>
             <div style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "flex-end", flexWrap: "wrap" }}>

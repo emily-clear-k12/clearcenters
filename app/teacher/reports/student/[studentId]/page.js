@@ -347,7 +347,7 @@ export default function StudentReportPage() {
 
       <div className="cc-detail-content">
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", maxWidth: 800, margin: "0 auto 20px" }} className="no-print">
-          <button onClick={() => router.push(`/teacher/reports/${report.classId}`)} className="gc-btn" style={{ display: "flex", alignItems: "center", gap: 6, background: "none", color: COLORS.textMuted, fontWeight: 700, fontSize: 13.5 }}>
+          <button onClick={() => router.push(`/teacher/reports?classId=${report.classId}&tab=students`)} className="gc-btn" style={{ display: "flex", alignItems: "center", gap: 6, background: "none", color: COLORS.textMuted, fontWeight: 700, fontSize: 13.5 }}>
             <ChevronLeft size={18} /> Back to {report.className}
           </button>
           <div style={{ display: "flex", alignItems: "center", gap: 14 }}>

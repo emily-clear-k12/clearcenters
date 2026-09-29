@@ -327,6 +327,12 @@ export default function ReportsPage() {
   const [tab, setTab] = useState("snapshot");
   const [tipState, setTipState] = useState(null);
 
+  // ?tab=students when coming back from a student's report.
+  useEffect(() => {
+    const asked = new URLSearchParams(window.location.search).get("tab");
+    if (TABS.some(([key]) => key === asked)) setTab(asked);
+  }, []);
+
   const tip = useCallback((e, text) => {
     if (!e) { setTipState(null); return; }
     setTipState({ x: Math.min(e.clientX + 14, window.innerWidth - 270), y: e.clientY + 14, text });

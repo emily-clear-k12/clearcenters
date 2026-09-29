@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { supabaseAdmin } from "../../lib/supabaseAdmin";
 import { getVisibleAssignmentsForStudent } from "../../lib/getStudentAssignments";
 import ProgressClient from "./ProgressClient";
+import { mainCode, codesFor } from "../../lib/standardCodes";
 
 export default async function ProgressPage() {
   const cookieStore = cookies();
@@ -44,7 +45,7 @@ export default async function ProgressPage() {
   const { data: submissions } = await supabaseAdmin
     .from("submissions")
     .select(
-      "id, assignment_id, attempt1, attempt2, self_confidence, submitted_at, released, released_at, teacher_grade, teacher_feedback, revision_requested, maker_studio_data, assignments(case_standard, cases(title, learning_target, engine))"
+      "id, assignment_id, attempt1, attempt2, self_confidence, submitted_at, released, released_at, teacher_grade, teacher_feedback, revision_requested, maker_studio_data, assignments(case_standard, cases(title, subject, learning_target, engine))"
     )
     .eq("student_id", studentId)
     .not("submitted_at", "is", null)
@@ -91,14 +92,28 @@ export default async function ProgressPage() {
   const subs = submissions || [];
 
   let pastDue = [];
+  // Sept 28, 2026: everything still open (not turned in), for the "Up next"
+  // column — past due first, then soonest due, then no due date.
+  let upNext = [];
   if (student.class_id) {
     try {
       const openAssignments = await getVisibleAssignmentsForStudent(student.id, student.class_id);
       const now = new Date();
       const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
       pastDue = (openAssignments || []).filter((a) => a.due_date && a.due_date < today);
+      upNext = (openAssignments || [])
+        .filter((a) => !a.revisionRequested)
+        .map((a) => ({
+          id: a.id,
+          caseStandard: a.case_standard,
+          caseTitle: a.cases?.title || a.case_standard || "Mission",
+          dueDate: a.due_date || null,
+          pastDue: !!(a.due_date && a.due_date < today),
+        }))
+        .sort((a, b) => (a.dueDate ? 0 : 1) - (b.dueDate ? 0 : 1) || String(a.dueDate || "").localeCompare(String(b.dueDate || "")));
     } catch (err) {
       pastDue = [];
+      upNext = [];
     }
   }
 
@@ -163,8 +178,34 @@ export default async function ProgressPage() {
     };
   });
 
+  // Sept 28, 2026: "My skills" — one row per standard the student has a
+  // grade on, worded as the activity's own "I can…" learning target. The
+  // level comes from every graded mission for that standard, the same way
+  // the teacher's Reports page works it out.
+  const skillMap = {};
+  subs.forEach((s) => {
+    if (!s.released || s.teacher_grade == null || s.revision_requested) return;
+    const standard = s.assignments?.case_standard;
+    if (!standard) return;
+    const subject = s.assignments?.cases?.subject || "";
+    const code = mainCode(standard) || codesFor(standard)[0] || standard;
+    const key = `${subject}|${code}`;
+    if (!skillMap[key]) skillMap[key] = { key, code, subject, text: "", grades: [], titles: [] };
+    const target = s.assignments?.cases?.learning_target;
+    if (!skillMap[key].text && target) skillMap[key].text = target;
+    skillMap[key].grades.push(Number(s.teacher_grade));
+    skillMap[key].titles.push(s.assignments?.cases?.title || standard);
+  });
+  const skills = Object.values(skillMap).map((k) => {
+    const avg = k.grades.reduce((a, b) => a + b, 0) / k.grades.length;
+    const level = avg >= 1.5 ? 2 : avg >= 0.75 ? 1 : 0;
+    return { key: k.key, code: k.code, subject: k.subject, text: k.text || k.titles[0], level, count: k.grades.length };
+  });
+
   return (
     <ProgressClient
+      upNext={upNext}
+      skills={skills}
       journalEntries={journalEntries}
       student={student}
       missions={missions}
