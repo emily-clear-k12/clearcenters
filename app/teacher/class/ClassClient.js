@@ -7,6 +7,7 @@ import { QRCodeSVG } from "qrcode.react";
 import { supabase } from "../../../lib/supabaseClient";
 import { BridgePage, PageHeading, ClassTabs, Empty } from "../../../components/teacher/BridgeUI";
 import ClassSetup from "../../../components/teacher/ClassSetup";
+import { replaySamTips } from "../../../components/teacher/SamCoach";
 import { SAM_SKINS, DEFAULT_SAM_SKIN, FALLBACK_ICON } from "../../../lib/samSkins";
 import { GRADEBOOK_SCALES, scaleNumbers } from "../../../lib/gradebookScale";
 
@@ -283,7 +284,8 @@ export default function ClassClient() {
                 <button className="cc-btn secondary" type="button" onClick={() => { navigator.clipboard.writeText(selected.class_code); setCopied(true); setTimeout(() => setCopied(false), 1200); }}>{copied ? "Copied" : "Copy code"}</button>
                 <button className="cc-btn" type="button" onClick={() => window.print()}>Print sign-in cards</button>
                 <button className="cc-btn quiet" type="button" onClick={() => setShowNew((open) => !open)}>{showNew ? "Close" : "New class"}</button>
-                <button className="cc-btn secondary" type="button" onClick={() => setHelp(true)}>Set up with help</button>
+                <button className="cc-btn secondary" type="button" onClick={() => setHelp(true)}>Watch the intro</button>
+                <button className="cc-btn secondary" type="button" onClick={() => { replaySamTips(); router.push("/teacher"); }}>Replay S.A.M. tips</button>
               </div>
             </section>
             {showNew && (

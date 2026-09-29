@@ -18,6 +18,19 @@ export function markTeacherLogin() {
   }
 }
 
+export function replaySamTips() {
+  try {
+    sessionStorage.setItem("cc-login-stamp", String(Date.now()));
+    const keys = [];
+    for (let i = 0; i < localStorage.length; i += 1) keys.push(localStorage.key(i));
+    keys.forEach((key) => {
+      if (key && key.startsWith("cc-sam-coach:")) localStorage.removeItem(key);
+    });
+  } catch (err) {
+    /* still send them to Today */
+  }
+}
+
 export default function SamCoach({ teacherId }) {
   const [tip, setTip] = useState(null);
 
