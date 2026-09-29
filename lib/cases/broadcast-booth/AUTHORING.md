@@ -77,7 +77,8 @@ Student UI keys off `segmentType` + `beats` + case fields. Keep Desert Radio `SC
 
 - Put photoreal PNGs under `public/maker/broadcast/` (prefix `bb-`).
 - Chips are image-first with a **tiny caption** in the UI — no typing in the storyboard.
-- Reuse existing desert chips for Explain; add new files for new cases.
+- Each different reason or caption gets its own picture file. Do not reuse one photo under several captions. The studio hides a repeated image URL in the idea bank, so a shared URL shows up once and the other caption loses its picture.
+- Reuse an existing picture only when it is the same thing, not a similar one.
 
 ## Wiring a new case (author checklist)
 
@@ -130,9 +131,9 @@ Each required tray normally needs one idea. Clips currently allow 2–20 seconds
 
 - Read `public/maker/broadcast/README.md` and the parent Maker README before adding art.
 - Reuse suitable existing pictures; place new classroom-safe documentary photos/illustrations under `public/maker/broadcast/` with meaningful `bb-` names. In content, paths start `/maker/broadcast/` (omit `public`). Never ship broken placeholder image paths.
-- Use the same image URL for the same picture. The shared planning view displays repeated picture URLs only once in the options while retaining every distinct text choice. Placed storyboard cues may still show their pictures.
+- Use a different picture file for every chip whose caption says something different. Never point two reasons at the same image URL. The planning view shows a repeated URL only once and drops the picture from the later chip.
 - Keep text as real labels, not baked into pictures. Preserve accessibility/read-aloud.
-- Do not redesign `BroadcastBoothClient.js`, `BroadcastStudioUI.js`, or `broadcast-booth.css` for a content request. All registered cases inherit the approved Plan / Record / Review studio, long planning column, and recording-only ON AIR indicator.
+- Do not redesign `BroadcastBoothClient.js`, `BroadcastStudioUI.js`, or `broadcast-booth.css` for a content request. The approved plan screen is top to bottom: the topic, then the part buttons (Hook, Big idea, and so on), then that part's storyboard, then the idea bank for that part. Do not go back to a long left-and-right column. Recording is the only place the ON AIR indicator appears.
 
 ## Make it assignable
 
