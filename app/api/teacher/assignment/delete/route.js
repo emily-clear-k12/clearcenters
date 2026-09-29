@@ -41,6 +41,17 @@ export async function POST(request) {
     return NextResponse.json({ error: "This assignment doesn't belong to one of your classes." }, { status: 403 });
   }
 
+  // Sept 28, 2026: games and hints also keep rows that point at the
+  // assignment. Clear those first, or the final delete is refused. A table
+  // that doesn't exist yet (its SQL never ran) just errors quietly here.
+  const { data: sessions } = await supabaseAdmin.from("frequency_rush_sessions").select("id").eq("assignment_id", assignmentId);
+  const sessionIds = (sessions || []).map((row) => row.id);
+  await supabaseAdmin.from("crystal_dive_runs").delete().eq("assignment_id", assignmentId);
+  if (sessionIds.length) await supabaseAdmin.from("frequency_rush_attempts").delete().in("session_id", sessionIds);
+  await supabaseAdmin.from("frequency_rush_sessions").delete().eq("assignment_id", assignmentId);
+  await supabaseAdmin.from("hint_requests").delete().eq("assignment_id", assignmentId);
+  await supabaseAdmin.from("signal_ops_sessions").delete().eq("assignment_id", assignmentId);
+
   const { error: subsError } = await supabaseAdmin.from("submissions").delete().eq("assignment_id", assignmentId);
   if (subsError) {
     return NextResponse.json({ error: "Couldn't delete this assignment's submissions: " + subsError.message }, { status: 500 });

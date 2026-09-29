@@ -78,6 +78,9 @@ export default function ClassClient() {
   const [ready, setReady] = useState(false);
   const [sam, setSam] = useState(DEFAULT_SAM_SKIN);
   const [saved, setSaved] = useState("");
+  const [work, setWork] = useState([]);
+  const [confirmId, setConfirmId] = useState(null);
+  const [deletingId, setDeletingId] = useState(null);
 
   const selected = classes.find((item) => item.id === classId) || classes[0] || null;
 
@@ -122,13 +125,24 @@ export default function ClassClient() {
       rows = rows.map((student) => ({ ...student, active: student.active !== false }));
     }
     setStudents(rows);
-    const { data: assignments } = await supabase.from("assignments").select("id, due_date").eq("class_id", current.id);
+    const { data: assignments } = await supabase.from("assignments").select("id, due_date, case_standard, created_at, game_skin").eq("class_id", current.id);
     const ids = (assignments || []).map((item) => item.id);
     let submissions = [];
     if (ids.length) {
       const { data } = await supabase.from("submissions").select("student_id, assignment_id, submitted_at, teacher_grade, revision_requested").in("assignment_id", ids);
       submissions = data || [];
     }
+    // Everything assigned to this class, newest first, so test work can be cleared out.
+    const standards = [...new Set((assignments || []).map((item) => item.case_standard).filter(Boolean))];
+    const { data: caseRows } = standards.length ? await supabase.from("cases").select("standard, title, engine").in("standard", standards) : { data: [] };
+    const titles = Object.fromEntries((caseRows || []).map((row) => [row.standard, row]));
+    setWork((assignments || []).map((item) => ({
+      ...item,
+      title: titles[item.case_standard]?.title || item.case_standard,
+      engine: titles[item.case_standard]?.engine || "",
+      turnedIn: submissions.filter((row) => row.assignment_id === item.id && row.submitted_at).length,
+    })).sort((a, b) => String(b.created_at || "").localeCompare(String(a.created_at || ""))));
+    setConfirmId(null);
     const nextNotes = {};
     rows.filter((student) => student.active !== false).forEach((student) => {
       nextNotes[student.id] = studentNote(student.id, assignments || [], submissions);
@@ -221,6 +235,28 @@ export default function ClassClient() {
     }
     setClasses((list) => list.map((item) => (item.id === selected.id ? { ...item, name } : item)));
     setSaved("Name saved.");
+  }
+
+  async function deleteAssignment(item) {
+    setDeletingId(item.id);
+    setError("");
+    const { data: sessionData } = await supabase.auth.getSession();
+    const accessToken = sessionData?.session?.access_token;
+    try {
+      const res = await fetch("/api/teacher/assignment/delete", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ assignmentId: item.id, accessToken }),
+      });
+      const body = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(body.error || "Couldn't delete that assignment.");
+      setWork((list) => list.filter((row) => row.id !== item.id));
+      setNotice(`Deleted “${item.title}” and its student work.`);
+    } catch (err) {
+      setError(err.message || "Couldn't delete that assignment.");
+    }
+    setDeletingId(null);
+    setConfirmId(null);
   }
 
   async function saveGradebook(next) {
@@ -344,6 +380,27 @@ export default function ClassClient() {
                 </section>
               </aside>
             </div>
+            <section className="cc-panel" style={{ marginTop: 16 }}>
+              <h2>Assigned work</h2>
+              <p className="cc-muted">Everything assigned to this class, newest first. Deleting one also deletes every student's work on it. It can't be undone.</p>
+              {!work.length && <Empty>Nothing assigned to this class yet.</Empty>}
+              {work.map((item) => (
+                <div className="cc-person" key={item.id}>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <strong>{item.title}</strong>
+                    <p>{item.case_standard} · assigned {item.created_at ? new Date(item.created_at).toLocaleDateString() : "—"}{item.due_date ? ` · due ${new Date(`${item.due_date}T12:00:00`).toLocaleDateString()}` : ""} · {item.turnedIn} turned in</p>
+                  </div>
+                  {confirmId === item.id ? (
+                    <div className="cc-row">
+                      <button type="button" className="cc-btn" style={{ background: "#c93c3c", borderColor: "#c93c3c" }} disabled={deletingId === item.id} onClick={() => deleteAssignment(item)}>{deletingId === item.id ? "Deleting…" : item.turnedIn ? `Delete it and ${item.turnedIn} students' work` : "Yes, delete it"}</button>
+                      <button type="button" className="cc-btn secondary" onClick={() => setConfirmId(null)}>Keep it</button>
+                    </div>
+                  ) : (
+                    <button type="button" className="cc-btn quiet" onClick={() => setConfirmId(item.id)}>Delete</button>
+                  )}
+                </div>
+              ))}
+            </section>
           </>
         )}
       </div>
