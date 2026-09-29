@@ -901,7 +901,6 @@ function displayCode(code){return String(code||'').replace(/^TEKS\s+/i,'').repla
         </button>
       ))}
     </div>
-    <p className="cc-quiet">More on the way: {PRODUCTS.filter((item) => item.soon).map((item) => item.label).join(", ")}.</p>
     {assignedSuccess?(            <div style={panelStyle(ACCENT, { padding: 32, textAlign: "center" })}>
               <div style={{ fontSize: 36, marginBottom: 10 }}>✅</div>
               <div style={{ fontWeight: 700, fontSize: 17, marginBottom: 6, color: COLORS.textDark }}>Assigned!</div>
