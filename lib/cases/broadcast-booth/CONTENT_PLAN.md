@@ -149,11 +149,11 @@ Emily, Sept 29: one Broadcast Booth per standard. Science goes first. This is th
 | Built | SCI.3.8A-BB | Correspondent | Energy hunt at the fair: light, sound, heat, and motion. Built in `wave9.js`; pictures requested in `image-prompts/broadcast-booth/wave9.md`. |
 | Built | SCI.3.8B-BB | Explain | A faster bowling ball has more energy and knocks down more pins. Built in `wave9.js`; pictures requested in `image-prompts/broadcast-booth/wave9.md`. |
 | Built | SCI.3.9A-BB | Explain | The Moon orbits Earth, and Earth orbits the Sun. Not phases, not day and night. Built in `wave9.js`; pictures requested in `image-prompts/broadcast-booth/wave9.md`. |
-| Next | SCI.3.9B-BB | Explain | The order of the planets from the Sun. |
-| Planned | SCI.3.10A-BB | Correspondent | Weather desk: Amarillo and Houston on the same day. |
-| Planned | SCI.3.10B-BB | Explain | Soil forms from broken rock and rotting leaves. Not the canyon. |
-| Planned | SCI.3.10C-BB | Correspondent | A landslide closes a road: fast changes to the land. |
-| Planned | SCI.3.11A-BB | Correspondent | Farm, road, and building site: how people use natural resources. |
+| Built | SCI.3.9B-BB | Explain | The order of the planets from the Sun. Built in `wave10.js`; pictures requested in `image-prompts/broadcast-booth/wave10.md`. |
+| Built | SCI.3.10A-BB | Correspondent | Weather desk: Amarillo and Houston on the same day. Built in `wave10.js`; pictures requested in `image-prompts/broadcast-booth/wave10.md`. |
+| Built | SCI.3.10B-BB | Explain | Soil forms from broken rock and rotting leaves. Not the canyon. Built in `wave10.js`; pictures requested in `image-prompts/broadcast-booth/wave10.md`. |
+| Built | SCI.3.10C-BB | Correspondent | A landslide closes a road: fast changes to the land. Built in `wave10.js`; pictures requested in `image-prompts/broadcast-booth/wave10.md`. |
+| Next | SCI.3.11A-BB | Correspondent | Farm, road, and building site: how people use natural resources. |
 | Planned | SCI.3.11C-BB | Explain | Reduce, reuse, recycle with one lunch box. Not bottles and paper. |
 | Planned | SCI.3.12A-BB | Explain | Monarchs migrate, bats hibernate, trees go dormant. |
 | Planned | SCI.3.12C-BB | Correspondent | A drought at a stock pond: some living things thrive, some move, some die. Not the creek. |

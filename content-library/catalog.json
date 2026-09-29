@@ -1,7 +1,7 @@
 {
   "generatedFrom": "lib/cases and add_*.sql",
-  "onDisk": 1065,
-  "inSql": 1082,
+  "onDisk": 1069,
+  "inSql": 1086,
   "items": [
     {
       "standard": "3.10C-AD",
@@ -616,6 +616,33 @@
       "file": "lib/cases/broadcast-booth/assignFallback.js"
     },
     {
+      "standard": "SCI.3.10A-BB",
+      "title": "Broadcast Booth: Same day, two cities (Correspondent)",
+      "grade": "3",
+      "subject": "Science",
+      "engine": "Broadcast Booth",
+      "kind": "standard",
+      "file": "lib/cases/broadcast-booth/assignFallback.js"
+    },
+    {
+      "standard": "SCI.3.10B-BB",
+      "title": "Broadcast Booth: What is soil made of? (Explain)",
+      "grade": "3",
+      "subject": "Science",
+      "engine": "Broadcast Booth",
+      "kind": "standard",
+      "file": "lib/cases/broadcast-booth/assignFallback.js"
+    },
+    {
+      "standard": "SCI.3.10C-BB",
+      "title": "Broadcast Booth: The road that disappeared (Correspondent)",
+      "grade": "3",
+      "subject": "Science",
+      "engine": "Broadcast Booth",
+      "kind": "standard",
+      "file": "lib/cases/broadcast-booth/assignFallback.js"
+    },
+    {
       "standard": "SCI.3.11B-BB",
       "title": "Broadcast Booth: Schoolyard Debate (Shade vs Play)",
       "grade": "3",
@@ -717,6 +744,15 @@
     {
       "standard": "SCI.3.9A-BB",
       "title": "Broadcast Booth: Who goes around whom? (Explain)",
+      "grade": "3",
+      "subject": "Science",
+      "engine": "Broadcast Booth",
+      "kind": "standard",
+      "file": "lib/cases/broadcast-booth/assignFallback.js"
+    },
+    {
+      "standard": "SCI.3.9B-BB",
+      "title": "Broadcast Booth: The planet walk (Explain)",
       "grade": "3",
       "subject": "Science",
       "engine": "Broadcast Booth",
