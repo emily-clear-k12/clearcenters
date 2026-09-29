@@ -1,7 +1,7 @@
 {
   "generatedFrom": "lib/cases and add_*.sql",
-  "onDisk": 1020,
-  "inSql": 1037,
+  "onDisk": 1024,
+  "inSql": 1041,
   "items": [
     {
       "standard": "3.10C-AD",
@@ -3460,6 +3460,15 @@
       "file": "lib/cases/expedition-station/quests/missing-number-lock.js"
     },
     {
+      "standard": "MA.3.6A-XP",
+      "title": "The Shape Workshop",
+      "grade": "3",
+      "subject": "Math",
+      "engine": "Expedition Station",
+      "kind": "id",
+      "file": "lib/cases/expedition-station/quests/shape-workshop.js"
+    },
+    {
       "standard": "MA.3.6C-XP",
       "title": "The Greenhouse Floor",
       "grade": "3",
@@ -3494,6 +3503,15 @@
       "engine": "Expedition Station",
       "kind": "id",
       "file": "lib/cases/expedition-station/quests/sighting-board.js"
+    },
+    {
+      "standard": "SCI.3.10B-XP",
+      "title": "The Soil Makers",
+      "grade": "3",
+      "subject": "Science",
+      "engine": "Expedition Station",
+      "kind": "id",
+      "file": "lib/cases/expedition-station/quests/soil-makers.js"
     },
     {
       "standard": "SCI.3.12A-XP",
@@ -3829,6 +3847,15 @@
       "file": "lib/cases/expedition-station/quests/three-reports.js"
     },
     {
+      "standard": "ELA.5.8A-XP",
+      "title": "The Twin Legends",
+      "grade": "5",
+      "subject": "ELAR",
+      "engine": "Expedition Station",
+      "kind": "id",
+      "file": "lib/cases/expedition-station/quests/twin-legends.js"
+    },
+    {
       "standard": "ELA.5.8B-XP",
       "title": "The Crew Conflict",
       "grade": "5",
@@ -3953,6 +3980,15 @@
       "engine": "Expedition Station",
       "kind": "id",
       "file": "lib/cases/expedition-station/quests/light-lab.js"
+    },
+    {
+      "standard": "SCI.5.9-XP",
+      "title": "The Spinning Earth",
+      "grade": "5",
+      "subject": "Science",
+      "engine": "Expedition Station",
+      "kind": "id",
+      "file": "lib/cases/expedition-station/quests/spinning-earth.js"
     },
     {
       "standard": "3.FR.Energy.forms",

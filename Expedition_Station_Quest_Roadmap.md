@@ -38,7 +38,7 @@
 | ✅ | The Seed Crates | MA.3.4K-XP | 3.4K multiply and divide word problems | 3.4D, 3.4E, 3.4H, 3.4J, 3.5B | Lumara | Pack seed crates in equal groups for planting |
 | ✅ | The Rover Convoy | MA.3.4G-XP | 3.4G two-digit × one-digit | 3.4F, 3.4I | Frostveil | Load the rover convoy for the long ice crossing |
 | ✅ | The Missing Number Lock | MA.3.5D-XP | 3.5D unknowns in × and ÷ equations | 3.5C, 3.5E | Cindara | Crack the number locks on the lava vault |
-| ⬜ | The Shape Workshop | MA.3.6A-XP | 3.6A classify 2D and 3D figures | 3.6B | Mechara | Sort parts by shape to rebuild a robot |
+| ✅ | The Shape Workshop | MA.3.6A-XP | 3.6A classify 2D and 3D figures | 3.6B | Mechara | Sort parts by shape to rebuild a robot |
 | ✅ | The Greenhouse Floor | MA.3.6C-XP | 3.6C area of rectangles | 3.6D, 3.6E | Lumara | Tile the greenhouse floor and plan garden plots |
 | ✅ | The Creature Pens | MA.3.7B-XP | 3.7B perimeter | 3.7A | Solara | Fence the rescued animals' pens |
 | ✅ | The Launch Schedule | MA.3.7C-XP | 3.7C time intervals | 3.7D, 3.7E | Cloudreach | Time the sky-ship launches and weigh the cargo |
@@ -139,7 +139,7 @@ Each ELAR quest has 4–6 original passages that belong to its world.
 | ⬜ | The Pun Patrol | ELA.5.3D-XP | 5.3D adages and puns | 5.3B, 5.3C | Mechara | Robot jokes and crew sayings |
 | ⬜ | The Silent Signal | ELA.5.6F-XP | 5.6F inferences with evidence | 5.7C | Frostveil | A mystery told in logs and messages |
 | ✅ | The Three Reports | ELA.5.6H-XP | 5.6H synthesize information | 5.7B | Cloudreach | Three reports about one storm |
-| ⬜ | The Twin Legends | ELA.5.8A-XP | 5.8A multiple themes | 5.9A | Lumara | Two legends with more than one theme |
+| ✅ | The Twin Legends | ELA.5.8A-XP | 5.8A multiple themes | 5.9A | Lumara | Two legends with more than one theme |
 | ✅ | The Crew Conflict | ELA.5.8B-XP | 5.8B character relationships and conflicts | 5.8D | Cindara | A story about a crew that disagrees |
 | ✅ | The River Rescue | ELA.5.8C-XP | 5.8C plot | 5.10B | Solara | An adventure story |
 | ⬜ | The Speaker's Voice | ELA.5.9B-XP | 5.9B poetry: poet vs. speaker | 5.10D | Cloudreach | Poems written as different speakers |
@@ -167,7 +167,7 @@ Science quests use the 2024–25 science TEKS. Practices (1–4) and recurring t
 | ✅ | The Energy Hunt | SCI.3.8A-XP | 3.8A light, sound, and thermal energy | 3.8B | Lumara | Find energy all around the garden outpost |
 | ✅ | The Orbit Model | SCI.3.9A-XP | 3.9A Sun, Earth, and Moon orbits | 3.9B | Cloudreach | Build a model of Earth's orbit from the telescope |
 | ⬜ | The Weather Watch | SCI.3.10A-XP | 3.10A weather in different places | — | Frostveil | Compare weather at two outposts |
-| ⬜ | The Soil Makers | SCI.3.10B-XP | 3.10B soil formation | 3.10C | Cindara | Watch rock turn into soil |
+| ✅ | The Soil Makers | SCI.3.10B-XP | 3.10B soil formation | 3.10C | Cindara | Watch rock turn into soil |
 | ⬜ | The Reuse Station | SCI.3.11B-XP | 3.11B conservation | 3.11A, 3.11C | Mechara | Reduce, reuse, and recycle at the outpost |
 | ✅ | The Migration Map | SCI.3.12A-XP | 3.12A weather and animal migration | — | Cloudreach | Track where the animals go when it gets cold |
 | ✅ | The Food Chain Crew | SCI.3.12B-XP | 3.12B food chains | 3.12C | Solara | Build and repair a rainforest food chain |
@@ -201,7 +201,7 @@ Science quests use the 2024–25 science TEKS. Practices (1–4) and recurring t
 | ✅ | The Tug-of-War | SCI.5.7A-XP | 5.7A balanced and unbalanced forces | 5.7B | Frostveil | Free the stuck rover |
 | ⬜ | The Energy Chain | SCI.5.8A-XP | 5.8A energy transformations | 5.8B | Mechara | Follow the energy through the robot factory |
 | ✅ | The Light Lab | SCI.5.8C-XP | 5.8C light reflects, refracts, absorbs | — | Lumara | Bounce light to power the garden sensors |
-| ⬜ | The Spinning Earth | SCI.5.9-XP | 5.9 Earth's rotation and day and night | — | Cloudreach | Explain day and night to the new crew |
+| ✅ | The Spinning Earth | SCI.5.9-XP | 5.9 Earth's rotation and day and night | — | Cloudreach | Explain day and night to the new crew |
 | ⬜ | The Ocean Engine | SCI.5.10A-XP | 5.10A Sun and ocean in the water cycle | — | Cloudreach | Trace how the Sun and ocean make rain |
 | ⬜ | The Rock Layers | SCI.5.10B-XP | 5.10B sedimentary rocks and fossil fuels | — | Cindara | Read the story in the canyon's rock layers |
 | ⬜ | The Delta Builders | SCI.5.10C-XP | 5.10C landforms | — | Frostveil | Watch water, wind, and ice shape the land |
@@ -216,10 +216,10 @@ Science quests use the 2024–25 science TEKS. Practices (1–4) and recurring t
 
 | Subject | Grade 3 | Grade 4 | Grade 5 | Total | Written |
 | --- | --- | --- | --- | --- | --- |
-| Math | 15 | 18 | 16 | 49 | 29 |
-| ELAR | 13 | 14 | 14 | 41 | 22 |
-| Science | 12 | 14 | 12 | 38 | 23 |
-| **All** | **40** | **46** | **42** | **128** | **74** |
+| Math | 15 | 18 | 16 | 49 | 30 |
+| ELAR | 13 | 14 | 14 | 41 | 23 |
+| Science | 12 | 14 | 12 | 38 | 25 |
+| **All** | **40** | **46** | **42** | **128** | **78** |
 
 ## Notes
 
