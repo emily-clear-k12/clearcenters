@@ -1,7 +1,7 @@
 {
   "generatedFrom": "lib/cases and add_*.sql",
-  "onDisk": 1029,
-  "inSql": 1046,
+  "onDisk": 1033,
+  "inSql": 1050,
   "items": [
     {
       "standard": "3.10C-AD",
@@ -598,6 +598,15 @@
       "file": "lib/cases/assembly-deck/SS-5-4C-AD.public.js"
     },
     {
+      "standard": "ELA.3.6F-BB",
+      "title": "Broadcast Booth: The story never says the feeling (Explain)",
+      "grade": "3",
+      "subject": "ELAR",
+      "engine": "Broadcast Booth",
+      "kind": "standard",
+      "file": "lib/cases/broadcast-booth/assignFallback.js"
+    },
+    {
       "standard": "SCI.3.11B-BB",
       "title": "Broadcast Booth: Schoolyard Debate (Shade vs Play)",
       "grade": "3",
@@ -634,10 +643,37 @@
       "file": "lib/cases/broadcast-booth/assignFallback.js"
     },
     {
+      "standard": "SCI.4.11A-BB",
+      "title": "Broadcast Booth: How should the town get power? (Debate)",
+      "grade": "4",
+      "subject": "Science",
+      "engine": "Broadcast Booth",
+      "kind": "standard",
+      "file": "lib/cases/broadcast-booth/assignFallback.js"
+    },
+    {
       "standard": "SCI.4.8C-BB",
       "title": "Broadcast Booth: Why is the bulb lit? (Explain)",
       "grade": "4",
       "subject": "Science",
+      "engine": "Broadcast Booth",
+      "kind": "standard",
+      "file": "lib/cases/broadcast-booth/assignFallback.js"
+    },
+    {
+      "standard": "ELA.5.8A-BB",
+      "title": "Broadcast Booth: What is the play really about? (Explain)",
+      "grade": "5",
+      "subject": "ELAR",
+      "engine": "Broadcast Booth",
+      "kind": "standard",
+      "file": "lib/cases/broadcast-booth/assignFallback.js"
+    },
+    {
+      "standard": "ELA.5.9E-BB",
+      "title": "Broadcast Booth: Which facts support the claim? (Debate)",
+      "grade": "5",
+      "subject": "ELAR",
       "engine": "Broadcast Booth",
       "kind": "standard",
       "file": "lib/cases/broadcast-booth/assignFallback.js"

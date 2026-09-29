@@ -49,11 +49,11 @@ Leave these Grade 3 Science cases alone.
 | Built | SCI.4.8C-BB | Explain | 4 | Electricity | How a closed circuit lights a bulb. | `lib/cases/broadcast-booth/wave1.js`. SQL file written, not run. |
 | Built | SCI.3.6C-BB | Explain | 3 | Matter | What heating and cooling do to water: ice, liquid, and vapor. Not the water cycle. | `lib/cases/broadcast-booth/wave1.js`. SQL file written, not run. |
 | Built | SCI.5.13B-BB | Correspondent | 5 | Animal behavior | One behavior an animal is born knowing, and one a person taught it. Not a food chain, and not body parts. | `lib/cases/broadcast-booth/wave1.js`. SQL is in the chat and in `add_broadcast_booth_instinct.sql`. Not run. |
-| Next | SCI.4.11A-BB | Debate | 4 | Energy choice | Two fair ways to power a town: one renewable, one nonrenewable. | Expedition roadmap: 4.11A renewable and nonrenewable resources. |
-| | ELA.3.6F-BB | Explain | 3 | Inference | What a story shows about a character when it never says the feeling out loud. | `lib/cases/ELA-3-6F.public.js` |
-| | ELA.5.8A-BB | Explain | 5 | Theme | The theme of a story, with evidence from the text. | `lib/cases/ELA-5-8A.public.js` |
-| | ELA.5.9E-BB | Debate | 5 | Argument | Facts for a claim and facts against it, then which side the facts support. | `lib/cases/ELA-5-9E.public.js` |
-| | MA.3.5B-BB | Explain | 3 | Multiplication | One multiplication problem shown with an array. Numbers within 100. | `lib/cases/MA-3-5B.public.js` |
+| Built | SCI.4.11A-BB | Debate | 4 | Energy choice | Two fair ways to power a town: one renewable, one nonrenewable. | `wave1.js`. SQL in the chat. Not run. |
+| Built | ELA.3.6F-BB | Explain | 3 | Inference | What a story shows about a character when it never says the feeling out loud. | `lib/cases/ELA-3-6F.public.js`. SQL in the chat. Not run. |
+| Built | ELA.5.8A-BB | Explain | 5 | Theme | The theme of a story, with evidence from the text. | `lib/cases/ELA-5-8A.public.js`. SQL in the chat. Not run. |
+| Built | ELA.5.9E-BB | Debate | 5 | Argument | Facts for a claim and facts against it, then which side the facts support. | `lib/cases/ELA-5-9E.public.js`. SQL in the chat. Not run. |
+| Next | MA.3.5B-BB | Explain | 3 | Multiplication | One multiplication problem shown with an array. Numbers within 100. | `lib/cases/MA-3-5B.public.js` |
 | | MA.4.3E-BB | Explain | 4 | Fractions | How to add two fractions with the same denominator. | `lib/cases/MA-4-3E.public.js` |
 | | SS.3.2B-BB | Correspondent | 3 | Communities | Two communities that meet the same needs in different ways. | `lib/cases/SS-3-2B.public.js` |
 | | SS.4.10A-BB | Explain | 4 | Economics | How supply and demand change price and what is available. | `lib/cases/SS-4-10A.public.js` |
