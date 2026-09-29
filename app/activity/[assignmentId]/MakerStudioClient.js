@@ -425,6 +425,7 @@ export default function MakerStudioClient({
   samNickname,
   previewMode = false,
   previewLibrary = null,
+  initialMode = null,
 }) {
   const router = useRouter();
   const config = configProp || (publicCase && publicCase.config) || {
@@ -472,7 +473,8 @@ export default function MakerStudioClient({
   const [aiNote, setAiNote] = useState(null);
   const [recording, setRecording] = useState(false);
   const [recordSec, setRecordSec] = useState(0);
-  const [tool, setTool] = useState("pictures");
+  const [tool, setTool] = useState(null);
+  const [posterDrawing, setPosterDrawing] = useState(false);
   const [micPending, setMicPending] = useState(false);
   const [processingVoice, setProcessingVoice] = useState(false);
   const editorRef = useRef(null);
@@ -698,11 +700,15 @@ export default function MakerStudioClient({
     }
     setDraft(nextDraft);
     setActiveMode(id);
+    setTool(null);
+    setPosterDrawing(false);
     dirty.current = false;
     setSaveState("saved");
     setView("mode");
     setStatus(`${(meta && meta.label) || id}: make your piece. It saves as you go.`);
   }
+
+  useEffect(() => { if (previewMode && initialMode) openMode(initialMode); }, []); // Preview entry only.
 
   function patchDraft(patch) {
     setSaveState("saving");
@@ -1225,7 +1231,11 @@ export default function MakerStudioClient({
   const hasPictures = !!imageKinds[activeMode];
   const pictureTarget = libraryPicker || { kind: imageKinds[activeMode], ...(activeMode === "comic" ? { index: 0 } : {}) };
   function selectTool(next) {
-    setTool(next === "text" ? "tools" : next);
+    setTool(next === "pictures" ? (tool === "pictures" ? null : "pictures") : null);
+    if (next === "draw") {
+      if (activeMode === "poster") setPosterDrawing(true);
+      else editorRef.current?.querySelector("canvas")?.scrollIntoView({block:"nearest"});
+    }
     if (next === "text") editorRef.current?.querySelector("textarea, input:not([type=file])")?.focus();
   }
   const library = hasPictures ? <>
@@ -1233,7 +1243,7 @@ export default function MakerStudioClient({
       <select value={activeMode === "comic" ? pictureTarget.index || 0 : pictureTarget.kind} onChange={event => setLibraryPicker(activeMode === "comic" ? { kind: "comic", index: Number(event.target.value) } : { kind: event.target.value })}>
         {activeMode === "comic" ? (draft?.panels || []).map((_, i) => <option key={i} value={i}>Panel {i + 1}</option>) : <><option value="before">Before</option><option value="after">After</option></>}
       </select></label> : null}
-    <LibraryPicker open inline title="Pictures" disabled={navigationBusy} previewItems={previewLibrary} onClose={() => setTool("tools")} onSelect={item => placeLibraryImage(item, pictureTarget)} />
+    <LibraryPicker open inline title="Pictures" disabled={navigationBusy} previewItems={previewLibrary} onClose={() => setTool(null)} onSelect={item => { placeLibraryImage(item, pictureTarget); setPosterDrawing(false); setTool(null); }} />
   </> : null;
   const title = (publicCase && publicCase.title) || "Maker Studio";
   const topicLine = config.topic ? config.topic : null;
@@ -1277,21 +1287,30 @@ export default function MakerStudioClient({
     const meta = modesMeta.find((m) => m.id === activeMode) || {};
     const sketchSurface = draft.canvasSurface === "light_table" ? "light_table" : "whiteboard";
     return (
-      <MakerStudioFrame {...frameProps}>
-        <div className="mk-shell">
-          <div className="mk-top">
-            <div>
-              <p className="mk-kicker">{meta.label || activeMode}</p>
-              <h1>Make your piece</h1>
+      <MakerStudioFrame {...frameProps} footer={<>
+            <div className="mk-save-row">
+              <span className={`mk-pill${saveState === "error" ? " warn" : ""}`}>
+                {saveState === "saving" ? "Saving…" : saveState === "error" ? "Not saved — please retry" : "Saved"}
+              </span>
+              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                <button type="button" className="mk-ghost" onClick={() => saveModeDraft(false)} disabled={navigationBusy}>
+                  Save
+                </button>
+                <button
+                  type="button"
+                  className="mk-next"
+                  onClick={markModeDone}
+                  disabled={navigationBusy || !modeReadyForDone(activeMode, draft)}
+                >
+                  Done with {meta.label?.toLowerCase() || "piece"}
+                </button>
+              </div>
             </div>
-            <button type="button" className="mk-ghost" onClick={() => saveModeDraft(true)} disabled={navigationBusy}>
-              All pieces
-            </button>
-          </div>
-
+      </>}>
+        <div className="mk-shell">
           <div ref={editorRef} className={`mk-panel mk-write mk-stage mk-stage-${activeMode}`}>
-            <h2>{meta.label || activeMode}</h2>
-            <p className="mk-quiet">{meta.instructions || "Make your piece."}</p>
+            <h2>{activeMode === "poster" ? "Make a poster" : meta.label || activeMode}</h2>
+            {activeMode !== "poster" ? <p className="mk-quiet">{meta.instructions || "Make your piece."}</p> : null}
 
             {activeMode === "write" ? (
               <div className="mk-field">
@@ -1417,13 +1436,13 @@ export default function MakerStudioClient({
               <div className="mk-poster-composition">
                 <div className="mk-field"><label className="mk-sr-only" htmlFor="mk-poster-title">Poster title</label><input id="mk-poster-title" className="mk-input" value={draft.title || ""} onChange={e => patchDraft({ title:e.target.value })} placeholder="Your poster headline…" disabled={busy} maxLength={80} /></div>
                 <div className="mk-broadcast-preview">
-                  {isLibraryPath(draft.imageDataUrl) ? <div className="mk-poster-preview"><img src={draft.imageDataUrl} alt="Poster artwork" /></div> : <MakerDrawPad initialImage={draft.imageDataUrl || null} onChange={url => patchDraft({ imageDataUrl:url })} disabled={busy} height={360} />}
+                  {draft.imageDataUrl && !posterDrawing ? <div className="mk-poster-preview"><img src={draft.imageDataUrl} alt="Poster artwork" /></div> : <MakerDrawPad initialImage={draft.imageDataUrl || null} onChange={url => patchDraft({ imageDataUrl:url })} disabled={busy} height={360} />}
                 </div>
                 <div className="mk-field"><label className="mk-sr-only" htmlFor="mk-poster-cap">Poster caption</label><input id="mk-poster-cap" className="mk-input" value={draft.caption || ""} onChange={e => patchDraft({caption:e.target.value})} placeholder="Add a caption about your idea…" disabled={busy} maxLength={160} /></div>
                 <div className="mk-upload-row">
-                  <button className="mk-ghost" disabled={busy} onClick={() => { setTool("pictures"); setLibraryPicker({kind:"poster"}); }}>Choose a picture</button>
+                  <button className="mk-ghost" disabled={busy} onClick={() => { setTool("pictures"); setLibraryPicker({kind:"poster"}); }}>Choose from library</button>
                   <label className="mk-ghost mk-file-btn">Upload<input type="file" accept="image/*" hidden disabled={busy} onChange={e => {onPosterUpload(e.target.files?.[0]);e.target.value="";}} /></label>
-                  {draft.imageDataUrl ? <button className="mk-ghost" disabled={busy} onClick={() => patchDraft({imageDataUrl:null})}>Clear picture / Draw</button> : null}
+                  {draft.imageDataUrl ? <button className="mk-ghost" disabled={busy} onClick={() => { patchDraft({imageDataUrl:null}); setPosterDrawing(true); }}>Clear</button> : null}
                 </div>
               </div>
             ) : null}
@@ -2337,27 +2356,6 @@ export default function MakerStudioClient({
               </>
             ) : null}
 
-            <div className="mk-save-row">
-              <span className={`mk-pill${saveState === "error" ? " warn" : ""}`}>
-                {saveState === "saving" ? "Saving…" : saveState === "error" ? "Not saved — please retry" : "Saved"}
-              </span>
-              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-                <button type="button" className="mk-ghost" onClick={() => saveModeDraft(false)} disabled={navigationBusy}>
-                  Save
-                </button>
-                <button
-                  type="button"
-                  className="mk-next"
-                  onClick={markModeDone}
-                  disabled={navigationBusy || !modeReadyForDone(activeMode, draft)}
-                >
-                  Done with {meta.label?.toLowerCase() || "piece"}
-                </button>
-              </div>
-            </div>
-            <p className="mk-quiet" style={{ marginTop: 10 }}>
-              {meta.doneHint || "Tap Done when this piece feels finished."}
-            </p>
           </div>
 
           <p className="mk-quiet">{status}</p>
