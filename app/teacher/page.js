@@ -520,6 +520,7 @@ export default function TeacherOverview() {
   const [error, setError] = useState(null);
 
   const [classes, setClasses] = useState([]);
+  const [needsSetup, setNeedsSetup] = useState(false);
   const [rawStudents, setRawStudents] = useState([]);
   const [rawAssignments, setRawAssignments] = useState([]);
   const [rawSubmissions, setRawSubmissions] = useState([]);
@@ -590,18 +591,21 @@ export default function TeacherOverview() {
     // Now: log the real Postgres error instead of swallowing it, and fall
     // back to the pre-planet_key select so classes still show (just
     // without a saved pick) rather than vanishing outright.
+    let classLoadFailed = false;
     let { data: classesData, error: classesError } = await supabase.from("classes").select("id, name, planet_key, grade, subject").eq("teacher_id", teacherId).order("name");
     if (classesError) {
       console.error("Failed to load classes with planet_key — falling back without it. Run the migration in Teacher_Dashboard_OrbitMap_Art_Spec.md if this persists:", classesError);
       const fallback = await supabase.from("classes").select("id, name").eq("teacher_id", teacherId).order("name");
       classesData = fallback.data;
       if (fallback.error) {
+        classLoadFailed = true;
         console.error("Fallback class load also failed:", fallback.error);
         setError("Couldn't load your classes. Refresh the page and try again.");
       }
     }
     const classIds = (classesData || []).map((c) => c.id);
     setClasses(classesData || []);
+    if (!classLoadFailed && !(classesData || []).length) setNeedsSetup(true);
 
     let students = [];
     if (classIds.length > 0) {
@@ -651,6 +655,10 @@ export default function TeacherOverview() {
   useEffect(() => {
     if (!loadingAuth && teacherId) loadDashboard(teacherId);
   }, [loadingAuth, teacherId, loadDashboard]);
+
+  useEffect(() => {
+    if (needsSetup) router.replace("/teacher/class");
+  }, [needsSetup, router]);
 
   async function handleAwardPoints({ classId, mode, studentId, amount }) {
     setAwarding(true);
@@ -789,7 +797,7 @@ export default function TeacherOverview() {
     router.push("/login");
   }
 
-  if (loadingAuth || loading) {
+  if (loadingAuth || loading || needsSetup) {
     return (
       <div style={{ minHeight: "100vh", background: "#f4effb", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Inter', sans-serif", color: COLORS.textMuted }}>
         Loading...
@@ -804,7 +812,7 @@ export default function TeacherOverview() {
   const teacherFirstName = displayName.split(" ")[0] || "";
   const planetSlots = planetLayout(perClassStats.length);
 
-  return <TodayBridge teacherName={displayName} teacherEmail={teacherEmail} classes={classes} students={rawStudents} assignments={rawAssignments} submissions={rawSubmissions} hints={rawHintRequests} caseDetails={caseDetails} targets={targets} targetsError={targetsError} error={error} onRewards={id=>{setRewardClassId(id);setAwardModalOpen(true)}}>
+  return <TodayBridge teacherName={displayName} teacherEmail={teacherEmail} teacherId={teacherId} classes={classes} students={rawStudents} assignments={rawAssignments} submissions={rawSubmissions} hints={rawHintRequests} caseDetails={caseDetails} targets={targets} targetsError={targetsError} error={error} onRewards={id=>{setRewardClassId(id);setAwardModalOpen(true)}}>
     {awardSuccess&&<div role="status" className="cc-panel">{awardSuccess}</div>}
     <RewardsModal open={awardModalOpen} classes={classes} rawStudents={rawStudents} defaultClassId={rewardClassId||classes[0]?.id} awarding={awarding} onCancel={()=>setAwardModalOpen(false)} onAwardPoints={handleAwardPoints} onGrantSkin={handleGrantSkin} onSendShoutout={handleSendShoutout}/>
   </TodayBridge>;

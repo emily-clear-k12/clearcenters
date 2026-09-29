@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Eye, EyeOff, User, Lock, Hash } from "lucide-react";
 import { supabase } from "../../lib/supabaseClient";
+import { markTeacherLogin } from "../../components/teacher/SamCoach";
 
 const COLORS = {
   violet: "#7B5DFF",
@@ -52,6 +53,7 @@ function LoginContent() {
       setError(signInError.message);
       return;
     }
+    markTeacherLogin();
     router.push("/teacher");
   }
 

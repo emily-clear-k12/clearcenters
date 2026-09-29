@@ -7,6 +7,7 @@ import {rememberedTeacherClass,rememberTeacherClass} from '../../lib/teacherClas
 import {missionMapTeksCode} from '../../lib/cases/mission-map/teksLabels';
 import {supabase} from '../../lib/supabaseClient';
 import { countLine } from '../../lib/gradeScale';
+import SamCoach from './SamCoach';
 
 function teksKeys(standard){
  const raw=String(standard||'');
@@ -16,7 +17,7 @@ function teksKeys(standard){
  return [...new Set((source.match(/\d+\.\d+[A-Z]?/gi)||[]).map(code=>code.toUpperCase()))];
 }
 
-export default function TodayBridge({teacherName,teacherEmail,classes,students,assignments,submissions,hints,caseDetails,targets,targetsError,error,onRewards,children}){
+export default function TodayBridge({teacherName,teacherEmail,teacherId,classes,students,assignments,submissions,hints,caseDetails,targets,targetsError,error,onRewards,children}){
  const [classId,setClassId]=useState(''),[selected,setSelected]=useState({}),[progressFilter,setProgressFilter]=useState(null);
  const [showAll,setShowAll]=useState(false);
  const [library,setLibrary]=useState([]);
@@ -79,6 +80,7 @@ export default function TodayBridge({teacherName,teacherEmail,classes,students,a
  return <BridgePage teacherName={teacherName} teacherEmail={teacherEmail}>
  <PageHeading title={`Hello, ${displayName}.`} subtitle={new Date().toLocaleDateString(undefined,{weekday:'long',month:'long',day:'numeric'})}><ClassTabs classes={classes} value={cls?.id} onChange={changeClass}/><div className="cc-class-context">{cls?.grade?`Grade ${cls.grade} · `:''}{cls?.subject?`${cls.subject} · `:''}{roster.length} students</div></PageHeading>
  {error&&<div className="cc-error" role="alert">{error}</div>}
+ {classes.length>0&&<SamCoach teacherId={teacherId}/>}
  {!classes.length?<Empty><h2>Your teaching space is ready.</h2><p>Set up a class to start assigning activities.</p><Link className="cc-btn" href="/teacher/class">Set up your class</Link></Empty>:<>
  {showStart&&<section className="cc-panel" style={{marginBottom:16}}><h2>Start here</h2><p className="cc-muted">Two steps, then your class can begin.</p><div className="cc-row">{startSteps.map(step=><Link key={step.label} className={step.done?'cc-badge teal':'cc-btn'} href={step.href}>{step.done?'Done · ':''}{step.label}</Link>)}</div></section>}
  <section className="cc-panel" style={{marginBottom:16}}><h2>This week</h2><p className="cc-muted">What is due Monday through Friday.</p><div className="cc-week-scroll"><div className="cc-week"><div className="cc-week-label">Due</div>{weekDays.map(date=>{const key=dayKey(date);const due=list.filter(item=>item.due_date===key);return <div key={key} className={'cc-day'+(key===todayKey?' is-today':'')}><strong>{date.toLocaleDateString(undefined,{weekday:'short'})}</strong>{due.length?due.map(item=><p key={item.id}>{caseDetails[item.case_standard]?.title||item.case_standard}</p>):<p className="cc-day-empty">Nothing due</p>}</div>})}</div></div></section>

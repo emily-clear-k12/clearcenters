@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Eye, EyeOff, User, Lock, Mail, School, KeyRound } from "lucide-react";
 import { supabase } from "../../lib/supabaseClient";
+import { markTeacherLogin } from "../../components/teacher/SamCoach";
 
 const COLORS = {
   violet: "#7B5DFF",
@@ -72,7 +73,8 @@ export default function TeacherSignUpPage() {
         router.push("/login");
         return;
       }
-      router.push("/teacher");
+      markTeacherLogin();
+      router.push("/teacher/class");
     } catch (err) {
       setLoading(false);
       setError("Couldn't reach the server. Check your connection and try again.");
