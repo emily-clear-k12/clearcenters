@@ -473,7 +473,7 @@ export default function MakerStudioClient({
   const [aiNote, setAiNote] = useState(null);
   const [recording, setRecording] = useState(false);
   const [recordSec, setRecordSec] = useState(0);
-  const [tool, setTool] = useState(null);
+  const [tool, setTool] = useState("pictures");
   const [posterDrawing, setPosterDrawing] = useState(false);
   const [micPending, setMicPending] = useState(false);
   const [processingVoice, setProcessingVoice] = useState(false);
@@ -700,7 +700,7 @@ export default function MakerStudioClient({
     }
     setDraft(nextDraft);
     setActiveMode(id);
-    setTool(null);
+    setTool("pictures");
     setPosterDrawing(false);
     dirty.current = false;
     setSaveState("saved");
@@ -1243,7 +1243,7 @@ export default function MakerStudioClient({
       <select value={activeMode === "comic" ? pictureTarget.index || 0 : pictureTarget.kind} onChange={event => setLibraryPicker(activeMode === "comic" ? { kind: "comic", index: Number(event.target.value) } : { kind: event.target.value })}>
         {activeMode === "comic" ? (draft?.panels || []).map((_, i) => <option key={i} value={i}>Panel {i + 1}</option>) : <><option value="before">Before</option><option value="after">After</option></>}
       </select></label> : null}
-    <LibraryPicker open inline title="Pictures" disabled={navigationBusy} previewItems={previewLibrary} onClose={() => setTool(null)} onSelect={item => { placeLibraryImage(item, pictureTarget); setPosterDrawing(false); setTool(null); }} />
+    <LibraryPicker open inline title="Pictures" disabled={navigationBusy} previewItems={previewLibrary} onClose={() => setTool(null)} onSelect={item => { placeLibraryImage(item, pictureTarget); setPosterDrawing(false); }} />
   </> : null;
   const title = (publicCase && publicCase.title) || "Maker Studio";
   const topicLine = config.topic ? config.topic : null;

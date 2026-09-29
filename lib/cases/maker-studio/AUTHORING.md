@@ -23,3 +23,6 @@ Build and check the new assignment's enabled modes, content requirements, image 
 Suggested request for another coding bot:
 
 > Read AGENTS.md and lib/cases/maker-studio/AUTHORING.md. Create Maker Studio content for [grade, subject, topic/standard], using [modes]. Preserve the shared Inventor's Lab and growing image library. Complete catalog, Assign integration, art and SQL registration; regenerate the content library, validate, and report what is actually applied and deployed.
+
+### Visual reference constraints
+Keep the approved Inventor's Lab console proportions: narrow tool rail, searchable picture dock alongside the artwork when open, large central work surface, mission and assigned pieces at right, and a persistent Save/Done footer. Desktop poster artwork must fit the available height without pushing the footer offscreen. Avoid adding duplicate poster headings or turning the editor into a long stack of cards. Picture selection keeps the dock open. The supplied poster references show both collage artwork and single photographs; the current data model remains one picture/drawing with a title and caption, not a draggable multilayer collage editor.

@@ -11,7 +11,7 @@ export default function MakerStudioFrame({ children, title, prompt, modes, saved
         <div className="mk-lab-brand"><span>ClearCenters</span><span className="mk-brand-rule" /><h1>Maker Studio</h1></div>
         <a href="/missions" onClick={onLeave} aria-disabled={busy || undefined}><LayoutGrid size={18} /> My Missions</a>
       </header>
-      <div className={"mk-lab-layout" + (activeMode ? " is-editing" : "")}>
+      <div className={"mk-lab-layout" + (activeMode ? " is-editing" : "") + (hasPictures && tool === "pictures" ? " has-picture-dock" : "")}>
         {activeMode ? <aside className="mk-lab-tools" aria-label="Studio tools">
           <nav className="mk-tool-rail" aria-label="Workspace tools">
             <button onClick={onHome} disabled={busy}><LayoutGrid size={24} /><span>My work</span></button>
@@ -23,7 +23,7 @@ export default function MakerStudioFrame({ children, title, prompt, modes, saved
         </aside> : null}
         <main className="mk-lab-workspace">{children}</main>
         <aside className="mk-lab-mission" aria-label="Mission and assigned pieces">
-          <section className="mk-mission-card"><h2>Your mission</h2><p>{prompt}</p><ReadAloudButton text={`${title}. ${prompt}`} /></section>
+          <section className="mk-mission-card"><div className="mk-mission-label">Your mission</div><h2>{title}</h2><p>{prompt}</p><ReadAloudButton text={`${title}. ${prompt}`} /></section>
           <section className="mk-mission-card"><h3>Your assigned pieces</h3><nav className="mk-piece-list" aria-label="Assigned pieces">{modes.map(m => <button key={m.id} disabled={busy} aria-current={activeMode === m.id ? "page" : undefined} onClick={() => onMode(m.id)}><MakerModeIcon id={m.id} size={22} /><span>{m.label}</span>{savedModes[m.id]?.status === "done" ? <Check className="mk-piece-check" size={21} aria-label="Done" /> : <Circle size={17} aria-hidden="true" />}</button>)}</nav><p className="mk-piece-count">{doneCount} of {modes.length} pieces done</p><progress value={doneCount} max={modes.length || 1} aria-label="Completed pieces" /></section>
           {previewMode ? <p className="mk-preview-note">Design preview · no student data saved</p> : null}
         </aside>

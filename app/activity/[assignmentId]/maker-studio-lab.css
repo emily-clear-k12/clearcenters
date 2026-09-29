@@ -190,3 +190,53 @@
 .mk-lab .mk-postcard-message .mk-field { margin:0 0 12px; }
 .mk-lab .mk-postcard-message textarea { min-height:150px; }
 @media(max-width:650px){.mk-lab .mk-stage-teach_the_buddy .mk-interview-list,.mk-lab .mk-stage-what_if .mk-beats,.mk-lab .mk-postcard-layout{grid-template-columns:1fr;}.mk-lab .mk-postcard-art{border-right:0;border-bottom:2px solid #d3cce9;padding:0 0 10px;}}
+
+/* Locked reference: tools + dock / artwork / mission, in one fitted console. */
+@media (min-width:901px) {
+  .mk-lab { padding:9vh 3vw 3vh; min-height:100dvh; }
+  .mk-lab-shell { height:86dvh; max-width:1680px; }
+  .mk-lab-header { height:66px; padding:12px 28px; }
+  .mk-lab-layout.is-editing { grid-template-columns:78px minmax(0,1fr) 24%; gap:8px; padding:8px 10px 0; }
+  .mk-lab-layout.is-editing.has-picture-dock { grid-template-columns:22% minmax(0,1fr) 24%; }
+  .has-picture-dock .mk-lab-tools { display:grid; grid-template-columns:70px minmax(0,1fr); gap:8px; background:#eae5fb; border-radius:15px; padding:8px; min-height:0; }
+  .has-picture-dock .mk-picture-popover { position:static; width:auto; min-width:0; max-height:none; height:100%; padding:0; border:0; box-shadow:none; border-radius:0; background:transparent; overflow:auto; scrollbar-width:thin; }
+  .has-picture-dock .mk-lib-inline .mk-lib-sheet { gap:8px; }
+  .has-picture-dock .mk-lib-inline .mk-lib-grid { grid-template-columns:repeat(2,minmax(0,1fr)); max-height:none; overflow:visible; gap:7px; }
+  .has-picture-dock .mk-lib-inline .mk-lib-head h2 { font-size:16px; }
+  .has-picture-dock .mk-lib-inline .mk-lib-head .mk-ghost { font-size:10px; }
+  .has-picture-dock .mk-lib-inline .mk-input { font-size:12px; padding:9px 7px; }
+  .has-picture-dock .mk-lib-inline .mk-lib-card { padding:4px; }
+  .has-picture-dock .mk-lib-inline .mk-lib-thumb { aspect-ratio:1; }
+  .mk-lab-tools .mk-tool-rail { gap:10px; }
+  .mk-tool-rail button { height:78px; font-size:13px; padding:12px 4px; }
+  .mk-lab .mk-stage-poster { padding:10px; background:#f5f3fc; }
+  .mk-lab .mk-stage-poster > h2 { display:none; }
+  .mk-lab .mk-poster-composition { border-radius:0; padding:12px; gap:8px; }
+  .mk-lab .mk-poster-composition > .mk-field:first-child { padding:0; }
+  .mk-lab .mk-poster-composition #mk-poster-title { font:700 clamp(24px,2.6vw,42px)/1.2 Arial,sans-serif; color:#26126b; padding:9px 4px; border-color:transparent; background:#fbf9f2; }
+  .mk-lab .mk-poster-composition #mk-poster-cap { border-color:transparent; background:#eaf7ff; padding:9px 3px; font-size:clamp(13px,1.3vw,20px); }
+  .mk-lab .mk-poster-preview img { object-fit:contain; }
+  .mk-lab .mk-poster-composition .mk-upload-row { justify-content:flex-end; }
+  .mk-lab .mk-poster-composition .mk-upload-row .mk-ghost { font-size:11px; padding:4px 8px; }
+  .mk-lab .mk-poster-composition .mk-upload-row .mk-ghost:first-child { display:none; }
+  .mk-lab-mission { padding:8px; gap:12px; border:1px solid #e3dcfa; }
+  .mk-mission-card { padding:15px; border:1px solid #e3dcfa; background:linear-gradient(130deg,#faf8ff,#efecff); }
+  .mk-mission-label { margin-bottom:10px; padding:7px 11px; font-size:13px; color:#32118c; }
+  .mk-mission-card h2 { font-size:clamp(22px,2.2vw,34px); margin-bottom:10px; }
+  .mk-mission-card h3 { font-size:16px; margin-bottom:12px; }
+  .mk-mission-card p { font-size:clamp(14px,1.4vw,21px); }
+  .mk-piece-list button { min-height:58px; font-weight:600; }
+  .mk-lab-footer { padding:12px 20px; }
+  .mk-lab-footer .mk-save-row { margin:0; padding:0; }
+}
+@media (min-width:901px) and (max-height:760px) {
+  .mk-lab { padding-top:5vh; padding-bottom:2vh; }
+  .mk-lab-shell { height:91dvh; }
+  .mk-lab-header { height:52px; }
+  .mk-lab-footer { padding:8px 18px; }
+  .mk-mission-card { padding:10px; }
+  .mk-mission-card h2 { font-size:22px; }
+  .mk-mission-card p { font-size:14px; }
+  .mk-piece-list button { min-height:45px; padding:8px; }
+  .mk-tool-rail button { height:65px; }
+}
