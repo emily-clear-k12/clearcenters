@@ -1,7 +1,7 @@
 {
   "generatedFrom": "lib/cases and add_*.sql",
-  "onDisk": 1024,
-  "inSql": 1041,
+  "onDisk": 1028,
+  "inSql": 1045,
   "items": [
     {
       "standard": "3.10C-AD",
@@ -619,6 +619,42 @@
       "standard": "SCI.3.13A-BB",
       "title": "Broadcast Booth: Desert Radio (Explain)",
       "grade": "3",
+      "subject": "Science",
+      "engine": "Broadcast Booth",
+      "kind": "standard",
+      "file": "lib/cases/broadcast-booth/assignFallback.js"
+    },
+    {
+      "standard": "SCI.3.6C-BB",
+      "title": "Broadcast Booth: What does heat do to water? (Explain)",
+      "grade": "3",
+      "subject": "Science",
+      "engine": "Broadcast Booth",
+      "kind": "standard",
+      "file": "lib/cases/broadcast-booth/assignFallback.js"
+    },
+    {
+      "standard": "SCI.4.8C-BB",
+      "title": "Broadcast Booth: Why is the bulb lit? (Explain)",
+      "grade": "4",
+      "subject": "Science",
+      "engine": "Broadcast Booth",
+      "kind": "standard",
+      "file": "lib/cases/broadcast-booth/assignFallback.js"
+    },
+    {
+      "standard": "SCI.5.7A-BB",
+      "title": "Broadcast Booth: Why did it move? (Explain)",
+      "grade": "5",
+      "subject": "Science",
+      "engine": "Broadcast Booth",
+      "kind": "standard",
+      "file": "lib/cases/broadcast-booth/assignFallback.js"
+    },
+    {
+      "standard": "SCI.5.9-BB",
+      "title": "Broadcast Booth: Why do we have day and night? (Explain)",
+      "grade": "5",
       "subject": "Science",
       "engine": "Broadcast Booth",
       "kind": "standard",
