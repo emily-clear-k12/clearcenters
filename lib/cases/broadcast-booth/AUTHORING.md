@@ -1,5 +1,7 @@
 # Broadcast Booth — authoring mold
 
+The content queue is [CONTENT_PLAN.md](CONTENT_PLAN.md). Read that file and take one row. Do not invent a new list of cases.
+
 Beats are **fixed by segment type** in `catalog.js` (`SEGMENT_TYPES`). Teachers/authors do **not** invent new beat ids; they supply case data that fills trays, stems, stimulus, and unlock rules.
 
 Student UI keys off `segmentType` + `beats` + case fields. Keep Desert Radio `SCI.3.13A-BB` (Explain) unchanged when adding cases.
