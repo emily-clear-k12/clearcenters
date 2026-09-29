@@ -10,6 +10,7 @@ import {subjectStyle} from '../../../lib/teacherBridge';
 import { COLORS, PAGE_ACCENTS, PAGE_BACKGROUNDS } from "../../../lib/teacherTheme";
 import { isPracticeGame } from "../../../lib/engineKinds";
 import { levelWord } from "../../../lib/gradeScale";
+import { GRADEBOOK_SCALES, scaleNumbers, gradebookValue } from "../../../lib/gradebookScale";
 
 function csvCell(value) {
   const text = String(value ?? "");
@@ -82,7 +83,9 @@ export default function TeacherGradeListPage() {
     // starting from every submission in the database — otherwise every
     // teacher using the app would see every other teacher's submissions
     // mixed in together here.
-    const { data: classes, error: classesError } = await supabase.from("classes").select("id, name, subject, grade").eq("teacher_id", teacherId).order("name");
+    let classQuery = await supabase.from("classes").select("id, name, subject, grade, gradebook_scale, gradebook_got, gradebook_almost, gradebook_notyet").eq("teacher_id", teacherId).order("name");
+    if (classQuery.error) classQuery = await supabase.from("classes").select("id, name, subject, grade").eq("teacher_id", teacherId).order("name");
+    const { data: classes, error: classesError } = classQuery;
     if (classesError) {
       setError(classesError.message);
       setLoadingSubs(false);
@@ -223,7 +226,7 @@ export default function TeacherGradeListPage() {
   function scoreNumber(studentId, assignmentId) {
     const row = latestScore(studentId, assignmentId);
     if (!row || row.teacher_grade == null) return "";
-    return String(row.teacher_grade);
+    return String(gradebookValue(row.teacher_grade, scaleNumbers(bookClass())));
   }
 
   function averageFor(studentId, columns) {
@@ -294,7 +297,7 @@ export default function TeacherGradeListPage() {
     const lines = [];
     bookStudents().forEach((student) => {
       columns.forEach((column) => {
-        lines.push([student.first_name, column.title, scoreNumber(student.id, column.id), "2"]);
+        lines.push([student.first_name, column.title, scoreNumber(student.id, column.id), String(scaleNumbers(current).got)]);
       });
     });
     downloadText(`${current.name} skyward.csv`, [header, ...lines].map((line) => line.map(csvCell).join(",")).join("\n"));
@@ -360,10 +363,10 @@ export default function TeacherGradeListPage() {
         .cc-ledger thead .cc-avg{background:#163c27}
         .cc-ledger tbody td.cc-avg{background:#f3ead0}
       `}</style>
-      <div className="cc-ledger-top"><div><h2>Gradebook</h2><p className="cc-muted">{currentClass?.name}{currentClass?.grade ? ` · Grade ${currentClass.grade}` : ""}</p></div><button className="cc-btn secondary" onClick={()=>setBook(null)}>Close</button></div>
+      <div className="cc-ledger-top"><div><h2>Gradebook</h2><p className="cc-muted">{currentClass?.name}{currentClass?.grade ? ` · Grade ${currentClass.grade}` : ""} · {(GRADEBOOK_SCALES.find((item)=>item.id===(currentClass?.gradebook_scale||"points"))||GRADEBOOK_SCALES[0]).label}</p></div><button className="cc-btn secondary" onClick={()=>setBook(null)}>Close</button></div>
       {bookSubjects.length>1&&<div className="cc-ledger-tabs" role="tablist" aria-label="Subjects">{bookSubjects.map((subject)=><button key={subject} type="button" className={book.subject===subject?"is-on":""} onClick={()=>{const next=classes.find((item)=>(item.subject||"Class")===subject);setBook({...book,subject,classId:next?.id||book.classId});}}>{subject}</button>)}</div>}
       <div className="cc-ledger-tabs" role="tablist" aria-label="Classes">{bookClasses.map((item)=><button key={item.id} type="button" className={book.classId===item.id?"is-on":""} onClick={()=>setBook({...book,classId:item.id,subject:item.subject||"Class"})}>{item.name}</button>)}</div>
-      <div className="cc-table-scroll"><table><thead><tr><th>Student</th>{shownColumns.map((column)=><th key={column.id}>{column.title}</th>)}<th className="cc-avg">Average</th></tr></thead><tbody>{shownStudents.map((student)=><tr key={student.id}><td><Link href={`/teacher/students/${student.id}`}>{student.first_name}</Link></td>{shownColumns.map((column)=><td key={column.id}>{scoreWord(student.id, column.id)}</td>)}<td className="cc-avg">{averageFor(student.id, shownColumns)}</td></tr>)}</tbody></table></div>
+      <div className="cc-table-scroll"><table><thead><tr><th>Student</th>{shownColumns.map((column)=><th key={column.id}>{column.title}</th>)}<th className="cc-avg">Average</th></tr></thead><tbody>{shownStudents.map((student)=><tr key={student.id}><td><Link href={`/teacher/students/${student.id}`}>{student.first_name}</Link></td>{shownColumns.map((column)=><td key={column.id}>{scoreNumber(student.id, column.id)}{scoreWord(student.id, column.id) ? <div style={{fontSize:11,fontWeight:400}}>{scoreWord(student.id, column.id)}</div> : null}</td>)}<td className="cc-avg">{averageFor(student.id, shownColumns)}</td></tr>)}</tbody></table></div>
       {!shownStudents.length&&<Empty>No students in this class yet.</Empty>}
       <div className="cc-row" style={{marginTop:12}}><button className="cc-btn secondary" onClick={exportExcel}>Excel</button><button className="cc-btn secondary" onClick={exportPdf}>PDF</button><button className="cc-btn secondary" onClick={exportSkyward}>Skyward</button><button className="cc-btn secondary" onClick={exportSchoology}>Schoology</button></div>
     </section>}
