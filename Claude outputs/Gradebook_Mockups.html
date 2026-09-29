@@ -1,0 +1,176 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Gradebook Mockups</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@600;700&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#241b50;--muted:#70658d;--line:#ece8f6;--soft:#f5f1fc;--purple:#7044cb;
+--got:#1f8a4d;--gotbg:#e3f5ea;--alm:#b98700;--almbg:#fdf3d6;--not:#d64545;--notbg:#fde7e7;--wait:#7044cb;--waitbg:#efe8fc}
+*{box-sizing:border-box}body{margin:0;background:#edf0ff;font-family:Inter,sans-serif;color:var(--ink)}
+.wrap{max-width:1320px;margin:18px auto;padding:0 16px}
+.pick{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+.pick button{border:0;background:#fff;border-radius:24px;padding:11px 18px;font:600 13px Inter,sans-serif;color:#302551;cursor:pointer;box-shadow:0 2px 8px #3324650f}
+.pick button[aria-pressed=true]{background:var(--purple);color:#fff}
+.note{background:#fff8e6;border:1px solid #f0dfae;border-radius:14px;padding:12px 16px;font-size:13px;line-height:1.55;margin-bottom:14px}
+.card{background:#fff;border-radius:24px;padding:24px;box-shadow:0 12px 40px #34286420}
+h1{font:700 30px Poppins,sans-serif;margin:0 0 4px;letter-spacing:-.8px}h2{font:600 18px Poppins,sans-serif;margin:0}
+.muted{color:var(--muted);font-size:13px}
+.top{display:flex;justify-content:space-between;gap:16px;align-items:flex-start;flex-wrap:wrap;margin-bottom:16px}
+.controls{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.seg{display:inline-flex;background:var(--soft);border-radius:22px;padding:3px}
+.seg button{border:0;background:none;border-radius:20px;padding:8px 13px;font:600 12px Inter,sans-serif;color:#5a4d78;cursor:pointer}
+.seg button[aria-pressed=true]{background:#fff;color:var(--purple);box-shadow:0 1px 4px #0001}
+select,.btn{font:600 12px Inter,sans-serif;border:1px solid #dcd3f0;background:#fff;color:#332854;border-radius:20px;padding:9px 14px;cursor:pointer}
+.btn.primary{background:var(--purple);color:#fff;border-color:var(--purple)}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--muted);margin:6px 0 14px;align-items:center}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.chip{display:inline-grid;place-items:center;min-width:30px;height:26px;padding:0 6px;border-radius:8px;font:700 12px Inter,sans-serif}
+.g2{background:var(--gotbg);color:var(--got)}.g1{background:var(--almbg);color:var(--alm)}.g0{background:var(--notbg);color:var(--not)}
+.gw{background:var(--waitbg);color:var(--wait);outline:1.5px dashed #b89ae8;outline-offset:-2px}
+.gr{background:#f0eef6;color:#6f6688}.ge{background:none;color:#b7afcc;outline:1.5px solid #ece8f6;outline-offset:-2px}
+.scroll{overflow:auto;border:1px solid var(--line);border-radius:16px;max-height:620px}
+table{border-collapse:separate;border-spacing:0;font-size:13px;width:100%}
+th,td{padding:8px 8px;border-bottom:1px solid var(--line);text-align:center;white-space:nowrap;background:#fff}
+thead th{position:sticky;top:0;z-index:2;background:#f7f4fd;font-size:11px;color:#514369;vertical-align:bottom}
+th.name,td.name{position:sticky;left:0;z-index:1;text-align:left;min-width:150px;border-right:1px solid var(--line)}
+thead th.name{z-index:3}
+td.name a{color:var(--ink);font-weight:600;text-decoration:none}td.name a:hover{color:var(--purple);text-decoration:underline}
+.colhead{display:grid;gap:4px;justify-items:center;width:78px;white-space:normal;line-height:1.25}
+.colhead img{width:40px;height:28px;border-radius:6px;object-fit:cover;background:#ddd}
+.colhead b{font-size:11px;color:var(--ink)}
+.colhead i{font-style:normal;font-size:10px;color:var(--muted)}
+.tally{display:flex;height:5px;width:60px;border-radius:4px;overflow:hidden;background:#eee}
+.tally span{display:block;height:100%}
+button.cell{border:0;cursor:pointer;font:inherit}button.cell:hover{filter:brightness(.95);transform:translateY(-1px)}
+.summary{min-width:170px;text-align:left}
+.bar{display:flex;height:8px;border-radius:5px;overflow:hidden;background:#eee;width:110px}
+.bar span{height:100%}
+.sumline{display:flex;align-items:center;gap:8px}
+.sumline small{font-size:11px;color:var(--muted)}
+tfoot td{font-size:11px;color:var(--muted);background:#faf8fe;position:sticky;bottom:0}
+.flag{font-size:11px;color:var(--not);font-weight:600}
+.tip{position:fixed;z-index:50;background:#241b50;color:#fff;font-size:12px;line-height:1.45;padding:9px 12px;border-radius:10px;pointer-events:none;max-width:260px;display:none}
+.drawer{position:fixed;right:0;top:0;height:100%;width:min(380px,92vw);background:#fff;box-shadow:-10px 0 40px #24193f33;padding:22px;transform:translateX(105%);transition:.2s;z-index:60;overflow:auto}
+.drawer.open{transform:none}.drawer h3{font:600 18px Poppins,sans-serif;margin:0 0 4px}
+.drawer .row{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--line);font-size:13px;gap:10px}
+.x{float:right;border:0;background:var(--soft);border-radius:50%;width:32px;height:32px;cursor:pointer;font-size:16px}
+/* option B */
+.std{cursor:pointer}.std .colhead{width:96px}
+.std-open{background:#faf7ff!important}
+.caret{font-size:10px;color:var(--purple)}
+/* option C */
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:12px}
+.scard{border:1px solid var(--line);border-radius:18px;padding:14px 16px;background:#fff}
+.scard header{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.scard header b{font-size:15px}
+.dots{display:flex;flex-wrap:wrap;gap:5px;margin:8px 0}
+.dots .chip{min-width:24px;height:22px;font-size:11px;border-radius:6px}
+.group-h{font:600 13px Poppins;margin:18px 0 8px;display:flex;gap:8px;align-items:center}
+.pill{font-size:11px;border-radius:12px;padding:3px 9px;font-weight:600}
+.why{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:18px}
+.why div{background:var(--soft);border-radius:14px;padding:12px 14px;font-size:12px;line-height:1.5}
+.why b{display:block;font-size:13px;margin-bottom:3px}
+@media(max-width:760px){.why{grid-template-columns:1fr}.card{padding:16px}h1{font-size:24px}}
+</style></head><body>
+<div class="wrap">
+  <div class="pick" role="tablist">
+    <button aria-pressed="true" data-v="A">A · Color grid</button>
+    <button aria-pressed="false" data-v="B">B · By standard</button>
+    <button aria-pressed="false" data-v="C">C · Student cards</button>
+  </div>
+  <div class="note"><b>Mockup with made-up students.</b> Three ways the gradebook could look. Click around: hover a cell, click a cell or a name, try the buttons. All three use the site's Got it / Almost / Not yet colors, and all three keep the Excel, PDF, Skyward and Schoology downloads under one <b>Download</b> button.</div>
+  <div class="card" id="view"></div>
+</div>
+<div class="tip" id="tip"></div>
+<aside class="drawer" id="drawer" aria-live="polite"></aside>
+<script>
+const ACTS=[
+ {id:'a1',t:'The Frozen Relay',s:'Frozen Relay',code:'4.3E',eng:'Expedition Station',std:'4.3E',img:'#9ec9e8',date:'Sep 8'},
+ {id:'a2',t:'Cold Lunchbox Job',s:'Lunchbox Job',code:'4.8B',eng:'Assembly Deck',std:'4.8B',img:'#f2c48d',date:'Sep 10'},
+ {id:'a3',t:'Erosion at the Creek Bend',s:'Creek Bend',code:'4.10B',eng:'Signal Check',std:'4.10B',img:'#b9d98f',date:'Sep 12'},
+ {id:'a4',t:'The Canyon Makers',s:'Canyon Makers',code:'4.10B',eng:'Expedition Station',std:'4.10B',img:'#e6a07c',date:'Sep 15'},
+ {id:'a5',t:'Water Cycle Loop',s:'Water Cycle',code:'4.10A',eng:'Expedition Station',std:'4.10A',img:'#8fc3e8',date:'Sep 17'},
+ {id:'a6',t:'Twenty-Eight Nights',s:'28 Nights',code:'4.9B',eng:'Assembly Deck',std:'4.9B',img:'#c5b3ea',date:'Sep 19'},
+ {id:'a7',t:'The Moon Watch',s:'Moon Watch',code:'4.9B',eng:'Expedition Station',std:'4.9B',img:'#9aa3d8',date:'Sep 22'},
+ {id:'a8',t:'Sort the Mixtures',s:'Sort Mixtures',code:'4.6B',eng:'Classification Lab',std:'4.6B',img:'#e8b9d0',date:'Sep 24'},
+ {id:'a9',t:'The Mixing Lab',s:'Mixing Lab',code:'4.6B',eng:'Expedition Station',std:'4.6B',img:'#a7dccb',date:'Sep 26'},
+];
+const STD={'4.3E':'Add and subtract fractions','4.8B':'Energy transfer','4.10B':'Weathering, erosion, deposition','4.10A':'Water cycle','4.9B':'Moon phases','4.6B':'Mixtures and solutions'};
+const NAMES=['Ava','Ben','Camila','Diego','Elijah','Fatima','Gabe','Hana','Isaac','Jada','Kai','Luna','Mateo','Nora','Owen','Priya','Quinn','Rosa'];
+// seeded random
+let s=7;const r=()=>{s=(s*9301+49297)%233280;return s/233280};
+const STU=NAMES.map((n,i)=>{const skill=[.9,.6,.8,.35,.7,.95,.5,.85,.65,.3,.75,.9,.55,.8,.45,.7,.6,.85][i];
+ const cells={};ACTS.forEach((a,j)=>{const x=r();let v;
+  if(j>=7&&x<.35) v='e'; else if(j>=6&&x<.2) v='w'; else if(x<.04) v='r'; else if(x<.08&&j<7) v='e';
+  else {const y=r();v=y<skill*.8?2:(y<skill+.15?1:0)}
+  cells[a.id]=v});return{n,cells}});
+const LV={2:['Got it','g2','2'],1:['Almost','g1','1'],0:['Not yet','g0','0'],w:['Turned in — needs your review','gw','?'],r:['Sent back to revise','gr','↺'],e:['Not turned in','ge','·']};
+const COL={2:'#1f8a4d',1:'#e0a800',0:'#d64545'};
+let view='A',opts={sort:'name',show:'all',open:null};
+const $=q=>document.querySelector(q);
+function chip(v,extra=''){const L=LV[v];return `<span class="chip ${L[1]}" ${extra}>${L[2]}</span>`}
+function graded(st,ids){return (ids||ACTS.map(a=>a.id)).map(id=>st.cells[id]).filter(v=>v===0||v===1||v===2)}
+function mix(vals){const c={2:0,1:0,0:0};vals.forEach(v=>c[v]++);return c}
+function barHTML(c,w=110){const t=c[2]+c[1]+c[0]||1;return `<div class="bar" style="width:${w}px">${[2,1,0].map(k=>`<span style="width:${c[k]/t*100}%;background:${COL[k]}"></span>`).join('')}</div>`}
+function overall(st,ids){const g=graded(st,ids);if(!g.length)return null;const avg=g.reduce((a,b)=>a+b,0)/g.length;return avg>=1.5?2:avg>=.75?1:0}
+function missing(st){return ACTS.filter(a=>st.cells[a.id]==='e').length}
+function waiting(st){return ACTS.filter(a=>st.cells[a.id]==='w').length}
+function sorted(){const a=[...STU];if(opts.sort==='need')a.sort((x,y)=>(overall(x)??3)-(overall(y)??3)||missing(y)-missing(x));else a.sort((x,y)=>x.n.localeCompare(y.n));return a}
+function tip(e,html){const t=$('#tip');t.innerHTML=html;t.style.display='block';t.style.left=Math.min(e.clientX+14,innerWidth-270)+'px';t.style.top=(e.clientY+14)+'px'}
+document.addEventListener('mouseover',e=>{const c=e.target.closest('[data-tip]');if(c)tip(e,c.dataset.tip)});
+document.addEventListener('mousemove',e=>{const c=e.target.closest('[data-tip]');if(c)tip(e,c.dataset.tip);else $('#tip').style.display='none'});
+function openStudent(name){const st=STU.find(x=>x.n===name);const d=$('#drawer');
+ d.innerHTML=`<button class="x" onclick="closeD()">×</button><h3>${st.n}</h3><p class="muted">Grade 4 Science · ${graded(st).length} graded · ${waiting(st)} waiting · ${missing(st)} not turned in</p>${barHTML(mix(graded(st)),200)}
+ ${ACTS.map(a=>`<div class="row"><span><b>${a.t}</b><br><span class="muted">${a.eng} · ${a.code} · ${a.date}</span></span>${chip(st.cells[a.id])}</div>`).join('')}
+ <p><button class="btn primary">Open full student page</button></p>`;d.classList.add('open')}
+function openCell(name,id){const st=STU.find(x=>x.n===name),a=ACTS.find(x=>x.id===id),v=st.cells[id];const d=$('#drawer');
+ const act=v==='w'?'Grade it now':v==='e'?'Send a reminder':'Open their work';
+ d.innerHTML=`<button class="x" onclick="closeD()">×</button><h3>${st.n} · ${a.t}</h3><p class="muted">${a.eng} · TEKS ${a.code} · assigned ${a.date}</p><p style="font-size:15px">${chip(v)} <b style="margin-left:6px">${LV[v][0]}</b></p>
+ ${v==='w'?'<p class="muted">Turned in Sep 27 · said they were 🙂 fairly sure</p>':''}
+ <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:6px">${v!=='e'?'<span class="muted" style="width:100%">Quick grade:</span>'+[2,1,0].map(k=>`<button class="btn" onclick="setG('${name}','${id}',${k})">${chip(k)} ${LV[k][0]}</button>`).join(''):''}</div>
+ <p style="margin-top:16px"><button class="btn primary">${act}</button></p>`;d.classList.add('open')}
+window.setG=(n,id,k)=>{STU.find(x=>x.n===n).cells[id]=k;closeD();render()};
+window.closeD=()=>$('#drawer').classList.remove('open');
+window.openStudent=openStudent;window.openCell=openCell;
+function toolbar(extra=''){return `<div class="controls">
+ <select aria-label="Class"><option>Grade 4 Science · Period 2</option><option>Grade 4 Science · Period 4</option></select>
+ <select aria-label="Grading period"><option>1st six weeks</option><option>2nd six weeks</option><option>Whole year</option></select>
+ <div class="seg"><button aria-pressed="${opts.sort==='name'}" onclick="opts.sort='name';render()">A–Z</button><button aria-pressed="${opts.sort==='need'}" onclick="opts.sort='need';render()">Needs help first</button></div>
+ ${extra}<button class="btn primary">Download ▾</button></div>`}
+function legend(){return `<div class="legend">${[2,1,0,'w','r','e'].map(k=>`<span>${chip(k)} ${LV[k][0].replace(' — needs your review','')}</span>`).join('')}</div>`}
+function head(title,sub){return `<div class="top"><div><h1>${title}</h1><div class="muted">${sub}</div></div>${toolbar(view==='A'?`<div class="seg"><button aria-pressed="${opts.show==='all'}" onclick="opts.show='all';render()">All</button><button aria-pressed="${opts.show==='w'}" onclick="opts.show='w';render()">Needs review</button><button aria-pressed="${opts.show==='e'}" onclick="opts.show='e';render()">Missing</button></div>`:'')}</div>`}
+function colTally(id){const c=mix(STU.map(s=>s.cells[id]).filter(v=>v===0||v===1||v===2));return `<div class="tally">${[2,1,0].map(k=>`<span style="width:${c[k]/(c[2]+c[1]+c[0]||1)*100}%;background:${COL[k]}"></span>`).join('')}</div>`}
+function studentSummary(st,ids){const c=mix(graded(st,ids));const o=overall(st,ids);const m=(ids||ACTS.map(a=>a.id)).filter(id=>st.cells[id]==='e').length;
+ return `<div class="sumline">${o==null?'<small>No grades yet</small>':chip(o)+barHTML(c,80)}</div>${m?`<div class="flag">${m} not turned in</div>`:''}`}
+function viewA(){
+ const list=sorted().filter(st=>opts.show==='all'||ACTS.some(a=>st.cells[a.id]===opts.show));
+ const w=STU.reduce((n,s)=>n+waiting(s),0);
+ return head('Gradebook',`Grade 4 Science · Period 2 · ${STU.length} students · ${ACTS.length} activities · <b style="color:var(--wait)">${w} waiting for you</b>`)+legend()+
+ `<div class="scroll"><table><thead><tr><th class="name">Student</th>${ACTS.map(a=>`<th data-tip="<b>${a.t}</b><br>${a.eng} · TEKS ${a.code}<br>Assigned ${a.date}"><div class="colhead"><img style="background:${a.img}" alt=""><b>${a.s}</b><i>${a.code} · ${a.date}</i>${colTally(a.id)}</div></th>`).join('')}<th class="summary">Overall</th></tr></thead><tbody>
+ ${list.map(st=>`<tr><td class="name"><a href="#" onclick="openStudent('${st.n}');return false">${st.n}</a></td>${ACTS.map(a=>{const v=st.cells[a.id];return `<td><button class="cell chip ${LV[v][1]}" data-tip="<b>${st.n}</b> · ${a.t}<br>${LV[v][0]}" onclick="openCell('${st.n}','${a.id}')">${LV[v][2]}</button></td>`}).join('')}<td class="summary">${studentSummary(st)}</td></tr>`).join('')}
+ </tbody></table></div>`+why([['Reads at a glance','Every cell is a color with 2, 1 or 0, so the whole class is readable in one look instead of reading words.'],['Nothing is ambiguous','Empty, waiting for you, and sent back each get their own mark. Today a blank could mean any of them.'],['Grade from the grid','Click a waiting cell and grade it right there. Short titles, dates and a class tally bar sit on every column.']])}
+function viewB(){
+ const stds=[...new Set(ACTS.map(a=>a.std))];
+ const rows=sorted().map(st=>{let tds=stds.map(sd=>{const ids=ACTS.filter(a=>a.std===sd).map(a=>a.id);const o=overall(st,ids);const miss=ids.filter(id=>st.cells[id]==='e').length;const wt=ids.filter(id=>st.cells[id]==='w').length;
+   let main=`<td class="${opts.open===sd?'std-open':''}"><span class="chip ${o==null?(wt?'gw':'ge'):LV[o][1]}" data-tip="<b>${st.n}</b> · ${sd} ${STD[sd]}<br>${ids.map(id=>{const a=ACTS.find(x=>x.id===id);return a.t+': '+LV[st.cells[id]][0]}).join('<br>')}">${o==null?(wt?'?':'·'):LV[o][0]}</span>${miss?'<div class="flag" style="font-size:10px">'+miss+' missing</div>':''}</td>`;
+   if(opts.open===sd) main+=ids.map(id=>`<td class="std-open"><button class="cell chip ${LV[st.cells[id]][1]}" onclick="openCell('${st.n}','${id}')">${LV[st.cells[id]][2]}</button></td>`).join('');
+   return main}).join('');
+  return `<tr><td class="name"><a href="#" onclick="openStudent('${st.n}');return false">${st.n}</a></td>${tds}<td class="summary">${studentSummary(st)}</td></tr>`}).join('');
+ const hd=stds.map(sd=>{const ids=ACTS.filter(a=>a.std===sd);let h=`<th class="std ${opts.open===sd?'std-open':''}" onclick="opts.open=opts.open==='${sd}'?null:'${sd}';render()" data-tip="Click to ${opts.open===sd?'close':'see'} the ${ids.length} activities"><div class="colhead"><b>TEKS ${sd}</b><i>${STD[sd]}</i><i>${ids.length} activit${ids.length>1?'ies':'y'} <span class="caret">${opts.open===sd?'▲':'▼'}</span></i></div></th>`;
+  if(opts.open===sd) h+=ids.map(a=>`<th class="std-open"><div class="colhead"><img style="background:${a.img}" alt=""><b>${a.s}</b><i>${a.eng}</i></div></th>`).join('');return h}).join('');
+ return head('Gradebook by standard','One column per TEKS. The cell is how the student is doing on that standard across every activity for it. Click a standard to open its activities.')+
+ `<div class="legend">${[2,1,0].map(k=>`<span>${chip(k)}</span>`).join('')}<span>${chip('w')} only ungraded work</span><span>${chip('e')} nothing turned in</span></div>`+
+ `<div class="scroll"><table><thead><tr><th class="name">Student</th>${hd}<th class="summary">Overall</th></tr></thead><tbody>${rows}</tbody></table></div>`+
+ why([['Matches the Assign page','Standards are the front door now, so the gradebook reads the same way: how is each student doing on 4.10B, not on one activity.'],['Fewer, wider columns','Six standards instead of nine activities, and the list stays short as you assign more.'],['Details one click away','Open a standard to see each activity underneath it and grade from there.']])}
+function viewC(){
+ const groups=[[0,'Needs help','g0'],[1,'Getting there','g1'],[2,'On track','g2'],[null,'No grades yet','ge']];
+ const byG=g=>sorted().filter(st=>overall(st)===g);
+ return head('Gradebook',`Grade 4 Science · Period 2 · students grouped by how they are doing`)+legend()+
+ groups.map(([g,label,cls])=>{const l=byG(g);if(!l.length)return '';return `<div class="group-h"><span class="pill chip ${cls}">${l.length}</span>${label}</div><div class="cards">${l.map(st=>`<div class="scard"><header><b><a href="#" style="color:inherit" onclick="openStudent('${st.n}');return false">${st.n}</a></b>${barHTML(mix(graded(st)),90)}</header>
+ <div class="dots">${ACTS.map(a=>`<button class="cell chip ${LV[st.cells[a.id]][1]}" data-tip="${a.t}<br>${LV[st.cells[a.id]][0]}" onclick="openCell('${st.n}','${a.id}')">${LV[st.cells[a.id]][2]}</button>`).join('')}</div>
+ <div class="muted" style="font-size:12px">${graded(st).length} graded${waiting(st)?` · <span style="color:var(--wait);font-weight:600">${waiting(st)} to review</span>`:''}${missing(st)?` · <span class="flag">${missing(st)} missing</span>`:''}</div></div>`).join('')}</div>`}).join('')+
+ why([['Who needs you, first','Students who are struggling rise to the top without sorting anything.'],['Works on a phone or iPad','No sideways scrolling: each student is one card.'],['Still shows every activity','The small squares run in assignment order; hover or tap for the name.']])}
+function why(items){return `<div class="why">${items.map(([b,t])=>`<div><b>${b}</b>${t}</div>`).join('')}</div>`}
+function render(){$('#view').innerHTML=view==='A'?viewA():view==='B'?viewB():viewC()}
+document.querySelectorAll('.pick button').forEach(b=>b.onclick=()=>{view=b.dataset.v;opts.open=null;document.querySelectorAll('.pick button').forEach(x=>x.setAttribute('aria-pressed',x===b));closeD();render()});
+render();
+</script></body></html>
