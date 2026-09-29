@@ -1,7 +1,7 @@
 {
   "generatedFrom": "lib/cases and add_*.sql",
-  "onDisk": 1037,
-  "inSql": 1054,
+  "onDisk": 1038,
+  "inSql": 1055,
   "items": [
     {
       "standard": "3.10C-AD",
@@ -665,6 +665,15 @@
       "title": "Broadcast Booth: Three eighths plus two eighths (Explain)",
       "grade": "4",
       "subject": "Math",
+      "engine": "Broadcast Booth",
+      "kind": "standard",
+      "file": "lib/cases/broadcast-booth/assignFallback.js"
+    },
+    {
+      "standard": "SCI.4.10A-BB",
+      "title": "Broadcast Booth: Where does the water go? (Explain)",
+      "grade": "4",
+      "subject": "Science",
       "engine": "Broadcast Booth",
       "kind": "standard",
       "file": "lib/cases/broadcast-booth/assignFallback.js"

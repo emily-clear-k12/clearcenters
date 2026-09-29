@@ -1,6 +1,6 @@
 # Broadcast Booth — content plan
 
-**For any coding bot.** Updated Sept 28, 2026.
+**For any coding bot.** Updated Sept 29, 2026.
 Read this file, then `AUTHORING.md` in this same folder, then `AGENTS.md`. Build **one** row unless Emily names more than one.
 
 ## How the library is built
@@ -34,7 +34,19 @@ What that leaves, counted from `lib/teksWording.js` and `lib/briefings/teks/ss-t
 | Social Studies | 34 | 57 | 60 | 151 |
 | **All** | | | | **505** |
 
-Sixteen are built. The second wave below is the next four. Do not generate the other rows until Emily asks for one grade and one subject.
+Sixteen are built, including two Social Studies broadcasts. Leave those two as they are. Do not build another Social Studies broadcast until Science, ELAR, and Math are done.
+
+## Build order
+
+Emily, Sept 29: Social Studies goes last. Focus on science, reading, and math first.
+
+1. The four planned rows below, when Emily says go.
+2. The rest of Science. It is the smallest set, and the most is already built.
+3. ELAR.
+4. Math.
+5. Social Studies last. The communities report and the lemonade report stay. Nothing new in Social Studies until then.
+
+Do not generate a full grade list until Emily asks for that grade and subject.
 
 Do not repeat a story. In particular:
 
@@ -52,8 +64,9 @@ Do not repeat a story. In particular:
 4. The standard sentence must match the wording already used in this repo, or be checked against Emily's TEKS PDF. Do not guess a code. Do not replace the standard with an "I can" sentence. If you cannot find the sentence, stop and ask.
 5. Keep the words on that grade's level. Clips are 2–20 seconds. Science stays true to Earth. This is a kid news desk, not an Expedition Station planet.
 6. Do not change a row marked **Built**.
-7. A SQL file in the repo is not the same as the database being updated. Say which is true.
-8. Work on `main`.
+7. Do not add a new Social Studies broadcast. Science, ELAR, and Math come first. The two Social Studies broadcasts already built stay as they are.
+8. A SQL file in the repo is not the same as the database being updated. Say which is true.
+9. Work on `main`.
 
 ## Paste this to any bot
 
@@ -87,7 +100,7 @@ Leave these Grade 3 Science cases alone.
 | Built | SS.3.2B-BB | Correspondent | 3 | Communities | Two communities that meet the same needs in different ways. | `lib/cases/SS-3-2B.public.js`. SQL in the chat. Not run. |
 | Built | SS.4.10A-BB | Explain | 4 | Economics | How supply and demand change price and what is available. | `lib/cases/SS-4-10A.public.js`. SQL in the chat. Not run. |
 
-The first wave is done. The next wave is written below. Do not build it until Emily says go. Nothing in it is marked Next yet.
+The first wave is done. The water-cycle row is built. The canyon row is marked Next.
 
 ## Second wave — finish two science shelves
 
@@ -99,8 +112,8 @@ This wave is still the next four. It does not finish either science grade. The M
 
 | Status | Code | Format | Grade | Topic | What the broadcast is | Standard source |
 | --- | --- | --- | --- | --- | --- | --- |
-| Planned | SCI.4.10A-BB | Explain | 4 | Water cycle | The one water-cycle broadcast. Water moves, and the Sun is the energy that lifts it. Not day and night, and not the creek food chain. | `lib/teksWording.js` Science 4.10A. |
-| Planned | SCI.4.10B-BB | Correspondent | 4 | Canyon | Slow change: weathering, erosion, and deposition. Not the water cycle. Grade 5 landforms (5.10C) can be its own broadcast later, about the shapes, not this process. | `lib/teksWording.js` Science 4.10B. |
+| Built | SCI.4.10A-BB | Explain | 4 | Water cycle | The one water-cycle broadcast. Water moves, and the Sun is the energy that lifts it. Not day and night, and not the creek food chain. | `lib/cases/broadcast-booth/wave2.js`. SQL in the chat. Not run. Grade 5 Sun-and-ocean (5.10A) is covered by this one. |
+| Next | SCI.4.10B-BB | Correspondent | 4 | Canyon | Slow change: weathering, erosion, and deposition. Not the water cycle. Grade 5 landforms (5.10C) can be its own broadcast later, about the shapes, not this process. | `lib/teksWording.js` Science 4.10B. |
 | Planned | SCI.5.11-BB | Debate | 5 | Using less | Two fair ways to cut harm from using resources: use less, or recycle. Not the wind-and-gas debate. | `lib/teksWording.js` Science 5.11. |
 | Planned | ELA.5.9D-BB | Explain | 5 | Central idea | The central idea of an informational text, with evidence. Not the theme of the trumpet play. | `lib/teksWording.js` ELAR 5.9D. Confirm a short source text before writing. |
 
