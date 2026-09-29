@@ -1,7 +1,7 @@
 {
   "generatedFrom": "lib/cases and add_*.sql",
-  "onDisk": 1061,
-  "inSql": 1078,
+  "onDisk": 1065,
+  "inSql": 1082,
   "items": [
     {
       "standard": "3.10C-AD",
@@ -681,6 +681,42 @@
     {
       "standard": "SCI.3.7A-BB",
       "title": "Broadcast Booth: Can a force work without touching? (Explain)",
+      "grade": "3",
+      "subject": "Science",
+      "engine": "Broadcast Booth",
+      "kind": "standard",
+      "file": "lib/cases/broadcast-booth/assignFallback.js"
+    },
+    {
+      "standard": "SCI.3.7B-BB",
+      "title": "Broadcast Booth: Push it, pull it, watch it move (Correspondent)",
+      "grade": "3",
+      "subject": "Science",
+      "engine": "Broadcast Booth",
+      "kind": "standard",
+      "file": "lib/cases/broadcast-booth/assignFallback.js"
+    },
+    {
+      "standard": "SCI.3.8A-BB",
+      "title": "Broadcast Booth: Energy hunt at the county fair (Correspondent)",
+      "grade": "3",
+      "subject": "Science",
+      "engine": "Broadcast Booth",
+      "kind": "standard",
+      "file": "lib/cases/broadcast-booth/assignFallback.js"
+    },
+    {
+      "standard": "SCI.3.8B-BB",
+      "title": "Broadcast Booth: Why does a faster ball knock down more pins? (Explain)",
+      "grade": "3",
+      "subject": "Science",
+      "engine": "Broadcast Booth",
+      "kind": "standard",
+      "file": "lib/cases/broadcast-booth/assignFallback.js"
+    },
+    {
+      "standard": "SCI.3.9A-BB",
+      "title": "Broadcast Booth: Who goes around whom? (Explain)",
       "grade": "3",
       "subject": "Science",
       "engine": "Broadcast Booth",

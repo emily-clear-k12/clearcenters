@@ -145,11 +145,11 @@ Emily, Sept 29: one Broadcast Booth per standard. Science goes first. This is th
 | Built | SCI.3.6B-BB | Explain | Solids keep their shape; juice and air take the shape of their container. Built in `wave8.js`; pictures requested in `image-prompts/broadcast-booth/wave8.md`. |
 | Built | SCI.3.6D-BB | Correspondent | Maker table: combining clay, sticks, and paper to build a tower that stands. Built in `wave8.js`; pictures requested in `image-prompts/broadcast-booth/wave8.md`. |
 | Built | SCI.3.7A-BB | Explain | A magnet pulls from a distance, gravity pulls down, a hand pushes by touching. Built in `wave8.js`; pictures requested in `image-prompts/broadcast-booth/wave8.md`. |
-| Next | SCI.3.7B-BB | Correspondent | Playground: pushes and pulls change where things go and how they move. Not balanced forces. |
-| Planned | SCI.3.8A-BB | Correspondent | Energy hunt at the fair: light, sound, heat, and motion. |
-| Planned | SCI.3.8B-BB | Explain | A faster bowling ball has more energy and knocks down more pins. |
-| Planned | SCI.3.9A-BB | Explain | The Moon orbits Earth, and Earth orbits the Sun. Not phases, not day and night. |
-| Planned | SCI.3.9B-BB | Explain | The order of the planets from the Sun. |
+| Built | SCI.3.7B-BB | Correspondent | Playground: pushes and pulls change where things go and how they move. Not balanced forces. Built in `wave9.js`; pictures requested in `image-prompts/broadcast-booth/wave9.md`. |
+| Built | SCI.3.8A-BB | Correspondent | Energy hunt at the fair: light, sound, heat, and motion. Built in `wave9.js`; pictures requested in `image-prompts/broadcast-booth/wave9.md`. |
+| Built | SCI.3.8B-BB | Explain | A faster bowling ball has more energy and knocks down more pins. Built in `wave9.js`; pictures requested in `image-prompts/broadcast-booth/wave9.md`. |
+| Built | SCI.3.9A-BB | Explain | The Moon orbits Earth, and Earth orbits the Sun. Not phases, not day and night. Built in `wave9.js`; pictures requested in `image-prompts/broadcast-booth/wave9.md`. |
+| Next | SCI.3.9B-BB | Explain | The order of the planets from the Sun. |
 | Planned | SCI.3.10A-BB | Correspondent | Weather desk: Amarillo and Houston on the same day. |
 | Planned | SCI.3.10B-BB | Explain | Soil forms from broken rock and rotting leaves. Not the canyon. |
 | Planned | SCI.3.10C-BB | Correspondent | A landslide closes a road: fast changes to the land. |
