@@ -62,16 +62,14 @@ export default function SamCoach({ teacherId }) {
   if (!tip) return null;
 
   return (
-    <section className="cc-panel cc-attention" style={{ marginBottom: 16 }}>
-      <div className="cc-attention-heading">
-        <img src="/icons/sam/cosmic/helping-poster.png" alt="" />
-        <div>
-          <div className="cc-eyebrow">S.A.M. · tip {tip.index + 1} of {TIPS.length}</div>
-          <h2>{tip.title}</h2>
-        </div>
+    <section className="cc-sam-banner">
+      <img src="/icons/sam/cosmic/helping-poster.png" alt="" />
+      <div className="cc-sam-banner-copy">
+        <div className="cc-eyebrow">S.A.M. · tip {tip.index + 1} of {TIPS.length}</div>
+        <strong>{tip.title}</strong>
+        <span>{tip.text}</span>
       </div>
-      <p>{tip.text}</p>
-      <div className="cc-row">
+      <div className="cc-sam-banner-actions">
         <Link className="cc-btn" href={tip.href} onClick={dismiss}>{tip.action}</Link>
         <button className="cc-btn secondary" type="button" onClick={dismiss}>Got it</button>
       </div>
