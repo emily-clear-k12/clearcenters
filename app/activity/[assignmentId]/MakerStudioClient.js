@@ -1233,7 +1233,7 @@ export default function MakerStudioClient({
   function selectTool(next) {
     setTool(next === "pictures" ? (tool === "pictures" ? null : "pictures") : null);
     if (next === "draw") {
-      if (activeMode === "poster") setPosterDrawing(true);
+      if (activeMode === "poster" || activeMode === "postcard") setPosterDrawing(true);
       else editorRef.current?.querySelector("canvas")?.scrollIntoView({block:"nearest"});
     }
     if (next === "text") editorRef.current?.querySelector("textarea, input:not([type=file])")?.focus();
@@ -2268,6 +2268,11 @@ export default function MakerStudioClient({
 
             {activeMode === "postcard" ? (
               <>
+                <div className="mk-postcard-layout">
+                  <div className="mk-postcard-art">
+                    {draft.imageDataUrl && !posterDrawing ? <img src={draft.imageDataUrl} alt="Postcard front" /> : <MakerDrawPad initialImage={draft.imageDataUrl || null} onChange={url => patchDraft({imageDataUrl:url,imageSource:"draw"})} disabled={busy || aiBusy} height={300} />}
+                  </div>
+                  <div className="mk-postcard-message">
                 <div className="mk-field">
                   <label htmlFor="mk-pc-to">To</label>
                   <input
@@ -2302,6 +2307,9 @@ export default function MakerStudioClient({
                     disabled={busy || aiBusy}
                   />
                 </div>
+
+                  </div>
+                </div>
                 <div className="mk-ai-row">
                   <button
                     type="button"
@@ -2321,38 +2329,8 @@ export default function MakerStudioClient({
                   </button>
                 </div>
                 {aiNote ? <p className="mk-warn">{aiNote}</p> : null}
-                <div className="mk-postcard-front">
-                  {isPlacedImage(draft.imageDataUrl) ? (
-                    <img src={draft.imageDataUrl} alt="Postcard front" />
-                  ) : (
-                    <span className="mk-quiet">Front of postcard</span>
-                  )}
-                </div>
-                <div className="mk-field">
-                  <label>Or draw the front</label>
-                  <MakerDrawPad
-                    initialImage={
-                      draft.imageSource === "draw" ? draft.imageDataUrl : null
-                    }
-                    onChange={(url) =>
-                      patchDraft({ imageDataUrl: url, imageSource: "draw" })
-                    }
-                    disabled={busy || aiBusy}
-                    height={200}
-                  />
-                </div>
-                {isPlacedImage(draft.imageDataUrl) ? (
-                  <button
-                    type="button"
-                    className="mk-ghost"
-                    disabled={busy || aiBusy}
-                    onClick={() =>
-                      patchDraft({ imageDataUrl: null, imageSource: null })
-                    }
-                  >
-                    Clear picture
-                  </button>
-                ) : null}
+
+                {draft.imageDataUrl ? <button type="button" className="mk-ghost" disabled={busy || aiBusy} onClick={() => {patchDraft({imageDataUrl:null,imageSource:null});setPosterDrawing(true);}}>Clear picture</button> : null}
               </>
             ) : null}
 
