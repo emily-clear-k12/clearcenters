@@ -18,7 +18,12 @@ function csvCell(value) {
 }
 
 function htmlCell(value) {
-  return String(value ?? "").replace(/[&<>"]/g, (ch) => ({ "&": "&", "<": "<", ">": ">", '"': """ }[ch]));
+  return String(value ?? "").replace(/[&<>"]/g, (ch) => {
+    if (ch === "&") return "\u0026amp;";
+    if (ch === "<") return "\u0026lt;";
+    if (ch === ">") return "\u0026gt;";
+    return "\u0026quot;";
+  });
 }
 
 function downloadText(filename, text) {

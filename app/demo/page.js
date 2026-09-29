@@ -19,6 +19,9 @@ export default function DemoDoor() {
         <p style={{ letterSpacing: ".08em", fontSize: 12, fontWeight: 700, color: "#74618e" }}>CLEARCENTERS DEMO</p>
         <h1 style={{ fontFamily: "Poppins, sans-serif", fontSize: 40, letterSpacing: "-1px", margin: "8px 0" }}>Mrs. Barrons’s class</h1>
         <p style={{ color: "#70658d", fontSize: 16, lineHeight: 1.5, maxWidth: 620 }}>This is a sample Grade 4 class. The live site is not changed. Open it as the teacher, or as Maya, one of the students.</p>
+        <p>
+          <button type="button" onClick={() => { window.open("https://clearcenters.vercel.app", "clearcenters-live"); }} style={{ ...button, background: "#173a28" }}>Open the live site in the other tab</button>
+        </p>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: 16, marginTop: 24 }}>
           <section style={{ background: "#fff", borderRadius: 20, padding: 22, border: "1px solid #e7e2f2" }}>
             <h2 style={{ fontFamily: "Poppins, sans-serif", marginTop: 0 }}>Teacher</h2>
