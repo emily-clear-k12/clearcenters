@@ -12,3 +12,4 @@ Seeds:
 - Desert Explain (`SCI.3.13A-BB`) — cactus / adaptations chips
 - Creek Correspondent (`SCI.3.12B-BB`) — creek bank / habitat chips
 - Schoolyard Debate (`SCI.3.11B-BB`) — shade trees vs playground chips
+- Day and night, forces, closed circuits, and heating and cooling water (`SCI.5.9-BB`, `SCI.5.7A-BB`, `SCI.4.8C-BB`, `SCI.3.6C-BB`)
