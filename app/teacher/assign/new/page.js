@@ -743,7 +743,10 @@ function displayCode(code){return String(code||'').replace(/^TEKS\s+/i,'').repla
   useEffect(()=>{
     if(!followClass||!targetClass||lane==='relay')return;
     if(targetClass.grade)setBrowseGrade(String(targetClass.grade));
-    if(targetClass.subject&&SUBJECTS[targetClass.subject])setBrowseSubject(targetClass.subject);
+    // ?subject= (from a gradebook group or a report) wins over the class's own subject.
+    const askedSubject=searchParams.get('subject');
+    if(askedSubject&&SUBJECTS[askedSubject])setBrowseSubject(askedSubject);
+    else if(targetClass.subject&&SUBJECTS[targetClass.subject])setBrowseSubject(targetClass.subject);
   },[followClass,lane,targetClass?.id,targetClass?.grade,targetClass?.subject]);
 
   function toggleStudentTarget(id) {

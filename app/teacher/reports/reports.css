@@ -1,0 +1,77 @@
+/* Reports — Sept 28, 2026. Snapshot, Standards, Students, Confidence Check. */
+.rp{--got:#1f8a4d;--gotbg:#e3f5ea;--alm:#a67800;--almbar:#e0a800;--almbg:#fdf3d6;--not:#c93c3c;--notbar:#d64545;--notbg:#fde7e7;--wait:#6a3fc6;--waitbg:#efe8fc;--line:#ece8f6;--soft:#f5f1fc}
+.rp-top{display:flex;justify-content:space-between;gap:18px;align-items:flex-start;flex-wrap:wrap;margin-bottom:6px}
+.rp-top h1{font:700 clamp(25px,2.6vw,36px)/1.15 Poppins,sans-serif;letter-spacing:-1px;margin:0 0 6px}
+.rp-sub{color:#70658d;font-size:14px;margin:0}
+.rp-controls{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.rp-controls select{font:600 12px Inter,sans-serif;border:1px solid #dcd3f0;background:#fff;color:#332854;border-radius:20px;padding:9px 14px}
+.rp-controls .cc-btn{min-height:36px;padding:8px 14px;font-size:12px}
+.rp-tabs{display:flex;gap:4px;border-bottom:1px solid var(--line);margin:14px 0 18px;flex-wrap:wrap}
+.rp-tabs button{border:0;background:none;padding:12px 16px;font:600 14px Inter,sans-serif;color:#716384;border-bottom:3px solid transparent;cursor:pointer;text-align:left}
+.rp-tabs button[aria-selected=true]{color:#7044cb;border-bottom-color:#7044cb}
+.rp-tabs small{display:block;font-weight:400;font-size:11px;color:#9a90b3;margin-top:2px}
+.rp-grid{display:grid;gap:14px}
+.rp-g3{grid-template-columns:repeat(3,minmax(0,1fr))}
+.rp-g2{grid-template-columns:minmax(0,1.35fr) minmax(0,1fr)}
+.rp-gh{grid-template-columns:repeat(2,minmax(0,1fr))}
+.rp-panel{border:1px solid var(--line);border-radius:18px;padding:18px;background:#fff;min-width:0}
+.rp-panel h2{font:600 18px Poppins,sans-serif;margin:0 0 4px}
+.rp-panel h3{font:600 15px Poppins,sans-serif;margin:0 0 4px}
+.rp-muted{color:#70658d;font-size:13px;line-height:1.5;margin:0}
+.rp-tile{border-radius:18px;padding:16px 18px;display:flex;gap:14px;align-items:center;border:1px solid var(--line)}
+.rp-tile strong{font:700 34px Poppins,sans-serif;line-height:1}
+.rp-tile b{display:block;font-size:14px}
+.rp-tile span{font-size:12px;color:#70658d}
+.rp-tile.k2{background:var(--gotbg)}.rp-tile.k2 strong{color:var(--got)}
+.rp-tile.k1{background:var(--almbg)}.rp-tile.k1 strong{color:var(--alm)}
+.rp-tile.k0{background:var(--notbg)}.rp-tile.k0 strong{color:var(--not)}
+.rp-delta{font-size:12px;font-weight:600;margin-top:3px}
+.rp-delta.good{color:var(--got)}.rp-delta.bad{color:var(--not)}.rp-delta.same{color:#70658d;font-weight:500}
+.rp-todo{display:flex;gap:12px;padding:14px 0;border-bottom:1px solid var(--line)}
+.rp-todo:last-child{border:0;padding-bottom:0}
+.rp-todo-mark{width:5px;border-radius:4px;flex:0 0 auto;background:#c9c2da}
+.rp-todo-mark.not{background:var(--notbar)}.rp-todo-mark.alm{background:var(--almbar)}.rp-todo-mark.got{background:var(--got)}.rp-todo-mark.wait{background:#9b7be0}
+.rp-todo h3{margin:0}
+.rp-todo .rp-small{font-size:12px;color:#8a80a6;margin:2px 0 0}
+.rp-todo p{margin:4px 0 10px;font-size:13px;color:#70658d;line-height:1.5}
+.rp-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.rp-row .cc-btn{min-height:32px;padding:6px 12px;font-size:12px}
+.rp-bar{display:flex;height:14px;border-radius:7px;overflow:hidden;gap:2px;width:100%;min-width:100px}
+.rp-bar span{display:block;height:100%}
+.rp-bar.empty{background:#eeeaf5}
+.rp-legend{display:flex;gap:14px;font-size:12px;color:#70658d;flex-wrap:wrap;margin-top:10px}
+.rp-legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+.rp-glance{display:grid;grid-template-columns:64px minmax(0,1fr);gap:10px;align-items:center;margin:9px 0}
+.rp-glance b{font-size:12px}
+.rp-glance small{display:block;font-weight:400;color:#8a80a6;font-size:10px}
+.rp-std{display:grid;grid-template-columns:minmax(200px,1.3fr) minmax(180px,1fr) 120px 90px auto;gap:14px;align-items:center;padding:12px 0;border-bottom:1px solid var(--line)}
+.rp-std:last-child{border:0}
+.rp-std.head{font-size:11px;color:#514369;font-weight:600;padding-top:0}
+.rp-std .rp-muted{font-size:12px}
+.rp-pill{display:inline-block;border-radius:12px;padding:3px 9px;font-size:11px;font-weight:700;background:#f0eef6;color:#6f6688;white-space:nowrap}
+.rp-pill.improving{background:var(--gotbg);color:var(--got)}
+.rp-pill.slipping{background:var(--notbg);color:var(--not)}
+.rp-gaps{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.rp-gaps a{background:#f7f4fd;border:1px dashed #d9cef1;border-radius:10px;padding:5px 9px;font-size:12px;color:#302454;text-decoration:none}
+.rp-gaps a:hover{background:#efe8fc}
+.rp-table{border-collapse:collapse;width:100%;font-size:13px}
+.rp-table th{text-align:left;font-size:11px;color:#514369;background:#f7f4fd;padding:10px;font-weight:600}
+.rp-table td{padding:10px;border-bottom:1px solid var(--line);vertical-align:middle}
+.rp-table a{color:#241b50;font-weight:600;text-decoration:none}
+.rp-table a:hover{color:#6a3fc6;text-decoration:underline}
+.rp-chip{display:inline-grid;place-items:center;min-width:26px;height:22px;padding:0 7px;border-radius:6px;font:700 11px Inter,sans-serif;white-space:nowrap}
+.rp-chip.k2{background:var(--gotbg);color:var(--got)}.rp-chip.k1{background:var(--almbg);color:var(--alm)}.rp-chip.k0{background:var(--notbg);color:var(--not)}
+.rp-flag{font-weight:700;color:var(--not)}.rp-flag.wait{color:var(--wait)}
+.rp-conf{display:grid;grid-template-columns:120px repeat(3,minmax(0,1fr));gap:6px;margin-top:12px}
+.rp-conf .h{font-size:12px;font-weight:600;color:#514369;display:flex;align-items:center}
+.rp-conf .h.col{justify-content:center}
+.rp-conf .c{border-radius:12px;padding:10px;min-height:88px;border:1px solid var(--line);font-size:12px}
+.rp-conf .c b{font:700 22px Poppins,sans-serif;display:block}
+.rp-conf .c.hot{border:2px solid var(--not);background:#fff6f6}
+.rp-conf .c.warm{border:2px dashed #b89ae8;background:#faf7ff}
+.rp-names{color:#70658d;font-size:11px;margin-top:4px;line-height:1.4}
+.rp-tip{position:fixed;z-index:80;background:#241b50;color:#fff;font-size:12px;line-height:1.45;padding:8px 11px;border-radius:9px;pointer-events:none;max-width:260px}
+.rp-empty{text-align:center;padding:40px 20px;color:#70658d}
+@media(max-width:1000px){.rp-g3,.rp-g2,.rp-gh{grid-template-columns:1fr}.rp-std{grid-template-columns:1fr 1fr}.rp-std.head{display:none}}
+@media(max-width:600px){.rp-conf{grid-template-columns:80px repeat(3,minmax(0,1fr))}.rp-controls select{width:100%}}
+@media print{.rp-controls,.rp-tabs,.cc-console,.rp-row{display:none!important}}

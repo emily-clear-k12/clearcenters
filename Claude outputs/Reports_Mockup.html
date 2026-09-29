@@ -1,0 +1,145 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Reports Mockups</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@600;700&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#241b50;--muted:#70658d;--line:#ece8f6;--soft:#f5f1fc;--purple:#7044cb;--got:#1f8a4d;--gotbg:#e3f5ea;--alm:#a67800;--almbar:#e0a800;--almbg:#fdf3d6;--not:#c93c3c;--notbar:#d64545;--notbg:#fde7e7;--wait:#6a3fc6;--waitbg:#efe8fc}
+*{box-sizing:border-box}body{margin:0;background:#edf0ff;font-family:Inter,sans-serif;color:var(--ink)}
+.wrap{max-width:1320px;margin:18px auto;padding:0 16px}
+.note{background:#fff8e6;border:1px solid #f0dfae;border-radius:14px;padding:12px 16px;font-size:13px;line-height:1.55;margin-bottom:14px}
+.card{background:#fff;border-radius:24px;padding:24px;box-shadow:0 12px 40px #34286420}
+h1{font:700 30px Poppins,sans-serif;margin:0 0 4px;letter-spacing:-.8px}h2{font:600 18px Poppins,sans-serif;margin:0 0 4px}h3{font:600 15px Poppins,sans-serif;margin:0 0 4px}
+.muted{color:var(--muted);font-size:13px;line-height:1.5}
+.top{display:flex;justify-content:space-between;gap:16px;align-items:flex-start;flex-wrap:wrap;margin-bottom:14px}
+.controls{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+select,.btn{font:600 12px Inter,sans-serif;border:1px solid #dcd3f0;background:#fff;color:#332854;border-radius:20px;padding:9px 14px;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:6px}
+.btn.primary{background:var(--purple);color:#fff;border-color:var(--purple)}.btn.small{padding:6px 11px;font-size:11px}
+.tabs{display:flex;gap:4px;border-bottom:1px solid var(--line);margin:6px 0 18px;flex-wrap:wrap}
+.tabs button{border:0;background:none;padding:12px 16px;font:600 14px Inter,sans-serif;color:#716384;border-bottom:3px solid transparent;cursor:pointer}
+.tabs button[aria-pressed=true]{color:var(--purple);border-bottom-color:var(--purple)}
+.tabs small{display:block;font-weight:400;font-size:11px;color:#9a90b3}
+.grid{display:grid;gap:14px}.g3{grid-template-columns:repeat(3,minmax(0,1fr))}.g2{grid-template-columns:minmax(0,1.4fr) minmax(0,1fr)}
+.panel{border:1px solid var(--line);border-radius:18px;padding:18px;background:#fff;min-width:0}
+.tile{border-radius:18px;padding:16px 18px;display:flex;gap:14px;align-items:center;border:1px solid var(--line)}
+.tile strong{font:700 34px Poppins,sans-serif;line-height:1}
+.tile b{display:block;font-size:14px}.tile span{font-size:12px;color:var(--muted)}
+.t2{background:var(--gotbg)}.t2 strong{color:var(--got)}.t1{background:var(--almbg)}.t1 strong{color:var(--alm)}.t0{background:var(--notbg)}.t0 strong{color:var(--not)}
+.delta{font-size:12px;font-weight:600;margin-top:3px}
+.insight{display:flex;gap:12px;align-items:flex-start;padding:14px 0;border-bottom:1px solid var(--line)}.insight:last-child{border:0}
+.icon{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;flex:0 0 auto;font-size:16px}
+.insight p{margin:3px 0 8px;font-size:13px;color:var(--muted);line-height:1.5}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.bar{display:flex;height:14px;border-radius:7px;overflow:hidden;gap:2px;background:#fff;min-width:120px}
+.bar span{height:100%}.bar span:first-child{border-radius:7px 0 0 7px}.bar span:last-child{border-radius:0 7px 7px 0}
+.std{display:grid;grid-template-columns:minmax(200px,1.3fr) minmax(180px,1fr) 110px 90px auto;gap:14px;align-items:center;padding:12px 0;border-bottom:1px solid var(--line)}
+.std:last-child{border:0}.std .code{font-weight:700}.std .muted{font-size:12px}
+.pill{display:inline-block;border-radius:12px;padding:3px 9px;font-size:11px;font-weight:700}
+.up{background:var(--gotbg);color:var(--got)}.down{background:var(--notbg);color:var(--not)}.flat{background:#f0eef6;color:#6f6688}
+table{border-collapse:collapse;width:100%;font-size:13px}
+th{text-align:left;font-size:11px;color:#514369;background:#f7f4fd;padding:10px;font-weight:600;position:sticky;top:0}
+td{padding:10px;border-bottom:1px solid var(--line);vertical-align:middle}
+td.name{font-weight:600}
+.chip{display:inline-grid;place-items:center;min-width:26px;height:22px;padding:0 6px;border-radius:6px;font:700 11px Inter,sans-serif}
+.k2{background:var(--gotbg);color:var(--got)}.k1{background:var(--almbg);color:var(--alm)}.k0{background:var(--notbg);color:var(--not)}
+.conf{display:grid;grid-template-columns:120px repeat(3,minmax(0,1fr));gap:6px;align-items:stretch}
+.conf .h{font-size:12px;font-weight:600;color:#514369;display:flex;align-items:center}
+.conf .c{border-radius:12px;padding:10px;min-height:92px;border:1px solid var(--line);font-size:12px;cursor:default}
+.conf .c b{font:700 22px Poppins,sans-serif;display:block}
+.conf .c.hot{border:2px solid var(--not);background:#fff6f6}.conf .c.warm{border:2px dashed #b89ae8;background:#faf7ff}
+.names{color:var(--muted);font-size:11px;margin-top:4px;line-height:1.4}
+.gap{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}.gap span{background:#f7f4fd;border:1px dashed #d9cef1;border-radius:10px;padding:5px 9px;font-size:12px}
+.tip{position:fixed;z-index:50;background:#241b50;color:#fff;font-size:12px;line-height:1.45;padding:8px 11px;border-radius:9px;pointer-events:none;display:none;max-width:260px}
+.legend{display:flex;gap:12px;font-size:12px;color:var(--muted);flex-wrap:wrap;margin:6px 0}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+.why{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:18px}
+.why div{background:var(--soft);border-radius:14px;padding:12px 14px;font-size:12px;line-height:1.5}.why b{display:block;font-size:13px;margin-bottom:3px}
+@media(max-width:900px){.g3,.g2,.why{grid-template-columns:1fr}.std{grid-template-columns:1fr 1fr}.conf{grid-template-columns:90px repeat(3,1fr)}}
+</style></head><body><div class="wrap">
+<div class="note"><b>Mockup with the demo class (Demo · Math &amp; Science).</b> One Reports page with four tabs, each answering one question a teacher asks. Hover the charts and bars. Buttons are for show.</div>
+<div class="card">
+ <div class="top"><div><h1>Reports</h1><div class="muted">Demo · Math &amp; Science · 18 students · 9 activities · last 4 weeks</div></div>
+ <div class="controls"><select><option>Demo · Math &amp; Science</option><option>Demo · ELAR &amp; Social Studies</option><option>All classes</option></select><select><option>Last 4 weeks</option><option>This six weeks</option><option>Whole year</option></select><button class="btn">Print</button><button class="btn">Family reports</button></div></div>
+ <div class="tabs" id="tabs"></div>
+ <div id="view"></div>
+</div></div><div class="tip" id="tip"></div>
+<script>
+const D={"acts":[{"id":"a0","std":"MA.4.3C-XP","title":"The Lava Lock","code":"4.3C","wk":3,"day":0},{"id":"a1","std":"4.10B-AD","title":"The Bend in Sandy Creek","code":"4.10B","wk":3,"day":2},{"id":"a2","std":"MA.4.3E-XP","title":"The Frozen Relay","code":"4.3E","wk":2,"day":0},{"id":"a3","std":"SCI.4.10B-XP","title":"The Canyon Makers","code":"4.10B","wk":2,"day":2},{"id":"a4","std":"MA.4.5B-AD","title":"The Sticker Machine","code":"4.5B","wk":1,"day":0},{"id":"a5","std":"4.9B-AD","title":"Twenty-Eight Nights","code":"4.9B","wk":1,"day":1},{"id":"a6","std":"SCI.4.9B-XP","title":"The Moon Watch","code":"4.9B","wk":1,"day":3},{"id":"a7","std":"MA.4.5B-XP","title":"The Pattern Machine","code":"4.5B","wk":0,"day":1},{"id":"a8","std":"4.8C-AD","title":"The Closed Path","code":"4.8C","wk":0,"day":3}],"kids":[{"id":"s0","name":"Ava","blurb":"Strong in every subject","work":[{"g":1,"c":"solid"},{"g":2,"c":"strong"},{"g":2,"c":"solid"},{"g":2,"c":"strong"},{"g":2,"c":"strong"},{"g":2,"c":"solid"},{"g":2,"c":"strong"},null,{"g":"w","c":"strong"}]},{"id":"s1","name":"Eli","blurb":"Solid, but fractions are hard","work":[{"g":2,"c":"solid"},{"g":1,"c":"strong"},{"g":0,"c":"solid"},{"g":2,"c":"strong"},{"g":2,"c":"strong"},{"g":2,"c":"strong"},{"g":1,"c":"strong"},null,null]},{"id":"s2","name":"Jonah","blurb":"Loves science, struggles with inferences","work":[{"g":1,"c":"strong"},{"g":2,"c":"solid"},{"g":2,"c":"solid"},{"g":2,"c":"solid"},{"g":2,"c":"solid"},{"g":2,"c":"solid"},{"g":"w","c":"solid"},{"g":"w","c":"solid"},null]},{"id":"s3","name":"Luis","blurb":"Improving every week","work":[{"g":0,"c":"solid"},{"g":0,"c":"solid"},{"g":0,"c":"shaky"},{"g":1,"c":"solid"},{"g":1,"c":"strong"},{"g":"w","c":"shaky"},{"g":2,"c":"shaky"},{"g":"w","c":"strong"},null]},{"id":"s4","name":"Maya","blurb":"On track, a few things to review","work":[{"g":2,"c":"strong"},{"g":1,"c":"strong"},{"g":2,"c":"strong"},{"g":1,"c":"strong"},{"g":1,"c":"strong"},{"g":2,"c":"solid"},{"g":1,"c":"strong"},{"g":"w","c":"solid"},null]},{"id":"s5","name":"Noah","blurb":"Understands it, but work goes missing","work":[{"g":1,"c":"strong"},null,{"g":1,"c":"strong"},{"g":1,"c":"solid"},null,{"g":2,"c":"shaky"},null,null,{"g":"w","c":"strong"}]},{"id":"s6","name":"Priya","blurb":"Ready for a challenge","work":[null,{"g":2,"c":"strong"},{"g":2,"c":"strong"},{"g":2,"c":"strong"},{"g":2,"c":"strong"},{"g":"w","c":"solid"},{"g":2,"c":"solid"},{"g":"w","c":"strong"},null]},{"id":"s7","name":"Sofia","blurb":"Needs help in most things","work":[{"g":0,"c":"shaky"},{"g":1,"c":"shaky"},{"g":0,"c":"strong"},{"g":1,"c":"shaky"},{"g":1,"c":"solid"},null,{"g":0,"c":"strong"},null,null]},{"id":"s8","name":"Aiden","blurb":"Slipping the last two weeks","work":[{"g":2,"c":"strong"},{"g":2,"c":"strong"},{"g":2,"c":"solid"},{"g":2,"c":"solid"},{"g":2,"c":"strong"},{"g":1,"c":"strong"},{"g":1,"c":"solid"},{"g":"w","c":"strong"},null]},{"id":"s9","name":"Camila","blurb":"Steady","work":[{"g":1,"c":"solid"},{"g":2,"c":"solid"},{"g":2,"c":"strong"},{"g":2,"c":"solid"},{"g":2,"c":"strong"},{"g":"w","c":"solid"},{"g":1,"c":"strong"},{"g":"w","c":"strong"},null]},{"id":"s10","name":"Diego","blurb":"Almost there on most things","work":[{"g":1,"c":"solid"},{"g":2,"c":"solid"},{"g":2,"c":"strong"},{"g":1,"c":"shaky"},{"g":1,"c":"solid"},{"g":1,"c":"strong"},{"g":1,"c":"solid"},null,{"g":"w","c":"solid"}]},{"id":"s11","name":"Emma","blurb":"Strong reader, multiplication is shaky","work":[{"g":2,"c":"strong"},{"g":2,"c":"solid"},null,{"g":1,"c":"solid"},{"g":1,"c":"strong"},{"g":2,"c":"solid"},{"g":2,"c":"solid"},{"g":"w","c":"strong"},null]},{"id":"s12","name":"Grace","blurb":"Moon and seasons are confusing","work":[{"g":2,"c":"strong"},{"g":2,"c":"solid"},{"g":1,"c":"strong"},{"g":1,"c":"solid"},{"g":2,"c":"solid"},{"g":"r","c":"solid"},{"g":0,"c":"strong"},null,{"g":"w","c":"solid"}]},{"id":"s13","name":"Isaiah","blurb":"Starting to catch on","work":[{"g":0,"c":"shaky"},{"g":0,"c":"solid"},{"g":2,"c":"solid"},{"g":0,"c":"solid"},{"g":"r","c":"shaky"},{"g":2,"c":"strong"},{"g":0,"c":"shaky"},{"g":"w","c":"strong"},null]},{"id":"s14","name":"Layla","blurb":"Strong, especially in science","work":[{"g":1,"c":"strong"},{"g":2,"c":"strong"},{"g":2,"c":"strong"},{"g":2,"c":"solid"},{"g":2,"c":"solid"},{"g":2,"c":"strong"},{"g":2,"c":"strong"},null,null]},{"id":"s15","name":"Mateo","blurb":"In the middle, some missing work","work":[{"g":1,"c":"solid"},{"g":2,"c":"solid"},{"g":1,"c":"solid"},null,{"g":0,"c":"strong"},{"g":1,"c":"solid"},{"g":2,"c":"solid"},{"g":"w","c":"strong"},{"g":"w","c":"strong"}]},{"id":"s16","name":"Olivia","blurb":"Strong, writing opinions is newer","work":[{"g":1,"c":"solid"},{"g":1,"c":"solid"},{"g":2,"c":"strong"},{"g":2,"c":"strong"},{"g":2,"c":"strong"},{"g":2,"c":"solid"},{"g":2,"c":"solid"},null,null]},{"id":"s17","name":"Ryan","blurb":"Needs help, especially with reading","work":[{"g":0,"c":"solid"},{"g":1,"c":"shaky"},{"g":1,"c":"shaky"},{"g":0,"c":"solid"},{"g":1,"c":"solid"},{"g":0,"c":"solid"},{"g":0,"c":"shaky"},null,{"g":"w","c":"strong"}]}]};
+const WORD={"4.3C":"Tell if two fractions are equivalent","4.3E":"Add and subtract fractions, same denominator","4.5B":"Find the rule in an input-output table","4.10B":"Weathering, erosion and deposition","4.9B":"Moon phases","4.8C":"Electricity in a closed circuit"};
+const SUBJ={"4.3C":"Math","4.3E":"Math","4.5B":"Math","4.10B":"Science","4.9B":"Science","4.8C":"Science"};
+const WEEKS=[3,2,1,0],WLAB={3:"Sep 7",2:"Sep 14",1:"Sep 21",0:"Sep 28"};
+const COL={2:"#1f8a4d",1:"#e0a800",0:"#d64545"},LV={2:"Got it",1:"Almost",0:"Not yet"};
+const $=q=>document.querySelector(q);
+const graded=w=>w&&typeof w.g==='number';
+function lvl(gs){if(!gs.length)return null;const a=gs.reduce((x,y)=>x+y,0)/gs.length;return a>=1.5?2:a>=.75?1:0}
+function count(gs){const c={0:0,1:0,2:0};gs.forEach(g=>c[g]++);return c}
+function bar(c,w){const t=c[0]+c[1]+c[2];if(!t)return `<div class="bar" style="width:${w||160}px;background:#eeeaf5"></div>`;return `<div class="bar" style="width:${w||'100%'}${w?'px':''}">${[2,1,0].filter(k=>c[k]).map(k=>`<span style="width:${c[k]/t*100}%;background:${COL[k]}" data-tip="${LV[k]}: ${c[k]} (${Math.round(c[k]/t*100)}%)"></span>`).join('')}</div>`}
+const kidAt=(k,wkMax)=>k.work.map((w,j)=>({w,a:D.acts[j]})).filter(x=>graded(x.w)&&x.a.wk>=wkMax);
+function levelNow(k){return lvl(k.work.filter(graded).map(w=>w.g))}
+function levelBefore(k){return lvl(k.work.map((w,j)=>({w,a:D.acts[j]})).filter(x=>graded(x.w)&&x.a.wk>=2).map(x=>x.w.g))}
+function levelRecent(k){return lvl(k.work.map((w,j)=>({w,a:D.acts[j]})).filter(x=>graded(x.w)&&x.a.wk<=1).map(x=>x.w.g))}
+function trend(k){const b=levelBefore(k),r=levelRecent(k);if(b==null||r==null)return 'flat';return r>b?'up':r<b?'down':'flat'}
+const TREND={up:'↗ Improving',down:'↘ Slipping',flat:'→ Steady'};
+function stdStats(code){const ids=D.acts.map((a,j)=>a.code===code?j:-1).filter(j=>j>=0);const per=D.kids.map(k=>lvl(ids.map(j=>k.work[j]).filter(graded).map(w=>w.g)));return {ids,per,c:count(per.filter(x=>x!=null)),waiting:ids.reduce((n,j)=>n+D.kids.filter(k=>k.work[j]&&k.work[j].g==='w').length,0)}}
+const STDS=[...new Set(D.acts.map(a=>a.code))];
+function weekPct(wk){const gs=[];D.kids.forEach(k=>k.work.forEach((w,j)=>{if(graded(w)&&D.acts[j].wk===wk)gs.push(w.g)}));const c=count(gs);const t=gs.length;return t?{got:c[2]/t,alm:c[1]/t,not:c[0]/t,n:t}:null}
+function lineChart(){const W=560,H=200,P={l:36,r:58,t:14,b:28};const pts=WEEKS.map((wk,i)=>({wk,i,v:weekPct(wk)})).filter(p=>p.v);const x=i=>P.l+i*(W-P.l-P.r)/3,y=v=>P.t+(1-v)*(H-P.t-P.b);
+ let s=`<svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="Share of work at Got it each week">`;
+ [0,.25,.5,.75,1].forEach(v=>s+=`<line x1="${P.l}" x2="${W-P.r}" y1="${y(v)}" y2="${y(v)}" stroke="#eeeaf5"/><text x="${P.l-6}" y="${y(v)+4}" font-size="10" fill="#8a80a6" text-anchor="end">${v*100}%</text>`);
+ WEEKS.forEach((wk,i)=>s+=`<text x="${x(i)}" y="${H-8}" font-size="11" fill="#70658d" text-anchor="middle">${WLAB[wk]}${weekPct(wk)?"":" · none yet"}</text>`);
+ [['got','#1f8a4d','Got it'],['not','#d64545','Not yet']].forEach(([key,c])=>{s+=`<polyline fill="none" stroke="${c}" stroke-width="2.5" points="${pts.map(p=>x(p.i)+','+y(p.v[key])).join(' ')}"/>`;pts.forEach(p=>s+=`<circle cx="${x(p.i)}" cy="${y(p.v[key])}" r="5" fill="${c}" stroke="#fff" stroke-width="2"/>`)});
+ pts.forEach(p=>s+=`<rect x="${x(p.i)-40}" y="0" width="80" height="${H}" fill="transparent" data-tip="<b>Week of ${WLAB[p.wk]}</b><br>Got it ${Math.round(p.v.got*100)}% · Almost ${Math.round(p.v.alm*100)}% · Not yet ${Math.round(p.v.not*100)}%<br>${p.v.n} graded pieces of work"/>`);
+ const last=pts[pts.length-1];s+=`<text x="${x(last.i)+8}" y="${y(last.v.got)-8}" font-size="11" font-weight="700" fill="#1f8a4d">Got it</text><text x="${x(last.i)+8}" y="${y(last.v.not)+16}" font-size="11" font-weight="700" fill="#c93c3c">Not yet</text>`;
+ return s+'</svg>'}
+function spark(k){const gs=k.work.map((w,j)=>({w,a:D.acts[j]})).filter(x=>graded(x.w));if(gs.length<2)return '<span class="muted">—</span>';const W=110,H=26;const x=i=>4+i*(W-8)/(gs.length-1),y=g=>H-4-g*(H-8)/2;
+ return `<svg width="${W}" height="${H}" aria-hidden="true"><polyline fill="none" stroke="#b7a6dd" stroke-width="2" points="${gs.map((g,i)=>x(i)+','+y(g.w.g)).join(' ')}"/>${gs.map((g,i)=>`<circle cx="${x(i)}" cy="${y(g.w.g)}" r="3.5" fill="${COL[g.w.g]}" data-tip="${g.a.title}: ${LV[g.w.g]}"/>`).join('')}</svg>`}
+function snapshot(){
+ const now=D.kids.map(levelNow),before=D.kids.map(levelBefore);const c=count(now.filter(x=>x!=null)),cb=count(before.filter(x=>x!=null));
+ const d=k=>{const n=c[k]-cb[k];return n===0?'<span class="muted">same as 2 weeks ago</span>':`<span style="color:${(k===2)===(n>0)?'#1f8a4d':'#c93c3c'}">${n>0?'▲':'▼'} ${Math.abs(n)} since 2 weeks ago</span>`};
+ const tiles=[[2,'On track','mostly Got it'],[1,'Getting there','mostly Almost'],[0,'Needs help','mostly Not yet']].map(([k,l,s])=>`<div class="tile t${k}"><strong>${c[k]}</strong><div><b>${l}</b><span>${s}</span><div class="delta">${d(k)}</div></div></div>`).join('');
+ // insights
+ const weakest=STDS.map(code=>({code,...stdStats(code)})).sort((a,b)=>(b.c[0]*2+b.c[1])-(a.c[0]*2+a.c[1]))[0];
+ const notYetNames=D.kids.filter((k,i)=>weakest.per[i]===0).map(k=>k.name);
+ const slipping=D.kids.filter(k=>trend(k)==='down').map(k=>k.name),improving=D.kids.filter(k=>trend(k)==='up').map(k=>k.name);
+ const missing=D.kids.map(k=>({n:k.name,m:k.work.filter((w,j)=>!w&&D.acts[j].wk>0).length})).filter(x=>x.m).sort((a,b)=>b.m-a.m);
+ const sureWrong=[];D.kids.forEach(k=>k.work.forEach((w,j)=>{if(graded(w)&&w.g===0&&w.c==='strong')sureWrong.push(k.name+' ('+D.acts[j].code+')')}));
+ const waiting=D.kids.reduce((n,k)=>n+k.work.filter(w=>w&&w.g==='w').length,0);
+ const ins=[
+  ['🎯','#fde7e7',`Reteach TEKS ${weakest.code}: ${WORD[weakest.code].toLowerCase()}`,`${weakest.c[0]} students are at Not yet and ${weakest.c[1]} at Almost. That's the most in the class. Not yet: ${notYetNames.join(', ')}.`,['Make a reteach group','Assign practice']],
+  ['↘','#fde7e7',`${slipping.length} slipping, ${improving.length} improving`,`Slipping over the last two weeks: ${slipping.join(', ')||'no one'}. Improving: ${improving.join(', ')||'no one'}.`,['Check in with them','Send a shout-out to the improvers']],
+  ['😕','#efe8fc',`${sureWrong.length} "very sure, but Not yet" answers`,`These students were sure they were right, and weren't. That usually means a wrong idea, not a gap: ${sureWrong.slice(0,6).join(', ')}${sureWrong.length>6?'…':''}.`,['See the Sure vs. right tab']],
+  ['📭','#fdf3d6',`${missing.length} students have missing work`,missing.slice(0,6).map(x=>`${x.n} (${x.m})`).join(', ')+'.',['Send reminders']],
+  ['⏳','#efe8fc',`${waiting} pieces of work waiting for you`,`Grading these will update this page.`,['Open the review list']],
+ ];
+ return `<div class="grid g3">${tiles}</div>
+ <div class="grid g2" style="margin-top:14px"><div class="panel"><h2>What to do this week</h2><p class="muted">Worked out from the grades. Each one has the next step ready.</p>${ins.map(([ic,bg,t,p,acts])=>`<div class="insight"><div class="icon" style="background:${bg}">${ic}</div><div><h3>${t}</h3><p>${p}</p><div class="row">${acts.map((a,i)=>`<button class="btn small ${i?'':'primary'}">${a}</button>`).join('')}</div></div></div>`).join('')}</div>
+ <div class="grid" style="align-content:start"><div class="panel"><h2>Is the class getting it?</h2><p class="muted">Share of graded work at Got it and at Not yet, week by week.</p>${lineChart()}</div>
+ <div class="panel"><h2>Standards at a glance</h2><p class="muted">Weakest first. Full detail in the Standards tab.</p>${STDS.map(code=>({code,...stdStats(code)})).sort((a,b)=>(b.c[0]*2+b.c[1])-(a.c[0]*2+a.c[1])).map(s=>`<div class="row" style="margin:9px 0;flex-wrap:nowrap"><b style="width:52px;font-size:12px">${s.code}</b><div style="flex:1">${s.c[0]+s.c[1]+s.c[2]?bar(s.c):'<span class="muted" style="font-size:12px">Not graded yet</span>'}</div></div>`).join('')}<div class="legend"><span><i style="background:#1f8a4d"></i>Got it</span><span><i style="background:#e0a800"></i>Almost</span><span><i style="background:#d64545"></i>Not yet</span></div></div></div></div>`}
+function standards(){
+ const rows=STDS.map(code=>{const s=stdStats(code);const early=lvl(D.kids.flatMap(k=>s.ids.filter(j=>D.acts[j].wk>=2).map(j=>k.work[j]).filter(graded).map(w=>w.g)));return {code,...s}}).sort((a,b)=>(b.c[0]*2+b.c[1])-(a.c[0]*2+a.c[1]));
+ const gaps={Math:["4.2B place value","4.2G decimals on a number line","4.4D multiply","4.4F divide","4.5D perimeter and area","4.6D classify shapes","4.7C measure angles","4.8C measurement problems","4.9A dot plots"],Science:["4.6A properties of matter","4.6B mixtures","4.7A forces","4.9A seasons","4.10A water cycle","4.11A resources","4.12A producers","4.12B food webs","4.13A plant structures"]};
+ return `<div class="panel"><h2>Where the class is on each standard</h2><p class="muted">Each student's level on a standard comes from every activity for it. Weakest first.</p>
+ <div class="std" style="font-size:11px;color:#514369;font-weight:600;padding-top:0"><span>Standard</span><span>Class</span><span>Assessed</span><span>Waiting</span><span></span></div>
+ ${rows.map(s=>`<div class="std"><div><span class="code">TEKS ${s.code}</span> <span class="pill ${SUBJ[s.code]==='Math'?'flat':'flat'}">${SUBJ[s.code]}</span><div class="muted">${WORD[s.code]}</div></div><div>${bar(s.c)}<div class="muted" style="margin-top:4px">${s.c[2]} got it · ${s.c[1]} almost · ${s.c[0]} not yet</div></div><div class="muted">${s.c[0]+s.c[1]+s.c[2]} of 18 · ${s.ids.length} ${s.ids.length>1?'activities':'activity'}</div><div class="muted">${s.waiting?s.waiting+' to grade':'—'}</div><div class="row"><button class="btn small primary">Small groups</button><button class="btn small">Assign</button></div></div>`).join('')}
+ <div class="legend"><span><i style="background:#1f8a4d"></i>Got it</span><span><i style="background:#e0a800"></i>Almost</span><span><i style="background:#d64545"></i>Not yet</span></div></div>
+ <div class="grid" style="grid-template-columns:1fr 1fr;margin-top:14px">${Object.entries(gaps).map(([sub,l])=>`<div class="panel"><h2>Not taught yet · Grade 4 ${sub}</h2><p class="muted">Standards with no activity assigned to this class so far. Click one to find activities for it.</p><div class="gap">${l.map(x=>`<span>${x}</span>`).join('')}</div></div>`).join('')}</div>`}
+function students(){
+ const rows=D.kids.map(k=>{const now=levelNow(k);const byStd=STDS.map(code=>{const s=stdStats(code);return {code,l:s.per[D.kids.indexOf(k)]}}).filter(x=>x.l!=null);const best=[...byStd].sort((a,b)=>b.l-a.l)[0],worst=[...byStd].sort((a,b)=>a.l-b.l)[0];const miss=k.work.filter((w,j)=>!w&&D.acts[j].wk>0).length;const sw=k.work.filter(w=>graded(w)&&w.g===0&&w.c==='strong').length;return {k,now,t:trend(k),best,worst,miss,sw}}).sort((a,b)=>(a.now??3)-(b.now??3));
+ return `<div class="panel"><h2>Every student, needs-help first</h2><p class="muted">The dots are each graded activity in order, so you can see the direction, not just the average.</p><div style="overflow:auto"><table><thead><tr><th>Student</th><th>Now</th><th>Last 4 weeks</th><th>Direction</th><th>Strongest</th><th>Weakest</th><th>Missing</th><th>Sure but Not yet</th></tr></thead><tbody>
+ ${rows.map(r=>`<tr><td class="name">${r.k.name}<div class="muted" style="font-weight:400;font-size:11px">${r.k.blurb}</div></td><td>${r.now==null?'—':`<span class="chip k${r.now}">${LV[r.now]}</span>`}</td><td>${spark(r.k)}</td><td><span class="pill ${r.t}">${TREND[r.t]}</span></td><td>${r.best?`${r.best.code} <span class="chip k${r.best.l}">${r.best.l}</span>`:'—'}</td><td>${r.worst&&r.worst.l<2?`${r.worst.code} <span class="chip k${r.worst.l}">${r.worst.l}</span>`:'—'}</td><td>${r.miss?`<b style="color:#c93c3c">${r.miss}</b>`:'—'}</td><td>${r.sw?`<b style="color:#6a3fc6">${r.sw}</b>`:'—'}</td></tr>`).join('')}
+ </tbody></table></div></div>`}
+function confidence(){
+ const cells={};['strong','solid','shaky'].forEach(c=>[2,1,0].forEach(g=>cells[c+g]=[]));
+ D.kids.forEach(k=>k.work.forEach((w,j)=>{if(graded(w))cells[w.c+w.g].push(k.name)}));
+ const lab={strong:'😄 Very sure',solid:'🙂 Pretty sure',shaky:'😕 Not sure'};
+ const uniq=a=>[...new Set(a)];
+ return `<div class="grid g2"><div class="panel"><h2>How sure were they, and were they right?</h2><p class="muted">Every graded piece of work, placed by what the student said before turning it in and the grade you gave it.</p>
+ <div class="conf" style="margin-top:12px"><div></div>${[2,1,0].map(g=>`<div class="h" style="justify-content:center"><span class="chip k${g}">${LV[g]}</span></div>`).join('')}
+ ${['strong','solid','shaky'].map(c=>`<div class="h">${lab[c]}</div>${[2,1,0].map(g=>{const l=cells[c+g];const cls=(c==='strong'&&g===0)?'hot':(c==='shaky'&&g===2)?'warm':'';return `<div class="c ${cls}" data-tip="${lab[c]} · ${LV[g]}: ${l.length}"><b>${l.length}</b>${cls?`<div class="names">${uniq(l).join(', ')||'—'}</div>`:''}</div>`}).join('')}`).join('')}</div></div>
+ <div class="grid" style="align-content:start"><div class="panel" style="border-color:#f3c4c4"><h3 style="color:#c93c3c">Very sure, but Not yet</h3><p class="muted">The most important box. These students believe something that isn't right. Reteach the idea, not just the steps.</p><button class="btn small primary">Make a group from these</button></div>
+ <div class="panel" style="border-color:#d9c9f5"><h3 style="color:#6a3fc6">Not sure, but Got it</h3><p class="muted">They know more than they think. A quick "you had this" goes a long way.</p><button class="btn small">Send a shout-out</button></div></div></div>`}
+const TABS=[['snap','Snapshot','What needs me this week?',snapshot],['std','Standards','Where is the class on each TEKS?',standards],['kids','Students','Who is growing, who is slipping?',students],['conf','Sure vs. right','Who believes something wrong?',confidence]];
+let tab='snap';
+function render(){$('#tabs').innerHTML=TABS.map(([k,l,s])=>`<button aria-pressed="${tab===k}" data-k="${k}">${l}<small>${s}</small></button>`).join('');$('#view').innerHTML=TABS.find(t=>t[0]===tab)[3]()+why();document.querySelectorAll('#tabs button').forEach(b=>b.onclick=()=>{tab=b.dataset.k;render()})}
+function why(){const W={snap:[['Starts with what to do','Not a list of activities: the page tells you who to reteach, who is slipping and what is missing, with the button to act.'],['Shows change','Tiles compare to two weeks ago, and the line shows whether the class is getting it week by week.'],['One page, four questions','The old Standards, Curriculum and class reports become tabs here, so nothing hides behind a link.']],std:[['By TEKS, not by activity','Two activities on the same standard count together, like the gradebook By standard view.'],['Coverage gaps','"Not taught yet" lists the grade-level standards no activity has touched, for planning.'],['Straight to groups','Small groups opens the same Reteach / Practice / Extend split as the gradebook.']],kids:[['Direction, not just average','The dots show each grade in order, so Luis improving and Aiden slipping look different even if their averages match.'],['Strongest and weakest','One glance at where to push each student.'],['Flags that matter','Missing work and "sure but Not yet" have their own columns.']],conf:[['Uses what students already tell you','Every submit already asks how sure they are. This is the first place that answer is used across the class.'],['Finds wrong ideas','"Very sure, Not yet" is a misconception, not a gap: it needs a different reteach.'],['Finds hidden confidence gaps','"Not sure, Got it" students need encouragement more than practice.']]}[tab];return `<div class="why">${W.map(([b,t])=>`<div><b>${b}</b>${t}</div>`).join('')}</div>`}
+render();
+document.addEventListener('mousemove',e=>{const c=e.target.closest('[data-tip]');const t=$('#tip');if(c){t.innerHTML=c.dataset.tip;t.style.display='block';t.style.left=Math.min(e.clientX+14,innerWidth-270)+'px';t.style.top=(e.clientY+14)+'px'}else t.style.display='none'});
+</script></body></html>

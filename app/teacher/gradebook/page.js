@@ -176,6 +176,7 @@ function GridView({ book, order, filter, onOpen }) {
 
 function StandardView({ book, order, openStd, setOpenStd, onOpen, onGroups }) {
   const colMap = Object.fromEntries(book.columns.map((c) => [c.id, c]));
+  const multiSubject = new Set(book.standards.map((s) => s.subject).filter(Boolean)).size > 1;
   return (
     <div className="gb-scroll">
       <table className="gb-table">
@@ -183,15 +184,16 @@ function StandardView({ book, order, openStd, setOpenStd, onOpen, onGroups }) {
           <tr>
             <th className="gb-name">Student</th>
             {book.standards.map((std) => {
-              const open = openStd === std.code;
+              const open = openStd === std.key;
               return (
-                <React.Fragment key={std.code}>
-                  <th className={`gb-std${open ? " gb-open" : ""}`} onClick={() => setOpenStd(open ? null : std.code)} title={std.wording || std.topic}>
+                <React.Fragment key={std.key}>
+                  <th className={`gb-std${open ? " gb-open" : ""}`} onClick={() => setOpenStd(open ? null : std.key)} title={std.wording || std.topic}>
                     <div className="gb-col wide">
                       <b>{std.code === "Other" ? "Other" : `TEKS ${std.code}`}</b>
+                      {multiSubject && std.subject && <i>{std.subject}</i>}
                       <i>{std.topic}</i>
                       <i>{std.columnIds.length} {std.columnIds.length === 1 ? "activity" : "activities"} <span className="gb-caret">{open ? "▲" : "▼"}</span></i>
-                      {std.code !== "Other" && <span role="button" tabIndex={0} className="gb-mini-link" onClick={(e) => { e.stopPropagation(); onGroups(std.code); }} onKeyDown={(e) => { if (e.key === "Enter") { e.stopPropagation(); onGroups(std.code); } }}>Groups</span>}
+                      {std.key !== "Other" && <span role="button" tabIndex={0} className="gb-mini-link" onClick={(e) => { e.stopPropagation(); onGroups(std.key); }} onKeyDown={(e) => { if (e.key === "Enter") { e.stopPropagation(); onGroups(std.key); } }}>Groups</span>}
                     </div>
                   </th>
                   {open && std.columnIds.map((id) => (
@@ -210,7 +212,7 @@ function StandardView({ book, order, openStd, setOpenStd, onOpen, onGroups }) {
             <tr key={student.id}>
               <td className="gb-name"><a href="#" onClick={(e) => { e.preventDefault(); onOpen({ studentId: student.id }); }}>{student.first_name}</a></td>
               {book.standards.map((std) => {
-                const open = openStd === std.code;
+                const open = openStd === std.key;
                 const st = studentStats(book, student.id, std.columnIds);
                 const detail = std.columnIds.map((id) => `${colMap[id].title}: ${cellWord(book.cells[student.id]?.[id], colMap[id].engine)}`).join("\n");
                 let main;
@@ -220,7 +222,7 @@ function StandardView({ book, order, openStd, setOpenStd, onOpen, onGroups }) {
                 else if (st.assigned === 0) main = <span className="gb-chip kn">–</span>;
                 else main = <span className={`gb-chip km${st.pastDue ? " late" : ""}`}>{st.pastDue ? "!" : "·"}</span>;
                 return (
-                  <React.Fragment key={std.code}>
+                  <React.Fragment key={std.key}>
                     <td className={open ? "gb-open" : ""} title={`${student.first_name}\n${detail}`}>
                       {main}
                       {st.level != null && st.missing > 0 && <div className="gb-flag">{st.missing} missing</div>}
@@ -291,6 +293,7 @@ function GroupsPanel({ book, classId, code, setCode, onClose }) {
     const ids = picked(group).map((s) => s.id).join(",");
     const params = new URLSearchParams({ classId });
     if (data.code) params.set("standard", data.code);
+    if (data.subject) params.set("subject", data.subject);
     params.set("students", ids);
     return `/teacher/assign/new?${params.toString()}`;
   }
@@ -308,7 +311,7 @@ function GroupsPanel({ book, classId, code, setCode, onClose }) {
         <div className="gb-row">
           <select aria-label="Group by" value={code || ""} onChange={(e) => setCode(e.target.value || null)}>
             <option value="">All work in this book</option>
-            {book.standards.filter((s) => s.code !== "Other").map((s) => <option key={s.code} value={s.code}>TEKS {s.code} · {s.topic}</option>)}
+            {book.standards.filter((s) => s.key !== "Other").map((s) => <option key={s.key} value={s.key}>TEKS {s.code}{s.subject ? ` (${s.subject})` : ""} · {s.topic}</option>)}
           </select>
           <button type="button" className="cc-btn secondary" onClick={onClose}>Close</button>
         </div>
@@ -415,7 +418,14 @@ export default function GradebookPage() {
   const [menu, setMenu] = useState(false);
   const [groups, setGroups] = useState(null); // { code } when the small-groups panel is open
 
-  useEffect(() => { setView(readView()); }, []);
+  // ?view=standard&groups=<subject|code> comes from Reports ("Small groups" on a standard).
+  const urlGroups = React.useRef(null);
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const asked = params.get("view");
+    if (VIEWS.some(([key]) => key === asked)) setView(asked); else setView(readView());
+    urlGroups.current = params.get("groups");
+  }, []);
 
   const load = useCallback(async (teacherId) => {
     setLoading(true);
@@ -466,6 +476,12 @@ export default function GradebookPage() {
   }, [router, load]);
 
   const book = useMemo(() => buildGradebook({ classId, periodKey: period, ...data }), [classId, period, data]);
+  useEffect(() => {
+    if (!urlGroups.current || !book.standards.length) return;
+    const key = urlGroups.current;
+    urlGroups.current = null;
+    if (book.standards.some((s) => s.key === key)) setGroups({ code: key });
+  }, [book]);
   const order = useMemo(() => sortStudents(book, sort), [book, sort]);
   const totals = useMemo(() => bookTotals(book), [book]);
   const current = data.classes.find((c) => c.id === classId) || null;
