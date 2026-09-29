@@ -38,6 +38,24 @@ export default function MakerDrawPad({
   const [tool, setTool] = useState("pen");
   const [hasInk, setHasInk] = useState(!!initialImage);
   const restored = useRef(false);
+  const history = useRef([]);
+  const [undoCount, setUndoCount] = useState(0);
+  const [color, setColor] = useState("#3a2a7a");
+  function remember() {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    history.current.push({ pixels: canvas.getContext("2d").getImageData(0, 0, canvas.width, canvas.height), hasInk });
+    if (history.current.length > 15) history.current.shift();
+    setUndoCount(history.current.length);
+  }
+  function undo() {
+    if (disabled || !history.current.length) return;
+    const previous = history.current.pop();
+    canvasRef.current.getContext("2d").putImageData(previous.pixels, 0, 0);
+    setHasInk(previous.hasInk);
+    setUndoCount(history.current.length);
+    if (previous.hasInk) emit(); else onChange?.(null);
+  }
   const cfg = surfaceConfig(surface);
 
   useEffect(() => {
@@ -85,6 +103,7 @@ export default function MakerDrawPad({
   function start(e) {
     if (disabled) return;
     e.preventDefault();
+    remember();
     drawing.current = true;
     last.current = pos(e);
   }
@@ -95,7 +114,7 @@ export default function MakerDrawPad({
     const canvas = canvasRef.current;
     const ctx = canvas.getContext("2d");
     const p = pos(e);
-    const stroke = surfaceConfig(surface).stroke;
+    const stroke = color;
     const fill = surfaceConfig(surface).fill;
     ctx.lineCap = "round";
     ctx.lineJoin = "round";
@@ -131,6 +150,7 @@ export default function MakerDrawPad({
 
   function clearAll() {
     if (disabled) return;
+    remember();
     const canvas = canvasRef.current;
     const ctx = canvas.getContext("2d");
     const rect = canvas.getBoundingClientRect();
@@ -143,6 +163,7 @@ export default function MakerDrawPad({
 
   function stampLabel(text) {
     if (disabled || !text) return;
+    remember();
     const canvas = canvasRef.current;
     const ctx = canvas.getContext("2d");
     const rect = canvas.getBoundingClientRect();
@@ -178,6 +199,8 @@ export default function MakerDrawPad({
         <button type="button" className="mk-tool" disabled={disabled} onClick={clearAll}>
           Clear
         </button>
+        <button type="button" className="mk-tool" disabled={disabled || !undoCount} onClick={undo}>Undo</button>
+        <label className="mk-pen-color">Ink <input aria-label="Drawing color" type="color" value={color} disabled={disabled} onChange={e => setColor(e.target.value)} /></label>
         <span className="mk-quiet" style={{ marginLeft: "auto", fontSize: 12 }}>
           {hasInk ? "Drawing saved as you go" : "Draw here"}
         </span>

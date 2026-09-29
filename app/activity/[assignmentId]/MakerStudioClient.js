@@ -2,14 +2,14 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import BackToHubButton from "../../../components/BackToHubButton";
-import SamGuide from "../../../components/SamGuide";
+import MakerStudioFrame, { MakerModeIcon } from "./MakerStudioFrame";
 import { MAKER_MODES } from "../../../lib/cases/maker-studio/modes";
 import MakerDrawPad from "./MakerDrawPad";
 import LibraryPicker from "../../../components/maker/LibraryPicker";
 import SubmitReflection from "../../../components/submit/SubmitReflection";
 import { ACTIVITY_CHECKS } from "../../../lib/selfCheckLists";
 import "./maker-studio.css";
+import "./maker-studio-lab.css";
 
 const VOICE_CAP_SEC = 90;
 const DIAGRAM_CHIPS = ["Part", "Step 1", "Step 2", "Cause", "Effect", "Result"];
@@ -423,6 +423,8 @@ export default function MakerStudioClient({
   revisionFeedback,
   samSkin,
   samNickname,
+  previewMode = false,
+  previewLibrary = null,
 }) {
   const router = useRouter();
   const config = configProp || (publicCase && publicCase.config) || {
@@ -470,6 +472,14 @@ export default function MakerStudioClient({
   const [aiNote, setAiNote] = useState(null);
   const [recording, setRecording] = useState(false);
   const [recordSec, setRecordSec] = useState(0);
+  const [tool, setTool] = useState("pictures");
+  const [micPending, setMicPending] = useState(false);
+  const [processingVoice, setProcessingVoice] = useState(false);
+  const editorRef = useRef(null);
+  const saveQueue = useRef(Promise.resolve());
+  const editVersion = useRef(0);
+  const allowLeave = useRef(false);
+  const submitLock = useRef(false);
   const autosaveTimer = useRef(null);
   const dirty = useRef(false);
   const mediaRec = useRef(null);
@@ -481,27 +491,23 @@ export default function MakerStudioClient({
   const doneCount = useMemo(() => countDone(modes, enabled), [modes, enabled]);
   const canSubmit = doneCount >= finishN && !submitted;
 
-  const persist = useCallback(
-    async (kind, nextModes, reflection) => {
+  const persist = useCallback((kind, nextModes, reflection) => {
+    const request = saveQueue.current.then(async () => {
       setBusy(true);
       try {
+        if (previewMode) return { ok: true };
         const response = await fetch("/api/maker-studio/submit", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            assignmentId,
-            kind,
-            modes: nextModes,
-            ...(reflection || {}),
-          }),
+          method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ assignmentId, kind, modes: nextModes, ...(reflection || {}) }),
         });
-        return await response.json().catch(() => ({}));
-      } finally {
-        setBusy(false);
-      }
-    },
-    [assignmentId]
-  );
+        const data = await response.json().catch(() => ({}));
+        return response.ok && data.ok ? data : { ...data, ok: false, error: data.error || data.message || "Could not save. Try again." };
+      } catch (_) { return { ok: false, error: "Could not save. Check your connection and try again." }; }
+      finally { setBusy(false); }
+    });
+    saveQueue.current = request.catch(() => {});
+    return request;
+  }, [assignmentId, previewMode]);
 
   // Autosave while editing a mode
   useEffect(() => {
@@ -516,11 +522,9 @@ export default function MakerStudioClient({
         [activeMode]: buildSlot(activeMode, draft, statusNext),
       };
       setModes(nextModes);
-      const data = await fetch("/api/maker-studio/submit", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ assignmentId, kind: "save", modes: nextModes }),
-      }).then((r) => r.json().catch(() => ({})));
+      const version = editVersion.current;
+      const data = await persist("save", nextModes);
+      if (version !== editVersion.current) return;
       if (data && data.ok) {
         dirty.current = false;
         setSaveState("saved");
@@ -531,7 +535,7 @@ export default function MakerStudioClient({
     return () => {
       if (autosaveTimer.current) clearTimeout(autosaveTimer.current);
     };
-  }, [draft, activeMode, view, submitted, assignmentId, modes]);
+  }, [draft, activeMode, view, submitted, assignmentId, modes, persist]);
 
   useEffect(() => {
     return () => {
@@ -559,7 +563,9 @@ export default function MakerStudioClient({
   }
 
   function openMode(id) {
-    if (submitted) return;
+    if (submitted || recording || micPending || processingVoice || aiBusy) return;
+    setLibraryPicker(null);
+    setTool("pictures");
     const meta = modesMeta.find((m) => m.id === id);
     const isEnabled = enabled.includes(id);
     const isLive = (meta && meta.available) || LIVE_MODE_IDS.has(id);
@@ -699,20 +705,25 @@ export default function MakerStudioClient({
   }
 
   function patchDraft(patch) {
+    setSaveState("saving");
     dirty.current = true;
+    editVersion.current += 1;
     setDraft((prev) => ({ ...(prev || {}), ...patch }));
   }
 
   async function saveModeDraft(andBack) {
-    if (!activeMode || !draft) return;
-    const statusNext = modeHasContent(activeMode, draft) ? "in_progress" : "empty";
+    if (!activeMode || !draft || recording || micPending || processingVoice || aiBusy) return false;
+    if (autosaveTimer.current) clearTimeout(autosaveTimer.current);
+    const statusNext = !dirty.current && modes[activeMode]?.status === "done" ? "done" : modeHasContent(activeMode, draft) ? "in_progress" : "empty";
     const nextModes = {
       ...modes,
       [activeMode]: buildSlot(activeMode, draft, statusNext),
     };
     setModes(nextModes);
+    const data = await persist("save", nextModes);
+    if (!data.ok) { setSaveState("error"); setStatus(data.error); return false; }
     dirty.current = false;
-    await persist("save", nextModes);
+    setSaveState("saved");
     if (andBack) {
       setView("main");
       setActiveMode(null);
@@ -723,10 +734,12 @@ export default function MakerStudioClient({
           : "Back to your studio."
       );
     }
+    return true;
   }
 
   async function markModeDone() {
-    if (!activeMode || !draft) return;
+    if (!activeMode || !draft || busy || recording || micPending || processingVoice || aiBusy) return;
+    if (autosaveTimer.current) clearTimeout(autosaveTimer.current);
     if (!modeReadyForDone(activeMode, draft)) {
       setStatus(doneBlockMessage(activeMode));
       return;
@@ -737,13 +750,13 @@ export default function MakerStudioClient({
       ...modes,
       [activeMode]: buildSlot(activeMode, draft, "done"),
     };
-    setModes(nextModes);
-    dirty.current = false;
     const data = await persist("save", nextModes);
     if (data && data.ok === false) {
       setStatus(data.message || "Could not save. Try again.");
       return;
     }
+    setModes(nextModes);
+    dirty.current = false;
     const label =
       (modesMeta.find((m) => m.id === activeMode) || {}).label || activeMode;
     setView("main");
@@ -784,8 +797,11 @@ export default function MakerStudioClient({
   }
 
   async function finishReflection(reflection) {
+    if (submitLock.current || busy || submitted || !canSubmit) return;
+    submitLock.current = true;
     const data = await persist("turnin", modes, reflection);
-    if (data && data.need) {
+    if (!data?.ok || data.need) {
+      submitLock.current = false;
       setStatus(data.error || data.message || "Finish a few more pieces first.");
       return;
     }
@@ -800,8 +816,11 @@ export default function MakerStudioClient({
   }
 
   async function startRecording() {
+    if (micPending || recording || processingVoice || busy) return;
+    setMicPending(true);
     setVoiceError(null);
     if (typeof window === "undefined" || !navigator.mediaDevices || !window.MediaRecorder) {
+      setMicPending(false);
       setVoiceError("This device cannot record audio in the browser.");
       return;
     }
@@ -823,15 +842,18 @@ export default function MakerStudioClient({
         if (ev.data && ev.data.size) recordChunks.current.push(ev.data);
       };
       rec.onstop = async () => {
+        setProcessingVoice(true);
         const blob = new Blob(recordChunks.current, { type: rec.mimeType || "audio/webm" });
         const reader = new FileReader();
-        reader.onloadend = () => {
+        reader.onload = () => {
+          setProcessingVoice(false);
           const dataUrl = typeof reader.result === "string" ? reader.result : null;
           const durationSec = Math.min(
             VOICE_CAP_SEC,
             Math.max(1, Math.round((Date.now() - recordStartedAt.current) / 1000))
           );
           dirty.current = true;
+    editVersion.current += 1;
           setDraft((prev) => ({
             ...(prev || {}),
             audioDataUrl: dataUrl,
@@ -839,6 +861,7 @@ export default function MakerStudioClient({
             durationSec,
           }));
         };
+        reader.onerror = () => { setProcessingVoice(false); setVoiceError("Could not read this recording. Try again."); };
         reader.readAsDataURL(blob);
         if (mediaStream.current) {
           mediaStream.current.getTracks().forEach((t) => t.stop());
@@ -846,6 +869,7 @@ export default function MakerStudioClient({
         }
       };
       rec.start(250);
+      setMicPending(false);
       setRecording(true);
       setRecordSec(0);
       if (recordTimer.current) clearInterval(recordTimer.current);
@@ -857,6 +881,7 @@ export default function MakerStudioClient({
         }
       }, 250);
     } catch (err) {
+      setMicPending(false);
       setVoiceError(
         "Microphone access was denied or unavailable. Allow the mic, or try another device."
       );
@@ -893,6 +918,7 @@ export default function MakerStudioClient({
     reader.onloadend = () => {
       if (typeof reader.result === "string") {
         dirty.current = true;
+    editVersion.current += 1;
         setDraft((prev) => ({ ...(prev || {}), imageDataUrl: reader.result }));
       }
     };
@@ -901,6 +927,7 @@ export default function MakerStudioClient({
 
 
   async function askBuddy() {
+    if (previewMode) { setAiNote("AI generation is available in assigned activities. This design preview does not call AI services; you can still type, draw, and use the picture library."); return; }
     if (!draft || aiBusy) return;
     const explanation = (draft.explanation || "").trim();
     if (!explanation) {
@@ -931,6 +958,7 @@ export default function MakerStudioClient({
         answer: keptAnswers[i] || "",
       }));
       dirty.current = true;
+    editVersion.current += 1;
       setDraft((prev) => ({
         ...(prev || {}),
         questions: nextQs,
@@ -944,6 +972,7 @@ export default function MakerStudioClient({
       );
     } catch (_) {
       dirty.current = true;
+    editVersion.current += 1;
       setDraft((prev) => ({
         ...(prev || {}),
         questions: emptyBuddyQuestions(BUDDY_FALLBACK_QUESTIONS),
@@ -957,6 +986,7 @@ export default function MakerStudioClient({
   }
 
   async function generatePaintImage({ regenerate } = {}) {
+    if (previewMode) { setAiNote("AI is off in this design preview. You can still type, draw, and choose library pictures."); return; }
     if (!draft || aiBusy) return;
     const promptText = (draft.promptText || "").trim();
     if (!promptText) {
@@ -983,6 +1013,7 @@ export default function MakerStudioClient({
       const data = await res.json().catch(() => ({}));
       if (data.ok && data.imageDataUrl) {
         dirty.current = true;
+    editVersion.current += 1;
         setDraft((prev) => ({
           ...(prev || {}),
           imageDataUrl: data.imageDataUrl,
@@ -1010,6 +1041,7 @@ export default function MakerStudioClient({
   }
 
   async function runWhatIfBeats() {
+    if (previewMode) { setAiNote("AI is off in this design preview. You can still type, draw, and choose library pictures."); return; }
     if (!draft || aiBusy) return;
     const twist = (draft.twist || "").trim();
     if (!twist) {
@@ -1039,6 +1071,7 @@ export default function MakerStudioClient({
               "Then, think about one new problem or surprise that shows up.",
             ];
       dirty.current = true;
+    editVersion.current += 1;
       setDraft((prev) => ({
         ...(prev || {}),
         beats,
@@ -1052,6 +1085,7 @@ export default function MakerStudioClient({
       );
     } catch (_) {
       dirty.current = true;
+    editVersion.current += 1;
       setDraft((prev) => ({
         ...(prev || {}),
         beats: [
@@ -1068,6 +1102,7 @@ export default function MakerStudioClient({
   }
 
   async function generatePostcardImage() {
+    if (previewMode) { setAiNote("AI generation is available in assigned activities. This design preview does not call AI services; you can still type, draw, and use the picture library."); return; }
     if (!draft || aiBusy) return;
     const message = (draft.message || "").trim();
     const desc =
@@ -1089,6 +1124,7 @@ export default function MakerStudioClient({
       const data = await res.json().catch(() => ({}));
       if (data.ok && data.imageDataUrl) {
         dirty.current = true;
+    editVersion.current += 1;
         setDraft((prev) => ({
           ...(prev || {}),
           imageDataUrl: data.imageDataUrl,
@@ -1110,20 +1146,21 @@ export default function MakerStudioClient({
     }
   }
 
-  function placeLibraryImage(item) {
-    if (!item || !item.url || !libraryPicker) return;
+  function placeLibraryImage(item, target = libraryPicker) {
+    if (!item || !item.url || !target || navigationBusy) return;
     dirty.current = true;
+    editVersion.current += 1;
     const url = item.url;
-    if (libraryPicker.kind === "comic") {
-      const idx = libraryPicker.index;
+    if (target.kind === "comic") {
+      const idx = target.index;
       setDraft((prev) => {
         const panels = ((prev && prev.panels) || []).map((p, i) =>
           i === idx ? { ...p, imageDataUrl: url } : p
         );
         return { ...(prev || {}), panels };
       });
-    } else if (libraryPicker.kind === "before" || libraryPicker.kind === "after") {
-      const side = libraryPicker.kind;
+    } else if (target.kind === "before" || target.kind === "after") {
+      const side = target.kind;
       setDraft((prev) => ({
         ...(prev || {}),
         [side]: { imageDataUrl: url },
@@ -1138,7 +1175,7 @@ export default function MakerStudioClient({
             : (prev && prev.imageSource) || null,
       }));
     }
-    setLibraryPicker(null);
+    setLibraryPicker(target);
     setStatus("Picture placed from the library.");
   }
 
@@ -1154,6 +1191,7 @@ export default function MakerStudioClient({
     const x = ((e.clientX - rect.left) / Math.max(1, rect.width)) * 100;
     const y = ((e.clientY - rect.top) / Math.max(1, rect.height)) * 100;
     dirty.current = true;
+    editVersion.current += 1;
     setDraft((prev) => ({
       ...(prev || {}),
       pins: [
@@ -1165,13 +1203,46 @@ export default function MakerStudioClient({
     setStatus("Pin placed — edit its label below.");
   }
 
+  const navigationBusy = busy || aiBusy || recording || micPending || processingVoice;
+  useEffect(() => {
+    const warn = event => { if (!allowLeave.current && (dirty.current || navigationBusy)) { event.preventDefault(); event.returnValue = ""; } };
+    window.addEventListener("beforeunload", warn);
+    return () => window.removeEventListener("beforeunload", warn);
+  }, [navigationBusy]);
+  async function switchMode(id) {
+    if (navigationBusy || id === activeMode) return;
+    if (view === "mode" && !(await saveModeDraft(false))) return;
+    openMode(id);
+  }
+  async function leaveStudio(event) {
+    event.preventDefault();
+    if (navigationBusy) return;
+    if (view === "mode" && !(await saveModeDraft(false))) return;
+    allowLeave.current = true;
+    window.location.assign("/missions");
+  }
+  const imageKinds = { sketch: "sketch", diagram: "diagram", poster: "poster", comic: "comic", before_after: "before", map_it: "map", math_story: "math", paint_what_i_said: "paint", postcard: "postcard" };
+  const hasPictures = !!imageKinds[activeMode];
+  const pictureTarget = libraryPicker || { kind: imageKinds[activeMode], ...(activeMode === "comic" ? { index: 0 } : {}) };
+  function selectTool(next) {
+    setTool(next === "text" ? "tools" : next);
+    if (next === "text") editorRef.current?.querySelector("textarea, input:not([type=file])")?.focus();
+  }
+  const library = hasPictures ? <>
+    {activeMode === "comic" || activeMode === "before_after" ? <label className="mk-picture-target">Place picture in
+      <select value={activeMode === "comic" ? pictureTarget.index || 0 : pictureTarget.kind} onChange={event => setLibraryPicker(activeMode === "comic" ? { kind: "comic", index: Number(event.target.value) } : { kind: event.target.value })}>
+        {activeMode === "comic" ? (draft?.panels || []).map((_, i) => <option key={i} value={i}>Panel {i + 1}</option>) : <><option value="before">Before</option><option value="after">After</option></>}
+      </select></label> : null}
+    <LibraryPicker open inline title="Pictures" disabled={navigationBusy} previewItems={previewLibrary} onClose={() => setTool("tools")} onSelect={item => placeLibraryImage(item, pictureTarget)} />
+  </> : null;
   const title = (publicCase && publicCase.title) || "Maker Studio";
   const topicLine = config.topic ? config.topic : null;
 
+  const frameProps = { title: topicLine || title, prompt: config.prompt, modes: visibleModes, savedModes: modes, activeMode: view === "mode" ? activeMode : null, doneCount, busy: navigationBusy || submitted, onMode: switchMode, onHome: () => saveModeDraft(true), onLeave: leaveStudio, library, hasPictures, tool, onTool: selectTool, status, previewMode };
+
   if (view === "done" || submitted) {
     return (
-      <div className="mk-page" data-mode="done">
-        <BackToHubButton />
+      <MakerStudioFrame {...frameProps}>
         <div className="mk-shell">
           <div className="mk-top">
             <div>
@@ -1196,16 +1267,9 @@ export default function MakerStudioClient({
               </button>
             </div>
           </div>
-          <SamGuide
-            skinKey={samSkin}
-            alt={samNickname || "S.A.M."}
-            size={96}
-            anchors={{ home: { right: 16, bottom: 16 } }}
-            line={"Your teacher gets your pieces next. Proud of you."}
-            state={submitted || view === "done" ? "celebrating" : "helping"}
-          />
+
         </div>
-      </div>
+      </MakerStudioFrame>
     );
   }
 
@@ -1213,25 +1277,19 @@ export default function MakerStudioClient({
     const meta = modesMeta.find((m) => m.id === activeMode) || {};
     const sketchSurface = draft.canvasSurface === "light_table" ? "light_table" : "whiteboard";
     return (
-      <div className="mk-page" data-mode={activeMode}>
-        <BackToHubButton />
+      <MakerStudioFrame {...frameProps}>
         <div className="mk-shell">
           <div className="mk-top">
             <div>
               <p className="mk-kicker">{meta.label || activeMode}</p>
               <h1>Make your piece</h1>
             </div>
-            <button type="button" className="mk-ghost" onClick={() => saveModeDraft(true)} disabled={busy}>
-              Back to studio
+            <button type="button" className="mk-ghost" onClick={() => saveModeDraft(true)} disabled={navigationBusy}>
+              All pieces
             </button>
           </div>
 
-          <div className="mk-card">
-            <h2>Your prompt</h2>
-            <p>{config.prompt}</p>
-          </div>
-
-          <div className={`mk-panel mk-write mk-stage mk-stage-${activeMode}`}>
+          <div ref={editorRef} className={`mk-panel mk-write mk-stage mk-stage-${activeMode}`}>
             <h2>{meta.label || activeMode}</h2>
             <p className="mk-quiet">{meta.instructions || "Make your piece."}</p>
 
@@ -1274,7 +1332,7 @@ export default function MakerStudioClient({
                     type="button"
                     className="mk-next"
                     disabled={busy}
-                    onClick={() => setLibraryPicker({ kind: "sketch" })}
+                    onClick={() => { setTool("pictures"); setLibraryPicker({ kind: "sketch" }); }}
                   >
                     Pick from library
                   </button>
@@ -1312,7 +1370,7 @@ export default function MakerStudioClient({
                     type="button"
                     className="mk-next"
                     disabled={busy}
-                    onClick={() => setLibraryPicker({ kind: "diagram" })}
+                    onClick={() => { setTool("pictures"); setLibraryPicker({ kind: "diagram" }); }}
                   >
                     Pick from library
                   </button>
@@ -1356,83 +1414,16 @@ export default function MakerStudioClient({
             ) : null}
 
             {activeMode === "poster" ? (
-              <div className="mk-broadcast-frame">
+              <div className="mk-poster-composition">
+                <div className="mk-field"><label className="mk-sr-only" htmlFor="mk-poster-title">Poster title</label><input id="mk-poster-title" className="mk-input" value={draft.title || ""} onChange={e => patchDraft({ title:e.target.value })} placeholder="Your poster headline…" disabled={busy} maxLength={80} /></div>
                 <div className="mk-broadcast-preview">
-                  {isPlacedImage(draft.imageDataUrl) ? (
-                    <div className="mk-poster-preview">
-                      <img src={draft.imageDataUrl} alt="Poster artwork" />
-                    </div>
-                  ) : (
-                    <MakerDrawPad
-                      initialImage={null}
-                      onChange={(url) => patchDraft({ imageDataUrl: url })}
-                      disabled={busy}
-                      height={260}
-                    />
-                  )}
+                  {isLibraryPath(draft.imageDataUrl) ? <div className="mk-poster-preview"><img src={draft.imageDataUrl} alt="Poster artwork" /></div> : <MakerDrawPad initialImage={draft.imageDataUrl || null} onChange={url => patchDraft({ imageDataUrl:url })} disabled={busy} height={360} />}
                 </div>
-                <div className="mk-broadcast-controls">
-                  <div className="mk-field">
-                    <label htmlFor="mk-poster-title">Title</label>
-                    <input
-                      id="mk-poster-title"
-                      className="mk-input"
-                      value={draft.title || ""}
-                      onChange={(e) => patchDraft({ title: e.target.value })}
-                      placeholder="Big headline…"
-                      disabled={busy}
-                      maxLength={80}
-                    />
-                  </div>
-                  <div className="mk-field">
-                    <label htmlFor="mk-poster-cap">Caption</label>
-                    <input
-                      id="mk-poster-cap"
-                      className="mk-input"
-                      value={draft.caption || ""}
-                      onChange={(e) => patchDraft({ caption: e.target.value })}
-                      placeholder="One short line about the idea…"
-                      disabled={busy}
-                      maxLength={160}
-                    />
-                  </div>
-                  <div className="mk-field">
-                    <label>Picture — pick from library</label>
-                    <div className="mk-upload-row">
-                      <button
-                        type="button"
-                        className="mk-next"
-                        disabled={busy}
-                        onClick={() => setLibraryPicker({ kind: "poster" })}
-                      >
-                        Pick from library
-                      </button>
-                      <label className="mk-ghost mk-file-btn">
-                        Upload
-                        <input
-                          type="file"
-                          accept="image/*"
-                          hidden
-                          disabled={busy}
-                          onChange={(e) => {
-                            const f = e.target.files && e.target.files[0];
-                            onPosterUpload(f);
-                            e.target.value = "";
-                          }}
-                        />
-                      </label>
-                      {isPlacedImage(draft.imageDataUrl) ? (
-                        <button
-                          type="button"
-                          className="mk-ghost"
-                          disabled={busy}
-                          onClick={() => patchDraft({ imageDataUrl: null })}
-                        >
-                          Clear picture
-                        </button>
-                      ) : null}
-                    </div>
-                  </div>
+                <div className="mk-field"><label className="mk-sr-only" htmlFor="mk-poster-cap">Poster caption</label><input id="mk-poster-cap" className="mk-input" value={draft.caption || ""} onChange={e => patchDraft({caption:e.target.value})} placeholder="Add a caption about your idea…" disabled={busy} maxLength={160} /></div>
+                <div className="mk-upload-row">
+                  <button className="mk-ghost" disabled={busy} onClick={() => { setTool("pictures"); setLibraryPicker({kind:"poster"}); }}>Choose a picture</button>
+                  <label className="mk-ghost mk-file-btn">Upload<input type="file" accept="image/*" hidden disabled={busy} onChange={e => {onPosterUpload(e.target.files?.[0]);e.target.value="";}} /></label>
+                  {draft.imageDataUrl ? <button className="mk-ghost" disabled={busy} onClick={() => patchDraft({imageDataUrl:null})}>Clear picture / Draw</button> : null}
                 </div>
               </div>
             ) : null}
@@ -1472,7 +1463,7 @@ export default function MakerStudioClient({
                           type="button"
                           className="mk-tool"
                           disabled={busy}
-                          onClick={() => setLibraryPicker({ kind: "comic", index: idx })}
+                          onClick={() => { setTool("pictures"); setLibraryPicker({ kind: "comic", index: idx }); }}
                         >
                           Pick from library
                         </button>
@@ -1572,7 +1563,7 @@ export default function MakerStudioClient({
                             type="button"
                             className="mk-tool"
                             disabled={busy}
-                            onClick={() => setLibraryPicker({ kind: side })}
+                            onClick={() => { setTool("pictures"); setLibraryPicker({ kind: side }); }}
                           >
                             Pick from library
                           </button>
@@ -1625,7 +1616,7 @@ export default function MakerStudioClient({
                     type="button"
                     className="mk-next"
                     disabled={busy}
-                    onClick={() => setLibraryPicker({ kind: "map" })}
+                    onClick={() => { setTool("pictures"); setLibraryPicker({ kind: "map" }); }}
                   >
                     Pick map background
                   </button>
@@ -1765,7 +1756,7 @@ export default function MakerStudioClient({
                     type="button"
                     className="mk-tool"
                     disabled={busy}
-                    onClick={() => setLibraryPicker({ kind: "math" })}
+                    onClick={() => { setTool("pictures"); setLibraryPicker({ kind: "math" }); }}
                   >
                     Optional library picture
                   </button>
@@ -2108,7 +2099,7 @@ export default function MakerStudioClient({
                     type="button"
                     className="mk-tool"
                     disabled={busy || aiBusy}
-                    onClick={() => setLibraryPicker({ kind: "paint" })}
+                    onClick={() => { setTool("pictures"); setLibraryPicker({ kind: "paint" }); }}
                   >
                     Pick from library
                   </button>
@@ -2195,6 +2186,7 @@ export default function MakerStudioClient({
                     disabled={busy || aiBusy}
                     onClick={() => {
                       dirty.current = true;
+    editVersion.current += 1;
                       setDraft((prev) => ({
                         ...(prev || {}),
                         beats: ["", ""],
@@ -2304,7 +2296,7 @@ export default function MakerStudioClient({
                     type="button"
                     className="mk-tool"
                     disabled={busy || aiBusy}
-                    onClick={() => setLibraryPicker({ kind: "postcard" })}
+                    onClick={() => { setTool("pictures"); setLibraryPicker({ kind: "postcard" }); }}
                   >
                     Pick from library
                   </button>
@@ -2347,19 +2339,19 @@ export default function MakerStudioClient({
 
             <div className="mk-save-row">
               <span className={`mk-pill${saveState === "error" ? " warn" : ""}`}>
-                {saveState === "saving" ? "Saving…" : saveState === "error" ? "Save failed — keep going" : "Saved"}
+                {saveState === "saving" ? "Saving…" : saveState === "error" ? "Not saved — please retry" : "Saved"}
               </span>
               <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-                <button type="button" className="mk-ghost" onClick={() => saveModeDraft(true)} disabled={busy}>
-                  Save & back
+                <button type="button" className="mk-ghost" onClick={() => saveModeDraft(false)} disabled={navigationBusy}>
+                  Save
                 </button>
                 <button
                   type="button"
                   className="mk-next"
                   onClick={markModeDone}
-                  disabled={busy || aiBusy || !modeReadyForDone(activeMode, draft)}
+                  disabled={navigationBusy || !modeReadyForDone(activeMode, draft)}
                 >
-                  Done
+                  Done with {meta.label?.toLowerCase() || "piece"}
                 </button>
               </div>
             </div>
@@ -2370,29 +2362,16 @@ export default function MakerStudioClient({
 
           <p className="mk-quiet">{status}</p>
 
-          <LibraryPicker
-            open={!!libraryPicker}
-            title="Pick a picture"
-            onClose={() => setLibraryPicker(null)}
-            onSelect={placeLibraryImage}
-          />
-          <SamGuide
-            skinKey={samSkin}
-            alt={samNickname || "S.A.M."}
-            size={96}
-            anchors={{ home: { right: 16, bottom: 16 } }}
-            line={"Make it clear. You can save and come back anytime."}
-            state="helping"
-          />
+
+
         </div>
-      </div>
+      </MakerStudioFrame>
     );
   }
 
   // Main studio page
   return (
-    <div className="mk-page" data-mode="home">
-      <BackToHubButton readText={`${title}. ${topicLine || ""}`} />
+    <MakerStudioFrame {...frameProps}>
       <div className="mk-shell">
         <div className="mk-top">
           <div>
@@ -2421,7 +2400,7 @@ export default function MakerStudioClient({
         </div>
 
         <div className="mk-panel">
-          <h2>Make modes</h2>
+          <h2>Choose your piece</h2>
           <p className="mk-quiet">
             {visibleModes.length === 1
               ? `Tap ${visibleModes[0].label} to begin.`
@@ -2447,7 +2426,7 @@ export default function MakerStudioClient({
                   aria-label={m.label}
                 >
                   <span className="mk-mode-icon" aria-hidden>
-                    {m.icon || "•"}
+                    <MakerModeIcon id={m.id} />
                   </span>
                   <b>{m.label}</b>
                   <span>{m.blurb}</span>
@@ -2474,15 +2453,8 @@ export default function MakerStudioClient({
           )}
         </div>
 
-        <SamGuide
-          skinKey={samSkin}
-          alt={samNickname || "S.A.M."}
-          size={96}
-          anchors={{ home: { right: 16, bottom: 16 } }}
-          line={(publicCase && publicCase.samOpen) || "Pick a mode. Make your piece. Submit when the counter says you are ready."}
-          state="helping"
-        />
+
       </div>
-    </div>
+    </MakerStudioFrame>
   );
 }
