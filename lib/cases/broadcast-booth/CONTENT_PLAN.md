@@ -100,7 +100,7 @@ Leave these Grade 3 Science cases alone.
 | Built | SS.3.2B-BB | Correspondent | 3 | Communities | Two communities that meet the same needs in different ways. | `lib/cases/SS-3-2B.public.js`. SQL in the chat. Not run. |
 | Built | SS.4.10A-BB | Explain | 4 | Economics | How supply and demand change price and what is available. | `lib/cases/SS-4-10A.public.js`. SQL in the chat. Not run. |
 
-The first wave is done. The next wave is written below. Do not build it until Emily says go. Nothing in it is marked Next yet.
+The first wave is done. The water-cycle row is built. The canyon row is marked Next.
 
 ## Second wave — finish two science shelves
 
@@ -112,8 +112,8 @@ This wave is still the next four. It does not finish either science grade. The M
 
 | Status | Code | Format | Grade | Topic | What the broadcast is | Standard source |
 | --- | --- | --- | --- | --- | --- | --- |
-| Planned | SCI.4.10A-BB | Explain | 4 | Water cycle | The one water-cycle broadcast. Water moves, and the Sun is the energy that lifts it. Not day and night, and not the creek food chain. | `lib/teksWording.js` Science 4.10A. |
-| Planned | SCI.4.10B-BB | Correspondent | 4 | Canyon | Slow change: weathering, erosion, and deposition. Not the water cycle. Grade 5 landforms (5.10C) can be its own broadcast later, about the shapes, not this process. | `lib/teksWording.js` Science 4.10B. |
+| Built | SCI.4.10A-BB | Explain | 4 | Water cycle | The one water-cycle broadcast. Water moves, and the Sun is the energy that lifts it. Not day and night, and not the creek food chain. | `lib/cases/broadcast-booth/wave2.js`. SQL in the chat. Not run. Grade 5 Sun-and-ocean (5.10A) is covered by this one. |
+| Next | SCI.4.10B-BB | Correspondent | 4 | Canyon | Slow change: weathering, erosion, and deposition. Not the water cycle. Grade 5 landforms (5.10C) can be its own broadcast later, about the shapes, not this process. | `lib/teksWording.js` Science 4.10B. |
 | Planned | SCI.5.11-BB | Debate | 5 | Using less | Two fair ways to cut harm from using resources: use less, or recycle. Not the wind-and-gas debate. | `lib/teksWording.js` Science 5.11. |
 | Planned | ELA.5.9D-BB | Explain | 5 | Central idea | The central idea of an informational text, with evidence. Not the theme of the trumpet play. | `lib/teksWording.js` ELAR 5.9D. Confirm a short source text before writing. |
 
