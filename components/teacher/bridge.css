@@ -1,7 +1,4 @@
 /* ClearCenters Live — approved Bridge Console, September 2026. */
-.cc-demo-bar{width:min(1320px,calc(100% - 64px));margin:0 auto 12px;background:#173a28;color:#f6f1e2;border-radius:14px;padding:10px 16px;display:flex;gap:12px;align-items:center;flex-wrap:wrap}
-.cc-demo-bar span{flex:1;font-size:13px}
-.cc-demo-bar a,.cc-demo-bar button{background:#f6f1e2;color:#173a28;border:0;border-radius:999px;padding:8px 14px;font-weight:700;cursor:pointer;text-decoration:none}
 .cc-today-classes{display:flex;flex-direction:column;align-items:flex-start;gap:8px;margin:0 0 20px}
 .cc-today-classes .cc-classes{justify-content:flex-start}
 .cc-today-classes .cc-class-context{text-align:left;margin-top:0}

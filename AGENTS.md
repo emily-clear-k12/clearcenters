@@ -1,5 +1,12 @@
 # Agent guidance
 
+## Which branch
+
+- **All work goes on `main`.** `main` is the live site.
+- `ci2-sandbox` is the CI2.0 sandbox. It has its own database of made-up data. Only work on it when Emily says the task is for the CI2.0 sandbox.
+- To bring the sandbox up to date, merge `main` into `ci2-sandbox`. Never merge `ci2-sandbox` into `main`.
+- Do not create other sandbox or demo branches, sites or modes.
+
 ## Broadcast Booth content
 
 - Before creating Broadcast Booth activities, read `lib/cases/broadcast-booth/AUTHORING.md`.
