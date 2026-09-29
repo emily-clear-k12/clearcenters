@@ -1,7 +1,7 @@
 {
   "generatedFrom": "lib/cases and add_*.sql",
-  "onDisk": 1038,
-  "inSql": 1055,
+  "onDisk": 1041,
+  "inSql": 1058,
   "items": [
     {
       "standard": "3.10C-AD",
@@ -679,6 +679,15 @@
       "file": "lib/cases/broadcast-booth/assignFallback.js"
     },
     {
+      "standard": "SCI.4.10B-BB",
+      "title": "Broadcast Booth: How did the canyon get so deep? (Correspondent)",
+      "grade": "4",
+      "subject": "Science",
+      "engine": "Broadcast Booth",
+      "kind": "standard",
+      "file": "lib/cases/broadcast-booth/assignFallback.js"
+    },
+    {
       "standard": "SCI.4.11A-BB",
       "title": "Broadcast Booth: How should the town get power? (Debate)",
       "grade": "4",
@@ -715,10 +724,28 @@
       "file": "lib/cases/broadcast-booth/assignFallback.js"
     },
     {
+      "standard": "ELA.5.9D-BB",
+      "title": "Broadcast Booth: What is the article mostly about? (Explain)",
+      "grade": "5",
+      "subject": "ELAR",
+      "engine": "Broadcast Booth",
+      "kind": "standard",
+      "file": "lib/cases/broadcast-booth/assignFallback.js"
+    },
+    {
       "standard": "ELA.5.9E-BB",
       "title": "Broadcast Booth: Which facts support the claim? (Debate)",
       "grade": "5",
       "subject": "ELAR",
+      "engine": "Broadcast Booth",
+      "kind": "standard",
+      "file": "lib/cases/broadcast-booth/assignFallback.js"
+    },
+    {
+      "standard": "SCI.5.11-BB",
+      "title": "Broadcast Booth: Use less, or recycle more? (Debate)",
+      "grade": "5",
+      "subject": "Science",
       "engine": "Broadcast Booth",
       "kind": "standard",
       "file": "lib/cases/broadcast-booth/assignFallback.js"
@@ -9346,4 +9373,4 @@
       "file": "lib/cases/simulation-lab/5-9-SL.public.js"
     }
   ]
-}
+}

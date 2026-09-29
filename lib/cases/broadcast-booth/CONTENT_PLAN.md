@@ -1,6 +1,6 @@
 # Broadcast Booth — content plan
 
-**For any coding bot.** Updated Sept 29, 2026.
+**For any coding bot.** Updated Sept 29, 2026 (evening): second wave finished; Science queue added.
 Read this file, then `AUTHORING.md` in this same folder, then `AGENTS.md`. Build **one** row unless Emily names more than one.
 
 ## How the library is built
@@ -100,7 +100,7 @@ Leave these Grade 3 Science cases alone.
 | Built | SS.3.2B-BB | Correspondent | 3 | Communities | Two communities that meet the same needs in different ways. | `lib/cases/SS-3-2B.public.js`. SQL in the chat. Not run. |
 | Built | SS.4.10A-BB | Explain | 4 | Economics | How supply and demand change price and what is available. | `lib/cases/SS-4-10A.public.js`. SQL in the chat. Not run. |
 
-The first wave is done. The water-cycle row is built. The canyon row is marked Next.
+The first wave is done. The second wave is done too (Sept 29). Next is the Science queue below.
 
 ## Second wave — finish two science shelves
 
@@ -113,9 +113,68 @@ This wave is still the next four. It does not finish either science grade. The M
 | Status | Code | Format | Grade | Topic | What the broadcast is | Standard source |
 | --- | --- | --- | --- | --- | --- | --- |
 | Built | SCI.4.10A-BB | Explain | 4 | Water cycle | The one water-cycle broadcast. Water moves, and the Sun is the energy that lifts it. Not day and night, and not the creek food chain. | `lib/cases/broadcast-booth/wave2.js`. SQL in the chat. Not run. Grade 5 Sun-and-ocean (5.10A) is covered by this one. |
-| Next | SCI.4.10B-BB | Correspondent | 4 | Canyon | Slow change: weathering, erosion, and deposition. Not the water cycle. Grade 5 landforms (5.10C) can be its own broadcast later, about the shapes, not this process. | `lib/teksWording.js` Science 4.10B. |
-| Planned | SCI.5.11-BB | Debate | 5 | Using less | Two fair ways to cut harm from using resources: use less, or recycle. Not the wind-and-gas debate. | `lib/teksWording.js` Science 5.11. |
-| Planned | ELA.5.9D-BB | Explain | 5 | Central idea | The central idea of an informational text, with evidence. Not the theme of the trumpet play. | `lib/teksWording.js` ELAR 5.9D. Confirm a short source text before writing. |
+| Built | SCI.4.10B-BB | Correspondent | 4 | Canyon | Slow change: weathering, erosion, and deposition. Not the water cycle. Grade 5 landforms (5.10C) can be its own broadcast later, about the shapes, not this process. | `lib/cases/broadcast-booth/wave3.js`. SQL in `add_broadcast_booth_wave3.sql`. Not run. Pictures requested in `image-prompts/broadcast-booth/wave3.md`; chips show words only until they are made. |
+| Built | SCI.5.11-BB | Debate | 5 | Using less | Two fair ways to cut harm from using resources: use less, or recycle. Not the wind-and-gas debate. | `wave3.js`. SQL in `add_broadcast_booth_wave3.sql`. Not run. Pictures requested. |
+| Built | ELA.5.9D-BB | Explain | 5 | Central idea | The central idea of an informational text, with evidence. Not the theme of the trumpet play. | `wave3.js`. Original article, "Where Did the Horned Lizards Go?" SQL in `add_broadcast_booth_wave3.sql`. Not run. Pictures requested. |
+
+## Science queue — every remaining content standard
+
+Emily, Sept 29: one Broadcast Booth per standard. Science goes first. This is the full list of Science standards that still need one, with a planned format and story. The format and story are suggestions a bot can improve, but keep them different from every other row (no repeated stories). Grade 4 first, then Grade 3, then Grade 5.
+
+**Pictures:** a bot that cannot make pictures writes the requests in `image-prompts/broadcast-booth/` and ships the case with `ART_READY = false` (see `wave3.js`), so chips show words only. Never point at a picture file that does not exist.
+
+| Status | Code | Format | Story (keep it different from every other row) |
+| --- | --- | --- | --- |
+| Next | SCI.4.9B-BB | Explain | The Moon's shape changes in a pattern over about a month. Not day and night. |
+| Planned | SCI.4.6A-BB | Explain | Sorting a tray of objects by properties: temperature, mass, magnetism, sinking or floating, physical state. |
+| Planned | SCI.4.6B-BB | Correspondent | Kitchen lab: trail mix and salad are mixtures; salt water and lemonade are solutions. |
+| Planned | SCI.4.6C-BB | Explain | Soil and water weigh the same before and after mixing. Matter is conserved. |
+| Planned | SCI.4.7-BB | Explain | Friction on the gym floor: sneakers grip, socks slide. Not a ramp. |
+| Planned | SCI.4.8A-BB | Correspondent | At the lake: a rolling ball, a wave, and a sound all carry energy. |
+| Planned | SCI.4.8B-BB | Explain | Conductors and insulators: a metal pot, an oven mitt, a copper wire in a plastic coat. |
+| Planned | SCI.4.9A-BB | Correspondent | Seasons desk: daylight and temperature in Texas across a year. |
+| Planned | SCI.4.10C-BB | Explain | One rainy week is weather; thirty years of rain is climate. |
+| Planned | SCI.4.11B-BB | Correspondent | A power outage shows how much modern life needs energy, and how saving it helps. Not the use-less debate. |
+| Planned | SCI.4.11C-BB | Explain | Porous rock stores water and oil like a sponge; solid rock does not. |
+| Planned | SCI.4.12A-BB | Explain | A leaf makes food from sunlight, water, and carbon dioxide. |
+| Planned | SCI.4.12B-BB | Correspondent | Forest floor food web, with decomposers. Not the creek food chain. |
+| Planned | SCI.4.12C-BB | Correspondent | Dinosaur Valley tracks show this place was once a muddy shoreline. |
+| Planned | SCI.4.13A-BB | Explain | Plant structures: a live oak's waxy leaves and a mesquite's deep roots. Not the cactus. |
+| Planned | SCI.4.13B-BB | Explain | Inherited traits (fur color) versus acquired traits (a scar, strong muscles). Not behavior. |
+| Planned | SCI.3.6A-BB | Explain | Testing objects: how hot, how heavy, magnetic or not, sink or float. |
+| Planned | SCI.3.6B-BB | Explain | Solids keep their shape; juice and air take the shape of their container. |
+| Planned | SCI.3.6D-BB | Correspondent | Maker table: combining clay, sticks, and paper to build a tower that stands. |
+| Planned | SCI.3.7A-BB | Explain | A magnet pulls from a distance, gravity pulls down, a hand pushes by touching. |
+| Planned | SCI.3.7B-BB | Correspondent | Playground: pushes and pulls change where things go and how they move. Not balanced forces. |
+| Planned | SCI.3.8A-BB | Correspondent | Energy hunt at the fair: light, sound, heat, and motion. |
+| Planned | SCI.3.8B-BB | Explain | A faster bowling ball has more energy and knocks down more pins. |
+| Planned | SCI.3.9A-BB | Explain | The Moon orbits Earth, and Earth orbits the Sun. Not phases, not day and night. |
+| Planned | SCI.3.9B-BB | Explain | The order of the planets from the Sun. |
+| Planned | SCI.3.10A-BB | Correspondent | Weather desk: Amarillo and Houston on the same day. |
+| Planned | SCI.3.10B-BB | Explain | Soil forms from broken rock and rotting leaves. Not the canyon. |
+| Planned | SCI.3.10C-BB | Correspondent | A landslide closes a road: fast changes to the land. |
+| Planned | SCI.3.11A-BB | Correspondent | Farm, road, and building site: how people use natural resources. |
+| Planned | SCI.3.11C-BB | Explain | Reduce, reuse, recycle with one lunch box. Not bottles and paper. |
+| Planned | SCI.3.12A-BB | Explain | Monarchs migrate, bats hibernate, trees go dormant. |
+| Planned | SCI.3.12C-BB | Correspondent | A drought at a stock pond: some living things thrive, some move, some die. Not the creek. |
+| Planned | SCI.3.12D-BB | Correspondent | Texas fossils (ammonites, shark teeth) show living things from long ago. |
+| Planned | SCI.3.13B-BB | Explain | Compare the life cycle of a cricket and a lima bean. |
+| Planned | SCI.5.6A-BB | Explain | Compare mystery solids by mass, magnetism, density, solubility, and conductivity. |
+| Planned | SCI.5.6B-BB | Correspondent | Beach sand with iron filings: a magnet pulls them out because each keeps its properties. |
+| Planned | SCI.5.6C-BB | Explain | Salt disappears in water but the mass stays the same. |
+| Planned | SCI.5.6D-BB | Explain | Air in a balloon: particles too small to see still take up space. |
+| Planned | SCI.5.7B-BB | Correspondent | Science fair: designing a fair test with a balloon rocket on a string. |
+| Planned | SCI.5.8A-BB | Explain | A flashlight: chemical energy to electrical energy to light. |
+| Planned | SCI.5.8B-BB | Explain | A complete circuit can run a fan or a buzzer: motion and sound. Not the light bulb. |
+| Planned | SCI.5.8C-BB | Explain | Light travels straight, bounces off a mirror, bends in water, and is absorbed. |
+| Planned | SCI.5.10B-BB | Correspondent | Rock layers and oil in the Permian Basin: how sedimentary rock and fossil fuels formed. |
+| Planned | SCI.5.10C-BB | Correspondent | Monahans Sandhills and a river delta: how wind and water build landforms. Not the canyon. |
+| Planned | SCI.5.12A-BB | Correspondent | Coastal prairie: living and nonliving parts working together. |
+| Planned | SCI.5.12B-BB | Explain | A coastal marsh food web: what happens when one living thing disappears. Not the creek. |
+| Planned | SCI.5.12C-BB | Debate | Build a boardwalk through the wetland, or leave it wild? Both sides fair. |
+| Planned | SCI.5.13A-BB | Explain | Roadrunner, jackrabbit, and kangaroo rat survive in the same desert in different ways. Not the cactus. |
+
+Covered, do not build: SCI.5.10A (by SCI.4.10A-BB).
 
 ## Still waiting
 
