@@ -67,23 +67,17 @@ export default function TodayBridge({teacherName,teacherEmail,teacherId,classes,
   {done:list.length>0,label:'Assign an activity',href:`/teacher/assign/new?classId=${cls?.id}`},
  ];
  const showStart=startSteps.some(step=>!step.done);
- function dayKey(date){return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`}
- const monday=new Date();
- monday.setHours(0,0,0,0);
- monday.setDate(monday.getDate()-(monday.getDay()===0?6:monday.getDay()-1));
- const weekDays=[0,1,2,3,4].map(offset=>{const date=new Date(monday);date.setDate(monday.getDate()+offset);return date});
- const todayKey=dayKey(new Date());
  const actualTeks=missionMapTeksCode(current?.case_standard||'')||current?.case_standard;
  const displayName=teacherName?.split(' ')[0]||teacherEmail?.split('@')[0]||'teacher';
  function showProgress(key){setProgressFilter(key);dialog.current?.showModal()}
  function focus(id){setSelected({...selected,[cls.id]:id})}
  return <BridgePage teacherName={teacherName} teacherEmail={teacherEmail}>
- <PageHeading title={`Hello, ${displayName}.`} subtitle={new Date().toLocaleDateString(undefined,{weekday:'long',month:'long',day:'numeric'})}><ClassTabs classes={classes} value={cls?.id} onChange={changeClass}/><div className="cc-class-context">{cls?.grade?`Grade ${cls.grade} · `:''}{cls?.subject?`${cls.subject} · `:''}{roster.length} students</div></PageHeading>
+ <PageHeading title={`Hello, ${displayName}.`} subtitle={new Date().toLocaleDateString(undefined,{weekday:'long',month:'long',day:'numeric'})}/>
  {error&&<div className="cc-error" role="alert">{error}</div>}
  {classes.length>0&&<SamCoach teacherId={teacherId}/>}
+ {classes.length>0&&<div className="cc-today-classes"><ClassTabs classes={classes} value={cls?.id} onChange={changeClass}/><div className="cc-class-context">{cls?.grade?`Grade ${cls.grade} · `:''}{cls?.subject?`${cls.subject} · `:''}{roster.length} students</div></div>}
  {!classes.length?<Empty><h2>Your teaching space is ready.</h2><p>Set up a class to start assigning activities.</p><Link className="cc-btn" href="/teacher/class">Set up your class</Link></Empty>:<>
  {showStart&&<section className="cc-panel" style={{marginBottom:16}}><h2>Start here</h2><p className="cc-muted">Two steps, then your class can begin.</p><div className="cc-row">{startSteps.map(step=><Link key={step.label} className={step.done?'cc-badge teal':'cc-btn'} href={step.href}>{step.done?'Done · ':''}{step.label}</Link>)}</div></section>}
- <section className="cc-panel" style={{marginBottom:16}}><h2>This week</h2><p className="cc-muted">What is due Monday through Friday.</p><div className="cc-week-scroll"><div className="cc-week"><div className="cc-week-label">Due</div>{weekDays.map(date=>{const key=dayKey(date);const due=list.filter(item=>item.due_date===key);return <div key={key} className={'cc-day'+(key===todayKey?' is-today':'')}><strong>{date.toLocaleDateString(undefined,{weekday:'short'})}</strong>{due.length?due.map(item=><p key={item.id}>{caseDetails[item.case_standard]?.title||item.case_standard}</p>):<p className="cc-day-empty">Nothing due</p>}</div>})}</div></div></section>
  <div className="cc-two"><div className="cc-stack">
  {current?<section className="cc-panel cc-frame cc-hero" style={style}><div className="cc-hero-main"><div><div className="cc-eyebrow cc-subject-label">CURRENT ACTIVITY · {engine.label}</div><h2>{info.title||current.case_standard}</h2><p className="cc-muted">{actualTeks} · {progressUnavailable?'Recipients unavailable':targetRows.length?`${applicable.length} selected student${applicable.length===1?'':'s'}`:'Whole class'}{current.due_date?` · Due ${new Date(current.due_date+'T12:00:00').toLocaleDateString(undefined,{month:'short',day:'numeric'})}`:''}</p><p className="cc-muted">{info.learning_target||engine.description}</p>{gradeLine&&<p className="cc-muted" style={{fontWeight:700}}>{gradeLine}</p>}<div className="cc-row"><Link className="cc-btn" href={assignmentBoard(current,info.engine)}>View assignment</Link><button className="cc-btn secondary" disabled={progressUnavailable} onClick={()=>showProgress('all')}>View students</button></div></div><img src={engine.image} alt={`${engine.label} activity`}/></div>
  {!progressUnavailable?<div className="cc-progress"><div className="cc-progress-bar" aria-hidden="true">{['not started','working','completed'].map((k,i)=><span key={k} style={{flex:counts[k]||0,display:counts[k]?'block':'none',background:['#c9c6df','#5798ef','#4bb589'][i]}}/>)}</div><div className="cc-progress-labels">{['not started','working','completed'].map(k=><button key={k} onClick={()=>showProgress(k)}>{counts[k]} {k}</button>)}</div></div>:<p className="cc-muted">Student progress is unavailable. Refresh to try again.</p>}
