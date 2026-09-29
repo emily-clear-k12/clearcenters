@@ -566,8 +566,11 @@ function NewAssignmentContent() {
   const [readingSubject, setReadingSubject] = useState("all");
 
   const [roster, setRoster] = useState([]);
-  const [targetMode, setTargetMode] = useState("whole"); // 'whole' | 'specific'
-  const [selectedStudentIds, setSelectedStudentIds] = useState([]);
+  // ?students=id1,id2 comes from a gradebook small group: start with just those students picked.
+  const groupFromUrl = (searchParams.get('students') || '').split(',').map((id) => id.trim()).filter(Boolean);
+  const [targetMode, setTargetMode] = useState(groupFromUrl.length ? "specific" : "whole"); // 'whole' | 'specific'
+  const [selectedStudentIds, setSelectedStudentIds] = useState(groupFromUrl);
+  const groupPending = React.useRef(groupFromUrl);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data, error: authError }) => {
@@ -586,7 +589,17 @@ function NewAssignmentContent() {
   useEffect(() => {
     if (!assignClassId) { setRoster([]); return; }
     if(classes.some(c=>c.id===assignClassId))rememberTeacherClass(assignClassId);
-    supabase.from("students").select("id, first_name").eq("class_id", assignClassId).order("first_name").then(({ data }) => setRoster(data || []));
+    const group = groupPending.current;
+    supabase.from("students").select("id, first_name").eq("class_id", assignClassId).order("first_name").then(({ data }) => {
+      const list = data || [];
+      setRoster(list);
+      // A gradebook group keeps its students if they are in this class.
+      if (group.length) {
+        groupPending.current = [];
+        const kept = group.filter((id) => list.some((s) => s.id === id));
+        if (kept.length) { setTargetMode("specific"); setSelectedStudentIds(kept); }
+      }
+    });
     setTargetMode("whole");
     setSelectedStudentIds([]);
   }, [assignClassId]);

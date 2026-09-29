@@ -75,3 +75,23 @@ button.gb-chip:hover{filter:brightness(.95);transform:translateY(-1px)}
 .gb-empty{text-align:center;padding:40px 20px;color:#70658d}
 @media(max-width:760px){.gb-controls select{width:100%}.gb-seg{overflow:auto;max-width:100%}.gb-cards{grid-template-columns:1fr}}
 @media print{.gb-controls,.gb-legend,.cc-console{display:none}}
+.gb-mini-link{display:inline-block;margin-top:4px;font:600 11px Inter,sans-serif;color:#6a3fc6;text-decoration:underline;text-underline-offset:2px;cursor:pointer;background:none;border:0;padding:0}
+.gb-group .gb-mini-link{margin:0 0 0 8px;font-size:12px}
+.gb-groups{border:1.5px solid #d9c9f5;background:#fcfaff;border-radius:18px;padding:16px 18px;margin:0 0 16px}
+.gb-groups-top{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:flex-start}
+.gb-groups h2{font:600 19px Poppins,sans-serif;margin:0 0 2px}
+.gb-groups select{font:600 12px Inter,sans-serif;border:1px solid #dcd3f0;background:#fff;color:#332854;border-radius:20px;padding:9px 14px;max-width:360px}
+.gb-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.gb-group-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-top:12px}
+.gb-group-card{background:#fff;border:1px solid var(--line);border-top:4px solid #c9c2da;border-radius:14px;padding:12px;display:grid;gap:8px;align-content:start}
+.gb-group-card.g-notyet{border-top-color:var(--not)}
+.gb-group-card.g-almost{border-top-color:#e0a800}
+.gb-group-card.g-got{border-top-color:var(--got)}
+.gb-group-card h3{font:600 15px Poppins,sans-serif;margin:0;display:flex;justify-content:space-between}
+.gb-group-card h3 span{font:700 13px Inter,sans-serif;color:#70658d}
+.gb-group-card .cc-btn{min-height:34px;padding:7px 12px;font-size:12px}
+.gb-names{display:flex;flex-wrap:wrap;gap:5px}
+.gb-name-chip{border:1px solid #e1d8f3;background:#f7f3fe;color:#302454;border-radius:14px;padding:5px 10px;font:600 12px Inter,sans-serif;cursor:pointer}
+.gb-name-chip.is-out{background:#fff;color:#b0a7c6;text-decoration:line-through;border-style:dashed}
+@media(max-width:1000px){.gb-group-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:560px){.gb-group-grid{grid-template-columns:1fr}}

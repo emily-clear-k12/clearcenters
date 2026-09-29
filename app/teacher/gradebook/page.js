@@ -21,8 +21,9 @@ import { levelWord } from "../../../lib/gradeScale";
 import {
   PERIODS, WAITING, RETURNED, MISSING, NOT_ASSIGNED,
   buildGradebook, studentStats, columnCounts, bookTotals, sortStudents,
-  isGraded, cellWord, cellNumber,
+  isGraded, cellWord, smallGroups, suggestedStandard,
 } from "../../../lib/gradebook";
+import { GRADEBOOK_SCALES, scaleNumbers, gradebookValue } from "../../../lib/gradebookScale";
 import "./gradebook.css";
 
 const VIEWS = [["grid", "Grid"], ["standard", "By standard"], ["cards", "Cards"]];
@@ -173,7 +174,7 @@ function GridView({ book, order, filter, onOpen }) {
   );
 }
 
-function StandardView({ book, order, openStd, setOpenStd, onOpen }) {
+function StandardView({ book, order, openStd, setOpenStd, onOpen, onGroups }) {
   const colMap = Object.fromEntries(book.columns.map((c) => [c.id, c]));
   return (
     <div className="gb-scroll">
@@ -190,6 +191,7 @@ function StandardView({ book, order, openStd, setOpenStd, onOpen }) {
                       <b>{std.code === "Other" ? "Other" : `TEKS ${std.code}`}</b>
                       <i>{std.topic}</i>
                       <i>{std.columnIds.length} {std.columnIds.length === 1 ? "activity" : "activities"} <span className="gb-caret">{open ? "▲" : "▼"}</span></i>
+                      {std.code !== "Other" && <span role="button" tabIndex={0} className="gb-mini-link" onClick={(e) => { e.stopPropagation(); onGroups(std.code); }} onKeyDown={(e) => { if (e.key === "Enter") { e.stopPropagation(); onGroups(std.code); } }}>Groups</span>}
                     </div>
                   </th>
                   {open && std.columnIds.map((id) => (
@@ -238,7 +240,7 @@ function StandardView({ book, order, openStd, setOpenStd, onOpen }) {
   );
 }
 
-function CardsView({ book, order, onOpen }) {
+function CardsView({ book, order, onOpen, classId }) {
   const groups = [[0, "Needs help"], [1, "Getting there"], [2, "On track"], [null, "No grades yet"]];
   return (
     <div>
@@ -247,7 +249,9 @@ function CardsView({ book, order, onOpen }) {
         if (!list.length) return null;
         return (
           <section key={label}>
-            <h2 className="gb-group"><span className={`gb-chip ${level == null ? "km" : `k${level}`}`}>{list.length}</span>{label}</h2>
+            <h2 className="gb-group"><span className={`gb-chip ${level == null ? "km" : `k${level}`}`}>{list.length}</span>{label}
+              {level != null && level < 2 && <Link className="gb-mini-link" href={`/teacher/assign/new?${new URLSearchParams({ classId, students: list.map((s) => s.id).join(",") }).toString()}`}>Assign something to these {list.length}</Link>}
+            </h2>
             <div className="gb-cards">
               {list.map((student) => {
                 const st = studentStats(book, student.id);
@@ -274,6 +278,64 @@ function CardsView({ book, order, onOpen }) {
         );
       })}
     </div>
+  );
+}
+
+function GroupsPanel({ book, classId, code, setCode, onClose }) {
+  const data = smallGroups(book, code);
+  const [left, setLeft] = useState({});
+  const [copied, setCopied] = useState("");
+  useEffect(() => { setLeft({}); setCopied(""); }, [code, classId]);
+  function picked(group) { return group.students.filter((s) => !left[s.id]); }
+  function assignHref(group) {
+    const ids = picked(group).map((s) => s.id).join(",");
+    const params = new URLSearchParams({ classId });
+    if (data.code) params.set("standard", data.code);
+    params.set("students", ids);
+    return `/teacher/assign/new?${params.toString()}`;
+  }
+  async function copy(group) {
+    const text = `${group.label}${data.code ? ` · TEKS ${data.code}` : ""}: ${picked(group).map((s) => s.name).join(", ")}`;
+    try { await navigator.clipboard.writeText(text); setCopied(group.key); } catch { setCopied(""); }
+  }
+  return (
+    <section className="gb-groups" aria-label="Small groups">
+      <div className="gb-groups-top">
+        <div>
+          <h2>Small groups</h2>
+          <p className="cc-muted">Made from the grades in this book. Tap a name to leave that student out.</p>
+        </div>
+        <div className="gb-row">
+          <select aria-label="Group by" value={code || ""} onChange={(e) => setCode(e.target.value || null)}>
+            <option value="">All work in this book</option>
+            {book.standards.filter((s) => s.code !== "Other").map((s) => <option key={s.code} value={s.code}>TEKS {s.code} · {s.topic}</option>)}
+          </select>
+          <button type="button" className="cc-btn secondary" onClick={onClose}>Close</button>
+        </div>
+      </div>
+      <div className="gb-group-grid">
+        {data.groups.map((group) => {
+          const chosen = picked(group);
+          return (
+            <div key={group.key} className={`gb-group-card g-${group.key}`}>
+              <h3>{group.label} <span>{group.students.length}</span></h3>
+              <p className="gb-note">{group.note}</p>
+              <div className="gb-names">
+                {group.students.length ? group.students.map((s) => (
+                  <button key={s.id} type="button" className={`gb-name-chip${left[s.id] ? " is-out" : ""}`} title={s.detail} aria-pressed={!left[s.id]} onClick={() => setLeft({ ...left, [s.id]: !left[s.id] })}>{s.name}</button>
+                )) : <span className="gb-note">No one here.</span>}
+              </div>
+              {group.key !== "none" && chosen.length > 0 && (
+                <div className="gb-row">
+                  <Link className="cc-btn" href={assignHref(group)}>Assign to these {chosen.length}</Link>
+                  <button type="button" className="cc-btn quiet" onClick={() => copy(group)}>{copied === group.key ? "Copied" : "Copy names"}</button>
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </section>
   );
 }
 
@@ -351,13 +413,17 @@ export default function GradebookPage() {
   const [openStd, setOpenStd] = useState(null);
   const [drawer, setDrawer] = useState(null);
   const [menu, setMenu] = useState(false);
+  const [groups, setGroups] = useState(null); // { code } when the small-groups panel is open
 
   useEffect(() => { setView(readView()); }, []);
 
   const load = useCallback(async (teacherId) => {
     setLoading(true);
     setError(null);
-    const { data: classes, error: classError } = await supabase.from("classes").select("id, name, subject, grade").eq("teacher_id", teacherId).order("name");
+    // The gradebook scale columns come from add_gradebook_scale.sql; fall back if it has not run.
+    let classQuery = await supabase.from("classes").select("id, name, subject, grade, gradebook_scale, gradebook_got, gradebook_almost, gradebook_notyet").eq("teacher_id", teacherId).order("name");
+    if (classQuery.error) classQuery = await supabase.from("classes").select("id, name, subject, grade").eq("teacher_id", teacherId).order("name");
+    const { data: classes, error: classError } = classQuery;
     if (classError) { setError(classError.message); setLoading(false); return; }
     const classIds = (classes || []).map((c) => c.id);
     if (!classIds.length) { setData((d) => ({ ...d, classes: [] })); setLoading(false); return; }
@@ -408,6 +474,8 @@ export default function GradebookPage() {
   function closeDrawer(next) { setDrawer(next && next.studentId ? next : null); }
 
   function exportRows(kind) {
+    const numbers = scaleNumbers(current);
+    const scoreOf = (cell) => (isGraded(cell) ? String(gradebookValue(cell.kind, numbers)) : "");
     const cols = book.columns;
     const students = book.students;
     const name = current?.name || "Class";
@@ -422,12 +490,12 @@ export default function GradebookPage() {
       const lines = [["Student Name", "Assignment", "Score", "Points Possible"]];
       students.forEach((s) => cols.forEach((c) => {
         const cell = book.cells[s.id]?.[c.id];
-        if (cell && cell.kind !== NOT_ASSIGNED) lines.push([s.first_name, c.title, cellNumber(cell), "2"]);
+        if (cell && cell.kind !== NOT_ASSIGNED) lines.push([s.first_name, c.title, scoreOf(cell), String(numbers.got)]);
       }));
       downloadCsv(`${name} skyward.csv`, lines);
     } else if (kind === "schoology") {
       const header = ["Student", ...cols.map((c) => c.title)];
-      const lines = students.map((s) => [s.first_name, ...cols.map((c) => cellNumber(book.cells[s.id]?.[c.id]))]);
+      const lines = students.map((s) => [s.first_name, ...cols.map((c) => scoreOf(book.cells[s.id]?.[c.id]))]);
       downloadCsv(`${name} schoology.csv`, [header, ...lines]);
     } else if (kind === "pdf") {
       const head = ["Student", ...cols.map((c) => c.title), "Overall"].map((h) => `<th>${htmlCell(h)}</th>`).join("");
@@ -449,6 +517,11 @@ export default function GradebookPage() {
 
   if (loading) return <div className="cc-loading">Loading…</div>;
 
+  const scale = scaleNumbers(current);
+  const scaleName = (GRADEBOOK_SCALES.find((item) => item.id === (current?.gradebook_scale || "points")) || GRADEBOOK_SCALES[0]).label;
+  const scaleLabel = `${scaleName}: Got it ${scale.got} · Almost ${scale.almost} · Not yet ${scale.notyet}`;
+  function openGroups(code) { setGroups({ code: code === undefined ? suggestedStandard(book) : code }); setMenu(false); }
+
   return (
     <BridgePage teacherEmail={teacherEmail}>
       <div className="gb">
@@ -466,7 +539,7 @@ export default function GradebookPage() {
         {error && <div className="cc-error" role="alert">{error}</div>}
 
         <div className="gb-controls">
-          <select aria-label="Class" value={classId} onChange={(e) => { setClassId(e.target.value); rememberTeacherClass(e.target.value); setOpenStd(null); setDrawer(null); }}>
+          <select aria-label="Class" value={classId} onChange={(e) => { setClassId(e.target.value); rememberTeacherClass(e.target.value); setOpenStd(null); setDrawer(null); setGroups(null); }}>
             {[...data.classes].sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true })).map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
           </select>
           <select aria-label="Time" value={period} onChange={(e) => setPeriod(e.target.value)}>
@@ -486,14 +559,15 @@ export default function GradebookPage() {
               <button type="button" aria-pressed={filter === "missing"} onClick={() => setFilter("missing")}>Missing work</button>
             </div>
           )}
+          <button type="button" className="cc-btn secondary" onClick={() => (groups ? setGroups(null) : openGroups())} disabled={!book.columns.length} aria-expanded={!!groups}>Small groups</button>
           <div className="gb-download">
             <button type="button" className="cc-btn" aria-expanded={menu} onClick={() => setMenu(!menu)} disabled={!book.columns.length}>Download ▾</button>
             {menu && (
               <div className="gb-menu" role="menu">
                 <button type="button" role="menuitem" onClick={() => exportRows("excel")}>Excel<small>Words: Got it, Almost, Not yet</small></button>
                 <button type="button" role="menuitem" onClick={() => exportRows("pdf")}>PDF<small>Print or save the grid</small></button>
-                <button type="button" role="menuitem" onClick={() => exportRows("skyward")}>Skyward<small>Scores out of 2</small></button>
-                <button type="button" role="menuitem" onClick={() => exportRows("schoology")}>Schoology<small>Scores out of 2</small></button>
+                <button type="button" role="menuitem" onClick={() => exportRows("skyward")}>Skyward<small>{scaleLabel}</small></button>
+                <button type="button" role="menuitem" onClick={() => exportRows("schoology")}>Schoology<small>{scaleLabel}</small></button>
               </div>
             )}
           </div>
@@ -503,11 +577,13 @@ export default function GradebookPage() {
           ? <div className="gb-legend"><span><span className="gb-chip k2 word">Got it</span></span><span><span className="gb-chip k1 word">Almost</span></span><span><span className="gb-chip k0 word">Not yet</span></span><span>across that standard's activities · click a standard to open them</span></div>
           : <Legend />}
 
+        {groups && book.columns.length > 0 && <GroupsPanel book={book} classId={classId} code={groups.code} setCode={(code) => setGroups({ code })} onClose={() => setGroups(null)} />}
+
         {!data.classes.length ? <Empty>Add a class to start a gradebook.</Empty>
           : !book.students.length ? <Empty>No students in this class yet.</Empty>
           : !book.columns.length ? <Empty>No graded activities {period === "all" ? "assigned yet" : "in this time"}. Practice games like Frequency Rush don't go in the gradebook.</Empty>
-          : view === "standard" ? <StandardView book={book} order={order} openStd={openStd} setOpenStd={setOpenStd} onOpen={setDrawer} />
-          : view === "cards" ? <CardsView book={book} order={order} onOpen={setDrawer} />
+          : view === "standard" ? <StandardView book={book} order={order} openStd={openStd} setOpenStd={setOpenStd} onOpen={setDrawer} onGroups={openGroups} />
+          : view === "cards" ? <CardsView book={book} order={order} onOpen={setDrawer} classId={classId} />
           : <GridView book={book} order={order} filter={filter} onOpen={setDrawer} />}
       </div>
       <Drawer book={book} open={drawer} onClose={closeDrawer} />
