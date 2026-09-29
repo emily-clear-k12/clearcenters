@@ -126,7 +126,7 @@ function Snapshot({ report, classId, setTab, tip }) {
       const ids = item.students.map((s) => s.id);
       return <>
         <Link className="cc-btn" href={assignHref({ classId, code: item.standard.code, subject: item.standard.subject, students: ids })}>Assign to these {ids.length}</Link>
-        <Link className="cc-btn secondary" href={`/teacher/gradebook?view=standard&groups=${encodeURIComponent(item.standard.key)}`}>Small groups</Link>
+        <Link className="cc-btn secondary" href={`/teacher/gradebook?classId=${classId}&view=standard&groups=${encodeURIComponent(item.standard.key)}`}>Small groups</Link>
       </>;
     }
     if (item.kind === "direction") return <>
@@ -136,7 +136,7 @@ function Snapshot({ report, classId, setTab, tip }) {
     if (item.kind === "confidence") return <button type="button" className="cc-btn" onClick={() => setTab("confidence")}>Open Confidence Check</button>;
     if (item.kind === "missing") return <>
       <Link className="cc-btn" href="/teacher/messages">Send reminders</Link>
-      <Link className="cc-btn secondary" href="/teacher/gradebook?view=grid">Open the gradebook</Link>
+      <Link className="cc-btn secondary" href={`/teacher/gradebook?classId=${classId}&view=grid`}>Open the gradebook</Link>
     </>;
     if (item.kind === "waiting") return <Link className="cc-btn" href="/teacher/grade">Open the review list</Link>;
     return null;
@@ -208,7 +208,7 @@ function Standards({ report, book, classId, grade, tip }) {
             <div className="rp-muted">{r.assessed} of {book.students.length} · {r.columnIds.length} {r.columnIds.length === 1 ? "activity" : "activities"}</div>
             <div className="rp-muted">{r.waiting ? `${r.waiting} to grade` : "—"}</div>
             <div className="rp-row">
-              <Link className="cc-btn" href={`/teacher/gradebook?view=standard&groups=${encodeURIComponent(r.key)}`}>Small groups</Link>
+              <Link className="cc-btn" href={`/teacher/gradebook?classId=${classId}&view=standard&groups=${encodeURIComponent(r.key)}`}>Small groups</Link>
               <Link className="cc-btn secondary" href={assignHref({ classId, code: r.code, subject: r.subject })}>Assign</Link>
             </div>
           </div>
@@ -403,7 +403,7 @@ export default function ReportsPage() {
             <select aria-label="Time" value={period} onChange={(e) => setPeriod(e.target.value)}>
               {PERIODS.map((p) => <option key={p.key} value={p.key}>{p.label}</option>)}
             </select>
-            <Link className="cc-btn secondary" href="/teacher/gradebook">Gradebook</Link>
+            <Link className="cc-btn secondary" href={`/teacher/gradebook?classId=${classId}`}>Gradebook</Link>
             <button type="button" className="cc-btn secondary" onClick={() => window.print()}>Print</button>
           </div>
         </div>
