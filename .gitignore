@@ -2,3 +2,6 @@ node_modules
 .next
 .env.local
 .DS_Store
+
+# Mockups, screenshots and notes from Claude. Kept on the computer, never pushed.
+Claude outputs/
