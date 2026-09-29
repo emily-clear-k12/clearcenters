@@ -5,7 +5,36 @@ Read this file, then `AUTHORING.md` in this same folder, then `AGENTS.md`. Build
 
 ## How the library is built
 
-The first wave is a **wide example**: different subjects and different kinds of ideas, not twelve versions of weather and water. After it is built, finish one subject and one grade at a time. A finished shelf is four broadcasts: two Explain, one Correspondent, one Debate.
+Every content standard gets one Broadcast Booth. The three formats stay. The format follows the standard. Do not force a debate onto a math fact just to fill a quota.
+
+- **Explain** — one idea the student can show with pictures. This is most of math, and most science that is not a choice.
+- **Correspondent** — the student is somewhere, or is looking at a source: a place, a community, a document, a text, or something they observed.
+- **Debate** — the standard really has two fair sides, a choice, or facts for and against. If it does not, it is an Explain.
+
+The four-broadcast shelf was only for the first sample. It is not the goal anymore.
+
+Do not repeat a story. Two neighboring standards still get two broadcasts, but not the same objects. Two fraction standards do not both use the trail. The exception: if a second standard is the same idea as one already built, do not make a twin. Mark it covered by the one that exists. Science 5.10A is covered by the Grade 4 water cycle. Do not build it.
+
+Left out on purpose. These do not get a Broadcast Booth:
+
+- Math process standards (the x.1 row).
+- Science practices (x.1 through x.5).
+- ELAR listening and speaking (x.1). The booth is already the speaking.
+- ELAR decoding, spelling, and cursive (x.2). Reading Tools, later.
+- ELAR fluency (x.4) and independent reading (x.5). Reading Tools, later.
+- Social studies skills.
+
+What that leaves, counted from `lib/teksWording.js` and `lib/briefings/teks/ss-teks-3-5.js` on Sept 28:
+
+| Subject | Grade 3 | Grade 4 | Grade 5 | Total |
+| --- | --- | --- | --- | --- |
+| Science | 22 | 20 | 19 | 61 |
+| ELAR | 54 | 54 | 54 | 162 |
+| Math | 46 | 46 | 39 | 131 |
+| Social Studies | 34 | 57 | 60 | 151 |
+| **All** | | | | **505** |
+
+Sixteen are built. The second wave below is the next four. Do not generate the other rows until Emily asks for one grade and one subject.
 
 Do not repeat a story. In particular:
 
@@ -62,23 +91,21 @@ The first wave is done. The next wave is written below. Do not build it until Em
 
 ## Second wave — finish two science shelves
 
-A shelf is one grade and one subject: two Explains, one Correspondent, one Debate.
+These four were chosen before the full-coverage rule. They still go first. After them, pick one grade and one subject and give every content standard in it a broadcast.
 
-Grade 3 Science is already full (cactus, water states, creek, schoolyard). Leave it alone.
+Grade 3 Science already has four broadcasts. The other Grade 3 Science standards still get their own later. Do not rewrite the cactus, the creek, or the schoolyard.
 
-This wave finishes Grade 4 Science and Grade 5 Science, then adds one Grade 5 reading Explain. The Moon waits. Grade 4 Science would already have two Explains, and a third would break the shelf.
+This wave is still the next four. It does not finish either science grade. The Moon is a different standard from day and night, so it gets its own broadcast later, when the rest of Grade 4 Science is built.
 
 | Status | Code | Format | Grade | Topic | What the broadcast is | Standard source |
 | --- | --- | --- | --- | --- | --- | --- |
 | Planned | SCI.4.10A-BB | Explain | 4 | Water cycle | The one water-cycle broadcast. Water moves, and the Sun is the energy that lifts it. Not day and night, and not the creek food chain. | `lib/teksWording.js` Science 4.10A. |
-| Planned | SCI.4.10B-BB | Correspondent | 4 | Canyon | The one "water shapes the land" story. Slow change: weathering, erosion, deposition. Not the water cycle. | `lib/teksWording.js` Science 4.10B. Do not also build 5.10C. |
+| Planned | SCI.4.10B-BB | Correspondent | 4 | Canyon | Slow change: weathering, erosion, and deposition. Not the water cycle. Grade 5 landforms (5.10C) can be its own broadcast later, about the shapes, not this process. | `lib/teksWording.js` Science 4.10B. |
 | Planned | SCI.5.11-BB | Debate | 5 | Using less | Two fair ways to cut harm from using resources: use less, or recycle. Not the wind-and-gas debate. | `lib/teksWording.js` Science 5.11. |
 | Planned | ELA.5.9D-BB | Explain | 5 | Central idea | The central idea of an informational text, with evidence. Not the theme of the trumpet play. | `lib/teksWording.js` ELAR 5.9D. Confirm a short source text before writing. |
 
 ## Still waiting
 
-- The Moon Explain, SCI.4.9B-BB. Real, but it does not fit this shelf.
-- Grade 5 decimal money Explain, MA.5.3E-BB, from `lib/cases/MA-5-3E.public.js`. First piece of an empty math shelf. Next wave after this one.
-- Do not build Science 5.10A. It is another Sun-and-ocean water story.
-
-Then fill one grade and one subject at a time until each shelf has four broadcasts.
+- The Moon Explain, SCI.4.9B-BB. It gets its own broadcast with the rest of Grade 4 Science. It is not day and night.
+- Grade 5 decimal money Explain, MA.5.3E-BB, from `lib/cases/MA-5-3E.public.js`. It joins the rest of Grade 5 Math when that grade is the one being filled.
+- Do not build Science 5.10A. It is the same water-cycle idea as 4.10A. Mark it covered by that broadcast.
