@@ -58,15 +58,27 @@ Leave these Grade 3 Science cases alone.
 | Built | SS.3.2B-BB | Correspondent | 3 | Communities | Two communities that meet the same needs in different ways. | `lib/cases/SS-3-2B.public.js`. SQL in the chat. Not run. |
 | Built | SS.4.10A-BB | Explain | 4 | Economics | How supply and demand change price and what is available. | `lib/cases/SS-4-10A.public.js`. SQL in the chat. Not run. |
 
-The first wave is done. Do not start the later list until Emily asks.
+The first wave is done. The next wave is written below. Do not build it until Emily says go. Nothing in it is marked Next yet.
 
-## Later
+## Second wave — finish two science shelves
 
-The first wave is done. Do not build these until Emily asks. Do not repeat a first-wave story.
+A shelf is one grade and one subject: two Explains, one Correspondent, one Debate.
 
-- The one water-cycle Explain: SCI.4.10A-BB
-- The one Moon Explain: SCI.4.9B-BB
-- The one canyon Correspondent: SCI.4.10B-BB
-- Grade 5 decimal money Explain: MA.5.3E-BB, from `lib/cases/MA-5-3E.public.js`
+Grade 3 Science is already full (cactus, water states, creek, schoolyard). Leave it alone.
+
+This wave finishes Grade 4 Science and Grade 5 Science, then adds one Grade 5 reading Explain. The Moon waits. Grade 4 Science would already have two Explains, and a third would break the shelf.
+
+| Status | Code | Format | Grade | Topic | What the broadcast is | Standard source |
+| --- | --- | --- | --- | --- | --- | --- |
+| Planned | SCI.4.10A-BB | Explain | 4 | Water cycle | The one water-cycle broadcast. Water moves, and the Sun is the energy that lifts it. Not day and night, and not the creek food chain. | `lib/teksWording.js` Science 4.10A. |
+| Planned | SCI.4.10B-BB | Correspondent | 4 | Canyon | The one "water shapes the land" story. Slow change: weathering, erosion, deposition. Not the water cycle. | `lib/teksWording.js` Science 4.10B. Do not also build 5.10C. |
+| Planned | SCI.5.11-BB | Debate | 5 | Using less | Two fair ways to cut harm from using resources: use less, or recycle. Not the wind-and-gas debate. | `lib/teksWording.js` Science 5.11. |
+| Planned | ELA.5.9D-BB | Explain | 5 | Central idea | The central idea of an informational text, with evidence. Not the theme of the trumpet play. | `lib/teksWording.js` ELAR 5.9D. Confirm a short source text before writing. |
+
+## Still waiting
+
+- The Moon Explain, SCI.4.9B-BB. Real, but it does not fit this shelf.
+- Grade 5 decimal money Explain, MA.5.3E-BB, from `lib/cases/MA-5-3E.public.js`. First piece of an empty math shelf. Next wave after this one.
+- Do not build Science 5.10A. It is another Sun-and-ocean water story.
 
 Then fill one grade and one subject at a time until each shelf has four broadcasts.
