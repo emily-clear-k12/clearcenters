@@ -1,7 +1,7 @@
 {
   "generatedFrom": "lib/cases and add_*.sql",
-  "onDisk": 1041,
-  "inSql": 1058,
+  "onDisk": 1061,
+  "inSql": 1078,
   "items": [
     {
       "standard": "3.10C-AD",
@@ -643,8 +643,44 @@
       "file": "lib/cases/broadcast-booth/assignFallback.js"
     },
     {
+      "standard": "SCI.3.6A-BB",
+      "title": "Broadcast Booth: The pumpkin patch tests (Explain)",
+      "grade": "3",
+      "subject": "Science",
+      "engine": "Broadcast Booth",
+      "kind": "standard",
+      "file": "lib/cases/broadcast-booth/assignFallback.js"
+    },
+    {
+      "standard": "SCI.3.6B-BB",
+      "title": "Broadcast Booth: What shape is lemonade? (Explain)",
+      "grade": "3",
+      "subject": "Science",
+      "engine": "Broadcast Booth",
+      "kind": "standard",
+      "file": "lib/cases/broadcast-booth/assignFallback.js"
+    },
+    {
       "standard": "SCI.3.6C-BB",
       "title": "Broadcast Booth: What does heat do to water? (Explain)",
+      "grade": "3",
+      "subject": "Science",
+      "engine": "Broadcast Booth",
+      "kind": "standard",
+      "file": "lib/cases/broadcast-booth/assignFallback.js"
+    },
+    {
+      "standard": "SCI.3.6D-BB",
+      "title": "Broadcast Booth: Build it strong (Correspondent)",
+      "grade": "3",
+      "subject": "Science",
+      "engine": "Broadcast Booth",
+      "kind": "standard",
+      "file": "lib/cases/broadcast-booth/assignFallback.js"
+    },
+    {
+      "standard": "SCI.3.7A-BB",
+      "title": "Broadcast Booth: Can a force work without touching? (Explain)",
       "grade": "3",
       "subject": "Science",
       "engine": "Broadcast Booth",
@@ -688,6 +724,15 @@
       "file": "lib/cases/broadcast-booth/assignFallback.js"
     },
     {
+      "standard": "SCI.4.10C-BB",
+      "title": "Broadcast Booth: A rainy week in the desert? (Explain)",
+      "grade": "4",
+      "subject": "Science",
+      "engine": "Broadcast Booth",
+      "kind": "standard",
+      "file": "lib/cases/broadcast-booth/assignFallback.js"
+    },
+    {
       "standard": "SCI.4.11A-BB",
       "title": "Broadcast Booth: How should the town get power? (Debate)",
       "grade": "4",
@@ -697,8 +742,143 @@
       "file": "lib/cases/broadcast-booth/assignFallback.js"
     },
     {
+      "standard": "SCI.4.11B-BB",
+      "title": "Broadcast Booth: A day without power (Correspondent)",
+      "grade": "4",
+      "subject": "Science",
+      "engine": "Broadcast Booth",
+      "kind": "standard",
+      "file": "lib/cases/broadcast-booth/assignFallback.js"
+    },
+    {
+      "standard": "SCI.4.11C-BB",
+      "title": "Broadcast Booth: Water hiding in the rock? (Explain)",
+      "grade": "4",
+      "subject": "Science",
+      "engine": "Broadcast Booth",
+      "kind": "standard",
+      "file": "lib/cases/broadcast-booth/assignFallback.js"
+    },
+    {
+      "standard": "SCI.4.12A-BB",
+      "title": "Broadcast Booth: Where does a tree get its food? (Explain)",
+      "grade": "4",
+      "subject": "Science",
+      "engine": "Broadcast Booth",
+      "kind": "standard",
+      "file": "lib/cases/broadcast-booth/assignFallback.js"
+    },
+    {
+      "standard": "SCI.4.12B-BB",
+      "title": "Broadcast Booth: Who eats what on the forest floor? (Correspondent)",
+      "grade": "4",
+      "subject": "Science",
+      "engine": "Broadcast Booth",
+      "kind": "standard",
+      "file": "lib/cases/broadcast-booth/assignFallback.js"
+    },
+    {
+      "standard": "SCI.4.12C-BB",
+      "title": "Broadcast Booth: What was this place like long ago? (Correspondent)",
+      "grade": "4",
+      "subject": "Science",
+      "engine": "Broadcast Booth",
+      "kind": "standard",
+      "file": "lib/cases/broadcast-booth/assignFallback.js"
+    },
+    {
+      "standard": "SCI.4.13A-BB",
+      "title": "Broadcast Booth: How do Texas trees survive a drought? (Explain)",
+      "grade": "4",
+      "subject": "Science",
+      "engine": "Broadcast Booth",
+      "kind": "standard",
+      "file": "lib/cases/broadcast-booth/assignFallback.js"
+    },
+    {
+      "standard": "SCI.4.13B-BB",
+      "title": "Broadcast Booth: Born with it, or got it later? (Explain)",
+      "grade": "4",
+      "subject": "Science",
+      "engine": "Broadcast Booth",
+      "kind": "standard",
+      "file": "lib/cases/broadcast-booth/assignFallback.js"
+    },
+    {
+      "standard": "SCI.4.6A-BB",
+      "title": "Broadcast Booth: How would you sort the mystery tray? (Explain)",
+      "grade": "4",
+      "subject": "Science",
+      "engine": "Broadcast Booth",
+      "kind": "standard",
+      "file": "lib/cases/broadcast-booth/assignFallback.js"
+    },
+    {
+      "standard": "SCI.4.6B-BB",
+      "title": "Broadcast Booth: Mixture or solution? (Correspondent)",
+      "grade": "4",
+      "subject": "Science",
+      "engine": "Broadcast Booth",
+      "kind": "standard",
+      "file": "lib/cases/broadcast-booth/assignFallback.js"
+    },
+    {
+      "standard": "SCI.4.6C-BB",
+      "title": "Broadcast Booth: Where did the water go? (Explain)",
+      "grade": "4",
+      "subject": "Science",
+      "engine": "Broadcast Booth",
+      "kind": "standard",
+      "file": "lib/cases/broadcast-booth/assignFallback.js"
+    },
+    {
+      "standard": "SCI.4.7-BB",
+      "title": "Broadcast Booth: Why do socks slide and sneakers stop? (Explain)",
+      "grade": "4",
+      "subject": "Science",
+      "engine": "Broadcast Booth",
+      "kind": "standard",
+      "file": "lib/cases/broadcast-booth/assignFallback.js"
+    },
+    {
+      "standard": "SCI.4.8A-BB",
+      "title": "Broadcast Booth: How does energy travel at the lake? (Correspondent)",
+      "grade": "4",
+      "subject": "Science",
+      "engine": "Broadcast Booth",
+      "kind": "standard",
+      "file": "lib/cases/broadcast-booth/assignFallback.js"
+    },
+    {
+      "standard": "SCI.4.8B-BB",
+      "title": "Broadcast Booth: Why is the pot hot but the handle cool? (Explain)",
+      "grade": "4",
+      "subject": "Science",
+      "engine": "Broadcast Booth",
+      "kind": "standard",
+      "file": "lib/cases/broadcast-booth/assignFallback.js"
+    },
+    {
       "standard": "SCI.4.8C-BB",
       "title": "Broadcast Booth: Why is the bulb lit? (Explain)",
+      "grade": "4",
+      "subject": "Science",
+      "engine": "Broadcast Booth",
+      "kind": "standard",
+      "file": "lib/cases/broadcast-booth/assignFallback.js"
+    },
+    {
+      "standard": "SCI.4.9A-BB",
+      "title": "Broadcast Booth: What will next month bring? (Correspondent)",
+      "grade": "4",
+      "subject": "Science",
+      "engine": "Broadcast Booth",
+      "kind": "standard",
+      "file": "lib/cases/broadcast-booth/assignFallback.js"
+    },
+    {
+      "standard": "SCI.4.9B-BB",
+      "title": "Broadcast Booth: Can you predict the Moon? (Explain)",
       "grade": "4",
       "subject": "Science",
       "engine": "Broadcast Booth",

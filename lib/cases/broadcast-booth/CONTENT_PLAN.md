@@ -125,27 +125,27 @@ Emily, Sept 29: one Broadcast Booth per standard. Science goes first. This is th
 
 | Status | Code | Format | Story (keep it different from every other row) |
 | --- | --- | --- | --- |
-| Next | SCI.4.9B-BB | Explain | The Moon's shape changes in a pattern over about a month. Not day and night. |
-| Planned | SCI.4.6A-BB | Explain | Sorting a tray of objects by properties: temperature, mass, magnetism, sinking or floating, physical state. |
-| Planned | SCI.4.6B-BB | Correspondent | Kitchen lab: trail mix and salad are mixtures; salt water and lemonade are solutions. |
-| Planned | SCI.4.6C-BB | Explain | Soil and water weigh the same before and after mixing. Matter is conserved. |
-| Planned | SCI.4.7-BB | Explain | Friction on the gym floor: sneakers grip, socks slide. Not a ramp. |
-| Planned | SCI.4.8A-BB | Correspondent | At the lake: a rolling ball, a wave, and a sound all carry energy. |
-| Planned | SCI.4.8B-BB | Explain | Conductors and insulators: a metal pot, an oven mitt, a copper wire in a plastic coat. |
-| Planned | SCI.4.9A-BB | Correspondent | Seasons desk: daylight and temperature in Texas across a year. |
-| Planned | SCI.4.10C-BB | Explain | One rainy week is weather; thirty years of rain is climate. |
-| Planned | SCI.4.11B-BB | Correspondent | A power outage shows how much modern life needs energy, and how saving it helps. Not the use-less debate. |
-| Planned | SCI.4.11C-BB | Explain | Porous rock stores water and oil like a sponge; solid rock does not. |
-| Planned | SCI.4.12A-BB | Explain | A leaf makes food from sunlight, water, and carbon dioxide. |
-| Planned | SCI.4.12B-BB | Correspondent | Forest floor food web, with decomposers. Not the creek food chain. |
-| Planned | SCI.4.12C-BB | Correspondent | Dinosaur Valley tracks show this place was once a muddy shoreline. |
-| Planned | SCI.4.13A-BB | Explain | Plant structures: a live oak's waxy leaves and a mesquite's deep roots. Not the cactus. |
-| Planned | SCI.4.13B-BB | Explain | Inherited traits (fur color) versus acquired traits (a scar, strong muscles). Not behavior. |
-| Planned | SCI.3.6A-BB | Explain | Testing objects: how hot, how heavy, magnetic or not, sink or float. |
-| Planned | SCI.3.6B-BB | Explain | Solids keep their shape; juice and air take the shape of their container. |
-| Planned | SCI.3.6D-BB | Correspondent | Maker table: combining clay, sticks, and paper to build a tower that stands. |
-| Planned | SCI.3.7A-BB | Explain | A magnet pulls from a distance, gravity pulls down, a hand pushes by touching. |
-| Planned | SCI.3.7B-BB | Correspondent | Playground: pushes and pulls change where things go and how they move. Not balanced forces. |
+| Built | SCI.4.9B-BB | Explain | The Moon's shape changes in a pattern over about a month. Not day and night. Built in `wave4.js`; pictures requested in `image-prompts/broadcast-booth/wave4.md`. |
+| Built | SCI.4.6A-BB | Explain | Sorting a tray of objects by properties: temperature, mass, magnetism, sinking or floating, physical state. Built in `wave4.js`; pictures requested in `image-prompts/broadcast-booth/wave4.md`. |
+| Built | SCI.4.6B-BB | Correspondent | Kitchen lab: trail mix and salad are mixtures; salt water and lemonade are solutions. Built in `wave4.js`; pictures requested in `image-prompts/broadcast-booth/wave4.md`. |
+| Built | SCI.4.6C-BB | Explain | Soil and water weigh the same before and after mixing. Matter is conserved. Built in `wave4.js`; pictures requested in `image-prompts/broadcast-booth/wave4.md`. |
+| Built | SCI.4.7-BB | Explain | Friction on the gym floor: sneakers grip, socks slide. Not a ramp. Built in `wave5.js`; pictures requested in `image-prompts/broadcast-booth/wave5.md`. |
+| Built | SCI.4.8A-BB | Correspondent | At the lake: a rolling ball, a wave, and a sound all carry energy. Built in `wave5.js`; pictures requested in `image-prompts/broadcast-booth/wave5.md`. |
+| Built | SCI.4.8B-BB | Explain | Conductors and insulators: a metal pot, an oven mitt, a copper wire in a plastic coat. Built in `wave5.js`; pictures requested in `image-prompts/broadcast-booth/wave5.md`. |
+| Built | SCI.4.9A-BB | Correspondent | Seasons desk: daylight and temperature in Texas across a year. Built in `wave5.js`; pictures requested in `image-prompts/broadcast-booth/wave5.md`. |
+| Built | SCI.4.10C-BB | Explain | One rainy week is weather; thirty years of rain is climate. Built in `wave6.js`; pictures requested in `image-prompts/broadcast-booth/wave6.md`. |
+| Built | SCI.4.11B-BB | Correspondent | A power outage shows how much modern life needs energy, and how saving it helps. Not the use-less debate. Built in `wave6.js`; pictures requested in `image-prompts/broadcast-booth/wave6.md`. |
+| Built | SCI.4.11C-BB | Explain | Porous rock stores water and oil like a sponge; solid rock does not. Built in `wave6.js`; pictures requested in `image-prompts/broadcast-booth/wave6.md`. |
+| Built | SCI.4.12A-BB | Explain | A leaf makes food from sunlight, water, and carbon dioxide. Built in `wave6.js`; pictures requested in `image-prompts/broadcast-booth/wave6.md`. |
+| Built | SCI.4.12B-BB | Correspondent | Forest floor food web, with decomposers. Not the creek food chain. Built in `wave7.js`; pictures requested in `image-prompts/broadcast-booth/wave7.md`. |
+| Built | SCI.4.12C-BB | Correspondent | Dinosaur Valley tracks show this place was once a muddy shoreline. Built in `wave7.js`; pictures requested in `image-prompts/broadcast-booth/wave7.md`. |
+| Built | SCI.4.13A-BB | Explain | Plant structures: a live oak's waxy leaves and a mesquite's deep roots. Not the cactus. Built in `wave7.js`; pictures requested in `image-prompts/broadcast-booth/wave7.md`. |
+| Built | SCI.4.13B-BB | Explain | Inherited traits (fur color) versus acquired traits (a scar, strong muscles). Not behavior. Built in `wave7.js`; pictures requested in `image-prompts/broadcast-booth/wave7.md`. |
+| Built | SCI.3.6A-BB | Explain | Testing objects: how hot, how heavy, magnetic or not, sink or float. Built in `wave8.js`; pictures requested in `image-prompts/broadcast-booth/wave8.md`. |
+| Built | SCI.3.6B-BB | Explain | Solids keep their shape; juice and air take the shape of their container. Built in `wave8.js`; pictures requested in `image-prompts/broadcast-booth/wave8.md`. |
+| Built | SCI.3.6D-BB | Correspondent | Maker table: combining clay, sticks, and paper to build a tower that stands. Built in `wave8.js`; pictures requested in `image-prompts/broadcast-booth/wave8.md`. |
+| Built | SCI.3.7A-BB | Explain | A magnet pulls from a distance, gravity pulls down, a hand pushes by touching. Built in `wave8.js`; pictures requested in `image-prompts/broadcast-booth/wave8.md`. |
+| Next | SCI.3.7B-BB | Correspondent | Playground: pushes and pulls change where things go and how they move. Not balanced forces. |
 | Planned | SCI.3.8A-BB | Correspondent | Energy hunt at the fair: light, sound, heat, and motion. |
 | Planned | SCI.3.8B-BB | Explain | A faster bowling ball has more energy and knocks down more pins. |
 | Planned | SCI.3.9A-BB | Explain | The Moon orbits Earth, and Earth orbits the Sun. Not phases, not day and night. |
