@@ -212,6 +212,7 @@ export default function GroupPage() {
     if (group.standard_code) params.set("standard", group.standard_code);
     if (group.subject) params.set("subject", group.subject);
     params.set("students", ids.join(","));
+    params.set("group", group.id);
     return `/teacher/assign/new?${params.toString()}`;
   }
 

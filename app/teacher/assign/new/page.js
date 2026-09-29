@@ -943,7 +943,10 @@ function displayCode(code){return String(code||'').replace(/^TEKS\s+/i,'').repla
                   <button onClick={() => router.push(`/teacher/signal-ops-board?assignmentId=${newAssignmentId}`)} className="gc-btn" style={{ background: "#0D1B2A", color: COLORS.white, borderRadius: 999, padding: "11px 20px", fontWeight: 700, fontSize: 13.5 }}>Open the Crew board</button>
                 )}
                 <button onClick={assignAnother} className="gc-btn" style={{ background: `${ACCENT}22`, color: ACCENT, borderRadius: 999, padding: "11px 20px", fontWeight: 700, fontSize: 13.5 }}>Assign Another</button>
-                <button onClick={() => router.push("/teacher/class?tab=work")} className="gc-btn" style={{ background: ACCENT, color: COLORS.white, borderRadius: 999, padding: "11px 20px", fontWeight: 700, fontSize: 13.5 }}>Back to Class</button>
+                {searchParams.get("group") && (
+                  <button onClick={() => router.push(`/teacher/groups/${encodeURIComponent(searchParams.get("group"))}`)} className="gc-btn" style={{ background: ACCENT, color: COLORS.white, borderRadius: 999, padding: "11px 20px", fontWeight: 700, fontSize: 13.5 }}>Back to the group</button>
+                )}
+                <button onClick={() => router.push("/teacher/class?tab=work")} className="gc-btn" style={{ background: searchParams.get("group") ? `${ACCENT}22` : ACCENT, color: searchParams.get("group") ? ACCENT : COLORS.white, borderRadius: 999, padding: "11px 20px", fontWeight: 700, fontSize: 13.5 }}>Back to Class</button>
               </div>
             </div>): (product === "centers" || product === "keys") ? <>
     {product === "keys" && <section className="cc-panel cc-keys">
