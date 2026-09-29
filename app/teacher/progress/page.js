@@ -7,6 +7,7 @@ import { supabase } from "../../../lib/supabaseClient";
 import { COLORS, PAGE_ACCENTS, PAGE_BACKGROUNDS, panelStyle } from "../../../lib/teacherTheme";
 import { countLevels, countLine, levelColor, levelWord } from "../../../lib/gradeScale";
 import { mistakeLine } from "../../../lib/mistakeLine";
+import Icon, { IconBadge } from "../../../components/teacher/Icon";
 
 // Sept 13 — second page moved to the console-interior look (see
 // Teacher_SiteWide_Redesign_Plan.md). Observatory's destination, so it
@@ -273,7 +274,7 @@ export default function StudentProgressPage() {
                     className="sp-input"
                     style={{ width: "100%", background: "rgba(255,255,255,.8)", color: COLORS.textDark, border: `2px solid ${COLORS.border}`, borderRadius: 10, padding: "9px 10px 9px 34px", fontSize: 13, boxSizing: "border-box", fontFamily: "inherit" }}
                   />
-                  <span style={{ position: "absolute", left: 10, top: 9, color: COLORS.textMuted }}>🔍</span>
+                  <span style={{ position: "absolute", left: 10, top: 9, color: COLORS.textMuted }}><Icon name="search" size={15} /></span>
                 </div>
 
                 <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 12 }}>

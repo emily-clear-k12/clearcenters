@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Maximize2, Minimize2, Radio } from "lucide-react";
 import { supabase } from "../../../lib/supabaseClient";
 import { PAGE_ACCENTS } from "../../../lib/teacherTheme";
+import Icon, { IconBadge } from "../../../components/teacher/Icon";
 
 // Sept 13 — moved the teacher-facing chrome (everything except the actual
 // projected board) to the console-interior look: TeacherSidebar +
@@ -194,13 +195,13 @@ function LiveOpsBoardContent() {
             {showExplainer && (
               <div style={{ background: COLORS.white, border: `1px solid ${COLORS.border}`, borderRadius: 14, padding: 16, marginBottom: 16, boxShadow: "0 4px 16px rgba(13,27,42,.06)" }}>
                 <p style={{ fontSize: 13, color: COLORS.textDark, lineHeight: 1.6, margin: 0 }}>
-                  <strong>🚨 Distress Call</strong> turns an assignment into a shared goal for the whole class. When you flag an assignment this way, every correct/completed checkpoint from every student counts toward one group target — not individual scores. This screen shows that live: the big number is how many checkpoints the class has cleared so far, out of the target you set.
+                  <strong>Distress Call</strong> turns an assignment into a shared goal for the whole class. When you flag an assignment this way, every correct/completed checkpoint from every student counts toward one group target — not individual scores. This screen shows that live: the big number is how many checkpoints the class has cleared so far, out of the target you set.
                 </p>
                 <p style={{ fontSize: 13, color: COLORS.textDark, lineHeight: 1.6, margin: "10px 0 0 0" }}>
                   Hit "Present" to put it up on the projector — it updates on its own every few seconds as students work, so you can just let it run in the background while kids race to clear the target together.
                 </p>
                 <p style={{ fontSize: 13, color: COLORS.textDark, lineHeight: 1.6, margin: "10px 0 0 0" }}>
-                  💎 If you set a crystal-point reward when you created it, every targeted student gets those points automatically the instant the class clears the target — no extra step from you.
+                  If you set a crystal-point reward when you created it, every targeted student gets those points automatically the instant the class clears the target — no extra step from you.
                 </p>
               </div>
             )}
@@ -277,7 +278,7 @@ function LiveOpsBoardContent() {
               {isFullscreen ? "Exit" : "Present"}
             </button>
 
-            <div style={{ fontSize: 13, letterSpacing: 1.5, textTransform: "uppercase", color: COLORS.teal, fontWeight: 700, marginBottom: 10 }}>🚨 Distress Call</div>
+            <div style={{ fontSize: 13, letterSpacing: 1.5, textTransform: "uppercase", color: COLORS.teal, fontWeight: 700, marginBottom: 10 }}><Icon name="signal" size={14} /> Distress Call</div>
             <h2 style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 700, fontSize: "clamp(22px, 3.5vw, 40px)", color: COLORS.white, margin: "0 0 6px 0", textAlign: "center" }}>{selected.caseTitle}</h2>
             <div style={{ color: "rgba(255,255,255,.6)", fontSize: 15, marginBottom: 36 }}>{selected.className}</div>
 
@@ -304,7 +305,7 @@ function LiveOpsBoardContent() {
                       animation: "lob-goal-glow 1.8s ease-in-out infinite",
                     }}
                   >
-                    🎉 Goal reached — +{progress.rewardPoints} crystal points awarded to everyone!
+                    <Icon name="check" size={16} /> Goal reached — +{progress.rewardPoints} crystal points awarded to everyone!
                   </div>
                 )}
 
@@ -325,7 +326,7 @@ function LiveOpsBoardContent() {
 
                 {!progress.rewardGiven && progress.rewardPoints > 0 && (
                   <div style={{ color: COLORS.teal, fontSize: 13, fontWeight: 700, marginTop: 14 }}>
-                    💎 Reward: +{progress.rewardPoints} crystal points for everyone when the class hits the target
+                    <Icon name="gem" size={14} /> Reward: +{progress.rewardPoints} crystal points for everyone when the class hits the target
                   </div>
                 )}
               </>

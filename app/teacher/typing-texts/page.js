@@ -201,7 +201,7 @@ export default function TypingTextsPage() {
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontWeight: 700, fontSize: 13.5 }}>{t.title}</div>
                     <div style={{ fontSize: 12, color: COLORS.textMuted, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                      Grade {t.grade} · {t.subject} · {t.mode === "dictation" ? "🎧 Dictation · " : t.mode === "copy" ? "Copy only · " : ""}{t.compose_prompt ? "✍️ Your Turn · " : ""}{t.text.length} chars · {t.text.replace(/\s+/g, " ").slice(0, 80)}
+                      Grade {t.grade} · {t.subject} · {t.mode === "dictation" ? "Dictation · " : t.mode === "copy" ? "Copy only · " : ""}{t.compose_prompt ? "Your Turn · " : ""}{t.text.length} chars · {t.text.replace(/\s+/g, " ").slice(0, 80)}
                     </div>
                   </div>
                   {t.assigned && <span style={{ fontSize: 11, fontWeight: 700, color: COLORS.success, background: `${COLORS.success}1F`, borderRadius: 999, padding: "2px 10px" }}>Assigned</span>}

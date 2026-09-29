@@ -10,6 +10,7 @@ import ClassSetup from "../../../components/teacher/ClassSetup";
 import { replaySamTips } from "../../../components/teacher/SamCoach";
 import { SAM_SKINS, DEFAULT_SAM_SKIN, FALLBACK_ICON } from "../../../lib/samSkins";
 import { GRADEBOOK_SCALES, scaleNumbers } from "../../../lib/gradebookScale";
+import { liveBoardFor } from "../../../lib/teacherBridge";
 
 function gradebookFields(scale, got, almost, notyet) {
   const preset = GRADEBOOK_SCALES.find((item) => item.id === scale) || GRADEBOOK_SCALES[0];
@@ -125,7 +126,7 @@ export default function ClassClient() {
       rows = rows.map((student) => ({ ...student, active: student.active !== false }));
     }
     setStudents(rows);
-    const { data: assignments } = await supabase.from("assignments").select("id, due_date, case_standard, created_at, game_skin").eq("class_id", current.id);
+    const { data: assignments } = await supabase.from("assignments").select("id, class_id, due_date, case_standard, created_at, game_skin, distress_call").eq("class_id", current.id);
     const ids = (assignments || []).map((item) => item.id);
     let submissions = [];
     if (ids.length) {
@@ -390,6 +391,7 @@ export default function ClassClient() {
                     <strong>{item.title}</strong>
                     <p>{item.case_standard} · assigned {item.created_at ? new Date(item.created_at).toLocaleDateString() : "—"}{item.due_date ? ` · due ${new Date(`${item.due_date}T12:00:00`).toLocaleDateString()}` : ""} · {item.turnedIn} turned in</p>
                   </div>
+                  {confirmId !== item.id && liveBoardFor(item, item.engine) && <Link className="cc-btn secondary" href={liveBoardFor(item, item.engine).href}>Open {liveBoardFor(item, item.engine).label}</Link>}
                   {confirmId === item.id ? (
                     <div className="cc-row">
                       <button type="button" className="cc-btn" style={{ background: "#c93c3c", borderColor: "#c93c3c" }} disabled={deletingId === item.id} onClick={() => deleteAssignment(item)}>{deletingId === item.id ? "Deleting…" : item.turnedIn ? `Delete it and ${item.turnedIn} students' work` : "Yes, delete it"}</button>

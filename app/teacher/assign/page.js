@@ -7,6 +7,7 @@ import { Plus, Copy, Check, Printer } from "lucide-react";
 import { CaseImage } from "../../../lib/caseImage";
 import { supabase } from "../../../lib/supabaseClient";
 import { COLORS, PAGE_ACCENTS, PAGE_BACKGROUNDS, panelStyle } from "../../../lib/teacherTheme";
+import Icon, { IconBadge } from "../../../components/teacher/Icon";
 
 // This page's own accent — Mission Control's color on the Overview console
 // (see PAGE_ACCENTS in lib/teacherTheme.js) — so arriving here from that
@@ -391,7 +392,7 @@ export default function MyClassesPage() {
                               {a.cases?.title || a.case_standard}
                               {a.distress_call && (
                                 <span title="Distress Call is live — project it from here or from the Live Ops Board" style={{ fontSize: 9.5, fontWeight: 700, color: COLORS.violet, background: `${COLORS.violet}22`, borderRadius: 999, padding: "1px 7px" }}>
-                                  📡 Live
+                                  <Icon name="signal" size={11} /> Live
                                 </span>
                               )}
                             </div>
@@ -497,15 +498,15 @@ export default function MyClassesPage() {
                   className="gc-btn"
                   style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, width: "100%", background: COLORS.textDark, border: `1px solid rgba(255,255,255,.14)`, color: COLORS.white, borderRadius: 12, padding: "12px 14px", fontWeight: 700, fontSize: 13.5, marginBottom: 16 }}
                 >
-                  📡 Project on Live Ops Board
+                  <Icon name="signal" size={15} /> Project on Live Ops Board
                 </button>
               )}
 
               {caseDetailAssignment.distress_call && caseDetailAssignment.distress_call_reward_points > 0 && (
                 <div style={{ fontSize: 12, fontWeight: 700, color: caseDetailAssignment.distress_call_reward_given ? "#8A5A00" : COLORS.violet, background: caseDetailAssignment.distress_call_reward_given ? `${COLORS.warning}1E` : `${COLORS.violet}1A`, borderRadius: 10, padding: "8px 12px", marginBottom: 16, textAlign: "center" }}>
                   {caseDetailAssignment.distress_call_reward_given
-                    ? `🎉 +${caseDetailAssignment.distress_call_reward_points} crystal points already awarded to the class`
-                    : `💎 +${caseDetailAssignment.distress_call_reward_points} crystal points will go out to everyone when the target is hit`}
+                    ? `+${caseDetailAssignment.distress_call_reward_points} crystal points already awarded to the class`
+                    : `+${caseDetailAssignment.distress_call_reward_points} crystal points will go out to everyone when the target is hit`}
                 </div>
               )}
 
@@ -513,7 +514,7 @@ export default function MyClassesPage() {
                 <div style={{ marginBottom: 16 }}>
                   <div style={{ fontSize: 11, fontWeight: 700, color: COLORS.textMuted, letterSpacing: .4, marginBottom: 5, textTransform: "uppercase" }}>Learning Target</div>
                   <div style={{ background: `${COLORS.aqua}18`, borderRadius: 12, padding: "10px 12px", fontSize: 13.5, color: COLORS.textDark, lineHeight: 1.5 }}>
-                    🎯 {caseDetailAssignment.cases.learning_target}
+                    <Icon name="target" size={15} style={{ color: "#0F7C8C", marginRight: 4 }} />{caseDetailAssignment.cases.learning_target}
                   </div>
                 </div>
               )}
@@ -531,7 +532,7 @@ export default function MyClassesPage() {
                 <div>
                   <div style={{ fontSize: 11, fontWeight: 700, color: COLORS.textMuted, letterSpacing: .4, marginBottom: 5, textTransform: "uppercase" }}>Watch For</div>
                   <div style={{ background: `${COLORS.warning}18`, border: `1px solid ${COLORS.warning}55`, borderRadius: 12, padding: "10px 12px", fontSize: 13, color: "#7A4A00", lineHeight: 1.5 }}>
-                    ⚠️ {caseDetailAssignment.cases.misconception_note}
+                    <Icon name="alert" size={15} style={{ marginRight: 4 }} />{caseDetailAssignment.cases.misconception_note}
                   </div>
                 </div>
               )}

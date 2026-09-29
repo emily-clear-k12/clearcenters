@@ -27,11 +27,11 @@ import { GRADEBOOK_SCALES, scaleNumbers, gradebookValue } from "../../../lib/gra
 import { groupsApi } from "../../../lib/groupsApi";
 import { CHECKS } from "../../../lib/smallGroups";
 import "./gradebook.css";
+import Icon, { IconBadge, ConfidenceMark } from "../../../components/teacher/Icon";
 
 const VIEWS = [["grid", "Grid"], ["standard", "By standard"], ["cards", "Cards"]];
 const VIEW_KEY = "cc-gradebook-view";
 const BAR = { 2: "#1f8a4d", 1: "#e0a800", 0: "#d64545" };
-const CONFIDENCE = { shaky: "😕 still shaky", solid: "🙂 pretty solid", strong: "😄 really strong" };
 
 function readView() {
   try {
@@ -418,7 +418,8 @@ function Drawer({ book, open, onClose, groupNotes }) {
         <h2>{student.first_name} · {column.title}</h2>
         <p className="cc-muted">{engineInfo(column.engine).label}{column.code ? ` · TEKS ${column.code}` : ""}{column.dueDate ? ` · due ${niceDate(column.dueDate)}` : ` · assigned ${niceDate(column.createdAt)}`}</p>
         <div className="gb-big"><span className={`gb-chip ${chipClass(cell)}`}>{chipMark(cell)}</span>{cellWord(cell, column.engine)}{cell?.kind === MISSING && cell.pastDue ? " · past due" : ""}</div>
-        {cell?.submittedAt && <p className="cc-muted">Turned in {niceDate(cell.submittedAt)}{cell.confidence && CONFIDENCE[cell.confidence] ? ` · felt ${CONFIDENCE[cell.confidence]}` : ""}{graded ? (cell.released ? " · released" : " · not released yet") : ""}</p>}
+        {cell?.submittedAt && <p className="cc-muted">Turned in {niceDate(cell.submittedAt)}{graded ? (cell.released ? " · released" : " · not released yet") : ""}</p>}
+        {cell?.confidence && <p className="cc-muted" style={{ display: "flex", alignItems: "center", gap: 6 }}>Felt: <ConfidenceMark value={cell.confidence} /></p>}
         {cell?.kind === MISSING && <p className="cc-muted">{cell.started ? "Started but not turned in yet." : "Nothing turned in yet."}</p>}
         <div className="gb-actions">
           {cell?.submissionId && <Link className="cc-btn" href={`/teacher/grade/${cell.submissionId}`}>{cell.kind === WAITING ? "Grade it now" : "Open their work"}</Link>}
@@ -444,7 +445,7 @@ function Drawer({ book, open, onClose, groupNotes }) {
           );
         })}
         <GroupNotes info={groupNotes} studentId={student.id} />
-        <div className="gb-actions"><Link className="cc-btn" href={`/teacher/students/${student.id}`}>Open {student.first_name}'s page</Link></div>
+        <div className="gb-actions"><Link className="cc-btn" href={`/teacher/students/${student.id}`}>All of {student.first_name}'s work</Link><Link className="cc-btn secondary" href={`/teacher/reports/student/${student.id}`}>Report</Link></div>
       </>
     );
   }

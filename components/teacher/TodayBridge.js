@@ -2,12 +2,32 @@
 import React,{useState,useEffect,useRef} from 'react';
 import Link from 'next/link';
 import {BridgePage,ClassTabs,PageHeading,Empty} from './BridgeUI';
-import {engineInfo,subjectStyle,assignmentBoard} from '../../lib/teacherBridge';
+import {engineInfo,subjectStyle,assignmentBoard,liveBoardFor} from '../../lib/teacherBridge';
 import {rememberedTeacherClass,rememberTeacherClass} from '../../lib/teacherClass';
 import {missionMapTeksCode} from '../../lib/cases/mission-map/teksLabels';
 import {supabase} from '../../lib/supabaseClient';
 import { countLine } from '../../lib/gradeScale';
 import SamCoach from './SamCoach';
+import { groupsApi } from '../../lib/groupsApi';
+import { meetings } from '../../lib/smallGroups';
+
+// Sept 29, 2026: the Small groups card on Today. Open groups for this class,
+// the one you haven't met with longest first.
+function daysAgo(value){if(!value)return null;return Math.floor((Date.now()-new Date(value).getTime())/86400000)}
+function metLine(days){if(days==null)return 'Not met yet';if(days<=0)return 'Met today';if(days===1)return 'Met yesterday';return `Met ${days} days ago`}
+function TodayGroups({cls,students}){
+ const [state,setState]=useState({loading:true,groups:[],notes:[],setup:''});
+ useEffect(()=>{if(!cls?.id)return;let ignore=false;setState(s=>({...s,loading:true}));groupsApi('list',{classId:cls.id}).then(res=>{if(!ignore)setState({loading:false,groups:res.groups||[],notes:res.notes||[],setup:res.setup||''})}).catch(()=>{if(!ignore)setState({loading:false,groups:[],notes:[],setup:''})});return ()=>{ignore=true}},[cls?.id]);
+ const name=id=>students.find(x=>x.id===id)?.first_name;
+ const open=state.groups.filter(g=>g.status!=='closed').map(g=>{const last=meetings(state.notes.filter(n=>n.group_id===g.id))[0];return {g,days:daysAgo(last?.at)}}).sort((a,b)=>(b.days==null?9999:b.days)-(a.days==null?9999:a.days));
+ const make=`/teacher/gradebook?classId=${cls?.id}&view=standard&groups=auto`;
+ return <section className="cc-panel cc-today-groups"><div className="cc-row cc-between"><h2>Small groups</h2>{open.length>0&&<span className="cc-badge neutral">{open.length} open</span>}</div>
+ {state.loading?<p className="cc-muted">Loading…</p>:state.setup?<p className="cc-muted">Small groups aren't set up in the database yet.</p>:open.length?<>
+ {open.slice(0,4).map(({g,days})=>{const done=new Set(g.done_ids||[]);const kids=(g.student_ids||[]).filter(id=>!done.has(id)).map(name).filter(Boolean);return <Link key={g.id} className="cc-today-group" href={`/teacher/groups/${g.id}`}><span><strong>{g.name}</strong><small>{g.standard_code?`TEKS ${g.standard_code} · `:''}{metLine(days)}</small><em>{kids.join(', ')||'Everyone is done'}</em></span><span className="cc-link">Meet</span></Link>})}
+ <div className="cc-row cc-between" style={{marginTop:10}}><Link className="cc-link" href={`/teacher/groups?classId=${cls?.id}`}>All groups →</Link><Link className="cc-link" href={make}>Make a group</Link></div>
+ </>:<><p className="cc-muted">No small groups for this class yet. Pull a group from the gradebook to plan it, meet, and track who moved up.</p><Link className="cc-btn secondary" href={make}>Make a group</Link></>}
+ </section>
+}
 
 function teksKeys(standard){
  const raw=String(standard||'');
@@ -59,9 +79,11 @@ export default function TodayBridge({teacherName,teacherEmail,teacherId,classes,
   return ()=>{ignore=true};
  },[info.grade,cls?.grade,current?.case_standard,currentTopic]);
  const struggling=roster.map(s=>{const grades=submissions.filter(x=>x.student_id===s.id&&list.some(a=>a.id===x.assignment_id)&&x.released&&x.teacher_grade!=null).map(x=>Number(x.teacher_grade));const notYet=grades.filter(g=>g===0).length;const hintCount=hints.filter(h=>h.student_id===s.id&&byId[h.assignment_id]).length;return {student:s,notYet,hintCount};}).filter(x=>x.notYet>0||x.hintCount>=2).sort((a,b)=>b.notYet-a.notYet||b.hintCount-a.hintCount).slice(0,3);
- const distress=list.find(a=>a.distress_call);
+ // Sept 29, 2026: every live board this class has (Distress Call, Crew,
+ // Relay Race, Typing Track), one tile each, so none is only reachable
+ // from the screen right after assigning.
  const boards=[];
- if(distress)boards.push({key:'live',name:'Distress call',button:'Open the live board',href:`/teacher/live-ops-board?assignmentId=${distress.id}`,image:'/teacher/live_ops_board_bg.jpg',focus:'68% 18%'});
+ list.forEach(a=>{const b=liveBoardFor(a,caseDetails[a.case_standard]?.engine);if(!b||boards.some(x=>x.href===b.href))return;boards.push({key:b.href,name:b.label,button:`Open the ${b.label}`,href:b.href,image:b.label==='Live Ops Board'?'/teacher/live_ops_board_bg.jpg':engineInfo(caseDetails[a.case_standard]?.engine).image,focus:b.label==='Live Ops Board'?'68% 18%':undefined})});
  const startSteps=[
   {done:roster.length>0,label:'Add your students',href:`/teacher/class?class=${cls?.id}`},
   {done:list.length>0,label:'Assign an activity',href:`/teacher/assign/new?classId=${cls?.id}`},
@@ -87,6 +109,7 @@ export default function TodayBridge({teacherName,teacherEmail,teacherId,classes,
  {pending.slice(0,3).map(s=><div className="cc-person" key={s.id}><div className="cc-avatar">{roster.find(r=>r.id===s.student_id)?.first_name?.[0]||'•'}</div><div><strong>{roster.find(r=>r.id===s.student_id)?.first_name||'Student'}</strong><p>{caseDetails[byId[s.assignment_id]?.case_standard]?.title||byId[s.assignment_id]?.case_standard||'Submitted work'} · Ready for feedback</p></div><Link className="cc-link" href={`/teacher/grade/${s.id}`}>Review</Link></div>)}
  {!pending.length&&<p className="cc-muted">You’re caught up on submitted work for this class.</p>}
  <Link className="cc-btn" style={{width:'100%',marginTop:14}} href={`/teacher/grade?classId=${cls.id}`}>Review student work</Link></section>
+ <TodayGroups cls={cls} students={students}/>
  <section className="cc-panel cc-support"><div className="cc-support-title"><img src="/icons/sam/cosmic/helping-poster.png" alt="S.A.M."/><h2>Next teaching step</h2></div>
  {error?<p className="cc-muted">Follow-up evidence is unavailable. Refresh to try again.</p>:struggling.length||gradeLine||requests.length?<>
  {struggling.length>0&&<div className="cc-support-suggestion"><div className="cc-eyebrow">S.A.M. suggests</div><h3>Check in · {struggling.map(x=>x.student.first_name).join(', ')}</h3><p>Review their recent work before choosing a follow-up.</p></div>}

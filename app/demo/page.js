@@ -1,11 +1,8 @@
-import { headers } from "next/headers";
 import { redirect } from "next/navigation";
-import { isSandboxHost, SANDBOX_URL } from "../../lib/demo/site";
-import { DEMO_STUDENTS, DEMO_STUDENT_LOGINS } from "../../lib/demo/barrons";
-import DemoDoor from "./DemoDoor";
 
-export default function DemoPage() {
-  if (!isSandboxHost(headers().get("host"))) redirect(`${SANDBOX_URL}/sandbox`);
-  const students = DEMO_STUDENT_LOGINS.map(({ index, label }) => ({ index, label, name: DEMO_STUDENTS[index].name, blurb: DEMO_STUDENTS[index].blurb }));
-  return <DemoDoor students={students} />;
+// Sept 29, 2026: the old demo door is retired. Demo classes now live on the
+// real site (Demo · Math & Science, Demo · ELAR & Social Studies). This
+// folder can be deleted.
+export default function RetiredDemo() {
+  redirect("/");
 }

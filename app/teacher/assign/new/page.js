@@ -477,6 +477,7 @@ function KeyStationBody({ id }) {
 }
 
 import {rememberedTeacherClass,rememberTeacherClass} from "../../../../lib/teacherClass";
+import Icon, { IconBadge, ConfidenceMark } from "../../../../components/teacher/Icon";
 
 function NewAssignmentContent() {
   const router = useRouter();
@@ -918,26 +919,26 @@ function displayCode(code){return String(code||'').replace(/^TEKS\s+/i,'').repla
       ))}
     </div>
     {assignedSuccess?(            <div style={panelStyle(ACCENT, { padding: 32, textAlign: "center" })}>
-              <div style={{ fontSize: 36, marginBottom: 10 }}>✅</div>
+              <IconBadge name="check" color="#1f8a4d" />
               <div style={{ fontWeight: 700, fontSize: 17, marginBottom: 6, color: COLORS.textDark }}>Assigned!</div>
               <p style={{ color: COLORS.textMuted, fontSize: 13.5, marginBottom: distressCallEnabled ? 10 : 20 }}>
                 "{selectedCase.title}" is now assigned to {targetMode === "specific" ? `${selectedStudentIds.length} student${selectedStudentIds.length === 1 ? "" : "s"} in` : "everyone in"} {targetClass?.name}.
               </p>
               {distressCallEnabled && (
                 <p style={{ color: COLORS.violet, fontSize: 12.5, fontWeight: 700, marginBottom: 20, background: `${COLORS.violet}1A`, borderRadius: 10, padding: "8px 12px", display: "inline-block" }}>
-                  🚨 Distress Call is live{distressCallTarget ? ` — target: ${distressCallTarget} ${distressCallUnit(selectedCase?.engine, selectedCase?.standard)}` : ""}. Students will see the meter update as they work.
+                  <Icon name="signal" size={15} /> Distress Call is live{distressCallTarget ? ` — target: ${distressCallTarget} ${distressCallUnit(selectedCase?.engine, selectedCase?.standard)}` : ""}. Students will see the meter update as they work.
                   {!!distressCallRewardPoints && parseInt(distressCallRewardPoints, 10) > 0 && ` Everyone gets +${distressCallRewardPoints} crystal points when they hit it.`}
                 </p>
               )}
               <div style={{ display: "flex", gap: 10, justifyContent: "center", flexWrap: "wrap" }}>
                 {distressCallEnabled && newAssignmentId && (
-                  <button onClick={() => router.push(`/teacher/live-ops-board?assignmentId=${newAssignmentId}`)} className="gc-btn" style={{ background: "#0D1B2A", color: COLORS.white, borderRadius: 999, padding: "11px 20px", fontWeight: 700, fontSize: 13.5 }}>📡 Project on Live Ops Board</button>
+                  <button onClick={() => router.push(`/teacher/live-ops-board?assignmentId=${newAssignmentId}`)} className="gc-btn" style={{ background: "#0D1B2A", color: COLORS.white, borderRadius: 999, padding: "11px 20px", fontWeight: 700, fontSize: 13.5 }}><Icon name="signal" size={15} /> Project on Live Ops Board</button>
                 )}
                 {selectedCase?.engine === "relay_station" && /\.RACE$/.test(selectedCase.standard || "") && (
-                  <button onClick={() => router.push(`/teacher/relay-race?classId=${assignClassId}`)} className="gc-btn" style={{ background: "#0D1B2A", color: COLORS.white, borderRadius: 999, padding: "11px 20px", fontWeight: 700, fontSize: 13.5 }}>🏁 Open Relay Race Board</button>
+                  <button onClick={() => router.push(`/teacher/relay-race?classId=${assignClassId}`)} className="gc-btn" style={{ background: "#0D1B2A", color: COLORS.white, borderRadius: 999, padding: "11px 20px", fontWeight: 700, fontSize: 13.5 }}><Icon name="flag" size={15} /> Open Relay Race Board</button>
                 )}
                 {selectedCase?.engine === "relay_station" && /\.TRACK$/.test(selectedCase.standard || "") && (
-                  <button onClick={() => router.push(`/teacher/typing-track?classId=${assignClassId}`)} className="gc-btn" style={{ background: "#0D1B2A", color: COLORS.white, borderRadius: 999, padding: "11px 20px", fontWeight: 700, fontSize: 13.5 }}>⌨️ Open Typing Track Board</button>
+                  <button onClick={() => router.push(`/teacher/typing-track?classId=${assignClassId}`)} className="gc-btn" style={{ background: "#0D1B2A", color: COLORS.white, borderRadius: 999, padding: "11px 20px", fontWeight: 700, fontSize: 13.5 }}>Open Typing Track Board</button>
                 )}
                 {selectedCase?.engine === "signal_defense" && newAssignmentId && (
                   <button onClick={() => router.push(`/teacher/signal-ops-board?assignmentId=${newAssignmentId}`)} className="gc-btn" style={{ background: "#0D1B2A", color: COLORS.white, borderRadius: 999, padding: "11px 20px", fontWeight: 700, fontSize: 13.5 }}>Open the Crew board</button>
@@ -1161,7 +1162,7 @@ function displayCode(code){return String(code||'').replace(/^TEKS\s+/i,'').repla
                         <div style={{ width: 16, height: 16, borderRadius: 4, background: distressCallEnabled ? COLORS.violet : COLORS.white, border: `1.5px solid ${distressCallEnabled ? COLORS.violet : COLORS.border}`, display: "flex", alignItems: "center", justifyContent: "center", color: COLORS.white, fontSize: 11, fontWeight: 700, flexShrink: 0 }}>
                           {distressCallEnabled ? "✓" : ""}
                         </div>
-                        <span style={{ fontWeight: 700, fontSize: 13, color: COLORS.textDark }}>🚨 Make this a Distress Call</span>
+                        <span style={{ fontWeight: 700, fontSize: 13, color: COLORS.textDark }}><Icon name="signal" size={14} /> Make this a Distress Call</span>
                       </button>
                       <p style={{ fontSize: 11.5, color: COLORS.textMuted, margin: "6px 0 0 24px" }}>
                         Turns this into a shared goal — students see a live meter as {distressCallUnit(selectedCase?.engine, selectedCase?.standard)} add up across the group.
@@ -1198,7 +1199,7 @@ function displayCode(code){return String(code||'').replace(/^TEKS\s+/i,'').repla
                               the same 5/10/25/50 quick-picks the Rewards & S.A.M. modal
                               on the teacher home page already uses. */}
                           <div style={{ marginTop: 10 }}>
-                            <label style={{ fontSize: 11, fontWeight: 700, color: COLORS.textMuted }}>💎 Crystal reward when the target is hit (optional)</label>
+                            <label style={{ fontSize: 11, fontWeight: 700, color: COLORS.textMuted }}>Crystal reward when the target is hit (optional)</label>
                             <div style={{ display: "flex", gap: 6, marginTop: 4, flexWrap: "wrap", alignItems: "center" }}>
                               {[0, 5, 10, 25, 50].map((amt) => (
                                 <button
@@ -1230,7 +1231,7 @@ function displayCode(code){return String(code||'').replace(/^TEKS\s+/i,'').repla
                             </div>
                             {!!distressCallRewardPoints && parseInt(distressCallRewardPoints, 10) > 0 && (
                               <p style={{ fontSize: 11, color: COLORS.violet, fontWeight: 600, margin: "6px 0 0 0" }}>
-                                🎉 Every targeted student gets +{distressCallRewardPoints} crystal points the instant the class hits the target.
+                                Every targeted student gets +{distressCallRewardPoints} crystal points the instant the class hits the target.
                               </p>
                             )}
                           </div>

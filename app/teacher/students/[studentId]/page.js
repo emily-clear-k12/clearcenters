@@ -160,11 +160,11 @@ export default function StudentDetailPage() {
         .gc-btn:hover { transform: translateY(-1px); }
       `}</style>
 
-      <PageHeading title={student.first_name} subtitle="student progress"></PageHeading>
+      <PageHeading title={student.first_name} subtitle="student progress"><div className="cc-row"><button type="button" className="cc-btn secondary" onClick={() => router.push(`/teacher/gradebook?classId=${student.class_id}`)}>Gradebook</button><button type="button" className="cc-btn" onClick={() => router.push(`/teacher/reports/student/${student.id}`)}>Report</button></div></PageHeading>
 
       <div className="cc-detail-content">
         <div style={{ width: "100%", maxWidth: 900 }}>
-          <button onClick={() => router.push("/teacher/roster")} className="gc-btn" style={{ background: "none", color: COLORS.textMuted, fontWeight: 600, fontSize: 13, marginBottom: 14, padding: 0 }}>← Back to roster</button>
+          <button onClick={() => router.push(`/teacher/class?class=${student.class_id}`)} className="gc-btn" style={{ background: "none", color: COLORS.textMuted, fontWeight: 600, fontSize: 13, marginBottom: 14, padding: 0 }}>← Back to {studentClass?.name || "class"}</button>
 
           <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 20 }}>
             <div style={{ width: 52, height: 52, borderRadius: "50%", background: `${COLORS.violet}22`, display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, color: COLORS.violet, fontSize: 20, flexShrink: 0 }}>{student.first_name[0]}</div>

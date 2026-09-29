@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "../../../lib/supabaseClient";
 import { COLORS, PAGE_ACCENTS, panelStyle } from "../../../lib/teacherTheme";
 import { RACE_MESSAGES, RACE_CRYSTALS, listRelayStationLessons } from "../../../lib/cases/relay-station";
+import Icon, { IconBadge } from "../../../components/teacher/Icon";
 
 // Class Relay Race board (Wave 3, design doc §15). The teacher picks a
 // message and starts the race; this screen is meant for the projector. The
@@ -109,18 +110,18 @@ function RelayRaceContent() {
               ))}
             </select>
           </label>
-          <button disabled={busy || !classId} onClick={() => act("start")} style={{ background: ACCENT, color: "#fff", border: "none", borderRadius: 999, padding: "10px 20px", fontWeight: 800, cursor: "pointer", fontFamily: "inherit" }}>{live ? "Restart with this message" : "🏁 Start Race"}</button>
+          <button disabled={busy || !classId} onClick={() => act("start")} style={{ background: ACCENT, color: "#fff", border: "none", borderRadius: 999, padding: "10px 20px", fontWeight: 800, cursor: "pointer", fontFamily: "inherit" }}>{live ? "Restart with this message" : "Start Race"}</button>
           {live && <button disabled={busy} onClick={() => act("end")} style={{ background: "none", color: COLORS.danger, border: `1px solid ${COLORS.danger}`, borderRadius: 999, padding: "9px 18px", fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>End Race</button>}
         </div>
         <p style={{ fontSize: 12.5, color: COLORS.textMuted, margin: "0 0 14px" }}>
-          Students join from their <b>Class Relay Race</b> assignment (Challenge Library → Relay Station → Class Relay Race tile). Each student grabs a leg, types it, and grabs another. If someone gets stuck for over a minute, a teammate can pick up their leg. When every leg is delivered, everyone who carried one earns +{RACE_CRYSTALS} 💎.
+          Students join from their <b>Class Relay Race</b> assignment (Challenge Library → Relay Station → Class Relay Race tile). Each student grabs a leg, types it, and grabs another. If someone gets stuck for over a minute, a teammate can pick up their leg. When every leg is delivered, everyone who carried one earns +{RACE_CRYSTALS} crystal points.
         </p>
         {error && <div style={{ background: `${COLORS.danger}18`, color: COLORS.danger, borderRadius: 10, padding: "10px 14px", marginBottom: 12 }}>{error}</div>}
 
         <div style={{ background: "radial-gradient(ellipse at 20% 20%, #16243F 0%, #0D1B2A 50%, #060B16 100%)", borderRadius: 20, padding: "26px 30px", color: "#fff", minHeight: 420 }}>
           {!race ? (
             <div style={{ textAlign: "center", paddingTop: 110 }}>
-              <div style={{ fontSize: 56 }}>🏁</div>
+              <IconBadge name="flag" color="#00C2C7" size={72} />
               <div style={{ fontSize: 28, fontWeight: 800, fontFamily: "'Poppins', sans-serif" }}>Ready when you are, Commander.</div>
               <div style={{ color: "rgba(255,255,255,.65)", marginTop: 6 }}>Pick a message and press Start Race.</div>
             </div>
@@ -128,7 +129,7 @@ function RelayRaceContent() {
             <>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", flexWrap: "wrap", gap: 12, marginBottom: 14 }}>
                 <div>
-                  <div style={{ fontSize: 13, letterSpacing: 2, color: "#00C2C7", fontWeight: 800 }}>{live ? "📡 RACE IN PROGRESS" : race.status === "done" ? "✅ MESSAGE DELIVERED" : "RACE ENDED"}</div>
+                  <div style={{ fontSize: 13, letterSpacing: 2, color: "#00C2C7", fontWeight: 800 }}>{live ? "RACE IN PROGRESS" : race.status === "done" ? "MESSAGE DELIVERED" : "RACE ENDED"}</div>
                   <div style={{ fontSize: "clamp(22px, 3vw, 36px)", fontWeight: 800, fontFamily: "'Poppins', sans-serif" }}>{race.title}</div>
                 </div>
                 <div style={{ textAlign: "right" }}>
@@ -149,7 +150,7 @@ function RelayRaceContent() {
                 ))}
               </div>
               {race.status === "done" && (
-                <div style={{ marginTop: 22, fontSize: 22, fontWeight: 800, color: "#FFC44D" }}>🎉 The whole crew delivered the message in {fmt(elapsed)}! +{RACE_CRYSTALS} 💎 for every cadet who carried a leg.</div>
+                <div style={{ marginTop: 22, fontSize: 22, fontWeight: 800, color: "#FFC44D" }}>The whole crew delivered the message in {fmt(elapsed)}! +{RACE_CRYSTALS} crystal points for every cadet who carried a leg.</div>
               )}
             </>
           )}

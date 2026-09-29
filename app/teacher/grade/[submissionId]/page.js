@@ -12,6 +12,7 @@ import { selfCheckFor } from "../../../../lib/selfCheck";
 import { AUTO_SCORE_ENGINES, NO_AI_ENGINES, isPracticeGame } from "../../../../lib/engineKinds";
 import { COLORS, PAGE_ACCENTS, PAGE_BACKGROUNDS, panelStyle } from "../../../../lib/teacherTheme";
 import { levelWord, studentLevelWord } from "../../../../lib/gradeScale";
+import Icon, { IconBadge, ConfidenceMark } from "../../../../components/teacher/Icon";
 
 // Sept 13 — moved to the console-interior look, same Observatory family
 // (aqua, bg-observatory.jpg) as the Submissions list this page is reached
@@ -52,9 +53,9 @@ function gradeLabelFor(engine, grade) {
 // three numbers.
 const POINTS_BY_GRADE = { 0: 10, 1: 20, 2: 30 };
 const CONFIDENCE_META = {
-  shaky: { emoji: "😕", label: "Still shaky" },
-  solid: { emoji: "🙂", label: "Pretty solid" },
-  strong: { emoji: "😄", label: "Really strong" },
+  shaky: { label: "Still shaky" },
+  solid: { label: "Pretty solid" },
+  strong: { label: "Really strong" },
 };
 
 const NEXT_STEPS_GENERIC = {
@@ -86,7 +87,7 @@ function ReleaseConfirmModal({ open, studentName, grade, onCancel, onConfirm }) 
   return (
     <div style={{ position: "fixed", inset: 0, background: "rgba(13,20,35,.65)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 100, padding: 20 }}>
       <div style={{ background: COLORS.white, borderRadius: 18, width: "min(420px, 100%)", padding: 24, boxShadow: "0 24px 60px rgba(0,0,0,.4)", textAlign: "center" }}>
-        <div style={{ fontSize: 36, marginBottom: 10 }}>📤</div>
+        <IconBadge name="send" />
         <div style={{ fontWeight: 700, fontSize: 17, color: COLORS.textDark, marginBottom: 8 }}>Release this grade to {studentName}?</div>
         <div style={{ fontSize: 13.5, color: COLORS.textMuted, lineHeight: 1.5, marginBottom: 6 }}>
           They'll see <strong>{studentLevelWord(grade)}</strong> and your feedback. They will not see the AI's score or rationale.
@@ -105,7 +106,7 @@ function SendBackConfirmModal({ open, studentName, feedback, onCancel, onConfirm
   return (
     <div style={{ position: "fixed", inset: 0, background: "rgba(13,20,35,.65)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 100, padding: 20 }}>
       <div style={{ background: COLORS.white, borderRadius: 18, width: "min(440px, 100%)", padding: 24, boxShadow: "0 24px 60px rgba(0,0,0,.4)", textAlign: "center" }}>
-        <div style={{ fontSize: 36, marginBottom: 10 }}>🔁</div>
+        <IconBadge name="retry" color="#B8860B" />
         <div style={{ fontWeight: 700, fontSize: 17, color: COLORS.textDark, marginBottom: 8 }}>Send this back to {studentName} to try again?</div>
         <div style={{ fontSize: 13.5, color: COLORS.textMuted, lineHeight: 1.5, marginBottom: 10 }}>
           No grade will be released yet. They'll see this note from you and get a chance to revise their answer:
@@ -976,7 +977,7 @@ export default function TeacherGradeDetailPage() {
 
             <div style={{ display: "flex", gap: 10 }}>
               {hideAi ? null : <ScorePill label={isAutoScore ? "Auto score" : "AI First Read"} value={submission.ai_score !== null && submission.ai_score !== undefined ? submission.ai_score : "—"} color={ACCENT} />}
-              <ScorePill label="Student Felt" value={confMeta ? confMeta.emoji : "—"} sublabel={confMeta ? confMeta.label : "Not shared"} color={COLORS.teal} />
+              <ScorePill label="Student Felt" value={confMeta ? <ConfidenceMark value={submission.self_confidence} words={false} color="#0F7C8C" /> : "—"} sublabel={confMeta ? confMeta.label : "Not shared"} color={COLORS.teal} />
               <ScorePill label="Your Grade" value={finalGrade} color={COLORS.gold} />
             </div>
 
@@ -1012,12 +1013,12 @@ export default function TeacherGradeDetailPage() {
               {submission.released ? (
                 <div className="gc-fade-in" style={{ textAlign: "center", background: `${COLORS.teal}22`, color: "#0F7C8C", borderRadius: 10, padding: "10px 12px", fontWeight: 700, fontSize: 13 }}>
                   ✓ Released to {studentName}
-                  {pointsAwarded !== null && <span> · +{pointsAwarded} Crystal Points 🔮</span>}
+                  {pointsAwarded !== null && <span> · +{pointsAwarded} Crystal Points</span>}
                 </div>
               ) : submission.revision_requested ? (
                 <div className="gc-fade-in">
                   <div style={{ textAlign: "center", background: "#FFF4E5", color: "#8A5A00", borderRadius: 10, padding: "10px 12px", fontWeight: 700, fontSize: 13, marginBottom: 8 }}>
-                    🔁 Sent back — waiting for {studentName} to try again
+                    <Icon name="retry" size={14} /> Sent back — waiting for {studentName} to try again
                   </div>
                   <button className="gc-btn" onClick={handleCancelSendBack} disabled={sendingBack} style={{ width: "100%", background: "none", color: COLORS.textMuted, border: `1.5px solid ${COLORS.border}`, borderRadius: 999, padding: "9px 16px", fontWeight: 700, fontSize: 12.5 }}>
                     {sendingBack ? "Undoing..." : "Undo — go back to grading"}
@@ -1035,7 +1036,7 @@ export default function TeacherGradeDetailPage() {
                     title={!feedback.trim() ? "Add feedback above so the student knows what to fix" : ""}
                     style={{ width: "100%", background: "none", color: !feedback.trim() ? COLORS.textMuted : "#B8860B", border: `1.5px solid ${!feedback.trim() ? COLORS.border : COLORS.warning}`, borderRadius: 999, padding: "10px 20px", fontWeight: 700, fontSize: 13.5, opacity: !feedback.trim() ? 0.6 : 1 }}
                   >
-                    {sendingBack ? "Sending..." : "🔁 Send Back for Revision"}
+                    {sendingBack ? "Sending..." : <><Icon name="retry" size={14} /> Send Back for Revision</>}
                   </button>
                   {!feedback.trim() && (
                     <div style={{ fontSize: 11.5, color: COLORS.textMuted, textAlign: "center" }}>Add feedback above to send this back for a revision.</div>

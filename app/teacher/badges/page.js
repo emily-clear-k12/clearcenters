@@ -5,6 +5,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "../../../lib/supabaseClient";
 import { COLORS, PAGE_ACCENTS, PAGE_BACKGROUNDS, panelStyle } from "../../../lib/teacherTheme";
+import Icon, { IconBadge } from "../../../components/teacher/Icon";
 
 // Sept 13 — moved to the console-interior look. TeacherSidebar +
 // TeacherPageBanner swapped for TeacherHUD; the flat opaque-white tier list
@@ -73,7 +74,7 @@ function AwardPointsModal({ open, classes, rawStudents, awarding, onCancel, onAw
   return (
     <div style={{ position: "fixed", inset: 0, background: "rgba(13,20,35,.65)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 100, padding: 20 }}>
       <div style={{ background: COLORS.white, borderRadius: 18, width: "min(440px, 100%)", padding: 24, boxShadow: "0 24px 60px rgba(0,0,0,.4)" }}>
-        <div style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 700, fontSize: 18, color: COLORS.textDark, marginBottom: 4 }}>🔮 Award Crystal Points</div>
+        <div style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 700, fontSize: 18, color: COLORS.textDark, marginBottom: 4 }}><Icon name="gem" size={17} style={{ color: "#8C52F2", marginRight: 6 }} />Award Crystal Points</div>
         <div style={{ fontSize: 13, color: COLORS.textMuted, marginBottom: 18 }}>Give a class or a single student a bonus — great for a great question, a kind classmate moment, or anything else that doesn't fit a rubric.</div>
 
         <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: COLORS.textMuted, marginBottom: 6 }}>Class</label>
@@ -318,7 +319,7 @@ export default function BadgesRewardsPage() {
             <p style={{ margin: 0, color: COLORS.textMuted, fontSize: 14 }}>Rename a tier or change how many missions it takes to reach it — students see these on their Home screen.</p>
           </div>
           <button onClick={() => setAwardModalOpen(true)} disabled={classes.length === 0} className="gc-btn" style={{ background: COLORS.violet, color: COLORS.white, borderRadius: 999, padding: "11px 20px", fontWeight: 700, fontSize: 13.5, opacity: classes.length === 0 ? 0.5 : 1, whiteSpace: "nowrap" }}>
-            🔮 Award Crystal Points
+            <Icon name="gem" size={15} /> Award Crystal Points
           </button>
         </div>
 
@@ -431,7 +432,7 @@ export default function BadgesRewardsPage() {
 
       {awardSuccess && (
         <div className="gc-fade-in" style={{ position: "fixed", bottom: 28, right: 28, background: COLORS.textDark, color: COLORS.white, borderRadius: 12, padding: "14px 20px", fontWeight: 700, fontSize: 13.5, boxShadow: "0 8px 24px rgba(0,0,0,.25)", zIndex: 200 }}>
-          🔮 {awardSuccess}
+          <Icon name="check" size={15} /> {awardSuccess}
         </div>
       )}
 

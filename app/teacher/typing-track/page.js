@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "../../../lib/supabaseClient";
 import { COLORS, PAGE_ACCENTS, panelStyle } from "../../../lib/teacherTheme";
 import { TRACK_LEVELS, TRACK_UNITS, normalizeAccommodations } from "../../../lib/cases/relay-station";
+import Icon, { IconBadge } from "../../../components/teacher/Icon";
 
 // Relay Station — Typing Track board (Sept 22, 2026). Design doc:
 // claude/RelayStation_Digital_Design_v1.md §9. One row per student: where
@@ -22,7 +23,7 @@ const UNIT_BY_ID = Object.fromEntries(TRACK_UNITS.map((u) => [u.id, u]));
 
 function statusFor(p) {
   if (!p) return { key: "new", label: "Not started", color: COLORS.textMuted };
-  if (p.completed_at || p.current_level > TOTAL) return { key: "done", label: "Complete 🏅", color: COLORS.success };
+  if (p.completed_at || p.current_level > TOTAL) return { key: "done", label: "Complete", color: COLORS.success };
   const cur = (p.level_results || {})[String(p.current_level)];
   if (cur && !cur.passed && (cur.attempts || 0) >= STUCK_ATTEMPTS) return { key: "stuck", label: "Needs help", color: COLORS.danger };
   return { key: "on", label: "On track", color: COLORS.info };
@@ -186,7 +187,7 @@ function TypingTrackContent() {
                         <td style={{ padding: "10px 12px", fontWeight: 700 }}>
                           {s.firstName}
                           {p && p.daily && p.daily.totalDays > 0 && (
-                            <div style={{ fontSize: 11.5, fontWeight: 600, color: COLORS.textMuted }}>🔥 {p.daily.streak || 0}-day streak · {p.daily.totalDays} daily</div>
+                            <div style={{ fontSize: 11.5, fontWeight: 600, color: COLORS.textMuted }}><Icon name="flame" size={13} style={{ color: "#E8935A" }} /> {p.daily.streak || 0}-day streak · {p.daily.totalDays} daily</div>
                           )}
                         </td>
                         <td style={{ padding: "10px 12px" }}><Chip color={st.color} label={st.label} /></td>
@@ -213,7 +214,7 @@ function TypingTrackContent() {
                         </td>
                         <td style={{ padding: "10px 12px", fontSize: 12 }}>
                           <button onClick={() => setSupportsFor(supportsFor === s.id ? null : s.id)} style={{ background: supportLabels.length ? `${COLORS.violet}1A` : "transparent", color: supportLabels.length ? COLORS.violet : COLORS.textMuted, border: `1px solid ${supportLabels.length ? COLORS.violet : COLORS.border}`, borderRadius: 999, padding: "3px 10px", fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "inherit", whiteSpace: "nowrap" }}>
-                            ⚙️ {supportLabels.length ? supportLabels.length : "Add"}
+                            <Icon name="sliders" size={13} /> {supportLabels.length ? supportLabels.length : "Add"}
                           </button>
                           {supportLabels.length > 0 && <div style={{ color: COLORS.textMuted, marginTop: 3 }}>{supportLabels.join(" · ")}</div>}
                         </td>
