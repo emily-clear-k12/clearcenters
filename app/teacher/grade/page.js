@@ -82,7 +82,7 @@ export default function TeacherGradeListPage() {
     // starting from every submission in the database — otherwise every
     // teacher using the app would see every other teacher's submissions
     // mixed in together here.
-    const { data: classes, error: classesError } = await supabase.from("classes").select("id, name").eq("teacher_id", teacherId).order("name");
+    const { data: classes, error: classesError } = await supabase.from("classes").select("id, name, subject, grade").eq("teacher_id", teacherId).order("name");
     if (classesError) {
       setError(classesError.message);
       setLoadingSubs(false);
@@ -226,62 +226,99 @@ export default function TeacherGradeListPage() {
     return String(row.teacher_grade);
   }
 
+  function averageFor(studentId, columns) {
+    const nums = columns.map((column) => scoreNumber(studentId, column.id)).filter((value) => value !== "").map(Number);
+    if (!nums.length) return "";
+    return (nums.reduce((sum, value) => sum + value, 0) / nums.length).toFixed(1);
+  }
+
   async function openBook() {
+    const classIds = classes.map((item) => item.id);
+    if (!classIds.length) return;
     let classId = selectedClassId !== "all" ? selectedClassId : null;
     if (!classId && assignmentFilter !== "all") {
       classId = submissions.find((s) => s.assignment_id === assignmentFilter)?.classId || null;
     }
-    if (!classId) classId = classes[0]?.id || null;
-    if (!classId) return;
-    const { data: kids } = await supabase.from("students").select("id, first_name").eq("class_id", classId).order("first_name");
-    const { data: assigns } = await supabase.from("assignments").select("id, case_standard, class_id, game_skin").eq("class_id", classId);
+    if (!classId) classId = classIds[0];
+    const picked = classes.find((item) => item.id === classId) || classes[0];
+    const { data: kids } = await supabase.from("students").select("id, first_name, class_id").in("class_id", classIds).order("first_name");
+    const { data: assigns } = await supabase.from("assignments").select("id, case_standard, class_id, game_skin, created_at").in("class_id", classIds);
     const standards = [...new Set((assigns || []).map((a) => a.case_standard).filter(Boolean))];
-    const { data: caseRows } = standards.length ? await supabase.from("cases").select("standard, title, engine").in("standard", standards) : { data: [] };
+    const { data: caseRows } = standards.length ? await supabase.from("cases").select("standard, title, engine, subject").in("standard", standards) : { data: [] };
     const caseMap = Object.fromEntries((caseRows || []).map((c) => [c.standard, c]));
-    let columns = (assigns || [])
+    const columns = (assigns || [])
       .filter((a) => !isPracticeGame(caseMap[a.case_standard]?.engine, a.game_skin))
-      .map((a) => ({ id: a.id, title: caseMap[a.case_standard]?.title || a.case_standard }));
-    if (assignmentFilter !== "all") columns = columns.filter((column) => column.id === assignmentFilter);
+      .sort((a, b) => new Date(a.created_at || 0) - new Date(b.created_at || 0))
+      .map((a) => ({ id: a.id, classId: a.class_id, title: caseMap[a.case_standard]?.title || a.case_standard }));
     setBook({
-      className: classes.find((c) => c.id === classId)?.name || "Class",
+      subject: picked.subject || "Class",
+      classId: picked.id,
       students: kids || [],
       columns,
     });
   }
 
+  function bookClass() {
+    if (!book) return null;
+    return classes.find((item) => item.id === book.classId) || null;
+  }
+
+  function bookColumns() {
+    if (!book) return [];
+    return book.columns.filter((column) => column.classId === book.classId);
+  }
+
+  function bookStudents() {
+    if (!book) return [];
+    return book.students
+      .filter((student) => student.class_id === book.classId)
+      .slice()
+      .sort((a, b) => (a.first_name || "").localeCompare(b.first_name || ""));
+  }
+
   function exportExcel() {
-    if (!book) return;
-    const header = ["Student", ...book.columns.map((column) => column.title)];
-    const lines = book.students.map((student) => [student.first_name, ...book.columns.map((column) => scoreWord(student.id, column.id))]);
-    downloadText(`${book.className} gradebook.csv`, [header, ...lines].map((line) => line.map(csvCell).join(",")).join("\n"));
+    const current = bookClass();
+    const columns = bookColumns();
+    const students = bookStudents();
+    if (!current) return;
+    const header = ["Student", ...columns.map((column) => column.title), "Average"];
+    const lines = students.map((student) => [student.first_name, ...columns.map((column) => scoreWord(student.id, column.id)), averageFor(student.id, columns)]);
+    downloadText(`${current.name} gradebook.csv`, [header, ...lines].map((line) => line.map(csvCell).join(",")).join("\n"));
   }
 
   function exportSkyward() {
-    if (!book) return;
+    const current = bookClass();
+    const columns = bookColumns();
+    if (!current) return;
     const header = ["Student Name", "Assignment", "Score", "Points Possible"];
     const lines = [];
-    book.students.forEach((student) => {
-      book.columns.forEach((column) => {
+    bookStudents().forEach((student) => {
+      columns.forEach((column) => {
         lines.push([student.first_name, column.title, scoreNumber(student.id, column.id), "2"]);
       });
     });
-    downloadText(`${book.className} skyward.csv`, [header, ...lines].map((line) => line.map(csvCell).join(",")).join("\n"));
+    downloadText(`${current.name} skyward.csv`, [header, ...lines].map((line) => line.map(csvCell).join(",")).join("\n"));
   }
 
   function exportSchoology() {
-    if (!book) return;
-    const header = ["Student", ...book.columns.map((column) => column.title)];
-    const lines = book.students.map((student) => [student.first_name, ...book.columns.map((column) => scoreNumber(student.id, column.id))]);
-    downloadText(`${book.className} schoology.csv`, [header, ...lines].map((line) => line.map(csvCell).join(",")).join("\n"));
+    const current = bookClass();
+    const columns = bookColumns();
+    if (!current) return;
+    const header = ["Student", ...columns.map((column) => column.title), "Average"];
+    const lines = bookStudents().map((student) => [student.first_name, ...columns.map((column) => scoreNumber(student.id, column.id)), averageFor(student.id, columns)]);
+    downloadText(`${current.name} schoology.csv`, [header, ...lines].map((line) => line.map(csvCell).join(",")).join("\n"));
   }
 
   function exportPdf() {
-    if (!book) return;
-    const header = ["Student", ...book.columns.map((column) => column.title)].map((cell) => `<th>${htmlCell(cell)}</th>`).join("");
-    const body = book.students.map((student) => `<tr><td>${htmlCell(student.first_name)}</td>${book.columns.map((column) => `<td>${htmlCell(scoreWord(student.id, column.id) || "—")}</td>`).join("")}</tr>`).join("");
+    const current = bookClass();
+    const columns = bookColumns();
+    const students = bookStudents();
+    if (!current) return;
+    const header = ["Student", ...columns.map((column) => column.title), "Average"].map((cell) => `<th>${htmlCell(cell)}</th>`).join("");
+    const body = students.map((student) => `<tr><td>${htmlCell(student.first_name)}</td>${columns.map((column) => `<td>${htmlCell(scoreWord(student.id, column.id) || "")}</td>`).join("")}<td>${htmlCell(averageFor(student.id, columns))}</td></tr>`).join("");
     const popup = window.open("", "_blank");
     if (!popup) return;
-    popup.document.write(`<html><head><title>${htmlCell(book.className)} gradebook</title><style>body{font-family:sans-serif;padding:24px}table{border-collapse:collapse;width:100%}th,td{border:1px solid #ccc;padding:6px;font-size:12px;text-align:left}h1{font-size:20px}</style></head><body><h1>${htmlCell(book.className)} gradebook</h1><table><thead><tr>${header}</tr></thead><tbody>${body}</tbody></table></body></html>`);
+    popup.document.write(`<html><head><title>${htmlCell(current.name)} gradebook</title><style>body{font-family:Georgia,serif;padding:24px;background:#f6f1e2}table{border-collapse:collapse;width:100%;background:#fffdf8}th,td{border:1px solid #7f9a84;padding:6px;font-size:12px}th{background:#1f4d32;color:#f6f1e2}tr:nth-child(even) td{background:#e7f0df}</style></head><body><h1>${htmlCell(current.name)}</h1><table><thead><tr>${header}</tr></thead><tbody>${body}</tbody></table></body></html>`);
     popup.document.close();
     popup.focus();
     popup.print();
@@ -297,10 +334,39 @@ export default function TeacherGradeListPage() {
 
   const rows=filteredSubmissions.filter(s=>(assignmentFilter==='all'||s.assignment_id===assignmentFilter)&&(reviewFilter==='all'||(reviewFilter==='review'?needsReview(s):!needsReview(s))));
   const chosen=rows.find(s=>needsReview(s));
+  const bookSubjects = book ? [...new Set(classes.map((item) => item.subject || "Class"))] : [];
+  const bookClasses = book ? classes.filter((item) => (item.subject || "Class") === book.subject) : [];
+  const shownColumns = bookColumns();
+  const shownStudents = bookStudents();
+  const currentClass = bookClass();
   return <BridgePage teacherEmail={teacherEmail}>
     <PageHeading title="Review student work" subtitle="See what is finished and what needs your feedback."><ClassTabs classes={classes} value={selectedClassId} onChange={id=>{setSelectedClassId(id);setAssignmentFilter('all');setBook(null)}} all/><button className="cc-btn" style={{marginTop:10}} onClick={openBook}>Gradebook</button></PageHeading>
     {error&&<div className="cc-error" role="alert">{error}</div>}
-    {book&&<section className="cc-panel" style={{marginBottom:18}}><div className="cc-row cc-between"><div><h2 style={{margin:0}}>{book.className} gradebook</h2><p className="cc-muted">{book.columns.length===1?book.columns[0].title:`${book.columns.length} assignments`} · filled from the grades you have already given.</p></div><button className="cc-btn secondary" onClick={()=>setBook(null)}>Close</button></div><div className="cc-row" style={{margin:"12px 0"}}><button className="cc-btn secondary" onClick={exportExcel}>Excel</button><button className="cc-btn secondary" onClick={exportPdf}>PDF</button><button className="cc-btn secondary" onClick={exportSkyward}>Skyward</button><button className="cc-btn secondary" onClick={exportSchoology}>Schoology</button></div><p className="cc-muted">Skyward and Schoology get a 0–2 score. Match each student name to their ID in that system before you upload.</p><div className="cc-table-scroll"><table className="cc-table"><thead><tr><th>Student</th>{book.columns.map(column=><th key={column.id}>{column.title}</th>)}</tr></thead><tbody>{book.students.map(student=><tr key={student.id}><td><Link href={`/teacher/students/${student.id}`}><strong>{student.first_name}</strong></Link></td>{book.columns.map(column=><td key={column.id}>{scoreWord(student.id, column.id)||'—'}</td>)}</tr>)}</tbody></table></div>{!book.students.length&&<Empty>No students in this class yet.</Empty>}</section>}
+    {book&&<section className="cc-ledger">
+      <style>{`
+        .cc-ledger{background:#f6f1e2;border:1px solid #c8c0a8;border-radius:6px;box-shadow:inset 0 0 0 8px #1f4d32,0 10px 0 #163c27;padding:16px 14px 14px;margin-bottom:18px}
+        .cc-ledger-top{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;margin-bottom:10px}
+        .cc-ledger h2{margin:0;font-family:Georgia,serif;color:#1f4d32}
+        .cc-ledger-tabs{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 8px}
+        .cc-ledger-tabs button{border:1px solid #1f4d32;background:#efe8d4;color:#1f4d32;font-weight:700;padding:6px 12px;border-radius:4px 4px 0 0;cursor:pointer}
+        .cc-ledger-tabs button.is-on{background:#1f4d32;color:#f6f1e2}
+        .cc-ledger table{width:100%;border-collapse:collapse;background:#fffdf8;font-family:Georgia,serif}
+        .cc-ledger th,.cc-ledger td{border:1px solid #7f9a84;padding:8px 6px;font-size:13px;text-align:center}
+        .cc-ledger thead th{background:#1f4d32;color:#f6f1e2;font-family:Inter,sans-serif;font-size:11px;letter-spacing:.02em}
+        .cc-ledger tbody tr:nth-child(even) td{background:#e7f0df}
+        .cc-ledger tbody tr:nth-child(odd) td{background:#fffdf8}
+        .cc-ledger td:first-child,.cc-ledger th:first-child{text-align:left;font-weight:700;min-width:140px}
+        .cc-ledger .cc-avg,.cc-ledger td.cc-avg{font-weight:700}
+        .cc-ledger thead .cc-avg{background:#163c27}
+        .cc-ledger tbody td.cc-avg{background:#f3ead0}
+      `}</style>
+      <div className="cc-ledger-top"><div><h2>Gradebook</h2><p className="cc-muted">{currentClass?.name}{currentClass?.grade ? ` · Grade ${currentClass.grade}` : ""}</p></div><button className="cc-btn secondary" onClick={()=>setBook(null)}>Close</button></div>
+      {bookSubjects.length>1&&<div className="cc-ledger-tabs" role="tablist" aria-label="Subjects">{bookSubjects.map((subject)=><button key={subject} type="button" className={book.subject===subject?"is-on":""} onClick={()=>{const next=classes.find((item)=>(item.subject||"Class")===subject);setBook({...book,subject,classId:next?.id||book.classId});}}>{subject}</button>)}</div>}
+      <div className="cc-ledger-tabs" role="tablist" aria-label="Classes">{bookClasses.map((item)=><button key={item.id} type="button" className={book.classId===item.id?"is-on":""} onClick={()=>setBook({...book,classId:item.id,subject:item.subject||"Class"})}>{item.name}</button>)}</div>
+      <div className="cc-table-scroll"><table><thead><tr><th>Student</th>{shownColumns.map((column)=><th key={column.id}>{column.title}</th>)}<th className="cc-avg">Average</th></tr></thead><tbody>{shownStudents.map((student)=><tr key={student.id}><td><Link href={`/teacher/students/${student.id}`}>{student.first_name}</Link></td>{shownColumns.map((column)=><td key={column.id}>{scoreWord(student.id, column.id)}</td>)}<td className="cc-avg">{averageFor(student.id, shownColumns)}</td></tr>)}</tbody></table></div>
+      {!shownStudents.length&&<Empty>No students in this class yet.</Empty>}
+      <div className="cc-row" style={{marginTop:12}}><button className="cc-btn secondary" onClick={exportExcel}>Excel</button><button className="cc-btn secondary" onClick={exportPdf}>PDF</button><button className="cc-btn secondary" onClick={exportSkyward}>Skyward</button><button className="cc-btn secondary" onClick={exportSchoology}>Schoology</button></div>
+    </section>}
     <div className="cc-three"><div className="cc-summary"><strong>{totalNeedsReview}</strong><span>ready to review</span></div><div className="cc-summary"><strong>{classFilteredSubmissions.filter(s=>s.teacher_grade!=null&&!s.revision_requested).length}</strong><span>graded</span></div><div className="cc-summary"><strong>{classFilteredSubmissions.filter(s=>s.revision_requested).length}</strong><span>returned for revision</span></div></div>
     <section className="cc-panel cc-frame" style={subjectStyle(assignmentFilter==='all'?null:submissions.find(s=>s.assignment_id===assignmentFilter)?.subject)}>
     <div className="cc-toolbar"><select aria-label="Assignment" value={assignmentFilter} onChange={e=>{setAssignmentFilter(e.target.value);setBook(null)}}><option value="all">All assignments</option>{assignmentGroups.map(g=><option key={g.assignmentId} value={g.assignmentId}>{g.caseTitle}</option>)}</select><input className="cc-input cc-search" value={search} onChange={e=>setSearch(e.target.value)} placeholder="Find a student" aria-label="Find a student"/><button className="cc-btn" disabled={!totalNeedsReview} onClick={handleGradeNext}>Review next</button></div>
