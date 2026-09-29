@@ -5,7 +5,7 @@ import { useRouter, usePathname } from "next/navigation";
 import { supabase } from "../lib/supabaseClient";
 import "./teacher/bridge.css";
 
-const NAV = [["Today","/teacher"],["Class","/teacher/class"],["Assign","/teacher/assign/new"],["Grades","/teacher/grade"],["Reports","/teacher/reports"],["Resources","/teacher/resources"]];
+const NAV = [["Today","/teacher"],["Class","/teacher/class"],["Assign","/teacher/assign/new"],["Grades","/teacher/grade"],["Groups","/teacher/groups"],["Reports","/teacher/reports"],["Resources","/teacher/resources"]];
 export default function TeacherHUD({title,subtitle,teacherName,teacherEmail,actions,compact=false}) {
  const router=useRouter(), pathname=usePathname();
  const [open,setOpen]=useState(false),[signingOut,setSigningOut]=useState(false);

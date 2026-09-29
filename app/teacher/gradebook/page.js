@@ -24,6 +24,8 @@ import {
   isGraded, cellWord, smallGroups, suggestedStandard,
 } from "../../../lib/gradebook";
 import { GRADEBOOK_SCALES, scaleNumbers, gradebookValue } from "../../../lib/gradebookScale";
+import { groupsApi } from "../../../lib/groupsApi";
+import { CHECKS } from "../../../lib/smallGroups";
 import "./gradebook.css";
 
 const VIEWS = [["grid", "Grid"], ["standard", "By standard"], ["cards", "Cards"]];
@@ -283,11 +285,33 @@ function CardsView({ book, order, onOpen, classId }) {
   );
 }
 
-function GroupsPanel({ book, classId, code, setCode, onClose }) {
+function GroupsPanel({ book, classId, code, setCode, onClose, groupCount }) {
+  const router = useRouter();
   const data = smallGroups(book, code);
   const [left, setLeft] = useState({});
   const [copied, setCopied] = useState("");
-  useEffect(() => { setLeft({}); setCopied(""); }, [code, classId]);
+  const [naming, setNaming] = useState(null); // { key, name } while saving a group
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState("");
+  useEffect(() => { setLeft({}); setCopied(""); setNaming(null); setSaveError(""); }, [code, classId]);
+  const std = data.key ? book.standards.find((s) => s.key === data.key) : null;
+  async function save(group) {
+    const students = picked(group);
+    if (!students.length || !std) return;
+    setSaving(true);
+    setSaveError("");
+    const startLevels = Object.fromEntries(students.map((s) => [s.id, studentStats(book, s.id, std.columnIds).level]));
+    try {
+      const res = await groupsApi("create", {
+        classId, name: naming.name, subject: data.subject, standardCode: data.code, standardKey: data.key,
+        studentIds: students.map((s) => s.id), startLevels,
+      });
+      router.push(`/teacher/groups/${res.group.id}`);
+    } catch (err) {
+      setSaveError(err.message);
+      setSaving(false);
+    }
+  }
   function picked(group) { return group.students.filter((s) => !left[s.id]); }
   function assignHref(group) {
     const ids = picked(group).map((s) => s.id).join(",");
@@ -306,7 +330,8 @@ function GroupsPanel({ book, classId, code, setCode, onClose }) {
       <div className="gb-groups-top">
         <div>
           <h2>Small groups</h2>
-          <p className="cc-muted">Made from the grades in this book. Tap a name to leave that student out.</p>
+          <p className="cc-muted">Made from the grades in this book. Tap a name to leave that student out, then save the group to plan it and track it.</p>
+          <Link className="gb-mini-link" href={`/teacher/groups?classId=${classId}`}>My groups{groupCount ? ` (${groupCount})` : ""}</Link>
         </div>
         <div className="gb-row">
           <select aria-label="Group by" value={code || ""} onChange={(e) => setCode(e.target.value || null)}>
@@ -316,6 +341,8 @@ function GroupsPanel({ book, classId, code, setCode, onClose }) {
           <button type="button" className="cc-btn secondary" onClick={onClose}>Close</button>
         </div>
       </div>
+      {!std && <p className="gb-note" style={{ margin: "10px 0 0" }}>Pick a standard above to save a group you can plan and track.</p>}
+      {saveError && <div className="cc-error" role="alert" style={{ margin: "10px 0 0" }}>{saveError}</div>}
       <div className="gb-group-grid">
         {data.groups.map((group) => {
           const chosen = picked(group);
@@ -328,9 +355,20 @@ function GroupsPanel({ book, classId, code, setCode, onClose }) {
                   <button key={s.id} type="button" className={`gb-name-chip${left[s.id] ? " is-out" : ""}`} title={s.detail} aria-pressed={!left[s.id]} onClick={() => setLeft({ ...left, [s.id]: !left[s.id] })}>{s.name}</button>
                 )) : <span className="gb-note">No one here.</span>}
               </div>
+              {chosen.length > 0 && std && (naming && naming.key === group.key ? (
+                <form className="gb-save" onSubmit={(e) => { e.preventDefault(); save(group); }}>
+                  <input aria-label="Group name" value={naming.name} maxLength={80} autoFocus onChange={(e) => setNaming({ ...naming, name: e.target.value })} />
+                  <div className="gb-row">
+                    <button type="submit" className="cc-btn" disabled={saving || !naming.name.trim()}>{saving ? "Saving…" : `Save group of ${chosen.length}`}</button>
+                    <button type="button" className="cc-btn quiet" onClick={() => setNaming(null)}>Cancel</button>
+                  </div>
+                </form>
+              ) : (
+                <button type="button" className="cc-btn" onClick={() => setNaming({ key: group.key, name: `${group.label} · TEKS ${data.code}` })}>Save as a group</button>
+              ))}
               {group.key !== "none" && chosen.length > 0 && (
                 <div className="gb-row">
-                  <Link className="cc-btn" href={assignHref(group)}>Assign to these {chosen.length}</Link>
+                  <Link className="cc-btn secondary" href={assignHref(group)}>Assign to these {chosen.length}</Link>
                   <button type="button" className="cc-btn quiet" onClick={() => copy(group)}>{copied === group.key ? "Copied" : "Copy names"}</button>
                 </div>
               )}
@@ -342,7 +380,25 @@ function GroupsPanel({ book, classId, code, setCode, onClose }) {
   );
 }
 
-function Drawer({ book, open, onClose }) {
+// Small-group notes for one student, newest first, in the drawer.
+function GroupNotes({ info, studentId }) {
+  if (!info) return null;
+  const groups = info.groups.filter((g) => (g.student_ids || []).includes(studentId));
+  if (!groups.length) return null;
+  const names = Object.fromEntries(groups.map((g) => [g.id, g]));
+  const list = info.notes.filter((n) => n.student_id === studentId && names[n.group_id]).slice(0, 4);
+  return (
+    <div className="gb-gnotes">
+      <h3>Small groups</h3>
+      {groups.map((g) => <Link key={g.id} className="gb-mini-link" style={{ marginRight: 10 }} href={`/teacher/groups/${g.id}`}>{g.name}{g.status === "closed" ? " (closed)" : ""}</Link>)}
+      {list.map((n) => (
+        <p key={n.id}><b>{new Date(n.met_at).toLocaleDateString(undefined, { month: "short", day: "numeric" })}</b>{n.check_result ? ` · ${CHECKS[n.check_result]?.label}` : ""}{n.note ? ` · ${n.note}` : ""}</p>
+      ))}
+    </div>
+  );
+}
+
+function Drawer({ book, open, onClose, groupNotes }) {
   useEffect(() => {
     if (!open) return undefined;
     const onKey = (e) => { if (e.key === "Escape") onClose(); };
@@ -387,6 +443,7 @@ function Drawer({ book, open, onClose }) {
             </div>
           );
         })}
+        <GroupNotes info={groupNotes} studentId={student.id} />
         <div className="gb-actions"><Link className="cc-btn" href={`/teacher/students/${student.id}`}>Open {student.first_name}'s page</Link></div>
       </>
     );
@@ -417,6 +474,7 @@ export default function GradebookPage() {
   const [drawer, setDrawer] = useState(null);
   const [menu, setMenu] = useState(false);
   const [groups, setGroups] = useState(null); // { code } when the small-groups panel is open
+  const [saved, setSaved] = useState(null); // saved small groups + their notes, for the drawer
 
   // ?view=standard&groups=<subject|code> comes from Reports ("Small groups" on a standard).
   const urlGroups = React.useRef(null);
@@ -472,6 +530,7 @@ export default function GradebookPage() {
       if (authError || !auth?.user) { router.push("/login"); return; }
       setTeacherEmail(auth.user.email || "");
       load(auth.user.id);
+      groupsApi("list").then((res) => setSaved({ groups: res.groups || [], notes: res.notes || [] })).catch(() => setSaved(null));
     });
   }, [router, load]);
 
@@ -480,7 +539,8 @@ export default function GradebookPage() {
     if (!urlGroups.current || !book.standards.length) return;
     const key = urlGroups.current;
     urlGroups.current = null;
-    if (book.standards.some((s) => s.key === key)) setGroups({ code: key });
+    if (key === "auto") setGroups({ code: suggestedStandard(book) });
+    else if (book.standards.some((s) => s.key === key)) setGroups({ code: key });
   }, [book]);
   const order = useMemo(() => sortStudents(book, sort), [book, sort]);
   const totals = useMemo(() => bookTotals(book), [book]);
@@ -593,7 +653,7 @@ export default function GradebookPage() {
           ? <div className="gb-legend"><span><span className="gb-chip k2 word">Got it</span></span><span><span className="gb-chip k1 word">Almost</span></span><span><span className="gb-chip k0 word">Not yet</span></span><span>across that standard's activities · click a standard to open them</span></div>
           : <Legend />}
 
-        {groups && book.columns.length > 0 && <GroupsPanel book={book} classId={classId} code={groups.code} setCode={(code) => setGroups({ code })} onClose={() => setGroups(null)} />}
+        {groups && book.columns.length > 0 && <GroupsPanel book={book} classId={classId} groupCount={saved ? saved.groups.filter((g) => g.class_id === classId && g.status !== "closed").length : 0} code={groups.code} setCode={(code) => setGroups({ code })} onClose={() => setGroups(null)} />}
 
         {!data.classes.length ? <Empty>Add a class to start a gradebook.</Empty>
           : !book.students.length ? <Empty>No students in this class yet.</Empty>
@@ -602,7 +662,7 @@ export default function GradebookPage() {
           : view === "cards" ? <CardsView book={book} order={order} onOpen={setDrawer} classId={classId} />
           : <GridView book={book} order={order} filter={filter} onOpen={setDrawer} />}
       </div>
-      <Drawer book={book} open={drawer} onClose={closeDrawer} />
+      <Drawer book={book} open={drawer} onClose={closeDrawer} groupNotes={saved} />
     </BridgePage>
   );
 }

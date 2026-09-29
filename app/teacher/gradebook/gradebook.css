@@ -95,3 +95,8 @@ button.gb-chip:hover{filter:brightness(.95);transform:translateY(-1px)}
 .gb-name-chip.is-out{background:#fff;color:#b0a7c6;text-decoration:line-through;border-style:dashed}
 @media(max-width:1000px){.gb-group-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:560px){.gb-group-grid{grid-template-columns:1fr}}
+.gb-save{display:grid;gap:6px}
+.gb-save input{border:1px solid #dcd3f0;border-radius:10px;padding:8px 10px;font:600 12px Inter,sans-serif;color:#241b50;min-width:0}
+.gb-gnotes{margin-top:16px;border-top:1px solid var(--line);padding-top:12px}
+.gb-gnotes h3{font:600 14px Poppins,sans-serif;margin:0 0 6px}
+.gb-gnotes p{margin:6px 0 0;font-size:13px}
