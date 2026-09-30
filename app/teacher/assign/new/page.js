@@ -909,7 +909,7 @@ function displayCode(code){return String(code||'').replace(/^TEKS\s+/i,'').repla
     if(key==='keys'){setLane('relay');setBrowseSubject(FOUNDATIONS);setReadingSubject('all');}
     else{setLane('standard');setBrowseSubject(targetClass?.subject||'Science');setFollowClass(true);}
   }
-  return <BridgePage teacherEmail={teacherEmail}><PageHeading title="Find your next activity" subtitle="Pick a standard. Every activity for it is on one page."><ClassTabs classes={classes} value={assignClassId} onChange={id=>{setAssignClassId(id);setFollowClass(true);setLane('standard');setTypeFilter('all');resetBrowse();setCaseSearch('')}}/><div className="cc-class-context">{targetClass?.name || 'Choose a class'} · {roster.length} students</div></PageHeading>
+  return <BridgePage teacherEmail={teacherEmail}><PageHeading title="Find your next activity" subtitle="Pick a standard. Every activity for it is on one page."><ClassTabs classes={classes} value={assignClassId} onChange={id=>{setAssignClassId(id);setFollowClass(true);setLane(product==='keys'?'relay':'standard');setTypeFilter('all');resetBrowse();setCaseSearch('')}}/><div className="cc-class-context">{targetClass?.name || 'Choose a class'} · {roster.length} students</div></PageHeading>
     {error&&<div role="alert" className="cc-error">{error}</div>}
     <div className="cc-products" role="list">
       {PRODUCTS.filter((item) => !item.soon).map((item) => (
@@ -950,7 +950,7 @@ function displayCode(code){return String(code||'').replace(/^TEKS\s+/i,'').repla
                 <button onClick={() => router.push("/teacher/class?tab=work")} className="gc-btn" style={{ background: searchParams.get("group") ? `${ACCENT}22` : ACCENT, color: searchParams.get("group") ? ACCENT : COLORS.white, borderRadius: 999, padding: "11px 20px", fontWeight: 700, fontSize: 13.5 }}>Back to Class</button>
               </div>
             </div>): (product === "centers" || product === "keys") ? <>
-    {product === "keys" && <ClearKeysSwitch classId={assignClassId} className={targetClass?.name} compact onStatus={(st)=>{setKeysOn(!!st.allOn);if(st.allOn&&browseSubject!==READINGS){setBrowseSubject(READINGS);setReadingSubject('all');setSelectedCase(null);}}} />}
+    {product === "keys" && <ClearKeysSwitch classId={assignClassId} className={targetClass?.name} compact onStatus={(st)=>{setKeysOn(!!st.allOn);if(st.allOn){setBrowseSubject((prev)=>{if(prev!==READINGS){setReadingSubject('all');setSelectedCase(null);}return READINGS;});}}} />}
     {product === "keys" && <section className="cc-panel cc-keys">
       {keysOn ? (
         <div className="cc-row cc-between" style={{ alignItems: "flex-end", marginBottom: 10 }}>
