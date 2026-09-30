@@ -66,7 +66,7 @@ function ActivityCard({ label, title, line, code, href, button, color, off }) {
   );
 }
 
-export default function KeysClient({ firstName, track, daily, race, readings, level, rank, streak, bests, history, practice, grade, story = [], arcade = [] }) {
+export default function KeysClient({ firstName, track, daily, race, readings, level, rank, streak, bests, history, practice, grade, story = [], arcade = [], fuel = null }) {
   const subjects = ["All", ...Array.from(new Set(practice.map((p) => p.subject)))];
   const [subject, setSubject] = useState("All");
   const shown = practice.filter((p) => subject === "All" || p.subject === subject);
@@ -110,6 +110,20 @@ export default function KeysClient({ firstName, track, daily, race, readings, le
             </div>
           </div>
         </section>
+
+        {fuel && (
+          <section style={{ ...glass, padding: 18, display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap" }} aria-label={`Class fuel this week: ${fuel.fuel} of ${fuel.goal}`}>
+            <div style={{ flex: "1 1 320px", minWidth: 0 }}>
+              <div style={eyebrow}>Class relay beam · this week</div>
+              <h2 style={{ ...h, fontSize: 20, margin: "2px 0 4px" }}>{fuel.pct >= 100 ? `Beam reached ${fuel.planet.name}!` : `Power the beam to ${fuel.planet.name}`}</h2>
+              <p style={{ color: C.muted, margin: "0 0 10px", fontSize: 14 }}>Every Daily Transmission and every level anyone in your class passes adds fuel. {fuel.fuel} of {fuel.goal} this week.</p>
+              <div style={{ position: "relative", height: 16, borderRadius: 999, background: "rgba(123,93,255,.15)", overflow: "hidden" }}>
+                <div style={{ width: `${fuel.pct}%`, height: "100%", borderRadius: 999, background: `linear-gradient(90deg, ${C.teal}, ${C.violet}, ${C.gold})`, boxShadow: `0 0 12px ${C.teal}` }} />
+              </div>
+            </div>
+            <img src={fuel.planet.image} alt="" width={84} height={84} style={{ flex: "0 0 auto", filter: fuel.pct >= 100 ? "drop-shadow(0 0 16px #F5B82E)" : "saturate(.8)" }} />
+          </section>
+        )}
 
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 18 }}>
           <ActivityCard

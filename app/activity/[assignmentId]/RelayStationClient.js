@@ -699,7 +699,21 @@ function PassageRun({ assignmentId, lesson, initialBest, initialCompose, trackLe
   useEffect(() => () => { if (speechOk) try { window.speechSynthesis.cancel(); } catch (err) { /* ignore */ } }, [speechOk]);
 
   // The ghost: the best run's per-character timeline (if one was saved).
-  const ghostTimeline = useMemo(() => (best ? cleanTimeline(best.timeline, text.length) : null), [best, text]);
+  const myGhost = useMemo(() => (best ? cleanTimeline(best.timeline, text.length) : null), [best, text]);
+  // Classmate ghosts (Sept 29): anonymous best runs from classmates on this track level.
+  const [mates, setMates] = useState([]);
+  const [ghostPick, setGhostPick] = useState("mine"); // "mine" | index into mates
+  useEffect(() => {
+    if (!isTrackLevel || !assignmentId) return undefined;
+    let alive = true;
+    fetch("/api/relay-station/ghosts", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ level: trackLevel }) })
+      .then((r) => r.json()).then((d) => { if (alive && Array.isArray(d.ghosts)) setMates(d.ghosts); }).catch(() => {});
+    return () => { alive = false; };
+  }, [isTrackLevel, trackLevel, assignmentId]);
+  const mate = ghostPick !== "mine" ? mates[ghostPick] || null : null;
+  const mateTimeline = useMemo(() => (mate ? cleanTimeline(mate.timeline, text.length) : null), [mate, text]);
+  const ghostTimeline = mateTimeline || myGhost;
+  const ghostName = mateTimeline ? `the ${mate.rank}` : "your ghost";
   const ghostActive = !!(ghostTimeline && ghostOn && !onFinishOverride);
 
   // Tick the live timer / WPM while typing (faster when a ghost is racing).
@@ -845,7 +859,30 @@ function PassageRun({ assignmentId, lesson, initialBest, initialCompose, trackLe
           <div style={{ fontSize: 13, color: THEME.muted, marginBottom: 14 }}>📡 {corrupt.length} words arrived scrambled (in pink). Unscramble them as you type. Miss the same letter {CORRUPT_REVEAL_AFTER} times and it appears.</div>
         )}
         <div style={{ fontSize: 13, color: THEME.teal, marginBottom: 14 }}>🪑 Ready position: sit tall · feet flat · wrists floating · fingers on home row · eyes on the screen</div>
-        {ghostTimeline && (
+        {mates.length > 0 && (
+          <div style={{ marginBottom: 14 }}>
+            <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: 1, color: THEME.muted, marginBottom: 6 }}>👻 RACE A GHOST</div>
+            <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+              {myGhost && (
+                <button onClick={() => { setGhostPick("mine"); setGhostOn(true); }} style={{ flex: "1 1 150px", textAlign: "left", background: ghostOn && ghostPick === "mine" ? "rgba(123,93,255,0.25)" : "rgba(255,255,255,0.05)", border: `1px solid ${ghostOn && ghostPick === "mine" ? THEME.violet : THEME.border}`, borderRadius: 10, padding: "8px 10px", color: THEME.text, cursor: "pointer", fontFamily: "inherit" }}>
+                  <div style={{ fontWeight: 800, fontSize: 14 }}>My best run</div>
+                  <div style={{ fontSize: 12, color: THEME.muted }}>{best.wpm} WPM</div>
+                </button>
+              )}
+              {mates.map((m, i) => (
+                <button key={i} onClick={() => { setGhostPick(i); setGhostOn(true); }} style={{ flex: "1 1 150px", textAlign: "left", background: ghostOn && ghostPick === i ? "rgba(123,93,255,0.25)" : "rgba(255,255,255,0.05)", border: `1px solid ${ghostOn && ghostPick === i ? THEME.violet : THEME.border}`, borderRadius: 10, padding: "8px 10px", color: THEME.text, cursor: "pointer", fontFamily: "inherit" }}>
+                  <div style={{ fontWeight: 800, fontSize: 14 }}>A {m.rank} from your class</div>
+                  <div style={{ fontSize: 12, color: THEME.muted }}>{m.label} · {m.wpm} WPM</div>
+                </button>
+              ))}
+              <button onClick={() => setGhostOn(false)} style={{ flex: "1 1 120px", textAlign: "left", background: !ghostOn ? "rgba(123,93,255,0.25)" : "rgba(255,255,255,0.05)", border: `1px solid ${!ghostOn ? THEME.violet : THEME.border}`, borderRadius: 10, padding: "8px 10px", color: THEME.text, cursor: "pointer", fontFamily: "inherit" }}>
+                <div style={{ fontWeight: 800, fontSize: 14 }}>No ghost</div>
+                <div style={{ fontSize: 12, color: THEME.muted }}>Just me</div>
+              </button>
+            </div>
+          </div>
+        )}
+        {ghostTimeline && mates.length === 0 && (
           <label style={{ display: "flex", gap: 8, alignItems: "center", fontSize: 14, color: THEME.text, marginBottom: 14, cursor: "pointer" }}>
             <input type="checkbox" checked={ghostOn} onChange={(e) => setGhostOn(e.target.checked)} />
             👻 Race my ghost — a purple marker replays my best run ({best.wpm} WPM)
@@ -1044,7 +1081,7 @@ function PassageRun({ assignmentId, lesson, initialBest, initialCompose, trackLe
         </span>
       </div>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10 }}>
-        <GhostStatus ghostPos={ghostPos} pos={pos} total={text.length} />
+        <GhostStatus ghostPos={ghostPos} pos={pos} total={text.length} name={ghostName} />
         <ComboMeter combo={combo} />
       </div>
       {boss ? (
@@ -1504,14 +1541,16 @@ function ReadyPosition({ onReady }) {
 }
 
 // Ghost racer status line: how far ahead/behind your best run you are.
-function GhostStatus({ ghostPos, pos, total }) {
+function GhostStatus({ ghostPos, pos, total, name = "your ghost" }) {
   if (ghostPos === null || ghostPos === undefined) return <span />;
   const diff = pos - ghostPos;
+  const mine = name === "your ghost";
+  const Name = name.charAt(0).toUpperCase() + name.slice(1);
   let msg;
-  if (ghostPos >= total && pos < total) msg = "👻 Your ghost finished — keep going, you've got this!";
-  else if (diff > 0) msg = `👻 You're ${diff} ahead of your best run!`;
-  else if (diff < 0) msg = `👻 Ghost is ${-diff} ahead — catch it!`;
-  else msg = "👻 Neck and neck with your ghost!";
+  if (ghostPos >= total && pos < total) msg = `👻 ${Name} finished — keep going, you've got this!`;
+  else if (diff > 0) msg = mine ? `👻 You're ${diff} ahead of your best run!` : `👻 You're ${diff} ahead of ${name}!`;
+  else if (diff < 0) msg = `👻 ${Name} is ${-diff} ahead — catch up!`;
+  else msg = `👻 Neck and neck with ${name}!`;
   return <span style={{ fontSize: 13, fontWeight: 700, color: diff > 0 ? THEME.done : "#C4B5FD" }}>{msg}</span>;
 }
 

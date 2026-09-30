@@ -5,6 +5,8 @@ import { getVisibleAssignmentsForStudent } from "../../lib/getStudentAssignments
 import { listRelayStationLessons, TRACK_LEVELS, rankFor, rankBadgeSrc, centralDateKey, continuesStreak } from "../../lib/cases/relay-station";
 import { STORY_CHAPTERS, STORY_ACTS, chapterUnlocked, unlockHint } from "../../lib/cases/relay-station/story";
 import { ARCADE_GAMES, gameUnlocked } from "../../lib/cases/relay-station/arcade";
+import { classFuel } from "../../lib/clearkeysFuel";
+import { getClassPlanet, CLASS_PLANETS } from "../../lib/classPlanets";
 import KeysClient from "./KeysClient";
 
 // ClearKeys door (Sept 29, 2026): the student's typing home, open any time
@@ -22,7 +24,7 @@ export default async function KeysPage() {
   if (!student) redirect("/login");
 
   const [{ data: cls }, assignments, { data: progress }, { data: subs }] = await Promise.all([
-    supabaseAdmin.from("classes").select("grade").eq("id", student.class_id).maybeSingle(),
+    supabaseAdmin.from("classes").select("grade, planet_key").eq("id", student.class_id).maybeSingle(),
     getVisibleAssignmentsForStudent(studentId, student.class_id),
     supabaseAdmin
       .from("relay_station_progress")
@@ -71,6 +73,16 @@ export default async function KeysPage() {
     }),
   }));
   const arcade = ARCADE_GAMES.map((g) => ({ key: g.key, name: g.name, line: g.line, image: g.image, open: gameUnlocked(g, unlock), unlockLevel: g.unlockLevel }));
+  // Class fuel goal: the whole class powers the relay beam together this week.
+  const { data: mates } = await supabaseAdmin.from("students").select("id, active").eq("class_id", student.class_id);
+  const mateIds = (mates || []).filter((m) => m.active !== false).map((m) => m.id);
+  let mateRows = [];
+  if (mateIds.length) {
+    const { data } = await supabaseAdmin.from("relay_station_progress").select("level_results, daily").in("student_id", mateIds);
+    mateRows = data || [];
+  }
+  const planet = getClassPlanet(cls?.planet_key) || CLASS_PLANETS[0];
+  const fuel = { ...classFuel(mateRows, mateIds.length), planet: { name: planet.name, image: planet.image } };
   const grade = ["3", "4", "5"].includes(String(cls?.grade)) ? Number(cls.grade) : 3;
   const practice = listRelayStationLessons()
     .filter((l) => l.grade === grade && /^RS\.[345]\./.test(l.code) && !/\.(TRACK|DAILY|RACE)$/.test(l.code))
@@ -92,6 +104,7 @@ export default async function KeysPage() {
       grade={grade}
       story={story}
       arcade={arcade}
+      fuel={fuel}
     />
   );
 }

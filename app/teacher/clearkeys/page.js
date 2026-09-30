@@ -7,6 +7,8 @@ import { BridgePage, PageHeading, ClassTabs, Empty } from "../../../components/t
 import ClearKeysTabs from "../../../components/teacher/ClearKeysTabs";
 import ClearKeysSwitch from "../../../components/teacher/ClearKeysSwitch";
 import { TRACK_LEVELS } from "../../../lib/cases/relay-station";
+import { classFuel } from "../../../lib/clearkeysFuel";
+import { getClassPlanet, CLASS_PLANETS } from "../../../lib/classPlanets";
 
 // ClearKeys home (Sept 29, 2026): the one teacher page for typing.
 // Setup (one switch), a snapshot of the class, and tabs to every typing tool.
@@ -36,7 +38,7 @@ function ClearKeysHome() {
       if (authError || !data?.user) { router.push("/login"); return; }
       setTeacherEmail(data.user.email || "");
       setReady(true);
-      supabase.from("classes").select("id, name, grade").eq("teacher_id", data.user.id).order("created_at").then(({ data: cls }) => {
+      supabase.from("classes").select("id, name, grade, planet_key").eq("teacher_id", data.user.id).order("created_at").then(({ data: cls }) => {
         setClasses(cls || []);
         if (!classId && cls && cls.length) setClassId(cls[0].id);
       });
@@ -70,6 +72,8 @@ function ClearKeysHome() {
   const stuck = [];
   (rows || []).forEach((r) => { const k = statusKey(r.progress); counts[k] += 1; if (k === "stuck") stuck.push(r); });
   const q = classId ? `?classId=${classId}` : "";
+  const fuel = rows ? classFuel(rows.map((r) => r.progress).filter(Boolean), rows.length) : null;
+  const planet = getClassPlanet(cls?.planet_key) || CLASS_PLANETS[0];
   const tile = { background: "#fff", border: "1px solid #e7e2f2", borderRadius: 16, padding: 16, textAlign: "center" };
 
   return (
@@ -93,6 +97,18 @@ function ClearKeysHome() {
                 <div style={tile}><b style={{ fontSize: 28, color: "#087c43" }}>{counts.done}</b><div>All 20 passed</div></div>
                 <div style={tile}><b style={{ fontSize: 28, color: "#70658d" }}>{counts.new}</b><div>Not started</div></div>
               </div>
+              {fuel && (
+                <div style={{ display: "flex", alignItems: "center", gap: 14, marginTop: 16, flexWrap: "wrap" }}>
+                  <img src={planet.image} alt="" width={56} height={56} />
+                  <div style={{ flex: "1 1 260px" }}>
+                    <b>Class relay beam this week: {fuel.fuel} of {fuel.goal} fuel</b> <span className="cc-muted">(toward {planet.name})</span>
+                    <div style={{ height: 10, borderRadius: 999, background: "#eee8fb", marginTop: 6, overflow: "hidden" }}>
+                      <div style={{ width: `${fuel.pct}%`, height: "100%", background: "linear-gradient(90deg,#00C2C7,#7541cf)" }} />
+                    </div>
+                    <div className="cc-muted" style={{ fontSize: 13, marginTop: 4 }}>Each Daily Transmission and each level passed adds 1. Students see this on their ClearKeys page.</div>
+                  </div>
+                </div>
+              )}
               {stuck.length > 0 && (
                 <p style={{ marginBottom: 0 }}>
                   <b>Check on:</b> {stuck.slice(0, 6).map((s) => s.firstName).join(", ")}{stuck.length > 6 ? ` and ${stuck.length - 6} more` : ""}. They have tried their level {STUCK_ATTEMPTS} or more times.{" "}
