@@ -63,6 +63,7 @@ import Link from 'next/link';
 import {BridgePage,PageHeading,ClassTabs,Empty} from '../../../../components/teacher/BridgeUI';
 import {subjectStyle,engineInfo,engineLine,SUBJECTS,ENGINES} from '../../../../lib/teacherBridge';
 import { activityFacts, factsLine, rowRank, ROW_LABEL, ROW_BLURB } from '../../../../lib/activityFacts';
+import { isHiddenContent, HIDDEN_ASSIGN_MESSAGE } from '../../../../lib/contentReview/hidden';
 import { COLORS, PAGE_ACCENTS, PAGE_BACKGROUNDS, panelStyle } from "../../../../lib/teacherTheme";
 import { missionMapTeksLabel, missionMapTeksCode } from "../../../../lib/cases/mission-map/teksLabels";
 import { codesFor, topicForCase, frUnitKey, frTopicName, mainCode } from "../../../../lib/standardCodes";
@@ -639,11 +640,12 @@ function NewAssignmentContent() {
 
   function topicCode(c){const standard=String(c?.standard||"");if(FR_CUSTOM_LIST_RE.test(standard))return MY_WORD_LISTS;if(isFrDailyCase(standard))return FR_DAILY_TOPIC;return missionMapTeksCode(standard)||standard.replace(/-(?:SC|GC|FR|SL|SD|AD|RS|MM|CL|EX|XP|MS|BB).*$/i,'');}
 function displayCode(code){return String(code||'').replace(/^TEKS\s+/i,'').replace(/^(MA|ELA|ELAR|SS|SCI)\./i,'');}
-  const topics=[...new Set(cases.map(normalizeCaseRow).filter(c=>c.engine!=='relay_station'&&Number(c.grade)===Number(browseGrade)&&(c.subject===browseSubject||isFrDailyCase(c.standard))&&(typeFilter==='all'||matchesChallenge(c.engine,typeFilter))&&!isRetiredSignalCheckCase(c.standard)&&!((FR_CUSTOM_LIST_RE.exec(c.standard)||[])[1]&&FR_CUSTOM_LIST_RE.exec(c.standard)[1]!==String(teacherId||"").replace(/-/g,"").slice(0,8).toLowerCase())).map(topicCode))].sort((a,b)=>a.localeCompare(b,undefined,{numeric:true}));
+  const topics=[...new Set(cases.map(normalizeCaseRow).filter(c=>c.engine!=='relay_station'&&!isHiddenContent(c.engine,c.standard)&&Number(c.grade)===Number(browseGrade)&&(c.subject===browseSubject||isFrDailyCase(c.standard))&&(typeFilter==='all'||matchesChallenge(c.engine,typeFilter))&&!isRetiredSignalCheckCase(c.standard)&&!((FR_CUSTOM_LIST_RE.exec(c.standard)||[])[1]&&FR_CUSTOM_LIST_RE.exec(c.standard)[1]!==String(teacherId||"").replace(/-/g,"").slice(0,8).toLowerCase())).map(topicCode))].sort((a,b)=>a.localeCompare(b,undefined,{numeric:true}));
   const searchQ = caseSearch.trim().toLowerCase();
   const inRush = product==='centers' && browseMode==='activities' && typeFilter==='frequency_rush';
   const filteredCases = cases.map(normalizeCaseRow).filter((c) => {
     if (!c || typeof c.standard !== "string") return false;
+    if (isHiddenContent(c.engine, c.standard)) return false;
     const isQuickMaker = c.engine === "maker_studio" && (c.standard === "MS.QUICK-WRITE" || c.standard === QUICK_MS_STANDARD);
     const makerBrowse = typeFilter === "maker_studio" && isQuickMaker;
     // Quick Maker is one seed usable at any grade/subject once Maker is selected.
@@ -689,6 +691,7 @@ function displayCode(code){return String(code||'').replace(/^TEKS\s+/i,'').repla
   if (product === "centers") {
     cases.map(normalizeCaseRow).forEach((c) => {
       if (!c || typeof c.standard !== "string") return;
+      if (isHiddenContent(c.engine, c.standard)) return;
       if (Number(c.grade) !== Number(browseGrade)) return;
       if (c.subject !== browseSubject && !isFrDailyCase(c.standard)) return;
       if (!CHALLENGE_TYPES.some((t) => t.real && matchesChallenge(c.engine, t.key))) return;
@@ -700,6 +703,7 @@ function displayCode(code){return String(code||'').replace(/^TEKS\s+/i,'').repla
   const quietTypes = Object.keys(ENGINES).filter((key) => activityFacts(key).row && key !== "signal_defense" && !typeCounts[key]).map((key) => activityFacts(key).label);
   const standardGroups = product==='keys' || browseMode!=='standards' ? [] : Object.values(cases.map(normalizeCaseRow).reduce((groups, c) => {
     if (!c || typeof c !== "object") return groups;
+    if (isHiddenContent(c.engine, c.standard)) return groups;
     if (Number(c.grade)!==Number(browseGrade) || (c.subject!==browseSubject && !isFrDailyCase(c.standard))) return groups;
     if (!CHALLENGE_TYPES.some((t) => t.real && matchesChallenge(c.engine, t.key)) || matchesChallenge(c.engine, 'relay_station') || matchesChallenge(c.engine, 'signal_defense') || isRetiredSignalCheckCase(c.standard)) return groups;
     const owned = mainCode(c.standard);
@@ -724,6 +728,7 @@ function displayCode(code){return String(code||'').replace(/^TEKS\s+/i,'').repla
   const showList = product==='keys' || (browseMode==='activities' && typeFilter!=='all' && !(inRush && !rushStandard)) || (browseMode==='standards' && !!pickedStandard);
   const rushTopics = !inRush || !rushMode ? [] : Object.values(cases.map(normalizeCaseRow).reduce((groups, c) => {
     if (!c || Number(c.grade)!==Number(browseGrade) || (c.subject!==browseSubject && !isFrDailyCase(c.standard))) return groups;
+    if (isHiddenContent(c.engine, c.standard)) return groups;
     if (!matchesChallenge(c.engine, rushMode==='crew' ? 'signal_defense' : 'frequency_rush')) return groups;
     const unit = frUnitKey(c.standard);
     const codes = codesFor(c.standard);
@@ -756,6 +761,10 @@ function displayCode(code){return String(code||'').replace(/^TEKS\s+/i,'').repla
 
   async function handleAssign() {
     if (!selectedCase || !assignClassId) return;
+    if (isHiddenContent(selectedCase.engine, selectedCase.standard)) {
+      setError(HIDDEN_ASSIGN_MESSAGE);
+      return;
+    }
     if (targetMode === "specific" && selectedStudentIds.length === 0) {
       setError("Pick at least one student, or switch to Whole Class.");
       return;
@@ -813,49 +822,30 @@ function displayCode(code){return String(code||'').replace(/^TEKS\s+/i,'').repla
       };
     }
 
-    let { data: newAssignment, error: insertError } = await supabase
-      .from("assignments")
-      .insert(assignmentFields)
-      .select()
-      .single();
-    // Sept 24, 2026 — if add_frequency_rush_skills.sql hasn't run yet, the
-    // question_seconds column doesn't exist. Assign without the timer rather
-    // than block Frequency Rush assigning entirely.
-    if (insertError && /question_seconds/i.test(insertError.message || "")) {
-      const { question_seconds, ...withoutTimer } = assignmentFields;
-      ({ data: newAssignment, error: insertError } = await supabase
-        .from("assignments")
-        .insert(withoutTimer)
-        .select()
-        .single());
-    }
-    if (insertError && /broadcast_booth_config/i.test(insertError.message || "")) {
-      const { broadcast_booth_config, ...withoutBb } = assignmentFields;
-      ({ data: newAssignment, error: insertError } = await supabase
-        .from("assignments")
-        .insert(withoutBb)
-        .select()
-        .single());
-      if (!insertError) {
-        setError("Assigned, but the Broadcast Booth settings didn't save. Assign it again, or contact support if this keeps happening.");
-      }
-    }
-    if (insertError && /maker_studio_config/i.test(insertError.message || "")) {
-      const { maker_studio_config, ...withoutMaker } = assignmentFields;
-      ({ data: newAssignment, error: insertError } = await supabase
-        .from("assignments")
-        .insert(withoutMaker)
-        .select()
-        .single());
-      if (!insertError) {
-        setError("Assigned, but the Maker Studio settings didn't save. Assign it again, or contact support if this keeps happening.");
-      }
-    }
-    if (insertError) {
+    const { data: sessionData } = await supabase.auth.getSession();
+    const accessToken = sessionData?.session?.access_token;
+    if (!accessToken) {
       setAssigning(false);
-      console.error(insertError);
-      setError("Couldn't assign that activity. Try again, or contact support if it keeps happening.");
+      setError("Your session expired — refresh the page and try again.");
       return;
+    }
+    const createRes = await fetch("/api/teacher/assignment/create", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ accessToken, engine: selectedCase.engine, ...assignmentFields }),
+    });
+    const created = await createRes.json().catch(() => ({}));
+    if (!createRes.ok) {
+      setAssigning(false);
+      setError(created.error || "Couldn't assign that activity. Try again, or contact support if it keeps happening.");
+      return;
+    }
+    const newAssignment = created.assignment;
+    if (created.dropped === "broadcast_booth_config") {
+      setError("Assigned, but the Broadcast Booth settings didn't save. Assign it again, or contact support if this keeps happening.");
+    }
+    if (created.dropped === "maker_studio_config") {
+      setError("Assigned, but the Maker Studio settings didn't save. Assign it again, or contact support if this keeps happening.");
     }
 
     if (targetMode === "specific") {

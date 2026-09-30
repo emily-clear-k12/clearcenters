@@ -8,6 +8,7 @@ import { CaseImage } from "../../../lib/caseImage";
 import { supabase } from "../../../lib/supabaseClient";
 import { COLORS, PAGE_ACCENTS, PAGE_BACKGROUNDS, panelStyle } from "../../../lib/teacherTheme";
 import Icon, { IconBadge } from "../../../components/teacher/Icon";
+import { isHiddenContent } from "../../../lib/contentReview/hidden";
 
 // This page's own accent — Mission Control's color on the Overview console
 // (see PAGE_ACCENTS in lib/teacherTheme.js) — so arriving here from that
@@ -390,6 +391,9 @@ export default function MyClassesPage() {
                           <div style={{ flex: 1, minWidth: 0 }}>
                             <div style={{ fontSize: 12.5, fontWeight: 600, color: COLORS.textDark, display: "flex", alignItems: "center", gap: 6 }}>
                               {a.cases?.title || a.case_standard}
+                              {isHiddenContent(a.cases?.engine, a.case_standard) && (
+                                <span style={{ fontSize: 9.5, fontWeight: 700, color: COLORS.textMuted }}>Being revised</span>
+                              )}
                               {a.distress_call && (
                                 <span title="Distress Call is live — project it from here or from the Live Ops Board" style={{ fontSize: 9.5, fontWeight: 700, color: COLORS.violet, background: `${COLORS.violet}22`, borderRadius: 999, padding: "1px 7px" }}>
                                   <Icon name="signal" size={11} /> Live
