@@ -157,7 +157,7 @@ export default function RelayStationClient({ assignmentId, lesson, existingBest,
   } else {
     body = (
       <Shell>
-        <DistressCallBadge assignmentId={assignmentId} />
+        {assignmentId && <DistressCallBadge assignmentId={assignmentId} />}
         <PassageRun assignmentId={assignmentId} lesson={lesson} initialBest={existingBest} initialCompose={existingCompose} />
       </Shell>
     );
@@ -534,7 +534,7 @@ function PassageRun({ assignmentId, lesson, initialBest, initialCompose, trackLe
   const [revealed, setRevealed] = useState(() => new Set());
   const [slowVoice, setSlowVoice] = useState(false);
   const [composeOpen, setComposeOpen] = useState(false);
-  const composePrompt = !isTrackLevel && !onFinishOverride ? (lesson.compose || getComposePrompt(lesson.code)) : null;
+  const composePrompt = assignmentId && !isTrackLevel && !onFinishOverride ? (lesson.compose || getComposePrompt(lesson.code)) : null;
   // Which characters are hidden in this mode, and what shows in their place.
   const mask = useMemo(() => {
     const hidden = new Set();
@@ -566,6 +566,8 @@ function PassageRun({ assignmentId, lesson, initialBest, initialCompose, trackLe
   }, []);
 
   const submitRun = useCallback(async (run) => {
+    // Free play (Sept 29): no assignment, so nothing is saved or graded.
+    if (!assignmentId) { setSaveState("practice"); return; }
     setSaveState("saving");
     try {
       const res = await fetch("/api/relay-station/submit", {
@@ -1006,6 +1008,7 @@ function PassageRun({ assignmentId, lesson, initialBest, initialCompose, trackLe
             {saveState === "saving" && "Saving…"}
             {saveState === "saved" && (isTrackLevel ? "Progress saved ✓" : "Saved to your missions ✓ (your best run is what counts)")}
             {saveState === "error" && "Couldn't save — check your connection, then try again."}
+            {saveState === "practice" && "Free play: just for practice, not saved."}
           </span>
         </div>
       </Panel>

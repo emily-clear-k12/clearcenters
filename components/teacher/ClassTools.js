@@ -13,7 +13,7 @@ const TOOLS = [
   { href: "/teacher/badges", name: "Badges and rewards", what: "Give Crystal Points and see who has earned which badge." },
   { href: "/teacher/passages", name: "Passages", what: "Every reading passage by subject, to open or project on its own." },
   { href: "/teacher/word-lists", name: "Word lists", what: "Make your own vocabulary or spelling list for Frequency Rush." },
-  { href: "/teacher/typing-texts", name: "Typing texts", what: "Add your own passages for ClearKeys typing practice." },
+  { href: "/teacher/clearkeys", name: "ClearKeys", what: "Typing: turn it on, see who needs help, run a race, add your own texts." },
 ];
 
 export default function ClassTools({ classId }) {

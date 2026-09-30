@@ -1,7 +1,7 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { supabaseAdmin } from "../../lib/supabaseAdmin";
-import { getVisibleAssignmentsForStudent } from "../../lib/getStudentAssignments";
+import { getVisibleAssignmentsForStudent, isClearKeysAlwaysOn } from "../../lib/getStudentAssignments";
 import MissionsClient from "./MissionsClient";
 
 export default async function MissionsPage() {
@@ -22,7 +22,7 @@ export default async function MissionsPage() {
     redirect("/login");
   }
 
-  const assignments = await getVisibleAssignmentsForStudent(studentId, student.class_id);
+  const assignments = (await getVisibleAssignmentsForStudent(studentId, student.class_id)).filter((a) => !isClearKeysAlwaysOn(a.case_standard));
 
   return <MissionsClient student={student} assignments={assignments} />;
 }

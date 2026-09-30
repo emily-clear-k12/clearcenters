@@ -71,7 +71,7 @@ Score: 2 = meets nearly all of the checklist for grade ${lesson.grade}; 1 = meet
   const prevData = (existing && existing.relay_station_data) || {};
   const firstCompose = !prevData.compose;
   const compose = { type: prompt.type, prompt: prompt.prompt, text, feedback, score: aiScore, at: new Date().toISOString(), revisions: ((prevData.compose && prevData.compose.revisions) || 0) + (firstCompose ? 0 : 1) };
-  const baseSummary = String((existing && existing.attempt2) || `Relay Station (${lesson.code}, ${lesson.title})`).split("\n\nYour Turn (")[0];
+  const baseSummary = String((existing && existing.attempt2) || `ClearKeys (${lesson.code}, ${lesson.title})`).split("\n\nYour Turn (")[0];
   const fields = {
     attempt1: text,
     attempt2: `${baseSummary}\n\nYour Turn (${prompt.type}):\n${text}`,

@@ -10,9 +10,9 @@ ALTER TABLE relay_station_custom_texts
   ADD COLUMN IF NOT EXISTS compose_prompt TEXT;
 
 INSERT INTO cases (standard, title, engine, grade, subject) VALUES
-  ('RS.3.DAILY', 'Relay Station: Daily Transmission', 'relay_station', 3, 'ELAR'),
-  ('RS.4.DAILY', 'Relay Station: Daily Transmission', 'relay_station', 4, 'ELAR'),
-  ('RS.5.DAILY', 'Relay Station: Daily Transmission', 'relay_station', 5, 'ELAR')
+  ('RS.3.DAILY', 'ClearKeys: Daily Transmission', 'relay_station', 3, 'ELAR'),
+  ('RS.4.DAILY', 'ClearKeys: Daily Transmission', 'relay_station', 4, 'ELAR'),
+  ('RS.5.DAILY', 'ClearKeys: Daily Transmission', 'relay_station', 5, 'ELAR')
 ON CONFLICT (standard) DO NOTHING;
 
 UPDATE cases SET

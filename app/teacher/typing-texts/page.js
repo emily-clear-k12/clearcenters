@@ -1,5 +1,6 @@
 "use client";
 import {BridgePage,PageHeading} from "../../../components/teacher/BridgeUI";
+import ClearKeysTabs from "../../../components/teacher/ClearKeysTabs";
 
 import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
@@ -76,7 +77,7 @@ export default function TypingTextsPage() {
     setSaving(true); setError(null); setNotice(null);
     try {
       await callApi({ action: "create", ...form, grade: Number(form.grade) });
-      setNotice(`Saved "${form.title}". Find it in Challenge Library → Relay Station → ${form.grade === "3" ? "3rd" : form.grade + "th"} Grade → ${form.subject}.`);
+      setNotice(`Saved "${form.title}". Find it in Assign → ClearKeys → Readings → ${form.grade === "3" ? "3rd" : form.grade + "th"} Grade → ${form.subject}.`);
       setForm((f) => ({ ...f, title: "", intro: "", composePrompt: "", text: "" }));
       await load();
     } catch (err) {
@@ -106,7 +107,8 @@ export default function TypingTextsPage() {
   return (
     <BridgePage teacherEmail={teacherEmail} >
       <style>{`@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@600;700&family=Inter:wght@400;500;600;700&display=swap');`}</style>
-      <PageHeading title="Typing Texts" subtitle="Relay Station · your own passages to assign"></PageHeading>
+      <PageHeading title="Typing Texts" subtitle="ClearKeys · your own passages to assign"></PageHeading>
+      <ClearKeysTabs active="texts" />
 
       <div className="cc-detail-content">
         {error && <div style={{ background: `${COLORS.danger}18`, color: COLORS.danger, borderRadius: 10, padding: "10px 14px", marginBottom: 12, fontSize: 13.5 }}>{error}</div>}

@@ -157,7 +157,7 @@ async function handleReadingRun({ studentId, assignmentId, lesson, result }) {
   modesDone[run.mode] = true;
 
   const summary =
-    `Relay Station (${lesson.code}, ${lesson.title}): best run ${"★".repeat(best.stars)} — ` +
+    `ClearKeys (${lesson.code}, ${lesson.title}): best run ${"★".repeat(best.stars)} — ` +
     `${best.wpm} WPM, ${best.accuracy}% accuracy, ${best.errors} errors` +
     (best.troubleKeys.length ? `; trouble keys: ${best.troubleKeys.map((t) => keyLabel(t.key)).join(" ")}` : "") +
     `. ${attempts} attempt${attempts === 1 ? "" : "s"}.` +

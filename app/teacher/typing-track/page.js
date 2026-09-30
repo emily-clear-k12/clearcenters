@@ -1,5 +1,6 @@
 "use client";
 import {BridgePage,PageHeading} from "../../../components/teacher/BridgeUI";
+import ClearKeysTabs from "../../../components/teacher/ClearKeysTabs";
 
 import React, { useState, useEffect, useCallback, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -120,7 +121,8 @@ function TypingTrackContent() {
   return (
     <BridgePage teacherEmail={teacherEmail} >
       <style>{`@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@600;700&family=Inter:wght@400;500;600;700&display=swap');`}</style>
-      <PageHeading title="Typing Track" subtitle="Relay Station · Foundations Track progress"></PageHeading>
+      <PageHeading title="Typing Track" subtitle="ClearKeys · Foundations Track progress"></PageHeading>
+      <ClearKeysTabs active="progress" classId={classId} />
 
       <div className="cc-detail-content">
         <div style={{ ...panelStyle(ACCENT, { padding: 18, marginBottom: 16 }) }}>
@@ -139,7 +141,7 @@ function TypingTrackContent() {
             </div>
           </div>
           <p style={{ fontSize: 12.5, color: COLORS.textMuted, margin: "10px 0 0" }}>
-            Students move up automatically when they pass a level. The bar rises: <b>90%</b> accuracy for levels 1–10, <b>95%</b> for 11–15, <b>100%</b> for 16–20. Assign it once (Challenge Library → Relay Station → <b>Foundations Track</b> tile) and every student works at their own level.
+            Students move up automatically when they pass a level. The bar rises: <b>90%</b> accuracy for levels 1–10, <b>95%</b> for 11–15, <b>100%</b> for 16–20. Assign it once (Assign → ClearKeys → <b>Foundations Track</b> tile) and every student works at their own level.
             Use <b>Place at</b> to skip a strong typist ahead (Level 13 = all letters known, Level 14 = capitals) or send someone back for review. <b>Needs help</b> = {STUCK_ATTEMPTS}+ tries on the same level without passing.
           </p>
         </div>

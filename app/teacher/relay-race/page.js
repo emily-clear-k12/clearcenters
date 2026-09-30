@@ -1,5 +1,6 @@
 "use client";
 import {BridgePage,PageHeading} from "../../../components/teacher/BridgeUI";
+import ClearKeysTabs from "../../../components/teacher/ClearKeysTabs";
 
 import React, { useState, useEffect, useCallback, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -90,7 +91,8 @@ function RelayRaceContent() {
   return (
     <BridgePage teacherEmail={teacherEmail} >
       <style>{`@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@600;700&family=Inter:wght@400;500;600;700&display=swap');`}</style>
-      <PageHeading title="Relay Race Board" subtitle="Relay Station · Class Relay Race"></PageHeading>
+      <PageHeading title="Relay Race Board" subtitle="ClearKeys · Class Relay Race"></PageHeading>
+      <ClearKeysTabs active="race" classId={classId} />
       <div className="cc-detail-content">
         <div style={{ ...panelStyle(ACCENT, { padding: 16, marginBottom: 14 }), display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap" }}>
           <label style={{ fontSize: 13, fontWeight: 700 }}>Class{" "}
@@ -114,7 +116,7 @@ function RelayRaceContent() {
           {live && <button disabled={busy} onClick={() => act("end")} style={{ background: "none", color: COLORS.danger, border: `1px solid ${COLORS.danger}`, borderRadius: 999, padding: "9px 18px", fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>End Race</button>}
         </div>
         <p style={{ fontSize: 12.5, color: COLORS.textMuted, margin: "0 0 14px" }}>
-          Students join from their <b>Class Relay Race</b> assignment (Challenge Library → Relay Station → Class Relay Race tile). Each student grabs a leg, types it, and grabs another. If someone gets stuck for over a minute, a teammate can pick up their leg. When every leg is delivered, everyone who carried one earns +{RACE_CRYSTALS} crystal points.
+          Students join from their <b>Class Relay Race</b> assignment (Assign → ClearKeys → Class Relay Race tile). Each student grabs a leg, types it, and grabs another. If someone gets stuck for over a minute, a teammate can pick up their leg. When every leg is delivered, everyone who carried one earns +{RACE_CRYSTALS} crystal points.
         </p>
         {error && <div style={{ background: `${COLORS.danger}18`, color: COLORS.danger, borderRadius: 10, padding: "10px 14px", marginBottom: 12 }}>{error}</div>}
 

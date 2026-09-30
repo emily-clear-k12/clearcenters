@@ -1,7 +1,7 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { supabaseAdmin } from "../../lib/supabaseAdmin";
-import { getVisibleAssignmentsForStudent } from "../../lib/getStudentAssignments";
+import { getVisibleAssignmentsForStudent, isClearKeysAlwaysOn } from "../../lib/getStudentAssignments";
 import { HOME_BACKGROUNDS } from "../../lib/homeBackgrounds";
 import HomeClient from "./HomeClient";
 
@@ -101,7 +101,7 @@ export default async function HomePage() {
     .eq("id", student.class_id)
     .single();
 
-  const assignments = await getVisibleAssignmentsForStudent(studentId, student.class_id);
+  const assignments = (await getVisibleAssignmentsForStudent(studentId, student.class_id)).filter((a) => !isClearKeysAlwaysOn(a.case_standard));
 
   // Only count real, final submissions — not draft rows created by
   // autosave while a student is still mid-activity (see the submitted_at

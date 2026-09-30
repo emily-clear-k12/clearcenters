@@ -22,11 +22,11 @@ ALTER TABLE relay_station_custom_texts ENABLE ROW LEVEL SECURITY;
 
 -- 3) Five new grade-level readings.
 INSERT INTO cases (standard, title, engine, grade, subject) VALUES
-  ('RS.3.P02', 'Relay Station: Paragraph - Earn, Spend, Save, Donate',           'relay_station', 3, 'Social Studies'),
-  ('RS.4.P01', 'Relay Station: Paragraph - The Sun Powers the Water Cycle',      'relay_station', 4, 'Science'),
-  ('RS.4.P02', 'Relay Station: Paragraph - The Four Regions of Texas',           'relay_station', 4, 'Social Studies'),
-  ('RS.5.P01', 'Relay Station: Paragraph - Day, Night, and Shadows',             'relay_station', 5, 'Science'),
-  ('RS.5.P02', 'Relay Station: Paragraph - No Taxation Without Representation',  'relay_station', 5, 'Social Studies')
+  ('RS.3.P02', 'ClearKeys: Paragraph - Earn, Spend, Save, Donate',           'relay_station', 3, 'Social Studies'),
+  ('RS.4.P01', 'ClearKeys: Paragraph - The Sun Powers the Water Cycle',      'relay_station', 4, 'Science'),
+  ('RS.4.P02', 'ClearKeys: Paragraph - The Four Regions of Texas',           'relay_station', 4, 'Social Studies'),
+  ('RS.5.P01', 'ClearKeys: Paragraph - Day, Night, and Shadows',             'relay_station', 5, 'Science'),
+  ('RS.5.P02', 'ClearKeys: Paragraph - No Taxation Without Representation',  'relay_station', 5, 'Social Studies')
 ON CONFLICT (standard) DO NOTHING;
 
 -- 4) Teacher-facing description for the Foundations Track (shows in the

@@ -34,9 +34,9 @@ ALTER TABLE relay_race_legs ENABLE ROW LEVEL SECURITY;
 
 -- 3) The assignable Relay Race cases (one per grade).
 INSERT INTO cases (standard, title, engine, grade, subject) VALUES
-  ('RS.3.RACE', 'Relay Station: Class Relay Race', 'relay_station', 3, 'ELAR'),
-  ('RS.4.RACE', 'Relay Station: Class Relay Race', 'relay_station', 4, 'ELAR'),
-  ('RS.5.RACE', 'Relay Station: Class Relay Race', 'relay_station', 5, 'ELAR')
+  ('RS.3.RACE', 'ClearKeys: Class Relay Race', 'relay_station', 3, 'ELAR'),
+  ('RS.4.RACE', 'ClearKeys: Class Relay Race', 'relay_station', 4, 'ELAR'),
+  ('RS.5.RACE', 'ClearKeys: Class Relay Race', 'relay_station', 5, 'ELAR')
 ON CONFLICT (standard) DO NOTHING;
 
 UPDATE cases SET

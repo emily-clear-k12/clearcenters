@@ -26,17 +26,17 @@ WHERE c.standard ~ '^RS\.[345]\.K0[1-5]$'
 
 -- 4) The lessons, so they show up in the Challenge Library.
 INSERT INTO cases (standard, title, engine, grade, subject) VALUES
-  ('RS.3.TRACK', 'Relay Station: Typing Foundations Track', 'relay_station', 3, 'ELAR'),
-  ('RS.4.TRACK', 'Relay Station: Typing Foundations Track', 'relay_station', 4, 'ELAR'),
-  ('RS.5.TRACK', 'Relay Station: Typing Foundations Track', 'relay_station', 5, 'ELAR'),
-  ('RS.3.S01', 'Relay Station: Science Words - Properties of Matter',       'relay_station', 3, 'Science'),
-  ('RS.3.P01', 'Relay Station: Paragraph - How Scientists Describe Matter', 'relay_station', 3, 'Science'),
-  ('RS.3.C01', 'Relay Station: Conversation - Ready for Landing',           'relay_station', 3, 'ELAR'),
-  ('RS.3.L01', 'Relay Station: Friendly Letter - Thank You for the Telescope', 'relay_station', 3, 'ELAR'),
-  ('RS.4.C01', 'Relay Station: Dialogue - The Broken Rover',                'relay_station', 4, 'ELAR'),
-  ('RS.4.L01', 'Relay Station: Letter - Requesting Information',            'relay_station', 4, 'ELAR'),
-  ('RS.5.C01', 'Relay Station: Dialogue - Signal Lost',                     'relay_station', 5, 'ELAR'),
-  ('RS.5.L01', 'Relay Station: Letter - Requesting Information',            'relay_station', 5, 'ELAR')
+  ('RS.3.TRACK', 'ClearKeys: Typing Foundations Track', 'relay_station', 3, 'ELAR'),
+  ('RS.4.TRACK', 'ClearKeys: Typing Foundations Track', 'relay_station', 4, 'ELAR'),
+  ('RS.5.TRACK', 'ClearKeys: Typing Foundations Track', 'relay_station', 5, 'ELAR'),
+  ('RS.3.S01', 'ClearKeys: Science Words - Properties of Matter',       'relay_station', 3, 'Science'),
+  ('RS.3.P01', 'ClearKeys: Paragraph - How Scientists Describe Matter', 'relay_station', 3, 'Science'),
+  ('RS.3.C01', 'ClearKeys: Conversation - Ready for Landing',           'relay_station', 3, 'ELAR'),
+  ('RS.3.L01', 'ClearKeys: Friendly Letter - Thank You for the Telescope', 'relay_station', 3, 'ELAR'),
+  ('RS.4.C01', 'ClearKeys: Dialogue - The Broken Rover',                'relay_station', 4, 'ELAR'),
+  ('RS.4.L01', 'ClearKeys: Letter - Requesting Information',            'relay_station', 4, 'ELAR'),
+  ('RS.5.C01', 'ClearKeys: Dialogue - Signal Lost',                     'relay_station', 5, 'ELAR'),
+  ('RS.5.L01', 'ClearKeys: Letter - Requesting Information',            'relay_station', 5, 'ELAR')
 ON CONFLICT (standard) DO NOTHING;
 
 -- 5) Check it worked: should show 11 lessons and 1 progress table.
