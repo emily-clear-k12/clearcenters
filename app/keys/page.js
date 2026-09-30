@@ -83,8 +83,10 @@ export default async function KeysPage() {
   const mateIds = (mates || []).filter((m) => m.active !== false).map((m) => m.id);
   let mateRows = [];
   if (mateIds.length) {
-    const { data } = await supabaseAdmin.from("relay_station_progress").select("level_results, daily").in("student_id", mateIds);
-    mateRows = data || [];
+    // Include Fluency passes when that column exists (add_clearkeys_fluency.sql).
+    let res = await supabaseAdmin.from("relay_station_progress").select("level_results, daily, fluency").in("student_id", mateIds);
+    if (res.error) res = await supabaseAdmin.from("relay_station_progress").select("level_results, daily").in("student_id", mateIds);
+    mateRows = res.data || [];
   }
   const planet = getClassPlanet(cls?.planet_key) || CLASS_PLANETS[0];
   const fuel = { ...classFuel(mateRows, mateIds.length), planet: { name: planet.name, image: planet.image } };
