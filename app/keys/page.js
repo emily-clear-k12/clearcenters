@@ -41,7 +41,7 @@ export default async function KeysPage() {
   const race = find("RACE");
   const readings = typing
     .filter((a) => !/\.(TRACK|DAILY|RACE)$/.test(a.case_standard))
-    .map((a) => ({ id: a.id, title: String(a.cases?.title || "Reading").replace(/^(?:Relay Station|ClearKeys):\s*/i, ""), due: a.due_date || null }));
+    .map((a) => ({ id: a.id, code: a.case_standard, title: String(a.cases?.title || "Reading").replace(/^(?:Relay Station|ClearKeys):\s*/i, ""), due: a.due_date || null }));
 
   // Personal bests from every saved run: track levels, daily runs, readings.
   const total = TRACK_LEVELS.length;
@@ -67,9 +67,9 @@ export default async function KeysPage() {
   return (
     <KeysClient
       firstName={student.first_name || ""}
-      track={track ? { id: track.id } : null}
-      daily={daily ? { id: daily.id } : null}
-      race={race ? { id: race.id } : null}
+      track={track ? { id: track.id, code: track.case_standard } : null}
+      daily={daily ? { id: daily.id, code: daily.case_standard } : null}
+      race={race ? { id: race.id, code: race.case_standard } : null}
       readings={readings}
       level={{ current: Math.min(currentLevel, total), total, complete: !!progress?.completed_at || currentLevel > total, passed: levelResults.filter((r) => r.passed).length }}
       rank={{ name: rank, badge: rankBadgeSrc(rank) }}
@@ -77,6 +77,7 @@ export default async function KeysPage() {
       bests={{ wpm: bestWpm, perfectRuns, stars }}
       history={dailyHistory.slice(-20).map((h) => ({ date: h.date, wpm: Number(h.wpm) || 0 }))}
       practice={practice}
+      grade={grade}
     />
   );
 }

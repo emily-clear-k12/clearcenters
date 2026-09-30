@@ -1,134 +1,193 @@
 "use client";
 import React, { useState } from "react";
 import Link from "next/link";
+import { CaseImage } from "../../lib/caseImage";
 
-// Student ClearKeys door (Sept 29, 2026). Same space look as the typing screens.
-const T = {
-  bg: "radial-gradient(ellipse at 20% 20%, #16243F 0%, #0D1B2A 45%, #060B16 100%)",
-  panel: "rgba(13, 27, 42, 0.92)",
-  border: "rgba(143, 164, 255, 0.28)",
-  text: "#FFFFFF",
-  muted: "rgba(255,255,255,0.65)",
-  green: "#39D97A",
-  gold: "#FFC44D",
+// Student ClearKeys door (Sept 29, 2026). Bright crystal-ship look to match
+// the Home hub: the ClearKeys typing room behind frosted-glass panels, with
+// the existing Track / Daily / Race / reading art on every card.
+const C = {
+  ink: "#241b50",
+  muted: "#6b5f8a",
   violet: "#7B5DFF",
+  violet2: "#9B7DFF",
   teal: "#00C2C7",
+  gold: "#F5B82E",
+  green: "#22B573",
+  glass: "rgba(255,255,255,0.80)",
+  line: "rgba(255,255,255,0.95)",
 };
-const panel = { background: T.panel, border: `1px solid ${T.border}`, borderRadius: 20, padding: 20 };
-const bigBtn = (bg, color = "#0D1B2A") => ({ display: "inline-block", background: bg, color, borderRadius: 999, padding: "12px 22px", fontWeight: 800, textDecoration: "none", fontSize: 16 });
+const glass = {
+  background: C.glass,
+  border: `1px solid ${C.line}`,
+  borderRadius: 24,
+  boxShadow: "0 10px 30px rgba(60, 40, 140, 0.18)",
+  backdropFilter: "blur(14px)",
+  WebkitBackdropFilter: "blur(14px)",
+};
+const eyebrow = { color: C.muted, fontSize: 12, fontWeight: 800, letterSpacing: ".08em", textTransform: "uppercase" };
+const h = { fontFamily: "'Poppins', sans-serif", color: C.ink, margin: 0 };
+const pill = (bg) => ({ display: "inline-flex", alignItems: "center", gap: 6, background: bg, color: "#fff", borderRadius: 999, padding: "11px 20px", fontWeight: 800, textDecoration: "none", fontSize: 15, boxShadow: "0 6px 16px rgba(123,93,255,.3)" });
+const cover = { width: "100%", height: "100%", objectFit: "cover", display: "block" };
 
 function Sparkline({ points }) {
-  if (points.length < 2) return <p style={{ color: T.muted, margin: 0 }}>Finish a few Daily Transmissions to see your speed climb here.</p>;
-  const w = 320, h = 80, pad = 6;
+  if (points.length < 2) return <p style={{ color: C.muted, margin: 0 }}>Finish a few Daily Transmissions and your speed line shows up here.</p>;
+  const w = 320, hgt = 80, pad = 8;
   const max = Math.max(...points.map((p) => p.wpm), 1);
-  const xy = points.map((p, i) => [pad + (i * (w - 2 * pad)) / (points.length - 1), h - pad - (p.wpm / max) * (h - 2 * pad)]);
+  const xy = points.map((p, i) => [pad + (i * (w - 2 * pad)) / (points.length - 1), hgt - pad - (p.wpm / max) * (hgt - 2 * pad)]);
   const last = points[points.length - 1];
   return (
     <figure style={{ margin: 0 }}>
-      <svg viewBox={`0 0 ${w} ${h}`} style={{ display: "block", width: "100%", maxWidth: 520 }} role="img" aria-label={`Your Daily Transmission speed over your last ${points.length} runs, now ${last.wpm} words per minute`}>
-        <polyline fill="none" stroke={T.teal} strokeWidth="3" strokeLinejoin="round" strokeLinecap="round" points={xy.map((p) => p.join(",")).join(" ")} />
-        <circle cx={xy[xy.length - 1][0]} cy={xy[xy.length - 1][1]} r="5" fill={T.gold} />
+      <svg viewBox={`0 0 ${w} ${hgt}`} style={{ display: "block", width: "100%", maxWidth: 520 }} role="img" aria-label={`Your speed on your last ${points.length} Daily Transmissions, now ${last.wpm} words per minute`}>
+        <defs>
+          <linearGradient id="ckLine" x1="0" x2="1"><stop offset="0" stopColor={C.teal} /><stop offset="1" stopColor={C.violet} /></linearGradient>
+        </defs>
+        <polyline fill="none" stroke="url(#ckLine)" strokeWidth="4" strokeLinejoin="round" strokeLinecap="round" points={xy.map((p) => p.join(",")).join(" ")} />
+        <circle cx={xy[xy.length - 1][0]} cy={xy[xy.length - 1][1]} r="6" fill={C.gold} stroke="#fff" strokeWidth="2" />
       </svg>
-      <figcaption style={{ color: T.muted, fontSize: 13 }}>Your speed on your last {points.length} Daily Transmissions. Latest: {last.wpm} WPM.</figcaption>
+      <figcaption style={{ color: C.muted, fontSize: 13 }}>Your speed on your last {points.length} Daily Transmissions. Latest: {last.wpm} WPM.</figcaption>
     </figure>
   );
 }
 
-export default function KeysClient({ firstName, track, daily, race, readings, level, rank, streak, bests, history, practice }) {
+function ActivityCard({ label, title, line, code, href, button, color, off }) {
+  return (
+    <section style={{ ...glass, overflow: "hidden", display: "flex", flexDirection: "column" }}>
+      <div style={{ aspectRatio: "16 / 7", background: "#e9e4fb" }}>
+        <CaseImage standard={code} engine="relay_station" style={cover} />
+      </div>
+      <div style={{ padding: 18, display: "grid", gap: 6, flex: 1, alignContent: "start" }}>
+        <div style={eyebrow}>{label}</div>
+        <h2 style={{ ...h, fontSize: 21 }}>{title}</h2>
+        <p style={{ color: C.muted, margin: "0 0 8px" }}>{line}</p>
+        {href ? <Link href={href} style={{ ...pill(color), justifySelf: "start" }}>{button}</Link> : <span style={{ color: C.muted, fontWeight: 600 }}>{off}</span>}
+      </div>
+    </section>
+  );
+}
+
+export default function KeysClient({ firstName, track, daily, race, readings, level, rank, streak, bests, history, practice, grade }) {
   const subjects = ["All", ...Array.from(new Set(practice.map((p) => p.subject)))];
   const [subject, setSubject] = useState("All");
   const shown = practice.filter((p) => subject === "All" || p.subject === subject);
-  const pct = Math.round(((level.complete ? level.total : level.current - 1) / level.total) * 100);
+  const passedCount = level.complete ? level.total : level.current - 1;
+  const g = grade || 3;
 
   return (
-    <main style={{ minHeight: "100vh", background: T.bg, color: T.text, fontFamily: "'Inter', sans-serif", padding: "24px 16px 60px" }}>
-      <div style={{ width: "min(1040px, 100%)", margin: "0 auto", display: "grid", gap: 18 }}>
-        <header style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
-          <Link href="/home" style={{ color: T.muted, textDecoration: "none", fontWeight: 700 }}>← Home</Link>
-          <h1 style={{ fontFamily: "'Poppins', sans-serif", margin: 0, fontSize: 32 }}>ClearKeys</h1>
-          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            {rank.badge && <img src={rank.badge} alt="" width={40} height={40} />}
-            <span style={{ fontWeight: 700 }}>{rank.name}{firstName ? ` ${firstName}` : ""}</span>
-          </div>
+    <main style={{ minHeight: "100vh", color: C.ink, fontFamily: "'Inter', sans-serif", padding: "20px 16px 60px", backgroundColor: "#dcd6f5", backgroundImage: "linear-gradient(180deg, rgba(242,240,250,.10) 0%, rgba(242,240,250,.55) 60%, rgba(242,240,250,.85) 100%), url(/relay/keys_room.jpg)", backgroundSize: "cover", backgroundPosition: "center top", backgroundRepeat: "no-repeat" }}>
+      <style>{`@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@600;700;800&family=Inter:wght@400;500;600;700;800&display=swap');`}</style>
+      <div style={{ width: "min(1060px, 100%)", margin: "0 auto", display: "grid", gap: 18 }}>
+        <header style={{ ...glass, borderRadius: 999, padding: "10px 14px 10px 18px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
+          <Link href="/home" style={{ color: C.violet, textDecoration: "none", fontWeight: 800 }}>← Home</Link>
+          <h1 style={{ ...h, fontSize: 26, letterSpacing: "-0.5px" }}>ClearKeys</h1>
+          <span style={{ color: C.muted, fontWeight: 700, fontSize: 14 }}>Grade {g}</span>
         </header>
 
-        <section style={{ ...panel, display: "grid", gap: 12 }}>
-          <div style={{ display: "flex", justifyContent: "space-between", flexWrap: "wrap", gap: 12, alignItems: "center" }}>
-            <div>
-              <div style={{ color: T.muted, fontSize: 13, fontWeight: 700, letterSpacing: ".06em", textTransform: "uppercase" }}>Foundations Track</div>
-              <h2 style={{ margin: "4px 0 0", fontSize: 24 }}>{level.complete ? "All 20 levels passed!" : `Level ${level.current} of ${level.total}`}</h2>
+        {/* Track hero */}
+        <section style={{ ...glass, overflow: "hidden", display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))" }}>
+          <div style={{ padding: 22, display: "grid", gap: 14, alignContent: "center" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+              {rank.badge && <img src={rank.badge} alt={`${rank.name} badge`} width={84} height={84} style={{ filter: "drop-shadow(0 6px 12px rgba(80,50,180,.25))" }} />}
+              <div>
+                <div style={eyebrow}>Foundations Track</div>
+                <h2 style={{ ...h, fontSize: 26 }}>{rank.name}{firstName ? ` ${firstName}` : ""}</h2>
+                <div style={{ color: C.muted, fontWeight: 600 }}>{level.complete ? "All 20 levels passed. Foundations Certified!" : `Level ${level.current} of ${level.total}`}</div>
+              </div>
             </div>
-            {track ? (
-              <Link href={`/activity/${track.id}`} style={bigBtn(T.green)}>{level.complete ? "Replay for stars" : level.passed ? "Keep going →" : "Start →"}</Link>
-            ) : (
-              <span style={{ color: T.muted }}>Your teacher hasn&apos;t turned on the track yet. Try free play below!</span>
-            )}
+            <div aria-label={`${passedCount} of ${level.total} levels passed`} role="img" style={{ display: "grid", gridTemplateColumns: `repeat(${level.total}, 1fr)`, gap: 4 }}>
+              {Array.from({ length: level.total }, (_, i) => {
+                const done = i < passedCount;
+                const now = !level.complete && i === level.current - 1;
+                return <span key={i} style={{ height: 12, borderRadius: 999, background: done ? `linear-gradient(90deg, ${C.teal}, ${C.violet})` : now ? C.gold : "rgba(123,93,255,.15)", boxShadow: now ? `0 0 10px ${C.gold}` : "none" }} />;
+              })}
+            </div>
+            <div>
+              {track ? (
+                <Link href={`/activity/${track.id}`} style={pill(`linear-gradient(135deg, ${C.violet}, ${C.violet2})`)}>{level.complete ? "Replay for stars" : level.passed ? "Keep climbing →" : "Start the track →"}</Link>
+              ) : (
+                <span style={{ color: C.muted, fontWeight: 600 }}>Your teacher hasn&apos;t turned on the track yet. Try free play below!</span>
+              )}
+            </div>
           </div>
-          <div aria-hidden="true" style={{ height: 12, background: "rgba(255,255,255,.12)", borderRadius: 999, overflow: "hidden" }}>
-            <div style={{ width: `${pct}%`, height: "100%", background: `linear-gradient(90deg, ${T.teal}, ${T.green})` }} />
+          <div style={{ minHeight: 220, background: "#e9e4fb" }}>
+            <CaseImage standard={track?.code || `RS.${g}.TRACK`} engine="relay_station" style={cover} />
           </div>
         </section>
 
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: 18 }}>
-          <section style={panel}>
-            <div style={{ color: T.muted, fontSize: 13, fontWeight: 700, letterSpacing: ".06em", textTransform: "uppercase" }}>Daily Transmission</div>
-            <h2 style={{ margin: "4px 0 6px", fontSize: 22 }}>{streak.now > 0 ? `${streak.now}-day streak` : "Start a streak today"}</h2>
-            <p style={{ color: T.muted, marginTop: 0 }}>A new message every school day. Weekends never break your streak.{streak.best > 0 ? ` Best: ${streak.best} days.` : ""}</p>
-            {daily ? <Link href={`/activity/${daily.id}`} style={bigBtn(T.teal)}>Today&apos;s message →</Link> : <span style={{ color: T.muted }}>Not turned on for your class yet.</span>}
-          </section>
-          <section style={panel}>
-            <div style={{ color: T.muted, fontSize: 13, fontWeight: 700, letterSpacing: ".06em", textTransform: "uppercase" }}>Class Relay Race</div>
-            <h2 style={{ margin: "4px 0 6px", fontSize: 22 }}>Decode the secret message together</h2>
-            <p style={{ color: T.muted, marginTop: 0 }}>When your teacher starts a race, grab a leg and type it fast and right.</p>
-            {race ? <Link href={`/activity/${race.id}`} style={bigBtn(T.gold)}>Join the race →</Link> : <span style={{ color: T.muted }}>Not turned on for your class yet.</span>}
-          </section>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 18 }}>
+          <ActivityCard
+            label="Daily Transmission"
+            title={streak.now > 0 ? `${streak.now}-day streak!` : "Start a streak today"}
+            line={`A new message every school day. Weekends never break your streak.${streak.best > 0 ? ` Best: ${streak.best} days.` : ""}`}
+            code={daily?.code || `RS.${g}.DAILY`}
+            href={daily ? `/activity/${daily.id}` : null}
+            button="Today's message →"
+            color={`linear-gradient(135deg, ${C.teal}, #33D6DA)`}
+            off="Not turned on for your class yet."
+          />
+          <ActivityCard
+            label="Class Relay Race"
+            title="Decode the secret message"
+            line="When your teacher starts a race, grab a leg and type it fast and right."
+            code={race?.code || `RS.${g}.RACE`}
+            href={race ? `/activity/${race.id}` : null}
+            button="Join the race →"
+            color={`linear-gradient(135deg, ${C.gold}, #FFD466)`}
+            off="Not turned on for your class yet."
+          />
         </div>
 
         {readings.length > 0 && (
-          <section style={panel}>
-            <h2 style={{ marginTop: 0, fontSize: 22 }}>Readings from your teacher</h2>
-            <div style={{ display: "grid", gap: 10 }}>
+          <section style={{ ...glass, padding: 20 }}>
+            <h2 style={{ ...h, fontSize: 22, marginBottom: 12 }}>Readings from your teacher</h2>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: 12 }}>
               {readings.map((r) => (
-                <Link key={r.id} href={`/activity/${r.id}`} style={{ display: "flex", justifyContent: "space-between", gap: 12, padding: "12px 16px", borderRadius: 14, background: "rgba(255,255,255,.06)", color: T.text, textDecoration: "none", fontWeight: 700 }}>
-                  <span>{r.title}</span>
-                  {r.due && <span style={{ color: T.muted, fontWeight: 500 }}>Due {new Date(`${r.due}T12:00:00`).toLocaleDateString(undefined, { month: "short", day: "numeric" })}</span>}
+                <Link key={r.id} href={`/activity/${r.id}`} style={{ background: "#fff", borderRadius: 18, overflow: "hidden", textDecoration: "none", color: C.ink, boxShadow: "0 4px 12px rgba(60,40,140,.1)" }}>
+                  <div style={{ aspectRatio: "16 / 9" }}><CaseImage standard={r.code} engine="relay_station" style={cover} /></div>
+                  <div style={{ padding: "10px 12px" }}>
+                    <div style={{ fontWeight: 800 }}>{r.title}</div>
+                    {r.due && <div style={{ color: C.muted, fontSize: 13 }}>Due {new Date(`${r.due}T12:00:00`).toLocaleDateString(undefined, { month: "short", day: "numeric" })}</div>}
+                  </div>
                 </Link>
               ))}
             </div>
           </section>
         )}
 
-        <section style={panel}>
-          <h2 style={{ marginTop: 0, fontSize: 22 }}>My personal bests</h2>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: 12, marginBottom: 16 }}>
+        <section style={{ ...glass, padding: 20 }}>
+          <h2 style={{ ...h, fontSize: 22, marginBottom: 12 }}>My personal bests</h2>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: 12, marginBottom: 16 }}>
             {[
-              { label: "Top speed", value: bests.wpm ? `${bests.wpm} WPM` : "—", color: T.teal },
-              { label: "Stars earned", value: bests.stars, color: T.gold },
-              { label: "Perfect runs", value: bests.perfectRuns, color: T.green },
-              { label: "Levels passed", value: `${level.passed} / ${level.total}`, color: T.violet },
+              { label: "Top speed", value: bests.wpm ? `${bests.wpm} WPM` : "—", color: C.teal },
+              { label: "Stars earned", value: bests.stars, color: C.gold },
+              { label: "Perfect runs", value: bests.perfectRuns, color: C.green },
+              { label: "Levels passed", value: `${level.passed} / ${level.total}`, color: C.violet },
             ].map((s) => (
-              <div key={s.label} style={{ background: "rgba(255,255,255,.06)", borderRadius: 14, padding: 14, textAlign: "center" }}>
-                <div style={{ fontSize: 26, fontWeight: 800, color: s.color }}>{s.value}</div>
-                <div style={{ color: T.muted, fontSize: 13 }}>{s.label}</div>
+              <div key={s.label} style={{ background: "#fff", borderRadius: 18, padding: 14, textAlign: "center", boxShadow: "0 4px 12px rgba(60,40,140,.08)" }}>
+                <div style={{ fontFamily: "'Poppins', sans-serif", fontSize: 26, fontWeight: 800, color: s.color }}>{s.value}</div>
+                <div style={{ color: C.muted, fontSize: 13, fontWeight: 600 }}>{s.label}</div>
               </div>
             ))}
           </div>
           <Sparkline points={history} />
         </section>
 
-        <section style={panel}>
-          <h2 style={{ marginTop: 0, fontSize: 22 }}>Free play</h2>
-          <p style={{ color: T.muted, marginTop: 0 }}>Type any reading for fun. Free play isn&apos;t saved or graded, so try Dictation or Corrupted Transmission too.</p>
-          <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 12 }}>
+        <section style={{ ...glass, padding: 20 }}>
+          <h2 style={{ ...h, fontSize: 22 }}>Free play</h2>
+          <p style={{ color: C.muted, margin: "4px 0 12px" }}>Type any reading just for fun. Free play isn&apos;t saved or graded, so try Dictation or Corrupted Transmission too.</p>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 14 }}>
             {subjects.map((s) => (
-              <button key={s} type="button" onClick={() => setSubject(s)} aria-pressed={subject === s} style={{ borderRadius: 999, padding: "8px 14px", fontWeight: 700, border: `1px solid ${T.border}`, background: subject === s ? T.violet : "transparent", color: T.text, cursor: "pointer" }}>{s}</button>
+              <button key={s} type="button" onClick={() => setSubject(s)} aria-pressed={subject === s} style={{ borderRadius: 999, padding: "8px 16px", fontWeight: 800, border: subject === s ? "1px solid transparent" : "1px solid #d9d0f5", background: subject === s ? `linear-gradient(135deg, ${C.violet}, ${C.violet2})` : "#fff", color: subject === s ? "#fff" : C.ink, cursor: "pointer", fontFamily: "inherit" }}>{s}</button>
             ))}
           </div>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: 10 }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", gap: 12 }}>
             {shown.map((p) => (
-              <Link key={p.code} href={`/keys/practice/${encodeURIComponent(p.code)}`} style={{ padding: "12px 14px", borderRadius: 14, background: "rgba(255,255,255,.06)", color: T.text, textDecoration: "none" }}>
-                <div style={{ fontWeight: 700 }}>{p.title}</div>
-                <div style={{ color: T.muted, fontSize: 13 }}>{p.subject}</div>
+              <Link key={p.code} href={`/keys/practice/${encodeURIComponent(p.code)}`} style={{ background: "#fff", borderRadius: 18, overflow: "hidden", textDecoration: "none", color: C.ink, boxShadow: "0 4px 12px rgba(60,40,140,.1)" }}>
+                <div style={{ aspectRatio: "16 / 9", background: "#e9e4fb" }}><CaseImage standard={p.code} engine="relay_station" style={cover} /></div>
+                <div style={{ padding: "10px 12px" }}>
+                  <div style={{ fontWeight: 800, lineHeight: 1.25 }}>{p.title}</div>
+                  <div style={{ color: C.muted, fontSize: 13 }}>{p.subject}</div>
+                </div>
               </Link>
             ))}
           </div>
