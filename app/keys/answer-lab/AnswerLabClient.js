@@ -38,7 +38,7 @@ function Drills() {
       const next = { ...done, [d.id]: true };
       setDone(next);
       try { localStorage.setItem(STORE, JSON.stringify(next)); } catch (e) { /* optional */ }
-      setResult({ ok: true, msg: `Fixed!${secs ? ` That took ${secs} seconds.` : ""}` });
+      setResult({ ok: true, msg: `Fixed!${secs ? ` That took ${secs} second${secs === 1 ? "" : "s"}.` : ""}` });
     } else {
       const at = firstDiff(text.replace(/\r\n/g, "\n"), d.target);
       const near = d.target.slice(Math.max(0, at - 12), at + 12).replace(/\n/g, " ↵ ");

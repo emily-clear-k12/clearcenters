@@ -43,6 +43,11 @@ export default async function StoryChapterPage({ params, searchParams }) {
   lesson.lockedMode = "copy";
   // Early chapters come in with only a few keys; keep the goals gentle.
   lesson.goals = chapter.n <= 10 ? { accuracy: 90, wpm: 6 } : { accuracy: 90, wpm: 10 };
+  const nextOpen = next && chapterUnlocked(next, unlock);
+  lesson.practiceNote = "Replay any chapter any time.";
+  lesson.doneLinks = nextOpen
+    ? [{ href: `/keys/story/${chapter.n}`, label: "Back to the chapter" }, { href: `/keys/story/${next.n}`, label: `Chapter ${next.n} →` }]
+    : [{ href: `/keys/story/${chapter.n}`, label: "Back to the chapter" }, { href: "/keys#story", label: "Back to ClearKeys →" }];
 
   return (
     <StoryChapterClient

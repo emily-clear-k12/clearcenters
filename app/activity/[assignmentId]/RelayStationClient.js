@@ -1088,11 +1088,15 @@ function PassageRun({ assignmentId, lesson, initialBest, initialCompose, trackLe
           {isTrackLevel && onBackToMap && (
             <button onClick={onBackToMap} style={btn("rgba(255,255,255,0.12)")}>Track Map</button>
           )}
+          {/* Sept 30: free-play pages (story, practice) pass where to go next. */}
+          {(lesson.doneLinks || []).map((l, i) => (
+            <a key={l.href} href={l.href} style={{ ...btn(i === (lesson.doneLinks.length - 1) ? THEME.done : "rgba(255,255,255,0.12)", i === (lesson.doneLinks.length - 1) ? "#0D1B2A" : undefined), textDecoration: "none", display: "inline-flex", alignItems: "center" }}>{l.label}</a>
+          ))}
           <span style={{ fontSize: 12.5, color: saveState === "error" ? THEME.error : THEME.muted }}>
             {saveState === "saving" && "Saving…"}
-            {saveState === "saved" && (isTrackLevel || lesson.submitTo ? "Progress saved ✓" : "Saved to your missions ✓ (your best run is what counts)")}
+            {saveState === "saved" && (isTrackLevel || lesson.submitTo ? "Progress saved ✓" : (lesson.isDaily || lesson.kind === "daily") ? "Saved ✓ Your streak is up to date." : lesson.isRace ? "Saved ✓" : "Saved to your missions ✓ (your best run is what counts)")}
             {saveState === "error" && "Couldn't save — check your connection, then try again."}
-            {saveState === "practice" && "Free play: just for practice, not saved."}
+            {saveState === "practice" && (lesson.practiceNote || "Free play: just for practice, not saved.")}
           </span>
         </div>
       </Panel>

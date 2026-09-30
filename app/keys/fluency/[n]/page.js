@@ -33,7 +33,7 @@ export default async function FluencyLevelPage({ params }) {
 
   return (
     <>
-      <Link href="/keys/fluency" style={{ position: "fixed", top: 14, left: 14, zIndex: 50, color: "#fff", background: "rgba(13,27,42,.8)", padding: "8px 14px", borderRadius: 999, textDecoration: "none", fontWeight: 700, fontFamily: "'Inter', sans-serif" }}>← Fluency map</Link>
+      <Link href="/keys/fluency" style={{ position: "fixed", top: 14, right: 14, zIndex: 50, color: "#fff", background: "rgba(13,27,42,.8)", padding: "8px 14px", borderRadius: 999, textDecoration: "none", fontWeight: 700, fontFamily: "'Inter', sans-serif" }}>← Fluency map</Link>
       <RelayStationClient
         assignmentId={null}
         lesson={lesson}

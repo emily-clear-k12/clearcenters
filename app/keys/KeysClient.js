@@ -308,7 +308,7 @@ a.ck-story-tile:focus-visible{outline:3px solid #7B5DFF;outline-offset:3px}
           <Sparkline points={history} />
         </section>
 
-        <section style={{ ...glass, padding: 20 }}>
+        <section id="practice" style={{ ...glass, padding: 20 }}>
           <h2 style={{ ...h, fontSize: 22 }}>Free play</h2>
           <p style={{ color: C.muted, margin: "4px 0 12px" }}>Type any reading just for fun. Free play isn&apos;t saved or graded, so try Dictation or Corrupted Transmission too. We picked your level, but you can try any level.</p>
           <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 10 }}>
