@@ -2,6 +2,7 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { CaseImage } from "../../lib/caseImage";
+import { TYPING_LEVELS } from "../../lib/cases/relay-station/typingLevel";
 
 // Student ClearKeys door (Sept 29, 2026). Bright crystal-ship look to match
 // the Home hub: the ClearKeys typing room behind frosted-glass panels, with
@@ -66,10 +67,11 @@ function ActivityCard({ label, title, line, code, href, button, color, off }) {
   );
 }
 
-export default function KeysClient({ firstName, track, daily, race, readings, level, rank, streak, bests, history, practice, grade, story = [], arcade = [], fuel = null, fluency = null, minutes = null }) {
+export default function KeysClient({ firstName, track, daily, race, readings, level, rank, streak, bests, history, practice, grade, story = [], arcade = [], fuel = null, fluency = null, minutes = null, recommended = 1 }) {
   const subjects = ["All", ...Array.from(new Set(practice.map((p) => p.subject)))];
   const [subject, setSubject] = useState("All");
-  const shown = practice.filter((p) => subject === "All" || p.subject === subject);
+  const [lvlPick, setLvlPick] = useState(recommended || "all");
+  const shown = practice.filter((p) => (subject === "All" || p.subject === subject) && (lvlPick === "all" || p.level === lvlPick));
   const passedCount = level.complete ? level.total : level.current - 1;
   const g = grade || 3;
 
@@ -80,7 +82,7 @@ export default function KeysClient({ firstName, track, daily, race, readings, le
         <header style={{ ...glass, borderRadius: 999, padding: "10px 14px 10px 18px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
           <Link href="/home" style={{ color: C.violet, textDecoration: "none", fontWeight: 800 }}>← Home</Link>
           <h1 style={{ ...h, fontSize: 26, letterSpacing: "-0.5px", display: "flex", alignItems: "center", gap: 8 }}><img src="/student/orb_keys.png" alt="" width={40} height={40} />ClearKeys</h1>
-          <span style={{ color: C.muted, fontWeight: 700, fontSize: 14 }}>Grade {g}</span>
+          <span style={{ color: C.muted, fontWeight: 700, fontSize: 14 }}>Your level: {recommended}</span>
         </header>
 
         {minutes && (
@@ -281,7 +283,12 @@ export default function KeysClient({ firstName, track, daily, race, readings, le
 
         <section style={{ ...glass, padding: 20 }}>
           <h2 style={{ ...h, fontSize: 22 }}>Free play</h2>
-          <p style={{ color: C.muted, margin: "4px 0 12px" }}>Type any reading just for fun. Free play isn&apos;t saved or graded, so try Dictation or Corrupted Transmission too.</p>
+          <p style={{ color: C.muted, margin: "4px 0 12px" }}>Type any reading just for fun. Free play isn&apos;t saved or graded, so try Dictation or Corrupted Transmission too. We picked your level, but you can try any level.</p>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 10 }}>
+            {[...TYPING_LEVELS.map((l) => ({ k: l.n, label: `Level ${l.n}: ${l.name}${l.n === recommended ? " ★ for you" : ""}` })), { k: "all", label: "All levels" }].map((x) => (
+              <button key={x.k} type="button" onClick={() => setLvlPick(x.k)} aria-pressed={lvlPick === x.k} style={{ borderRadius: 999, padding: "8px 14px", fontWeight: 800, border: lvlPick === x.k ? "1px solid transparent" : "1px solid #d9d0f5", background: lvlPick === x.k ? `linear-gradient(135deg, ${C.teal}, ${C.violet})` : "#fff", color: lvlPick === x.k ? "#fff" : C.ink, cursor: "pointer", fontFamily: "inherit" }}>{x.label}</button>
+            ))}
+          </div>
           <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 14 }}>
             {subjects.map((s) => (
               <button key={s} type="button" onClick={() => setSubject(s)} aria-pressed={subject === s} style={{ borderRadius: 999, padding: "8px 16px", fontWeight: 800, border: subject === s ? "1px solid transparent" : "1px solid #d9d0f5", background: subject === s ? `linear-gradient(135deg, ${C.violet}, ${C.violet2})` : "#fff", color: subject === s ? "#fff" : C.ink, cursor: "pointer", fontFamily: "inherit" }}>{s}</button>
@@ -293,7 +300,7 @@ export default function KeysClient({ firstName, track, daily, race, readings, le
                 <div style={{ aspectRatio: "16 / 9", background: "#e9e4fb" }}><CaseImage standard={p.code} engine="relay_station" style={cover} /></div>
                 <div style={{ padding: "10px 12px" }}>
                   <div style={{ fontWeight: 800, lineHeight: 1.25 }}>{p.title}</div>
-                  <div style={{ color: C.muted, fontSize: 13 }}>{p.subject}</div>
+                  <div style={{ color: C.muted, fontSize: 13 }}>Level {p.level} · {p.subject}</div>
                 </div>
               </Link>
             ))}

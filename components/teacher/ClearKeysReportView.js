@@ -80,7 +80,7 @@ export default function ClearKeysReportView({ className, summaries, grade }) {
               {rows.map((r, i) => (
                 <tr key={`${r.firstName}-${i}`}>
                   <td><b>{r.firstName}</b><small>{r.minutesWeek} min this week · {r.dailyDays} Daily days{r.fluencyPassed ? ` · ${r.fluencyPassed} Fluency` : ""}</small>{r.supports && <small style={{ color: "#513193" }}>Supports: {r.supports.labels.join(", ")}{r.supports.beforeAcc != null && r.supports.afterAcc != null ? ` · accuracy ${r.supports.beforeAcc}% before → ${r.supports.afterAcc}% with supports` : r.supports.since ? " · too soon to compare" : ""}</small>}</td>
-                  <td>{r.complete ? "All 20" : `${r.levelsPassed} of 20`}<small>{r.stars} stars</small></td>
+                  <td>{r.complete ? "All 20" : `${r.levelsPassed} of 20`}<small>{r.stars} stars · reads at Typing Level {r.typingLevel}</small></td>
                   <td>{r.nowWpm != null ? <><b>{r.nowWpm}</b> WPM<small>{r.nowAcc}% accuracy{r.bestWpm ? ` · best ${r.bestWpm}` : ""}</small></> : <span className="cc-muted">—</span>}</td>
                   <td><Spark values={r.history} />{r.startWpm != null && r.nowWpm != null && <small>{r.startWpm} → {r.nowWpm} WPM</small>}</td>
                   <td><span className={`cc-badge ${BADGE[r.status.key]}`}>{r.status.label}</span></td>

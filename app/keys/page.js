@@ -11,6 +11,7 @@ import { readFluency } from "../../lib/fluencyServer";
 import { normalizeFluency, fluencyPassedCount } from "../../lib/cases/relay-station/fluency";
 import { readClassSettings, minutesOn } from "../../lib/clearkeysServer";
 import { cleanSettings } from "../../lib/clearkeysWeekly";
+import { recommendedTypingLevel } from "../../lib/cases/relay-station/typingLevel";
 import KeysClient from "./KeysClient";
 
 // ClearKeys door (Sept 29, 2026): the student's typing home, open any time
@@ -101,9 +102,16 @@ export default async function KeysPage() {
   else if (unlock.trackComplete) nextStep = { label: "Build speed in Fluency", href: "/keys/fluency" };
   const minutes = settings.minutesPerDay ? { goal: settings.minutesPerDay, done: minutesOn(d, today), next: nextStep } : null;
   const grade = ["3", "4", "5"].includes(String(cls?.grade)) ? Number(cls.grade) : 3;
+  // Sept 30: free play shows every reading, sorted by typing level (not grade),
+  // with this student's recommended level picked first.
+  const recentWpm = (() => { const h = dailyHistory.slice(-5); return h.length ? Math.round(h.reduce((n, x) => n + (Number(x.wpm) || 0), 0) / h.length) : null; })();
+  const recommended = recommendedTypingLevel({ currentLevel, trackComplete: unlock.trackComplete, recentWpm });
+  const seen = new Set();
   const practice = listRelayStationLessons()
-    .filter((l) => l.grade === grade && /^RS\.[345]\./.test(l.code) && !/\.(TRACK|DAILY|RACE)$/.test(l.code))
-    .map((l) => ({ code: l.code, title: l.title, subject: l.subject || "ELAR", kind: l.kind || "" }));
+    .filter((l) => /^RS\.[345]\./.test(l.code) && !/\.(TRACK|DAILY|RACE)$/.test(l.code))
+    .filter((l) => { const k = l.title; if (seen.has(k)) return false; seen.add(k); return true; })
+    .map((l) => ({ code: l.code, title: l.title, subject: l.subject || "ELAR", level: l.typingLevel || 2 }))
+    .sort((a, b) => a.level - b.level || a.title.localeCompare(b.title));
 
   return (
     <KeysClient
@@ -119,6 +127,7 @@ export default async function KeysPage() {
       history={dailyHistory.slice(-20).map((h) => ({ date: h.date, wpm: Number(h.wpm) || 0 }))}
       practice={practice}
       grade={grade}
+      recommended={recommended}
       story={story}
       arcade={arcade}
       fuel={fuel}

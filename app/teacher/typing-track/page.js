@@ -7,6 +7,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "../../../lib/supabaseClient";
 import { COLORS, PAGE_ACCENTS, panelStyle } from "../../../lib/teacherTheme";
 import { TRACK_LEVELS, TRACK_UNITS, normalizeAccommodations } from "../../../lib/cases/relay-station";
+import { recommendedTypingLevel, typingLevelInfo } from "../../../lib/cases/relay-station/typingLevel";
 import Icon, { IconBadge } from "../../../components/teacher/Icon";
 
 // Relay Station — Typing Track board (Sept 22, 2026). Design doc:
@@ -160,7 +161,7 @@ function TypingTrackContent() {
               <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13.5 }}>
                 <thead>
                   <tr style={{ background: `${ACCENT}14`, textAlign: "left" }}>
-                    {["Student", "Status", "Current level", "Progress", "Tries on this level", "Last try", "Supports", "Place at"].map((h) => (
+                    {["Student", "Status", "Current level", "Reads at", "Progress", "Tries on this level", "Last try", "Supports", "Place at"].map((h) => (
                       <th key={h} style={{ padding: "10px 12px", fontSize: 12, color: COLORS.textMuted, fontWeight: 700 }}>{h}</th>
                     ))}
                   </tr>
@@ -201,6 +202,14 @@ function TypingTrackContent() {
                             </>
                           )}
                         </td>
+                        <td style={{ padding: "10px 12px" }}>
+                          {(() => {
+                            const hist = (p && p.daily && Array.isArray(p.daily.history)) ? p.daily.history.slice(-5) : [];
+                            const wpm = hist.length ? Math.round(hist.reduce((n, h) => n + (Number(h.wpm) || 0), 0) / hist.length) : null;
+                            const lv = recommendedTypingLevel({ currentLevel: p ? p.current_level : 1, trackComplete: st.key === "done", recentWpm: wpm });
+                            return <><b>Level {lv}</b><div style={{ fontSize: 11.5, color: COLORS.textMuted }}>{typingLevelInfo(lv).name}</div></>;
+                          })()}
+                        </td>
                         <td style={{ padding: "10px 12px", minWidth: 140 }}>
                           <div style={{ height: 8, background: `${COLORS.textMuted}22`, borderRadius: 99, overflow: "hidden" }}>
                             <div style={{ width: `${(passed / TOTAL) * 100}%`, height: "100%", background: st.key === "done" ? COLORS.success : ACCENT }} />
@@ -236,7 +245,7 @@ function TypingTrackContent() {
                       </tr>
                       {supportsFor === s.id && (
                         <tr>
-                          <td colSpan={8} style={{ padding: "4px 12px 14px" }}>
+                          <td colSpan={9} style={{ padding: "4px 12px 14px" }}>
                             <SupportsEditor
                               name={s.firstName}
                               value={supports}
