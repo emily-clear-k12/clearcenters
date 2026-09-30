@@ -39,7 +39,26 @@ export default function ClearKeysHomeView({ cls, classId, rows, summaries, count
 
       {error && <div className="cc-error" role="alert">{error}</div>}
 
-      {rows && rows.length > 0 && (
+      {rows && rows.length > 0 && started === 0 && (
+        <section className="cc-panel" style={{ marginBottom: 18 }}>
+          <h3>Getting started</h3>
+          <p className="cc-muted" style={{ marginTop: 0 }}>Nobody in {cls?.name || "this class"} has typed yet. Here is how the first day goes.</p>
+          <div className="cc-three">
+            {[
+              { n: 1, img: "/teacher/products/keys.jpg", t: "Turn it on", d: "Click Turn on ClearKeys above. Every student gets the Foundations Track, the Daily Transmission and the Relay Race." },
+              { n: 2, img: "/student/orb_keys.png", t: "Students open ClearKeys", d: "On their Home screen, students click the green keyboard orb. New typists start at Level 1 or take the 1-minute placement check." },
+              { n: 3, img: "/cases/RS-4-DAILY.jpg", t: "Check back here", d: "Who needs help, the year goal, the class relay beam and the Report fill in as soon as students start typing." },
+            ].map((x) => (
+              <div key={x.n} className="cc-mini" style={{ alignItems: "flex-start", background: "#f8f6fc" }}>
+                <img src={x.img} alt="" style={{ objectFit: x.n === 2 ? "contain" : "cover", background: "#fff" }} />
+                <div><strong>{x.n}. {x.t}</strong><p>{x.d}</p></div>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {rows && rows.length > 0 && started > 0 && (
         <div className="cc-three" style={{ gridTemplateColumns: "repeat(4, minmax(0, 1fr))", marginBottom: 18 }}>
           {[
             { n: counts.stuck, label: "need help", color: "#b42b3a" },
@@ -54,7 +73,7 @@ export default function ClearKeysHomeView({ cls, classId, rows, summaries, count
         </div>
       )}
 
-      {rows && rows.length > 0 && (
+      {rows && rows.length > 0 && started > 0 && (
         <div className="cc-two" style={{ marginBottom: 18 }}>
           <div className="cc-stack">
             <section className="cc-panel cc-attention">
