@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { supabaseAdmin } from "../../lib/supabaseAdmin";
 import { getVisibleAssignmentsForStudent } from "../../lib/getStudentAssignments";
 import { listRelayStationLessons, TRACK_LEVELS, rankFor, rankBadgeSrc, centralDateKey, continuesStreak } from "../../lib/cases/relay-station";
+import { STORY_CHAPTERS, STORY_ACTS, chapterUnlocked, unlockHint } from "../../lib/cases/relay-station/story";
 import KeysClient from "./KeysClient";
 
 // ClearKeys door (Sept 29, 2026): the student's typing home, open any time
@@ -59,6 +60,15 @@ export default async function KeysPage() {
   const today = centralDateKey();
   const streakNow = d.lastDate === today || continuesStreak(d.lastDate, today) ? d.streak || 0 : 0;
 
+  // Story campaign "The Hush": chapters unlock with track levels, then Daily days.
+  const unlock = { currentLevel, trackComplete: !!progress?.completed_at || currentLevel > total, dailyDays: d.totalDays || 0 };
+  const story = STORY_ACTS.map((act) => ({
+    name: act.name,
+    chapters: act.chapters.map((n) => {
+      const c = STORY_CHAPTERS.find((x) => x.n === n);
+      return { n, title: c.title, open: chapterUnlocked(c, unlock), hint: unlockHint(c) };
+    }),
+  }));
   const grade = ["3", "4", "5"].includes(String(cls?.grade)) ? Number(cls.grade) : 3;
   const practice = listRelayStationLessons()
     .filter((l) => l.grade === grade && /^RS\.[345]\./.test(l.code) && !/\.(TRACK|DAILY|RACE)$/.test(l.code))
@@ -78,6 +88,7 @@ export default async function KeysPage() {
       history={dailyHistory.slice(-20).map((h) => ({ date: h.date, wpm: Number(h.wpm) || 0 }))}
       practice={practice}
       grade={grade}
+      story={story}
     />
   );
 }

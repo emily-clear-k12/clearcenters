@@ -5,6 +5,7 @@ import BackToHubButton from "../../../components/BackToHubButton";
 import DistressCallBadge from "../../../components/DistressCallBadge";
 import SamGuide from "../../../components/SamGuide";
 import { KEYBOARD_SKINS, getKeyboardSkin, skinUnlocked, skinForRankIndex, RACE_CRYSTALS, MODES, MODE_BONUS_CRYSTALS, DICTATION_REVEAL_AFTER, CORRUPT_REVEAL_AFTER, corruptRanges, dictationChunks, speakableText, getComposePrompt, COMPOSE_CRYSTALS, DAILY_CRYSTALS, applyAccommodations, normalizeAccommodations, ACCOMMODATION_DEFAULTS, cleanTimeline, buildRepairDrill, trackAllowedChars, TIERS, PLACEMENT_STAGES, PLACEMENT_MIN_WPM, placementResult, computeStars, meetsAccuracy, passAccuracyForLevel, getTrackLevelLesson, rankFor, rankBadgeSrc, RANKS, isCheckpointLevel, unitsCleared, comboTier, CRYSTALS } from "../../../lib/cases/relay-station";
+import { getStoryChapter } from "../../../lib/cases/relay-station/story";
 
 // Relay Station — the typing center. Added Sept 22, 2026.
 // Design doc: claude/RelayStation_Digital_Design_v1.md.
@@ -345,7 +346,7 @@ function TrackView({ assignmentId, track, initialProgress }) {
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 16, flexWrap: "wrap" }}>
             <div>
               <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
-                <span style={{ fontSize: 12, letterSpacing: 2, color: THEME.teal, fontWeight: 700 }}>📡 RELAY STATION · FOUNDATIONS TRACK</span>
+                <span style={{ fontSize: 12, letterSpacing: 2, color: THEME.teal, fontWeight: 700 }}>⌨️ CLEARKEYS · FOUNDATIONS TRACK</span>
                 <span style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 12, fontWeight: 800, color: "#0D1B2A", background: THEME.cursor, borderRadius: 999, padding: "2px 10px 2px 4px" }}>
                   {rankBadgeSrc(rank) && (
                     <img src={rankBadgeSrc(rank)} alt="" width={28} height={28} style={{ width: 28, height: 28, objectFit: "contain", display: "block" }} />
@@ -915,6 +916,12 @@ function PassageRun({ assignmentId, lesson, initialBest, initialCompose, trackLe
               {skinForRankIndex(RANKS.indexOf(reward.promotedTo)) && <> New keyboard skin unlocked: <span style={{ color: THEME.cursor }}>{skinForRankIndex(RANKS.indexOf(reward.promotedTo)).name}</span> (pick it from Keyboard Skins on the track map).</>}
             </div>
           </div>
+        )}
+        {isTrackLevel && passed && saveState === "saved" && getStoryChapter(trackLevel) && (
+          <a href={`/keys/story/${trackLevel}`} style={{ display: "flex", alignItems: "center", gap: 12, background: "linear-gradient(90deg, #7B5DFF33, #00C2C733)", border: `1px solid ${THEME.violet}`, borderRadius: 12, padding: "10px 14px", margin: "8px 0", color: THEME.text, textDecoration: "none", fontWeight: 700 }}>
+            <span style={{ fontSize: 22 }} aria-hidden="true">📡</span>
+            <span>Signal repaired! Story Chapter {trackLevel}, <i>{getStoryChapter(trackLevel).title}</i>, is ready to decode. <span style={{ color: THEME.teal }}>Open it →</span></span>
+          </a>
         )}
         <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center", marginBottom: 6 }}>
           {newBest && <span style={{ color: THEME.cursor, fontWeight: 700 }}>🏅 New personal best!</span>}

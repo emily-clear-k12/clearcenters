@@ -66,7 +66,7 @@ function ActivityCard({ label, title, line, code, href, button, color, off }) {
   );
 }
 
-export default function KeysClient({ firstName, track, daily, race, readings, level, rank, streak, bests, history, practice, grade }) {
+export default function KeysClient({ firstName, track, daily, race, readings, level, rank, streak, bests, history, practice, grade, story = [] }) {
   const subjects = ["All", ...Array.from(new Set(practice.map((p) => p.subject)))];
   const [subject, setSubject] = useState("All");
   const shown = practice.filter((p) => subject === "All" || p.subject === subject);
@@ -133,6 +133,45 @@ export default function KeysClient({ firstName, track, daily, race, readings, le
             off="Not turned on for your class yet."
           />
         </div>
+
+        {story.length > 0 && (() => {
+          const all = story.flatMap((a) => a.chapters);
+          const latest = [...all].reverse().find((c) => c.open);
+          return (
+            <section id="story" style={{ ...glass, padding: 20 }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 12, flexWrap: "wrap" }}>
+                <h2 style={{ ...h, fontSize: 22 }}>Story: The Hush</h2>
+                <span style={{ color: C.muted, fontWeight: 700, fontSize: 14 }}>{all.filter((c) => c.open).length} of {all.length} chapters unlocked</span>
+              </div>
+              <p style={{ color: C.muted, margin: "4px 0 14px" }}>A lost ship is calling for help, but the signal is broken. Every level you pass repairs more of it.</p>
+              <div style={{ display: "grid", gap: 14 }}>
+                {story.map((act, i) => (
+                  <div key={act.name}>
+                    <div style={{ ...eyebrow, marginBottom: 8 }}>Act {i + 1} · {act.name}</div>
+                    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(190px, 1fr))", gap: 10 }}>
+                      {act.chapters.map((c) => {
+                        const isNew = latest && c.n === latest.n;
+                        const inner = (
+                          <>
+                            <span style={{ flex: "0 0 34px", height: 34, borderRadius: 999, display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 800, background: c.open ? `linear-gradient(135deg, ${C.violet}, ${C.teal})` : "#ece8f8", color: c.open ? "#fff" : C.muted }}>{c.open ? c.n : "🔒"}</span>
+                            <span style={{ minWidth: 0 }}>
+                              <span style={{ display: "block", fontWeight: 800, color: c.open ? C.ink : C.muted }}>{c.open ? c.title : `Chapter ${c.n}`}</span>
+                              <span style={{ display: "block", fontSize: 12.5, color: isNew ? C.violet : C.muted, fontWeight: isNew ? 800 : 500 }}>{c.open ? (isNew ? "Newest chapter!" : `Chapter ${c.n}`) : c.hint}</span>
+                            </span>
+                          </>
+                        );
+                        const box = { display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", borderRadius: 16, background: c.open ? "#fff" : "rgba(255,255,255,.55)", textDecoration: "none", boxShadow: isNew ? `0 0 0 2px ${C.violet}, 0 6px 16px rgba(123,93,255,.25)` : c.open ? "0 4px 12px rgba(60,40,140,.08)" : "none" };
+                        return c.open
+                          ? <Link key={c.n} href={`/keys/story/${c.n}`} style={box}>{inner}</Link>
+                          : <div key={c.n} style={box} aria-label={`Chapter ${c.n}, locked. ${c.hint}.`}>{inner}</div>;
+                      })}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </section>
+          );
+        })()}
 
         {readings.length > 0 && (
           <section style={{ ...glass, padding: 20 }}>
