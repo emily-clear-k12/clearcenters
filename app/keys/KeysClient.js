@@ -66,7 +66,7 @@ function ActivityCard({ label, title, line, code, href, button, color, off }) {
   );
 }
 
-export default function KeysClient({ firstName, track, daily, race, readings, level, rank, streak, bests, history, practice, grade, story = [], arcade = [], fuel = null }) {
+export default function KeysClient({ firstName, track, daily, race, readings, level, rank, streak, bests, history, practice, grade, story = [], arcade = [], fuel = null, fluency = null }) {
   const subjects = ["All", ...Array.from(new Set(practice.map((p) => p.subject)))];
   const [subject, setSubject] = useState("All");
   const shown = practice.filter((p) => subject === "All" || p.subject === subject);
@@ -110,6 +110,17 @@ export default function KeysClient({ firstName, track, daily, race, readings, le
             </div>
           </div>
         </section>
+
+        {fluency && (
+          <section id="fluency" style={{ ...glass, padding: 18, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 14, flexWrap: "wrap" }}>
+            <div>
+              <div style={eyebrow}>Fluency Levels 21–40</div>
+              <h2 style={{ ...h, fontSize: 20, margin: "2px 0 4px" }}>{fluency.open ? (fluency.passed >= 20 ? "All 40 levels passed!" : `Next up: Level ${Math.min(fluency.next, 40)}`) : "Build your speed after the track"}</h2>
+              <p style={{ color: C.muted, margin: 0, fontSize: 14 }}>{fluency.open ? `${fluency.passed} of 20 passed. Every 5 unlock a bonus story chapter.` : "Pass all 20 Foundations levels to open 20 speed levels."}</p>
+            </div>
+            {fluency.open ? <Link href="/keys/fluency" style={pill(`linear-gradient(135deg, ${C.teal}, ${C.violet})`)}>Open Fluency →</Link> : <span style={{ fontSize: 26 }} aria-hidden="true">🔒</span>}
+          </section>
+        )}
 
         {fuel && (
           <section style={{ ...glass, padding: 18, display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap" }} aria-label={`Class fuel this week: ${fuel.fuel} of ${fuel.goal}`}>

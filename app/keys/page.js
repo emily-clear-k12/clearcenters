@@ -7,6 +7,8 @@ import { STORY_CHAPTERS, STORY_ACTS, chapterUnlocked, unlockHint } from "../../l
 import { ARCADE_GAMES, gameUnlocked } from "../../lib/cases/relay-station/arcade";
 import { classFuel } from "../../lib/clearkeysFuel";
 import { getClassPlanet, CLASS_PLANETS } from "../../lib/classPlanets";
+import { readFluency } from "../../lib/fluencyServer";
+import { normalizeFluency, fluencyPassedCount } from "../../lib/cases/relay-station/fluency";
 import KeysClient from "./KeysClient";
 
 // ClearKeys door (Sept 29, 2026): the student's typing home, open any time
@@ -64,7 +66,10 @@ export default async function KeysPage() {
   const streakNow = d.lastDate === today || continuesStreak(d.lastDate, today) ? d.streak || 0 : 0;
 
   // Story campaign "The Hush": chapters unlock with track levels, then Daily days.
-  const unlock = { currentLevel, trackComplete: !!progress?.completed_at || currentLevel > total, dailyDays: d.totalDays || 0 };
+  const { fluency: fluencyRaw } = await readFluency(studentId);
+  const fluencyPassed = fluencyPassedCount(fluencyRaw);
+  const unlock = { currentLevel, trackComplete: !!progress?.completed_at || currentLevel > total, dailyDays: d.totalDays || 0, fluencyPassed };
+  const fluencyCard = { open: unlock.trackComplete, passed: fluencyPassed, next: normalizeFluency(fluencyRaw).current };
   const story = STORY_ACTS.map((act) => ({
     name: act.name,
     chapters: act.chapters.map((n) => {
@@ -105,6 +110,7 @@ export default async function KeysPage() {
       story={story}
       arcade={arcade}
       fuel={fuel}
+      fluency={fluencyCard}
     />
   );
 }

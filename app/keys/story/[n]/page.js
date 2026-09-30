@@ -3,6 +3,8 @@ import { redirect, notFound } from "next/navigation";
 import { supabaseAdmin } from "../../../../lib/supabaseAdmin";
 import { buildReadingLesson, TRACK_LEVELS } from "../../../../lib/cases/relay-station";
 import { getStoryChapter, chapterUnlocked, STORY_CHAPTERS, STORY_ACTS } from "../../../../lib/cases/relay-station/story";
+import { readFluency } from "../../../../lib/fluencyServer";
+import { fluencyPassedCount } from "../../../../lib/cases/relay-station/fluency";
 import StoryChapterClient from "./StoryChapterClient";
 
 // ClearKeys story chapter (Sept 29, 2026). /keys/story/5 shows the narration;
@@ -23,6 +25,7 @@ export default async function StoryChapterPage({ params, searchParams }) {
     currentLevel: rs?.current_level || 1,
     trackComplete: !!rs?.completed_at || (rs?.current_level || 1) > TRACK_LEVELS.length,
     dailyDays: rs?.daily?.totalDays || 0,
+    fluencyPassed: fluencyPassedCount((await readFluency(studentId)).fluency),
   };
   if (!chapterUnlocked(chapter, unlock)) redirect("/keys#story");
 

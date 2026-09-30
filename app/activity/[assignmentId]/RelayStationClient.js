@@ -570,10 +570,17 @@ function PassageRun({ assignmentId, lesson, initialBest, initialCompose, trackLe
 
   const submitRun = useCallback(async (run) => {
     // Free play (Sept 29): no assignment, so nothing is saved or graded.
-    if (!assignmentId) { setSaveState("practice"); return; }
+    // Fluency levels (Sept 29) save to their own route via lesson.submitTo.
+    if (!assignmentId && !lesson.submitTo) { setSaveState("practice"); return; }
     setSaveState("saving");
     try {
-      const res = await fetch("/api/relay-station/submit", {
+      const res = lesson.submitTo
+        ? await fetch(lesson.submitTo.url, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ ...lesson.submitTo.body, result: run }),
+          })
+        : await fetch("/api/relay-station/submit", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ assignmentId, level: trackLevel || null, result: run, dailyKey: lesson.dailyKey || null }),
@@ -589,7 +596,7 @@ function PassageRun({ assignmentId, lesson, initialBest, initialCompose, trackLe
       console.error("Relay Station submit failed:", err);
       setSaveState("error");
     }
-  }, [assignmentId, trackLevel, onServerResult]);
+  }, [assignmentId, trackLevel, onServerResult, lesson]);
 
   const finish = useCallback((s, finishedAt) => {
     setEndedAt(finishedAt);
@@ -932,7 +939,8 @@ function PassageRun({ assignmentId, lesson, initialBest, initialCompose, trackLe
   if (phase === "done") {
     const run = calcStats({ correctChars: text.length, keystrokes, errors, startedAt, endedAt });
     const stars = computeStars(goals, run.wpm, run.accuracyExact);
-    const passed = meetsAccuracy(goals, run.accuracyExact);
+    // Fluency levels pass on accuracy AND speed (lesson.passNeedsSpeed).
+    const passed = meetsAccuracy(goals, run.accuracyExact) && (!lesson.passNeedsSpeed || run.wpm >= goals.wpm);
     const trouble = Object.entries(misses).sort((a, b) => b[1] - a[1]).slice(0, 5);
     const nextLevel = (trackLevel || 0) + 1;
     return (
@@ -987,12 +995,17 @@ function PassageRun({ assignmentId, lesson, initialBest, initialCompose, trackLe
           <Stat label="Errors" value={errors} />
         </div>
 
-        {!passed && (
+        {!passed && !(lesson.passNeedsSpeed && meetsAccuracy(goals, run.accuracyExact)) && (
           <div style={{ fontSize: 14.5, color: THEME.text, marginBottom: 14, background: "rgba(255,196,77,0.12)", borderRadius: 10, padding: "10px 12px" }}>
             You need {goals.accuracy}% accuracy{isTrackLevel ? " to move up" : " for two stars"} — you got {run.accuracy}%.{" "}
             {failStreak >= 2
               ? "Tip: go SLOW. Say each letter in your head before you press it. Speed comes later — accuracy is what moves you up."
               : "Slow down a little and watch the glowing key."}
+          </div>
+        )}
+        {lesson.passNeedsSpeed && !passed && meetsAccuracy(goals, run.accuracyExact) && (
+          <div style={{ fontSize: 14.5, color: THEME.text, marginBottom: 14, background: "rgba(255,196,77,0.12)", borderRadius: 10, padding: "10px 12px" }}>
+            Great accuracy! Fluency levels also need {goals.wpm} words per minute to pass. You typed {run.wpm}. Try again and keep a steady rhythm.
           </div>
         )}
         {passed && stars < 3 && (
@@ -1061,7 +1074,7 @@ function PassageRun({ assignmentId, lesson, initialBest, initialCompose, trackLe
           )}
           <span style={{ fontSize: 12.5, color: saveState === "error" ? THEME.error : THEME.muted }}>
             {saveState === "saving" && "Saving…"}
-            {saveState === "saved" && (isTrackLevel ? "Progress saved ✓" : "Saved to your missions ✓ (your best run is what counts)")}
+            {saveState === "saved" && (isTrackLevel || lesson.submitTo ? "Progress saved ✓" : "Saved to your missions ✓ (your best run is what counts)")}
             {saveState === "error" && "Couldn't save — check your connection, then try again."}
             {saveState === "practice" && "Free play: just for practice, not saved."}
           </span>
