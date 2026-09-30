@@ -52,15 +52,15 @@ function Sparkline({ points }) {
 
 function ActivityCard({ label, title, line, code, href, button, color, off }) {
   return (
-    <section style={{ ...glass, overflow: "hidden", display: "flex", flexDirection: "column" }}>
-      <div style={{ aspectRatio: "16 / 7", background: "#e9e4fb" }}>
+    <section style={{ ...glass, padding: 14, display: "flex", gap: 14, alignItems: "center" }}>
+      <div style={{ flex: "0 0 96px", height: 96, borderRadius: 18, overflow: "hidden", background: "#e9e4fb" }}>
         <CaseImage standard={code} engine="relay_station" style={cover} />
       </div>
-      <div style={{ padding: 18, display: "grid", gap: 6, flex: 1, alignContent: "start" }}>
+      <div style={{ display: "grid", gap: 4, minWidth: 0 }}>
         <div style={eyebrow}>{label}</div>
-        <h2 style={{ ...h, fontSize: 21 }}>{title}</h2>
-        <p style={{ color: C.muted, margin: "0 0 8px" }}>{line}</p>
-        {href ? <Link href={href} style={{ ...pill(color), justifySelf: "start" }}>{button}</Link> : <span style={{ color: C.muted, fontWeight: 600 }}>{off}</span>}
+        <h2 style={{ ...h, fontSize: 19 }}>{title}</h2>
+        <p style={{ color: C.muted, margin: "0 0 6px", fontSize: 14 }}>{line}</p>
+        {href ? <Link href={href} style={{ ...pill(color), justifySelf: "start", padding: "9px 16px", fontSize: 14 }}>{button}</Link> : <span style={{ color: C.muted, fontWeight: 600, fontSize: 14 }}>{off}</span>}
       </div>
     </section>
   );
@@ -74,7 +74,7 @@ export default function KeysClient({ firstName, track, daily, race, readings, le
   const g = grade || 3;
 
   return (
-    <main style={{ minHeight: "100vh", color: C.ink, fontFamily: "'Inter', sans-serif", padding: "20px 16px 60px", backgroundColor: "#dcd6f5", backgroundImage: "linear-gradient(180deg, rgba(242,240,250,.10) 0%, rgba(242,240,250,.55) 60%, rgba(242,240,250,.85) 100%), url(/relay/keys_room.jpg)", backgroundSize: "cover", backgroundPosition: "center top", backgroundRepeat: "no-repeat" }}>
+    <main style={{ minHeight: "100vh", color: C.ink, fontFamily: "'Inter', sans-serif", padding: "20px 16px 60px", background: "linear-gradient(180deg, #E9E4FB 0%, #F2F0FA 40%, #F7F5FD 100%)" }}>
       <style>{`@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@600;700;800&family=Inter:wght@400;500;600;700;800&display=swap');`}</style>
       <div style={{ width: "min(1060px, 100%)", margin: "0 auto", display: "grid", gap: 18 }}>
         <header style={{ ...glass, borderRadius: 999, padding: "10px 14px 10px 18px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
@@ -83,14 +83,14 @@ export default function KeysClient({ firstName, track, daily, race, readings, le
           <span style={{ color: C.muted, fontWeight: 700, fontSize: 14 }}>Grade {g}</span>
         </header>
 
-        {/* Track hero */}
-        <section style={{ ...glass, overflow: "hidden", display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))" }}>
-          <div style={{ padding: 22, display: "grid", gap: 14, alignContent: "center" }}>
+        {/* Track hero: the ClearKeys typing room is the one big picture. */}
+        <section style={{ position: "relative", borderRadius: 28, overflow: "hidden", minHeight: 340, display: "flex", alignItems: "flex-end", padding: 18, backgroundColor: "#dcd6f5", backgroundImage: "url(/relay/keys_room.jpg)", backgroundSize: "cover", backgroundPosition: "center 35%", boxShadow: "0 12px 34px rgba(60,40,140,.22)" }}>
+          <div style={{ ...glass, padding: 20, display: "grid", gap: 14, width: "min(520px, 100%)" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-              {rank.badge && <img src={rank.badge} alt={`${rank.name} badge`} width={84} height={84} style={{ filter: "drop-shadow(0 6px 12px rgba(80,50,180,.25))" }} />}
+              {rank.badge && <img src={rank.badge} alt={`${rank.name} badge`} width={76} height={76} style={{ flex: "0 0 auto", filter: "drop-shadow(0 6px 12px rgba(80,50,180,.25))" }} />}
               <div>
                 <div style={eyebrow}>Foundations Track</div>
-                <h2 style={{ ...h, fontSize: 26 }}>{rank.name}{firstName ? ` ${firstName}` : ""}</h2>
+                <h2 style={{ ...h, fontSize: 24 }}>{rank.name}{firstName ? ` ${firstName}` : ""}</h2>
                 <div style={{ color: C.muted, fontWeight: 600 }}>{level.complete ? "All 20 levels passed. Foundations Certified!" : `Level ${level.current} of ${level.total}`}</div>
               </div>
             </div>
@@ -108,9 +108,6 @@ export default function KeysClient({ firstName, track, daily, race, readings, le
                 <span style={{ color: C.muted, fontWeight: 600 }}>Your teacher hasn&apos;t turned on the track yet. Try free play below!</span>
               )}
             </div>
-          </div>
-          <div style={{ minHeight: 220, background: "#e9e4fb" }}>
-            <CaseImage standard={track?.code || `RS.${g}.TRACK`} engine="relay_station" style={cover} />
           </div>
         </section>
 
