@@ -2,7 +2,7 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { supabaseAdmin } from "../../lib/supabaseAdmin";
 import { getVisibleAssignmentsForStudent } from "../../lib/getStudentAssignments";
-import { listRelayStationLessons, TRACK_LEVELS, rankFor, rankBadgeSrc, centralDateKey, continuesStreak } from "../../lib/cases/relay-station";
+import { getRelayStationLesson, listRelayStationLessons, TRACK_LEVELS, rankFor, rankBadgeSrc, centralDateKey, continuesStreak } from "../../lib/cases/relay-station";
 import { STORY_CHAPTERS, STORY_ACTS, chapterUnlocked, unlockHint } from "../../lib/cases/relay-station/story";
 import { ARCADE_GAMES, gameUnlocked } from "../../lib/cases/relay-station/arcade";
 import { classFuel } from "../../lib/clearkeysFuel";
@@ -49,7 +49,7 @@ export default async function KeysPage() {
   const race = find("RACE");
   const readings = typing
     .filter((a) => !/\.(TRACK|DAILY|RACE)$/.test(a.case_standard))
-    .map((a) => ({ id: a.id, code: a.case_standard, title: String(a.cases?.title || "Reading").replace(/^(?:Relay Station|ClearKeys):\s*/i, ""), due: a.due_date || null }));
+    .map((a) => ({ id: a.id, code: a.case_standard, title: (getRelayStationLesson(a.case_standard) || {}).title || String(a.cases?.title || "Reading").replace(/^(?:Relay Station|ClearKeys)\s*[:\u00b7]\s*/i, "").replace(/^Custom:\s*/i, ""), due: a.due_date || null }));
 
   // Personal bests from every saved run: track levels, daily runs, readings.
   const total = TRACK_LEVELS.length;
