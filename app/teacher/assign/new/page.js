@@ -616,11 +616,24 @@ function NewAssignmentContent() {
     let cancelled = false;
     (async () => {
       setCasesLoading(true);
-      let { data, error: loadError } = await supabase.from("cases").select(CASES_SELECT_FULL);
+      // Sept 30: the database returns at most 1,000 rows per request, and the
+      // library is past 1,000 activities, so read it in pages.
+      async function loadAll(columns) {
+        const PAGE = 1000;
+        let all = [];
+        for (let from = 0; from < 20000; from += PAGE) {
+          const res = await supabase.from("cases").select(columns).order("standard").range(from, from + PAGE - 1);
+          if (res.error) return { data: all.length ? all : null, error: res.error };
+          all = all.concat(res.data || []);
+          if (!res.data || res.data.length < PAGE) break;
+        }
+        return { data: all, error: null };
+      }
+      let { data, error: loadError } = await loadAll(CASES_SELECT_FULL);
       // Optional columns / schema drift can fail the full select — retry minimal
       // fields so the library still loads instead of staying empty.
       if (loadError) {
-        const retry = await supabase.from("cases").select(CASES_SELECT_MINIMAL);
+        const retry = await loadAll(CASES_SELECT_MINIMAL);
         if (!retry.error) {
           data = retry.data;
           loadError = null;
