@@ -122,6 +122,15 @@ export default function KeysClient({ firstName, track, daily, race, readings, le
           </section>
         )}
 
+        <section style={{ ...glass, padding: 18, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 14, flexWrap: "wrap" }}>
+          <div>
+            <div style={eyebrow}>Answer Lab</div>
+            <h2 style={{ ...h, fontSize: 20, margin: "2px 0 4px" }}>Type answers like a pro</h2>
+            <p style={{ color: C.muted, margin: 0, fontSize: 14 }}>Editing drills (arrows, delete, cut and paste, undo) and timed short answers, like a computer test.</p>
+          </div>
+          <Link href="/keys/answer-lab" style={pill(`linear-gradient(135deg, ${C.violet}, ${C.violet2})`)}>Open Answer Lab →</Link>
+        </section>
+
         {fuel && (
           <section style={{ ...glass, padding: 18, display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap" }} aria-label={`Class fuel this week: ${fuel.fuel} of ${fuel.goal}`}>
             <div style={{ flex: "1 1 320px", minWidth: 0 }}>
