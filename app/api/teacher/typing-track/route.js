@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "../../../../lib/supabaseAdmin";
-import { TRACK_LEVELS, normalizeAccommodations } from "../../../../lib/cases/relay-station";
+import { TRACK_LEVELS, normalizeAccommodations, hasSupports } from "../../../../lib/cases/relay-station";
 
 // SERVER ONLY. Teacher side of the Relay Station Foundations Track
 // (design doc: claude/RelayStation_Digital_Design_v1.md §9).
@@ -143,9 +143,14 @@ export async function POST(request) {
     const accommodations = normalizeAccommodations(body.accommodations);
     const { data: existing } = await supabaseAdmin
       .from("relay_station_progress")
-      .select("student_id")
+      .select("student_id, accommodations")
       .eq("student_id", studentId)
       .maybeSingle();
+    // Sept 29: remember when supports started, so the report can compare
+    // accuracy before and after. Turning every support off clears it.
+    const before = normalizeAccommodations(existing && existing.accommodations);
+    if (!hasSupports(accommodations)) accommodations.since = null;
+    else accommodations.since = hasSupports(before) && before.since ? before.since : new Date().toISOString();
     const { error } = existing
       ? await supabaseAdmin.from("relay_station_progress").update({ accommodations }).eq("student_id", studentId)
       : await supabaseAdmin.from("relay_station_progress").insert({ student_id: studentId, current_level: 1, level_results: {}, accommodations });

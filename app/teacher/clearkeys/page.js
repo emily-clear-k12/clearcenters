@@ -5,6 +5,7 @@ import { supabase } from "../../../lib/supabaseClient";
 import { BridgePage, PageHeading, ClassTabs, Empty } from "../../../components/teacher/BridgeUI";
 import ClearKeysTabs from "../../../components/teacher/ClearKeysTabs";
 import ClearKeysHomeView from "../../../components/teacher/ClearKeysHomeView";
+import ClearKeysWeekPanel from "../../../components/teacher/ClearKeysWeekPanel";
 import { TRACK_LEVELS } from "../../../lib/cases/relay-station";
 import { classFuel } from "../../../lib/clearkeysFuel";
 import { summarizeStudent } from "../../../lib/clearkeysReport";
@@ -93,7 +94,10 @@ function ClearKeysHome() {
       {!classes.length ? (
         <Empty>Make a class first, then come back to turn on ClearKeys.</Empty>
       ) : (
-        <ClearKeysHomeView cls={cls} classId={classId} rows={rows} summaries={summaries} counts={counts} stuck={stuck} fuel={fuel} planet={planet} total={TOTAL} stuckAttempts={STUCK_ATTEMPTS} error={error} />
+        <>
+          <ClearKeysHomeView cls={cls} classId={classId} rows={rows} summaries={summaries} counts={counts} stuck={stuck} fuel={fuel} planet={planet} total={TOTAL} stuckAttempts={STUCK_ATTEMPTS} error={error} />
+          <ClearKeysWeekPanel classId={classId} />
+        </>
       )}
     </BridgePage>
   );

@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { supabaseAdmin } from "../../../../lib/supabaseAdmin";
 import { resolveRelayStationLesson } from "../../../../lib/relayStationServer";
+import { readClassSettings, recordTypingTime } from "../../../../lib/clearkeysServer";
+import { dailyTextForClass } from "../../../../lib/clearkeysWeekly";
 import {
   getTrackLevelLesson,
   computeStars,
@@ -76,13 +78,19 @@ export async function POST(request) {
     return NextResponse.json({ error: "This typing lesson isn't set up yet." }, { status: 404 });
   }
 
+  // Sept 29: every saved run adds its time to the student's typing-time log
+  // (for the class minutes-per-day goal). Never fails the save.
+  let response;
   if (lesson.isTrack) {
-    return handleTrackRun({ studentId, assignmentId, track: lesson, level, result });
+    response = await handleTrackRun({ studentId, assignmentId, track: lesson, level, result });
+  } else if (lesson.isDaily) {
+    const classSettings = await readClassSettings(assignment.class_id);
+    response = await handleDailyRun({ studentId, assignmentId, lesson, result, dailyKey, classSettings });
+  } else {
+    response = await handleReadingRun({ studentId, assignmentId, lesson, result });
   }
-  if (lesson.isDaily) {
-    return handleDailyRun({ studentId, assignmentId, lesson, result, dailyKey });
-  }
-  return handleReadingRun({ studentId, assignmentId, lesson, result });
+  if (response && response.status === 200) await recordTypingTime(studentId, result && result.ms);
+  return response;
 }
 
 // Clean + recompute one run against a passage's own text and goals.
@@ -298,11 +306,12 @@ async function handleTrackRun({ studentId, assignmentId, track, level, result })
 // Daily Transmission (Wave 2). The server picks the date (Central time) and
 // the text, so everyone in the class types the same thing that day. A run
 // that started just before midnight may report yesterday's key — accepted.
-async function handleDailyRun({ studentId, assignmentId, lesson, result, dailyKey }) {
+async function handleDailyRun({ studentId, assignmentId, lesson, result, dailyKey, classSettings }) {
   const today = centralDateKey();
   const yesterday = centralDateKey(new Date(Date.now() - 86400000));
   const key = dailyKey === yesterday ? yesterday : today;
-  const passage = { text: dailyTextFor(key), goals: lesson.goals };
+  // Sept 29: the class's words of the week are woven in when the teacher set them.
+  const passage = { text: dailyTextForClass(classSettings, key), goals: lesson.goals };
 
   const { data: row } = await supabaseAdmin
     .from("relay_station_progress")
@@ -317,6 +326,7 @@ async function handleDailyRun({ studentId, assignmentId, lesson, result, dailyKe
   let streak = prev.streak || 0;
   if (firstToday) streak = continuesStreak(prev.lastDate, key) ? streak + 1 : 1;
   const daily = {
+    ...prev, // keep timeLog and anything else stored alongside the streak
     lastDate: firstToday ? key : prev.lastDate,
     streak,
     bestStreak: Math.max(prev.bestStreak || 0, streak),

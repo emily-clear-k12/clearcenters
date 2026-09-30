@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "../../../../lib/supabaseAdmin";
+import { cleanSettings } from "../../../../lib/clearkeysWeekly";
+import { weekRange } from "../../../../lib/clearkeysFuel";
 
 // ClearKeys setup for one class (Sept 29, 2026).
 //
@@ -64,6 +66,29 @@ export async function POST(request) {
       if (error) return NextResponse.json({ error: "Couldn't turn ClearKeys on. Try again, or contact support if it keeps happening." }, { status: 500 });
     }
     return NextResponse.json({ added: rows.length, grade });
+  }
+
+  // Sept 29: this week's Daily words + minutes-per-day goal (classes.clearkeys_settings).
+  if (action === "getSettings") {
+    const { data: row, error: setErr } = await supabaseAdmin.from("classes").select("clearkeys_settings").eq("id", classId).maybeSingle();
+    const { data: lists } = await supabaseAdmin
+      .from("frequency_rush_custom_lists")
+      .select("standard, title, words")
+      .eq("teacher_id", userData.user.id)
+      .order("created_at", { ascending: false })
+      .limit(30);
+    return NextResponse.json({
+      ready: !setErr,
+      settings: cleanSettings(row && row.clearkeys_settings),
+      thisWeek: weekRange().start,
+      wordLists: (lists || []).map((l) => ({ title: l.title, words: (Array.isArray(l.words) ? l.words : []).map((w) => ({ word: w.word, def: w.definition || "" })) })),
+    });
+  }
+  if (action === "saveSettings") {
+    const next = cleanSettings({ weekWords: body.weekWords, minutesPerDay: body.minutesPerDay, weekOf: weekRange().start });
+    const { error: saveErr } = await supabaseAdmin.from("classes").update({ clearkeys_settings: next }).eq("id", classId);
+    if (saveErr) return NextResponse.json({ error: /clearkeys_settings/.test(saveErr.message || "") ? "This needs a quick database update first (add_clearkeys_settings.sql)." : "Couldn't save. Try again." }, { status: 500 });
+    return NextResponse.json({ settings: next });
   }
 
   return NextResponse.json({ error: "Unknown action." }, { status: 400 });

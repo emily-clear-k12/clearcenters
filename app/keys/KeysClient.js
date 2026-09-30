@@ -66,7 +66,7 @@ function ActivityCard({ label, title, line, code, href, button, color, off }) {
   );
 }
 
-export default function KeysClient({ firstName, track, daily, race, readings, level, rank, streak, bests, history, practice, grade, story = [], arcade = [], fuel = null, fluency = null }) {
+export default function KeysClient({ firstName, track, daily, race, readings, level, rank, streak, bests, history, practice, grade, story = [], arcade = [], fuel = null, fluency = null, minutes = null }) {
   const subjects = ["All", ...Array.from(new Set(practice.map((p) => p.subject)))];
   const [subject, setSubject] = useState("All");
   const shown = practice.filter((p) => subject === "All" || p.subject === subject);
@@ -82,6 +82,18 @@ export default function KeysClient({ firstName, track, daily, race, readings, le
           <h1 style={{ ...h, fontSize: 26, letterSpacing: "-0.5px", display: "flex", alignItems: "center", gap: 8 }}><img src="/student/orb_keys.png" alt="" width={40} height={40} />ClearKeys</h1>
           <span style={{ color: C.muted, fontWeight: 700, fontSize: 14 }}>Grade {g}</span>
         </header>
+
+        {minutes && (
+          <section style={{ ...glass, padding: "14px 18px", display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap" }} aria-label={`Today's typing goal: ${Math.min(minutes.done, minutes.goal)} of ${minutes.goal} minutes`}>
+            <div style={{ flex: "1 1 260px" }}>
+              <div style={{ fontWeight: 800 }}>{minutes.done >= minutes.goal ? `Goal met! ${minutes.done} minutes of typing today.` : `Today's typing goal: ${minutes.done} of ${minutes.goal} minutes`}</div>
+              <div style={{ height: 10, borderRadius: 999, background: "rgba(123,93,255,.15)", overflow: "hidden", marginTop: 6 }}>
+                <div style={{ width: `${Math.min(100, Math.round((minutes.done / minutes.goal) * 100))}%`, height: "100%", background: `linear-gradient(90deg, ${C.teal}, ${C.green})` }} />
+              </div>
+            </div>
+            {minutes.next && minutes.done < minutes.goal && <Link href={minutes.next.href} style={pill(`linear-gradient(135deg, ${C.violet}, ${C.violet2})`)}>{minutes.next.label} →</Link>}
+          </section>
+        )}
 
         {/* Track hero: the ClearKeys typing room is the one big picture. */}
         <section style={{ position: "relative", borderRadius: 28, overflow: "hidden", minHeight: 340, display: "flex", alignItems: "flex-end", padding: 18, backgroundColor: "#dcd6f5", backgroundImage: "url(/relay/keys_room.jpg)", backgroundSize: "cover", backgroundPosition: "center 35%", boxShadow: "0 12px 34px rgba(60,40,140,.22)" }}>

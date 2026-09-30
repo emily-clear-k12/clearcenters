@@ -17,6 +17,8 @@ import { resolveMakerConfig } from "../../../lib/cases/maker-studio/catalog";
 import { MAKER_MODES } from "../../../lib/cases/maker-studio/modes";
 import { resolveRelayStationLesson } from "../../../lib/relayStationServer";
 import { centralDateKey, dailyTextFor, continuesStreak } from "../../../lib/cases/relay-station";
+import { readClassSettings } from "../../../lib/clearkeysServer";
+import { dailyTextForClass } from "../../../lib/clearkeysWeekly";
 import ActivityClient from "./ActivityClient";
 import SignalCheckClient from "./SignalCheckClient";
 import MissionMapClient from "./MissionMapClient";
@@ -183,7 +185,7 @@ export default async function ActivityPage({ params }) {
             {...common}
             daily={{
               dateKey,
-              text: dailyTextFor(dateKey),
+              text: dailyTextForClass(await readClassSettings(assignment.class_id), dateKey),
               doneToday: d.lastDate === dateKey,
               streak: alive ? d.streak || 0 : 0,
               bestStreak: d.bestStreak || 0,

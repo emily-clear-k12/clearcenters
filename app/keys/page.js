@@ -9,6 +9,8 @@ import { classFuel } from "../../lib/clearkeysFuel";
 import { getClassPlanet, CLASS_PLANETS } from "../../lib/classPlanets";
 import { readFluency } from "../../lib/fluencyServer";
 import { normalizeFluency, fluencyPassedCount } from "../../lib/cases/relay-station/fluency";
+import { readClassSettings, minutesOn } from "../../lib/clearkeysServer";
+import { cleanSettings } from "../../lib/clearkeysWeekly";
 import KeysClient from "./KeysClient";
 
 // ClearKeys door (Sept 29, 2026): the student's typing home, open any time
@@ -90,6 +92,14 @@ export default async function KeysPage() {
   }
   const planet = getClassPlanet(cls?.planet_key) || CLASS_PLANETS[0];
   const fuel = { ...classFuel(mateRows, mateIds.length), planet: { name: planet.name, image: planet.image } };
+  // Minutes-per-day goal (teacher sets it on the ClearKeys Overview).
+  const settings = cleanSettings(await readClassSettings(student.class_id));
+  const dailyDoneToday = d.lastDate === today;
+  let nextStep = null;
+  if (daily && !dailyDoneToday) nextStep = { label: "Start with today's Daily Transmission", href: `/activity/${daily.id}` };
+  else if (track && !unlock.trackComplete) nextStep = { label: `Keep climbing: Level ${Math.min(currentLevel, total)}`, href: `/activity/${track.id}` };
+  else if (unlock.trackComplete) nextStep = { label: "Build speed in Fluency", href: "/keys/fluency" };
+  const minutes = settings.minutesPerDay ? { goal: settings.minutesPerDay, done: minutesOn(d, today), next: nextStep } : null;
   const grade = ["3", "4", "5"].includes(String(cls?.grade)) ? Number(cls.grade) : 3;
   const practice = listRelayStationLessons()
     .filter((l) => l.grade === grade && /^RS\.[345]\./.test(l.code) && !/\.(TRACK|DAILY|RACE)$/.test(l.code))
@@ -113,6 +123,7 @@ export default async function KeysPage() {
       arcade={arcade}
       fuel={fuel}
       fluency={fluencyCard}
+      minutes={minutes}
     />
   );
 }

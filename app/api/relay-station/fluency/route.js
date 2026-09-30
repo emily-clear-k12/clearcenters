@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import { supabaseAdmin } from "../../../../lib/supabaseAdmin";
 import { computeRun, computeStars, meetsAccuracy, applyAccommodations, cleanTimeline, TRACK_LEVELS, CRYSTALS } from "../../../../lib/cases/relay-station";
 import { getFluencyLevel, normalizeFluency, FLUENCY_LAST } from "../../../../lib/cases/relay-station/fluency";
+import { recordTypingTime } from "../../../../lib/clearkeysServer";
 
 // ClearKeys Fluency levels 21-40 (Sept 29, 2026). Student side: save one run.
 // The server re-scores the raw counts against the level's own text, like the
@@ -69,5 +70,6 @@ export async function POST(request) {
   if (crystalsEarned) {
     try { await supabaseAdmin.rpc("increment_crystal_points", { p_student_id: studentId, p_amount: crystalsEarned }); } catch (e) { /* never fail a save over a reward */ }
   }
+  await recordTypingTime(studentId, ms);
   return NextResponse.json({ success: true, passed, leveledUp, isNewBest: passed && better, best: record.passed ? record : null, crystalsEarned, promotedTo: null, fluency: { current, results } });
 }
