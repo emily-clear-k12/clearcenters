@@ -666,7 +666,7 @@ function displayCode(code){return String(code||'').replace(/^TEKS\s+/i,'').repla
   const topics=[...new Set(cases.map(normalizeCaseRow).filter(c=>c.engine!=='relay_station'&&!isHiddenContent(c.engine,c.standard)&&Number(c.grade)===Number(browseGrade)&&(c.subject===browseSubject||isFrDailyCase(c.standard))&&(typeFilter==='all'||matchesChallenge(c.engine,typeFilter))&&!isRetiredSignalCheckCase(c.standard)&&!((FR_CUSTOM_LIST_RE.exec(c.standard)||[])[1]&&FR_CUSTOM_LIST_RE.exec(c.standard)[1]!==String(teacherId||"").replace(/-/g,"").slice(0,8).toLowerCase())).map(topicCode))].sort((a,b)=>a.localeCompare(b,undefined,{numeric:true}));
   const searchQ = caseSearch.trim().toLowerCase();
   const inRush = product==='centers' && browseMode==='activities' && typeFilter==='frequency_rush';
-  const filteredCases = cases.map(normalizeCaseRow).filter((c) => {
+  const keepCase = (c, ignoreLevel = false) => {
     if (!c || typeof c.standard !== "string") return false;
     if (isHiddenContent(c.engine, c.standard)) return false;
     const isQuickMaker = c.engine === "maker_studio" && (c.standard === "MS.QUICK-WRITE" || c.standard === QUICK_MS_STANDARD);
@@ -681,7 +681,7 @@ function displayCode(code){return String(code||'').replace(/^TEKS\s+/i,'').repla
     if (product === "keys" && !matchesChallenge(c.engine, "relay_station")) return false;
     if (product === "keys" && browseSubject === READINGS) {
       if (!isTypingReading(c.standard)) return false;
-      if (keysLevelPick !== "all" && keysLevel(c) !== Number(keysLevelPick)) return false;
+      if (!ignoreLevel && keysLevelPick !== "all" && keysLevel(c) !== Number(keysLevelPick)) return false;
       if (readingSubject !== "all" && c.subject !== readingSubject) return false;
     } else {
     const specialTile = RELAY_SPECIAL_TILES.find((t) => t.key === browseSubject);
@@ -710,7 +710,23 @@ function displayCode(code){return String(code||'').replace(/^TEKS\s+/i,'').repla
     if (isCustomCode(c.standard) && customCodeOwnerPrefix(c.standard) !== String(teacherId || "").replace(/-/g, "").slice(0, 8).toLowerCase()) return false;
     if (!searchQ) return true;
     return [c.title, c.standard, c.learning_target, missionMapTeksLabel(c.standard)].some((value) => String(value || "").toLowerCase().includes(searchQ));
-  });
+  };
+  const filteredCases = cases.map(normalizeCaseRow).filter((c) => keepCase(c));
+  // Sept 30: one-click typing-level buttons on ClearKeys readings, with counts
+  // for the current subject and search.
+  const keysLevelCounts = { all: 0, 1: 0, 2: 0, 3: 0, 4: 0 };
+  if (product === "keys" && browseSubject === READINGS) cases.map(normalizeCaseRow).forEach((c) => { if (!keepCase(c, true)) return; keysLevelCounts.all += 1; const lv = keysLevel(c); if (lv) keysLevelCounts[lv] += 1; });
+  const pickKeysLevel = (v) => { setKeysLevelPick(v); setSelectedCase(null); setLimit(12); };
+  const keysLevelButtons = (
+    <div className="cc-keys-levels" role="group" aria-label="Typing level">
+      <button type="button" className="cc-keys-level" aria-pressed={keysLevelPick === "all"} onClick={() => pickKeysLevel("all")}><strong>All levels</strong><span>{keysLevelCounts.all} readings</span></button>
+      {TYPING_LEVELS.map((l) => (
+        <button key={l.n} type="button" className="cc-keys-level" aria-pressed={keysLevelPick === String(l.n)} onClick={() => pickKeysLevel(String(l.n))} title={l.line}>
+          <strong>Level {l.n} · {l.name}</strong><span>{l.line} · {keysLevelCounts[l.n]}</span>
+        </button>
+      ))}
+    </div>
+  );
   const listedCases = product==='keys'&&browseSubject===READINGS
     ? [...filteredCases].sort((a,b)=>(keysLevel(a)||9)-(keysLevel(b)||9)||keysTitle(a).localeCompare(keysTitle(b)))
     : browseMode==='standards'
@@ -975,17 +991,13 @@ function displayCode(code){return String(code||'').replace(/^TEKS\s+/i,'').repla
     {product === "keys" && <ClearKeysSwitch classId={assignClassId} className={targetClass?.name} compact onStatus={(st)=>{setKeysOn(!!st.allOn);if(st.allOn){setBrowseSubject((prev)=>{if(prev!==READINGS){setReadingSubject('all');setSelectedCase(null);}return READINGS;});}}} />}
     {product === "keys" && <section className="cc-panel cc-keys">
       {keysOn ? (
-        <div className="cc-row cc-between" style={{ alignItems: "flex-end", marginBottom: 10 }}>
-          <div>
-            <strong style={{ font: "600 16px Poppins, sans-serif" }}>Add readings</strong>
-            <p className="cc-muted" style={{ margin: "2px 0 0" }}>Readings are sorted by typing level, not grade. Pick a level and a subject, then a reading.</p>
-          </div>
-          <label className="cc-field" style={{ margin: 0 }}>Typing level<select value={keysLevelPick} onChange={e=>{setKeysLevelPick(e.target.value);setSelectedCase(null);}}><option value="all">All levels</option>{TYPING_LEVELS.map(l=><option key={l.n} value={String(l.n)}>Level {l.n}: {l.name} ({l.line.toLowerCase()})</option>)}</select></label>
+        <div style={{ marginBottom: 10 }}>
+          <strong style={{ font: "600 16px Poppins, sans-serif" }}>Add readings</strong>
+          <p className="cc-muted" style={{ margin: "2px 0 10px" }}>Readings are sorted by typing level, not grade. Pick a level and a subject, then a reading.</p>
+          {keysLevelButtons}
         </div>
       ) : browseSubject===READINGS ? (
-      <div className="cc-toolbar cc-browse-filters">
-        <label className="cc-field" style={{ margin: 0 }}>Typing level<select value={keysLevelPick} onChange={e=>{setKeysLevelPick(e.target.value);setSelectedCase(null);}}><option value="all">All levels</option>{TYPING_LEVELS.map(l=><option key={l.n} value={String(l.n)}>Level {l.n}: {l.name} ({l.line.toLowerCase()})</option>)}</select></label>
-      </div>
+      <div style={{ marginBottom: 10 }}>{keysLevelButtons}</div>
       ) : null}
       <div className="cc-key-stations" style={keysOn ? { display: "none" } : undefined}>
         {KEY_STATIONS.map((item) => (
@@ -1015,7 +1027,7 @@ function displayCode(code){return String(code||'').replace(/^TEKS\s+/i,'').repla
     {browseMode==='standards' && !pickedStandard && <section className="cc-panel"><h2>Choose a standard</h2><p className="cc-muted">{browseSubject} · Grade {browseGrade}. Open a standard to see Practice, Prove it, and Make it.</p><label className="cc-field">Find a standard<input className="cc-input" type="search" placeholder="Search by code or topic" value={caseSearch} onChange={e=>setCaseSearch(e.target.value)}/></label><div className="cc-standard-list" style={subjectStyle(browseSubject)}>{standardFamilies.map((family)=><section key={family.name}><h3>{family.name}</h3>{family.items.map((group)=><button key={group.code} type="button" className="cc-standard-row" onClick={()=>{setPickedStandard(group.code);setSelectedCase(null);setCaseSearch('');setLimit(12)}}><b>{displayCode(group.code)}</b>{group.title&&<span>{group.title}</span>}<small>{group.count} {group.count===1?'activity':'activities'}</small></button>)}</section>)}</div>{!visibleGroups.length&&<Empty>No standards for this grade and subject yet.</Empty>}</section>}
     </>}
     {showList&&<div className={"cc-two"+(product!=='keys'?" cc-two-maker":"")}><section className="cc-panel">{inRush&&rushStandard&&<button className="cc-text-button" onClick={()=>{setRushStandard(null);setSelectedCase(null);setCaseSearch('');}}>← Standards</button>}{browseMode==='standards'&&pickedStandard&&<button className="cc-text-button" onClick={()=>{setPickedStandard(null);setSelectedCase(null);setCaseSearch('');}}>← All standards</button>}<h2>{product==='keys'?(browseSubject===READINGS?'Readings':(RELAY_SPECIAL_TILES.find(t=>t.key===browseSubject)?.title||'ClearKeys')):(inRush?`${rushTitle} · ${displayCode(rushPick?.code || rushStandard)}`:(browseMode==='standards'?displayCode(pickedStandard):(typeFilter!=='all'?engineInfo(typeFilter).label:'Activities')))}</h2><p className="cc-muted">{product==='keys'?`${browseSubject===READINGS?(keysLevelPick==='all'?'All typing levels':`Typing Level ${keysLevelPick}: ${typingLevelInfo(keysLevelPick).name}`):`Grade ${browseGrade}`} · ${filteredCases.length} ${browseSubject===READINGS?(filteredCases.length===1?'reading':'readings'):(filteredCases.length===1?'activity':'activities')}`:browseMode==='standards'?(standardGroups.find(group=>group.code===pickedStandard)?.title||'Activities for this standard'):(inRush?(rushPick?.name?`${rushPick.name}. ${rushMode==='crew'?'Choose the question set. The class plays together.':'Choose a vocab list or a question set. Each student plays alone.'}`:(rushMode==='crew'?'Choose the question set. The class plays together.':'Choose a vocab list or a question set. Each student plays alone.')):`${browseSubject} · Grade ${browseGrade} · ${filteredCases.length} activities`)}</p><label className="cc-field">Find an activity<input className="cc-input" type="search" placeholder="Search these activities" value={caseSearch} onChange={e=>{setCaseSearch(e.target.value);setLimit(12)}}/></label><div className={"cc-gallery cc-compact-gallery"+(product!=='keys'?' cc-maker-gallery':'')+(product==='keys'&&browseSubject===READINGS?' cc-readings':'')}>{(browseMode==='standards'?listedCases:listedCases.slice(0,limit)).map((c,index)=>{const e=engineInfo(c.engine);const rowName=activityFacts(c.engine).row;const prevRow=index>0?activityFacts(listedCases[index-1].engine).row:null;const showRow=product!=='keys'&&browseMode==='standards'&&rowName&&rowName!==prevRow;const code=codesFor(c.standard)[0]||displayCode(String(c.standard||""));const topic=topicForCase(c.standard,typeof c.learning_target==="string"?c.learning_target:"");const title=String(c.title||"");const thumb=assignCaseImageCandidates(c.standard,c.engine);return <React.Fragment key={`${c.standard}-${c.engine}-${index}`}>{showRow&&<h3 className="cc-row-head">{ROW_LABEL[rowName]} <span>{ROW_BLURB[rowName]}</span></h3>}<button className={"cc-activity"+(c.engine==="frequency_rush"?" is-rush":"")} style={subjectStyle(c.subject)} aria-pressed={selectedCase?.standard===c.standard} onClick={()=>{setStudentInfo(false);setSelectedCase(c);if(rushMode==='dive'||c.engine==='signal_defense'){if(c.engine!=='signal_defense'&&rushMode==='dive')setGameSkin('crystal_dive');}else if(rushMode==='run'){if(gameSkin==='crystal_dive')setGameSkin(DEFAULT_GAME_SKIN);} if(/^FR\.[345]\.DAILY$/.test(String(c.standard||"")))setGameSkin(DEFAULT_GAME_SKIN); if(c.engine==='signal_defense')setTargetMode('whole'); setSelectedChallenge(CHALLENGE_TYPES.find(t=>matchesChallenge(c.engine,t.key)))}}><img src={thumb[0]} alt="" onError={(event)=>{const img=event.currentTarget;const step=Number(img.dataset.step||0)+1;if(step>=thumb.length)return;img.dataset.step=String(step);img.src=thumb[step];}}/>{product==='keys'?<div><strong style={{display:'block',fontSize:15,lineHeight:1.3}}>{keysTitle(c)}</strong><small style={{display:'block',marginTop:4,color:'#70658d',fontSize:12.5}}>{keysLine(c)}</small></div>:<div><small>{inRush?(rushMode==='crew'||!isVocabSet(c.standard)?'Questions':'Vocab'):code}</small>{topic&&!inRush&&<b>{topic}</b>}<strong>{c.engine==='relay_station'?keysTitle(c):title}</strong>{!inRush&&<em>{e.label}{e.what?` · ${e.what}`:''}</em>}<span className="cc-activity-facts">{factsLine(c.engine)}</span></div>}</button></React.Fragment>})}</div>{casesLoading?<Empty>Loading activities…</Empty>:!filteredCases.length&&<Empty>{typeFilter!=='all'?'No activities for this type at Grade '+browseGrade+' · '+browseSubject+'. Try another grade or subject.':'No activities match these filters. Try another topic, grade, or format.'}</Empty>}{browseMode!=='standards'&&filteredCases.length>limit&&<button className="cc-btn secondary" style={{marginTop:18}} onClick={()=>setLimit(limit+12)}>Show more activities</button>}</section>
-    <aside className="cc-stack">{selectedCase?<section className="cc-panel cc-frame" style={subjectStyle(selectedCase.subject)}><div className="cc-assign-read"><div className="cc-eyebrow cc-subject-label">{selectedCase.engine==='signal_defense'?'Crew':selectedCase.engine==='frequency_rush'?(rushMode==='dive'||gameSkin==='crystal_dive'?'Dive':'Run'):engineLine(selectedCase.engine)}</div><h2>{selectedCase.engine==='relay_station'?keysTitle(selectedCase):selectedCase.title}</h2><p className="cc-assign-standard">{[codesFor(selectedCase.standard).join(' & ')||displayCode(topicCode(selectedCase)), topicForCase(selectedCase.standard, selectedCase.learning_target)].filter(Boolean).join(' — ')}</p><p>{selectedCase.lesson_summary||selectedCase.learning_target||engineInfo(selectedCase.engine).description}</p></div>{((selectedCase.lesson_summary&&selectedCase.learning_target)||selectedCase.misconception_note)&&<div className="cc-student-pop">{selectedCase.lesson_summary&&selectedCase.learning_target&&<><h3>Learning target</h3><p className="cc-muted">{selectedCase.learning_target}</p></>}{selectedCase.misconception_note&&<><h3>Teaching notes</h3><p className="cc-muted">{selectedCase.misconception_note}</p></>}</div>}
+    <aside className="cc-stack">{selectedCase?<section className="cc-panel cc-frame" style={subjectStyle(selectedCase.subject)}><div className="cc-assign-read"><div className="cc-eyebrow cc-subject-label">{selectedCase.engine==='signal_defense'?'Crew':selectedCase.engine==='frequency_rush'?(rushMode==='dive'||gameSkin==='crystal_dive'?'Dive':'Run'):engineLine(selectedCase.engine)}</div><h2>{selectedCase.engine==='relay_station'?keysTitle(selectedCase):selectedCase.title}</h2>{selectedCase.engine==='relay_station'&&keysLevel(selectedCase)&&<p className="cc-keys-levelline">Typing Level {keysLevel(selectedCase)} · {typingLevelInfo(keysLevel(selectedCase)).name} <span>{typingLevelInfo(keysLevel(selectedCase)).line}</span></p>}<p className="cc-assign-standard">{[codesFor(selectedCase.standard).join(' & ')||displayCode(topicCode(selectedCase)), topicForCase(selectedCase.standard, selectedCase.learning_target)].filter(Boolean).join(' — ')}</p><p>{selectedCase.lesson_summary||selectedCase.learning_target||engineInfo(selectedCase.engine).description}</p></div>{((selectedCase.lesson_summary&&selectedCase.learning_target)||selectedCase.misconception_note)&&<div className="cc-student-pop">{selectedCase.lesson_summary&&selectedCase.learning_target&&<><h3>Learning target</h3><p className="cc-muted">{selectedCase.learning_target}</p></>}{selectedCase.misconception_note&&<><h3>Teaching notes</h3><p className="cc-muted">{selectedCase.misconception_note}</p></>}</div>}
     <div className="cc-assignment-form"><h3>Assign to {targetClass?.name||'your class'}</h3>
                   {assignClassId && (
                     <>

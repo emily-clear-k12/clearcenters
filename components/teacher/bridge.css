@@ -74,6 +74,17 @@
 .cc-keys-subjects{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
 .cc-keys-subjects .cc-btn{border:1.5px solid #d1d7ed;background:#fff;color:#302551;border-radius:999px;padding:6px 14px;min-height:36px;font-weight:700;cursor:pointer}
 .cc-keys-subjects .cc-btn[aria-pressed=true]{border-color:#7044cb;background:#7044cb;color:#fff}
+/* Sept 30: ClearKeys typing-level buttons on Assign */
+.cc-keys-levels{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px}
+.cc-keys-level{display:flex;flex-direction:column;align-items:flex-start;gap:2px;text-align:left;border:1.5px solid #d1d7ed;background:#fff;color:#302551;border-radius:14px;padding:9px 12px;cursor:pointer;font:inherit;min-height:56px}
+.cc-keys-level strong{font-size:13.5px;font-weight:700;line-height:1.25}
+.cc-keys-level span{font-size:11.5px;color:#70658d;line-height:1.3}
+.cc-keys-level:hover{border-color:#a58be6}
+.cc-keys-level[aria-pressed=true]{border-color:#7044cb;background:#7044cb;color:#fff}
+.cc-keys-level[aria-pressed=true] span{color:#e9e1ff}
+  .cc-keys-levelline{margin:-4px 0 8px;font-weight:700;color:#513193;font-size:14px}
+.cc-keys-levelline span{font-weight:500;color:#70658d}
+@media (max-width:900px){.cc-keys-levels{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:900px){.cc-keys-facts,.cc-keys-choices{grid-template-columns:1fr}}
 .cc-product.is-ready{cursor:pointer;font:inherit;border-color:#8b6cf6;box-shadow:inset 0 1px 0 #fff,0 4px 0 #5bdfff,0 8px 16px #28dbff55}
 .cc-product.is-ready[aria-pressed=true]{background:linear-gradient(180deg,#fff,#e7f9ff)}

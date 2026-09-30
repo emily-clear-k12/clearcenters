@@ -6,6 +6,16 @@ import DistressCallBadge from "../../../components/DistressCallBadge";
 import SamGuide from "../../../components/SamGuide";
 import { KEYBOARD_SKINS, getKeyboardSkin, skinUnlocked, skinForRankIndex, RACE_CRYSTALS, MODES, MODE_BONUS_CRYSTALS, DICTATION_REVEAL_AFTER, CORRUPT_REVEAL_AFTER, corruptRanges, dictationChunks, speakableText, getComposePrompt, COMPOSE_CRYSTALS, DAILY_CRYSTALS, applyAccommodations, normalizeAccommodations, ACCOMMODATION_DEFAULTS, cleanTimeline, buildRepairDrill, trackAllowedChars, TIERS, PLACEMENT_STAGES, PLACEMENT_MIN_WPM, placementResult, computeStars, meetsAccuracy, passAccuracyForLevel, getTrackLevelLesson, rankFor, rankBadgeSrc, RANKS, isCheckpointLevel, unitsCleared, comboTier, CRYSTALS } from "../../../lib/cases/relay-station";
 import { getStoryChapter, BOSSES } from "../../../lib/cases/relay-station/story";
+import { typingLevelInfo } from "../../../lib/cases/relay-station/typingLevel";
+
+// Sept 30: readings show their typing level under the title. Track levels,
+// story chapters, Fluency, Daily and Race have their own labels instead.
+function readingLevelOf(lesson) {
+  if (!lesson || lesson.isTrack || !lesson.typingLevel) return null;
+  if (["story", "fluency", "daily", "race", "track"].includes(lesson.kind)) return null;
+  if (/\.(TRACK|DAILY|RACE)$/.test(String(lesson.code || ""))) return null;
+  return typingLevelInfo(lesson.typingLevel);
+}
 
 // Relay Station — the typing center. Added Sept 22, 2026.
 // Design doc: claude/RelayStation_Digital_Design_v1.md.
@@ -495,6 +505,7 @@ function normalizeProgress(p, total) {
 function PassageRun({ assignmentId, lesson, initialBest, initialCompose, trackLevel, trackTotal, autoStart, onServerResult, onNextLevel, onBackToMap, onFinishOverride }) {
   const text = lesson.text;
   const isTrackLevel = !!trackLevel;
+  const levelInfo = isTrackLevel ? null : readingLevelOf(lesson);
   // Boss checkpoint: the last level of each unit (Sept 29, 2026).
   const boss = isTrackLevel && isCheckpointLevel(trackLevel) && lesson.unit ? BOSSES[lesson.unit] || null : null;
   const acc = useContext(AccContext);
@@ -804,10 +815,15 @@ function PassageRun({ assignmentId, lesson, initialBest, initialCompose, trackLe
             <div style={{ fontSize: 14, color: THEME.muted }}>{boss.line}</div>
           </div>
         )}
-        <h1 style={{ fontSize: 26, margin: "0 0 6px", color: THEME.text }}>{lesson.title}</h1>
+        <h1 style={{ fontSize: 26, margin: "0 0 4px", color: THEME.text }}>{lesson.title}</h1>
+        {levelInfo && (
+          <div style={{ fontSize: 15, fontWeight: 700, color: THEME.teal, margin: "0 0 8px" }}>
+            Typing Level {levelInfo.n} · {levelInfo.name} <span style={{ fontWeight: 500, color: THEME.muted }}>· {levelInfo.line}</span>
+          </div>
+        )}
         <div style={{ fontSize: 12.5, color: THEME.muted, marginBottom: 16, display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
           <span>Relay it exactly — letter for letter.</span>
-          {lesson.tier && TIERS[lesson.tier] && (
+          {!levelInfo && lesson.tier && TIERS[lesson.tier] && (
             <span style={{ background: "rgba(255,255,255,0.08)", border: `1px solid ${THEME.border}`, borderRadius: 999, padding: "2px 10px", color: THEME.text, fontWeight: 700 }}>
               {TIERS[lesson.tier].icon} {TIERS[lesson.tier].label} · {TIERS[lesson.tier].note}
             </span>
@@ -1088,7 +1104,7 @@ function PassageRun({ assignmentId, lesson, initialBest, initialCompose, trackLe
   return (
     <div style={{ width: "100%", maxWidth: 960 }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", color: THEME.muted, fontSize: 13, marginBottom: 8, gap: 12, flexWrap: "wrap" }}>
-        <span style={{ color: THEME.text, fontWeight: 700 }}>{lesson.title}</span>
+        <span style={{ color: THEME.text, fontWeight: 700 }}>{lesson.title}{levelInfo && <span style={{ display: "block", fontWeight: 600, fontSize: 12, color: THEME.teal }}>Typing Level {levelInfo.n} · {levelInfo.name}</span>}</span>
         <span>
           {!acc.hideSpeed && <><b style={{ color: THEME.text }}>{live.wpm}</b> WPM · </>}<b style={{ color: THEME.text }}>{live.accuracy}%</b> accuracy{!acc.hideSpeed && <> · {formatTime(live.ms)}</>}
         </span>

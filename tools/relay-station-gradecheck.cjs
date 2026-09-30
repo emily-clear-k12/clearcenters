@@ -46,7 +46,9 @@ console.log(`prose readings (paragraph/log/letter): ${prose.length}   other form
   console.log(`  g${g} prose average FK ${avg(p.map(r=>r.fk))}  (band ${BAND[g][0]}-${BAND[g][1]})`);
 });
 const over=prose.filter(r=>r.fk>BAND[r.grade][1]).sort((a,b)=>(b.fk-BAND[b.grade][1])-(a.fk-BAND[a.grade][1]));
-const under=prose.filter(r=>r.fk<BAND[r.grade][0]).sort((a,b)=>a.fk-b.fk);
+// Level 1 (Liftoff, RS.3.LIFTnn) readings are meant to be easy: they are for
+// beginning typists, so they are not held to the grade-3 minimum.
+const under=prose.filter(r=>!/\.LIFT\d/.test(r.code)&&r.fk<BAND[r.grade][0]).sort((a,b)=>a.fk-b.fk);
 console.log(`\nPROSE ABOVE GRADE: ${over.length} of ${prose.length}`);
 over.forEach(r=>console.log(`   ${r.code.padEnd(12)} g${r.grade} ${r.kind.padEnd(9)} FK ${String(r.fk).padStart(4)} (max ${BAND[r.grade][1]})  avg ${String(r.avg).padStart(4)}w  longest ${r.longest.n}w`));
 console.log(`\nPROSE BELOW GRADE: ${under.length}`);

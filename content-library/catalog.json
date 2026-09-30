@@ -1,7 +1,7 @@
 {
   "generatedFrom": "lib/cases and add_*.sql",
-  "onDisk": 1069,
-  "inSql": 1086,
+  "onDisk": 1089,
+  "inSql": 1106,
   "items": [
     {
       "standard": "3.10C-AD",
@@ -1759,6 +1759,177 @@
       "file": "lib/cases/classification-lab/catalog.js"
     },
     {
+      "standard": "RS.3.LIFT01",
+      "title": "Ice, Water, and Steam",
+      "grade": "",
+      "subject": "Science",
+      "engine": "ClearKeys",
+      "kind": "code",
+      "file": "lib/cases/relay-station/index.js"
+    },
+    {
+      "standard": "RS.3.LIFT02",
+      "title": "Will It Float?",
+      "grade": "",
+      "subject": "Science",
+      "engine": "ClearKeys",
+      "kind": "code",
+      "file": "lib/cases/relay-station/index.js"
+    },
+    {
+      "standard": "RS.3.LIFT03",
+      "title": "Magnets",
+      "grade": "",
+      "subject": "Science",
+      "engine": "ClearKeys",
+      "kind": "code",
+      "file": "lib/cases/relay-station/index.js"
+    },
+    {
+      "standard": "RS.3.LIFT04",
+      "title": "Push and Pull",
+      "grade": "",
+      "subject": "Science",
+      "engine": "ClearKeys",
+      "kind": "code",
+      "file": "lib/cases/relay-station/index.js"
+    },
+    {
+      "standard": "RS.3.LIFT05",
+      "title": "Energy All Around",
+      "grade": "",
+      "subject": "Science",
+      "engine": "ClearKeys",
+      "kind": "code",
+      "file": "lib/cases/relay-station/index.js"
+    },
+    {
+      "standard": "RS.3.LIFT06",
+      "title": "Our Planet",
+      "grade": "",
+      "subject": "Science",
+      "engine": "ClearKeys",
+      "kind": "code",
+      "file": "lib/cases/relay-station/index.js"
+    },
+    {
+      "standard": "RS.3.LIFT07",
+      "title": "Who Eats What?",
+      "grade": "",
+      "subject": "Science",
+      "engine": "ClearKeys",
+      "kind": "code",
+      "file": "lib/cases/relay-station/index.js"
+    },
+    {
+      "standard": "RS.3.LIFT08",
+      "title": "Cactus Survival",
+      "grade": "",
+      "subject": "Science",
+      "engine": "ClearKeys",
+      "kind": "code",
+      "file": "lib/cases/relay-station/index.js"
+    },
+    {
+      "standard": "RS.3.LIFT09",
+      "title": "Fast Changes",
+      "grade": "",
+      "subject": "Science",
+      "engine": "ClearKeys",
+      "kind": "code",
+      "file": "lib/cases/relay-station/index.js"
+    },
+    {
+      "standard": "RS.3.LIFT10",
+      "title": "Which Way?",
+      "grade": "",
+      "subject": "Social Studies",
+      "engine": "ClearKeys",
+      "kind": "code",
+      "file": "lib/cases/relay-station/index.js"
+    },
+    {
+      "standard": "RS.3.LIFT11",
+      "title": "Not Enough",
+      "grade": "",
+      "subject": "Social Studies",
+      "engine": "ClearKeys",
+      "kind": "code",
+      "file": "lib/cases/relay-station/index.js"
+    },
+    {
+      "standard": "RS.3.LIFT12",
+      "title": "A Good Citizen",
+      "grade": "",
+      "subject": "Social Studies",
+      "engine": "ClearKeys",
+      "kind": "code",
+      "file": "lib/cases/relay-station/index.js"
+    },
+    {
+      "standard": "RS.3.LIFT13",
+      "title": "Leaders",
+      "grade": "",
+      "subject": "Social Studies",
+      "engine": "ClearKeys",
+      "kind": "code",
+      "file": "lib/cases/relay-station/index.js"
+    },
+    {
+      "standard": "RS.3.LIFT14",
+      "title": "Saving Up",
+      "grade": "",
+      "subject": "Social Studies",
+      "engine": "ClearKeys",
+      "kind": "code",
+      "file": "lib/cases/relay-station/index.js"
+    },
+    {
+      "standard": "RS.3.LIFT15",
+      "title": "Poem: Rain",
+      "grade": "",
+      "subject": "ELAR",
+      "engine": "ClearKeys",
+      "kind": "code",
+      "file": "lib/cases/relay-station/index.js"
+    },
+    {
+      "standard": "RS.3.LIFT16",
+      "title": "Note: Library Day",
+      "grade": "",
+      "subject": "ELAR",
+      "engine": "ClearKeys",
+      "kind": "code",
+      "file": "lib/cases/relay-station/index.js"
+    },
+    {
+      "standard": "RS.3.LIFT17",
+      "title": "Opinion: Dogs Are Great",
+      "grade": "",
+      "subject": "ELAR",
+      "engine": "ClearKeys",
+      "kind": "code",
+      "file": "lib/cases/relay-station/index.js"
+    },
+    {
+      "standard": "RS.3.LIFT18",
+      "title": "Questions and Answers",
+      "grade": "",
+      "subject": "ELAR",
+      "engine": "ClearKeys",
+      "kind": "code",
+      "file": "lib/cases/relay-station/index.js"
+    },
+    {
+      "standard": "RS.3.LIFT19",
+      "title": "Log: My First Day",
+      "grade": "",
+      "subject": "ELAR",
+      "engine": "ClearKeys",
+      "kind": "code",
+      "file": "lib/cases/relay-station/index.js"
+    },
+    {
       "standard": "RS.3.BIO01",
       "title": "Clara Barton",
       "grade": "3",
@@ -1842,6 +2013,15 @@
     {
       "standard": "RS.3.L01",
       "title": "Friendly Letter: Thank You for the Telescope",
+      "grade": "3",
+      "subject": "ELAR",
+      "engine": "ClearKeys",
+      "kind": "code",
+      "file": "lib/cases/relay-station/index.js"
+    },
+    {
+      "standard": "RS.3.LIFT20",
+      "title": "How to Say Hello",
       "grade": "3",
       "subject": "ELAR",
       "engine": "ClearKeys",
@@ -9625,4 +9805,4 @@
       "file": "lib/cases/simulation-lab/5-9-SL.public.js"
     }
   ]
-}
+}
