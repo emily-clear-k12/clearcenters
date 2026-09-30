@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Meteor Keys</title>
+<!--
+  Meteor Keys: ClearKeys arcade game (Sept 29, 2026). Self-contained, no
+  network. Letters fall like meteors; press the matching key to zap them.
+  ?keys=asdfjkl limits the letters to the ones the student has learned on the
+  Foundations Track (the page passes them in). Default: home row.
+  Posts { type: "clearcenters-game-result", game: "meteor_keys", score, best } to the parent.
+-->
+<style>
+  html, body { margin: 0; height: 100%; background: #060B16; overflow: hidden; font-family: "Trebuchet MS", "Segoe UI", system-ui, sans-serif; color: #fff; }
+  #wrap { position: relative; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; }
+  canvas { display: block; max-width: 100%; max-height: 100%; background: #0B1026; border-radius: 12px; outline: none; }
+  .screen { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; pointer-events: none; }
+  .card { pointer-events: auto; background: rgba(13, 27, 42, 0.94); border: 2px solid #9B7DFF; border-radius: 18px; padding: 26px 30px; max-width: 520px; text-align: center; box-shadow: 0 0 40px rgba(123, 93, 255, 0.35); }
+  .card h1 { margin: 0 0 6px; font-size: 36px; letter-spacing: 1px; color: #C4B5FF; text-shadow: 0 0 12px #9B7DFF; }
+  .card h2 { margin: 0 0 10px; font-size: 15px; color: #FFC44D; letter-spacing: 3px; }
+  .card p { margin: 8px 0; font-size: 16px; line-height: 1.5; color: #DDE6FF; }
+  .keys { font-size: 20px; letter-spacing: 6px; color: #67E8F9; font-weight: 800; }
+  .big { font-size: 44px; font-weight: 800; color: #FFC44D; margin: 6px 0; }
+  .stats { display: flex; gap: 12px; justify-content: center; margin: 10px 0; flex-wrap: wrap; }
+  .stat { background: rgba(255,255,255,0.07); border-radius: 10px; padding: 8px 12px; min-width: 90px; }
+  .stat b { display: block; font-size: 22px; }
+  .stat span { font-size: 12px; color: #9FB0D6; }
+  button { font: inherit; font-weight: 800; font-size: 18px; background: #9B7DFF; color: #fff; border: none; border-radius: 999px; padding: 12px 28px; cursor: pointer; margin-top: 10px; }
+  .hint { font-size: 13px; color: #9FB0D6; }
+  #sound { position: absolute; bottom: 10px; right: 12px; font-size: 13px; padding: 6px 12px; margin: 0; background: rgba(255,255,255,0.12); pointer-events: auto; }
+  [hidden] { display: none !important; }
+  .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+</style>
+</head>
+<body>
+<div id="wrap">
+  <canvas id="game" width="960" height="600" tabindex="0" aria-label="Meteor Keys game"></canvas>
+  <button id="sound" type="button">Sound on</button>
+
+  <div class="screen" id="startScreen">
+    <div class="card">
+      <h2>CLEARKEYS ARCADE</h2>
+      <h1>METEOR KEYS</h1>
+      <p>Letter meteors are falling toward the relay station!</p>
+      <p><b>Press a meteor's letter to zap it.</b> The lowest meteor with that letter gets zapped first.</p>
+      <p>Your meteors use only the keys you've learned:</p>
+      <p class="keys" id="keyList">asdfjkl</p>
+      <p>Protect your 3 shields for 60 seconds.</p>
+      <button id="startBtn" type="button">Launch (Enter)</button>
+      <p class="hint">Fingers on home row. Eyes on the sky, not your hands.</p>
+    </div>
+  </div>
+
+  <div class="screen" id="resultScreen" hidden>
+    <div class="card">
+      <h2 id="badge">STATION DEFENDER</h2>
+      <div class="big" id="finalScore">0</div>
+      <div class="stats">
+        <div class="stat"><b id="zapStat">0</b><span>meteors zapped</span></div>
+        <div class="stat"><b id="accStat">100%</b><span>accuracy</span></div>
+        <div class="stat"><b id="comboStat">0</b><span>best streak</span></div>
+        <div class="stat"><b id="bestStat">0</b><span>your best</span></div>
+      </div>
+      <p id="resultMsg">The station is safe!</p>
+      <button id="againBtn" type="button">Play Again (Enter)</button>
+    </div>
+  </div>
+  <div class="sr" aria-live="polite" id="announcer"></div>
+</div>
+
+<script>
+(() => {
+  "use strict";
+  const W = 960, H = 600, DURATION = 60, GROUND = H - 60;
+  const canvas = document.getElementById("game");
+  const ctx = canvas.getContext("2d");
+  const startScreen = document.getElementById("startScreen");
+  const resultScreen = document.getElementById("resultScreen");
+  const announcer = document.getElementById("announcer");
+  const soundBtn = document.getElementById("sound");
+
+  // Letters come from ?keys= (only a-z, at least 2); default is the home row.
+  let KEYS = "asdfjkl";
+  try {
+    const raw = (new URLSearchParams(location.search).get("keys") || "").toLowerCase().replace(/[^a-z]/g, "");
+    const uniq = [...new Set(raw.split(""))].join("");
+    if (uniq.length >= 2) KEYS = uniq;
+  } catch (e) { /* default */ }
+  document.getElementById("keyList").textContent = KEYS.split("").join(" ");
+
+  // Finger colors (same zones as the ClearKeys keyboard).
+  const FINGER = {};
+  [["qaz", "#F9A8D4"], ["wsx", "#FDBA74"], ["edc", "#FDE047"], ["rfvtgb", "#86EFAC"], ["yhnujm", "#67E8F9"], ["ik", "#A5B4FC"], ["ol", "#C4B5FD"], ["p", "#F9A8D4"]]
+    .forEach(([ks, c]) => ks.split("").forEach((k) => { FINGER[k] = c; }));
+
+  let state = "start";
+  let meteors = [], particles = [], zaps = [], stars = [], popups = [];
+  let score = 0, shields = 3, streak = 0, bestStreak = 0, zapped = 0, presses = 0, misses = 0;
+  let elapsed = 0, spawnTimer = 0, last = 0, shake = 0, countdown = 0, soundOn = true, audio = null;
+
+  for (let i = 0; i < 110; i++) stars.push({ x: Math.random() * W, y: Math.random() * GROUND, r: Math.random() * 1.6 + 0.3, tw: Math.random() * 6 });
+
+  function tone(freq, dur, type = "sine", vol = 0.04) {
+    if (!soundOn) return;
+    try {
+      audio = audio || new (window.AudioContext || window.webkitAudioContext)();
+      const o = audio.createOscillator(), g = audio.createGain();
+      o.type = type; o.frequency.value = freq; g.gain.value = vol;
+      o.connect(g); g.connect(audio.destination);
+      o.start(); g.gain.exponentialRampToValueAtTime(0.0001, audio.currentTime + dur); o.stop(audio.currentTime + dur);
+    } catch (e) { /* optional */ }
+  }
+
+  function spawn() {
+    const onScreen = new Set(meteors.map((m) => m.ch));
+    let ch, tries = 0;
+    do { ch = KEYS[Math.floor(Math.random() * KEYS.length)]; tries++; } while (onScreen.has(ch) && tries < 12 && KEYS.length > 3);
+    const speed = 40 + elapsed * 1.4 + Math.random() * 18;
+    meteors.push({ ch, x: 60 + Math.random() * (W - 120), y: -30, vy: speed, r: 26, spin: Math.random() * 6, trail: [] });
+  }
+
+  function reset() {
+    meteors = []; particles = []; zaps = []; popups = [];
+    score = 0; shields = 3; streak = 0; bestStreak = 0; zapped = 0; presses = 0; misses = 0;
+    elapsed = 0; spawnTimer = 0.5; shake = 0;
+  }
+
+  function begin() {
+    reset();
+    startScreen.hidden = true; resultScreen.hidden = true;
+    state = "countdown"; countdown = 3.2; last = performance.now();
+    canvas.focus();
+    requestAnimationFrame(loop);
+  }
+
+  function burst(x, y, color, n) {
+    for (let i = 0; i < n; i++) { const a = Math.random() * Math.PI * 2, s = 60 + Math.random() * 200; particles.push({ x, y, vx: Math.cos(a) * s, vy: Math.sin(a) * s, life: 0.5 + Math.random() * 0.5, color }); }
+  }
+
+  function press(key) {
+    if (state !== "playing") return;
+    presses++;
+    const hits = meteors.filter((m) => m.ch === key).sort((a, b) => b.y - a.y);
+    if (!hits.length) {
+      misses++; streak = 0; shake = 0.15; tone(160, 0.12, "square", 0.03);
+      popups.push({ x: W / 2, y: GROUND - 30, text: key ? `no ${key.toUpperCase()} meteor` : "", life: 0.8, color: "#FF8A9A" });
+      return;
+    }
+    const m = hits[0];
+    meteors = meteors.filter((x) => x !== m);
+    streak++; bestStreak = Math.max(bestStreak, streak); zapped++;
+    const mult = 1 + Math.min(4, Math.floor(streak / 5));
+    const pts = 10 * mult + Math.round(Math.max(0, GROUND - m.y) / 20);
+    score += pts;
+    zaps.push({ x: m.x, y: m.y, life: 0.18 });
+    burst(m.x, m.y, FINGER[m.ch] || "#67E8F9", 18);
+    popups.push({ x: m.x, y: m.y - 20, text: `+${pts}${mult > 1 ? ` x${mult}` : ""}`, life: 0.9, color: "#FFC44D" });
+    tone(520 + Math.min(streak, 20) * 25, 0.09, "triangle", 0.05);
+  }
+
+  function hitGround(m) {
+    shields--; streak = 0; shake = 0.4;
+    burst(m.x, GROUND, "#FF5A6E", 26);
+    tone(90, 0.3, "sawtooth", 0.05);
+    announcer.textContent = `Shield hit. ${shields} left.`;
+    if (shields <= 0) end(false);
+  }
+
+  function end(survived) {
+    state = "over";
+    const accuracy = presses ? Math.round(((presses - misses) / presses) * 100) : 100;
+    let best = score;
+    try { best = Math.max(score, Number(localStorage.getItem("meteorKeysBest") || 0)); localStorage.setItem("meteorKeysBest", String(best)); } catch (e) { /* optional */ }
+    try { if (window.parent && window.parent !== window) window.parent.postMessage({ type: "clearcenters-game-result", game: "meteor_keys", score, best }, "*"); } catch (e) { /* ignore */ }
+    document.getElementById("finalScore").textContent = score.toLocaleString();
+    document.getElementById("zapStat").textContent = zapped;
+    document.getElementById("accStat").textContent = accuracy + "%";
+    document.getElementById("comboStat").textContent = bestStreak;
+    document.getElementById("bestStat").textContent = best.toLocaleString();
+    document.getElementById("badge").textContent = survived ? (accuracy >= 95 ? "ACE DEFENDER" : "STATION DEFENDER") : "SHIELDS DOWN";
+    document.getElementById("resultMsg").textContent = survived
+      ? (accuracy >= 95 ? "Clean zapping! Your fingers know these keys." : "You held the line! Try for fewer misses next time.")
+      : "The meteors got through this time. Slow down and press only the letters you see.";
+    resultScreen.hidden = false;
+    announcer.textContent = `Game over. Score ${score}.`;
+    tone(survived ? 660 : 200, 0.4, "triangle", 0.05);
+  }
+
+  function loop(now) {
+    const dt = Math.min(0.05, (now - last) / 1000); last = now;
+    if (state === "countdown") {
+      countdown -= dt;
+      if (countdown <= 0) { state = "playing"; announcer.textContent = "Go!"; }
+    } else if (state === "playing") {
+      elapsed += dt;
+      spawnTimer -= dt;
+      const gap = Math.max(0.55, 1.5 - elapsed * 0.017);
+      if (spawnTimer <= 0 && meteors.length < 7) { spawn(); spawnTimer = gap; }
+      for (const m of meteors) { m.y += m.vy * dt; m.spin += dt * 2; m.trail.push({ x: m.x, y: m.y }); if (m.trail.length > 10) m.trail.shift(); }
+      for (const m of meteors.filter((x) => x.y + x.r >= GROUND)) { meteors = meteors.filter((x) => x !== m); hitGround(m); if (state !== "playing") break; }
+      if (state === "playing" && elapsed >= DURATION) end(true);
+    }
+    for (const p of particles) { p.x += p.vx * dt; p.y += p.vy * dt; p.vy += 240 * dt; p.life -= dt; }
+    particles = particles.filter((p) => p.life > 0);
+    for (const z of zaps) z.life -= dt; zaps = zaps.filter((z) => z.life > 0);
+    for (const p of popups) { p.y -= 40 * dt; p.life -= dt; } popups = popups.filter((p) => p.life > 0);
+    shake = Math.max(0, shake - dt);
+    draw(now / 1000);
+    if (state === "countdown" || state === "playing") requestAnimationFrame(loop);
+  }
+
+  function draw(t) {
+    ctx.save();
+    if (shake > 0) ctx.translate((Math.random() - 0.5) * 10 * shake, (Math.random() - 0.5) * 10 * shake);
+    const g = ctx.createLinearGradient(0, 0, 0, H); g.addColorStop(0, "#0B1026"); g.addColorStop(1, "#1B1450");
+    ctx.fillStyle = g; ctx.fillRect(-10, -10, W + 20, H + 20);
+    for (const s of stars) { ctx.globalAlpha = 0.5 + 0.5 * Math.sin(t * 2 + s.tw); ctx.fillStyle = "#fff"; ctx.beginPath(); ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2); ctx.fill(); }
+    ctx.globalAlpha = 1;
+
+    // station ground
+    ctx.fillStyle = "#2A2360"; ctx.fillRect(0, GROUND, W, H - GROUND);
+    ctx.fillStyle = "#9B7DFF"; ctx.fillRect(0, GROUND, W, 3);
+    for (let i = 0; i < 3; i++) {
+      ctx.fillStyle = i < shields ? "#67E8F9" : "rgba(255,255,255,0.15)";
+      ctx.beginPath(); ctx.arc(W / 2 - 40 + i * 40, GROUND + 30, 11, 0, Math.PI * 2); ctx.fill();
+    }
+
+    for (const m of meteors) {
+      m.trail.forEach((p, i) => { ctx.globalAlpha = (i / m.trail.length) * 0.35; ctx.fillStyle = "#FFB347"; ctx.beginPath(); ctx.arc(p.x, p.y - 8, m.r * (i / m.trail.length) * 0.7, 0, Math.PI * 2); ctx.fill(); });
+      ctx.globalAlpha = 1;
+      const col = FINGER[m.ch] || "#67E8F9";
+      const rg = ctx.createRadialGradient(m.x - 8, m.y - 8, 4, m.x, m.y, m.r + 6);
+      rg.addColorStop(0, "#ffffff"); rg.addColorStop(0.35, col); rg.addColorStop(1, "rgba(123,93,255,0.1)");
+      ctx.fillStyle = rg; ctx.beginPath(); ctx.arc(m.x, m.y, m.r + 6, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = "#0B1026"; ctx.font = "bold 30px Trebuchet MS"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+      ctx.fillText(m.ch.toUpperCase(), m.x, m.y + 1);
+    }
+    for (const z of zaps) { ctx.globalAlpha = z.life / 0.18; ctx.strokeStyle = "#67E8F9"; ctx.lineWidth = 4; ctx.beginPath(); ctx.moveTo(W / 2, GROUND); ctx.lineTo(z.x, z.y); ctx.stroke(); }
+    ctx.globalAlpha = 1;
+    for (const p of particles) { ctx.globalAlpha = Math.max(0, p.life); ctx.fillStyle = p.color; ctx.fillRect(p.x, p.y, 4, 4); }
+    ctx.globalAlpha = 1;
+    for (const p of popups) { ctx.globalAlpha = Math.min(1, p.life * 2); ctx.fillStyle = p.color; ctx.font = "bold 20px Trebuchet MS"; ctx.textAlign = "center"; ctx.fillText(p.text, p.x, p.y); }
+    ctx.globalAlpha = 1;
+
+    // HUD
+    ctx.fillStyle = "#fff"; ctx.font = "bold 22px Trebuchet MS"; ctx.textAlign = "left"; ctx.textBaseline = "top";
+    ctx.fillText(`Score ${score}`, 150, 16);
+    ctx.textAlign = "right"; ctx.fillText(`${Math.max(0, Math.ceil(DURATION - elapsed))}s`, W - 20, 16);
+    if (streak >= 5) { ctx.textAlign = "center"; ctx.fillStyle = "#FFC44D"; ctx.fillText(`Streak ${streak}  x${1 + Math.min(4, Math.floor(streak / 5))}`, W / 2, 16); }
+    if (state === "countdown") {
+      ctx.fillStyle = "#C4B5FF"; ctx.font = "bold 90px Trebuchet MS"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+      ctx.fillText(countdown > 1 ? String(Math.ceil(countdown - 0.2)) : "GO!", W / 2, H / 2);
+    }
+    ctx.restore();
+  }
+
+  window.addEventListener("keydown", (e) => {
+    if (e.key === "Enter" && (state === "start" || state === "over")) { e.preventDefault(); begin(); return; }
+    if (state !== "playing") return;
+    if (e.ctrlKey || e.metaKey || e.altKey) return;
+    if (e.key.length === 1) { e.preventDefault(); press(e.key.toLowerCase()); }
+  });
+  document.getElementById("startBtn").addEventListener("click", begin);
+  document.getElementById("againBtn").addEventListener("click", begin);
+  soundBtn.addEventListener("click", () => { soundOn = !soundOn; soundBtn.textContent = soundOn ? "Sound on" : "Sound off"; canvas.focus(); });
+  window.addEventListener("blur", () => { if (state === "playing") { state = "paused"; } });
+  window.addEventListener("focus", () => { if (state === "paused") { state = "playing"; last = performance.now(); requestAnimationFrame(loop); } });
+  draw(0);
+  window.__meteorKeys = { get state() { return state; }, get score() { return score; }, press, begin };
+})();
+</script>
+</body>
+</html>

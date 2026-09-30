@@ -5,7 +5,7 @@ import BackToHubButton from "../../../components/BackToHubButton";
 import DistressCallBadge from "../../../components/DistressCallBadge";
 import SamGuide from "../../../components/SamGuide";
 import { KEYBOARD_SKINS, getKeyboardSkin, skinUnlocked, skinForRankIndex, RACE_CRYSTALS, MODES, MODE_BONUS_CRYSTALS, DICTATION_REVEAL_AFTER, CORRUPT_REVEAL_AFTER, corruptRanges, dictationChunks, speakableText, getComposePrompt, COMPOSE_CRYSTALS, DAILY_CRYSTALS, applyAccommodations, normalizeAccommodations, ACCOMMODATION_DEFAULTS, cleanTimeline, buildRepairDrill, trackAllowedChars, TIERS, PLACEMENT_STAGES, PLACEMENT_MIN_WPM, placementResult, computeStars, meetsAccuracy, passAccuracyForLevel, getTrackLevelLesson, rankFor, rankBadgeSrc, RANKS, isCheckpointLevel, unitsCleared, comboTier, CRYSTALS } from "../../../lib/cases/relay-station";
-import { getStoryChapter } from "../../../lib/cases/relay-station/story";
+import { getStoryChapter, BOSSES } from "../../../lib/cases/relay-station/story";
 
 // Relay Station — the typing center. Added Sept 22, 2026.
 // Design doc: claude/RelayStation_Digital_Design_v1.md.
@@ -465,7 +465,7 @@ function TrackView({ assignmentId, track, initialProgress }) {
                       }}>{locked ? "🔒" : l.number}</span>
                       <span style={{ flex: 1, fontSize: 13.5, fontWeight: 600 }}>
                         {l.title}
-                        {isCheckpointLevel(l.number) && <span style={{ marginLeft: 6, fontSize: 10.5, fontWeight: 800, color: THEME.cursor, letterSpacing: 1 }}>⚡ CHECKPOINT</span>}
+                        {isCheckpointLevel(l.number) && <span style={{ marginLeft: 6, fontSize: 10.5, fontWeight: 800, color: THEME.cursor, letterSpacing: 1 }}>⚡ BOSS</span>}
                       </span>
                       <span style={{ fontSize: 13, color: THEME.cursor, letterSpacing: 1 }}>
                         {passed && r ? (r.stars > 0 ? "★".repeat(r.stars) : <span style={{ color: THEME.teal, fontSize: 11.5, fontWeight: 700 }}>✓ PLACED</span>) : isCurrent ? <span style={{ color: THEME.teal, fontSize: 11.5, fontWeight: 700 }}>UP NEXT</span> : ""}
@@ -495,6 +495,8 @@ function normalizeProgress(p, total) {
 function PassageRun({ assignmentId, lesson, initialBest, initialCompose, trackLevel, trackTotal, autoStart, onServerResult, onNextLevel, onBackToMap, onFinishOverride }) {
   const text = lesson.text;
   const isTrackLevel = !!trackLevel;
+  // Boss checkpoint: the last level of each unit (Sept 29, 2026).
+  const boss = isTrackLevel && isCheckpointLevel(trackLevel) && lesson.unit ? BOSSES[lesson.unit] || null : null;
   const acc = useContext(AccContext);
   const say = useSay();
   // Accommodations lower the accuracy goal for real lessons (never for the
@@ -774,6 +776,13 @@ function PassageRun({ assignmentId, lesson, initialBest, initialCompose, trackLe
         <div style={{ fontSize: 12, letterSpacing: 2, color: THEME.teal, fontWeight: 700, marginBottom: 6 }}>
           📡 INCOMING TRANSMISSION, CADET{isTrackLevel ? ` · LEVEL ${trackLevel} OF ${trackTotal}` : ""}
         </div>
+        {boss && (
+          <div style={{ background: "linear-gradient(90deg, #FF5A6E33, #7B5DFF33)", border: "1px solid #FF5A6E", borderRadius: 12, padding: "10px 14px", margin: "4px 0 12px" }}>
+            <div style={{ fontSize: 12, letterSpacing: 2, color: "#FF8A9A", fontWeight: 800 }}>⚡ BOSS LEVEL</div>
+            <div style={{ fontSize: 20, fontWeight: 800, color: THEME.text }}>{boss.name}</div>
+            <div style={{ fontSize: 14, color: THEME.muted }}>{boss.line}</div>
+          </div>
+        )}
         <h1 style={{ fontSize: 26, margin: "0 0 6px", color: THEME.text }}>{lesson.title}</h1>
         <div style={{ fontSize: 12.5, color: THEME.muted, marginBottom: 16, display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
           <span>Relay it exactly — letter for letter.</span>
@@ -894,10 +903,12 @@ function PassageRun({ assignmentId, lesson, initialBest, initialCompose, trackLe
         {isTrackLevel ? (
           passed ? (
             <div style={{ fontSize: 13, letterSpacing: 2, color: THEME.done, fontWeight: 800 }}>
+              {boss ? `⚡ BOSS DEFEATED: ${boss.name.toUpperCase()}` : ""}
+              {boss && <br />}
               {trackLevel >= trackTotal ? "🏅 FOUNDATIONS TRACK COMPLETE" : `⬆️ LEVEL UP! LEVEL ${trackLevel} PASSED`}
             </div>
           ) : (
-            <div style={{ fontSize: 13, letterSpacing: 2, color: THEME.cursor, fontWeight: 800 }}>SO CLOSE — TRY LEVEL {trackLevel} AGAIN</div>
+            <div style={{ fontSize: 13, letterSpacing: 2, color: THEME.cursor, fontWeight: 800 }}>{boss ? `${boss.name.toUpperCase()} HELD ON. ` : ""}SO CLOSE — TRY LEVEL {trackLevel} AGAIN</div>
           )
         ) : (
           <div style={{ fontSize: 12, letterSpacing: 2, color: THEME.done, fontWeight: 700 }}>✅ TRANSMISSION RELAYED</div>
@@ -1036,9 +1047,21 @@ function PassageRun({ assignmentId, lesson, initialBest, initialCompose, trackLe
         <GhostStatus ghostPos={ghostPos} pos={pos} total={text.length} />
         <ComboMeter combo={combo} />
       </div>
-      <div style={{ height: 6, background: "rgba(255,255,255,0.1)", borderRadius: 99, marginBottom: 12, overflow: "hidden" }}>
-        <div style={{ width: `${progress}%`, height: "100%", background: THEME.done, transition: "width .15s" }} />
-      </div>
+      {boss ? (
+        <div style={{ marginBottom: 12 }} aria-label={`${boss.name} shield at ${Math.round(100 - progress)} percent`}>
+          <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, fontWeight: 800, letterSpacing: 1, color: "#FF8A9A", marginBottom: 4 }}>
+            <span>⚡ {boss.name.toUpperCase()}</span><span>SHIELD {Math.round(100 - progress)}%</span>
+          </div>
+          <div key={flashKey} style={{ height: 12, background: "rgba(255,255,255,0.1)", borderRadius: 99, overflow: "hidden", animation: lastWrong !== null && !acc.reducedMotion ? "rsBossHit .25s" : "none" }}>
+            <div style={{ width: `${100 - progress}%`, height: "100%", background: "linear-gradient(90deg, #FF5A6E, #7B5DFF)", transition: "width .15s", marginLeft: "auto" }} />
+          </div>
+          <style>{`@keyframes rsBossHit { 0% { transform: translateX(0) } 25% { transform: translateX(-4px) } 75% { transform: translateX(4px) } 100% { transform: translateX(0) } }`}</style>
+        </div>
+      ) : (
+        <div style={{ height: 6, background: "rgba(255,255,255,0.1)", borderRadius: 99, marginBottom: 12, overflow: "hidden" }}>
+          <div style={{ width: `${progress}%`, height: "100%", background: THEME.done, transition: "width .15s" }} />
+        </div>
+      )}
 
       {mode === "dictation" && (
         <div style={{ display: "flex", gap: 8, justifyContent: "center", marginBottom: 10 }}>

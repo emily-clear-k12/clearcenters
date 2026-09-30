@@ -66,7 +66,7 @@ function ActivityCard({ label, title, line, code, href, button, color, off }) {
   );
 }
 
-export default function KeysClient({ firstName, track, daily, race, readings, level, rank, streak, bests, history, practice, grade, story = [] }) {
+export default function KeysClient({ firstName, track, daily, race, readings, level, rank, streak, bests, history, practice, grade, story = [], arcade = [] }) {
   const subjects = ["All", ...Array.from(new Set(practice.map((p) => p.subject)))];
   const [subject, setSubject] = useState("All");
   const shown = practice.filter((p) => subject === "All" || p.subject === subject);
@@ -172,6 +172,31 @@ export default function KeysClient({ firstName, track, daily, race, readings, le
             </section>
           );
         })()}
+
+        {arcade.length > 0 && (
+          <section id="arcade" style={{ ...glass, padding: 20 }}>
+            <h2 style={{ ...h, fontSize: 22 }}>Arcade</h2>
+            <p style={{ color: C.muted, margin: "4px 0 14px" }}>Typing games that open up as you climb the track.</p>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(240px, 1fr))", gap: 12 }}>
+              {arcade.map((g) => {
+                const inner = (
+                  <>
+                    <div style={{ aspectRatio: "16 / 8", background: "#e9e4fb", position: "relative" }}>
+                      <img src={g.image} alt="" style={{ ...cover, filter: g.open ? "none" : "grayscale(1) opacity(.55)" }} />
+                      {!g.open && <span style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 28 }} aria-hidden="true">🔒</span>}
+                    </div>
+                    <div style={{ padding: "10px 12px" }}>
+                      <div style={{ fontWeight: 800 }}>{g.name}</div>
+                      <div style={{ color: C.muted, fontSize: 13 }}>{g.open ? g.line : `Pass Level ${g.unlockLevel} to unlock`}</div>
+                    </div>
+                  </>
+                );
+                const box = { background: "#fff", borderRadius: 18, overflow: "hidden", textDecoration: "none", color: C.ink, boxShadow: "0 4px 12px rgba(60,40,140,.1)", opacity: g.open ? 1 : 0.85 };
+                return g.open ? <Link key={g.key} href={`/keys/arcade/${g.key}`} style={box}>{inner}</Link> : <div key={g.key} style={box}>{inner}</div>;
+              })}
+            </div>
+          </section>
+        )}
 
         {readings.length > 0 && (
           <section style={{ ...glass, padding: 20 }}>

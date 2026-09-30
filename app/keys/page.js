@@ -4,6 +4,7 @@ import { supabaseAdmin } from "../../lib/supabaseAdmin";
 import { getVisibleAssignmentsForStudent } from "../../lib/getStudentAssignments";
 import { listRelayStationLessons, TRACK_LEVELS, rankFor, rankBadgeSrc, centralDateKey, continuesStreak } from "../../lib/cases/relay-station";
 import { STORY_CHAPTERS, STORY_ACTS, chapterUnlocked, unlockHint } from "../../lib/cases/relay-station/story";
+import { ARCADE_GAMES, gameUnlocked } from "../../lib/cases/relay-station/arcade";
 import KeysClient from "./KeysClient";
 
 // ClearKeys door (Sept 29, 2026): the student's typing home, open any time
@@ -69,6 +70,7 @@ export default async function KeysPage() {
       return { n, title: c.title, open: chapterUnlocked(c, unlock), hint: unlockHint(c) };
     }),
   }));
+  const arcade = ARCADE_GAMES.map((g) => ({ key: g.key, name: g.name, line: g.line, image: g.image, open: gameUnlocked(g, unlock), unlockLevel: g.unlockLevel }));
   const grade = ["3", "4", "5"].includes(String(cls?.grade)) ? Number(cls.grade) : 3;
   const practice = listRelayStationLessons()
     .filter((l) => l.grade === grade && /^RS\.[345]\./.test(l.code) && !/\.(TRACK|DAILY|RACE)$/.test(l.code))
@@ -89,6 +91,7 @@ export default async function KeysPage() {
       practice={practice}
       grade={grade}
       story={story}
+      arcade={arcade}
     />
   );
 }
