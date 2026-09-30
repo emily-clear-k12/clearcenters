@@ -79,7 +79,7 @@ export default function KeysClient({ firstName, track, daily, race, readings, le
       <div style={{ width: "min(1060px, 100%)", margin: "0 auto", display: "grid", gap: 18 }}>
         <header style={{ ...glass, borderRadius: 999, padding: "10px 14px 10px 18px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
           <Link href="/home" style={{ color: C.violet, textDecoration: "none", fontWeight: 800 }}>← Home</Link>
-          <h1 style={{ ...h, fontSize: 26, letterSpacing: "-0.5px" }}>ClearKeys</h1>
+          <h1 style={{ ...h, fontSize: 26, letterSpacing: "-0.5px", display: "flex", alignItems: "center", gap: 8 }}><img src="/student/orb_keys.png" alt="" width={40} height={40} />ClearKeys</h1>
           <span style={{ color: C.muted, fontWeight: 700, fontSize: 14 }}>Grade {g}</span>
         </header>
 

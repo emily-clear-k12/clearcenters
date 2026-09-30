@@ -859,9 +859,9 @@ export default function HomeClient({ student, studentClass, assignments, mission
           <div className="hub-orb-wrap"><img src="/student/orb_progress.png" alt="" /></div>
           <span style={{ fontWeight: 700, fontSize: 13, color: COLORS.white, background: "rgba(20,26,50,.55)", padding: "4px 14px", borderRadius: 999, backdropFilter: "blur(6px)" }}>My Progress</span>
         </button>
-        {/* Sept 29, 2026: ClearKeys door, reusing the green orb. Open any time. */}
+        {/* Sept 29, 2026: ClearKeys door (Emily's keyboard-crystal orb). Open any time. */}
         <button type="button" className="hub-portal hub-portal--keys" onClick={() => router.push("/keys")}>
-          <div className="hub-orb-wrap"><img src="/student/orb_briefings.png" alt="" /></div>
+          <div className="hub-orb-wrap"><img src="/student/orb_keys.png" alt="" /></div>
           <span style={{ fontWeight: 700, fontSize: 13, color: COLORS.white, background: "rgba(20,26,50,.55)", padding: "4px 14px", borderRadius: 999, backdropFilter: "blur(6px)" }}>ClearKeys</span>
         </button>
         <button type="button" className="hub-portal hub-portal--crystal" onClick={() => router.push("/gear-locker")}>
