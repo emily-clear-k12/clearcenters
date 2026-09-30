@@ -1,0 +1,86 @@
+/* Inventor's Lab material system. All text and controls remain live HTML. */
+@font-face{font-family:MakerUI;src:url('/simulation-lab/fonts/nunito-latin-600-normal.woff2') format('woff2');font-weight:400 600;font-display:swap}
+@font-face{font-family:MakerUI;src:url('/simulation-lab/fonts/nunito-latin-800-normal.woff2') format('woff2');font-weight:700 900;font-display:swap}
+@font-face{font-family:MakerHand;src:url('/maker/_chrome/patrick-hand.ttf') format('truetype');font-weight:400;font-display:swap}
+.mk-lab{--mk-text:#2e087e;--mk-violet:#5420b1;--mk-muted:#7970b1;font-family:MakerUI,sans-serif;color:var(--mk-text);padding:10vh 4vw 4vh}
+.mk-lab button,.mk-lab input,.mk-lab textarea,.mk-lab select{font-family:MakerUI,sans-serif}
+.mk-lab-shell{position:relative;isolation:isolate;height:84dvh;border:2px solid #d2ffff;border-radius:30px;background:linear-gradient(120deg,#fffefa 0%,#f3efff 35%,#eae5fc 100%);box-shadow:inset 0 0 0 2px #ffffffc4,0 0 0 4px #00c7cf,0 0 0 7px #134951,0 0 0 10px #8babb6,0 0 0 13px #303854,0 0 0 16px #75849e,0 0 0 18px #b6c3dc,0 0 24px 7px #10e9ed66,0 22px 45px #01051baa}
+.mk-lab-shell:before{content:"";position:absolute;pointer-events:none;inset:-13px;border:4px solid transparent;border-top-color:#d7e6f499;border-left-color:#d2eef799;border-bottom-color:#111b3e99;border-radius:41px;z-index:-1}
+.mk-console-trim{position:absolute;left:29%;right:29%;bottom:-22px;height:12px;pointer-events:none;border-radius:0 0 15px 15px;border:3px solid #172e47;background:linear-gradient(#0a536b,#0beded 50%,#13465c);box-shadow:0 3px 0 #8798af,0 0 10px #18e0e3}
+.mk-lab-header{height:76px;flex:none;padding:12px 26px;background:linear-gradient(115deg,#fffffa,#f4eeff 70%,#e8e1fd);border-bottom:1px solid #c4b9f7;border-radius:28px 28px 0 0;box-shadow:inset 0 2px 2px #fff}
+.mk-lab-brand{font:600 clamp(23px,2.3vw,36px)/1 MakerUI,sans-serif;color:#4916b1;gap:15px;letter-spacing:-1px}
+.mk-lab-brand h1{font:800 clamp(23px,2.15vw,34px)/1 MakerUI,sans-serif;color:#2f0787;letter-spacing:-.7px}
+.mk-planet-mark{flex:none;color:#5427b8;transform:rotate(-18deg);margin-right:5px}
+.mk-brand-rule{height:35px;background:#987dd2;margin:0 1px}
+.mk-lab-header a{font:800 clamp(15px,1.45vw,23px) MakerUI,sans-serif;color:#320588;border-left:1px solid #a898df;border-radius:0;padding:0 8px 0 24px;gap:16px}
+.mk-lab-layout.is-editing{padding:0 8px;gap:7px;grid-template-columns:83px minmax(0,1fr) 24%;border-radius:0 0 22px 22px}
+.mk-lab-layout.is-editing.has-picture-dock{grid-template-columns:22% minmax(0,1fr) 24%}
+.mk-lab-tools,.has-picture-dock .mk-lab-tools{padding:13px 6px 10px;background:linear-gradient(100deg,#e1d8fd,#f4efff 40%,#e7e2ff);border-radius:17px 17px 0 0;box-shadow:inset 1px 0 2px #fff}
+.has-picture-dock .mk-lab-tools{grid-template-columns:76px minmax(0,1fr);gap:9px}
+.mk-tool-rail{gap:10px!important;min-height:0;overflow:auto;scrollbar-width:thin}
+.mk-tool-rail button{flex:none;height:89px;min-height:0;padding:13px 5px 10px;gap:7px;border:1px solid #d9ccff;border-radius:13px;background:linear-gradient(140deg,#fffefa,#f6f0ff);box-shadow:inset 0 2px 0 white,inset 0 -2px 1px #e4dcfb; color:#42109e;font:800 16px/1.1 MakerUI,sans-serif;transition:box-shadow .15s,transform .15s}
+.mk-tool-rail button:hover:not(:disabled){box-shadow:inset 0 2px 0 white,0 3px 8px #6036bd33;transform:translateY(-1px)}
+.mk-tool-rail button svg{width:34px;height:34px;flex:none}
+.mk-tool-rail button[aria-pressed=true]{background:linear-gradient(140deg,#8762d1,#613bb6 60%,#7849c8);border:2px solid #ac8ddd;color:#fff;box-shadow:inset 0 2px 2px #e7d7ff77,inset 0 -2px 3px #4c2a9f,0 2px 1px #b8a4e5}
+.mk-tool-rail .mk-my-work{order:9!important;height:45px!important;margin:0!important;font-size:11px!important;padding:5px!important;gap:2px;background:transparent!important;box-shadow:none;border:0}
+.mk-tool-rail .mk-my-work svg{width:18px;height:18px}
+.mk-ink-palette{display:flex;flex-direction:column;align-items:center;gap:8px;padding:11px 0;border:1px solid #d9ccff;border-radius:14px;background:linear-gradient(120deg,#fffcff,#eee8ff);box-shadow:inset 0 2px 0 #fff}
+.mk-tool-rail .mk-ink-palette button{width:28px;height:28px;min-height:0;border-radius:50%;padding:0;margin:0;border:1px solid #ffffffa8;background:var(--ink);box-shadow:inset 0 1px 2px #ffffff55}
+.mk-tool-rail .mk-ink-palette button[aria-pressed=true]{outline:2px solid #9a86d2;outline-offset:2px;border:2px solid white}
+.has-picture-dock .mk-picture-popover{background:linear-gradient(100deg,#faf7ff,#ede8ff);padding:6px;border-radius:13px;box-shadow:inset 0 2px 3px #ffffffdd}
+.has-picture-dock .mk-lib-inline .mk-lib-head h2{font:800 17px MakerUI,sans-serif;color:#36088e}
+.has-picture-dock .mk-lib-inline .mk-lib-head .mk-ghost{font-size:10px;color:#7968b1;padding:3px}
+.has-picture-dock .mk-lib-inline .mk-input{background:#eae4ff;border:1px solid #e1d7fa;border-radius:9px;box-shadow:inset 0 2px 3px #dad1f2;font-size:12px}
+.has-picture-dock .mk-lib-inline .mk-lib-count{color:#8b7cb4;font-size:10px}
+.has-picture-dock .mk-lib-inline .mk-lib-grid{gap:7px}
+.has-picture-dock .mk-lib-inline .mk-lib-card{padding:4px;border-radius:10px;border:1px solid #e1d6ff;background:linear-gradient(145deg,#fffefd,#f4efff);box-shadow:inset 0 1px 1px white}
+.has-picture-dock .mk-lib-inline .mk-lib-label{font:600 10px/1.15 MakerUI,sans-serif;max-height:24px;overflow:hidden;color:#6d589d}
+.mk-lab-workspace,.is-editing .mk-lab-workspace{border-radius:17px 17px 0 0;background:#f6f2ff}
+.mk-lab .mk-stage{font-family:MakerUI,sans-serif;background:linear-gradient(140deg,#fdfcff,#f3efff);border-radius:17px;padding:20px}
+.mk-lab .mk-stage>h2{font:800 clamp(24px,2.2vw,34px) MakerUI,sans-serif;color:#290773}
+.mk-lab .mk-stage>.mk-quiet{font:600 15px/1.45 MakerUI,sans-serif;color:#76658e}
+.mk-lab .mk-stage-poster{padding:12px;background:linear-gradient(130deg,#f8f4ff,#ece8fc);border:1px solid #fff}
+.mk-lab .mk-poster-composition{padding:14px 12px 8px;gap:5px;border:1px solid #d1c8ef;background:linear-gradient(110deg,#fffef8,#fefeff);box-shadow:0 2px 5px #aa9bc122,inset 0 0 20px #eee9df33}
+.mk-lab .mk-poster-composition>.mk-field{position:relative;isolation:isolate;margin:0}
+.mk-lab .mk-poster-composition>.mk-field:first-child{padding:0 4%;z-index:1;transform:rotate(-.65deg)}
+.mk-lab .mk-poster-composition>.mk-field:before{content:"";position:absolute;inset:0;z-index:-1;background:repeating-linear-gradient(13deg,#f6f3db33 0 2px,#bcb59215 3px,#fffffa88 5px 9px),linear-gradient(110deg,#f4efdb,#fffcf1 40%,#eee9d4);clip-path:polygon(0 6%,4% 2%,8% 5%,12% 0,18% 4%,23% 1%,29% 5%,34% 2%,40% 4%,45% 0,52% 4%,58% 1%,66% 5%,72% 1%,79% 4%,87% 0,94% 3%,100% 1%,99% 28%,100% 47%,99% 71%,100% 98%,94% 95%,88% 100%,81% 96%,74% 99%,67% 95%,61% 99%,55% 96%,49% 100%,43% 97%,35% 100%,28% 96%,21% 99%,14% 96%,7% 100%,0 97%,1% 74%,0 52%,1% 30%);box-shadow:inset 0 0 12px #b9aa7344}
+.mk-lab .mk-poster-composition #mk-poster-title{font:400 clamp(30px,3.8vw,59px)/1.12 MakerHand,cursive;color:#0864b9;text-shadow:.8px 1.1px #063e85;letter-spacing:.4px;padding:6px 0 9px;background:transparent!important;border:0;box-shadow:none;border-radius:0}
+.mk-lab .mk-poster-composition>.mk-field:has(#mk-poster-cap){transform:rotate(.4deg);margin-top:0}
+.mk-lab .mk-poster-composition>.mk-field:has(#mk-poster-cap):before{background:repeating-linear-gradient(17deg,#a7dcf222 0 2px,#e6faff77 4px 8px),linear-gradient(120deg,#a9dcf4,#d7f2fc 50%,#b4e0f3);box-shadow:inset 0 0 14px #83c5e477}
+.mk-lab .mk-poster-composition #mk-poster-cap{font:400 clamp(18px,2.2vw,33px)/1.15 MakerHand,cursive;padding:7px 0 10px;color:#063875;background:transparent!important;border:0;box-shadow:none;border-radius:0}
+.mk-lab .mk-poster-composition .mk-broadcast-preview{background:transparent;border:0}
+.mk-lab .mk-poster-preview{background:transparent}
+.mk-lab .mk-poster-preview img{object-fit:contain;width:100%;height:100%}
+.mk-lab .mk-poster-composition .mk-upload-row{gap:7px;opacity:.8}
+.mk-lab .mk-poster-composition .mk-upload-row .mk-ghost{font:700 10px MakerUI,sans-serif;padding:2px 6px;border:0;background:transparent}
+.mk-lab-mission{padding:8px;gap:13px;border-radius:17px;background:linear-gradient(100deg,#f4efff,#f0edff);border:1px solid #cfc4f3;box-shadow:inset 0 1px 2px white;scrollbar-width:thin}
+.mk-mission-card{border:1px solid #d7cbfa;border-radius:15px;padding:17px 16px;background:linear-gradient(125deg,#fffaff,#f7f3ff 60%,#eee7ff);box-shadow:inset 0 2px 2px white}
+.mk-mission-label{font:800 15px MakerUI,sans-serif;padding:6px 12px;background:#ded3ff;border-radius:10px;color:#3a098d;margin-bottom:10px}
+.mk-mission-card h2{font:900 clamp(24px,2.25vw,36px)/1.12 MakerUI,sans-serif;color:#35068d;letter-spacing:-.65px;margin-bottom:10px}
+.mk-mission-card h3{font:800 17px MakerUI,sans-serif;color:#310184;margin-bottom:13px}
+.mk-mission-card p{font:600 clamp(16px,1.45vw,23px)/1.4 MakerUI,sans-serif;color:#320b85;margin-bottom:7px}
+.mk-mission-card>button{background:transparent!important;border:0!important;padding:0!important;font:700 11px MakerUI,sans-serif!important;color:#7666aa!important}
+.mk-piece-list{gap:12px}
+.mk-piece-list button{font:800 clamp(17px,1.55vw,24px)/1.1 MakerUI,sans-serif;color:#34068f;min-height:64px;padding:13px 12px;border-radius:13px;border:1px solid #d3c4ff;background:linear-gradient(125deg,#fffcff,#f9f5ff);box-shadow:inset 0 1px 1px white;gap:13px}
+.mk-piece-list button>svg:first-child{width:29px;height:32px;stroke-width:2.1}
+.mk-piece-list button>svg:last-child{color:#b9aceb;flex:none}
+.mk-piece-list button[aria-current]{border:2px solid #00d2de;background:linear-gradient(115deg,#e9ffff,#f9ffff 65%,#caf9fb);color:#320389;box-shadow:inset 0 0 0 2px #ffffffbb,0 3px 0 #03a6bb,0 0 10px #00dad65c}
+.mk-piece-list button .mk-piece-check{background:#16c790;color:white;width:30px;height:30px;box-shadow:inset 0 1px 1px #ffffff55}
+.mk-piece-list button .mk-piece-current{color:#0081a1;width:30px;height:30px}
+.mk-mission-card .mk-piece-count{font:600 17px MakerUI,sans-serif;border-top:1px solid #dcd0f8;padding-top:14px;margin-top:17px}
+.mk-mission-card progress{height:13px;border:1px solid #c4b8f8;background:#dcd6fd}
+.mk-mission-card progress::-webkit-progress-bar{background:#dcd6fd}
+.mk-mission-card progress::-webkit-progress-value{background:linear-gradient(90deg,#15c780,#09d9cd)}
+.mk-preview-note{font:600 10px MakerUI,sans-serif;color:#9385b4;margin:0}
+.mk-lab-footer{padding:10px 16px 12px;background:linear-gradient(110deg,#f7f1ff,#f5f1ff 55%,#e8e2fd);border-top:1px solid #c9b9f1;border-radius:0 0 28px 28px;box-shadow:inset 0 2px 1px #fff}
+.mk-lab-footer .mk-save-row{display:flex;align-items:center;justify-content:space-between;width:100%;margin:0;padding:0;border:0;gap:15px}
+.mk-lab-footer .mk-pill{display:flex;align-items:center;gap:9px;margin-right:auto;background:none;font:600 17px MakerUI,sans-serif;color:#8276cb;padding:4px 12px}
+.mk-lab-footer .mk-pill svg{color:white;background:#9992d2;border-radius:50%;padding:3px;width:25px;height:25px}
+.mk-lab-footer .mk-ghost{min-width:135px;min-height:48px;font:800 20px MakerUI,sans-serif;color:#31058a;padding:10px 22px;border:1px solid #b29cef;border-radius:12px;background:linear-gradient(#faf7ff,#e9e2ff);box-shadow:inset 0 2px 1px #fff,0 1px 2px #a899cb33}
+.mk-lab .mk-next{display:inline-flex;align-items:center;justify-content:center;gap:20px;font:800 19px MakerUI,sans-serif;color:#1f1378;padding:10px 24px;border:2px solid #91ffff;border-radius:17px;background:linear-gradient(115deg,#05e1cf,#00d5e3 70%,#00c9e5);box-shadow:inset 0 0 0 2px #ffffff99,inset 0 -3px 3px #00aebb77,0 0 0 2px #10c3cf,0 3px 2px #018d9d,0 0 12px #06e6e399;min-height:49px}
+.mk-lab .mk-next:hover:not(:disabled){filter:brightness(1.05);box-shadow:inset 0 0 0 2px #fff,inset 0 -3px 3px #00aebb77,0 0 0 2px #10c3cf,0 3px 2px #018d9d,0 0 18px #06e6e3aa}
+.mk-lab .mk-next:disabled{opacity:.45}
+@media(min-width:901px) and (max-height:800px){.mk-lab{padding-top:7vh;padding-bottom:3vh}.mk-lab-shell{height:87dvh}.mk-lab-header{height:62px}.mk-tool-rail button{height:70px;font-size:14px;padding:8px 4px;gap:4px}.mk-tool-rail button svg{width:28px;height:28px}.mk-ink-palette{gap:7px;padding:8px 0}.mk-tool-rail .mk-ink-palette button{height:22px;width:22px}.mk-mission-card{padding:12px}.mk-piece-list button{min-height:51px;font-size:17px;padding:10px}.mk-mission-card h2{font-size:26px}.mk-mission-card p{font-size:16px}.mk-lab-footer .mk-next,.mk-lab-footer .mk-ghost{min-height:44px;padding:7px 19px;font-size:17px}.mk-lab .mk-poster-composition #mk-poster-title{font-size:clamp(29px,3.3vw,48px)}.mk-lab .mk-poster-composition #mk-poster-cap{font-size:clamp(17px,1.9vw,28px)}}
+@media(max-width:1100px) and (min-width:901px){.mk-lab{padding-inline:2.5vw}.has-picture-dock .mk-lab-tools{grid-template-columns:60px minmax(0,1fr);gap:5px;padding-inline:3px}.mk-tool-rail button{font-size:13px}.mk-lab-brand{font-size:24px}.mk-lab-brand h1{font-size:24px}.mk-planet-mark{width:32px}.mk-mission-card{padding:11px}.mk-mission-card h2{font-size:25px}.mk-mission-card p{font-size:16px}.mk-lab-header{padding-inline:17px}}
+@media(max-width:900px){.mk-lab{padding:65px 20px 30px}.mk-lab-shell{height:auto;min-height:85vh}.mk-lab-header{height:auto;min-height:64px;padding:12px}.mk-lab-brand,.mk-lab-brand h1{font-size:19px;gap:8px;letter-spacing:-.5px}.mk-planet-mark{width:28px;margin:0}.mk-lab-header a{font-size:13px;gap:5px;padding-left:10px}.mk-lab-header a svg{width:20px}.mk-lab-layout.is-editing,.mk-lab-layout.is-editing.has-picture-dock{grid-template-columns:67px minmax(0,1fr);gap:6px;padding:7px}.mk-tool-rail button{height:75px;font-size:13px}.mk-tool-rail button svg{width:27px;height:27px}.mk-tool-rail .mk-my-work{height:42px!important}.mk-ink-palette{gap:7px}.mk-tool-rail .mk-ink-palette button{width:24px;height:24px}.mk-lab .mk-stage-poster{height:560px;padding:8px}.mk-lab .mk-poster-composition{padding:8px}.mk-lab .mk-poster-composition #mk-poster-title{font-size:30px}.mk-lab .mk-poster-composition #mk-poster-cap{font-size:20px}.mk-lab-footer{padding:10px}.mk-lab-footer .mk-pill{font-size:12px;padding:0;gap:4px}.mk-lab-footer .mk-ghost{min-width:65px;font-size:16px;padding:8px 12px}.mk-lab-footer .mk-next{font-size:16px;padding:8px 12px;gap:4px}.mk-lab-footer .mk-save-row>div{width:auto}.mk-lab-mission{border-radius:17px}.mk-console-trim{display:none}}
+@media(max-width:540px){.mk-lab{padding-inline:13px}.mk-lab-brand>span:first-of-type{display:none}.mk-brand-rule{display:none}.mk-lab-brand h1{font-size:20px}.mk-lab .mk-poster-composition #mk-poster-title{font-size:24px}.mk-lab .mk-poster-composition #mk-poster-cap{font-size:17px}.mk-lab .mk-stage-poster{height:480px}.mk-lab-footer .mk-next{font-size:13px}.mk-lab-footer .mk-ghost{font-size:14px}.mk-lab-footer .mk-pill{font-size:11px}.mk-lab-footer .mk-pill svg{width:18px;height:18px}}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from "react";
 
 const SURFACES = {
   whiteboard: {
@@ -24,14 +24,17 @@ function surfaceConfig(surface) {
  * initialImage: optional existing data URL to restore.
  * surface: "whiteboard" | "light_table" — fill/stroke + CSS class (keeps ink when switching).
  */
-export default function MakerDrawPad({
+const MakerDrawPad = forwardRef(function MakerDrawPad({
   initialImage = null,
   onChange,
   height = 280,
   labelChips = null,
   disabled = false,
   surface = "whiteboard",
-}) {
+  inkColor,
+  onInkColorChange,
+  onUndoAvailabilityChange,
+}, forwardedRef) {
   const canvasRef = useRef(null);
   const drawing = useRef(false);
   const last = useRef(null);
@@ -56,6 +59,9 @@ export default function MakerDrawPad({
     setUndoCount(history.current.length);
     if (previous.hasInk) emit(); else onChange?.(null);
   }
+  useImperativeHandle(forwardedRef, () => ({ undo }));
+  useEffect(() => { onUndoAvailabilityChange?.(undoCount > 0); }, [undoCount, onUndoAvailabilityChange]);
+  useEffect(() => () => onUndoAvailabilityChange?.(false), [onUndoAvailabilityChange]);
   const cfg = surfaceConfig(surface);
 
   useEffect(() => {
@@ -114,7 +120,7 @@ export default function MakerDrawPad({
     const canvas = canvasRef.current;
     const ctx = canvas.getContext("2d");
     const p = pos(e);
-    const stroke = color;
+    const stroke = inkColor || color;
     const fill = surfaceConfig(surface).fill;
     ctx.lineCap = "round";
     ctx.lineJoin = "round";
@@ -200,7 +206,7 @@ export default function MakerDrawPad({
           Clear
         </button>
         <button type="button" className="mk-tool" disabled={disabled || !undoCount} onClick={undo}>Undo</button>
-        <label className="mk-pen-color">Ink <input aria-label="Drawing color" type="color" value={color} disabled={disabled} onChange={e => setColor(e.target.value)} /></label>
+        <label className="mk-pen-color">Ink <input aria-label="Drawing color" type="color" value={inkColor || color} disabled={disabled} onChange={e => { setColor(e.target.value); onInkColorChange?.(e.target.value); }} /></label>
         <span className="mk-quiet" style={{ marginLeft: "auto", fontSize: 12 }}>
           {hasInk ? "Drawing saved as you go" : "Draw here"}
         </span>
@@ -228,7 +234,8 @@ export default function MakerDrawPad({
       />
     </div>
   );
-}
+});
+export default MakerDrawPad;
 
 function roundRect(ctx, x, y, w, h, r) {
   const rr = Math.min(r, w / 2, h / 2);

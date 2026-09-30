@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Check, ChevronRight } from "lucide-react";
 import { useRouter } from "next/navigation";
 import MakerStudioFrame, { MakerModeIcon } from "./MakerStudioFrame";
 import { MAKER_MODES } from "../../../lib/cases/maker-studio/modes";
@@ -10,6 +11,7 @@ import SubmitReflection from "../../../components/submit/SubmitReflection";
 import { ACTIVITY_CHECKS } from "../../../lib/selfCheckLists";
 import "./maker-studio.css";
 import "./maker-studio-lab.css";
+import "./maker-studio-finish.css";
 
 const VOICE_CAP_SEC = 90;
 const DIAGRAM_CHIPS = ["Part", "Step 1", "Step 2", "Cause", "Effect", "Result"];
@@ -478,6 +480,9 @@ export default function MakerStudioClient({
   const [micPending, setMicPending] = useState(false);
   const [processingVoice, setProcessingVoice] = useState(false);
   const editorRef = useRef(null);
+  const posterPadRef = useRef(null);
+  const [inkColor, setInkColor] = useState("#087dff");
+  const [canUndoDrawing, setCanUndoDrawing] = useState(false);
   const saveQueue = useRef(Promise.resolve());
   const editVersion = useRef(0);
   const allowLeave = useRef(false);
@@ -1231,7 +1236,7 @@ export default function MakerStudioClient({
   const hasPictures = !!imageKinds[activeMode];
   const pictureTarget = libraryPicker || { kind: imageKinds[activeMode], ...(activeMode === "comic" ? { index: 0 } : {}) };
   function selectTool(next) {
-    setTool(next === "pictures" ? (tool === "pictures" ? null : "pictures") : null);
+    setTool(next === "pictures" ? (tool === "pictures" ? null : "pictures") : next);
     if (next === "draw") {
       if (activeMode === "poster" || activeMode === "postcard") setPosterDrawing(true);
       else editorRef.current?.querySelector("canvas")?.scrollIntoView({block:"nearest"});
@@ -1248,7 +1253,7 @@ export default function MakerStudioClient({
   const title = (publicCase && publicCase.title) || "Maker Studio";
   const topicLine = config.topic ? config.topic : null;
 
-  const frameProps = { title: topicLine || title, prompt: config.prompt, modes: visibleModes, savedModes: modes, activeMode: view === "mode" ? activeMode : null, doneCount, busy: navigationBusy || submitted, onMode: switchMode, onHome: () => saveModeDraft(true), onLeave: leaveStudio, library, hasPictures, tool, onTool: selectTool, status, previewMode };
+  const frameProps = { title: topicLine || title, prompt: config.prompt, modes: visibleModes, savedModes: modes, activeMode: view === "mode" ? activeMode : null, doneCount, busy: navigationBusy || submitted, onMode: switchMode, onHome: () => saveModeDraft(true), onLeave: leaveStudio, library, hasPictures, tool, onTool: selectTool, status, previewMode, showPalette: activeMode === "poster", inkColor, onInkColor: color => { setInkColor(color); setPosterDrawing(true); setTool("draw"); }, onUndo: () => posterPadRef.current?.undo(), canUndo: posterDrawing && canUndoDrawing };
 
   if (view === "done" || submitted) {
     return (
@@ -1290,7 +1295,7 @@ export default function MakerStudioClient({
       <MakerStudioFrame {...frameProps} footer={<>
             <div className="mk-save-row">
               <span className={`mk-pill${saveState === "error" ? " warn" : ""}`}>
-                {saveState === "saving" ? "Saving…" : saveState === "error" ? "Not saved — please retry" : "Saved"}
+                <Check size={18} aria-hidden="true" /> {saveState === "saving" ? "Saving…" : saveState === "error" ? "Not saved — please retry" : "Saved"}
               </span>
               <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
                 <button type="button" className="mk-ghost" onClick={() => saveModeDraft(false)} disabled={navigationBusy}>
@@ -1302,7 +1307,7 @@ export default function MakerStudioClient({
                   onClick={markModeDone}
                   disabled={navigationBusy || !modeReadyForDone(activeMode, draft)}
                 >
-                  Done with {meta.label?.toLowerCase() || "piece"}
+                  Done with {meta.label?.toLowerCase() || "piece"} <ChevronRight size={25} aria-hidden="true" />
                 </button>
               </div>
             </div>
@@ -1436,7 +1441,7 @@ export default function MakerStudioClient({
               <div className="mk-poster-composition">
                 <div className="mk-field"><label className="mk-sr-only" htmlFor="mk-poster-title">Poster title</label><input id="mk-poster-title" className="mk-input" value={draft.title || ""} onChange={e => patchDraft({ title:e.target.value })} placeholder="Your poster headline…" disabled={busy} maxLength={80} /></div>
                 <div className="mk-broadcast-preview">
-                  {draft.imageDataUrl && !posterDrawing ? <div className="mk-poster-preview"><img src={draft.imageDataUrl} alt="Poster artwork" /></div> : <MakerDrawPad initialImage={draft.imageDataUrl || null} onChange={url => patchDraft({ imageDataUrl:url })} disabled={busy} height={360} />}
+                  {draft.imageDataUrl && !posterDrawing ? <div className="mk-poster-preview"><img src={draft.imageDataUrl} alt="Poster artwork" /></div> : <MakerDrawPad ref={posterPadRef} inkColor={inkColor} onInkColorChange={setInkColor} onUndoAvailabilityChange={setCanUndoDrawing} initialImage={draft.imageDataUrl || null} onChange={url => patchDraft({ imageDataUrl:url })} disabled={busy} height={360} />}
                 </div>
                 <div className="mk-field"><label className="mk-sr-only" htmlFor="mk-poster-cap">Poster caption</label><input id="mk-poster-cap" className="mk-input" value={draft.caption || ""} onChange={e => patchDraft({caption:e.target.value})} placeholder="Add a caption about your idea…" disabled={busy} maxLength={160} /></div>
                 <div className="mk-upload-row">
