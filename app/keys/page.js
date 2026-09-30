@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { supabaseAdmin } from "../../lib/supabaseAdmin";
 import { getVisibleAssignmentsForStudent } from "../../lib/getStudentAssignments";
 import { getRelayStationLesson, listRelayStationLessons, TRACK_LEVELS, rankFor, rankBadgeSrc, centralDateKey, continuesStreak } from "../../lib/cases/relay-station";
-import { STORY_CHAPTERS, STORY_ACTS, chapterUnlocked, unlockHint } from "../../lib/cases/relay-station/story";
+import { STORY_CHAPTERS, STORY_ACTS, chapterUnlocked, unlockHint, chapterImage, chapterHook } from "../../lib/cases/relay-station/story";
 import { ARCADE_GAMES, gameUnlocked } from "../../lib/cases/relay-station/arcade";
 import { classFuel } from "../../lib/clearkeysFuel";
 import { getClassPlanet, CLASS_PLANETS } from "../../lib/classPlanets";
@@ -77,7 +77,7 @@ export default async function KeysPage() {
     name: act.name,
     chapters: act.chapters.map((n) => {
       const c = STORY_CHAPTERS.find((x) => x.n === n);
-      return { n, title: c.title, open: chapterUnlocked(c, unlock), hint: unlockHint(c) };
+      return { n, title: c.title, open: chapterUnlocked(c, unlock), hint: unlockHint(c), image: chapterImage(n), hook: chapterHook(n) };
     }),
   }));
   const arcade = ARCADE_GAMES.map((g) => ({ key: g.key, name: g.name, line: g.line, image: g.image, open: gameUnlocked(g, unlock), unlockLevel: g.unlockLevel }));

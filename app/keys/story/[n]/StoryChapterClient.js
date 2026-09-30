@@ -2,6 +2,7 @@
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import RelayStationClient from "../../../activity/[assignmentId]/RelayStationClient";
+import { chapterImage, actFor } from "../../../../lib/cases/relay-station/story";
 
 // Bright story page (same look as the ClearKeys door) + the dark typing
 // screen for the transmission. Sept 29, 2026.
@@ -56,9 +57,9 @@ export default function StoryChapterClient({ typing, chapter, next, lesson, stud
           <span style={{ color: C.muted, fontWeight: 700, fontSize: 14 }}>Chapter {chapter.n} of 24</span>
         </header>
 
-        <section style={{ position: "relative", borderRadius: 28, overflow: "hidden", minHeight: 200, display: "flex", alignItems: "flex-end", padding: 18, backgroundColor: "#dcd6f5", backgroundImage: "url(/relay/keys_room.jpg)", backgroundSize: "cover", backgroundPosition: "center 35%", boxShadow: "0 12px 34px rgba(60,40,140,.22)" }}>
+        <section style={{ position: "relative", borderRadius: 28, overflow: "hidden", minHeight: 260, display: "flex", alignItems: "flex-end", padding: 18, backgroundColor: "#dcd6f5", backgroundImage: `url(${chapterImage(chapter.n)}), url(/relay/keys_room.jpg)`, backgroundSize: "cover", backgroundPosition: "center 35%", boxShadow: "0 12px 34px rgba(60,40,140,.22)" }}>
           <div style={{ ...glass, padding: "14px 18px" }}>
-            <div style={{ color: C.muted, fontSize: 12, fontWeight: 800, letterSpacing: ".08em", textTransform: "uppercase" }}>{chapter.act ? `${chapter.act} · ` : ""}Chapter {chapter.n}</div>
+            <div style={{ color: C.muted, fontSize: 12, fontWeight: 800, letterSpacing: ".08em", textTransform: "uppercase" }}>{actFor(chapter.n) ? `Act ${actFor(chapter.n).number} · ${actFor(chapter.n).name} · ` : ""}Chapter {chapter.n}</div>
             <h1 style={{ fontFamily: "'Poppins', sans-serif", margin: 0, fontSize: 28 }}>{chapter.title}</h1>
           </div>
         </section>

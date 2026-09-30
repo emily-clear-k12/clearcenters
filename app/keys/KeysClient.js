@@ -67,6 +67,64 @@ function ActivityCard({ label, title, line, code, href, button, color, off }) {
   );
 }
 
+// Sept 30, 2026 (Emily): one story tile, not the whole chapter list. It shows
+// the newest chapter the student has unlocked, with that chapter's picture (the
+// station picture shows underneath until the chapter picture is made),
+// and changes each time a new chapter unlocks. Earlier chapters stay one tap
+// away under "Reread a chapter".
+function StoryTile({ story }) {
+  const all = story.flatMap((a, i) => a.chapters.map((c) => ({ ...c, act: i + 1, actName: a.name })));
+  const opened = all.filter((c) => c.open);
+  const latest = opened[opened.length - 1] || null;
+  const next = all.find((c) => !c.open) || null;
+  const show = latest || all[0];
+  const locked = !latest;
+  const Wrap = locked ? "div" : Link;
+  const wrapProps = locked ? {} : { href: `/keys/story/${show.n}` };
+  return (
+    <section id="story" style={{ display: "grid", gap: 10 }}>
+      <Wrap {...wrapProps} className="ck-story-tile" aria-label={locked ? `Story locked. ${show.hint}.` : `Read Chapter ${show.n}: ${show.title}`} style={{ position: "relative", display: "block", minHeight: 300, borderRadius: 28, overflow: "hidden", textDecoration: "none", color: "#fff", background: "#1b1440", boxShadow: "0 14px 36px rgba(60,40,140,.28)" }}>
+        <div className="ck-story-img" aria-hidden="true" style={{ position: "absolute", inset: 0, backgroundImage: `url(${show.image}), url(/relay/station_hero.jpg)`, backgroundSize: "cover", backgroundPosition: "center", filter: locked ? "blur(3px) brightness(.7)" : "none" }} />
+        <div style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg, rgba(20,12,60,0) 25%, rgba(20,12,60,.55) 60%, rgba(20,12,60,.92) 100%)" }} />
+        <div style={{ position: "absolute", top: 16, left: 16, display: "flex", gap: 8, flexWrap: "wrap" }}>
+          <span style={{ background: "rgba(255,255,255,.9)", color: C.ink, borderRadius: 999, padding: "5px 12px", fontSize: 12, fontWeight: 800, letterSpacing: ".06em", textTransform: "uppercase" }}>Story · The Hush</span>
+          {!locked && <span className="ck-story-new" style={{ background: `linear-gradient(135deg, ${C.gold}, #FFD466)`, color: "#3a2a00", borderRadius: 999, padding: "5px 12px", fontSize: 12, fontWeight: 800 }}>✦ Newest chapter</span>}
+        </div>
+        <div style={{ position: "relative", display: "flex", flexDirection: "column", justifyContent: "flex-end", minHeight: 300, padding: "22px 24px" }}>
+          <div style={{ fontSize: 12.5, fontWeight: 800, letterSpacing: ".08em", textTransform: "uppercase", color: "#cfc3ff" }}>
+            {locked ? "Incoming signal…" : `Act ${show.act} · ${show.actName} · Chapter ${show.n} of ${all.length}`}
+          </div>
+          <div style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 800, fontSize: 32, lineHeight: 1.15, margin: "4px 0 6px", textShadow: "0 2px 12px rgba(0,0,0,.35)" }}>
+            {locked ? "A lost ship is calling for help" : show.title}
+          </div>
+          <p style={{ margin: "0 0 14px", fontSize: 16.5, lineHeight: 1.45, color: "#eee9ff", maxWidth: 560 }}>
+            {locked ? "The signal is broken. Pass Level 1 to decode the first chapter." : show.hook}
+          </p>
+          {!locked && <span style={{ ...pill(`linear-gradient(135deg, ${C.violet}, ${C.teal})`), alignSelf: "flex-start" }}>Read Chapter {show.n} →</span>}
+        </div>
+      </Wrap>
+      <div style={{ ...glass, padding: "12px 16px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
+        <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }} aria-label={`${opened.length} of ${all.length} chapters unlocked`}>
+          {all.map((c) => <span key={c.n} style={{ width: 10, height: 10, borderRadius: 999, background: c.open ? `linear-gradient(135deg, ${C.violet}, ${C.teal})` : "#dcd6f0" }} />)}
+        </div>
+        <span style={{ color: C.muted, fontSize: 13.5, fontWeight: 700 }}>
+          {next ? (latest ? `Next up: Chapter ${next.n}. ${next.hint}.` : `${opened.length} of ${all.length} chapters unlocked`) : `All ${all.length} chapters unlocked!`}
+        </span>
+      </div>
+      {opened.length > 1 && (
+        <details style={{ ...glass, padding: "10px 16px" }}>
+          <summary style={{ cursor: "pointer", fontWeight: 800, color: C.violet }}>Reread a chapter</summary>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 10 }}>
+            {opened.map((c) => (
+              <Link key={c.n} href={`/keys/story/${c.n}`} style={{ background: "#fff", border: "1px solid #e4def6", borderRadius: 999, padding: "6px 12px", color: C.ink, fontWeight: 700, fontSize: 13.5, textDecoration: "none" }}>{c.n}. {c.title}</Link>
+            ))}
+          </div>
+        </details>
+      )}
+    </section>
+  );
+}
+
 export default function KeysClient({ firstName, track, daily, race, readings, level, rank, streak, bests, history, practice, grade, story = [], arcade = [], fuel = null, fluency = null, minutes = null, recommended = 1 }) {
   const subjects = ["All", ...Array.from(new Set(practice.map((p) => p.subject)))];
   const [subject, setSubject] = useState("All");
@@ -77,7 +135,13 @@ export default function KeysClient({ firstName, track, daily, race, readings, le
 
   return (
     <main style={{ minHeight: "100vh", color: C.ink, fontFamily: "'Inter', sans-serif", padding: "20px 16px 60px", background: "linear-gradient(180deg, #E9E4FB 0%, #F2F0FA 40%, #F7F5FD 100%)" }}>
-      <style>{`@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@600;700;800&family=Inter:wght@400;500;600;700;800&display=swap');`}</style>
+      <style>{`@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@600;700;800&family=Inter:wght@400;500;600;700;800&display=swap');
+.ck-story-img{transition:transform .6s ease}
+a.ck-story-tile:hover .ck-story-img,a.ck-story-tile:focus-visible .ck-story-img{transform:scale(1.04)}
+a.ck-story-tile:focus-visible{outline:3px solid #7B5DFF;outline-offset:3px}
+.ck-story-new{animation:ckGlow 2.4s ease-in-out infinite}
+@keyframes ckGlow{0%,100%{box-shadow:0 0 0 0 rgba(255,212,102,.0)}50%{box-shadow:0 0 16px 3px rgba(255,212,102,.75)}}
+@media (prefers-reduced-motion: reduce){.ck-story-new{animation:none}.ck-story-img{transition:none}}`}</style>
       <div style={{ width: "min(1060px, 100%)", margin: "0 auto", display: "grid", gap: 18 }}>
         <header style={{ ...glass, borderRadius: 999, padding: "10px 14px 10px 18px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
           <Link href="/home" style={{ color: C.violet, textDecoration: "none", fontWeight: 800 }}>← Home</Link>
@@ -182,44 +246,7 @@ export default function KeysClient({ firstName, track, daily, race, readings, le
           />
         </div>
 
-        {story.length > 0 && (() => {
-          const all = story.flatMap((a) => a.chapters);
-          const latest = [...all].reverse().find((c) => c.open);
-          return (
-            <section id="story" style={{ ...glass, padding: 20 }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 12, flexWrap: "wrap" }}>
-                <h2 style={{ ...h, fontSize: 22 }}>Story: The Hush</h2>
-                <span style={{ color: C.muted, fontWeight: 700, fontSize: 14 }}>{all.filter((c) => c.open).length} of {all.length} chapters unlocked</span>
-              </div>
-              <p style={{ color: C.muted, margin: "4px 0 14px" }}>A lost ship is calling for help, but the signal is broken. Every level you pass repairs more of it.</p>
-              <div style={{ display: "grid", gap: 14 }}>
-                {story.map((act, i) => (
-                  <div key={act.name}>
-                    <div style={{ ...eyebrow, marginBottom: 8 }}>Act {i + 1} · {act.name}</div>
-                    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(190px, 1fr))", gap: 10 }}>
-                      {act.chapters.map((c) => {
-                        const isNew = latest && c.n === latest.n;
-                        const inner = (
-                          <>
-                            <span style={{ flex: "0 0 34px", height: 34, borderRadius: 999, display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 800, background: c.open ? `linear-gradient(135deg, ${C.violet}, ${C.teal})` : "#ece8f8", color: c.open ? "#fff" : C.muted }}>{c.open ? c.n : "🔒"}</span>
-                            <span style={{ minWidth: 0 }}>
-                              <span style={{ display: "block", fontWeight: 800, color: c.open ? C.ink : C.muted }}>{c.open ? c.title : `Chapter ${c.n}`}</span>
-                              <span style={{ display: "block", fontSize: 12.5, color: isNew ? C.violet : C.muted, fontWeight: isNew ? 800 : 500 }}>{c.open ? (isNew ? "Newest chapter!" : `Chapter ${c.n}`) : c.hint}</span>
-                            </span>
-                          </>
-                        );
-                        const box = { display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", borderRadius: 16, background: c.open ? "#fff" : "rgba(255,255,255,.55)", textDecoration: "none", boxShadow: isNew ? `0 0 0 2px ${C.violet}, 0 6px 16px rgba(123,93,255,.25)` : c.open ? "0 4px 12px rgba(60,40,140,.08)" : "none" };
-                        return c.open
-                          ? <Link key={c.n} href={`/keys/story/${c.n}`} style={box}>{inner}</Link>
-                          : <div key={c.n} style={box} aria-label={`Chapter ${c.n}, locked. ${c.hint}.`}>{inner}</div>;
-                      })}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </section>
-          );
-        })()}
+        {story.length > 0 && <StoryTile story={story} />}
 
         {arcade.length > 0 && (
           <section id="arcade" style={{ ...glass, padding: 20 }}>
