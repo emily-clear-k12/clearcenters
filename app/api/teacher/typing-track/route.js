@@ -43,12 +43,12 @@ export async function POST(request) {
     const ids = activeStudents.map((s) => s.id);
     let progressRows = [];
     if (ids.length) {
-      const { data, error } = await supabaseAdmin
-        .from("relay_station_progress")
-        .select("student_id, current_level, level_results, completed_at, updated_at, placement, accommodations, daily")
-        .in("student_id", ids);
-      if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-      progressRows = data || [];
+      // Fluency (levels 21-40) is included once add_clearkeys_fluency.sql has run.
+      const cols = "student_id, current_level, level_results, completed_at, updated_at, placement, accommodations, daily";
+      let res = await supabaseAdmin.from("relay_station_progress").select(`${cols}, fluency`).in("student_id", ids);
+      if (res.error) res = await supabaseAdmin.from("relay_station_progress").select(cols).in("student_id", ids);
+      if (res.error) return NextResponse.json({ error: res.error.message }, { status: 500 });
+      progressRows = res.data || [];
     }
     const byStudent = Object.fromEntries(progressRows.map((p) => [p.student_id, p]));
     return NextResponse.json({

@@ -49,46 +49,39 @@ export default function ClearKeysSwitch({ classId, className, onChange, compact 
   if (!classId) return null;
   const pieces = status?.pieces || [];
   const allOn = pieces.length > 0 && pieces.every((p) => p.on);
-  const box = { background: "#fff", border: "1px solid #e7e2f2", borderRadius: 18, padding: compact ? 14 : 20, margin: compact ? "0 0 14px" : "0 0 18px" };
 
   return (
-    <section style={box} aria-live="polite">
-      <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
-        <div>
-          <h2 style={{ margin: 0, fontSize: compact ? 17 : 20 }}>{allOn ? `ClearKeys is on${className ? ` for ${className}` : ""}` : `Turn on ClearKeys${className ? ` for ${className}` : " for this class"}`}</h2>
-          <p style={{ margin: "4px 0 0", color: "#70658d", fontSize: 14 }}>
+    <div className={compact ? "cc-panel" : ""} style={compact ? { marginBottom: 14 } : { marginTop: 16 }} aria-live="polite">
+      <div className="cc-row cc-between">
+        <div style={{ minWidth: 0, flex: "1 1 280px" }}>
+          <strong style={{ font: "600 16px Poppins, sans-serif" }}>{allOn ? `ClearKeys is on${className ? ` for ${className}` : ""}` : `Turn on ClearKeys${className ? ` for ${className}` : ""}`}</strong>
+          <p className="cc-muted" style={{ margin: "4px 0 0" }}>
             {allOn
               ? "Every student has the Foundations Track, the Daily Transmission and the Class Relay Race. Add readings any time."
-              : "One press gives every student the Foundations Track, a new Daily Transmission each school day, and the Class Relay Race. Nothing has a due date."}
+              : "One click gives every student the Foundations Track, a new Daily Transmission each school day, and the Class Relay Race. Nothing gets a due date."}
           </p>
         </div>
         {status && !allOn && (
-          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <div className="cc-row">
             {needGrade && (
-              <label style={{ fontSize: 14, fontWeight: 600 }}>
-                Grade{" "}
+              <label className="cc-field" style={{ margin: 0 }}>
+                Grade
                 <select value={grade} onChange={(e) => setGrade(e.target.value)}>
                   {["3", "4", "5"].map((g) => <option key={g} value={g}>Grade {g}</option>)}
                 </select>
               </label>
             )}
-            <button type="button" className="cc-btn" onClick={turnOn} disabled={busy} style={{ background: "#7541cf", color: "#fff", border: 0 }}>
-              {busy ? "Turning on…" : "Turn on ClearKeys"}
-            </button>
+            <button type="button" className="cc-btn" onClick={turnOn} disabled={busy}>{busy ? "Turning on…" : "Turn on ClearKeys"}</button>
           </div>
         )}
       </div>
       {pieces.length > 0 && (
-        <ul style={{ listStyle: "none", padding: 0, margin: "12px 0 0", display: "flex", flexWrap: "wrap", gap: 8 }}>
-          {pieces.map((p) => (
-            <li key={p.key} style={{ fontSize: 13, fontWeight: 600, padding: "4px 10px", borderRadius: 999, background: p.on ? "#e3f7ec" : "#f3f0f8", color: p.on ? "#087c43" : "#70658d" }}>
-              {p.on ? "On" : "Off"} · {p.name}
-            </li>
-          ))}
-        </ul>
+        <div className="cc-row" style={{ gap: 6, marginTop: 10 }}>
+          {pieces.map((p) => <span key={p.key} className={`cc-badge${p.on ? " teal" : " neutral"}`}>{p.on ? "On" : "Off"} · {p.name}</span>)}
+        </div>
       )}
-      {needGrade && <p style={{ margin: "10px 0 0", fontSize: 14 }}>This class has no grade set. Pick one so students get the right goals.</p>}
-      {error && <p role="alert" style={{ margin: "10px 0 0", color: "#c4233a", fontSize: 14 }}>{error}</p>}
-    </section>
+      {needGrade && <p className="cc-muted" style={{ margin: "10px 0 0" }}>This class has no grade set. Pick one so students get the right goals.</p>}
+      {error && <p className="cc-error" role="alert" style={{ margin: "10px 0 0" }}>{error}</p>}
+    </div>
   );
 }

@@ -127,7 +127,7 @@ export default function KeysClient({ firstName, track, daily, race, readings, le
             <div style={{ flex: "1 1 320px", minWidth: 0 }}>
               <div style={eyebrow}>Class relay beam · this week</div>
               <h2 style={{ ...h, fontSize: 20, margin: "2px 0 4px" }}>{fuel.pct >= 100 ? `Beam reached ${fuel.planet.name}!` : `Power the beam to ${fuel.planet.name}`}</h2>
-              <p style={{ color: C.muted, margin: "0 0 10px", fontSize: 14 }}>Every Daily Transmission and every level anyone in your class passes adds fuel. {fuel.fuel} of {fuel.goal} this week.</p>
+              <p style={{ color: C.muted, margin: "0 0 10px", fontSize: 14 }}>Every Daily Transmission and every level anyone in your class passes adds fuel. {fuel.fuel >= fuel.goal ? `${fuel.fuel} fuel this week, past the goal of ${fuel.goal}!` : `${fuel.fuel} of ${fuel.goal} this week.`}</p>
               <div style={{ position: "relative", height: 16, borderRadius: 999, background: "rgba(123,93,255,.15)", overflow: "hidden" }}>
                 <div style={{ width: `${fuel.pct}%`, height: "100%", borderRadius: 999, background: `linear-gradient(90deg, ${C.teal}, ${C.violet}, ${C.gold})`, boxShadow: `0 0 12px ${C.teal}` }} />
               </div>
