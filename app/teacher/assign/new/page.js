@@ -503,6 +503,8 @@ function NewAssignmentContent() {
   const [pickedStandard,setPickedStandard]=useState(searchParams.get('standard')||null);
   const [lane,setLane]=useState('standard');
   const [product,setProduct]=useState('centers');
+  // Sept 30: true once the class already has the Track, Daily and Race; then the shelf is just Readings.
+  const [keysOn,setKeysOn]=useState(false);
   const [followClass,setFollowClass]=useState(true);
   const [limit,setLimit]=useState(12);
   const [casesLoading,setCasesLoading]=useState(true);
@@ -948,12 +950,22 @@ function displayCode(code){return String(code||'').replace(/^TEKS\s+/i,'').repla
                 <button onClick={() => router.push("/teacher/class?tab=work")} className="gc-btn" style={{ background: searchParams.get("group") ? `${ACCENT}22` : ACCENT, color: searchParams.get("group") ? ACCENT : COLORS.white, borderRadius: 999, padding: "11px 20px", fontWeight: 700, fontSize: 13.5 }}>Back to Class</button>
               </div>
             </div>): (product === "centers" || product === "keys") ? <>
-    {product === "keys" && <ClearKeysSwitch classId={assignClassId} className={targetClass?.name} compact />}
+    {product === "keys" && <ClearKeysSwitch classId={assignClassId} className={targetClass?.name} compact onStatus={(st)=>{setKeysOn(!!st.allOn);if(st.allOn&&browseSubject!==READINGS){setBrowseSubject(READINGS);setReadingSubject('all');setSelectedCase(null);}}} />}
     {product === "keys" && <section className="cc-panel cc-keys">
+      {keysOn ? (
+        <div className="cc-row cc-between" style={{ alignItems: "flex-end", marginBottom: 10 }}>
+          <div>
+            <strong style={{ font: "600 16px Poppins, sans-serif" }}>Add readings</strong>
+            <p className="cc-muted" style={{ margin: "2px 0 0" }}>A paragraph, a letter, a conversation, a poem or a word list for students to type. Pick a subject, then a reading.</p>
+          </div>
+          <label className="cc-field" style={{ margin: 0 }}>Grade<select value={browseGrade} onChange={e=>{setFollowClass(false);setBrowseGrade(e.target.value);setSelectedCase(null);setCaseSearch('');}}>{['3','4','5'].map(g=><option key={g} value={g}>Grade {g}</option>)}</select></label>
+        </div>
+      ) : (
       <div className="cc-toolbar cc-browse-filters">
         <label className="cc-field">Grade<select value={browseGrade} onChange={e=>{setFollowClass(false);setBrowseGrade(e.target.value);setSelectedCase(null);setCaseSearch('');}}>{['3','4','5'].map(g=><option key={g} value={g}>Grade {g}</option>)}</select></label>
       </div>
-      <div className="cc-key-stations">
+      )}
+      <div className="cc-key-stations" style={keysOn ? { display: "none" } : undefined}>
         {KEY_STATIONS.map((item) => (
           <button key={item.key} type="button" className="cc-key-station" aria-pressed={browseSubject===item.key} onClick={()=>{setBrowseSubject(item.key);if(item.key===READINGS)setReadingSubject('all');setTopic('all');setSelectedCase(null);setCaseSearch('');}}>
             <b>{item.title}</b>
@@ -963,7 +975,7 @@ function displayCode(code){return String(code||'').replace(/^TEKS\s+/i,'').repla
         ))}
       </div>
       {browseSubject===READINGS && <div className="cc-keys-subjects">{['all','Science','Math','ELAR','Social Studies'].map(subject=><button key={subject} type="button" className="cc-btn" aria-pressed={readingSubject===subject} onClick={()=>{setReadingSubject(subject);setSelectedCase(null);}}>{subject==='all'?'All subjects':subject}</button>)}</div>}
-      <Link className="cc-text-button" href="/teacher/typing-texts">Paste your own passage</Link>{" "}<Link className="cc-text-button" href={`/teacher/clearkeys${assignClassId?`?classId=${assignClassId}`:""}`}>ClearKeys home</Link>
+      <div className="cc-row" style={{ gap: 18, marginTop: 12 }}><Link className="cc-text-button" href="/teacher/typing-texts">Paste your own passage</Link><Link className="cc-text-button" href={`/teacher/clearkeys${assignClassId?`?classId=${assignClassId}`:""}`}>ClearKeys home</Link></div>
     </section>}
     {product === "centers" && <>
     <div className="cc-find-bar">

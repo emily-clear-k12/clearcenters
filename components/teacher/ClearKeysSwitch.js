@@ -17,7 +17,7 @@ async function callApi(payload) {
   return data;
 }
 
-export default function ClearKeysSwitch({ classId, className, onChange, compact = false }) {
+export default function ClearKeysSwitch({ classId, className, onChange, onStatus, compact = false }) {
   const [status, setStatus] = useState(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(null);
@@ -27,7 +27,12 @@ export default function ClearKeysSwitch({ classId, className, onChange, compact 
   const load = useCallback(async () => {
     if (!classId) return;
     setError(null);
-    try { setStatus(await callApi({ action: "status", classId })); } catch (err) { setError(err.message); }
+    try {
+      const st = await callApi({ action: "status", classId });
+      setStatus(st);
+      if (onStatus) onStatus({ allOn: (st.pieces || []).length > 0 && st.pieces.every((p) => p.on) });
+    } catch (err) { setError(err.message); }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [classId]);
   useEffect(() => { setStatus(null); setNeedGrade(false); load(); }, [load]);
 
@@ -78,6 +83,13 @@ export default function ClearKeysSwitch({ classId, className, onChange, compact 
       {pieces.length > 0 && (
         <div className="cc-row" style={{ gap: 6, marginTop: 10 }}>
           {pieces.map((p) => <span key={p.key} className={`cc-badge${p.on ? " teal" : " neutral"}`}>{p.on ? "On" : "Off"} · {p.name}</span>)}
+          {compact && allOn && (
+            <span className="cc-row" style={{ gap: 14, marginLeft: "auto", fontSize: 13, fontWeight: 600 }}>
+              <a className="cc-link" href={`/teacher/relay-race?classId=${classId}`}>Relay Race board</a>
+              <a className="cc-link" href={`/teacher/typing-track?classId=${classId}`}>Class progress</a>
+              <a className="cc-link" href={`/teacher/clearkeys?classId=${classId}`}>ClearKeys home</a>
+            </span>
+          )}
         </div>
       )}
       {needGrade && <p className="cc-muted" style={{ margin: "10px 0 0" }}>This class has no grade set. Pick one so students get the right goals.</p>}
