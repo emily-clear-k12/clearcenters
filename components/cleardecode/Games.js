@@ -81,10 +81,10 @@ export function GameRoom({ room, onDone }) {
           <h2 style={S.h2}>Chamber cleared. Time to get out of the ruin.</h2>
           <p style={S.p}>Only words with today&apos;s code count: {room.code.spellings.join(", ")}.</p>
         </div>
-        <button type="button" onClick={() => start(room.kind)} style={{ alignSelf: "flex-start", minHeight: 160, minWidth: 420, borderRadius: 20, border: `2px solid ${C.teal}`, background: "linear-gradient(160deg, #183a63, #141844)", color: "#eef0ff", cursor: "pointer", padding: 24, textAlign: "left", display: "flex", flexDirection: "column", justifyContent: "flex-end", gap: 8 }}>
-          <span style={S.eyebrow}>Today&apos;s game</span>
+        <button type="button" onClick={() => start(room.kind)} style={{ alignSelf: "flex-start", minHeight: 220, minWidth: 560, borderRadius: 20, border: `2px solid ${C.teal}`, background: "linear-gradient(160deg, #183a63, #141844)", color: "#eef0ff", cursor: "pointer", padding: 24, textAlign: "left", display: "flex", flexDirection: "column", justifyContent: "flex-end", gap: 8 }}>
+          <span style={{ ...S.eyebrow, color: "#7ff0ff" }}>Today&apos;s game</span>
           <span style={{ font: "800 30px Poppins, sans-serif" }}>{room.kind === "runner" ? "Ruin Runner" : "Glyph Storm"}</span>
-          <span style={{ fontSize: 15, color: C.soft }}>{room.kind === "runner" ? "Race the rover out of the tunnel. Tap the gate with the code word to steer through it." : "Glyph stones are falling on the shield. Tap only the code words to blast them."}</span>
+          <span style={{ fontSize: 18, color: "#cfe0ff" }}>{room.kind === "runner" ? "Race the rover out of the tunnel. Tap the gate with the code word to steer through it." : "Glyph stones are falling on the shield. Tap only the code words to blast them."}</span>
           <span style={{ alignSelf: "flex-start", marginTop: 6, padding: "10px 20px", borderRadius: 999, background: `linear-gradient(90deg, ${C.violet}, ${C.teal})`, font: "700 16px Poppins, sans-serif", color: "#fff" }}>Tap to start</span>
         </button>
       </section>
@@ -104,7 +104,7 @@ export function GameRoom({ room, onDone }) {
     <section style={{ ...S.panel, display: "flex", flexDirection: "column", gap: 12 }}>
       <div style={{ display: "flex", alignItems: "center", gap: 18 }}>
         <div style={{ font: "800 20px Poppins, sans-serif" }}>{kind === "runner" ? "Ruin Runner" : "Glyph Storm"}</div>
-        <div style={{ flexGrow: 1, height: 10, borderRadius: 999, background: "#262c68", overflow: "hidden" }}><div style={{ height: "100%", width: `${Math.max(0, Math.round((1 - s.t / SECONDS) * 100))}%`, background: `linear-gradient(90deg, ${C.violet}, ${C.teal})` }} /></div>
+        <div style={{ flexGrow: 1, height: 10, borderRadius: 999, background: "#dcebf5", overflow: "hidden" }}><div style={{ height: "100%", width: `${Math.max(0, Math.round((1 - s.t / SECONDS) * 100))}%`, background: `linear-gradient(90deg, ${C.violet}, ${C.teal})` }} /></div>
         <div style={{ font: "700 16px Poppins, sans-serif", color: C.tealText }}>{kind === "runner" ? `${s.cleared} gates` : `${s.hits} blasted`}</div>
       </div>
       <div style={{ ...S.fb(s.msgOk), minHeight: 22 }}>{s.msg}</div>
