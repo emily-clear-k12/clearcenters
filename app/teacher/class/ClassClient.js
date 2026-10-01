@@ -10,7 +10,7 @@ import ClassSetup from "../../../components/teacher/ClassSetup";
 import ClassTools from "../../../components/teacher/ClassTools";
 import { replaySamTips } from "../../../components/teacher/SamCoach";
 import { SAM_SKINS, DEFAULT_SAM_SKIN, FALLBACK_ICON } from "../../../lib/samSkins";
-import { GRADEBOOK_SCALES, scaleNumbers } from "../../../lib/gradebookScale";
+import { GRADEBOOK_SCALES } from "../../../lib/gradebookScale";
 import { liveBoardFor, engineLine } from "../../../lib/teacherBridge";
 
 function gradebookFields(scale, got, almost, notyet) {
@@ -261,19 +261,6 @@ export default function ClassClient() {
     setConfirmId(null);
   }
 
-  async function saveGradebook(next) {
-    if (!selected) return;
-    setError("");
-    const fields = gradebookFields(next.scale, next.got, next.almost, next.notyet);
-    const { error: saveError } = await supabase.from("classes").update(fields).eq("id", selected.id);
-    if (saveError) {
-      setError("Couldn't save the gradebook setup. Run the gradebook SQL, then try again.");
-      return;
-    }
-    setClasses((list) => list.map((item) => (item.id === selected.id ? { ...item, ...fields } : item)));
-    setSaved("Gradebook setup saved.");
-  }
-
   const active = students
     .filter((student) => student.active !== false)
     .slice()
@@ -328,12 +315,11 @@ export default function ClassClient() {
             {showNew && (
               <section className="cc-panel" style={{ marginBottom: 16 }}>
                 <h2>New class</h2>
-                <ClassForm name={newName} setName={setNewName} grade={newGrade} setGrade={setNewGrade} subject={newSubject} setSubject={setNewSubject} scale={newScale} setScale={setNewScale} got={newGot} setGot={setNewGot} almost={newAlmost} setAlmost={setNewAlmost} notyet={newNotyet} setNotyet={setNewNotyet} busy={making} onSubmit={createClass} />
+                <ClassForm name={newName} setName={setNewName} grade={newGrade} setGrade={setNewGrade} subject={newSubject} setSubject={setNewSubject} busy={making} onSubmit={createClass} />
               </section>
             )}
             {notice && <p className="cc-muted">{notice}</p>}
             {saved && <p className="cc-muted">{saved}</p>}
-            <GradebookSetup row={selected} onSave={saveGradebook} />
             <div className="cc-two">
               <section className="cc-panel">
                 <h2>Students</h2>
@@ -429,7 +415,7 @@ export default function ClassClient() {
   );
 }
 
-function ClassForm({ name, setName, grade, setGrade, subject, setSubject, scale, setScale, got, setGot, almost, setAlmost, notyet, setNotyet, busy, onSubmit }) {
+function ClassForm({ name, setName, grade, setGrade, subject, setSubject, busy, onSubmit }) {
   return (
     <form onSubmit={onSubmit}>
       <div className="cc-row" style={{ alignItems: "end" }}>
@@ -451,63 +437,6 @@ function ClassForm({ name, setName, grade, setGrade, subject, setSubject, scale,
         </label>
         <button className="cc-btn" disabled={busy || !name.trim()}>{busy ? "Creating…" : "Create class"}</button>
       </div>
-      <GradebookFields scale={scale} setScale={setScale} got={got} setGot={setGot} almost={almost} setAlmost={setAlmost} notyet={notyet} setNotyet={setNotyet} />
     </form>
-  );
-}
-
-function GradebookSetup({ row, onSave }) {
-  const numbers = scaleNumbers(row);
-  const scale = row?.gradebook_scale || "points";
-  return (
-    <section className="cc-panel" style={{ marginBottom: 16 }}>
-      <h2>Gradebook setup</h2>
-      <p className="cc-muted">How Got it, Almost, and Not yet show up in the gradebook.</p>
-      <GradebookFields
-        scale={scale}
-        got={String(numbers.got)}
-        almost={String(numbers.almost)}
-        notyet={String(numbers.notyet)}
-        setScale={(id) => {
-          const preset = GRADEBOOK_SCALES.find((item) => item.id === id) || GRADEBOOK_SCALES[0];
-          onSave({ scale: id, got: preset.got, almost: preset.almost, notyet: preset.notyet });
-        }}
-        setGot={(value) => onSave({ scale: "custom", got: value, almost: numbers.almost, notyet: numbers.notyet })}
-        setAlmost={(value) => onSave({ scale: "custom", got: numbers.got, almost: value, notyet: numbers.notyet })}
-        setNotyet={(value) => onSave({ scale: "custom", got: numbers.got, almost: numbers.almost, notyet: value })}
-      />
-    </section>
-  );
-}
-
-function GradebookFields({ scale, setScale, got, setGot, almost, setAlmost, notyet, setNotyet }) {
-  function choose(id) {
-    const preset = GRADEBOOK_SCALES.find((item) => item.id === id) || GRADEBOOK_SCALES[0];
-    setScale(id);
-    if (id !== "custom") {
-      setGot(String(preset.got));
-      setAlmost(String(preset.almost));
-      setNotyet(String(preset.notyet));
-    }
-  }
-  return (
-    <fieldset style={{ border: 0, padding: 0, margin: "14px 0 0" }}>
-      <legend style={{ fontWeight: 700, marginBottom: 8 }}>Gradebook setup</legend>
-      <div className="cc-row" style={{ flexWrap: "wrap" }}>
-        {GRADEBOOK_SCALES.map((item) => (
-          <label key={item.id} className="cc-field" style={{ minWidth: 140 }}>
-            <input type="radio" name="gradebook-setup" checked={scale === item.id} onChange={() => choose(item.id)} /> {item.label}
-            {item.id !== "custom" && <span className="cc-muted"> {item.got}, {item.almost}, {item.notyet}</span>}
-          </label>
-        ))}
-      </div>
-      {scale === "custom" && (
-        <div className="cc-row" style={{ marginTop: 8 }}>
-          <label className="cc-field">Got it<input className="cc-input" type="number" value={got} onChange={(event) => setGot(event.target.value)} /></label>
-          <label className="cc-field">Almost<input className="cc-input" type="number" value={almost} onChange={(event) => setAlmost(event.target.value)} /></label>
-          <label className="cc-field">Not yet<input className="cc-input" type="number" value={notyet} onChange={(event) => setNotyet(event.target.value)} /></label>
-        </div>
-      )}
-    </fieldset>
   );
 }
