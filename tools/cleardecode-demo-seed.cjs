@@ -87,7 +87,7 @@ function play(story) {
 
 const rows = {};
 for (const [name, st] of Object.entries(STORIES)) {
-  if (st.kind === "out") rows[name] = { status: "scanned", current_ruin: null, pass_mark: 80, ruins: {}, log: [], chamber: null, scan: { pending: false, tested: {}, result: { startRuin: null, scoredOut: true, belowFloor: false, mastered: CD.RUIN_ORDER.slice(), gaps: [], at: SCAN_DAY }, history: [{ at: SCAN_DAY, startRuin: null, scoredOut: true, mastered: CD.RUIN_ORDER.length }] } };
+  if (st.kind === "out") rows[name] = { status: "scanned", current_ruin: null, pass_mark: 80, ruins: {}, log: [], chamber: null, scan: { pending: false, tested: {}, result: { startRuin: null, scoredOut: true, belowFloor: false, mastered: [], gaps: [], at: SCAN_DAY }, history: [{ at: SCAN_DAY, startRuin: null, scoredOut: true, mastered: CD.RUIN_ORDER.length }] } };
   else if (st.kind === "wait") rows[name] = { status: "scan", current_ruin: null, pass_mark: 80, ruins: {}, log: [], chamber: null, scan: { pending: true, tested: {}, sentAt: "2026-09-30T14:00:00Z" } };
   else if (st.kind === "needs") rows[name] = { status: "scanned", current_ruin: null, pass_mark: 80, ruins: {}, log: [], chamber: null, scan: { pending: false, tested: {}, result: scanResult(st.start, st), history: [{ at: SCAN_DAY, startRuin: st.start, scoredOut: false, mastered: CD.ruinIndex(st.start) }] } };
   else if (st.kind === "keeper") rows[name] = play(st);
@@ -95,26 +95,28 @@ for (const [name, st] of Object.entries(STORIES)) {
 }
 
 const q = (v) => `'${JSON.stringify(v).replace(/'/g, "''")}'::jsonb`;
-const out = [];
-out.push("-- Oct 1, 2026: ClearDecode demo data for the demo classes (DEMO-4401, DEMO-4402).");
-out.push("-- Made by tools/cleardecode-demo-seed.cjs. Safe to run more than once.");
-out.push("BEGIN;");
-for (const [name, r] of Object.entries(rows)) {
-  out.push(`INSERT INTO clearcode_progress (student_id, class_id, status, scan, current_ruin, ruins, log, pass_mark, chamber, updated_at)
-SELECT s.id, s.class_id, '${r.status}', ${q(r.scan)}, ${r.current_ruin ? `'${r.current_ruin}'` : "NULL"}, ${q(r.ruins)}, ${q(r.log)}, ${r.pass_mark}, NULL, now()
-FROM students s JOIN classes c ON c.id = s.class_id
-WHERE c.class_code IN ('DEMO-4401', 'DEMO-4402') AND s.first_name ILIKE '${name}%'
-ON CONFLICT (student_id) DO UPDATE SET class_id = EXCLUDED.class_id, status = EXCLUDED.status, scan = EXCLUDED.scan, current_ruin = EXCLUDED.current_ruin, ruins = EXCLUDED.ruins, log = EXCLUDED.log, pass_mark = EXCLUDED.pass_mark, chamber = NULL, updated_at = now();`);
-}
+const values = Object.entries(rows).map(([name, r]) => `  ('${name}', '${r.status}', ${q(r.scan)}, ${r.current_ruin ? `'${r.current_ruin}'` : "NULL"}, ${q(r.ruins)}, ${q((r.log || []).slice(-10))}, ${r.pass_mark})`);
 const words = CD.cleanClassWords([
   { word: "evaporation", meaning: "when water turns into a gas and rises" },
   { word: "condensation", meaning: "when water vapor cools and turns back into drops" },
   { word: "remainder", meaning: "the amount left over after you divide" },
 ]);
-out.push(`UPDATE classes SET clearcode_settings = ${q({ weekOf: "2026-09-28", words })} WHERE class_code IN ('DEMO-4401', 'DEMO-4402');`);
-out.push("COMMIT;");
-out.push(`SELECT c.name AS class, count(p.*) AS cleardecode_students FROM classes c LEFT JOIN students s ON s.class_id = c.id LEFT JOIN clearcode_progress p ON p.student_id = s.id WHERE c.class_code IN ('DEMO-4401', 'DEMO-4402') GROUP BY c.name;`);
-process.stdout.write(out.join("\n\n") + "\n");
+const out = `-- Oct 1, 2026: ClearDecode demo data for the demo classes (DEMO-4401, DEMO-4402).
+-- Made by tools/cleardecode-demo-seed.cjs. Safe to run more than once.
+INSERT INTO clearcode_progress (student_id, class_id, status, scan, current_ruin, ruins, log, pass_mark, chamber, updated_at)
+SELECT s.id, s.class_id, d.status, d.scan, d.current_ruin, d.ruins, d.log, d.pass_mark, NULL, now()
+FROM (VALUES
+${values.join(",\n")}
+) AS d(name, status, scan, current_ruin, ruins, log, pass_mark)
+JOIN students s ON s.first_name ILIKE d.name || '%'
+JOIN classes c ON c.id = s.class_id AND c.class_code IN ('DEMO-4401', 'DEMO-4402')
+ON CONFLICT (student_id) DO UPDATE SET class_id = EXCLUDED.class_id, status = EXCLUDED.status, scan = EXCLUDED.scan, current_ruin = EXCLUDED.current_ruin, ruins = EXCLUDED.ruins, log = EXCLUDED.log, pass_mark = EXCLUDED.pass_mark, chamber = NULL, updated_at = now();
+
+UPDATE classes SET clearcode_settings = ${q({ weekOf: "2026-09-28", words })} WHERE class_code IN ('DEMO-4401', 'DEMO-4402');
+
+SELECT c.name AS class, count(p.*) AS cleardecode_students FROM classes c LEFT JOIN students s ON s.class_id = c.id LEFT JOIN clearcode_progress p ON p.student_id = s.id WHERE c.class_code IN ('DEMO-4401', 'DEMO-4402') GROUP BY c.name;
+`;
+process.stdout.write(out);
 
 // Summary to stderr for checking.
 for (const [name, r] of Object.entries(rows)) {
