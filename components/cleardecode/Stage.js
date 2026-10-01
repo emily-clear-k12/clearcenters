@@ -89,7 +89,8 @@ export function SideCard({ meta, title, steps = [], children, width = 330 }) {
 // Planet art: real art goes in /public/decode/planets/<id>.webp (see
 // image-prompts/cleardecode). Until a file is listed here, a styled orb
 // stands in, colored for the planet's story.
-const PLANET_ART = {}; // e.g. { A: "/decode/planets/A.webp" }
+// Emily's planet art, Sept 30, 2026 (trimmed, squared, 360px WebP).
+const PLANET_ART = Object.fromEntries("ABCDEFGHIJK".split("").map((k) => [k, `/decode/planets/${k}.webp`]));
 const ORB = {
   A: ["#c8a46a", "#6f5a2e"], B: ["#9aa7b8", "#4a5466"], C: ["#b5e3ef", "#3f7d9a"], D: ["#f2b46b", "#8a4b2a"],
   E: ["#d8e4f0", "#7c8ea8"], F: ["#a3b6ff", "#3b4fa8"], G: ["#6fd8f0", "#1f6fa8"], H: ["#c9a0ff", "#5a3aa8"],
@@ -99,7 +100,10 @@ export function PlanetOrb({ id, size = 60, dim = false, glow = false }) {
   const art = PLANET_ART[id];
   const [a, b] = ORB[id] || ["#cde", "#567"];
   const look = { width: size, height: size, borderRadius: "50%", flexShrink: 0, filter: dim ? "grayscale(0.7) brightness(0.75)" : "none", boxShadow: glow ? "0 0 0 4px rgba(120,230,255,0.9), 0 0 30px rgba(80,220,255,0.9)" : "0 4px 10px rgba(0,0,0,0.25)" };
-  if (art) return <img src={art} alt="" style={{ ...look, objectFit: "contain", borderRadius: 0, boxShadow: "none", filter: `${look.filter} ${glow ? "drop-shadow(0 0 16px rgba(80,220,255,0.95))" : ""}` }} />;
+  if (art) {
+    const f = [dim ? "grayscale(0.65) brightness(0.7)" : "", glow ? "drop-shadow(0 0 14px rgba(80,220,255,0.95)) drop-shadow(0 0 4px rgba(255,255,255,0.8))" : "drop-shadow(0 6px 8px rgba(0,0,0,0.35))"].filter(Boolean).join(" ");
+    return <img src={art} alt="" style={{ width: size, height: size, flexShrink: 0, objectFit: "contain", filter: f }} />;
+  }
   return <span aria-hidden="true" style={{ ...look, display: "inline-block", background: `radial-gradient(circle at 32% 28%, #ffffff 0%, ${a} 22%, ${b} 100%)` }} />;
 }
 

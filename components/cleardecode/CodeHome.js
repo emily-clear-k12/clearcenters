@@ -69,7 +69,7 @@ export default function CodeHome({ firstName, view, skin }) {
             const [x, y] = SPOTS[i] || [0, 0];
             const done = p.ruins.every((r) => r.state === "done");
             const locked = !p.here && !done;
-            const size = p.here ? 132 : 92;
+            const size = p.here ? 140 : 104;
             return (
               <div key={p.id} style={{ position: "absolute", left: x - 90, top: y - size / 2 - 20, width: 180, display: "flex", flexDirection: "column", alignItems: "center", gap: 6, textAlign: "center" }}>
                 <span style={{ width: 38, height: 38, borderRadius: "50%", display: "inline-flex", alignItems: "center", justifyContent: "center", font: "800 19px Poppins, sans-serif", color: "#fff", background: p.here ? "#14a9d6" : done ? "#20b07a" : "rgba(20,40,80,0.9)", border: "2px solid rgba(255,255,255,0.85)", boxShadow: p.here ? "0 0 14px rgba(80,220,255,0.9)" : "none" }}>{done ? "✓" : p.id}</span>
