@@ -85,6 +85,7 @@ export function GameRoom({ room, onDone }) {
           <span style={S.eyebrow}>Today&apos;s game</span>
           <span style={{ font: "800 30px Poppins, sans-serif" }}>{room.kind === "runner" ? "Ruin Runner" : "Glyph Storm"}</span>
           <span style={{ fontSize: 15, color: C.soft }}>{room.kind === "runner" ? "Race the rover out of the tunnel. Tap the gate with the code word to steer through it." : "Glyph stones are falling on the shield. Tap only the code words to blast them."}</span>
+          <span style={{ alignSelf: "flex-start", marginTop: 6, padding: "10px 20px", borderRadius: 999, background: `linear-gradient(90deg, ${C.violet}, ${C.teal})`, font: "700 16px Poppins, sans-serif", color: "#fff" }}>Tap to start</span>
         </button>
       </section>
     );

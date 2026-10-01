@@ -114,7 +114,7 @@ export function WallRoom({ room, onDone }) {
       speak(sounds ? [...parts, word.w] : [...parts, word.w]);
     } else {
       const m = misses + 1; setMisses(m); setCuts([]);
-      setFb({ ok: false, text: m >= 2 ? (sounds ? `Say it slowly: ${parts.join(" · ")}. One cut between each sound.` : `Find the vowel sounds first. This word has ${parts.length} chunks.`) : "The wall flickers. Check that every chunk has one vowel sound." });
+      setFb({ ok: false, text: m >= 2 ? (sounds ? `Say it slowly: ${parts.join(" · ")}. One cut between each sound.` : `Find the vowel sounds first. This word has ${parts.length} chunks.`) : "The wall flickers. Try a different gap: each chunk gets one vowel sound." });
     }
   }
   return (
@@ -281,7 +281,7 @@ export function ReadRoom({ room, onDone }) {
   function tap(i) {
     if (found.includes(i)) return;
     if (tokens[i].target) { setFound([...found, i]); setWrongIdx(-1); setFb({ ok: true, text: `Yes: ${tokens[i].t.replace(/[^A-Za-z]/g, "")}.` }); }
-    else { setWrongs((n) => n + 1); setWrongIdx(i); setFb({ ok: false, text: `Look again: that word doesn't have the ${room.code.label} code.` }); }
+    else { setWrongs((n) => n + 1); setWrongIdx(i); setFb({ ok: false, text: `Look again: that word doesn't have ${room.code.spellings.join(" or ")}.` }); }
   }
   return (
     <section style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: 18 }}>
@@ -301,7 +301,7 @@ export function ReadRoom({ room, onDone }) {
         </div>
       </div>
       <div style={{ ...S.panel, display: "flex", flexDirection: "column", gap: 14 }}>
-        <h2 style={{ ...S.h2, fontSize: 21 }}>Read the log. Then find every word with the {room.code.label} code.</h2>
+        <h2 style={{ ...S.h2, fontSize: 21 }}>Read the log. Then find every word with {room.code.spellings.join(" or ")}.</h2>
         <div style={{ font: "800 38px Poppins, sans-serif", color: C.tealText }}>{found.length} <span style={{ fontSize: 17, color: C.muted }}>of {totalTargets} found</span></div>
         <div style={{ height: 10, borderRadius: 999, background: "#262c68", overflow: "hidden" }}><div style={{ height: "100%", width: `${totalTargets ? Math.round((found.length / totalTargets) * 100) : 100}%`, background: `linear-gradient(90deg, ${C.violet}, ${C.teal})` }} /></div>
         <div style={S.fb(fb.ok)}>{fb.text}</div>

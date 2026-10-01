@@ -102,7 +102,7 @@ function Reward({ data, vault, message, ruinName }) {
   const headline = vault ? (r.passed ? "Vault cracked!" : "The vault held this time.") : `Chamber cleared · relic piece ${r.piece || 1} of 4`;
   const line = vault
     ? (r.passed ? `${r.relic ? r.relic.name : "A relic"} goes in your relic case. ${r.relic ? r.relic.caption : ""}` : `You cracked ${r.correct} seals. One more practice chamber tomorrow, then you can try the vault again.`)
-    : r.movedBack ? "S.A.M. found an easier way in. Your next chamber is in a different part of the ruins." : `Another piece of ${ruinName}'s relic.`;
+    : r.movedBack ? "S.A.M. found an easier way in. Your next chamber is in a different part of the ruins." : `Another piece of the ${ruinName} relic.`;
   return (
     <section style={{ ...S.panel, display: "flex", flexDirection: "column", gap: 14, alignItems: "flex-start" }}>
       <div style={S.eyebrow}>{vault ? "The vault" : "Chamber complete"}</div>
