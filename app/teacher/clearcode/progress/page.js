@@ -2,7 +2,7 @@
 import React, { useState, Suspense } from "react";
 import { BridgePage, PageHeading, ClassTabs, Empty } from "../../../../components/teacher/BridgeUI";
 import { ClearCodeTabs, useClearCodeClass, callClearCode, statusOf, scanLine, weekStats, ruinLabel, ruinState, recentAccuracy } from "../../../../components/teacher/ClearCodeShared";
-import { RUINS, PLANETS, CHAMBERS_PER_RUIN } from "../../../../lib/clearcode";
+import { RUINS, PLANETS, CHAMBERS_PER_RUIN } from "../../../../lib/clearcode/core";
 
 // ClearCode Class progress (Sept 30, 2026): one row per student with the
 // teacher controls (on/off, pass mark, place at).

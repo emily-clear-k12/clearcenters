@@ -3,7 +3,7 @@ import React, { useMemo, useState } from "react";
 import Link from "next/link";
 import { S, C, Sam } from "./ui";
 import { PickItem, SpellItem } from "./Items";
-import { scanStep, probeItems } from "../../lib/clearcode";
+import { scanStep, probeItems } from "../../lib/clearcode/core";
 
 // "Scan the ruins": the placement scan. Students never see a score or a
 // level, only "Scan complete." The teacher sees the result.

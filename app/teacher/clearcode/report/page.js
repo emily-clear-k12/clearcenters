@@ -2,7 +2,7 @@
 import React, { useState, Suspense } from "react";
 import { BridgePage, PageHeading, ClassTabs, Empty } from "../../../../components/teacher/BridgeUI";
 import { ClearCodeTabs, useClearCodeClass, statusOf, weekStats, recentAccuracy, familyNote, ruinLabel, masteredRuins } from "../../../../components/teacher/ClearCodeShared";
-import { RUIN_ORDER } from "../../../../lib/clearcode";
+import { RUIN_ORDER } from "../../../../lib/clearcode/core";
 
 // ClearCode Report (Sept 30, 2026): patterns mastered, re-scan growth,
 // practice time, family notes, and a CSV for Excel.

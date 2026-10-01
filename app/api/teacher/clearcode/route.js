@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "../../../../lib/supabaseAdmin";
 import { PROGRESS_COLS, readClassWords, suggestClassWords } from "../../../../lib/clearcodeServer";
-import { getRuin, cleanClassWords, dateKey } from "../../../../lib/clearcode";
+import { getRuin, cleanClassWords, dateKey, needsHelp, getRuinContent } from "../../../../lib/clearcode";
 import { weekRange } from "../../../../lib/clearkeysFuel";
 
 // ClearCode teacher actions (Sept 30, 2026). Design: claude/ClearCode_Design_v1.md §10.
@@ -40,7 +40,11 @@ export async function POST(request) {
     const words = await readClassWords(classId);
     return NextResponse.json({
       className: cls.name,
-      students: active.map((s) => ({ id: s.id, firstName: s.first_name, progress: byId[s.id] || null })),
+      students: active.map((s) => {
+        const p = byId[s.id] || null;
+        const h = needsHelp(p);
+        return { id: s.id, firstName: s.first_name, progress: p, miniLesson: h ? ((getRuinContent(h.ruin) || {}).miniLesson || null) : null };
+      }),
       classWords: words.words,
       weekOf: words.weekOf,
     });

@@ -3,7 +3,6 @@ import React, { useState, Suspense } from "react";
 import Link from "next/link";
 import { BridgePage, PageHeading, ClassTabs, Empty } from "../../../components/teacher/BridgeUI";
 import { ClearCodeTabs, useClearCodeClass, callClearCode, statusOf, scanLine, weekStats, ruinLabel, needsHelp } from "../../../components/teacher/ClearCodeShared";
-import { getRuinContent } from "../../../lib/clearcode";
 
 // ClearCode teacher Overview (Sept 30, 2026). Mirrors the ClearKeys Overview:
 // hero, setup action, who needs you, this week, tools.
@@ -128,7 +127,7 @@ function Overview() {
               <section className="cc-panel cc-attention">
                 <h3>Who needs you</h3>
                 {help.length === 0 ? <p className="cc-muted" style={{ margin: 0 }}>Nobody is stuck right now. A student shows up here after missing a vault twice, or two sessions under 60%.</p> : help.map(({ s, h }) => {
-                  const ml = (getRuinContent(h.ruin) || {}).miniLesson;
+                  const ml = s.miniLesson;
                   return (
                     <div key={s.id}>
                       <div className="cc-person">

@@ -3,7 +3,7 @@ import React, { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "../../lib/supabaseClient";
-import { ruinLabel, needsHelp, masteredRuins, minutesThisWeek, ruinState, dateKey } from "../../lib/clearcode";
+import { ruinLabel, needsHelp, masteredRuins, minutesThisWeek, ruinState, dateKey } from "../../lib/clearcode/core";
 
 // Shared pieces for the ClearCode teacher pages (Sept 30, 2026). Same
 // layout and tabs as ClearKeys so teachers learn one pattern.

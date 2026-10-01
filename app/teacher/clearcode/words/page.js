@@ -2,7 +2,7 @@
 import React, { useEffect, useState, Suspense } from "react";
 import { BridgePage, PageHeading, ClassTabs, Empty } from "../../../../components/teacher/BridgeUI";
 import { ClearCodeTabs, useClearCodeClass, callClearCode } from "../../../../components/teacher/ClearCodeShared";
-import { chunkWord } from "../../../../lib/clearcode";
+import { chunkWord } from "../../../../lib/clearcode/core";
 
 // ClearCode Class words (Sept 30, 2026): this week's big words from what the
 // class is assigned. Students chunk them in a short room each chamber.
