@@ -38,7 +38,7 @@ const STORIES = {
   Jonah: { kind: "needs", start: "H5", gaps: ["G3"] },
   Aiden: { kind: "keeper", start: "K7", acc: 0.9, attend: 0.97, passProb: 1 },
   Luis: { kind: "on", start: "B2", acc: 0.86, attend: 0.95, rescan: "B5" },     // improving every week
-  Sofia: { kind: "on", start: "A4", acc: 0.55, attend: 0.85, passProb: 0.25 },  // needs help: vault keeps holding
+  Sofia: { kind: "on", start: "A4", acc: 0.55, attend: 0.85, passProb: 0.5 },  // needs help: vault keeps holding
   Isaiah: { kind: "on", start: "B5", acc: 0.8, attend: 0.92, rescan: "C2" },    // starting to catch on
   Ryan: { kind: "on", start: "A1", acc: 0.62, attend: 0.9, belowFloor: true, passMark: 90 },
   Diego: { kind: "on", start: "D2", acc: 0.82, attend: 0.9 },
