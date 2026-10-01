@@ -147,9 +147,9 @@ const PRODUCTS = [
   { key: "sheets", label: "ClearSheets", image: "/teacher/products/sheets.jpg", soon: true },
   { key: "centers", label: "ClearCenters", image: "/teacher/products/centers.jpg", soon: false, line: "Assign a center" },
   { key: "keys", label: "ClearKeys", image: "/teacher/products/keys.jpg", soon: false, line: "Assign typing" },
-  // Sept 30, 2026: ClearCode (word-reading practice) is turned on per
+  // Sept 30, 2026: ClearDecode (word-reading practice) is turned on per
   // student from its own page, so this card opens that page.
-  { key: "code", label: "ClearCode", image: "/teacher/products/keys.jpg", soon: false, line: "Word-reading practice" },
+  { key: "code", label: "ClearDecode", image: "/teacher/products/keys.jpg", soon: false, line: "Word-reading practice" },
   { key: "quest", label: "Crystal Quest", image: "/teacher/products/quest.jpg", soon: true },
   { key: "showdown", label: "ClassCade Showdown", image: "/teacher/products/showdown.jpg", soon: true },
   { key: "writing", label: "Crystal Writing", image: "/teacher/products/writing.jpg", soon: true },
@@ -941,7 +941,7 @@ function displayCode(code){return String(code||'').replace(/^TEKS\s+/i,'').repla
 
   function resetBrowse(){setSelectedCase(null);setTopic('all');setPickedStandard(null);setRushStandard(null);setLimit(12);setDistressCallEnabled(false);setDistressCallTarget('');setDistressCallDeadline('');setDistressCallRewardPoints('');}
   function openProduct(key){
-    if(key==='code'){window.location.href=`/teacher/clearcode${assignClassId?`?classId=${assignClassId}`:''}`;return;}
+    if(key==='code'){window.location.href=`/teacher/cleardecode${assignClassId?`?classId=${assignClassId}`:''}`;return;}
     setProduct(key);
     setSelectedCase(null);
     setCaseSearch('');

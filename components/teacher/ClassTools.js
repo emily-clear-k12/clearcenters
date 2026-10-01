@@ -14,7 +14,7 @@ const TOOLS = [
   { href: "/teacher/passages", name: "Passages", what: "Every reading passage by subject, to open or project on its own." },
   { href: "/teacher/word-lists", name: "Word lists", what: "Make your own vocabulary or spelling list for Frequency Rush." },
   { href: "/teacher/clearkeys", name: "ClearKeys", what: "Typing: turn it on, see who needs help, run a race, add your own texts." },
-  { href: "/teacher/clearcode", name: "ClearCode", what: "Word-reading practice: placement scan, who needs help, class words." },
+  { href: "/teacher/cleardecode", name: "ClearDecode", what: "Word-reading practice: placement scan, who needs help, class words." },
 ];
 
 export default function ClassTools({ classId }) {

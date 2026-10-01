@@ -136,17 +136,17 @@ export default async function HomePage() {
     .limit(1)
     .maybeSingle();
 
-  // Sept 30, 2026: ClearCode orb only for students who have a placement scan
-  // waiting or ClearCode turned on (fails quietly before add_clearcode.sql).
-  let showClearCode = false;
+  // Sept 30, 2026: ClearDecode orb only for students who have a placement scan
+  // waiting or ClearDecode turned on (fails quietly before add_clearcode.sql).
+  let showClearDecode = false;
   try {
     const { data: cc } = await supabaseAdmin.from("clearcode_progress").select("status, scan").eq("student_id", studentId).maybeSingle();
-    showClearCode = !!cc && (cc.status === "on" || !!(cc.scan && cc.scan.pending));
-  } catch (e) { showClearCode = false; }
+    showClearDecode = !!cc && (cc.status === "on" || !!(cc.scan && cc.scan.pending));
+  } catch (e) { showClearDecode = false; }
 
   return (
     <HomeClient
-      showClearCode={showClearCode}
+      showClearDecode={showClearDecode}
       student={student}
       studentClass={studentClass}
       assignments={assignments || []}

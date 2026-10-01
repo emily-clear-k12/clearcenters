@@ -95,7 +95,7 @@ function subjectRingColor(subject) {
 // portals always line up with the glowing floor rings baked into the
 // background art, and so the whole thing fits on one screen with no
 // scrolling — that was the point of the redesign.
-export default function HomeClient({ student, studentClass, assignments, missionsCompleted, badgeTiers, homeBackground, shoutout, earnedWorldBackgrounds, showClearCode = false }) {
+export default function HomeClient({ student, studentClass, assignments, missionsCompleted, badgeTiers, homeBackground, shoutout, earnedWorldBackgrounds, showClearDecode = false }) {
   const router = useRouter();
   const [samOpen, setSamOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -865,11 +865,11 @@ export default function HomeClient({ student, studentClass, assignments, mission
           <div className="hub-orb-wrap"><img src="/student/orb_keys.png" alt="" /></div>
           <span style={{ fontWeight: 700, fontSize: 13, color: COLORS.white, background: "rgba(20,26,50,.55)", padding: "4px 14px", borderRadius: 999, backdropFilter: "blur(6px)" }}>ClearKeys</span>
         </button>
-        {/* Sept 30, 2026: ClearCode door, only for students it's turned on for (placeholder orb art). */}
-        {showClearCode && (
-          <button type="button" className="hub-portal hub-portal--code" onClick={() => router.push("/code")}>
+        {/* Sept 30, 2026: ClearDecode door, only for students it's turned on for (placeholder orb art). */}
+        {showClearDecode && (
+          <button type="button" className="hub-portal hub-portal--code" onClick={() => router.push("/decode")}>
             <div className="hub-orb-wrap"><img src="/student/orb_briefings.png" alt="" /></div>
-            <span style={{ fontWeight: 700, fontSize: 13, color: COLORS.white, background: "rgba(20,26,50,.55)", padding: "4px 14px", borderRadius: 999, backdropFilter: "blur(6px)" }}>ClearCode</span>
+            <span style={{ fontWeight: 700, fontSize: 13, color: COLORS.white, background: "rgba(20,26,50,.55)", padding: "4px 14px", borderRadius: 999, backdropFilter: "blur(6px)" }}>ClearDecode</span>
           </button>
         )}
         <button type="button" className="hub-portal hub-portal--crystal" onClick={() => router.push("/gear-locker")}>
