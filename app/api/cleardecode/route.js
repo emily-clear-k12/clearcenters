@@ -49,12 +49,16 @@ export async function POST(request) {
   if (body.action === "finish") {
     const ses = nextSession(row);
     if (doneToday(row)) return NextResponse.json({ error: "You already finished today's session. See you tomorrow!", already: true }, { status: 409 });
-    if (!ses.ruin || body.ruin !== ses.ruin || !isRuinReady(ses.ruin)) return NextResponse.json({ error: "That session isn't open right now." }, { status: 400 });
-    const kind = ses.kind === "vault" ? "vault" : "chamber";
+    const keeper = ses.kind === "keeper";
+    if (!ses.ruin || body.ruin !== ses.ruin || (!keeper && !isRuinReady(ses.ruin))) return NextResponse.json({ error: "That session isn't open right now." }, { status: 400 });
+    const kind = keeper ? "keeper" : ses.kind === "vault" ? "vault" : "chamber";
+    const items = Array.isArray(body.items) ? body.items.slice(0, 40).map((x) => ({ probe: String((x && x.probe) || ""), ok: !!(x && x.ok) })) : [];
+    const SELF = ["smooth", "bumps", "tricky"];
+    const reread = body.reread && SELF.includes(body.reread.self) ? { goal: String(body.reread.goal || "").slice(0, 20), self: body.reread.self } : null;
     const total = Math.max(0, Math.min(200, Number(body.total) || 0));
     const correct = Math.max(0, Math.min(total, Number(body.correct) || 0));
     const minutes = Math.max(0, Math.min(60, Math.round(Number(body.minutes) || 0)));
-    const { fields, crystals, result } = applyFinish(row, { kind, ruin: ses.ruin, n: ses.n, correct, total, minutes, bonus: Number(body.bonus) || 0 });
+    const { fields, crystals, result } = applyFinish(row, { kind, ruin: ses.ruin, n: ses.n, correct, total, minutes, bonus: Number(body.bonus) || 0, items, reread });
     const { error } = await saveProgress(studentId, fields);
     if (error) return NextResponse.json({ error: "Couldn't save. Check your connection and try again." }, { status: 500 });
     await addCrystals(studentId, crystals);

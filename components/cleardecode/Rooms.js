@@ -45,8 +45,9 @@ function Done({ text, label = "Continue", onClick, box }) {
 function useSeq(items) {
   const [i, setI] = useState(0);
   const [correct, setCorrect] = useState(0);
-  const next = (ok) => { if (ok) setCorrect((n) => n + 1); setI((n) => n + 1); };
-  return { i, item: items[i], done: i >= items.length, correct, next };
+  const [results, setResults] = useState([]);
+  const next = (ok) => { if (ok) setCorrect((n) => n + 1); setResults((r) => [...r, { i, ok: !!ok }]); setI((n) => n + 1); };
+  return { i, item: items[i], done: i >= items.length, correct, next, results };
 }
 function Count({ n, of, label }) {
   return <div style={{ font: "800 30px Poppins, sans-serif", color: C.tealText, whiteSpace: "nowrap" }}>{n} <span style={{ fontSize: 17, color: C.muted }}>{label || `of ${of}`}</span></div>;
@@ -58,9 +59,12 @@ function Dots({ n, of }) {
 // ---------- Warm-up ----------
 export function WarmRoom({ room, onDone }) {
   const seq = useSeq(room.items);
-  if (seq.done) return <Done text={`${seq.correct} of ${room.items.length}. Warmed up.`} label="Open the codex" onClick={() => onDone({ correct: seq.correct, total: room.items.length })} />;
+  if (seq.done) {
+    const items = seq.results.map((r) => ({ probe: room.items[r.i] && room.items[r.i].probe, ok: r.ok })).filter((x) => x.probe);
+    return <Done text={`${seq.correct} of ${room.items.length}. ${room.keeper ? "Codes checked." : "Warmed up."}`} label={room.keeper ? "Continue" : "Open the codex"} onClick={() => onDone({ correct: seq.correct, total: room.items.length, items })} />;
+  }
   return (
-    <Panel eyebrow={`Warm-up · word ${seq.i + 1} of ${room.items.length}`} title="Codes you already cracked" right={<Count n={seq.correct} of={room.items.length} />}>
+    <Panel eyebrow={`${room.keeper ? "Keeper review" : "Warm-up"} · word ${seq.i + 1} of ${room.items.length}`} title={room.keeper ? "Keep every code sharp" : "Codes you already cracked"} right={<Count n={seq.correct} of={room.items.length} />}>
       <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center" }}>
         <PickItem key={seq.i} item={seq.item} mode="quick" onDone={seq.next} prompt="Listen, then tap the word you heard." />
       </div>
@@ -214,6 +218,8 @@ export function WallRoom({ room, onDone }) {
 }
 
 // ---------- Sorting vault ----------
+// Sorting chamber scene: two console panels (left x 60-640, right x
+// 960-1540, y 600-750) are the vaults; the relic floats between them.
 export function SortRoom({ room, onDone }) {
   const [queue, setQueue] = useState(room.items.map((_, i) => i));
   const [missed, setMissed] = useState([]);
@@ -229,24 +235,35 @@ export function SortRoom({ room, onDone }) {
       speak(item.w);
     }
   }
-  const vaultBtn = (yes) => (
-    <button type="button" onClick={() => send(yes)}
-      style={{ height: 330, borderRadius: 26, border: `4px solid ${yes ? C.teal : "#e3a92c"}`, background: yes ? "linear-gradient(180deg, #e2fbff, #bfeef8)" : "linear-gradient(180deg, #fff6df, #f6e2b0)", color: C.navy, cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 10, boxShadow: "0 10px 22px rgba(15,35,80,0.2)" }}>
-      <span style={{ font: "800 30px Poppins, sans-serif", color: yes ? "#086b78" : "#9a6200" }}>{yes ? room.sort.yes : room.sort.no}</span>
-      <span style={{ font: "600 20px Inter, sans-serif", color: C.soft }}>{yes ? room.sort.yesHint : room.sort.noHint}</span>
-    </button>
+  const vaultBtn = (yes, box) => (
+    <At {...box}>
+      <button type="button" onClick={() => send(yes)}
+        style={{ width: "100%", height: "100%", borderRadius: 26, border: `4px solid ${yes ? C.teal : "#e3a92c"}`, background: yes ? "rgba(226,251,255,0.9)" : "rgba(255,246,223,0.92)", color: C.navy, cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 8, boxShadow: `0 0 0 4px ${yes ? "rgba(20,184,200,0.3)" : "rgba(227,169,44,0.3)"}, 0 10px 22px rgba(15,35,80,0.2)` }}>
+        <span style={{ font: "800 34px Poppins, sans-serif", color: yes ? "#086b78" : "#9a6200" }}>{yes ? room.sort.yes : room.sort.no}</span>
+        <span style={{ font: "700 21px Inter, sans-serif", color: C.soft }}>{yes ? room.sort.yesHint : room.sort.noHint}</span>
+      </button>
+    </At>
   );
   return (
-    <Panel eyebrow={`Sorting vault · ${queue.length} relics left`} title="Read the word on each relic. Which vault?" right={<button type="button" style={S.hear} onClick={() => speak(item.w)}><SpeakerIcon /> Hear it</button>}>
-      <div style={{ flex: 1, display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 26, alignItems: "center" }}>
-        {vaultBtn(true)}
-        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 18 }}>
-          <div style={{ width: 300, height: 200, borderRadius: 30, background: "radial-gradient(circle at 50% 30%, #fffdf6, #e9dcc0 80%)", border: "4px solid #d8b46a", boxShadow: "0 0 24px rgba(232,184,74,0.55), 0 10px 20px rgba(0,0,0,0.2)", display: "flex", alignItems: "center", justifyContent: "center", font: "800 58px Poppins, sans-serif", color: C.navy }}>{item.w}</div>
-          <div style={{ ...S.fb(fb.ok), textAlign: "center" }}>{fb.text}</div>
+    <>
+      <At x={480} y={110} w={640} h={92}>
+        <div style={{ height: "100%", borderRadius: 22, background: "rgba(13,40,90,0.9)", border: "2px solid rgba(120,214,255,0.85)", display: "flex", alignItems: "center", justifyContent: "center", gap: 18, color: "#fff" }}>
+          <div style={{ font: "800 26px Poppins, sans-serif" }}>Read the relic. Which vault?</div>
+          <div style={{ font: "700 18px Inter, sans-serif", color: "#9fe9ff" }}>{queue.length} left</div>
         </div>
-        {vaultBtn(false)}
-      </div>
-    </Panel>
+      </At>
+      <At x={620} y={410} w={360} h={230}>
+        <div style={{ height: "100%", display: "flex", flexDirection: "column", alignItems: "center", gap: 10 }}>
+          <div style={{ width: 340, height: 170, borderRadius: 30, background: "radial-gradient(circle at 50% 30%, #fffdf6, #e9dcc0 80%)", border: "4px solid #d8b46a", boxShadow: "0 0 30px rgba(232,184,74,0.75), 0 12px 24px rgba(0,0,0,0.3)", display: "flex", alignItems: "center", justifyContent: "center", font: "800 64px Poppins, sans-serif", color: C.navy }}>{item.w}</div>
+          <button type="button" style={{ ...S.hear, minHeight: 46 }} onClick={() => speak(item.w)}><SpeakerIcon /> Hear it</button>
+        </div>
+      </At>
+      {vaultBtn(true, { x: 70, y: 606, w: 560, h: 150 })}
+      {vaultBtn(false, { x: 970, y: 606, w: 560, h: 150 })}
+      <At x={640} y={660} w={320} h={110}>
+        {fb.text && <div style={{ ...S.fb(fb.ok), textAlign: "center", fontSize: 20, background: "rgba(255,255,255,0.9)", borderRadius: 14, padding: "8px 12px" }}>{fb.text}</div>}
+      </At>
+    </>
   );
 }
 
@@ -286,6 +303,8 @@ function PasswordDots({ n, of }) {
 }
 
 // ---------- Forge (word parts) ----------
+// Forge scene: the anvil sits about x 670-1000, y 250-420; the console
+// panel below (x 220-1380, y 530-760) holds the part chips.
 const KIND = {
   pre: { border: "3px solid #14b8c8", color: "#086b78", background: "#e0fbff" },
   base: { border: "3px solid #e3a92c", color: "#7a4d00", background: "#fff4d6" },
@@ -307,32 +326,45 @@ export function ForgeRoom({ room, onDone }) {
     const m = misses + 1; setMisses(m); setForged([]);
     setFb({ ok: false, text: m >= 2 ? `Start with the base word, then add the parts: ${item.parts.join(" + ")}.` : `The forge sparks: that makes "${made}". Check the meaning again.` });
   }
-  const chipStyle = (k) => ({ minWidth: 80, minHeight: 72, padding: "0 20px", borderRadius: 16, font: "800 32px Poppins, sans-serif", cursor: "pointer", boxShadow: "0 6px 12px rgba(15,35,80,0.15)", ...KIND[k] });
+  const chipStyle = (k) => ({ minWidth: 84, minHeight: 74, padding: "0 20px", borderRadius: 16, font: "800 32px Poppins, sans-serif", cursor: "pointer", boxShadow: "0 6px 12px rgba(15,35,80,0.15)", ...KIND[k] });
   return (
-    <Panel eyebrow={`The forge · key ${fi + 1} of ${room.items.length}`} title={`Forge the word that means: ${item.clue}`}
-      sub="Snap the parts together in order: front part, base word, ending." right={<button type="button" style={S.hear} onClick={() => speak(item.w)}><SpeakerIcon /> Hear the word</button>}>
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 12, minHeight: 130, borderRadius: 22, background: "rgba(255,255,255,0.7)", border: "3px dashed #8fd0ee" }}>
-        {forged.length ? forged.map((c, i) => <div key={i} style={{ ...chipStyle(c.k), cursor: "default", display: "flex", alignItems: "center", justifyContent: "center" }}>{c.t}</div>)
-          : <div style={{ font: "600 20px Inter, sans-serif", color: C.muted }}>Tap parts below to load the forge</div>}
-      </div>
-      {ok ? (
-        <div style={{ display: "flex", alignItems: "center", gap: 18, marginTop: "auto" }}>
-          <div style={{ font: "600 21px/1.4 Inter, sans-serif", color: C.soft, flex: 1 }}>{item.explain}</div>
-          <button type="button" style={S.primary} onClick={() => { setFi(fi + 1); setForged([]); setOk(false); setMisses(0); setFb({ ok: true, text: "" }); }}>Next key →</button>
+    <>
+      <At x={400} y={96} w={780} h={104}>
+        <div style={{ height: "100%", borderRadius: 22, background: "rgba(13,40,90,0.9)", border: "2px solid rgba(255,190,90,0.9)", boxShadow: "0 0 22px rgba(255,170,60,0.45)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", color: "#fff", textAlign: "center", padding: "0 18px" }}>
+          <div style={{ font: "700 16px Inter, sans-serif", color: "#ffd89a", letterSpacing: "0.08em" }}>THE FORGE · KEY {fi + 1} OF {room.items.length}</div>
+          <div style={{ font: "800 27px/1.2 Poppins, sans-serif" }}>Forge the word that means: {item.clue}</div>
         </div>
-      ) : (
-        <>
-          <div style={{ display: "flex", flexWrap: "wrap", gap: 14, justifyContent: "center" }}>
-            {room.chips.map((c) => <button key={c.t} type="button" style={chipStyle(c.k)} onClick={() => forged.length < 4 && setForged([...forged, c])}>{c.t}</button>)}
+      </At>
+      <At x={430} y={262} w={740} h={120}>
+        <div style={{ height: "100%", borderRadius: 24, display: "flex", alignItems: "center", justifyContent: "center", gap: 12, background: ok ? "rgba(255,240,200,0.92)" : "rgba(255,255,255,0.55)", border: `3px ${ok ? "solid #ffb84a" : "dashed rgba(255,200,120,0.95)"}`, boxShadow: ok ? "0 0 36px rgba(255,170,40,0.9)" : "0 0 18px rgba(255,170,60,0.5)" }}>
+          {forged.length ? forged.map((c, i) => <div key={i} style={{ ...chipStyle(c.k), cursor: "default", display: "flex", alignItems: "center", justifyContent: "center" }}>{c.t}</div>)
+            : <div style={{ font: "700 21px Inter, sans-serif", color: "#5a3b00" }}>Tap parts to load the anvil</div>}
+          {ok && <div style={{ font: "800 36px Poppins, sans-serif", color: "#7a4d00", marginLeft: 10 }}>= {item.w}</div>}
+        </div>
+      </At>
+      <At x={240} y={540} w={1120} h={210}>
+        {ok ? (
+          <div style={{ height: "100%", display: "flex", alignItems: "center", gap: 22, padding: "0 20px" }}>
+            <div style={{ font: "600 23px/1.4 Inter, sans-serif", color: C.navy, flex: 1 }}>{item.explain}</div>
+            <button type="button" style={{ ...S.primary, minWidth: 220 }} onClick={() => { setFi(fi + 1); setForged([]); setOk(false); setMisses(0); setFb({ ok: true, text: "" }); }}>Next key →</button>
           </div>
-          <div style={{ display: "flex", gap: 14, alignItems: "center", justifyContent: "center", marginTop: "auto" }}>
-            <button type="button" style={S.dark} onClick={() => setForged([])}>Clear</button>
-            <button type="button" style={{ ...S.primary, minWidth: 240 }} onClick={forge}>Forge it</button>
+        ) : (
+          <div style={{ height: "100%", display: "flex", flexDirection: "column", justifyContent: "center", gap: 14 }}>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 12, justifyContent: "center" }}>
+              {room.chips.map((c) => <button key={c.t} type="button" style={chipStyle(c.k)} onClick={() => forged.length < 4 && setForged([...forged, c])}>{c.t}</button>)}
+            </div>
+            <div style={{ display: "flex", gap: 14, alignItems: "center", justifyContent: "center" }}>
+              <button type="button" style={S.hear} onClick={() => speak(item.w)}><SpeakerIcon /> Hear the word</button>
+              <button type="button" style={S.dark} onClick={() => setForged([])}>Clear</button>
+              <button type="button" style={{ ...S.primary, minWidth: 220, background: "linear-gradient(180deg, #ffb84a, #e07a14)", boxShadow: "0 0 0 3px rgba(255,170,60,0.4)" }} onClick={forge}>Forge it</button>
+            </div>
           </div>
-          <div style={{ ...S.fb(fb.ok), textAlign: "center" }}>{fb.text}</div>
-        </>
-      )}
-    </Panel>
+        )}
+      </At>
+      <At x={240} y={770} w={1120} h={40}>
+        <div style={{ ...S.fb(fb.ok), textAlign: "center", fontSize: 20, textShadow: "0 0 6px #fff, 0 0 6px #fff" }}>{fb.text}</div>
+      </At>
+    </>
   );
 }
 
@@ -358,6 +390,9 @@ export function ChainRoom({ room, onDone }) {
 }
 
 // ---------- Inscription ----------
+// Tablet scene: the blank stone sits about x 470-1140, y 190-580.
+const TAB = { x: 482, y: 214, w: 646, h: 356 };
+function tabletFont(n) { return n <= 50 ? 28 : n <= 75 ? 25 : n <= 100 ? 22 : 20; }
 export function ReadRoom({ room, onDone }) {
   const find = useMemo(() => new RegExp(room.find, "i"), [room.find]);
   const tokens = useMemo(() => room.text.split(/\s+/).map((t) => ({ t, target: find.test(t.toLowerCase().replace(/[^a-z]/g, "")) })), [room.text, find]);
@@ -367,7 +402,7 @@ export function ReadRoom({ room, onDone }) {
   const [wrongIdx, setWrongIdx] = useState(-1);
   const [fb, setFb] = useState({ ok: true, text: "" });
   const done = found.length >= totalTargets;
-  const long = tokens.length > 85;
+  const fs = tabletFont(tokens.length);
   function tap(i) {
     if (found.includes(i)) return;
     if (tokens[i].target) { setFound([...found, i]); setWrongIdx(-1); setFb({ ok: true, text: `Yes: ${tokens[i].t.replace(/[^A-Za-z]/g, "")}.` }); }
@@ -375,30 +410,109 @@ export function ReadRoom({ room, onDone }) {
   }
   return (
     <>
-      <At x={390} y={150} w={830} h={690}>
-        <div style={{ height: "100%", borderRadius: 26, padding: "24px 30px", boxSizing: "border-box", background: "linear-gradient(180deg, #fbf5e6, #efe1c0)", border: "4px solid #d8b46a", boxShadow: "0 0 0 4px rgba(120,214,255,0.45), 0 12px 28px rgba(0,0,0,0.3)", display: "flex", flexDirection: "column", gap: 14, overflow: "auto" }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12 }}>
-            <div style={{ ...S.eyebrow, color: "#9a6200" }}>Inscription · {room.title}</div>
-            <button type="button" style={S.hear} onClick={() => speak(room.text)}><SpeakerIcon /> Read it to me</button>
-          </div>
-          <div style={{ display: "flex", flexWrap: "wrap", gap: "4px 6px" }}>
+      <At {...TAB}>
+        <div style={{ height: "100%", overflow: "auto", display: "flex", flexDirection: "column", gap: 8 }}>
+          <div style={{ ...S.eyebrow, color: "#8a5a00" }}>{room.title}</div>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: "2px 4px" }}>
             {tokens.map((x, i) => {
               const on = found.includes(i);
               return (
                 <button key={i} type="button" onClick={() => tap(i)}
-                  style={{ font: `600 ${long ? 25 : 29}px/1.45 Inter, sans-serif`, padding: "0 7px", borderRadius: 10, cursor: "pointer", ...(on ? { background: "#c9f5fa", color: "#06606d", border: `2px solid ${C.teal}` } : wrongIdx === i ? { background: "#ffe6d8", color: "#9a3412", border: "2px solid #f0a274" } : { background: "transparent", color: "#2b2418", border: "2px solid transparent" }) }}>{x.t}</button>
+                  style={{ font: `700 ${fs}px/1.45 Inter, sans-serif`, padding: "0 5px", borderRadius: 9, cursor: "pointer", ...(on ? { background: "#c9f5fa", color: "#06606d", border: `2px solid ${C.teal}` } : wrongIdx === i ? { background: "#ffe6d8", color: "#9a3412", border: "2px solid #f0a274" } : { background: "transparent", color: "#2b2418", border: "2px solid transparent" }) }}>{x.t}</button>
               );
             })}
           </div>
         </div>
       </At>
-      <Panel box={{ x: 1240, y: 150, w: 330, h: 690 }}>
+      <Panel box={{ x: 1210, y: 190, w: 360, h: 420 }}>
         <h2 style={{ ...S.h2, fontSize: 24 }}>Read the log. Then find every word with {room.code.spellings.join(" or ")}.</h2>
         <Count n={found.length} of={totalTargets} label={`of ${totalTargets} found`} />
         <div style={{ height: 14, borderRadius: 999, background: "#dcebf5", overflow: "hidden" }}><div style={{ height: "100%", width: `${totalTargets ? Math.round((found.length / totalTargets) * 100) : 100}%`, background: "linear-gradient(90deg, #2fd3e0, #1c6fd6)" }} /></div>
         <div style={S.fb(fb.ok)}>{fb.text}</div>
-        {done && <button type="button" style={{ ...S.primary, marginTop: "auto" }} onClick={() => onDone({ correct: totalTargets, total: totalTargets + wrongs })}>Continue →</button>}
       </Panel>
+      <At x={420} y={705} w={760} h={90}>
+        <div style={{ height: "100%", display: "flex", gap: 18, alignItems: "center", justifyContent: "center" }}>
+          <button type="button" style={{ ...S.hear, minHeight: 66, fontSize: 21 }} onClick={() => speak(room.text)}><SpeakerIcon /> Read it to me</button>
+          {done && <button type="button" style={{ ...S.primary, minHeight: 66 }} onClick={() => onDone({ correct: totalTargets, total: totalTargets + wrongs })}>Continue →</button>}
+        </div>
+      </At>
+    </>
+  );
+}
+
+// ---------- Reread (fluency) ----------
+// Yesterday's log again, with one goal. Tap a sentence to hear it, read it
+// out loud, and (if the device allows) record and play yourself back. The
+// recording stays on the device; nothing is uploaded or scored.
+const GOALS = {
+  accurate: { name: "Read every word right", tip: "Tap any sentence to hear it first. Then read the whole log out loud, carefully." },
+  smooth: { name: "Read it smoothly", tip: "Read it like you're talking, not like a robot. Pause at the periods." },
+  expression: { name: "Read it with expression", tip: "Read it like a crew member telling the story. Make your voice match what's happening." },
+};
+export function RereadRoom({ room, onDone }) {
+  const goal = GOALS[room.goal] || GOALS.smooth;
+  const sentences = useMemo(() => room.text.match(/[^.!?]+[.!?]+["”]?|[^.!?]+$/g) || [room.text], [room.text]);
+  const [heard, setHeard] = useState(-1);
+  const [readAloud, setReadAloud] = useState(false);
+  const [rec, setRec] = useState(null);
+  const [url, setUrl] = useState(null);
+  const [micErr, setMicErr] = useState("");
+  const chunks = React.useRef([]);
+  const [canRecord, setCanRecord] = useState(false);
+  useEffect(() => { setCanRecord(!!(navigator.mediaDevices && window.MediaRecorder)); }, []);
+  const fs = tabletFont(room.text.split(/\s+/).length);
+  useEffect(() => () => { if (url) URL.revokeObjectURL(url); }, [url]);
+  async function startRec() {
+    setMicErr("");
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mr = new MediaRecorder(stream);
+      chunks.current = [];
+      mr.ondataavailable = (e) => { if (e.data && e.data.size) chunks.current.push(e.data); };
+      mr.onstop = () => { const b = new Blob(chunks.current, { type: mr.mimeType || "audio/webm" }); setUrl(URL.createObjectURL(b)); stream.getTracks().forEach((t) => t.stop()); };
+      mr.start(); setRec(mr);
+    } catch (e) { setMicErr("The microphone isn't available. Read it out loud anyway."); }
+  }
+  function stopRec() { if (rec) rec.stop(); setRec(null); setReadAloud(true); }
+  const rate = (self) => onDone({ correct: 0, total: 0, reread: { goal: room.goal, self } });
+  return (
+    <>
+      <At {...TAB}>
+        <div style={{ height: "100%", overflow: "auto", display: "flex", flexDirection: "column", gap: 8 }}>
+          <div style={{ ...S.eyebrow, color: "#8a5a00" }}>Reread · {room.title}</div>
+          <div style={{ font: `700 ${fs}px/1.55 Inter, sans-serif`, color: "#2b2418" }}>
+            {sentences.map((t, i) => (
+              <span key={i} role="button" tabIndex={0} onClick={() => { setHeard(i); speak(t.trim()); }} onKeyDown={(e) => { if (e.key === "Enter") { setHeard(i); speak(t.trim()); } }}
+                style={{ cursor: "pointer", borderRadius: 8, padding: "1px 2px", background: heard === i ? "rgba(120,214,255,0.45)" : "transparent" }}>{t} </span>
+            ))}
+          </div>
+        </div>
+      </At>
+      <Panel box={{ x: 1210, y: 190, w: 360, h: 470 }}>
+        <div style={S.eyebrow}>Today&apos;s goal</div>
+        <h2 style={{ ...S.h2, fontSize: 25, marginTop: 0 }}>{goal.name}</h2>
+        <p style={{ ...S.p, fontSize: 17, marginTop: 0 }}>{goal.tip}</p>
+        {!readAloud ? (
+          <div style={{ display: "flex", flexDirection: "column", gap: 10, marginTop: "auto" }}>
+            {canRecord && !rec && <button type="button" style={{ ...S.secondary, borderColor: "#f08a6c" }} onClick={startRec}>● Record myself</button>}
+            {rec && <button type="button" style={{ ...S.secondary, background: "#ffece4", borderColor: "#f08a6c" }} onClick={stopRec}>■ Stop recording</button>}
+            {!rec && <button type="button" style={S.primary} onClick={() => setReadAloud(true)}>I read it out loud</button>}
+            {micErr && <div style={{ ...S.fb(false), fontSize: 15 }}>{micErr}</div>}
+          </div>
+        ) : (
+          <div style={{ display: "flex", flexDirection: "column", gap: 10, marginTop: "auto" }}>
+            {url && <button type="button" style={S.hear} onClick={() => new Audio(url).play()}><SpeakerIcon /> Hear myself</button>}
+            <div style={{ font: "800 19px Poppins, sans-serif", color: C.navy }}>How did it go?</div>
+            {[["smooth", "Smooth"], ["bumps", "A few bumps"], ["tricky", "Tricky"]].map(([k, label]) => <button key={k} type="button" style={S.secondary} onClick={() => rate(k)}>{label}</button>)}
+          </div>
+        )}
+      </Panel>
+      <At x={420} y={705} w={760} h={90}>
+        <div style={{ height: "100%", display: "flex", gap: 18, alignItems: "center", justifyContent: "center" }}>
+          <button type="button" style={{ ...S.hear, minHeight: 66, fontSize: 21 }} onClick={() => speak(room.text)}><SpeakerIcon /> Hear S.A.M. read it</button>
+          <div style={{ font: "700 17px Inter, sans-serif", color: C.navy, background: "rgba(255,255,255,0.85)", padding: "8px 14px", borderRadius: 12 }}>Tap a sentence to hear just that part.</div>
+        </div>
+      </At>
     </>
   );
 }

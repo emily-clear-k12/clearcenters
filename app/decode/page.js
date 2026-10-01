@@ -2,7 +2,7 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { supabaseAdmin } from "../../lib/supabaseAdmin";
 import { readProgress } from "../../lib/cleardecodeServer";
-import { PLANETS, ruinsOfPlanet, ruinIndex, getRuinContent, isRuinReady, nextSession, doneToday, ruinState, masteredRuins, planetOf } from "../../lib/cleardecode";
+import { PLANETS, ruinsOfPlanet, ruinIndex, getRuinContent, isRuinReady, nextSession, doneToday, ruinState, masteredRuins, planetOf, isComplete } from "../../lib/cleardecode";
 import CodeHome from "../../components/cleardecode/CodeHome";
 import DecodeMessage from "../../components/cleardecode/DecodeMessage";
 
@@ -30,17 +30,19 @@ export default async function CodePage() {
     return { id: p.id, name: p.name, skill: p.skill, here: ruins.some((r) => r.state === "here"), ruins };
   });
   const relics = Object.entries(row.ruins || {}).filter(([, v]) => v && v.passedAt).map(([id]) => ({ id, ...(getRuinContent(id) || {}).relic })).filter((r) => r.name);
-  const content = getRuinContent(current);
+  const keeper = !current && isComplete(row);
+  const content = keeper ? null : getRuinContent(current);
   const view = {
     planets, current, relics,
     session: nextSession(row),
     doneToday: doneToday(row),
-    ready: isRuinReady(current),
-    ruinName: content ? content.name : "Uncharted ruin",
-    pieces: Math.min(4, ruinState(row, current).chambers || 0),
-    planetName: (planetOf(current) || {}).name || "",
-    currentPlanet: (planetOf(current) || {}).id || "A",
-    codeLabel: content ? content.code.label : "",
+    ready: keeper || isRuinReady(current),
+    keeper,
+    ruinName: keeper ? "Keeper of the Archive" : content ? content.name : "Uncharted ruin",
+    pieces: keeper ? 4 : Math.min(4, ruinState(row, current).chambers || 0),
+    planetName: keeper ? "Haven" : (planetOf(current) || {}).name || "",
+    currentPlanet: keeper ? "K" : (planetOf(current) || {}).id || "A",
+    codeLabel: keeper ? "all codes" : content ? content.code.label : "",
   };
   return <CodeHome firstName={student.first_name} view={view} skin={skin} />;
 }

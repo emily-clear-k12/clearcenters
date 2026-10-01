@@ -1,7 +1,7 @@
 "use client";
 import React, { useState, Suspense } from "react";
 import { BridgePage, PageHeading, ClassTabs, Empty } from "../../../../components/teacher/BridgeUI";
-import { ClearDecodeTabs, useClearDecodeClass, callClearDecode, statusOf, scanLine, weekStats, ruinLabel, ruinState, recentAccuracy } from "../../../../components/teacher/ClearDecodeShared";
+import { ClearDecodeTabs, useClearDecodeClass, callClearDecode, statusOf, scanLine, weekStats, ruinLabel, ruinState, recentAccuracy, troubleSpots, rereadNote, isComplete } from "../../../../components/teacher/ClearDecodeShared";
 import { RUINS, PLANETS, CHAMBERS_PER_RUIN } from "../../../../lib/cleardecode/core";
 
 // ClearDecode Class progress (Sept 30, 2026): one row per student with the
@@ -40,7 +40,7 @@ function Progress() {
           <div className="cc-table-scroll">
             <table className="cc-table">
               <thead>
-                <tr><th>Student</th><th>Status</th><th>Ruin</th><th>Chambers</th><th>Vault</th><th>This week</th><th>Recent</th><th>Placement scan</th><th>Pass mark</th><th>Place at</th><th></th></tr>
+                <tr><th>Student</th><th>Status</th><th>Ruin</th><th>Chambers</th><th>Vault</th><th>This week</th><th>Recent</th><th>Trouble spots</th><th>Placement scan</th><th>Pass mark</th><th>Place at</th><th></th></tr>
               </thead>
               <tbody>
                 {students.map((s) => {
@@ -55,11 +55,12 @@ function Progress() {
                     <tr key={s.id}>
                       <td><b>{s.firstName}</b></td>
                       <td><span className={`cc-badge ${st.color}`}>{st.label}</span></td>
-                      <td>{live ? ruinLabel(p.current_ruin) : "—"}</td>
+                      <td>{live ? ruinLabel(p.current_ruin) : p && p.status === "on" && isComplete(p) ? "All 55 ruins done" : "—"}</td>
                       <td>{rs ? `${Math.min(rs.chambers, CHAMBERS_PER_RUIN)} of ${CHAMBERS_PER_RUIN}` : "—"}</td>
                       <td>{rs && rs.vaultTries ? `${rs.vaultTries} ${rs.vaultTries === 1 ? "try" : "tries"} · best ${rs.vaultBest ?? 0}/15` : "—"}</td>
                       <td>{p ? `${wk.sessions} · ${wk.minutes} min` : "—"}</td>
-                      <td>{acc === null ? "—" : `${acc}%`}</td>
+                      <td>{acc === null ? "—" : `${acc}%`}{rereadNote(p) && <div className="cc-muted" style={{ fontSize: 12 }}>{rereadNote(p)}</div>}</td>
+                      <td style={{ maxWidth: 220 }}>{troubleSpots(p).length ? troubleSpots(p).slice(0, 3).map((t) => <div key={t.ruin} style={{ fontSize: 13 }}><b>{ruinLabel(t.ruin)}</b> <span className="cc-muted">· {t.why}</span></div>) : "—"}</td>
                       <td style={{ maxWidth: 240 }}>{scanLine(p)}</td>
                       <td>
                         {p ? (

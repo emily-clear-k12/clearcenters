@@ -1,6 +1,9 @@
 "use client";
 import React, { useEffect, useRef, useState } from "react";
 import { S, C } from "./ui";
+import { At } from "./Stage";
+
+const MAINBOX = { x: 390, y: 150, w: 1180, h: 690 };
 
 // Bonus games (45 seconds). Only the ruin's own words count; a wrong tap or
 // gate never triggers anything fun. Bonus crystals are capped at 3 (score / 6).
@@ -75,7 +78,7 @@ export function GameRoom({ room, onDone }) {
   const s = g.current;
   if (!kind) {
     return (
-      <section style={{ ...S.panel, display: "flex", flexDirection: "column", gap: 18 }}>
+      <At {...MAINBOX}><section style={{ ...S.panel, display: "flex", flexDirection: "column", gap: 18 }}>
         <div>
           <div style={S.eyebrow}>Bonus game · 45 seconds</div>
           <h2 style={S.h2}>Chamber cleared. Time to get out of the ruin.</h2>
@@ -87,21 +90,65 @@ export function GameRoom({ room, onDone }) {
           <span style={{ fontSize: 18, color: "#cfe0ff" }}>{room.kind === "runner" ? "Race the rover out of the tunnel. Tap the gate with the code word to steer through it." : "Glyph stones are falling on the shield. Tap only the code words to blast them."}</span>
           <span style={{ alignSelf: "flex-start", marginTop: 6, padding: "10px 20px", borderRadius: 999, background: `linear-gradient(90deg, ${C.violet}, ${C.teal})`, font: "700 16px Poppins, sans-serif", color: "#fff" }}>Tap to start</span>
         </button>
-      </section>
+      </section></At>
     );
   }
   if (over) {
     return (
-      <section style={{ ...S.panel, display: "flex", flexDirection: "column", alignItems: "center", gap: 14, textAlign: "center" }}>
+      <At x={420} y={260} w={1120} h={360}><section style={{ ...S.panel, display: "flex", flexDirection: "column", alignItems: "center", gap: 14, textAlign: "center" }}>
         <div style={S.eyebrow}>{kind === "runner" ? "Ruin Runner" : "Glyph Storm"} · run complete</div>
         <div style={{ font: "800 42px Poppins, sans-serif" }}>{over.score} {kind === "runner" ? "gates cleared" : "glyphs blasted"}</div>
         <div style={{ font: "700 18px Poppins, sans-serif", color: C.gold }}>+{over.bonus} bonus crystals</div>
         <button type="button" style={S.primary} onClick={() => onDone({ bonus: over.bonus })}>Collect your reward</button>
-      </section>
+      </section></At>
+    );
+  }
+  if (kind === "runner") {
+    // Ruin Runner scene: three stone lanes run from about y 330 (far) to
+    // y 620 (near), centered on x 800. Gates slide toward the rover.
+    return (
+      <>
+        <At x={430} y={96} w={740} h={96}>
+          <div style={{ ...S.glass, height: "100%", padding: "10px 22px", display: "flex", flexDirection: "column", justifyContent: "center", gap: 6 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+              <div style={{ font: "800 22px Poppins, sans-serif", color: C.navy }}>Ruin Runner</div>
+              <div style={{ flexGrow: 1, height: 12, borderRadius: 999, background: "#dcebf5", overflow: "hidden" }}><div style={{ height: "100%", width: `${Math.max(0, Math.round((1 - s.t / SECONDS) * 100))}%`, background: `linear-gradient(90deg, ${C.violet}, ${C.teal})` }} /></div>
+              <div style={{ font: "800 20px Poppins, sans-serif", color: C.tealText }}>{s.cleared} {s.cleared === 1 ? "gate" : "gates"}</div>
+            </div>
+            <div style={{ ...S.fb(s.msgOk), minHeight: 22, fontSize: 17 }}>{s.msg || "Tap the gate with the code word."}</div>
+          </div>
+        </At>
+        {s.rows.map((r) => {
+          const t = Math.min(1.1, Math.max(0, r.y));
+          const yy = 330 + t * 290;
+          const spread = 140 + t * 230;
+          const w = 118 + t * 150;
+          const h = 46 + t * 26;
+          return r.words.map((word, i) => {
+            const look = r.res === "hit" && i === r.target ? { background: "rgba(47,212,200,0.95)", border: "3px solid #fff", color: "#fff" }
+              : r.res === "miss" && i === r.target ? { background: "rgba(255,255,255,0.95)", border: `3px solid ${C.teal}`, color: "#086b78" }
+              : i === s.lane && !r.res ? { background: "#ffffff", border: "3px solid #2f7de1", color: C.navy, boxShadow: "0 0 18px rgba(47,125,225,0.8)" }
+              : { background: "rgba(255,255,255,0.88)", border: "3px solid #9fd6f2", color: C.navy };
+            return (
+              <At key={`${r.id}-${i}`} x={800 + (i - 1) * spread - w / 2} y={yy - h / 2} w={w} h={h}>
+                <button type="button" onClick={() => { s.lane = i; force((n) => n + 1); }} style={{ width: "100%", height: "100%", borderRadius: 14, cursor: "pointer", font: `800 ${Math.round(18 + t * 18)}px Poppins, sans-serif`, boxShadow: "0 6px 14px rgba(0,0,0,0.3)", ...look }}>{word}</button>
+              </At>
+            );
+          });
+        })}
+        <At x={800 + (s.lane - 1) * 360 - 70} y={650} w={140} h={100} style={{ transition: "left 0.15s ease-out" }}>
+          <svg width="140" height="100" viewBox="0 0 96 70" aria-hidden="true"><ellipse cx="48" cy="62" rx="38" ry="6" fill="rgba(47,212,200,0.45)" /><path d="M14 44c0-14 14-26 34-26s34 12 34 26v6H14z" fill="#3a4cb0" /><path d="M30 30c4-8 10-12 18-12s14 4 18 12z" fill="#7ff0e6" opacity="0.9" /><rect x="10" y="44" width="76" height="10" rx="5" fill="#2fd4c8" /></svg>
+        </At>
+        {[0, 1, 2].map((i) => (
+          <At key={`lane-${i}`} x={800 + (i - 1) * 360 - 150} y={760} w={300} h={60}>
+            <button type="button" onClick={() => { s.lane = i; force((n) => n + 1); }} style={{ width: "100%", height: "100%", borderRadius: 16, border: `3px solid ${s.lane === i ? C.blue : "#9fd6f2"}`, background: s.lane === i ? "#e3f1ff" : "rgba(255,255,255,0.8)", font: "800 18px Inter, sans-serif", color: C.navy, cursor: "pointer" }}>{["Left lane", "Middle lane", "Right lane"][i]}</button>
+          </At>
+        ))}
+      </>
     );
   }
   return (
-    <section style={{ ...S.panel, display: "flex", flexDirection: "column", gap: 12 }}>
+    <At {...MAINBOX}><section style={{ ...S.panel, display: "flex", flexDirection: "column", gap: 12 }}>
       <div style={{ display: "flex", alignItems: "center", gap: 18 }}>
         <div style={{ font: "800 20px Poppins, sans-serif" }}>{kind === "runner" ? "Ruin Runner" : "Glyph Storm"}</div>
         <div style={{ flexGrow: 1, height: 10, borderRadius: 999, background: "#dcebf5", overflow: "hidden" }}><div style={{ height: "100%", width: `${Math.max(0, Math.round((1 - s.t / SECONDS) * 100))}%`, background: `linear-gradient(90deg, ${C.violet}, ${C.teal})` }} /></div>
@@ -136,6 +183,6 @@ export function GameRoom({ room, onDone }) {
           <div style={{ position: "absolute", left: 0, right: 0, bottom: 0, height: 34, background: `linear-gradient(0deg, rgba(47,212,200,${Math.max(0.15, 0.75 - s.missed * 0.06).toFixed(2)}), rgba(47,212,200,0))`, borderTop: "2px solid rgba(127,240,230,0.6)" }} />
         </div>
       )}
-    </section>
+    </section></At>
   );
 }

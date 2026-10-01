@@ -2,7 +2,7 @@
 import React, { useState, Suspense } from "react";
 import Link from "next/link";
 import { BridgePage, PageHeading, ClassTabs, Empty } from "../../../components/teacher/BridgeUI";
-import { ClearDecodeTabs, useClearDecodeClass, callClearDecode, statusOf, scanLine, weekStats, ruinLabel, needsHelp } from "../../../components/teacher/ClearDecodeShared";
+import { ClearDecodeTabs, useClearDecodeClass, callClearDecode, statusOf, scanLine, weekStats, ruinLabel, needsHelp, troubleSpots, isComplete, RUIN_ORDER } from "../../../components/teacher/ClearDecodeShared";
 
 // ClearDecode teacher Overview (Sept 30, 2026). Mirrors the ClearKeys Overview:
 // hero, setup action, who needs you, this week, tools.
@@ -153,6 +153,7 @@ function Overview() {
                     { href: `/teacher/cleardecode/progress${q}`, name: "Class progress", what: "Each student's ruin, vault results, pass mark and place-at." },
                     { href: `/teacher/cleardecode/report${q}`, name: "Report", what: "Patterns mastered, re-scan growth, family notes, Excel." },
                     { href: `/teacher/cleardecode/words${q}`, name: "Class words", what: "This week's big words from what your class is assigned." },
+                    { href: `/teacher/cleardecode/kit${q}`, name: "Small-group kits", what: "Print a mini-lesson, cards, sort and logs for any pattern." },
                   ].map((t) => (
                     <Link key={t.name} href={t.href} className="cc-board-tile" style={{ border: "1px solid #eee9f7" }}>
                       <strong>{t.name}</strong>
@@ -163,6 +164,45 @@ function Overview() {
               </section>
             </div>
           )}
+          {data && inCode > 0 && (() => {
+            const active = students.filter((st) => st.progress && st.progress.status === "on");
+            const byRuin = {};
+            active.forEach((st) => { const k = st.progress.current_ruin || (isComplete(st.progress) ? "KEEP" : null); if (k) (byRuin[k] = byRuin[k] || []).push(st); });
+            const order = (k) => (k === "KEEP" ? 999 : RUIN_ORDER.indexOf(k));
+            const groups = Object.entries(byRuin).sort((a, b) => order(a[0]) - order(b[0]));
+            const shared = {};
+            active.forEach((st) => troubleSpots(st.progress).forEach((t) => { (shared[t.ruin] = shared[t.ruin] || []).push(st.firstName); }));
+            const common = Object.entries(shared).filter(([, names]) => names.length >= 2).sort((a, b) => b[1].length - a[1].length).slice(0, 4);
+            const kit = (ruin) => `/teacher/cleardecode/kit?ruin=${ruin}${classId ? `&classId=${classId}` : ""}`;
+            return (
+              <section className="cc-panel" style={{ marginBottom: 18 }}>
+                <h3>Small groups</h3>
+                <p className="cc-muted" style={{ marginTop: 0 }}>Students working on the same pattern, and trouble spots more than one student shares. Each kit prints the mini-lesson, word cards, a sort, spelling words and the logs.</p>
+                <div className="cc-two">
+                  <div>
+                    <strong style={{ fontSize: 14 }}>Working on the same pattern</strong>
+                    {groups.map(([ruin, list]) => (
+                      <div key={ruin} className="cc-person">
+                        <div className="cc-avatar">{list.length}</div>
+                        <div><strong>{ruin === "KEEP" ? "Finished · keeper practice" : ruinLabel(ruin)}</strong><p>{list.map((st) => `${st.firstName}${needsHelp(st.progress) ? " (stuck)" : ""}`).join(", ")}</p></div>
+                        {ruin !== "KEEP" && <Link href={kit(ruin)} className="cc-btn secondary">Group kit</Link>}
+                      </div>
+                    ))}
+                  </div>
+                  <div>
+                    <strong style={{ fontSize: 14 }}>Shared trouble spots</strong>
+                    {common.length === 0 ? <p className="cc-muted">None yet. When two or more students struggle with the same pattern, it shows up here.</p> : common.map(([ruin, names]) => (
+                      <div key={ruin} className="cc-person">
+                        <div className="cc-avatar" style={{ background: "#fde8eb", color: "#b42b3a" }}>{names.length}</div>
+                        <div><strong>{ruinLabel(ruin)}</strong><p>{names.join(", ")}</p></div>
+                        <Link href={kit(ruin)} className="cc-btn secondary">Reteach kit</Link>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </section>
+            );
+          })()}
           <p className="cc-muted" style={{ fontSize: 12.5 }}>ClearDecode is supplemental practice. It reinforces, and does not replace, your district&apos;s reading intervention or dyslexia program, and the placement scan is not a reading screener.</p>
         </>
       )}

@@ -20,6 +20,13 @@ export const SCENES = {
   wall: "/decode/scenes/wall.webp",
   door: "/decode/scenes/door.webp",
   vault: "/decode/scenes/vault.webp",
+  sort: "/decode/scenes/sort.webp",
+  forge: "/decode/scenes/forge.webp",
+  tablet: "/decode/scenes/tablet.webp",
+  runner: "/decode/scenes/runner.webp",
+  case: "/decode/scenes/case.webp",
+  // Each planet's window view (Emily's art): the default room background.
+  ...Object.fromEntries("ABCDEFGHIJK".split("").map((k) => [`planet-${k}`, `/decode/scenes/planet-${k}.webp`])),
 };
 
 export function Logo({ size = 1 }) {

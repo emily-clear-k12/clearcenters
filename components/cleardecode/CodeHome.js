@@ -15,15 +15,17 @@ const SPOTS = [
 ];
 
 export default function CodeHome({ firstName, view, skin }) {
-  const { planets, session, doneToday, ready, relics, ruinName, pieces, planetName, codeLabel, currentPlanet } = view;
+  const { planets, session, doneToday, ready, relics, ruinName, pieces, planetName, codeLabel, currentPlanet, keeper } = view;
   const [caseOpen, setCaseOpen] = useState(false);
-  const status = !ready ? "This part of the ruins is still being mapped. Ask your teacher."
+  const [page, setPage] = useState(0);
+  const status = keeper ? (doneToday ? "Keeper mission done for today. The archive is safe." : "You can read the builders' code. A short keeper mission keeps every code sharp.")
+    : !ready ? "This part of the ruins is still being mapped. Ask your teacher."
     : doneToday ? "You finished today's session. The next one opens tomorrow."
     : session.kind === "vault" ? "The vault is ready. Crack its seals to earn this ruin's relic."
     : `${session.retryPrep ? "One more practice run before the vault. " : ""}Hear, read, and build words with ${codeLabel}.`;
   const path = SPOTS.map(([x, y], i) => `${i ? "L" : "M"}${x} ${y}`).join(" ");
   return (
-    <Stage scene="map" exit={{ href: "/home", label: "Back to Home" }} sam={{ skin, line: doneToday ? `Good work today${firstName ? `, ${firstName}` : ""}.` : `Ready for ${ruinName}?`, state: "idle" }}>
+    <Stage scene="map" exit={{ href: "/home", label: "Back to Home" }} sam={{ skin, line: doneToday ? `Good work today${firstName ? `, ${firstName}` : ""}.` : keeper ? "The archive needs its keeper." : `Ready for ${ruinName}?`, state: "idle" }}>
       {/* Today's expedition */}
       <At x={50} y={150} w={570} h={660}>
         <div style={{ ...S.glass, background: "rgba(247,252,255,0.95)", height: "100%", overflow: "hidden", display: "flex", flexDirection: "column" }}>
@@ -37,16 +39,16 @@ export default function CodeHome({ firstName, view, skin }) {
             </div>
           </div>
           <div style={{ padding: "18px 24px", display: "flex", flexDirection: "column", gap: 14, flex: 1 }}>
-            <div style={{ font: "800 30px Poppins, sans-serif", color: C.navy }}>{!ready ? "Uncharted" : doneToday ? "Done for today" : session.kind === "vault" ? "The vault" : `Chamber ${session.n}`}</div>
+            <div style={{ font: "800 30px Poppins, sans-serif", color: C.navy }}>{keeper ? "Keeper mission" : !ready ? "Uncharted" : doneToday ? "Done for today" : session.kind === "vault" ? "The vault" : `Chamber ${session.n}`}</div>
             <div style={{ font: "600 20px/1.4 Inter, sans-serif", color: C.soft }}>{status}</div>
-            {ready && !doneToday && <div style={{ display: "flex", alignItems: "center", gap: 8, font: "600 18px Inter, sans-serif", color: C.soft }}>⏱ About 20 minutes</div>}
+            {ready && !doneToday && <div style={{ display: "flex", alignItems: "center", gap: 8, font: "600 18px Inter, sans-serif", color: C.soft }}>⏱ About {keeper ? 10 : 20} minutes</div>}
             {ready && !doneToday && (
               <Link href="/decode/play" style={{ ...S.primary, display: "flex", alignItems: "center", justifyContent: "center", textDecoration: "none", minHeight: 76, fontSize: 30, marginTop: 4 }}>
-                {session.kind === "vault" ? "Enter the vault →" : `Enter Chamber ${session.n} →`}
+                {keeper ? "Start keeper mission →" : session.kind === "vault" ? "Enter the vault →" : `Enter Chamber ${session.n} →`}
               </Link>
             )}
             <div style={{ marginTop: "auto", padding: "14px 18px", borderRadius: 18, background: "#eef6fb", display: "flex", alignItems: "center", gap: 16 }}>
-              <div style={{ flex: 1 }}>
+              <div style={{ flex: 1, visibility: keeper ? "hidden" : "visible" }}>
                 <div style={{ font: "700 18px Inter, sans-serif", color: C.navy, marginBottom: 8 }}>{pieces} of 4 relic pieces</div>
                 <div style={{ display: "flex", gap: 10 }}>
                   {[0, 1, 2, 3].map((i) => <div key={i} style={{ width: 54, height: 54, borderRadius: 12, border: "3px solid #bfdcef", background: i < pieces ? "linear-gradient(135deg, #ffd765, #d99a14)" : "#fff", boxShadow: i < pieces ? "0 0 12px rgba(255,200,60,0.7)" : "none" }} />)}
@@ -88,24 +90,26 @@ export default function CodeHome({ firstName, view, skin }) {
       </At>
 
       {caseOpen && (
-        <At x={0} y={0} w={1600} h={900} style={{ background: "rgba(5,15,40,0.55)", zIndex: 5 }}>
-          <div style={{ position: "absolute", left: 300, top: 140, width: 1000, height: 620 }}>
-            <div style={{ ...S.glass, background: "rgba(247,252,255,0.97)", height: "100%", padding: 30, display: "flex", flexDirection: "column", gap: 16 }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                <h2 style={{ ...S.h2, margin: 0 }}>Relic case</h2>
-                <button type="button" style={S.secondary} onClick={() => setCaseOpen(false)}>Close</button>
+        <At x={0} y={0} w={1600} h={900} style={{ zIndex: 5 }}>
+          <div style={{ position: "absolute", inset: 0, backgroundImage: "url(/decode/scenes/case.webp)", backgroundSize: "100% 100%" }} />
+          <div style={{ position: "absolute", left: 40, top: 26 }}><div style={{ ...S.glass, padding: "12px 22px", font: "800 30px Poppins, sans-serif", color: C.navy }}>Relic case · {relics.length} {relics.length === 1 ? "relic" : "relics"}</div></div>
+          {/* Shelves: top row y 185-355, bottom row y 410-525; columns x 415-675, 685-925, 935-1185 */}
+          {relics.length === 0 && <div style={{ position: "absolute", left: 420, top: 240, width: 760, textAlign: "center", font: "700 26px Poppins, sans-serif", color: C.navy }}>Crack a ruin&apos;s vault to put its relic here.</div>}
+          {relics.slice(page * 6, page * 6 + 6).map((r, i) => {
+            const col = [[415, 260], [685, 240], [935, 250]][i % 3];
+            const top = i < 3 ? 200 : 412;
+            const h = i < 3 ? 140 : 104;
+            return (
+              <div key={r.id} title={r.caption} style={{ position: "absolute", left: col[0] + 8, top, width: col[1] - 16, height: h, borderRadius: 16, background: "linear-gradient(180deg, rgba(255,250,235,0.95), rgba(255,236,190,0.95))", border: "3px solid #e3b44a", boxShadow: "0 0 20px rgba(255,200,80,0.7)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center", padding: 8, boxSizing: "border-box" }}>
+                <div style={{ font: "800 20px/1.15 Poppins, sans-serif", color: "#5a3b00" }}>{r.name}</div>
+                {i < 3 && <div style={{ font: "600 13px/1.3 Inter, sans-serif", color: "#6b5a3a", marginTop: 6 }}>{r.caption}</div>}
               </div>
-              {relics.length === 0 ? <p style={{ ...S.p, fontSize: 21 }}>Crack a ruin&apos;s vault to put its relic here.</p> : (
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: 16, overflow: "auto" }}>
-                  {relics.map((r) => (
-                    <div key={r.id} style={{ borderRadius: 18, padding: 18, background: "#fff", border: "3px solid #e3c27a", boxShadow: "0 6px 14px rgba(15,35,80,0.12)" }}>
-                      <div style={{ font: "800 21px Poppins, sans-serif", color: C.navy }}>{r.name}</div>
-                      <div style={{ font: "500 16px/1.4 Inter, sans-serif", color: C.soft, marginTop: 6 }}>{r.caption}</div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
+            );
+          })}
+          <div style={{ position: "absolute", left: 420, top: 640, width: 760, display: "flex", justifyContent: "center", gap: 16 }}>
+            {page > 0 && <button type="button" style={S.secondary} onClick={() => setPage(page - 1)}>← Earlier relics</button>}
+            <button type="button" style={S.primary} onClick={() => { setCaseOpen(false); setPage(0); }}>Close the case</button>
+            {(page + 1) * 6 < relics.length && <button type="button" style={S.secondary} onClick={() => setPage(page + 1)}>More relics →</button>}
           </div>
         </At>
       )}

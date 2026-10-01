@@ -2,7 +2,7 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { supabaseAdmin } from "../../../lib/supabaseAdmin";
 import { readProgress, readClassWords } from "../../../lib/cleardecodeServer";
-import { nextSession, doneToday, isRuinReady, buildChamber, buildVault, reviewPool, getRuinContent, dateKey, planetOf, ruinState } from "../../../lib/cleardecode";
+import { nextSession, doneToday, isRuinReady, buildChamber, buildVault, buildKeeper, reviewPool, getRuinContent, dateKey, planetOf, ruinState, KEEPER, LAST_RUIN } from "../../../lib/cleardecode";
 import ChamberClient from "../../../components/cleardecode/ChamberClient";
 
 export const dynamic = "force-dynamic";
@@ -16,6 +16,13 @@ export default async function PlayPage() {
   const { row } = await readProgress(studentId);
   if (!row || row.status !== "on") redirect("/decode");
   const ses = nextSession(row);
+  if (ses.kind === "keeper" && !doneToday(row)) {
+    const { words } = await readClassWords(student.class_id);
+    const rooms = buildKeeper(row, { classWords: words });
+    const meta = { planetId: "K", planetName: "Haven", ruinId: KEEPER, ruinName: "Keeper of the Archive", codeLabel: "review" };
+    const resume = row.chamber && row.chamber.ruin === KEEPER && row.chamber.date === dateKey() ? row.chamber.room : 0;
+    return <ChamberClient session={ses} rooms={rooms} startRoom={resume} ruinName={meta.ruinName} codeLabel="review" meta={meta} skin={student.equipped_sam_skin || null} keeper />;
+  }
   if (!ses.ruin || !isRuinReady(ses.ruin) || doneToday(row)) redirect("/decode");
   const content = getRuinContent(ses.ruin);
   const pool = reviewPool(ses.ruin);

@@ -1,7 +1,7 @@
 "use client";
 import React, { useState, Suspense } from "react";
 import { BridgePage, PageHeading, ClassTabs, Empty } from "../../../../components/teacher/BridgeUI";
-import { ClearDecodeTabs, useClearDecodeClass, statusOf, weekStats, recentAccuracy, familyNote, ruinLabel, masteredRuins } from "../../../../components/teacher/ClearDecodeShared";
+import { ClearDecodeTabs, useClearDecodeClass, statusOf, weekStats, recentAccuracy, familyNote, ruinLabel, masteredRuins, troubleSpots, rereadNote, isComplete } from "../../../../components/teacher/ClearDecodeShared";
 import { RUIN_ORDER } from "../../../../lib/cleardecode/core";
 
 // ClearDecode Report (Sept 30, 2026): patterns mastered, re-scan growth,
@@ -23,7 +23,9 @@ function rowFor(s) {
     s, p, st, wk, g,
     mastered: masteredRuins(p || {}).length,
     acc: recentAccuracy(p),
-    ruin: p && p.status === "on" && p.current_ruin ? ruinLabel(p.current_ruin) : "—",
+    ruin: p && p.status === "on" && p.current_ruin ? ruinLabel(p.current_ruin) : p && p.status === "on" && isComplete(p) ? "Finished (keeper practice)" : "—",
+    trouble: troubleSpots(p).map((t) => `${ruinLabel(t.ruin)} (${t.why})`).join("; "),
+    reread: rereadNote(p) || "",
   };
 }
 
@@ -39,8 +41,8 @@ function Report() {
   const total = RUIN_ORDER.length;
 
   function download() {
-    const head = ["Student", "Status", "Current ruin", "Patterns mastered", `Of ${total}`, "Sessions this week", "Minutes this week", "Recent accuracy %", "First scan start", "Latest scan start", "Patterns gained since first scan"];
-    const lines = rows.map((r) => [r.s.firstName, r.st.label, r.ruin, r.mastered, total, r.wk.sessions, r.wk.minutes, r.acc ?? "", r.g ? r.g.from : "", r.g ? r.g.to : "", r.g ? r.g.gained : ""].map(csvCell).join(","));
+    const head = ["Student", "Status", "Current ruin", "Patterns mastered", `Of ${total}`, "Sessions this week", "Minutes this week", "Recent accuracy %", "First scan start", "Latest scan start", "Patterns gained since first scan", "Trouble spots", "Last reread"];
+    const lines = rows.map((r) => [r.s.firstName, r.st.label, r.ruin, r.mastered, total, r.wk.sessions, r.wk.minutes, r.acc ?? "", r.g ? r.g.from : "", r.g ? r.g.to : "", r.g ? r.g.gained : "", r.trouble, r.reread].map(csvCell).join(","));
     const blob = new Blob([[head.map(csvCell).join(","), ...lines].join("\n")], { type: "text/csv;charset=utf-8" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -71,7 +73,7 @@ function Report() {
             <p className="cc-muted" style={{ marginTop: 0 }}>&quot;Patterns mastered&quot; counts the ruins below a student&apos;s scan start plus every vault passed, out of {total} in UFLI order. Growth compares the first placement scan to the latest re-scan.</p>
             <div className="cc-table-scroll">
               <table className="cc-table">
-                <thead><tr><th>Student</th><th>Status</th><th>Working on</th><th>Patterns mastered</th><th>This week</th><th>Recent accuracy</th><th>Re-scan growth</th></tr></thead>
+                <thead><tr><th>Student</th><th>Status</th><th>Working on</th><th>Patterns mastered</th><th>This week</th><th>Recent accuracy</th><th>Trouble spots</th><th>Re-scan growth</th></tr></thead>
                 <tbody>
                   {rows.map((r) => (
                     <tr key={r.s.id}>
@@ -80,7 +82,8 @@ function Report() {
                       <td>{r.ruin}</td>
                       <td>{r.mastered} of {total}</td>
                       <td>{r.wk.sessions} {r.wk.sessions === 1 ? "session" : "sessions"} · {r.wk.minutes} min</td>
-                      <td>{r.acc === null ? "—" : `${r.acc}%`}</td>
+                      <td>{r.acc === null ? "—" : `${r.acc}%`}{r.reread && <div className="cc-muted" style={{ fontSize: 12 }}>{r.reread}</div>}</td>
+                      <td style={{ maxWidth: 240, fontSize: 13 }}>{r.trouble || "—"}</td>
                       <td>{r.g ? `${r.g.from} → ${r.g.to}${r.g.gained > 0 ? ` (+${r.g.gained})` : ""}` : "Re-scan to see growth"}</td>
                     </tr>
                   ))}

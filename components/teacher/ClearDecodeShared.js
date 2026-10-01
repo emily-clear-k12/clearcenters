@@ -3,7 +3,7 @@ import React, { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "../../lib/supabaseClient";
-import { ruinLabel, needsHelp, masteredRuins, minutesThisWeek, ruinState, dateKey } from "../../lib/cleardecode/core";
+import { ruinLabel, needsHelp, masteredRuins, minutesThisWeek, ruinState, dateKey, isComplete, slippingRuins, RUIN_ORDER, ruinIndex } from "../../lib/cleardecode/core";
 
 // Shared pieces for the ClearDecode teacher pages (Sept 30, 2026). Same
 // layout and tabs as ClearKeys so teachers learn one pattern.
@@ -12,6 +12,7 @@ const TABS = [
   { key: "progress", label: "Class progress", href: "/teacher/cleardecode/progress" },
   { key: "report", label: "Report", href: "/teacher/cleardecode/report" },
   { key: "words", label: "Class words", href: "/teacher/cleardecode/words" },
+  { key: "kit", label: "Small-group kits", href: "/teacher/cleardecode/kit" },
 ];
 
 export function ClearDecodeTabs({ active, classId }) {
@@ -78,6 +79,7 @@ export function useClearDecodeClass() {
 export function statusOf(p) {
   if (!p) return { key: "none", label: "No scan yet", color: "neutral" };
   if (p.scan && p.scan.pending) return { key: "scanWait", label: "Scan waiting", color: "" };
+  if (p.status === "on" && !p.current_ruin && isComplete(p)) return needsHelp(p) ? { key: "help", label: "Needs help", color: "danger" } : { key: "on", label: "Finished · keeper practice", color: "teal" };
   if (p.status === "on") return needsHelp(p) ? { key: "help", label: "Needs help", color: "danger" } : { key: "on", label: "In ClearDecode", color: "teal" };
   if (p.status === "off") return { key: "off", label: "Turned off", color: "neutral" };
   const r = p.scan && p.scan.result;
@@ -115,7 +117,32 @@ export function familyNote(name, p) {
   const mastered = masteredRuins(p || {}).length;
   const wk = weekStats(p);
   if (!p || p.status !== "on") return `${name} isn't using ClearDecode right now.`;
+  if (!r && isComplete(p)) return `${name} finished every pattern in ClearDecode, our daily word-reading practice, and now does short review missions to keep those skills sharp. This week ${name} finished ${wk.sessions} ${wk.sessions === 1 ? "session" : "sessions"}. Reading aloud together for a few minutes at home still helps.`;
   return `${name} is practicing reading and spelling words with the ${ruinLabel(r).replace(/^\w+ · /, "")} pattern in ClearDecode, our daily word-reading practice. This week ${name} finished ${wk.sessions} ${wk.sessions === 1 ? "session" : "sessions"}, and has ${mastered} ${mastered === 1 ? "pattern" : "patterns"} mastered so far. Reading aloud together for a few minutes at home helps these patterns stick.`;
 }
 
-export { ruinLabel, needsHelp, masteredRuins, ruinState };
+// Where a student has had trouble: ruins with low practice accuracy, a
+// missed vault, a scan gap, or a pattern slipping in keeper review.
+export function troubleSpots(p) {
+  if (!p) return [];
+  const out = new Map();
+  const add = (id, why) => { if (id && !out.has(id)) out.set(id, why); };
+  slippingRuins(p).forEach((id) => add(id, "slipping in review"));
+  Object.entries(p.ruins || {}).forEach(([id, v]) => { if (v && v.vaultTries >= 2) add(id, `vault took ${v.vaultTries} tries`); });
+  const by = {};
+  (p.log || []).filter((e) => e.kind === "chamber" && e.total).forEach((e) => { by[e.ruin] = by[e.ruin] || [0, 0, 0]; by[e.ruin][0] += e.correct; by[e.ruin][1] += e.total; by[e.ruin][2] += 1; });
+  Object.entries(by).forEach(([id, [c, t, n]]) => { if (n >= 2 && c / t < 0.7) add(id, `${Math.round((c / t) * 100)}% in practice`); });
+  const gaps = (p.scan && p.scan.result && p.scan.result.gaps) || [];
+  gaps.forEach((id) => add(id, "scan gap"));
+  return [...out.entries()].sort((a, b) => ruinIndex(a[0]) - ruinIndex(b[0])).map(([ruin, why]) => ({ ruin, why }));
+}
+// The student's last reread self-check, in plain words.
+export function rereadNote(p) {
+  const last = [...((p && p.log) || [])].reverse().find((e) => e.reread);
+  if (!last) return null;
+  const goal = { accurate: "every word right", smooth: "smoothly", expression: "with expression" }[last.reread.goal] || last.reread.goal;
+  const self = { smooth: "felt smooth", bumps: "a few bumps", tricky: "tricky" }[last.reread.self] || last.reread.self;
+  return `Reread ${goal}: ${self}`;
+}
+
+export { ruinLabel, needsHelp, masteredRuins, ruinState, isComplete, RUIN_ORDER };
