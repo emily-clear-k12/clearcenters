@@ -37,13 +37,13 @@ const STORIES = {
   Grace: { kind: "wait" },
   Jonah: { kind: "needs", start: "H5", gaps: ["G3"] },
   Aiden: { kind: "keeper", start: "K7", acc: 0.9, attend: 0.97, passProb: 1 },
-  Luis: { kind: "on", start: "B2", acc: 0.86, attend: 0.95, rescan: "B5" },     // improving every week
+  Luis: { kind: "on", start: "B3", acc: 0.86, attend: 0.95, rescan: true, gaps: ["C4"] },     // improving every week
   Sofia: { kind: "on", start: "A4", acc: 0.55, attend: 0.85, passProb: 0.5 },  // needs help: vault keeps holding
-  Isaiah: { kind: "on", start: "B5", acc: 0.8, attend: 0.92, rescan: "C2" },    // starting to catch on
-  Ryan: { kind: "on", start: "A1", acc: 0.62, attend: 0.9, belowFloor: true, passMark: 90 },
-  Diego: { kind: "on", start: "D2", acc: 0.82, attend: 0.9 },
-  Mateo: { kind: "on", start: "F3", acc: 0.78, attend: 0.7 },
-  Noah: { kind: "on", start: "E3", acc: 0.8, attend: 0.5 },                      // work goes missing
+  Isaiah: { kind: "on", start: "B5", acc: 0.8, attend: 0.92, rescan: true, gaps: ["C4"] },    // starting to catch on
+  Ryan: { kind: "on", start: "A2", acc: 0.62, attend: 0.9, belowFloor: true, passMark: 90 },
+  Diego: { kind: "on", start: "D2", acc: 0.82, attend: 0.9, gaps: ["E3", "G3"] },
+  Mateo: { kind: "on", start: "F3", acc: 0.78, attend: 0.7, gaps: ["G3"] },
+  Noah: { kind: "on", start: "E3", acc: 0.8, attend: 0.5, gaps: ["F3", "G3"] },                      // work goes missing
 };
 
 function scanResult(start, extra = {}) {
@@ -80,7 +80,7 @@ function play(story) {
     p = { ...p, ...r.fields };
   }
   if (story.rescan) {
-    p.scan.history.push({ at: "2026-09-29", startRuin: story.rescan, scoredOut: false, mastered: CD.ruinIndex(story.rescan) });
+    p.scan.history.push({ at: "2026-09-29", startRuin: p.current_ruin, scoredOut: false, mastered: CD.ruinIndex(p.current_ruin) });
   }
   return p;
 }
