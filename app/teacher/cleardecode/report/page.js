@@ -21,7 +21,8 @@ function rowFor(s) {
   const g = growthOf(p);
   return {
     s, p, st, wk, g,
-    mastered: masteredRuins(p || {}).length,
+    // Scored out of the scan = every pattern; no scan yet = nothing to count.
+    mastered: p && p.scan && p.scan.result && p.scan.result.scoredOut ? RUIN_ORDER.length : p && p.scan && p.scan.result ? masteredRuins(p).length : null,
     acc: recentAccuracy(p),
     ruin: p && p.status === "on" && p.current_ruin ? ruinLabel(p.current_ruin) : p && p.status === "on" && isComplete(p) ? "Finished (keeper practice)" : "—",
     trouble: troubleSpots(p).map((t) => `${ruinLabel(t.ruin)} (${t.why})`).join("; "),
@@ -42,7 +43,7 @@ function Report() {
 
   function download() {
     const head = ["Student", "Status", "Current ruin", "Patterns mastered", `Of ${total}`, "Sessions this week", "Minutes this week", "Recent accuracy %", "First scan start", "Latest scan start", "Patterns gained since first scan", "Trouble spots", "Last reread"];
-    const lines = rows.map((r) => [r.s.firstName, r.st.label, r.ruin, r.mastered, total, r.wk.sessions, r.wk.minutes, r.acc ?? "", r.g ? r.g.from : "", r.g ? r.g.to : "", r.g ? r.g.gained : "", r.trouble, r.reread].map(csvCell).join(","));
+    const lines = rows.map((r) => [r.s.firstName, r.st.label, r.ruin, r.mastered ?? "", total, r.wk.sessions, r.wk.minutes, r.acc ?? "", r.g ? r.g.from : "", r.g ? r.g.to : "", r.g ? r.g.gained : "", r.trouble, r.reread].map(csvCell).join(","));
     const blob = new Blob([[head.map(csvCell).join(","), ...lines].join("\n")], { type: "text/csv;charset=utf-8" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -80,7 +81,7 @@ function Report() {
                       <td><b>{r.s.firstName}</b></td>
                       <td><span className={`cc-badge ${r.st.color}`}>{r.st.label}</span></td>
                       <td>{r.ruin}</td>
-                      <td>{r.mastered} of {total}</td>
+                      <td>{r.mastered == null ? "—" : `${r.mastered} of ${total}`}</td>
                       <td>{r.wk.sessions} {r.wk.sessions === 1 ? "session" : "sessions"} · {r.wk.minutes} min</td>
                       <td>{r.acc === null ? "—" : `${r.acc}%`}{r.reread && <div className="cc-muted" style={{ fontSize: 12 }}>{r.reread}</div>}</td>
                       <td style={{ maxWidth: 240, fontSize: 13 }}>{r.trouble || "—"}</td>
