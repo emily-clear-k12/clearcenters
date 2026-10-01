@@ -366,7 +366,7 @@ export default function HomeClient({ student, studentClass, assignments, mission
         .hub-portal--progress:hover .hub-orb-wrap { filter: drop-shadow(0 10px 22px rgba(0,0,0,.4)) drop-shadow(0 0 22px #00C2C7); }
         .hub-portal--crystal:hover .hub-orb-wrap { filter: drop-shadow(0 10px 22px rgba(0,0,0,.4)) drop-shadow(0 0 22px #FFC44D); }
         .hub-portal--keys:hover .hub-orb-wrap { filter: drop-shadow(0 10px 22px rgba(0,0,0,.4)) drop-shadow(0 0 22px #39D97A); }
-        .hub-portal--code:hover .hub-orb-wrap { filter: drop-shadow(0 10px 22px rgba(0,0,0,.4)) drop-shadow(0 0 22px #2FD4C8); }
+        .hub-portal--code:hover .hub-orb-wrap { filter: drop-shadow(0 10px 22px rgba(0,0,0,.4)) drop-shadow(0 0 22px #F5B13A); }
         .hub-portals { position: absolute; bottom: 6%; left: 50%; transform: translateX(-50%); display: flex; gap: 64px; z-index: 4; }
         @media (max-width: 800px) {
           .hub-portals { gap: 8px; width: calc(100% - 16px); justify-content: center; bottom: 3%; }
@@ -865,10 +865,10 @@ export default function HomeClient({ student, studentClass, assignments, mission
           <div className="hub-orb-wrap"><img src="/student/orb_keys.png" alt="" /></div>
           <span style={{ fontWeight: 700, fontSize: 13, color: COLORS.white, background: "rgba(20,26,50,.55)", padding: "4px 14px", borderRadius: 999, backdropFilter: "blur(6px)" }}>ClearKeys</span>
         </button>
-        {/* Sept 30, 2026: ClearDecode door, only for students it's turned on for (placeholder orb art). */}
+        {/* Sept 30, 2026: ClearDecode door, only for students it is turned on for (or who have a scan waiting). Orb art from Emily. */}
         {showClearDecode && (
           <button type="button" className="hub-portal hub-portal--code" onClick={() => router.push("/decode")}>
-            <div className="hub-orb-wrap"><img src="/student/orb_briefings.png" alt="" /></div>
+            <div className="hub-orb-wrap"><img src="/student/orb_cleardecode.png" alt="" /></div>
             <span style={{ fontWeight: 700, fontSize: 13, color: COLORS.white, background: "rgba(20,26,50,.55)", padding: "4px 14px", borderRadius: 999, backdropFilter: "blur(6px)" }}>ClearDecode</span>
           </button>
         )}
