@@ -9,7 +9,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
  *
  * Kid flow: search → results grid → tap to place.
  */
-export default function LibraryPicker({ open, onClose, onSelect, title = "Pick a picture" }) {
+export default function LibraryPicker({ open, onClose, onSelect, title = "Pick a picture", inline = false, previewItems = null, disabled = false }) {
   const [q, setQ] = useState("");
   const [items, setItems] = useState([]);
   const [total, setTotal] = useState(0);
@@ -17,8 +17,15 @@ export default function LibraryPicker({ open, onClose, onSelect, title = "Pick a
   const [error, setError] = useState(null);
   const inputRef = useRef(null);
   const debounce = useRef(null);
+  const requestId = useRef(0);
 
   const load = useCallback(async (query) => {
+    const request = ++requestId.current;
+    if (previewItems) {
+      const terms = query.toLowerCase().trim().split(/\s+/).filter(Boolean);
+      const matches = previewItems.filter(item => terms.every(term => `${item.title} ${(item.tags || []).join(" ")} ${item.url}`.toLowerCase().includes(term)));
+      setItems(matches.slice(0, 48)); setTotal(matches.length); setError(null); setLoading(false); return;
+    }
     setLoading(true);
     setError(null);
     try {
@@ -27,6 +34,7 @@ export default function LibraryPicker({ open, onClose, onSelect, title = "Pick a
       params.set("limit", "48");
       const res = await fetch(`/api/maker-studio/library?${params.toString()}`);
       const data = await res.json().catch(() => ({}));
+      if (request !== requestId.current) return;
       if (!res.ok) {
         setError((data && data.error) || "Could not load the library.");
         setItems([]);
@@ -36,19 +44,20 @@ export default function LibraryPicker({ open, onClose, onSelect, title = "Pick a
       setItems(Array.isArray(data.items) ? data.items : []);
       setTotal(typeof data.total === "number" ? data.total : 0);
     } catch (_) {
+      if (request !== requestId.current) return;
       setError("Could not load the library. Try again.");
       setItems([]);
     } finally {
-      setLoading(false);
+      if (request === requestId.current) setLoading(false);
     }
-  }, []);
+  }, [previewItems]);
 
   useEffect(() => {
     if (!open) return undefined;
     setQ("");
     load("");
     const t = setTimeout(() => {
-      if (inputRef.current) inputRef.current.focus();
+      if (!inline && inputRef.current) inputRef.current.focus();
     }, 50);
     return () => clearTimeout(t);
   }, [open, load]);
@@ -74,14 +83,14 @@ export default function LibraryPicker({ open, onClose, onSelect, title = "Pick a
   if (!open) return null;
 
   return (
-    <div className="mk-lib-overlay" role="dialog" aria-modal="true" aria-label={title}>
+    <div className={inline ? "mk-lib-inline" : "mk-lib-overlay"} role={inline ? "region" : "dialog"} aria-modal={inline ? undefined : true} aria-label={title}>
       <div className="mk-lib-sheet">
         <div className="mk-lib-head">
           <div>
             <p className="mk-kicker">ClearCenters library</p>
             <h2>{title}</h2>
           </div>
-          <button type="button" className="mk-ghost" onClick={onClose}>
+          <button type="button" className="mk-ghost" onClick={onClose} disabled={disabled}>
             Close
           </button>
         </div>
@@ -116,13 +125,14 @@ export default function LibraryPicker({ open, onClose, onSelect, title = "Pick a
             </p>
           </div>
         ) : (
-          <div className="mk-lib-grid" role="list">
+          <div className="mk-lib-grid">
             {items.map((item) => (
               <button
                 key={item.id || item.url}
                 type="button"
                 className="mk-lib-card"
-                role="listitem"
+                disabled={disabled}
+                aria-label={`Use ${item.title}`}
                 onClick={() => {
                   if (onSelect) onSelect(item);
                 }}
