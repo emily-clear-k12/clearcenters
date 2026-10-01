@@ -75,7 +75,7 @@ function Progress() {
                           onChange={(e) => e.target.value && act(`place-${s.id}`, { action: "placeAt", studentId: s.id, ruin: e.target.value }, `${s.firstName} now starts at ${ruinLabel(e.target.value)}.`)}>
                           <option value="">Move to…</option>
                           {PLANETS.map((pl) => (
-                            <optgroup key={pl.id} label={`${pl.name} · ${pl.skill}`}>
+                            <optgroup key={pl.id} label={`${pl.id} · ${pl.name} · ${pl.skill}`}>
                               {RUINS.filter((r) => r.id[0] === pl.id).map((r) => <option key={r.id} value={r.id}>{ruinLabel(r.id)}</option>)}
                             </optgroup>
                           ))}
